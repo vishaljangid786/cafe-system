@@ -2,9 +2,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
-import { Loader2 } from 'lucide-react';
 
-export default function Home() {
+export default function RootPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -12,7 +11,7 @@ export default function Home() {
     if (!loading) {
       if (user) {
         if (user.role === 'super_admin' || user.role === 'admin') router.push('/dashboard/admin');
-        else if (user.role === 'branch_admin') router.push('/dashboard/branch-admin');
+        else if (user.role === 'location_admin') router.push('/dashboard/location-admin');
         else router.push('/dashboard/staff');
       } else {
         router.push('/login');
@@ -21,8 +20,8 @@ export default function Home() {
   }, [user, loading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Loader2 className="animate-spin text-amber-600" size={40} />
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="h-12 w-12 rounded-xl border-2 border-amber-500/20 border-t-amber-500 animate-spin" />
     </div>
   );
 }

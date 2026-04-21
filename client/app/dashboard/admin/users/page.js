@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { 
-  Users, UserPlus, Search, Filter, Trash2, Edit3, 
+import {
+  Users, UserPlus, Search, Filter, Trash2, Edit3,
   Shield, Loader2, X, TrendingUp, TrendingDown, ArrowLeft,
   Ban, Unlock, MapPin
 } from 'lucide-react';
@@ -45,7 +45,7 @@ export default function UsersManagementPage() {
     try {
       const res = await api.get('/locations');
       setLocations(res.data.data);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function UsersManagementPage() {
     e.preventDefault();
     setSubmitting(true);
     const loadToast = toast.loading(editingUser ? 'Updating personnel data...' : 'Onboarding personnel...');
-    
+
     try {
       if (editingUser) {
         await api.put(`/users/${editingUser._id}`, formData);
@@ -128,14 +128,14 @@ export default function UsersManagementPage() {
   return (
     <PageTransition>
       <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-zinc-200 dark:border-zinc-800 gap-6 transition-colors">
           <div>
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 tracking-tight flex items-center">
               <Users className="mr-4 text-amber-600" size={32} /> Personnel <span className="text-amber-600 ml-2">Matrix</span>
             </h1>
             <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium mt-1">Manage network access and role hierarchy.</p>
           </div>
-          <button 
+          <button
             onClick={() => {
               setEditingUser(null);
               setShowModal(true);
@@ -145,11 +145,10 @@ export default function UsersManagementPage() {
             <UserPlus size={18} className="mr-3" /> Onboard Personnel
           </button>
         </div>
-
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-              <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
+        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[2.5rem] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="min-w-[1000px] w-full divide-y divide-zinc-100 dark:divide-zinc-800">
+              <thead className="bg-zinc-50/50 dark:bg-zinc-800/50">
                 <tr>
                   <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Identity</th>
                   <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Clearance</th>
@@ -158,7 +157,7 @@ export default function UsersManagementPage() {
                   <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
                 {loading ? (
                   <tr>
                     <td colSpan="5" className="px-8 py-20 text-center">
@@ -169,28 +168,27 @@ export default function UsersManagementPage() {
                     </td>
                   </tr>
                 ) : users.map((user) => (
-                  <tr key={user._id} className={`hover:bg-gray-50/50 dark:hover:bg-zinc-800/20 transition-colors group ${user.isBlocked ? 'opacity-50' : ''}`}>
+                  <tr key={user._id} className={`hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors group ${user.isBlocked ? 'opacity-50' : ''}`}>
                     <td className="px-8 py-6 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black text-sm border ${user.isBlocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 border-amber-200/20'}`}>
                           {user.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-black text-gray-900 dark:text-zinc-100">{user.name}</div>
-                          <div className="text-xs font-medium text-gray-400">{user.email}</div>
+                          <div className="text-sm font-black text-zinc-900 dark:text-zinc-100">{user.name}</div>
+                          <div className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{user.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap">
-                      <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] ${
-                        user.role === 'super_admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10' :
+                      <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] ${user.role === 'super_admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10' :
                         user.role === 'admin' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10' :
-                        user.role === 'location_admin' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
-                      }`}>
+                          user.role === 'location_admin' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
+                        }`}>
                         {user.role.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm font-bold text-gray-500 dark:text-zinc-400">
+                    <td className="px-8 py-6 whitespace-nowrap text-sm font-bold text-zinc-500 dark:text-zinc-400">
                       {user.assignedLocation?.name || <span className="opacity-30">N/A</span>}
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-center">
@@ -214,33 +212,33 @@ export default function UsersManagementPage() {
           </div>
         </div>
 
-        <Modal 
-          isOpen={showModal} 
+        <Modal
+          isOpen={showModal}
           onClose={() => {
             setShowModal(false);
             setEditingUser(null);
-          }} 
+          }}
           title={editingUser ? 'Refine Identity' : 'Onboard Personnel'}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Legal Full Name</label>
-                <input required type="text" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <input required type="text" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Identity</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
               {!editingUser && (
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Access Password</label>
-                  <input required type="password" underline="true" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                  <input required type="password" underline="true" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                 </div>
               )}
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Assigned Role</label>
-                <select className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                <select className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
                   <option value="staff">Staff</option>
                   <option value="location_admin">Location Admin</option>
                   <option value="admin">Admin</option>
@@ -249,21 +247,21 @@ export default function UsersManagementPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Assign Location</label>
-                <select 
+                <select
                   disabled={currentUser?.role === 'location_admin'}
-                  className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none ${currentUser?.role === 'location_admin' ? 'opacity-50 cursor-not-allowed' : ''}`} 
-                  value={formData.assignedLocation} 
-                  onChange={e => setFormData({...formData, assignedLocation: e.target.value})}
+                  className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none ${currentUser?.role === 'location_admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  value={formData.assignedLocation}
+                  onChange={e => setFormData({ ...formData, assignedLocation: e.target.value })}
                 >
                   <option value="">No Location</option>
                   {locations.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
                 </select>
               </div>
             </div>
-            
-            <button 
-              type="submit" 
-              disabled={submitting} 
+
+            <button
+              type="submit"
+              disabled={submitting}
               className="w-full py-5 bg-zinc-900 dark:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-amber-600/20 flex items-center justify-center mt-4"
             >
               {submitting ? <Loader2 className="animate-spin mr-3" /> : (editingUser ? 'Apply Corrections' : 'Confirm Registration')}

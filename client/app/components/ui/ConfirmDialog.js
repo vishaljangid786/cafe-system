@@ -1,16 +1,17 @@
 'use client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { Button } from './Button';
 
-export default function ConfirmDialog({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title, 
-  message, 
-  confirmText = 'Confirm', 
-  type = 'danger' 
+export default function ConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Proceed',
+  type = 'danger',
+  loading = false
 }) {
   return (
     <AnimatePresence>
@@ -21,27 +22,31 @@ export default function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md z-[10000]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]"
           />
           <div className="fixed inset-0 flex items-center justify-center p-4 z-[10001] pointer-events-none">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="glass-card w-full max-w-md rounded-[2.5rem] overflow-hidden pointer-events-auto p-10 text-center shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)]"
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass-card w-full max-w-sm rounded-2xl overflow-hidden pointer-events-auto p-8 text-center border border-white/5 dark:border-zinc-800/50 bg-zinc-950/90 backdrop-blur-2xl"
             >
-              <div className={`h-20 w-20 ${type === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'} rounded-3xl mx-auto flex items-center justify-center mb-8 border border-current/10`}>
-                <AlertCircle size={40} strokeWidth={2.5} />
+              <div className={`h-16 w-16 ${type === 'danger' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'} rounded-2xl mx-auto flex items-center justify-center mb-6 border border-current/20 shadow-lg shadow-current/5`}>
+                {type === 'danger' ? <ShieldAlert size={32} /> : <AlertCircle size={32} />}
               </div>
-              
-              <h3 className="text-2xl font-black text-foreground tracking-tight mb-3">{title}</h3>
-              <p className="text-sm font-medium text-muted-foreground leading-relaxed mb-10 px-4">{message}</p>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="space-y-1 mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Security Override</span>
+                <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
+              </div>
+              <p className="text-sm font-medium text-zinc-400 leading-relaxed mb-8 px-2">{message}</p>
+
+              <div className="grid grid-cols-2 gap-3">
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   onClick={onClose}
-                  className="!py-4"
+                  className="!rounded-xl border-zinc-800"
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
@@ -49,9 +54,9 @@ export default function ConfirmDialog({
                   variant={type === 'danger' ? 'danger' : 'primary'}
                   onClick={() => {
                     onConfirm();
-                    onClose();
                   }}
-                  className="!py-4"
+                  className="!rounded-xl"
+                  loading={loading}
                 >
                   {confirmText}
                 </Button>

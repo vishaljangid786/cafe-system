@@ -189,10 +189,36 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.billImage = req.file.path;
   table.status = 'completed';
 
+  const Transaction = require('../models/Transaction');
+
+  const totalProfit = table.orders.reduce((acc, item) => {
+    return acc + ((Number(item.price) - Number(item.costPrice || 0)) * Number(item.quantity));
+  }, 0);
+
+  // Archive session as a persistent Transaction
+  await Transaction.create({
+    locationId: table.locationId,
+    tableNumber: table.tableNumber,
+    staffId: req.user._id,
+    orders: table.orders.map(o => ({
+      menuItemId: o.menuItemId,
+      itemName: o.itemName,
+      quantity: o.quantity,
+      price: o.price,
+      costPrice: o.costPrice || 0
+    })),
+    totalAmount: table.totalAmount,
+    totalProfit: totalProfit,
+    billImage: req.file.path,
+    date: new Date()
+  });
+
   await Expense.create({
     title: `Revenue: Table ${table.tableNumber}`,
-    description: `Automated fiscal entry from table completion. Orders: ${table.orders.length}`,
+    description: `Automated fiscal entry from table completion. \nOrders:\n${table.orders.map(o => `- ${o.itemName}: ${o.quantity} units (Profit: ₹${(Number(o.price) - Number(o.costPrice || 0)) * Number(o.quantity)})`).join('\n')}`,
     amount: table.totalAmount,
+    profit: totalProfit,
+    type: 'income',
     locationId: table.locationId,
     proofImage: req.file.path,
     createdBy: req.user._id,

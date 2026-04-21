@@ -10,13 +10,13 @@ const router = express.Router();
 
 router.use(verifyToken);
 
-router.route('/branch')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getLocationSalary);
+router.route('/location')
+  .get(authorizeRoles('location_admin', 'admin', 'super_admin'), getLocationSalary);
 
 router.route('/all')
   .get(authorizeRoles('admin', 'super_admin'), getAllSalary);
 
 router.route('/user/:id')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getUserSalary);
+  .get(authorizeRoles('location_admin', 'admin', 'super_admin'), getUserSalary);
 
 module.exports = router;

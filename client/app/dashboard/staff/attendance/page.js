@@ -41,8 +41,8 @@ export default function StaffAttendancePage() {
           </h1>
           <p className="text-gray-500 mt-1">Review your work days and calculated pay for the month.</p>
         </div>
-        <input 
-          type="month" 
+        <input
+          type="month"
           className="border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-amber-500 focus:border-amber-500 font-semibold"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
@@ -95,10 +95,9 @@ export default function StaffAttendancePage() {
                 <tr key={idx} className="text-sm">
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-700">{new Date(log.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
-                      log.status === 'present' ? 'bg-green-100 text-green-700' :
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${log.status === 'present' ? 'bg-green-100 text-green-700' :
                       log.status === 'half-day' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                      }`}>
                       {log.status}
                     </span>
                   </td>

@@ -4,8 +4,7 @@ const locationSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Location name/label is required (e.g. MI Road)'],
-      trim: true,
+      // name is now optional as per requirement
     },
     city: {
       type: String,
@@ -30,7 +29,7 @@ const locationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['active', 'hold', 'deleted'],
+      enum: ['active', 'inactive', 'hold', 'deleted'],
       default: 'active',
     },
     holdReason: {
@@ -44,6 +43,10 @@ const locationSchema = new mongoose.Schema(
     isPermanentlyDeleted: {
       type: Boolean,
       default: false,
+    },
+    maxCapacity: {
+      type: Number,
+      default: 20,
     },
   },
   {

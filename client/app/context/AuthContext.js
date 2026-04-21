@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
       } else if (userData.role === 'location_admin') {
-        router.push('/dashboard/branch-admin');
+        router.push('/dashboard/location-admin');
       } else {
         router.push('/dashboard/staff');
       }
@@ -114,8 +114,10 @@ export const AuthProvider = ({ children }) => {
     router.push('/login');
   };
 
+  const [globalSearch, setGlobalSearch] = useState('');
+
   return (
-    <AuthContext.Provider value={{ user, selectedLocation, switchLocation, loading, login, logout, socket }}>
+    <AuthContext.Provider value={{ user, setUser, selectedLocation, switchLocation, globalSearch, setGlobalSearch, loading, login, logout, socket }}>
       {children}
     </AuthContext.Provider>
   );

@@ -112,8 +112,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
+  const cleanEmail = email.trim().toLowerCase();
+  console.log(cleanEmail, password);
 
-  const user = await User.findOne({ email }).populate('assignedLocation accessibleLocations');
+  const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
 
   if (user && (await user.matchPassword(password))) {
     res.json({

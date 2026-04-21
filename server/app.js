@@ -17,6 +17,7 @@ const couponRoutes = require('./routes/couponRoutes');
 const menuRoutes = require('./routes/menuRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const recipeRoutes = require('./routes/recipeRoutes');
 const app = express();
 
 // Middlewares
@@ -42,6 +43,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/recipes', recipeRoutes);
 // Base route
 app.get('/', (req, res) => {
   res.send('Cafe Management API is running...');

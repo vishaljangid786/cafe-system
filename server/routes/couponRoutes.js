@@ -1,26 +1,27 @@
 const express = require('express');
+const router = express.Router();
 const {
   getCoupons,
+  getCoupon,
   createCoupon,
   updateCoupon,
   deleteCoupon,
-  applyCoupon,
+  applyCoupon
 } = require('../controllers/couponController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
-
-const router = express.Router();
+const { couponSchema, validate } = require('../middlewares/validateMiddleware');
 
 router.use(verifyToken);
 
 router.route('/')
-  .get(authorizeRoles('super_admin', 'admin'), getCoupons)
-  .post(authorizeRoles('super_admin', 'admin'), createCoupon);
+  .get(authorizeRoles('super_admin', 'admin', 'location_admin'), getCoupons)
+  .post(authorizeRoles('super_admin', 'admin'), couponSchema, validate, createCoupon);
 
-router.route('/apply')
-  .post(applyCoupon);
+router.post('/apply', applyCoupon);
 
 router.route('/:id')
-  .put(authorizeRoles('super_admin', 'admin'), updateCoupon)
+  .get(getCoupon)
+  .put(authorizeRoles('super_admin', 'admin'), couponSchema, validate, updateCoupon)
   .delete(authorizeRoles('super_admin', 'admin'), deleteCoupon);
 
 module.exports = router;

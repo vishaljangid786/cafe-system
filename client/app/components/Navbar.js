@@ -1,162 +1,203 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  Bell, LogOut, User as UserIcon, Sun, Moon, 
-  Menu, X, Search, MapPin, ChevronDown, Check,
-  Globe
+import {
+  Bell, User as UserIcon, Sun, Moon,
+  Menu, MapPin, Zap,
+
 } from 'lucide-react';
+import Link from 'next/link';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
-  const { user, selectedLocation, switchLocation, logout, socket } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { user, selectedLocation, logout, socket } = useAuth(); const { theme, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showLocationSelector, setShowLocationSelector] = useState(false);
-  const [allLocations, setAllLocations] = useState([]);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const locationRef = useRef(null);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
-    if (!user) return;
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
 
-    const fetchNotifications = async () => {
-      try {
-        const res = await api.get('/notifications?limit=5');
-        setNotifications(res.data.data);
-        const countRes = await api.get('/notifications/unread-count');
-        setUnreadCount(countRes.data.count);
-      } catch (err) {}
-    };
-
-    const fetchAllLocations = async () => {
-      if (user.role === 'super_admin' || user.role === 'admin') {
-        try {
-          const res = await api.get('/locations');
-          setAllLocations(res.data.data);
-        } catch (err) {}
+    const handleClickOutside = (event) => {
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
+        setShowLocationSelector(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
       }
     };
+    document.addEventListener('mousedown', handleClickOutside);
 
-    fetchNotifications();
-    fetchAllLocations();
+    if (user) {
+      const fetchNotifications = async () => {
+        try {
+          const res = await api.get('/notifications?limit=5');
+          setNotifications(res.data.data);
+          const countRes = await api.get('/notifications/unread-count');
+          setUnreadCount(countRes.data.count);
+        } catch (err) { }
+      };
 
-    if (socket) {
-      socket.on('new_notification', (notification) => {
-        setNotifications(prev => [notification, ...prev].slice(0, 5));
-        setUnreadCount(prev => prev + 1);
-      });
+      fetchNotifications();
 
-      socket.on('booking_status_updated', (data) => {
-        if (data.status === 'confirmed') {
-          toast.success(data.message, { duration: 5000 });
-        } else {
-          toast.error(data.message, { duration: 5000 });
-        }
-      });
+      if (socket) {
+        socket.on('new_notification', (notification) => {
+          setNotifications(prev => [notification, ...prev].slice(0, 5));
+          setUnreadCount(prev => prev + 1);
+          toast.success('New update received', { icon: '🔔' });
+        });
+      }
     }
 
     return () => {
-      if (socket) {
-        socket.off('new_notification');
-        socket.off('booking_status_updated');
-      }
-    }
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (socket) socket.off('new_notification');
+    };
   }, [user, socket]);
 
   if (!user) return null;
 
-  // Determine available locations for the switcher
-  const accessibleLocations = user.role === 'super_admin' || user.role === 'admin' 
-    ? allLocations 
-    : (user.assignedLocation ? [user.assignedLocation] : []);
-
-  const currentLocationLabel = selectedLocation 
+  const currentLocationLabel = selectedLocation
     ? `${selectedLocation.city} - ${selectedLocation.name}`
-    : 'Global Network';
+    : (user.role === 'super_admin' || user.role === 'admin' ? 'Global Network' : 'No Node');
 
   return (
-    <header className="h-20 flex items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b border-border z-[90] sticky top-0">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={onToggleSidebar}
-          className="p-2.5 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-xl transition-all duration-300"
-        >
-          <Menu size={20} />
-        </button>
-        
-        <div className="hidden md:flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">
-            {user.role.replace('_', ' ')} Portal
-          </span>
-        </div>
+    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between  z-[90] sticky top-0 transition-all duration-300  ${isScrolled
+      ? 'bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200 dark:border-zinc-800 shadow-lg shadow-black/5'
+      : 'bg-transparent border-b border-zinc-200 dark:border-zinc-800'
+      }`}>
+      <div className="flex items-center gap-2 md:gap-6">
+        {isMobile && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-zinc-500 hover:text-amber-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all rounded-xl"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="hidden lg:flex items-center relative mr-4">
-          <Search className="absolute left-4 text-muted-foreground" size={16} />
-          <input 
-            type="text" 
-            placeholder="Search matrix..." 
-            className="pl-11 pr-4 py-2.5 bg-muted/50 border border-border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/50 w-64 transition-all"
-          />
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Location Selector Dropdown */}
+        <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-2xl border 
+  bg-zinc-100/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800">
+
+          <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+            <MapPin size={14} />
+          </div>
+
+          <div className="flex flex-col items-start leading-none pr-1">
+            <span className="hidden sm:inline text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">
+              Active Node
+            </span>
+
+            <span className="text-[10px] md:text-xs font-black text-zinc-800 dark:text-zinc-200 max-w-[120px] truncate">
+              {selectedLocation
+                ? `${selectedLocation.city} - ${selectedLocation.name}`
+                : (['admin', 'super_admin', 'location_admin'].includes(user.role)
+                  ? 'Global Network'
+                  : 'No Location')}
+            </span>
+          </div>
         </div>
 
-        {/* Location Switcher */}
-        <div className="relative">
-          <button 
-            onClick={() => setShowLocationSelector(!showLocationSelector)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-accent/10 hover:text-accent border border-border rounded-2xl transition-all duration-300 group"
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 text-zinc-500 hover:text-amber-500 transition-all rounded-xl hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm"
+            title="Toggle Protocol"
           >
-            <MapPin size={16} className="text-accent" />
-            <span className="text-xs font-black tracking-tight max-w-[120px] truncate">{currentLocationLabel}</span>
-            <ChevronDown size={14} className={`transition-transform duration-300 ${showLocationSelector ? 'rotate-180' : ''}`} />
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          
+          <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-800 mx-1" />
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`p-2.5 relative transition-all rounded-xl hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm ${showNotifications ? 'text-amber-500 bg-white dark:bg-zinc-800 shadow-sm' : 'text-zinc-500'}`}
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-zinc-950 animate-pulse" />
+            )}
+          </button>
+
+          {/* Notification Panel */}
           <AnimatePresence>
-            {showLocationSelector && (
+            {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-64 glass-card rounded-2xl overflow-hidden shadow-2xl z-[100] p-2"
+                className="absolute right-20 top-16 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-[100]"
+                ref={notificationRef}
               >
-                <div className="space-y-1">
-                  <p className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50 flex items-center gap-2">
-                    <Globe size={10} /> Accessible Nodes
-                  </p>
-                  
-                  {accessibleLocations.length === 0 ? (
-                    <div className="px-3 py-4 text-xs text-muted-foreground text-center italic">No accessible nodes found</div>
-                  ) : (
-                    accessibleLocations.map((loc) => {
-                      const isSelected = selectedLocation?._id === loc._id;
-                      return (
-                        <button 
-                          key={loc._id}
-                          onClick={() => {
-                            switchLocation(loc);
-                            setShowLocationSelector(false);
-                          }}
-                          className={`
-                            flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs transition-all duration-200
-                            ${isSelected 
-                              ? 'bg-accent/10 text-accent font-bold' 
-                              : 'hover:bg-muted text-muted-foreground hover:text-foreground'}
-                          `}
-                        >
-                          <div className="flex flex-col items-start min-w-0">
-                            <span className="truncate w-full text-left">{loc.city}</span>
-                            <span className={`text-[9px] uppercase tracking-tighter opacity-60 ${isSelected ? '' : 'text-muted-foreground'}`}>{loc.name}</span>
+                <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                    <Bell size={12} className="text-amber-500" /> Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await api.patch('/notifications/read-all');
+                          setUnreadCount(0);
+                          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                        } catch (err) { }
+                      }}
+                      className="text-[9px] font-black text-amber-500 uppercase tracking-tight hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                  {notifications.length > 0 ? (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif._id}
+                        className={`px-5 py-4 border-b border-zinc-50 dark:border-zinc-800/50 transition-colors cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${notif.isRead ? 'opacity-60' : ''}`}
+                        onClick={async () => {
+                          if (!notif.isRead) {
+                            try {
+                              await api.patch(`/notifications/${notif._id}/read`);
+                              setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n));
+                              setUnreadCount(prev => Math.max(0, prev - 1));
+                            } catch (err) { }
+                          }
+                        }}
+                      >
+                        <div className="flex gap-3">
+                          <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${notif.isRead ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`} />
+                          <div>
+                            <p className={`text-xs font-black tracking-tight leading-none mb-1 ${notif.isRead ? 'text-zinc-500' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                              {notif.title}
+                            </p>
+                            <p className="text-[10px] font-medium text-zinc-400 leading-relaxed mb-2">
+                              {notif.message}
+                            </p>
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tighter">
+                              {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {notif.type.replace('_', ' ')}
+                            </span>
                           </div>
-                          {isSelected && <Check size={14} />}
-                        </button>
-                      );
-                    })
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-8 py-12 text-center opacity-30">
+                      <Zap size={32} className="mx-auto mb-3" />
+                      <p className="text-[10px] font-black uppercase tracking-widest">Protocol Clear</p>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -164,34 +205,30 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center bg-muted/30 p-1.5 rounded-2xl border border-border ml-2">
-          <button 
-            onClick={toggleTheme}
-            className="p-2 text-muted-foreground hover:text-accent transition-colors"
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <button 
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 text-muted-foreground hover:text-accent relative transition-colors"
-          >
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-accent rounded-full ring-2 ring-background" />
-            )}
-          </button>
-        </div>
-
-        <div className="ml-2 flex items-center gap-3 pl-3 border-l border-border">
-           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-sm font-black tracking-tight">{user.name}</span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Status: Active</span>
+        {/* User Identity Section */}
+        <div className="flex items-center gap-4 pl-4 border-l border-zinc-200 dark:border-zinc-800">
+          <div className="hidden sm:flex flex-col items-end leading-none">
+            <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">{user.name}</span>
+            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
+              <span className="h-1 w-1 bg-emerald-500 rounded-full animate-ping" /> Authorized
+            </span>
           </div>
-          <div className="h-10 w-10 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent relative">
-            <UserIcon size={20} />
-            <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
-          </div>
+          <Link
+            href="/dashboard/profile"
+            className="h-11 w-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-[1.5px] group cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 transition-all active:scale-95 overflow-hidden"
+          >
+            <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-zinc-950 flex items-center justify-center text-amber-500 overflow-hidden">
+              {user.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt={user.name}
+                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              ) : (
+                <UserIcon size={20} />
+              )}
+            </div>
+          </Link>
         </div>
       </div>
     </header>

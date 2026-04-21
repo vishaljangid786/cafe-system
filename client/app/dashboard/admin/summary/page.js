@@ -35,7 +35,7 @@ export default function MonthlySummaryPage() {
     <PageTransition>
       <div className="space-y-8">
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
             <div>
               <Link href="/dashboard/admin" className="text-xs font-black text-amber-600 uppercase tracking-widest flex items-center mb-4 hover:translate-x-[-4px] transition-transform w-fit">
                 <ArrowLeft size={14} className="mr-2" /> Back to Dashboard
@@ -45,7 +45,7 @@ export default function MonthlySummaryPage() {
               </h1>
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium uppercase tracking-widest text-[10px]">Personnel Performance & Attendance Analytics</p>
             </div>
-            <div 
+            <div
               onClick={() => monthInputRef.current?.showPicker()}
               className="bg-gray-50 dark:bg-zinc-800 p-2 rounded-2xl border border-gray-200 dark:border-zinc-700 cursor-pointer hover:border-amber-500/50 transition-colors"
             >
@@ -126,8 +126,8 @@ export default function MonthlySummaryPage() {
 
             <SlideIn direction="up" delay={0.3}>
               <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                       <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-100 dark:border-zinc-800">
                         <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Operational Location</th>

@@ -59,7 +59,7 @@ const getMenuItem = asyncHandler(async (req, res) => {
 
 // @desc    Create a menu item
 // @route   POST /api/menu
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const createMenuItem = asyncHandler(async (req, res) => {
   const {
     name, category, price, originalPrice, discountedPrice,
@@ -106,7 +106,7 @@ const createMenuItem = asyncHandler(async (req, res) => {
 
 // @desc    Update a menu item
 // @route   PUT /api/menu/:id
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const updateMenuItem = asyncHandler(async (req, res) => {
   const item = await MenuItem.findById(req.params.id);
   if (!item) {
@@ -161,7 +161,7 @@ const updateMenuItem = asyncHandler(async (req, res) => {
 
 // @desc    Delete a menu item
 // @route   DELETE /api/menu/:id
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const deleteMenuItem = asyncHandler(async (req, res) => {
   const item = await MenuItem.findById(req.params.id);
   if (!item) {
@@ -179,7 +179,7 @@ const deleteMenuItem = asyncHandler(async (req, res) => {
 
 // @desc    Toggle menu item availability
 // @route   PUT /api/menu/:id/availability
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const toggleAvailability = asyncHandler(async (req, res) => {
   const item = await MenuItem.findById(req.params.id);
   if (!item) {

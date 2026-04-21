@@ -14,7 +14,7 @@ router.use(verifyToken);
 router.route('/mark')
   .post(authorizeRoles('location_admin'), markAttendance);
 
-router.route('/branch')
+router.route('/location')
   .get(authorizeRoles('location_admin', 'admin', 'super_admin'), getLocationAttendance);
 
 router.route('/all')

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from "framer-motion";
+import PageTransition from '../components/ui/PageTransition';
 
 export default function DashboardLayout({ children }) {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -16,7 +17,8 @@ export default function DashboardLayout({ children }) {
       if (mobile) {
         setIsSidebarExpanded(false);
       } else {
-        setIsSidebarExpanded(true);
+        const storedExpanded = localStorage.getItem('sidebar-expanded');
+        setIsSidebarExpanded(storedExpanded === null ? true : storedExpanded === 'true');
       }
     };
 
@@ -25,39 +27,47 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleToggleSidebar = (val) => {
+    setIsSidebarExpanded(val);
+    localStorage.setItem('sidebar-expanded', val);
+  };
+
   return (
-    <div className="flex h-screen bg-background overflow-hidden selection:bg-accent/30 selection:text-accent">
+    <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden selection:bg-amber-500/30 selection:text-amber-500 font-sans transition-colors duration-300">
       {/* Sidebar - Desktop & Mobile */}
-      <Sidebar 
-        isExpanded={isSidebarExpanded} 
-        setIsExpanded={setIsSidebarExpanded}
+      <Sidebar
+        isExpanded={isSidebarExpanded}
+        setIsExpanded={handleToggleSidebar}
         isMobileOpen={isMobileMenuOpen}
         setIsMobileOpen={setIsMobileMenuOpen}
-        isMobile={isMobile} 
+        isMobile={isMobile}
       />
-      
+
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <Navbar 
-          onToggleSidebar={() => isMobile ? setIsMobileMenuOpen(!isMobileMenuOpen) : setIsSidebarExpanded(!isSidebarExpanded)} 
+        <Navbar
+          onToggleSidebar={() => isMobile ? setIsMobileMenuOpen(!isMobileMenuOpen) : handleToggleSidebar(!isSidebarExpanded)}
           sidebarExpanded={isSidebarExpanded}
           isMobile={isMobile}
         />
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background/50 p-4 md:p-8 custom-scrollbar">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="max-w-7xl mx-auto"
-          >
-            {children}
-          </motion.div>
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white/50 dark:bg-zinc-950/20 p-4 md:p-8 custom-scrollbar relative">
+          <PageTransition>
+            <div className="max-w-[1600px] mx-auto">
+              {children}
+            </div>
+          </PageTransition>
+
+          {/* Bottom spacing for mobile */}
+          <div className="h-20 lg:hidden" />
         </main>
 
-        {/* Ambient background glows */}
-        <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[120px] pointer-events-none z-[-1]" />
-        <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/5 rounded-full blur-[120px] pointer-events-none z-[-1]" />
+        {/* Premium ambient glows */}
+        <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
+        <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-orange-600/5 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
       </div>
+
+      {/* Decorative noise overlay for texture */}
+      {/* <div className="fixed inset-0 pointer-events-none z-[200] opacity-[0.015] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" /> */}
     </div>
   );
 }

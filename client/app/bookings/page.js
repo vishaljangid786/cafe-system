@@ -16,7 +16,7 @@ export default function BookingPage() {
   const [endTime, setEndTime] = useState('');
   const [guests, setGuests] = useState(1);
   const [specialRequests, setSpecialRequests] = useState('');
-  
+
   const [availability, setAvailability] = useState(null);
   const [checking, setChecking] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -84,7 +84,7 @@ export default function BookingPage() {
         specialRequests
       });
       toast.success('Booking confirmed successfully!', { id: toastId });
-      
+
       // Reset form
       setSelectedLocation('');
       setDate('');
@@ -93,7 +93,7 @@ export default function BookingPage() {
       setGuests(1);
       setSpecialRequests('');
       setAvailability(null);
-      
+
       fetchMyBookings();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to complete booking', { id: toastId });
@@ -103,14 +103,14 @@ export default function BookingPage() {
   };
 
   const timeSlots = [
-    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", 
+    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
     "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
   ];
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-background text-foreground p-4 md:p-8 pt-20 max-w-7xl mx-auto">
-        
+
         <SlideIn direction="down">
           <div className="mb-10 text-center">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
@@ -129,15 +129,15 @@ export default function BookingPage() {
               <div className="absolute top-0 right-0 p-8 text-amber-600/10 pointer-events-none">
                 <CalendarIcon size={200} />
               </div>
-              
+
               <form onSubmit={handleCheckAvailability} className="relative z-10 space-y-8">
                 {/* Location */}
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
                     <MapPin size={14} className="mr-2" /> Select Location
                   </label>
-                  <select 
-                    value={selectedLocation} 
+                  <select
+                    value={selectedLocation}
                     onChange={(e) => { setSelectedLocation(e.target.value); setAvailability(null); }}
                     className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                     required
@@ -155,7 +155,7 @@ export default function BookingPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
                       <CalendarIcon size={14} className="mr-2" /> Date
                     </label>
-                    <input 
+                    <input
                       type="date"
                       min={new Date().toISOString().split('T')[0]}
                       value={date}
@@ -168,7 +168,7 @@ export default function BookingPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
                       <Users size={14} className="mr-2" /> Number of Guests
                     </label>
-                    <input 
+                    <input
                       type="number"
                       min="1"
                       max="20"
@@ -186,7 +186,7 @@ export default function BookingPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
                       <Clock size={14} className="mr-2" /> Start Time
                     </label>
-                    <select 
+                    <select
                       value={startTime}
                       onChange={(e) => { setStartTime(e.target.value); setAvailability(null); }}
                       className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
@@ -200,7 +200,7 @@ export default function BookingPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
                       <Clock size={14} className="mr-2" /> End Time
                     </label>
-                    <select 
+                    <select
                       value={endTime}
                       onChange={(e) => { setEndTime(e.target.value); setAvailability(null); }}
                       className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
@@ -211,13 +211,13 @@ export default function BookingPage() {
                     </select>
                   </div>
                 </div>
-                
+
                 {/* Special Requests */}
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                     Special Requests (Optional)
                   </label>
-                  <textarea 
+                  <textarea
                     value={specialRequests}
                     onChange={(e) => setSpecialRequests(e.target.value)}
                     placeholder="E.g., Window seat, anniversary celebration..."
@@ -241,7 +241,7 @@ export default function BookingPage() {
 
               <AnimatePresence>
                 {availability && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, height: 0 }}
                     animate={{ opacity: 1, y: 0, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
@@ -258,7 +258,7 @@ export default function BookingPage() {
                           {availability.available ? 'Slots Available!' : 'Not Available'}
                         </h4>
                         <p className="text-sm font-medium opacity-80 mt-1">{availability.message}</p>
-                        
+
                         {availability.available && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -285,7 +285,7 @@ export default function BookingPage() {
               <h2 className="text-xl font-black mb-6 uppercase tracking-widest flex items-center">
                 <CalendarIcon className="mr-2 text-amber-600" size={20} /> My Schedule
               </h2>
-              
+
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
                 {myBookings.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
@@ -296,11 +296,10 @@ export default function BookingPage() {
                   myBookings.map(booking => (
                     <div key={booking._id} className="p-4 rounded-2xl bg-background border border-border hover:border-amber-500/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                          booking.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
                           booking.status === 'pending' ? 'bg-amber-500/20 text-amber-500' :
-                          'bg-red-500/20 text-red-500'
-                        }`}>
+                            'bg-red-500/20 text-red-500'
+                          }`}>
                           {booking.status}
                         </span>
                         <span className="text-xs font-bold text-muted-foreground">{new Date(booking.date).toLocaleDateString()}</span>

@@ -2,139 +2,155 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Coffee, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Coffee, Eye, EyeOff, ShieldCheck, Zap, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { PageTransition, SlideIn } from '../components/ui/AnimatedContainer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '../components/ui/Button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// Validation Schema
+const loginSchema = z.object({
+  email: z.string().email('Operational terminal email required').min(1, 'Email is required'),
+  password: z.string().min(6, 'Protocol requires at least 6 characters'),
+});
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false)
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
   const { login, user, loading } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+  });
+
   useEffect(() => {
     if (!loading && user) {
       if (user.role === 'super_admin' || user.role === 'admin') router.push('/dashboard/admin');
-      else if (user.role === 'branch_admin') router.push('/dashboard/branch-admin');
+      else if (user.role === 'location_admin') router.push('/dashboard/location-admin');
       else router.push('/dashboard/staff');
     }
   }, [user, loading, router]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    const res = await login(email, password);
+  const onSubmit = async (data) => {
+    setServerError('');
+    const res = await login(data.email, data.password);
     if (res.success) {
-      toast.success('Login successful! Redirecting...');
+      toast.success('Access Granted. Welcome back.');
     } else {
-      setError(res.message);
-      toast.error(res.message || 'Login failed');
+      setServerError(res.message);
+      toast.error(res.message || 'Authentication protocol failure');
     }
-    setIsLoading(false);
   };
 
-  if (loading) return null; // Prevent flicker
+  if (loading) return null;
 
   return (
-    <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-500 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <SlideIn direction="down">
-          <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <motion.div 
-              initial={{ rotate: -20, scale: 0.8 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="flex justify-center text-amber-600"
-            >
-              <Coffee size={64} strokeWidth={2.5} />
-            </motion.div>
-            <h2 className="mt-6 text-center text-3xl font-black text-gray-900 dark:text-zinc-100 tracking-tight">
-              Welcome <span className="text-amber-600">Back</span>
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-500 dark:text-zinc-500 font-medium">
-              Enterprise Cafe Management System
-            </p>
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-md relative z-10"
+      >
+        <div className="flex flex-col items-center mb-10">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black shadow-2xl shadow-amber-500/20 mb-6"
+          >
+            <Coffee size={32} strokeWidth={2.5} />
+          </motion.div>
+          <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white mb-2 text-center">
+            Cafe<span className="text-amber-500">OS</span>
+          </h1>
+          <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full">
+            <ShieldCheck size={12} className="text-amber-500" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Secure Access Protocol</span>
           </div>
-        </SlideIn>
+        </div>
 
-        <SlideIn delay={0.2}>
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-            <div className="bg-white dark:bg-zinc-900 py-10 px-8 shadow-2xl shadow-amber-600/5 rounded-3xl border border-gray-100 dark:border-zinc-800">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-red-50 dark:bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r-xl"
-                  >
-                    <p className="text-sm text-red-700 dark:text-red-400 font-bold">{error}</p>
-                  </motion.div>
-                )}
-                
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 dark:text-zinc-500 mb-2">Email address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-amber-500 outline-none transition-all"
-                    placeholder="admin@cafe.com"
-                  />
-                </div>
-
-                <div className="relative">
-                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 dark:text-zinc-500 mb-2">Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-amber-500 outline-none transition-all pr-12"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors focus:outline-none"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-
+        <div className="glass-card !bg-white/40 dark:!bg-zinc-900/40 backdrop-blur-2xl border-zinc-200 dark:border-zinc-800/50 p-8 md:p-10 rounded-2xl shadow-2xl">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <AnimatePresence mode="wait">
+              {serverError && (
                 <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-center gap-3"
                 >
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-4 px-4 rounded-xl shadow-lg shadow-amber-600/20 text-sm font-black uppercase tracking-widest text-white bg-amber-600 hover:bg-amber-700 focus:outline-none transition-all disabled:bg-amber-400"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Secure Sign In'}
-                  </button>
+                  <AlertCircle size={16} className="text-rose-500" />
+                  <p className="text-xs text-rose-400 font-bold">{serverError}</p>
                 </motion.div>
-              </form>
+              )}
+            </AnimatePresence>
 
-              <div className="mt-8 pt-8 border-t border-gray-50 dark:border-zinc-800 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-zinc-600">
-                  Authorized Personnel Only
-                </p>
-              </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1">Email Terminal</label>
+              <input
+                {...register('email')}
+                className={`block w-full px-5 py-3.5 rounded-xl border bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white outline-none transition-all font-medium text-sm ${errors.email ? 'border-rose-500/50 ring-2 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50'}`}
+                placeholder="admin@cafeos.com"
+              />
+              {errors.email && <p className="text-[10px] text-rose-400 font-bold mt-1 ml-1 uppercase tracking-wider">{errors.email.message}</p>}
             </div>
+
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1">Key Passphrase</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register('password')}
+                  className={`block w-full px-5 py-3.5 rounded-xl border bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white outline-none transition-all font-medium text-sm pr-12 ${errors.password ? 'border-rose-500/50 ring-2 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50'}`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && <p className="text-[10px] text-rose-400 font-bold mt-1 ml-1 uppercase tracking-wider">{errors.password.message}</p>}
+            </div>
+
+            <div className="pt-4">
+              <Button
+                type="submit"
+                loading={isSubmitting}
+                disabled={!isValid || isSubmitting}
+                className="w-full h-14 !text-base shadow-amber-500/20"
+                variant="primary"
+                icon={Zap}
+              >
+                Establish Connection
+              </Button>
+            </div>
+          </form>
+
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">Authorized Access Only</p>
+            <div className="h-px w-12 bg-zinc-200 dark:bg-zinc-800" />
+            <button
+              onClick={() => router.push('/signup')}
+              className="text-xs font-bold text-zinc-500 hover:text-amber-500 transition-colors"
+            >
+              Need secondary clearance? <span className="text-amber-500 underline underline-offset-4">Register Hub</span>
+            </button>
           </div>
-        </SlideIn>
-      </div>
-    </PageTransition>
+        </div>
+      </motion.div>
+    </div>
   );
 }

@@ -35,7 +35,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 
 // @desc    Create a category
 // @route   POST /api/categories
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description, icon, sortOrder } = req.body;
 
@@ -61,7 +61,7 @@ const createCategory = asyncHandler(async (req, res) => {
 
 // @desc    Update a category
 // @route   PUT /api/categories/:id
-// @access  Private (Admin, Branch Admin)
+// @access  Private (Admin, Location Admin)
 const updateCategory = asyncHandler(async (req, res) => {
   const { name, description, icon, sortOrder, isActive } = req.body;
 

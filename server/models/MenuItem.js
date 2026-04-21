@@ -17,6 +17,11 @@ const menuItemSchema = new mongoose.Schema(
       required: [true, 'Price is required'],
       min: [0, 'Price cannot be negative'],
     },
+    costPrice: {
+      type: Number,
+      default: 0,
+      min: [0, 'Cost price cannot be negative'],
+    },
     originalPrice: {
       type: Number,
       min: [0, 'Original price cannot be negative'],
@@ -44,12 +49,17 @@ const menuItemSchema = new mongoose.Schema(
     locationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
-      default: null, // null = global item visible to all locations
+      default: null,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    recipeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Recipe',
+      default: null,
     },
   },
   {
@@ -57,6 +67,7 @@ const menuItemSchema = new mongoose.Schema(
   }
 );
 
+// Validate price is number (done by type)
 // Validate discountedPrice < originalPrice
 menuItemSchema.pre('save', function (next) {
   if (
@@ -69,11 +80,6 @@ menuItemSchema.pre('save', function (next) {
   }
   next();
 });
-
-// Index for fast filtering
-menuItemSchema.index({ category: 1, isAvailable: 1 });
-menuItemSchema.index({ price: 1 });
-menuItemSchema.index({ locationId: 1, isAvailable: 1 });
 
 const MenuItem = mongoose.model('MenuItem', menuItemSchema);
 module.exports = MenuItem;

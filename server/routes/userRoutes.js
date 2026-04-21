@@ -6,22 +6,25 @@ const {
   deleteUser, 
   promoteUser,
   demoteUser,
-  toggleBlocklist, 
-  replaceUser 
+  toggleBlocklist,
+  updateProfile
 } = require('../controllers/userController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
 
 router.use(verifyToken);
 
+router.put('/update-profile', upload.single('profileImage'), updateProfile);
+
 router.route('/')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUsers);
+  .get(authorizeRoles('super_admin', 'admin', 'location_admin'), getUsers);
 
 router.route('/:id')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUser)
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateUser)
-  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteUser);
+  .get(authorizeRoles('super_admin', 'admin', 'location_admin'), getUser)
+  .put(authorizeRoles('super_admin', 'admin', 'location_admin'), updateUser)
+  .delete(authorizeRoles('super_admin', 'admin', 'location_admin'), deleteUser);
 
 router.route('/:id/promote')
   .patch(authorizeRoles('super_admin', 'admin'), promoteUser);
@@ -33,8 +36,5 @@ router.patch('/:id/toggle-block', authorizeRoles('super_admin', 'admin'), toggle
 
 router.route('/:id/block')
   .put(authorizeRoles('super_admin', 'admin'), toggleBlocklist);
-
-router.route('/replace')
-  .post(authorizeRoles('super_admin', 'admin'), replaceUser);
 
 module.exports = router;

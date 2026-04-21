@@ -1,24 +1,84 @@
-const branches = [
+const locations = [
   {
     name: 'Downtown Central',
-    location: { city: 'New York', state: 'NY', country: 'USA' },
+    city: 'New York',
+    state: 'NY',
+    country: 'USA',
+    pincode: '10001',
     status: 'active'
   },
   {
     name: 'Uptown Bistro',
-    location: { city: 'Chicago', state: 'IL', country: 'USA' },
+    city: 'Chicago',
+    state: 'IL',
+    country: 'USA',
+    pincode: '60601',
     status: 'active'
   },
   {
     name: 'Waterfront Cafe',
-    location: { city: 'Miami', state: 'FL', country: 'USA' },
+    city: 'Miami',
+    state: 'FL',
+    country: 'USA',
+    pincode: '33101',
     status: 'hold',
     holdReason: 'Interior Renovation'
   },
   {
-    name: 'Old Town Branch',
-    location: { city: 'Boston', state: 'MA', country: 'USA' },
+    name: 'Old Town',
+    city: 'Boston',
+    state: 'MA',
+    country: 'USA',
+    pincode: '02108',
     status: 'deleted'
+  },
+  {
+    name: 'Westside Lounge',
+    city: 'Los Angeles',
+    state: 'CA',
+    country: 'USA',
+    pincode: '90001',
+    status: 'active'
+  },
+  {
+    name: 'Tech Park Cafe',
+    city: 'San Francisco',
+    state: 'CA',
+    country: 'USA',
+    pincode: '94105',
+    status: 'active'
+  },
+  {
+    name: 'Suburban Retreat',
+    city: 'Austin',
+    state: 'TX',
+    country: 'USA',
+    pincode: '73301',
+    status: 'active'
+  },
+  {
+    name: 'University Campus',
+    city: 'Seattle',
+    state: 'WA',
+    country: 'USA',
+    pincode: '98105',
+    status: 'active'
+  },
+  {
+    name: 'Airport Express',
+    city: 'Denver',
+    state: 'CO',
+    country: 'USA',
+    pincode: '80249',
+    status: 'active'
+  },
+  {
+    name: 'Mall Kiosk',
+    city: 'Atlanta',
+    state: 'GA',
+    country: 'USA',
+    pincode: '30303',
+    status: 'active'
   }
 ];
 
@@ -66,17 +126,17 @@ const users = [
     aadharNumber: '123456789013',
     highestQualification: 'Graduate'
   },
-  // Branch Admins
+  // Location Admins
   {
     name: 'John Downtown',
     email: 'john.d@cafe.com',
     password: 'password123',
-    role: 'branch_admin',
-    branchName: 'Downtown Central',
+    role: 'location_admin',
+    locationName: 'Downtown Central',
     phone: '9876543212',
     gender: 'Male',
     age: 28,
-    address1: '789 Branch Blvd',
+    address1: '789 Hub Blvd',
     city: 'New York',
     state: 'NY',
     country: 'USA',
@@ -87,8 +147,8 @@ const users = [
     name: 'Sarah Uptown',
     email: 'sarah.u@cafe.com',
     password: 'password123',
-    role: 'branch_admin',
-    branchName: 'Uptown Bistro',
+    role: 'location_admin',
+    locationName: 'Uptown Bistro',
     phone: '9876543213',
     gender: 'Female',
     age: 29,
@@ -105,7 +165,7 @@ const users = [
     email: `staff${i + 1}@cafe.com`,
     password: 'password123',
     role: 'staff',
-    branchName: i < 5 ? 'Downtown Central' : 'Uptown Bistro',
+    locationName: i < 5 ? 'Downtown Central' : 'Uptown Bistro',
     phone: `987654322${i}`,
     gender: i % 2 === 0 ? 'Male' : 'Female',
     age: 20 + i,
@@ -119,6 +179,74 @@ const users = [
   }))
 ];
 
-const categories = ['Utilities', 'Raw Materials', 'Maintenance', 'Marketing', 'Rent', 'Other'];
+const categories = ['Utilities', 'Raw Materials', 'Maintenance', 'Marketing', 'Rent', 'Other', 'Payroll', 'Insurance', 'Taxes', 'Supplies'];
 
-module.exports = { branches, users, menuItems, categories };
+const attendances = Array.from({ length: 10 }, (_, i) => ({
+  user: '60d5ec49f1b2c82a3c8b456' + i,
+  locationId: '60d5ec49f1b2c82a3c8b457' + (i % 2),
+  date: `2026-04-${String((i % 30) + 1).padStart(2, '0')}`,
+  status: i % 3 === 0 ? 'absent' : 'present',
+  markedBy: '60d5ec49f1b2c82a3c8b4560'
+}));
+
+const bookings = Array.from({ length: 10 }, (_, i) => ({
+  userId: '60d5ec49f1b2c82a3c8b456' + i,
+  locationId: '60d5ec49f1b2c82a3c8b457' + (i % 2),
+  date: new Date(`2026-04-${String((i % 30) + 1).padStart(2, '0')}`),
+  startTime: '18:00',
+  endTime: '20:00',
+  numberOfGuests: (i % 5) + 1,
+  status: 'confirmed',
+  specialRequests: i % 2 === 0 ? 'Window seat' : ''
+}));
+
+const coupons = Array.from({ length: 10 }, (_, i) => ({
+  code: `SAVE${i * 10 || 10}`,
+  discountType: i % 2 === 0 ? 'percentage' : 'fixed',
+  discountValue: i % 2 === 0 ? 10 + i : 50 + (i * 10),
+  expiryDate: new Date('2026-12-31'),
+  isActive: true,
+  createdBy: '60d5ec49f1b2c82a3c8b4560'
+}));
+
+const expenses = Array.from({ length: 10 }, (_, i) => ({
+  title: `Expense ${i + 1}`,
+  description: `Description for expense ${i + 1}`,
+  amount: 100 + (i * 50),
+  date: new Date(),
+  locationId: '60d5ec49f1b2c82a3c8b457' + (i % 2),
+  createdBy: '60d5ec49f1b2c82a3c8b4560',
+  proofImage: 'https://example.com/receipt.jpg'
+}));
+
+const tables = Array.from({ length: 10 }, (_, i) => ({
+  tableNumber: i + 1,
+  locationId: '60d5ec49f1b2c82a3c8b457' + (i % 2),
+  isBooked: false,
+  status: 'available',
+  numberOfPeople: 0,
+  createdBy: '60d5ec49f1b2c82a3c8b4560'
+}));
+
+const notifications = Array.from({ length: 10 }, (_, i) => ({
+  title: `Notification ${i + 1}`,
+  message: `This is the message for notification ${i + 1}`,
+  type: 'user_action',
+  roleTarget: ['staff', 'location_admin'],
+  createdBy: '60d5ec49f1b2c82a3c8b4560'
+}));
+
+const recipes = Array.from({ length: 10 }, (_, i) => ({
+  menuItemId: '60d5ec49f1b2c82a3c8b458' + i,
+  ingredients: [
+    { name: `Ingredient ${i}A`, quantity: 100, unit: 'grams' },
+    { name: `Ingredient ${i}B`, quantity: 2, unit: 'pcs' }
+  ],
+  instructions: [
+    { step: 1, text: `Mix ingredient ${i}A` },
+    { step: 2, text: `Add ingredient ${i}B` }
+  ],
+  createdBy: '60d5ec49f1b2c82a3c8b4560'
+}));
+
+module.exports = { locations, users, menuItems, categories, attendances, bookings, coupons, expenses, tables, notifications, recipes };

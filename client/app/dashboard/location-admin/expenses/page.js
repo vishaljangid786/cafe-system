@@ -7,8 +7,11 @@ import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { Button } from '@/app/components/ui/Button';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ExpensesPage() {
+  const { user } = useAuth();
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
   const [expenses, setExpenses] = useState([]);
@@ -17,10 +20,11 @@ export default function ExpensesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
-  
+  const [viewingExpense, setViewingExpense] = useState(null);
+
   const [filters, setFilters] = useState({ startDate: '', endDate: '' });
   const [formData, setFormData] = useState({
-    title: '', amount: '', category: 'Other', description: '', 
+    title: '', amount: '', category: 'Other', description: '',
     date: new Date().toISOString().split('T')[0]
   });
   const [image, setImage] = useState(null);
@@ -31,7 +35,7 @@ export default function ExpensesPage() {
       const query = new URLSearchParams();
       if (filters.startDate) query.append('startDate', filters.startDate);
       if (filters.endDate) query.append('endDate', filters.endDate);
-      
+
       const res = await api.get(`/expenses?${query.toString()}`);
       setExpenses(res.data.data);
     } catch (error) {
@@ -65,7 +69,7 @@ export default function ExpensesPage() {
     e.preventDefault();
     setSubmitting(true);
     const loadToast = toast.loading(editingExpense ? 'Updating ledger...' : 'Recording transaction...');
-    
+
     const data = new FormData();
     Object.keys(formData).forEach(key => data.append(key, formData[key]));
     if (image) data.append('proofImage', image);
@@ -118,35 +122,35 @@ export default function ExpensesPage() {
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Digital operational ledger and fiscal matrix.</p>
             </div>
             <div className="flex flex-wrap gap-4 w-full md:w-auto">
-              <div 
+              <div
                 onClick={() => startInputRef.current?.showPicker()}
                 className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-2 rounded-xl border border-gray-100 dark:border-zinc-800 cursor-pointer hover:border-amber-500 transition-colors flex-1 md:flex-none"
               >
                 <div className="p-2 text-gray-400"><Calendar size={18} /></div>
-                <input 
+                <input
                   ref={startInputRef}
-                  type="date" 
+                  type="date"
                   className="bg-transparent outline-none text-xs font-black text-gray-700 dark:text-zinc-200 pr-3 cursor-pointer"
                   value={filters.startDate}
-                  onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                 />
               </div>
 
-              <div 
+              <div
                 onClick={() => endInputRef.current?.showPicker()}
                 className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-2 rounded-xl border border-gray-100 dark:border-zinc-800 cursor-pointer hover:border-amber-500 transition-colors flex-1 md:flex-none"
               >
                 <div className="p-2 text-gray-400"><Calendar size={18} /></div>
-                <input 
+                <input
                   ref={endInputRef}
-                  type="date" 
+                  type="date"
                   className="bg-transparent outline-none text-xs font-black text-gray-700 dark:text-zinc-200 pr-3 cursor-pointer"
                   value={filters.endDate}
-                  onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                 />
               </div>
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
@@ -176,7 +180,7 @@ export default function ExpensesPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
                   {loading ? (
-                    [1,2,3,4].map(i => (
+                    [1, 2, 3, 4].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan="5" className="px-8 py-8"><div className="h-6 bg-gray-100 dark:bg-zinc-800 rounded-xl w-full"></div></td>
                       </tr>
@@ -191,25 +195,46 @@ export default function ExpensesPage() {
                       </td>
                     </tr>
                   ) : expenses.map((exp, idx) => (
-                    <tr key={exp._id} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group">
+                    <tr
+                      key={exp._id}
+                      onClick={() => setViewingExpense(exp)}
+                      className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group cursor-pointer"
+                    >
                       <td className="px-8 py-6 text-sm font-black text-gray-400">
                         {new Date(exp.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td className="px-8 py-6">
-                        <div className="text-sm font-black text-gray-900 dark:text-zinc-100 tracking-tight">{exp.title}</div>
+                        <div className="text-sm font-black text-gray-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                          {exp.title}
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${exp.type === 'income' ? 'bg-green-500/10 text-green-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                            {exp.type || 'expense'}
+                          </span>
+                        </div>
                         <div className="text-[10px] text-amber-600 font-black uppercase tracking-widest mt-1">{exp.category}</div>
+                        {exp.description && (
+                          <div className="text-[8px] text-zinc-400 font-medium mt-1 italic max-w-xs truncate">
+                            {exp.description}
+                          </div>
+                        )}
                       </td>
-                      <td className="px-8 py-6 text-sm font-black text-gray-900 dark:text-zinc-100">
-                        ₹{exp.amount.toLocaleString()}
+                      <td className="px-8 py-6">
+                        <div className={`text-sm font-black ${exp.type === 'income' ? 'text-green-600' : 'text-rose-600'}`}>
+                          {exp.type === 'income' ? '+' : '-'}₹{exp.amount.toLocaleString()}
+                        </div>
+                        {exp.profit > 0 && (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'location_admin') && (
+                          <div className="text-[10px] font-black text-amber-600 mt-1">
+                            Profit: ₹{exp.profit.toLocaleString()}
+                          </div>
+                        )}
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex justify-center">
                           {exp.proofImage ? (
-                            <motion.a 
+                            <motion.a
                               whileHover={{ scale: 1.1, rotate: 5 }}
-                              href={exp.proofImage} 
-                              target="_blank" 
-                              rel="noreferrer" 
+                              href={exp.proofImage}
+                              target="_blank"
+                              rel="noreferrer"
                               className="h-10 w-10 flex items-center justify-center bg-amber-50 dark:bg-amber-500/10 text-amber-600 rounded-xl border border-amber-200/20 shadow-sm"
                             >
                               <ImageIcon size={18} />
@@ -221,8 +246,8 @@ export default function ExpensesPage() {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(exp)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-colors"><Edit3 size={18} /></button>
-                          <button onClick={() => setShowDeleteConfirm(exp._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"><Trash2 size={18} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleEdit(exp); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-colors"><Edit3 size={18} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(exp._id); }} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"><Trash2 size={18} /></button>
                         </div>
                       </td>
                     </tr>
@@ -233,28 +258,28 @@ export default function ExpensesPage() {
           </div>
         </SlideIn>
 
-        <Modal 
-          isOpen={showModal} 
-          onClose={() => setShowModal(false)} 
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
           title={editingExpense ? 'Refine Expenditure' : 'Capture Transaction'}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="sm:col-span-2">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Expenditure Identity</label>
-                <input required type="text" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Bulk Beans Purchase" />
+                <input required type="text" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Bulk Beans Purchase" />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Fiscal Volume (₹)</label>
-                <input required type="number" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
+                <input required type="number" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Temporal Stamp</label>
-                <input required type="date" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                <input required type="date" className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Operational Matrix</label>
-                <select className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all appearance-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                <select className="w-full rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all appearance-none" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
                   <option value="Raw Materials">Raw Materials</option>
                   <option value="Utilities">Utilities</option>
                   <option value="Rent">Rent</option>
@@ -288,6 +313,97 @@ export default function ExpensesPage() {
           title="Liquidate Record?"
           message="This transaction will be permanently purged from the fiscal vault."
         />
+
+        {/* Detail View Modal */}
+        <Modal
+          isOpen={!!viewingExpense}
+          onClose={() => setViewingExpense(null)}
+          title="Transaction Intelligence"
+          maxWidth="max-w-2xl"
+        >
+          {viewingExpense && (
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-zinc-100 dark:border-zinc-800 pb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">{viewingExpense.title}</h2>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${viewingExpense.type === 'income' ? 'bg-green-500/10 text-green-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                      {viewingExpense.type || 'expense'}
+                    </span>
+                    <span className="text-[10px] text-amber-600 font-black uppercase tracking-widest border border-amber-500/20 px-3 py-1 rounded-full">
+                      {viewingExpense.category}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Fiscal Impact</p>
+                  <p className={`text-3xl font-black ${viewingExpense.type === 'income' ? 'text-green-600' : 'text-rose-600'} tracking-tighter`}>
+                    {viewingExpense.type === 'income' ? '+' : '-'}₹{viewingExpense.amount.toLocaleString()}
+                  </p>
+                  {(user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'location_admin') && viewingExpense.profit > 0 && (
+                    <p className="text-sm font-black text-amber-600 mt-1 italic tracking-tight">
+                      Net Profit: ₹{viewingExpense.profit.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Temporal Stamp</h4>
+                    <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+                      <Calendar size={16} className="text-amber-600" />
+                      {new Date(viewingExpense.date).toLocaleDateString(undefined, { dateStyle: 'full' })}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Protocol Description</h4>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium whitespace-pre-line">
+                      {viewingExpense.description || 'No descriptive data recorded for this entry.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Fiscal Proof / Receipt</h4>
+                  {viewingExpense.proofImage ? (
+                    <div className="group relative rounded-3xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-square">
+                      <img
+                        src={viewingExpense.proofImage}
+                        alt="Fiscal Proof"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <a
+                        href={viewingExpense.proofImage}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-xs uppercase tracking-widest gap-2 backdrop-blur-sm"
+                      >
+                        Open Original <ImageIcon size={16} />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center justify-center text-zinc-400 aspect-square">
+                      <AlertCircle size={32} className="mb-2 opacity-20" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-center">No Imagery Captured</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                <Button
+                  variant="outline"
+                  className="w-full py-4 !rounded-2xl font-black text-xs uppercase tracking-widest"
+                  onClick={() => setViewingExpense(null)}
+                >
+                  Return to Ledger
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </PageTransition>
   );

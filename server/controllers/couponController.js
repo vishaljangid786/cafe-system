@@ -162,8 +162,20 @@ const applyCoupon = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get single coupon
+// @route   GET /api/coupons/:id
+const getCoupon = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findById(req.params.id).populate('createdBy', 'name');
+  if (!coupon) {
+    res.status(404);
+    throw new Error('Coupon not found');
+  }
+  res.json({ success: true, data: coupon });
+});
+
 module.exports = {
   getCoupons,
+  getCoupon,
   createCoupon,
   updateCoupon,
   deleteCoupon,

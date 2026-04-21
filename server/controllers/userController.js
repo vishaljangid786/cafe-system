@@ -4,16 +4,16 @@ const sendNotification = require('../utils/sendNotification');
 
 // @desc    Get all users
 // @route   GET /api/users
-// @access  Private (Admin, Super Admin, Branch Admin)
+// @access  Private (Admin, Super Admin, Location Admin)
 const getUsers = asyncHandler(async (req, res) => {
   let query = {};
 
-  // Branch Admin can only see staff from their branch
-  if (req.user.role === 'branch_admin') {
-    query.branchName = req.user.branchName;
+  // Location Admin can only see staff from their location
+  if (req.user.role === 'location_admin') {
+    query.assignedLocation = req.user.assignedLocation;
   }
 
-  const users = await User.find(query).select('-password');
+  const users = await User.find(query).select('-password').populate('assignedLocation', 'name city');
 
   res.json({
     success: true,
@@ -40,8 +40,8 @@ const promoteUser = asyncHandler(async (req, res) => {
   }
 
   let nextRole = user.role;
-  if (user.role === 'staff') nextRole = 'branch_admin';
-  else if (user.role === 'branch_admin') nextRole = 'admin';
+  if (user.role === 'staff') nextRole = 'location_admin';
+  else if (user.role === 'location_admin') nextRole = 'admin';
   else if (user.role === 'admin') nextRole = 'super_admin';
 
   user.role = nextRole;
@@ -52,7 +52,7 @@ const promoteUser = asyncHandler(async (req, res) => {
     message: `User ${user.name} promoted to ${nextRole} by ${req.user.name}.`,
     type: 'user_action',
     performedByUser: req.user,
-    branchName: user.branchName,
+    locationId: user.assignedLocation,
   });
 
   res.json({ success: true, message: `User promoted to ${nextRole}`, data: user });
@@ -75,8 +75,8 @@ const demoteUser = asyncHandler(async (req, res) => {
   }
 
   let prevRole = user.role;
-  if (user.role === 'admin') prevRole = 'branch_admin';
-  else if (user.role === 'branch_admin') prevRole = 'staff';
+  if (user.role === 'admin') prevRole = 'location_admin';
+  else if (user.role === 'location_admin') prevRole = 'staff';
 
   user.role = prevRole;
   await user.save();
@@ -86,54 +86,15 @@ const demoteUser = asyncHandler(async (req, res) => {
     message: `User ${user.name} demoted to ${prevRole} by ${req.user.name}.`,
     type: 'user_action',
     performedByUser: req.user,
-    branchName: user.branchName,
+    locationId: user.assignedLocation,
   });
 
   res.json({ success: true, message: `User demoted to ${prevRole}`, data: user });
 });
 
-// @desc    Replace user with another user (e.g. transfer duties)
-// @route   POST /api/users/replace
-// @access  Private (Super Admin, Admin)
-const replaceUser = asyncHandler(async (req, res) => {
-  const { oldUserId, newUserId } = req.body;
-
-  const oldUser = await User.findById(oldUserId);
-  const newUser = await User.findById(newUserId);
-
-  if (!oldUser || !newUser) {
-    res.status(404);
-    throw new Error('One or both users not found');
-  }
-
-  // Admins restrictions apply here too if needed...
-  
-  // Example logic: deactivate old user, ensure new user has correct role/branch
-  oldUser.role = 'staff'; // demote or deactivate
-  // Update new user
-  newUser.role = oldUser.role;
-  newUser.branchName = oldUser.branchName;
-
-  await oldUser.save();
-  await newUser.save();
-
-  await sendNotification({
-    title: 'User Replaced',
-    message: `User ${oldUser.name} was replaced by ${newUser.name} by ${req.user.name}.`,
-    type: 'user_action',
-    performedByUser: req.user,
-    branchName: newUser.branchName,
-  });
-
-  res.json({
-    success: true,
-    message: 'User replaced successfully',
-  });
-});
-
 // @desc    Update user details
 // @route   PUT /api/users/:id
-// @access  Private (Super Admin, Admin, Branch Admin)
+// @access  Private (Super Admin, Admin, Location Admin)
 const updateUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
@@ -142,14 +103,14 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Branch Admin can only update staff from their branch
-  if (req.user.role === 'branch_admin' && user.branchName !== req.user.branchName) {
+  // Location Admin can only update staff from their location
+  if (req.user.role === 'location_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to update users from other branches');
+    throw new Error('Not authorized to update users from other locations');
   }
 
-  // Prevent branch admin from changing roles to anything higher than staff
-  if (req.user.role === 'branch_admin' && req.body.role && req.body.role !== 'staff') {
+  // Prevent location admin from changing roles to anything higher than staff
+  if (req.user.role === 'location_admin' && req.body.role && req.body.role !== 'staff') {
     delete req.body.role;
   }
 
@@ -166,7 +127,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
 // @desc    Delete user
 // @route   DELETE /api/users/:id
-// @access  Private (Super Admin, Admin, Branch Admin)
+// @access  Private (Super Admin, Admin, Location Admin)
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
@@ -176,9 +137,9 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 
   // Restrictions
-  if (req.user.role === 'branch_admin' && user.branchName !== req.user.branchName) {
+  if (req.user.role === 'location_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to delete users from other branches');
+    throw new Error('Not authorized to delete users from other locations');
   }
 
   if (user.role === 'super_admin') {
@@ -186,14 +147,18 @@ const deleteUser = asyncHandler(async (req, res) => {
     throw new Error('Super Admin cannot be deleted');
   }
 
+  const userId = user._id;
+  const userName = user.name;
+  const locationId = user.assignedLocation;
+
   await user.deleteOne();
 
   await sendNotification({
     title: 'User Deleted',
-    message: `User ${user.name} was removed by ${req.user.name}.`,
+    message: `User ${userName} was removed by ${req.user.name}.`,
     type: 'user_action',
     performedByUser: req.user,
-    branchName: user.branchName,
+    locationId,
   });
 
   res.json({
@@ -230,24 +195,85 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
 
 // @desc    Get single user
 // @route   GET /api/users/:id
-// @access  Private (Admin, Super Admin, Branch Admin)
+// @access  Private (Admin, Super Admin, Location Admin)
 const getUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select('-password');
+  const user = await User.findById(req.params.id).select('-password').populate('assignedLocation', 'name city');
 
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
-  // Branch Admin restriction
-  if (req.user.role === 'branch_admin' && user.branchName !== req.user.branchName) {
+  // Location Admin restriction
+  if (req.user.role === 'location_admin' && user.assignedLocation?._id.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to view users from other branches');
+    throw new Error('Not authorized to view users from other locations');
   }
 
   res.json({
     success: true,
     data: user,
+  });
+});
+
+// @desc    Update current user profile
+// @route   PUT /api/users/update-profile
+// @access  Private
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Fields allowed to be updated by user themselves
+  const allowedFields = [
+    'name', 
+    'phone', 
+    'age', 
+    'gender', 
+    'address1', 
+    'address2', 
+    'city', 
+    'state', 
+    'country', 
+    'alternatePhone',
+    'highestQualification'
+  ];
+
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      user[field] = req.body[field];
+    }
+  });
+
+  // Handle profile image if uploaded
+  if (req.file) {
+    user.profileImageUrl = req.file.path;
+  }
+
+  const updatedUser = await user.save();
+
+  await sendNotification({
+    title: 'Profile Updated',
+    message: `Personnel dossier for ${user.name} was updated by the owner.`,
+    type: 'user_action',
+    performedByUser: req.user,
+    locationId: user.assignedLocation,
+  });
+
+  res.json({
+    success: true,
+    data: {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      profileImageUrl: updatedUser.profileImageUrl,
+      assignedLocation: updatedUser.assignedLocation,
+    },
   });
 });
 
@@ -259,5 +285,5 @@ module.exports = {
   promoteUser,
   demoteUser,
   toggleBlocklist,
-  replaceUser,
+  updateProfile,
 };

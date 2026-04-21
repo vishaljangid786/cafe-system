@@ -92,6 +92,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       required: function() { return this.role === 'staff'; },
     },
+    profileImageUrl: {
+      type: String,
+      default: "",
+    },
     isBlocked: {
       type: Boolean,
       default: false,

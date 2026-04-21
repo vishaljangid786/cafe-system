@@ -18,7 +18,7 @@ export default function StaffDashboard() {
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
               <UserCircle size={120} />
             </div>
-            
+
             <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-6 border border-amber-100 dark:border-amber-500/20 shadow-inner">
               <Coffee size={40} strokeWidth={2.5} />
             </div>
@@ -26,7 +26,7 @@ export default function StaffDashboard() {
               Welcome back, <span className="text-amber-600">{user?.name?.split(' ')[0]}</span>!
             </h1>
             <p className="text-gray-500 dark:text-zinc-500 font-medium tracking-tight">
-              Operational portal for the <span className="text-gray-900 dark:text-zinc-200 font-black">{user?.branchName}</span> branch.
+              Operational portal for the <span className="text-gray-900 dark:text-zinc-200 font-black">{user?.assignedLocation?.city}</span> node.
             </p>
           </div>
         </SlideIn>
@@ -63,7 +63,7 @@ export default function StaffDashboard() {
                   Time Logs
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-zinc-500 font-medium leading-relaxed flex-grow">
-                  Attendance is recorded by your Branch Admin. Review your monthly presence and salary disbursements through notifications.
+                  Attendance is recorded by your Location Admin. Review your monthly presence and salary disbursements through notifications.
                 </p>
                 <div className="mt-8 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] w-fit">
                   Auto-Sync Enabled

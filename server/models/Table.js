@@ -19,6 +19,10 @@ const orderItemSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  costPrice: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const tableSchema = new mongoose.Schema(
@@ -41,6 +45,10 @@ const tableSchema = new mongoose.Schema(
       default: 0,
     },
     orders: [orderItemSchema],
+    totalAmount: {
+      type: Number,
+      default: 0,
+    },
     appliedCoupon: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Coupon',

@@ -41,7 +41,7 @@ export default function GlobalAttendancePage() {
       <div className="space-y-6">
         {/* Header & Controls */}
         <SlideIn direction="down">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-4 md:p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-colors">
             <div>
               <h1 className="text-2xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight">
                 <CalendarCheck className="mr-3 text-amber-600" size={28} /> Global Attendance Matrix
@@ -50,26 +50,26 @@ export default function GlobalAttendancePage() {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <div 
+              <div
                 onClick={() => dateInputRef.current?.showPicker()}
                 className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 cursor-pointer hover:border-amber-500/50 transition-colors"
               >
                 <div className="p-2 text-gray-400"><Calendar size={18} /></div>
-                <input 
+                <input
                   ref={dateInputRef}
-                  type="date" 
+                  type="date"
                   className="bg-transparent outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 pr-3 cursor-pointer"
                   value={filters.date}
-                  onChange={(e) => setFilters({...filters, date: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, date: e.target.value })}
                 />
               </div>
 
               <div className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-700">
                 <div className="p-2 text-gray-400"><MapPin size={18} /></div>
-                <select 
+                <select
                   className="bg-transparent outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 pr-8 appearance-none"
                   value={filters.locationId}
-                  onChange={(e) => setFilters({...filters, locationId: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, locationId: e.target.value })}
                 >
                   <option value="All">All Locations</option>
                   {locations.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
@@ -82,32 +82,32 @@ export default function GlobalAttendancePage() {
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 border-l-4 border-l-green-500">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Present Today</p>
-              <p className="text-3xl font-black text-gray-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'present').length}</p>
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 border-l-4 border-l-green-500 transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Present Today</p>
+              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'present').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.2}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 border-l-4 border-l-red-500">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Absent Today</p>
-              <p className="text-3xl font-black text-gray-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 border-l-4 border-l-red-500 transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Absent Today</p>
+              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.3}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Total Month Presents</p>
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Total Month Presents</p>
               <p className="text-3xl font-black text-green-600 mt-1">
-                {Array.isArray(summary) 
+                {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalPresentDays) || 0), 0)
                   : 0}
               </p>
             </div>
           </SlideIn>
           <SlideIn delay={0.4}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Total Month Absents</p>
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Total Month Absents</p>
               <p className="text-3xl font-black text-red-600 mt-1">
-                {Array.isArray(summary) 
+                {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalAbsentDays) || 0), 0)
                   : 0}
               </p>
@@ -117,23 +117,23 @@ export default function GlobalAttendancePage() {
 
         {/* Attendance Table */}
         <SlideIn direction="up" delay={0.5}>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
-              <h2 className="font-bold text-gray-900 dark:text-zinc-100">Daily Logs</h2>
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
+            <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <h2 className="font-bold text-zinc-900 dark:text-zinc-100">Daily Logs</h2>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left min-w-[800px]">
                 <thead>
-                  <tr className="bg-gray-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">
+                  <tr className="bg-zinc-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
                     <th className="px-6 py-4">Personnel</th>
                     <th className="px-6 py-4">Location</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Marked By</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
                   {loading ? (
-                    [1,2,3].map(i => (
+                    [1, 2, 3].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan="4" className="px-6 py-8"><div className="h-4 bg-gray-100 dark:bg-zinc-800 rounded w-full"></div></td>
                       </tr>

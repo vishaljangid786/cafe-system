@@ -8,12 +8,13 @@ const {
   updateBookingStatus
 } = require('../controllers/bookingController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { bookingSchema, validate } = require('../middlewares/validateMiddleware');
 
 // Check availability (can be accessed by any logged-in user)
 router.get('/check-availability', verifyToken, checkAvailability);
 
 // Create a booking (any logged-in user)
-router.post('/', verifyToken, createBooking);
+router.post('/', verifyToken, bookingSchema, validate, createBooking);
 
 // Get user's own bookings
 router.get('/my', verifyToken, getUserBookings);

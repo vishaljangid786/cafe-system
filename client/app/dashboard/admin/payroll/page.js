@@ -37,7 +37,7 @@ export default function GlobalPayrollPage() {
     fetchData();
   }, [month]);
 
-  const filteredSalaries = salaries.filter(s => 
+  const filteredSalaries = salaries.filter(s =>
     selectedLocation === 'All' || s.locationName === selectedLocation
   );
 
@@ -46,7 +46,7 @@ export default function GlobalPayrollPage() {
       <div className="space-y-6">
         {/* Header */}
         <SlideIn direction="down">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-colors">
             <div>
               <h1 className="text-2xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight">
                 <Wallet className="mr-3 text-amber-600" size={28} /> Global Payroll Matrix
@@ -55,19 +55,19 @@ export default function GlobalPayrollPage() {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <div 
+              <div
                 onClick={() => monthInputRef.current?.showPicker()}
                 className="flex items-center px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 focus-within:ring-2 focus-within:ring-amber-500 cursor-pointer hover:border-amber-500/50 transition-colors"
               >
-                <input 
+                <input
                   ref={monthInputRef}
-                  type="month" 
+                  type="month"
                   className="bg-transparent border-none outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 cursor-pointer"
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
                 />
               </div>
-              <select 
+              <select
                 className="px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 appearance-none pr-10 relative font-bold"
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
@@ -90,31 +90,31 @@ export default function GlobalPayrollPage() {
               </div>
             </div>
           </SlideIn>
-          
+
           <SlideIn delay={0.2}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 h-full">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Avg Salary / Personnel</p>
-              <p className="text-3xl font-black text-gray-900 dark:text-zinc-100 mt-1">
-                ₹{salaries.length > 0 ? (stats?.totalPayroll / salaries.length).toLocaleString(undefined, {maximumFractionDigits: 0}) : 0}
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 h-full transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Avg Salary / Personnel</p>
+              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                ₹{salaries.length > 0 ? (stats?.totalPayroll / salaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 h-full">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">Personnel Count</p>
-              <p className="text-3xl font-black text-gray-900 dark:text-zinc-100 mt-1">{salaries.length}</p>
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 h-full transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Personnel Count</p>
+              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{salaries.length}</p>
             </div>
           </SlideIn>
         </div>
 
         {/* Salary Table */}
         <SlideIn direction="up" delay={0.4}>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-gray-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-500">
+                  <tr className="bg-zinc-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
                     <th className="px-6 py-4">Employee</th>
                     <th className="px-6 py-4">Location</th>
                     <th className="px-6 py-4 text-center">Present Days</th>
@@ -124,7 +124,7 @@ export default function GlobalPayrollPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
                   {loading ? (
-                    [1,2,3,4].map(i => (
+                    [1, 2, 3, 4].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan="5" className="px-6 py-6"><div className="h-4 bg-gray-100 dark:bg-zinc-800 rounded w-full"></div></td>
                       </tr>
@@ -135,17 +135,17 @@ export default function GlobalPayrollPage() {
                     </tr>
                   ) : (
                     filteredSalaries.map((s, idx) => (
-                      <motion.tr 
+                      <motion.tr
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.5 + idx * 0.03 }}
-                        key={s._id} 
+                        key={s._id}
                         className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group"
                       >
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">{s.name}</p>
-                            <p className="text-[10px] font-medium text-gray-500">{s.email}</p>
+                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{s.name}</p>
+                            <p className="text-[10px] font-medium text-zinc-500">{s.email}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -162,7 +162,7 @@ export default function GlobalPayrollPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className="text-sm font-black text-gray-900 dark:text-zinc-100 group-hover:text-amber-600 transition-colors">
-                            ₹{s.calculatedSalary?.toLocaleString(undefined, {maximumFractionDigits: 0})}
+                            ₹{s.calculatedSalary?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </span>
                         </td>
                       </motion.tr>
