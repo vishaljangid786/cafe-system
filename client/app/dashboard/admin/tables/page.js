@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw } from 'lucide-react';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw, MapPin } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
@@ -27,8 +27,8 @@ export default function AdminTablesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [isModalReady, setIsModalReady] = useState(false);
   
   // Form States
   const [isEditing, setIsEditing] = useState(false);
@@ -49,6 +49,22 @@ export default function AdminTablesPage() {
   const [dietaryFilter, setDietaryFilter] = useState('All');
   const [systemOrders, setSystemOrders] = useState([]);
   const syncTimeoutRef = useRef(null);
+  const selectedTableRef = useRef(null);
+
+  // Sync ref with state
+  useEffect(() => {
+    selectedTableRef.current = selectedTable;
+  }, [selectedTable]);
+
+  // Handle Progressive Rendering
+  useEffect(() => {
+    if (showOrderModal) {
+      const timer = setTimeout(() => setIsModalReady(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsModalReady(false);
+    }
+  }, [showOrderModal]);
 
   const fetchTables = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -72,7 +88,7 @@ export default function AdminTablesPage() {
 
   const fetchSystemOrders = async (tableId) => {
     try {
-      const res = await api.get(`/orders?tableId=${tableId}`);
+      const res = await api.get(`/orders?tableId=${tableId}&isBilled=false`);
       setSystemOrders(res.data.data);
     } catch (error) {
       console.error('Failed to fetch system orders');
@@ -97,8 +113,6 @@ export default function AdminTablesPage() {
     fetchResources();
 
     if (socket) {
-      // Global admin joins all branch rooms or just listens globally if needed
-      // For now, let's join the currently selected location room if not 'All'
       if (selectedLocation !== 'All') {
         socket.emit('join_room', `branch_${selectedLocation}`);
       }
@@ -106,7 +120,7 @@ export default function AdminTablesPage() {
       socket.on('order:new', () => fetchTables(true));
       socket.on('order:update', () => {
         fetchTables(true);
-        if (selectedTable) fetchSystemOrders(selectedTable._id);
+        if (selectedTableRef.current) fetchSystemOrders(selectedTableRef.current._id);
       });
       socket.on('order:ready', (data) => {
         toast.success(data.message || 'Order is ready!', { icon: '🍱' });
@@ -119,7 +133,7 @@ export default function AdminTablesPage() {
         socket.off('order:ready');
       };
     }
-  }, [selectedLocation, socket, selectedTable]);
+  }, [selectedLocation, socket]);
 
   const handleAddTable = async (e) => {
     e.preventDefault();
@@ -190,10 +204,6 @@ export default function AdminTablesPage() {
     }
   };
 
-  const handleAssignConfirm = async (data) => {
-    // Legacy
-  };
-
   const handleOpenOrder = (table) => {
     setSelectedTable(table);
     setPendingOrders([...table.orders]);
@@ -205,11 +215,9 @@ export default function AdminTablesPage() {
   };
 
   const handleSyncOrders = async (ordersToSync, extra = {}) => {
-    // Update local state immediately for a smooth typing experience
     setSelectedTable(prev => ({ ...prev, ...extra }));
     if (ordersToSync) setPendingOrders(ordersToSync);
 
-    // Debounce the API call to prevent cursor jumping and high server load
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 
     syncTimeoutRef.current = setTimeout(async () => {
@@ -219,14 +227,11 @@ export default function AdminTablesPage() {
           ...extra
         };
         const res = await api.put(`/tables/${selectedTable._id}/orders`, payload);
-        // Update with server truth but keep the table ID consistent
         setSelectedTable(prev => ({ 
           ...res.data.data,
-          // Preserve local input state to prevent overwriting while user is still typing
           customerName: prev._id === res.data.data._id ? prev.customerName : res.data.data.customerName,
           numberOfPeople: prev._id === res.data.data._id ? prev.numberOfPeople : res.data.data.numberOfPeople
         }));
-        fetchTables();
       } catch (error) {
         console.error('Sync failed', error);
       }
@@ -318,10 +323,7 @@ export default function AdminTablesPage() {
       };
 
       await api.post('/orders', payload);
-      
-      // Clear staged orders in the table document
       await api.put(`/tables/${selectedTable._id}/orders`, { orders: [] });
-      
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
@@ -331,27 +333,36 @@ export default function AdminTablesPage() {
     }
   };
 
-  const filteredTables = tables.filter(t =>
-    t.tableNumber.toString().includes(searchTerm) ||
-    (t.locationId?.name || t.locationName || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTables = useMemo(() => {
+    return tables.filter(t =>
+      t.tableNumber.toString().includes(searchTerm) ||
+      (t.locationId?.name || t.locationName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [tables, searchTerm]);
 
-  const locationOptions = [
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter(m => 
+      m.name.toLowerCase().includes(menuSearch.toLowerCase()) && 
+      (dietaryFilter === 'All' || m.dietaryType === dietaryFilter)
+    );
+  }, [menuItems, menuSearch, dietaryFilter]);
+
+  const locationOptions = useMemo(() => [
     { value: 'All', label: 'All Locations' },
     ...locations.map(l => ({ value: l._id, label: l.name || l.city }))
-  ];
+  ], [locations]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: tables.length,
     occupied: tables.filter(t => t.status !== 'available').length,
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
-  };
+  }), [tables]);
 
   if (loading) return (
     <div className="space-y-6 p-4">
-      <div className="h-16 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+      <div className="h-16 bg-muted rounded-2xl animate-pulse" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <div key={i} className="h-24 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />)}
+        {[1,2,3].map(i => <div key={i} className="h-24 bg-muted rounded-2xl animate-pulse" />)}
       </div>
     </div>
   );
@@ -359,28 +370,28 @@ export default function AdminTablesPage() {
   return (
     <PageTransition>
       <div className="space-y-6 pb-10">
-        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <Globe size={24} className="text-white" />
               </div>
               Global Floor Matrix
             </h1>
-            <p className="text-xs text-zinc-500 font-medium ml-13">Supervisory command — all sectors active</p>
+            <p className="text-xs text-muted-foreground font-medium ml-13">Supervisory command — all sectors active</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900/50 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 transition-all border border-zinc-200 dark:border-zinc-800 disabled:opacity-50"
+              className="p-3 rounded-2xl bg-muted text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all border border-border disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
-            <div className="h-12 w-px bg-zinc-200 dark:bg-zinc-800 mx-2 hidden sm:block" />
+            <div className="h-12 w-px bg-border mx-2 hidden sm:block" />
             <Button 
               variant="primary" 
-              className="!rounded-2xl !py-4 shadow-xl shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-[0.2em]"
+              className="!rounded-2xl !py-4 shadow-xl shadow-accent/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-[0.2em]"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -395,35 +406,33 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
           {[
             { label: 'Total Matrix', val: stats.total, color: 'amber', icon: Globe },
             { label: 'Live Sessions', val: stats.occupied, color: 'amber', icon: Zap },
             { label: 'Total Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
-              <div className="glass-morphism rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 flex items-center gap-4">
+              <div className="glass-morphism rounded-2xl border border-border p-4 flex items-center gap-4">
                 <div className={`h-10 w-10 rounded-xl bg-${stat.color}-500/10 flex items-center justify-center flex-shrink-0`}>
                   <stat.icon size={18} className={`text-${stat.color}-500`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100 leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-black text-foreground leading-none">{stat.val}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="relative z-20 glass-morphism rounded-2xl border border-zinc-200 dark:border-zinc-800 p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative z-20 glass-morphism rounded-2xl border border-border p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <input
               type="text"
               placeholder="Search table number or location..."
-              className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 transition-all text-zinc-900 dark:text-zinc-100"
+              className="w-full bg-muted border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -438,7 +447,6 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
-        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           <AnimatePresence mode="popLayout">
             {filteredTables.map((table, i) => (
@@ -455,77 +463,76 @@ export default function AdminTablesPage() {
           </AnimatePresence>
         </div>
 
-        {/* Modals */}
         <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={isEditing ? 'Modify Protocol' : 'Initialize New Unit'} maxWidth="max-w-md">
           <form onSubmit={handleAddTable} className="space-y-4">
             {!isEditing && (
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Target Location</label>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Target Location</label>
                 <Dropdown options={locations.map(l => ({ value: l._id, label: l.name }))} value={newTableLocation} onChange={setNewTableLocation} placeholder="Select Location" />
               </div>
             )}
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table ID</label>
-              <input required type="number" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Table ID</label>
+              <input required type="number" className="w-full rounded-xl bg-muted border border-border p-4 text-sm font-bold text-foreground" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Designation</label>
-              <input type="text" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Designation</label>
+              <input type="text" className="w-full rounded-xl bg-muted border border-border p-4 text-sm font-bold text-foreground" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Seating Capacity</label>
-              <input required type="number" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Seating Capacity</label>
+              <input required type="number" className="w-full rounded-xl bg-muted border border-border p-4 text-sm font-bold text-foreground" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
             </div>
-            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-xl shadow-amber-600/10" icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Confirm Update' : 'Initialize Unit'}</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-xl shadow-accent/10" icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Confirm Update' : 'Initialize Unit'}</Button>
           </form>
         </Modal>
 
         <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Session Matrix: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
-              <div className="lg:col-span-5 flex flex-col h-full bg-zinc-50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 overflow-hidden shadow-2xl">
-                <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-br from-zinc-50/50 to-white dark:from-zinc-950/50 dark:to-zinc-900/50 space-y-6">
+              <div className="lg:col-span-5 flex flex-col h-full bg-muted/30 rounded-[2.5rem] border border-border overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-border bg-gradient-to-br from-muted/50 to-card space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Session Core
                       </h3>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Order Registry</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Order Registry</p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">
+                      <span className="text-xl font-black text-foreground tracking-tighter">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Units Staged</span>
+                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Units Staged</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6 p-5 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm">
+                  <div className="grid grid-cols-2 gap-6 p-5 bg-card rounded-[2rem] border border-border shadow-sm">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 flex items-center gap-2">
                         Guest Identity <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-zinc-300 dark:text-white"
+                        className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 text-foreground"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">
+                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">
                         Table Party
                       </label>
                       <div className="relative">
                         <input 
                           type="number"
-                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                          className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground"
                           value={selectedTable.numberOfPeople || 0}
                           onChange={(e) => handleSyncOrders(pendingOrders, { numberOfPeople: e.target.value })}
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <Users size={14} className="text-zinc-400" />
+                          <Users size={14} className="text-muted-foreground" />
                         </div>
                       </div>
                     </div>
@@ -539,35 +546,35 @@ export default function AdminTablesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={`${order.menuItemId || order.itemName}-${idx}`}
-                      className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 group hover:border-amber-500/20 transition-all"
+                      className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border group hover:border-accent/20 transition-all"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                          {order.image ? <img src={order.image} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-zinc-400" />}
+                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                          {order.image ? <img src={order.image} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-muted-foreground" />}
                         </div>
                         <div>
-                          <div className="text-xs font-black text-zinc-900 dark:text-zinc-100 line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-zinc-500 tracking-widest uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-black text-foreground line-clamp-1">{order.itemName}</div>
+                          <div className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+                        <div className="flex items-center bg-muted rounded-xl p-1">
                           <button
                             onClick={() => updateQuantity(idx, -1)}
-                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 text-zinc-500 transition-all"
+                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-card text-muted-foreground transition-all"
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-black text-zinc-900 dark:text-zinc-100">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-black text-foreground">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
-                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 text-zinc-500 transition-all"
+                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-card text-muted-foreground transition-all"
                           >
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-amber-600 w-16 text-right">
+                        <div className="text-sm font-black text-accent w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -582,36 +589,33 @@ export default function AdminTablesPage() {
 
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
-                      <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-zinc-400" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Registry is Empty</p>
+                      <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-muted-foreground" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registry is Empty</p>
                     </div>
                   )}
 
-                  {/* System Orders Section (OMS) */}
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
-                    <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="mt-8 pt-8 border-t border-border">
                       <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                         <Zap size={14} /> Production Queue (OMS)
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
                           systemOrders.map((order) => (
-                            <div key={order._id} className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 flex items-center justify-between group shadow-sm">
+                            <div key={order._id} className="bg-card p-4 rounded-2xl border border-border flex items-center justify-between group shadow-sm">
                               <div className="flex items-center gap-3">
                                 <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`} />
                                 <div>
-                                  <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">#{order._id.slice(-6)}</div>
-                                  <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{order.status}</div>
+                                  <div className="text-[11px] font-black text-foreground uppercase tracking-tight">#{order._id.slice(-6)}</div>
+                                  <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{order.status}</div>
                                 </div>
                               </div>
                               
-                              {/* Chef Note Display */}
                               {order.chefNote && (
                                 <div className="flex-1 mx-4 px-3 py-2 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 group/note relative">
                                   <MessageSquare size={12} className="text-amber-500 flex-shrink-0" />
                                   <p className="text-[9px] font-bold text-amber-700 dark:text-amber-400 leading-tight line-clamp-1">{order.chefNote}</p>
                                   
-                                  {/* Hover expansion */}
                                   <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-zinc-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
                                     {order.chefNote}
                                     <div className="absolute top-full left-4 border-8 border-transparent border-t-zinc-900" />
@@ -620,13 +624,13 @@ export default function AdminTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[10px] font-black text-foreground">₹{Number(order.totalAmount).toLocaleString()}</div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
                                       const loadToast = toast.loading('Generating fiscal proof...');
                                       try {
-                                        const res = await api.post(`/orders/${order._id}/generate-bill`);
+                                        await api.post(`/orders/${order._id}/generate-bill`);
                                         toast.success('Bill Generated & Locked', { id: loadToast });
                                         fetchSystemOrders(selectedTable._id);
                                       } catch (err) {
@@ -647,18 +651,18 @@ export default function AdminTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-zinc-300">No active production units</div>
+                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground">No active production units</div>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 space-y-6">
+                <div className="p-8 border-t border-border bg-card/50 space-y-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                       <span>Production Subtotal</span>
-                      <span className="text-zinc-900 dark:text-white">₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
+                      <span className="text-foreground">₹{systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
@@ -666,10 +670,10 @@ export default function AdminTablesPage() {
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2" />
+                    <div className="h-px bg-border my-2" />
                     <div className="flex justify-between items-end">
                       <span className="text-[10px] font-black uppercase text-amber-600 tracking-[0.3em] mb-2">Billed Total</span>
-                      <span className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">
+                      <span className="text-4xl font-black text-foreground tracking-tighter">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -679,7 +683,7 @@ export default function AdminTablesPage() {
                     <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                       <Button
                         variant="primary"
-                        className="w-full !rounded-2xl !py-4 shadow-xl shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-widest"
+                        className="w-full !rounded-2xl !py-4 shadow-xl shadow-accent/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-widest"
                         icon={Zap}
                         onClick={handleSendToKitchen}
                         disabled={pendingOrders.length === 0}
@@ -692,7 +696,7 @@ export default function AdminTablesPage() {
                           className="w-full !rounded-2xl !py-4 shadow-xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase tracking-widest"
                           icon={Receipt}
                           onClick={() => {
-                            const allReady = systemOrders.every(o => ['SERVED'].includes(o.status));
+                            const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
                             if (!allReady) return toast.error('Culinary Protocol: All orders must be SERVED before finalization');
                             setIsBillPreviewOpen(true);
                           }}
@@ -706,32 +710,32 @@ export default function AdminTablesPage() {
 
                 <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-8">
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-accent transition-colors">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
                     placeholder="Search the menu matrix..."
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white shadow-sm"
+                    className="w-full rounded-2xl bg-muted border border-border pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground shadow-sm"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
                 </div>
 
                 {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-                  <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-fit">
+                  <div className="flex bg-muted/50 p-1 rounded-xl border border-border w-fit shadow-inner">
                     {[
                       { id: 'All', label: 'All Items' },
-                      { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
-                      { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
+                      { id: 'veg', label: 'Veg Only'},
+                      { id: 'non-veg', label: 'Non-Veg'}
                     ].map((f) => (
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
                         className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                           dietaryFilter === f.id 
-                            ? 'bg-amber-500 text-black shadow-sm' 
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                            ? 'bg-accent text-black shadow-sm' 
+                            : 'text-muted-foreground hover:text-foreground'
                         } ${f.color || ''}`}
                       >
                         {f.label}
@@ -742,14 +746,14 @@ export default function AdminTablesPage() {
 
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-amber-500" /> Top Performing Items
+                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center">
+                      <Zap size={12} className="mr-2 text-accent" /> Top Performing Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-3xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group shadow-sm"
+                          className="flex-shrink-0 w-40 bg-card rounded-2xl p-4 border border-border hover:border-accent/30 transition-all cursor-pointer group shadow-sm"
                           onClick={() => {
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
@@ -773,18 +777,18 @@ export default function AdminTablesPage() {
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
                         >
-                          <div className="h-24 w-full rounded-2xl overflow-hidden mb-3 bg-zinc-100 dark:bg-zinc-800 relative shadow-inner">
+                          <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-muted relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <img src={item.image} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={24} /></div>
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground"><Coffee size={24} /></div>
                             )}
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                            <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                               <Plus className="text-white drop-shadow-md" size={24} strokeWidth={3} />
                             </div>
                           </div>
-                          <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-amber-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="text-[10px] font-black text-foreground truncate">{item.name}</div>
+                          <div className="text-[10px] font-bold text-accent mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -792,14 +796,9 @@ export default function AdminTablesPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Full Menu Grid</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                    {menuItems
-                      .filter(m => 
-                        m.name.toLowerCase().includes(menuSearch.toLowerCase()) && 
-                        (dietaryFilter === 'All' || m.dietaryType === dietaryFilter)
-                      )
-                      .map((item) => (
+                    {isModalReady ? filteredMenuItems.map((item) => (
                         <div
                           key={item._id}
                           onClick={() => {
@@ -824,48 +823,50 @@ export default function AdminTablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-amber-500/5"
+                          className="bg-card p-4 rounded-3xl border border-border hover:border-accent/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-accent/5"
                         >
-                          <div className="h-24 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden relative shadow-inner">
+                          <div className="h-24 w-full rounded-2xl bg-muted overflow-hidden relative shadow-inner">
                             {item.image ? (
                               <img src={item.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-zinc-300">
-                                <Coffee size={20} />
-                              </div>
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground"><Coffee size={20} /></div>
                             )}
                             <div className="absolute top-2 left-2">
                               <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest text-white ${item.dietaryType === 'veg' ? 'bg-green-500' : 'bg-red-500'}`}>
                                 {item.dietaryType || 'Cuisine'}
                               </div>
                             </div>
-                            <div className="absolute inset-0 bg-amber-500/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                            <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                               <Plus className="text-white drop-shadow-md" size={32} strokeWidth={3} />
                             </div>
                           </div>
                           <div>
-                            <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 leading-tight truncate">{item.name}</div>
+                            <div className="text-[11px] font-black text-foreground leading-tight truncate">{item.name}</div>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="text-[10px] font-bold text-amber-600">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
-                              <div className="h-6 w-6 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                              <div className="text-[10px] font-bold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                              <div className="h-6 w-6 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-accent group-hover:text-black transition-all">
                                 <Plus size={12} />
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        [1,2,3,4,5,6].map(i => (
+                          <div key={i} className="h-40 rounded-3xl bg-muted/20 animate-pulse border border-border" />
+                        ))
+                      )}
                   </div>
                 </div>
 
-                <div className="p-6 bg-zinc-50 dark:bg-zinc-950/30 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                <div className="p-6 bg-muted rounded-3xl border border-border">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon Code</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white shadow-inner"
+                          className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
@@ -903,8 +904,8 @@ export default function AdminTablesPage() {
         </Modal>
 
         <ConfirmDialog isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} onConfirm={handleDeleteTable} title="Decommission Table?" message="This table will be permanently removed from the global floor grid." />
-        <AssignTableModal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} onConfirm={handleAssignConfirm} table={selectedTable} />
         <BillPreview isOpen={isBillPreviewOpen} onClose={() => setIsBillPreviewOpen(false)} onComplete={handleFinalizeSession} table={selectedTable} systemOrders={systemOrders} />
+      </div>
     </PageTransition>
   );
 }

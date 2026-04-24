@@ -77,9 +77,9 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     : (['admin', 'super_admin'].includes(user.role) ? 'Select Branch' : 'Assigned Branch');
 
   return (
-    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between  z-[90] sticky top-0 transition-all duration-300  ${isScrolled
-      ? 'bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200 dark:border-zinc-800 shadow-lg shadow-black/5'
-      : 'bg-transparent border-b border-zinc-200 dark:border-zinc-800'
+    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[90] sticky top-0 transition-all duration-300 ${isScrolled
+      ? 'bg-background/80 backdrop-blur-2xl border-b border-border shadow-lg shadow-black/5'
+      : 'bg-transparent border-b border-border'
       }`}>
       <div className="flex items-center gap-2 md:gap-6">
         {isMobile && (
@@ -98,8 +98,8 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               ctrlKey: true, 
               metaKey: true,
               bubbles: true 
-            }))}
-            className="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/30 hover:border-amber-500/50 transition-all text-zinc-400 group min-w-[280px] shadow-sm"
+             }))}
+            className="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-card/30 hover:border-accent/50 transition-all text-zinc-400 group min-w-[280px] shadow-sm"
           >
             <Search size={16} className="group-hover:text-amber-500 transition-colors" />
             <span className="text-[11px] font-bold">Search system or switch user...</span>
@@ -115,8 +115,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
 
       <div className="flex items-center gap-2 md:gap-4">
         {/* Location Selector Dropdown */}
-        {!isMobile && <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-2xl border 
-  bg-zinc-100/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800">
+        {!isMobile && <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-2xl border bg-muted/50 border-border">
 
           <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
             <MapPin size={14} />
@@ -127,7 +126,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               Active Node
             </span>
 
-            <span className="text-[10px] md:text-xs font-black text-zinc-800 dark:text-zinc-200 max-w-[120px] truncate">
+            <span className="text-[10px] md:text-xs font-black text-foreground max-w-[120px] truncate">
               {selectedLocation
                 ? `${selectedLocation.city} - ${selectedLocation.name}`
                 : (['admin', 'super_admin'].includes(user.role)
@@ -138,7 +137,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         </div>}
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
+        <div className="flex items-center gap-2 bg-muted/50 p-1.5 rounded-2xl border border-border shadow-inner">
           <button
             onClick={toggleTheme}
             className="p-2.5 text-zinc-500 hover:text-amber-500 transition-all rounded-xl hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm"

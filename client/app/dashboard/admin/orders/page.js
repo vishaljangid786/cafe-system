@@ -89,11 +89,11 @@ export default function AdminOrdersDashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-zinc-900 dark:text-zinc-100">
-              <ShieldAlert className="text-amber-500" size={32} />
+            <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-foreground">
+              <ShieldAlert className="text-accent" size={32} />
               Operational Oversight
             </h1>
-            <p className="text-zinc-500 text-sm font-bold mt-1 tracking-tight">Cross-branch order surveillance and performance analytics.</p>
+            <p className="text-muted-foreground text-sm font-bold mt-1 tracking-tight">Cross-branch order surveillance and performance analytics.</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -113,9 +113,9 @@ export default function AdminOrdersDashboard() {
                 ))}
               </select>
             )}
-            <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
-              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 shadow-sm text-amber-500' : 'text-zinc-500'}`}><LayoutGrid size={16} /></button>
-              <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-amber-500' : 'text-zinc-500'}`}><List size={16} /></button>
+            <div className="flex bg-muted rounded-xl p-1 border border-border shadow-inner">
+              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-card shadow-sm text-accent' : 'text-muted-foreground hover:text-foreground'}`}><LayoutGrid size={16} /></button>
+              <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-card shadow-sm text-accent' : 'text-muted-foreground hover:text-foreground'}`}><List size={16} /></button>
             </div>
           </div>
         </div>
@@ -252,13 +252,13 @@ function StatCard({ label, value, sub, icon: Icon, color }) {
 
   return (
     <CardHover>
-      <div className="glass-morphism p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 flex flex-col group">
+      <div className="bg-card p-6 rounded-[2rem] border border-border flex flex-col group shadow-sm">
         <div className={`h-12 w-12 rounded-2xl ${colors[color]} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border`}>
           <Icon size={24} />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
-        <h4 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter mb-2">{value}</h4>
-        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-tight">{sub}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
+        <h4 className="text-3xl font-black text-foreground tracking-tighter mb-2">{value}</h4>
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">{sub}</p>
       </div>
     </CardHover>
   );
@@ -277,14 +277,14 @@ function AdminOrderCard({ order, onCancel, onForceComplete }) {
 
   return (
     <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all relative group overflow-hidden">
+      <div className="bg-card border border-border p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all relative group overflow-hidden">
         <div className="flex justify-between items-start mb-6">
           <div>
             <span className={`text-[10px] font-black uppercase tracking-widest ${statusColors[order.status]}`}>
               {order.status}
             </span>
-            <h4 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight mt-1">
-              Table {order.table?.tableNumber || '??'} <span className="text-zinc-500 font-medium">/ {order.branch?.name}</span>
+            <h4 className="text-lg font-black text-foreground tracking-tight mt-1">
+              Table {order.table?.tableNumber || '??'} <span className="text-muted-foreground font-medium">/ {order.branch?.name}</span>
             </h4>
           </div>
           <button className="p-2 text-zinc-400 hover:text-amber-500 transition-colors">
@@ -294,12 +294,12 @@ function AdminOrderCard({ order, onCancel, onForceComplete }) {
 
         <div className="space-y-2 mb-6">
           {order.items.map((item, i) => (
-            <p key={i} className="text-xs font-bold text-zinc-600 dark:text-zinc-500 flex items-center justify-between">
+            <p key={i} className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${item.menuItem?.dietaryType === 'veg' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : item.menuItem?.dietaryType === 'non-veg' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${item.menuItem?.dietaryType === 'veg' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : item.menuItem?.dietaryType === 'non-veg' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-accent shadow-[0_0_8px_rgba(245,158,11,0.6)]'}`} />
                 {item.quantity}x {item.menuItem?.name}
               </span>
-              <span className="text-zinc-400">₹{(item.menuItem?.price || 0) * item.quantity}</span>
+              <span className="text-muted-foreground/60">₹{(item.menuItem?.price || 0) * item.quantity}</span>
             </p>
           ))}
         </div>

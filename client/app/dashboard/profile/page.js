@@ -171,7 +171,7 @@ export default function ProfilePage() {
                       </Button>
                     </>
                   ) : (
-                    <Button onClick={() => setIsEditing(true)} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-amber-500 border border-zinc-200 dark:border-white/5 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
+                    <Button onClick={() => setIsEditing(true)} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-muted text-accent border border-border hover:bg-accent hover:text-white transition-all">
                       Edit Personnel Parameters
                     </Button>
                   )}
@@ -186,12 +186,12 @@ export default function ProfilePage() {
         }
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 p-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-[2rem] w-fit mx-auto border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+        <div className="flex items-center gap-2 p-1.5 bg-muted rounded-[2rem] w-fit mx-auto border border-border shadow-sm">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-amber-500 shadow-xl shadow-amber-500/10' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-card text-accent shadow-xl shadow-accent/10' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <tab.icon size={16} /> {tab.label}
             </button>
@@ -203,7 +203,7 @@ export default function ProfilePage() {
           {activeTab === 'identity' && (
             <motion.div key="identity" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
               <div className="lg:col-span-8 space-y-8">
-                <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-10 lg:p-14 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+                <div className="bg-card rounded-[3rem] p-10 lg:p-14 border border-border shadow-sm">
                   <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400 mb-10 flex items-center gap-3">
                     <Shield size={16} className="text-amber-500" /> Identity Matrix
                   </h3>
@@ -221,14 +221,14 @@ export default function ProfilePage() {
 
               <div className="lg:col-span-4 space-y-8">
                 <CardHover>
-                  <div className="bg-zinc-100 dark:bg-zinc-950 rounded-[3rem] p-10 text-zinc-900 dark:text-white shadow-xl border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group">
+                  <div className="bg-muted rounded-[3rem] p-10 text-foreground shadow-xl border border-border relative overflow-hidden group">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-8 flex items-center gap-2">
                       <Briefcase size={14} /> Employment Node
                     </h3>
                     <div className="space-y-6 relative z-10">
                       <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Designation</p>
-                        <p className="text-2xl font-black text-zinc-900 dark:text-white mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+                        <p className="text-2xl font-black text-foreground mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Base Compensation</p>
@@ -439,7 +439,7 @@ export default function ProfilePage() {
           )}
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-2xl mx-auto">
-              <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-10 lg:p-14 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+              <div className="bg-card rounded-[3rem] p-10 lg:p-14 border border-border shadow-sm">
                 <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-10 flex items-center gap-3">
                   <Shield size={16} className="text-amber-500" /> Access Protocol
                 </h3>

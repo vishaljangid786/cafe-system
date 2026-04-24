@@ -77,7 +77,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   };
 
   const content = (
-    <div className="h-full flex flex-col glass-morphism bg-white/90 dark:bg-zinc-950/80 backdrop-blur-3xl border-y-0 border-l border-r border-zinc-200 dark:border-zinc-800/50 transition-colors duration-300">
+    <div className="h-full flex flex-col glass-morphism bg-card/90 backdrop-blur-3xl border-y-0 border-l border-r border-border transition-colors duration-300">
       {/* Brand Header */}
       <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0`}>
         <motion.div layout className="flex items-center gap-3">

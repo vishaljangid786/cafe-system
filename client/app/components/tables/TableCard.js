@@ -56,7 +56,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
         {/* Status Indicator */}
         <div className="absolute top-8 right-8 flex items-center gap-2">
           {table.hasActiveNotes && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="h-6 w-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
@@ -90,7 +90,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
               <Users size={10} /> {table.capacity || 1} Seater
             </span>
           </div>
-          
+
           {(isOccupied || table.status === 'ongoing') && table.activeOrdersCount > 0 && (
             <div className="bg-zinc-50 dark:bg-zinc-950/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-3">
               <div className="flex items-center justify-between">
@@ -98,7 +98,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
                 <span className="text-[10px] font-black text-amber-600 uppercase tracking-tight">{table.activeOrdersCount} Active Unit{table.activeOrdersCount > 1 ? 's' : ''}</span>
               </div>
               <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                <motion.div 
+                <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: '60%' }} // Future: calculate based on status breakdown
                   className="h-full bg-amber-500"

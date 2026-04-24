@@ -3,15 +3,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #09090b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  --background: #f8fafc;
+  --foreground: #020617;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   --accent: #f59e0b;
   --accent-foreground: #ffffff;
-  --border: #e4e4e7;
+  --border: #e2e8f0;
   --card: #ffffff;
-  --card-foreground: #09090b;
+  --card-foreground: #020617;
 }
 
 .dark {
@@ -55,15 +55,15 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/40 dark:bg-zinc-950/40 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/40;
+    @apply bg-white/70 dark:bg-zinc-950/40 backdrop-blur-md border border-slate-200/60 dark:border-zinc-800/40;
   }
   
   .glass-card {
-    @apply bg-white/80 dark:bg-zinc-900/40 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)];
+    @apply bg-white/95 dark:bg-zinc-900/40 backdrop-blur-xl border border-slate-200 dark:border-zinc-800/50 shadow-[0_30px_60px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)];
   }
 
   .glass-morphism {
-    @apply bg-white/60 dark:bg-black/20 backdrop-blur-md border border-zinc-200/50 dark:border-white/10;
+    @apply bg-white/80 dark:bg-black/20 backdrop-blur-md border border-slate-200/50 dark:border-white/10;
   }
 
   .text-gradient {
@@ -71,7 +71,7 @@
   }
 
   .bg-gradient-premium {
-    @apply bg-white dark:bg-gradient-to-br dark:from-zinc-900 dark:to-zinc-950;
+    @apply bg-gradient-to-br from-slate-50 to-white dark:from-zinc-900 dark:to-zinc-950;
   }
 
   .amber-glow {

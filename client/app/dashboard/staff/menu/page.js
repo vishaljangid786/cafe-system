@@ -126,7 +126,7 @@ export default function StaffMenuPage() {
                 />
 
                 {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-                  <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 mt-4 w-fit">
+                  <div className="flex bg-muted/50 p-1 rounded-xl border border-border mt-4 w-fit shadow-inner">
                     {[
                       { id: 'All', label: 'All Matrix' },
                       { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
@@ -137,8 +137,8 @@ export default function StaffMenuPage() {
                         onClick={() => setDietaryFilter(f.id)}
                         className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                           dietaryFilter === f.id 
-                            ? 'bg-amber-600 text-white shadow-sm' 
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                            ? 'bg-accent text-black shadow-sm' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-card'
                         } ${f.color || ''}`}
                       >
                         {f.label}
@@ -235,7 +235,7 @@ export default function StaffMenuPage() {
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="text-xl font-black tracking-tight line-clamp-1">{item.name}</h3>
                         <div className="flex flex-col items-end">
-                          <span className="text-lg font-black text-amber-600 flex items-center">
+                          <span className="text-lg font-black text-accent flex items-center">
                             <IndianRupee size={16} />{item.discountedPrice || item.price}
                           </span>
                           {item.discountedPrice && (
@@ -269,7 +269,7 @@ export default function StaffMenuPage() {
                               setStockValue(item.stock || 0);
                               setShowStockModal(true);
                             }}
-                            className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 hover:bg-amber-500 hover:text-black transition-all"
+                            className="p-2 rounded-xl bg-accent/10 border border-accent/20 text-accent hover:bg-accent hover:text-black transition-all"
                             title="Manage Stock"
                           >
                             <Layers size={14} />
@@ -285,9 +285,9 @@ export default function StaffMenuPage() {
         </div>
 
         {filteredItems.length === 0 && !loading && (
-          <div className="text-center py-32 bg-amber-600/[0.02] rounded-[4rem] border border-dashed border-amber-600/20">
-            <UtensilsCrossed size={64} className="mx-auto text-amber-600/10 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Matrix Empty</h3>
+          <div className="text-center py-32 bg-accent/5 rounded-[4rem] border border-dashed border-accent/20">
+            <UtensilsCrossed size={64} className="mx-auto text-accent/10 mb-6" strokeWidth={1} />
+            <h3 className="text-2xl font-black text-foreground tracking-tight">Matrix Empty</h3>
             <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">No culinary nodes match your current query parameters.</p>
           </div>
         )}
@@ -301,19 +301,19 @@ export default function StaffMenuPage() {
         >
           <div className="p-6 space-y-8 text-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="h-20 w-20 rounded-[2rem] bg-amber-500/10 flex items-center justify-center text-amber-600 border border-amber-500/20">
+              <div className="h-20 w-20 rounded-[2rem] bg-accent/10 flex items-center justify-center text-accent border border-accent/20">
                 <Package size={40} />
               </div>
               <div>
-                <h3 className="text-2xl font-black tracking-tight">{editingItem?.name}</h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-1">Current Stock: {editingItem?.stock || 0}</p>
+                <h3 className="text-2xl font-black tracking-tight text-foreground">{editingItem?.name}</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Current Stock: {editingItem?.stock || 0}</p>
               </div>
             </div>
 
             <div className="flex items-center justify-center gap-8">
               <button 
                 onClick={() => setStockValue(Math.max(0, stockValue - 1))}
-                className="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-rose-500 hover:text-white transition-all shadow-sm"
               >
                 <Minus size={24} strokeWidth={3} />
               </button>
@@ -322,12 +322,12 @@ export default function StaffMenuPage() {
                 type="number"
                 value={stockValue}
                 onChange={(e) => setStockValue(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-32 text-4xl font-black text-center bg-transparent outline-none text-zinc-900 dark:text-white"
+                className="w-32 text-4xl font-black text-center bg-transparent outline-none text-foreground"
               />
-
+ 
               <button 
                 onClick={() => setStockValue(stockValue + 1)}
-                className="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:bg-green-500 hover:text-white transition-all shadow-sm"
+                className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
               >
                 <Plus size={24} strokeWidth={3} />
               </button>
@@ -336,7 +336,7 @@ export default function StaffMenuPage() {
             <div className="pt-6 flex gap-4">
               <button
                 onClick={() => setShowStockModal(false)}
-                className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
               >
                 Cancel
               </button>

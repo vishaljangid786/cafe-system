@@ -403,11 +403,11 @@ export default function MenuManagementPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-              <Utensils className="mr-4 text-amber-600" size={36} strokeWidth={2.5} /> Menu <span className="ml-3 text-amber-600">Management</span>
+            <h1 className="text-3xl font-black text-foreground flex items-center tracking-tight leading-none">
+              <Utensils className="mr-4 text-accent" size={36} strokeWidth={2.5} /> Menu <span className="ml-3 text-accent">Management</span>
             </h1>
-            <p className="text-gray-500 dark:text-zinc-400 text-sm mt-3 font-medium flex items-center">
-              <Target size={14} className="mr-2 text-amber-600" /> Manage food items and categories for your branches.
+            <p className="text-muted-foreground text-sm mt-3 font-medium flex items-center">
+              <Target size={14} className="mr-2 text-accent" /> Manage food items and categories for your branches.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 bg-muted/30 p-1.5 rounded-2xl border border-border">
@@ -433,12 +433,12 @@ export default function MenuManagementPage() {
             <div className="relative">
               <button
                 onClick={() => setIsLocSelectorOpen(!isLocSelectorOpen)}
-                className="flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-amber-500/50 transition-all min-w-[140px] sm:min-w-[180px]"
+                className="flex items-center gap-3 px-5 py-2.5 bg-card border border-border rounded-2xl shadow-sm hover:border-accent/50 transition-all min-w-[140px] sm:min-w-[180px]"
               >
                 <MapPin size={16} className="text-amber-500" />
                 <div className="flex flex-col items-start">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Branch</span>
-                  <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Branch</span>
+                  <span className="text-xs font-black text-foreground">
                     {filterLocation === 'all' ? 'All Branches' : locations.find(l => l._id === filterLocation)?.name}
                   </span>
                 </div>
@@ -450,7 +450,7 @@ export default function MenuManagementPage() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 mt-3 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl z-50 p-3 max-h-[300px] overflow-y-auto custom-scrollbar"
+                    className="absolute top-full left-0 mt-3 w-64 bg-card border border-border rounded-[2rem] shadow-2xl z-50 p-3 max-h-[300px] overflow-y-auto custom-scrollbar"
                   >
                     <button
                       onClick={() => { setFilterLocation('all'); setIsLocSelectorOpen(false); }}
@@ -473,12 +473,12 @@ export default function MenuManagementPage() {
             </div>
 
             {/* Time Filter */}
-            <div className="flex items-center gap-3 bg-white/40 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
+            <div className="flex items-center gap-3 bg-muted/50 p-1.5 rounded-2xl border border-border shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
               {['7d', '30d', 'all', 'custom'].map(t => (
                 <button
                   key={t}
                   onClick={() => setTimeFilter(t)}
-                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeFilter === t ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800'}`}
+                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeFilter === t ? 'bg-accent text-black shadow-lg shadow-accent/20' : 'text-muted-foreground hover:text-foreground hover:bg-card'}`}
                 >
                   {t}
                 </button>
@@ -491,25 +491,25 @@ export default function MenuManagementPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-4 p-6 bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm"
+            className="flex gap-4 p-6 bg-card border border-border rounded-3xl shadow-sm"
           >
             <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-zinc-500 mb-2 ml-1">Start Date</label>
-              <input type="date" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+              <label className="block text-[10px] font-black uppercase text-muted-foreground mb-2 ml-1">Start Date</label>
+              <input type="date" className="w-full bg-muted border border-border rounded-xl p-3 text-xs font-bold text-foreground outline-none focus:ring-2 focus:ring-accent/20 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-zinc-500 mb-2 ml-1">End Date</label>
-              <input type="date" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+              <label className="block text-[10px] font-black uppercase text-muted-foreground mb-2 ml-1">End Date</label>
+              <input type="date" className="w-full bg-muted border border-border rounded-xl p-3 text-xs font-bold text-foreground outline-none focus:ring-2 focus:ring-accent/20 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
             </div>
           </motion.div>
         )}
 
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="!p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+          <Card className="!p-8 bg-card border-border shadow-sm" hover={false}>
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-lg">Popular Categories</CardTitle>
-              <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-inner">
+              <div className="flex bg-muted p-1 rounded-lg border border-border shadow-inner">
                 <button 
                   onClick={() => setGraphMetric('value')}
                   className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'value' ? 'bg-amber-500 text-black shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
@@ -547,10 +547,10 @@ export default function MenuManagementPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-black text-zinc-900 dark:text-white">
+                <span className="text-xl font-black text-foreground">
                   {graphMetric === 'value' ? `₹${analytics?.summary?.totalRevenue?.toLocaleString()}` : analytics?.summary?.totalOrders}
                 </span>
-                <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
                   {graphMetric === 'value' ? 'Gross Yield' : 'Total Orders'}
                 </span>
               </div>
@@ -571,13 +571,13 @@ export default function MenuManagementPage() {
           </Card>
 
           {/* Crew Spotlight */}
-          <Card className="lg:col-span-2 !p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50 overflow-hidden relative" hover={false}>
+          <Card className="lg:col-span-2 !p-8 bg-card border-border shadow-sm overflow-hidden relative" hover={false}>
             <div className="absolute -right-20 -top-20 h-64 w-64 bg-amber-500/5 rounded-full blur-3xl" />
             
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
                 <CardTitle className="text-lg">Branch Momentum</CardTitle>
-                <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Live operational performance</CardDescription>
+                <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Live operational performance</CardDescription>
               </div>
               <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                 <Users size={18} />
@@ -591,10 +591,10 @@ export default function MenuManagementPage() {
                   <div className="h-24 w-24 rounded-full bg-amber-500/10 flex items-center justify-center mb-6 border border-amber-500/20 shadow-2xl shadow-amber-500/10">
                     <Zap size={40} className="text-amber-500 animate-pulse" />
                   </div>
-                  <h4 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter max-w-md">
-                    <span className="text-amber-500">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
+                  <h4 className="text-2xl font-black text-foreground uppercase tracking-tighter max-w-md">
+                    <span className="text-accent">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
                   </h4>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">Solo Operation Mastery</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">Solo Operation Mastery</p>
                   
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
@@ -612,7 +612,7 @@ export default function MenuManagementPage() {
                 /* Team Mosaic View */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {analytics?.staffPerformance?.slice(0, 4).map((staff, idx) => (
-                    <div key={idx} className="group p-5 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all duration-500">
+                    <div key={idx} className="group p-5 rounded-3xl bg-muted border border-border hover:border-accent/30 transition-all duration-500">
                       <div className="flex items-center gap-4 mb-4">
                         <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center font-black text-amber-500 text-xs shadow-sm">
                           {staff.name.substring(0, 2).toUpperCase()}
@@ -662,13 +662,13 @@ export default function MenuManagementPage() {
                 <input 
                   type="text" 
                   placeholder={activeTab === 'items' ? "Search culinary inventory..." : "Search sector categories..."}
-                  className="w-full pl-14 pr-6 py-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-inner transition-all" 
+                  className="w-full pl-14 pr-6 py-4 bg-muted border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-inner transition-all" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
 
                 {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-                  <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 mt-4 w-fit">
+                  <div className="flex bg-muted p-1 rounded-xl border border-border mt-4 w-fit">
                     {[
                       { id: 'All', label: 'All Items' },
                       { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
@@ -760,7 +760,7 @@ export default function MenuManagementPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-8 mt-6 bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
+                  <div className="p-8 mt-6 bg-muted rounded-3xl border border-border shadow-inner">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                       <div className="space-y-2.5">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Category</label>
@@ -804,13 +804,13 @@ export default function MenuManagementPage() {
                       </div>
 
                       <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Max Price</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Min Price</label>
                         <div className="relative">
-                          <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                          <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                           <input
                             type="number"
-                            placeholder="Max"
-                            className="w-full pl-10 pr-4 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
+                            placeholder="Min"
+                            className="w-full pl-10 pr-4 py-4 bg-card border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-sm transition-all text-foreground"
                             value={maxPrice}
                             onChange={(e) => setMaxPrice(e.target.value)}
                           />
@@ -818,9 +818,9 @@ export default function MenuManagementPage() {
                       </div>
 
                       <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Dietary</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Dietary</label>
                         <select
-                          className="w-full px-5 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-sm transition-all"
+                          className="w-full px-5 py-4 bg-card border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none appearance-none font-bold text-sm shadow-sm transition-all text-foreground"
                           value={dietaryFilter}
                           onChange={(e) => setDietaryFilter(e.target.value)}
                         >
@@ -899,9 +899,9 @@ export default function MenuManagementPage() {
                       {/* Content */}
                       <div className="p-6 md:p-8 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-xl font-black tracking-tight line-clamp-1">{item.name}</h3>
+                          <h3 className="text-xl font-black tracking-tight line-clamp-1 text-foreground">{item.name}</h3>
                           <div className="flex flex-col items-end">
-                            <span className="text-lg font-black text-amber-600 flex items-center">
+                            <span className="text-lg font-black text-accent flex items-center">
                               <IndianRupee size={16} />{item.discountedPrice || item.price}
                             </span>
                             {(item.discountedPrice || item.originalPrice) && (
@@ -965,11 +965,11 @@ export default function MenuManagementPage() {
                     <div>
                       <h3 className="text-xl font-black tracking-tight">{cat.name}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
                           Items: {menuItems.filter(m => (m.category?._id || m.category) === cat._id).length}
                         </p>
-                        <div className="h-1 w-1 rounded-full bg-zinc-800" />
-                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">
+                        <div className="h-1 w-1 rounded-full bg-border" />
+                        <p className="text-[9px] font-black uppercase tracking-widest text-accent">
                           Sold: {analytics.categorySales.find(cs => cs.name === cat.name)?.count || 0}
                         </p>
                       </div>

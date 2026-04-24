@@ -172,11 +172,11 @@ export default function StaffOrdersPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3">
-              <ShoppingBag className="text-amber-500" size={32} />
-              Live Orders <span className="text-zinc-500 font-medium">/ Frontline Sync</span>
+            <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-foreground">
+              <ShoppingBag className="text-accent" size={32} />
+              Live Orders <span className="text-muted-foreground font-medium">/ Frontline Sync</span>
             </h1>
-            <p className="text-zinc-500 text-sm font-bold mt-1 tracking-tight">Monitor kitchen throughput and fulfillment cycles.</p>
+            <p className="text-muted-foreground text-sm font-bold mt-1 tracking-tight">Monitor kitchen throughput and fulfillment cycles.</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -186,14 +186,14 @@ export default function StaffOrdersPage() {
                 fetchStats();
                 toast.success('Syncing with Kitchen...');
               }}
-              className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-amber-500 rounded-2xl transition-all border border-zinc-200 dark:border-zinc-700"
+              className="p-3 bg-muted rounded-2xl border border-border"
               title="Refresh Dashboard"
             >
               <RefreshCcw className={loading ? 'animate-spin' : ''} size={18} />
             </button>
             <button 
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+              className="px-6 py-3 bg-accent hover:bg-accent/90 text-black font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-accent/20 flex items-center gap-2"
             >
               <Plus size={18} strokeWidth={3} /> New Order
             </button>
@@ -202,16 +202,16 @@ export default function StaffOrdersPage() {
 
         {/* Filters & Search */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-4 flex p-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
+          <div className="md:col-span-4 flex p-1.5 bg-muted rounded-2xl border border-border">
             <button 
               onClick={() => setFilterType('branch')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'branch' ? 'bg-white dark:bg-zinc-800 text-amber-500 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}`}
+              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'branch' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <Globe size={14} /> Branch Orders
             </button>
             <button 
               onClick={() => setFilterType('my')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'my' ? 'bg-white dark:bg-zinc-800 text-amber-500 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}`}
+              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'my' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <User size={14} /> My Orders
             </button>
@@ -222,7 +222,7 @@ export default function StaffOrdersPage() {
             <input 
               type="text"
               placeholder="Search by table or Order ID..."
-              className="w-full pl-14 pr-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+              className="w-full pl-14 pr-6 py-4 bg-card border border-border rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -239,12 +239,12 @@ export default function StaffOrdersPage() {
                 { label: 'Served by Me', value: stats.servedCount, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
                 { label: 'Live Active', value: orders.filter(o => !['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(o.status)).length, icon: Clock, color: 'text-indigo-500', bg: 'bg-indigo-500/5' }
               ].map((stat, i) => (
-                <div key={i} className={`p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col items-center text-center group hover:scale-105 transition-all duration-500`}>
-                  <div className={`h-12 w-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 border border-zinc-100 dark:border-zinc-800`}>
+                <div key={i} className={`p-6 rounded-[2rem] border border-border bg-card shadow-sm flex flex-col items-center text-center group hover:scale-105 transition-all duration-500`}>
+                  <div className={`h-12 w-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 border border-border`}>
                     <stat.icon size={20} />
                   </div>
-                  <h4 className="text-2xl font-black tracking-tighter mb-1">{stat.value}</h4>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">{stat.label}</p>
+                  <h4 className="text-2xl font-black tracking-tighter mb-1 text-foreground">{stat.value}</h4>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -268,9 +268,9 @@ export default function StaffOrdersPage() {
           </AnimatePresence>
           
           {!loading && filteredOrders.length === 0 && (
-            <div className="lg:col-span-2 xl:col-span-3 h-80 flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 dark:border-zinc-800/50 rounded-[3rem] opacity-30">
-              <Utensils size={48} strokeWidth={1} className="mb-4" />
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-center">No active signals in this sector</p>
+            <div className="lg:col-span-2 xl:col-span-3 h-80 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[3rem] opacity-30">
+              <Utensils size={48} strokeWidth={1} className="mb-4 text-muted-foreground" />
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-center text-muted-foreground">No active signals in this sector</p>
             </div>
           )}
         </div>
@@ -351,11 +351,11 @@ export default function StaffOrdersPage() {
             {/* Menu Discovery */}
             <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6 pt-6 pr-6">
               <div className="relative">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <input 
                   type="text"
                   placeholder="Search the menu matrix..."
-                  className="w-full pl-14 pr-6 py-4 bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-amber-500/20 rounded-2xl text-xs font-bold outline-none transition-all"
+                  className="w-full pl-14 pr-6 py-4 bg-muted border border-border focus:ring-2 focus:ring-accent/20 rounded-2xl text-xs font-bold outline-none transition-all text-foreground"
                   value={menuSearch}
                   onChange={(e) => setMenuSearch(e.target.value)}
                 />
@@ -367,9 +367,9 @@ export default function StaffOrdersPage() {
                     <div 
                       key={item._id}
                       onClick={() => addToStage(item)}
-                      className="bg-white dark:bg-zinc-900 p-4 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group relative overflow-hidden"
+                      className="bg-card p-4 rounded-[2rem] border border-border hover:border-accent/30 transition-all cursor-pointer group relative overflow-hidden shadow-sm"
                     >
-                      <div className="h-24 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 mb-3 overflow-hidden">
+                      <div className="h-24 w-full rounded-2xl bg-muted mb-3 overflow-hidden">
                         {item.image ? (
                           <img src={item.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
@@ -379,8 +379,8 @@ export default function StaffOrdersPage() {
                            <div className={`w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900 ${item.dietaryType === 'veg' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
                         </div>
                       </div>
-                      <h4 className="text-[11px] font-black text-zinc-800 dark:text-zinc-100 truncate">{item.name}</h4>
-                      <p className="text-[10px] font-bold text-amber-600 mt-0.5">₹{item.discountedPrice || item.price}</p>
+                      <h4 className="text-[11px] font-black text-foreground truncate">{item.name}</h4>
+                      <p className="text-[10px] font-bold text-accent mt-0.5">₹{item.discountedPrice || item.price}</p>
                       
                       <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-amber-500 text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 shadow-lg shadow-amber-500/20">
                         <Plus size={16} strokeWidth={3} />
@@ -421,15 +421,15 @@ function StaffOrderCard({ order, onRefresh }) {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex flex-col items-center justify-center border border-zinc-200/50 dark:border-zinc-700/50">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">Table</span>
-              <span className="text-xl font-black text-zinc-800 dark:text-zinc-100">{order.table?.tableNumber || '??'}</span>
+            <div className="h-14 w-14 rounded-2xl bg-muted flex flex-col items-center justify-center border border-border">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Table</span>
+              <span className="text-xl font-black text-foreground">{order.table?.tableNumber || '??'}</span>
             </div>
             <div>
               <div className={`text-[10px] font-black uppercase tracking-[0.2em] text-${config.color}-500 flex items-center gap-1.5`}>
                 <config.icon size={12} className={order.status === 'PREPARING' ? 'animate-spin' : ''} /> {config.label}
               </div>
-              <p className="text-[10px] font-bold text-zinc-400 mt-1 uppercase tracking-widest">{timeElapsed} ago</p>
+              <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-widest">{timeElapsed} ago</p>
             </div>
           </div>
           
@@ -446,9 +446,9 @@ function StaffOrderCard({ order, onRefresh }) {
         {/* Items List */}
         <div className="space-y-2 mb-6">
           {order.items.map((item, i) => (
-            <div key={i} className="flex justify-between items-center text-xs font-bold text-zinc-600 dark:text-zinc-400 px-2 py-1">
+            <div key={i} className="flex justify-between items-center text-xs font-bold text-muted-foreground px-2 py-1">
               <span className="flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${item.menuItem?.dietaryType === 'veg' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : item.menuItem?.dietaryType === 'non-veg' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${item.menuItem?.dietaryType === 'veg' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : item.menuItem?.dietaryType === 'non-veg' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-accent shadow-[0_0_8px_rgba(245,158,11,0.6)]'}`} />
                 {item.quantity}x {item.menuItem?.name}
               </span>
             </div>
