@@ -17,8 +17,8 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
 
     // Determine target roles hierarchically
     if (performedByUser.role === 'staff') {
-      roleTarget.push('location_admin', 'admin', 'super_admin');
-    } else if (performedByUser.role === 'location_admin') {
+      roleTarget.push('branch_admin', 'admin', 'super_admin');
+    } else if (performedByUser.role === 'branch_admin') {
       roleTarget.push('admin', 'super_admin');
     } else if (performedByUser.role === 'admin') {
       roleTarget.push('super_admin');
@@ -32,12 +32,12 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
 
     const users = await User.find(query);
 
-    // Filter by location if necessary (location_admins only care about their location)
+    // Filter by location if necessary (branch_admins only care about their location)
     const recipientsList = [];
     const targetLocationId = locationId || performedByUser.assignedLocation;
 
     users.forEach((u) => {
-      if (u.role === 'location_admin') {
+      if (u.role === 'branch_admin') {
         if (u.assignedLocation?.toString() === targetLocationId?.toString()) {
           recipientsList.push({ user: u._id, isRead: false });
         }

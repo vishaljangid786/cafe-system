@@ -15,6 +15,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: #09090b;
   --foreground: #fafafa;
   --muted: #18181b;
@@ -104,5 +105,36 @@
 }
 
 .recharts-default-tooltip {
-  @apply !bg-zinc-900/90 !backdrop-blur-md !border-zinc-800 !rounded-xl !shadow-2xl !p-3 !text-xs !border;
+  @apply !bg-white/90 dark:!bg-zinc-900/90 !backdrop-blur-md !border-zinc-200 dark:!border-zinc-800 !rounded-xl !shadow-2xl !p-3 !text-xs !border;
+}
+
+@layer base {
+  /* Global Number Input Overrides */
+  /* Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+
+  /* Firefox */
+  input[type=number] {
+    -moz-appearance: textfield !important;
+  }
+
+/* High-specificity Browser Autofill Overrides */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fafafa !important;
+  -webkit-box-shadow: 0 0 0 1000px #09090b inset !important;
+}
 }

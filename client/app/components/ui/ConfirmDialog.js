@@ -11,7 +11,8 @@ export default function ConfirmDialog({
   message,
   confirmText = 'Proceed',
   type = 'danger',
-  loading = false
+  loading = false,
+  isImpersonating = false
 }) {
   return (
     <AnimatePresence>
@@ -29,7 +30,7 @@ export default function ConfirmDialog({
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              className="glass-card w-full max-w-sm rounded-2xl overflow-hidden pointer-events-auto p-8 text-center border border-white/5 dark:border-zinc-800/50 bg-zinc-950/90 backdrop-blur-2xl"
+              className="glass-card w-full max-w-sm rounded-2xl overflow-hidden pointer-events-auto p-8 text-center border border-zinc-200 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl shadow-2xl"
             >
               <div className={`h-16 w-16 ${type === 'danger' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'} rounded-2xl mx-auto flex items-center justify-center mb-6 border border-current/20 shadow-lg shadow-current/5`}>
                 {type === 'danger' ? <ShieldAlert size={32} /> : <AlertCircle size={32} />}
@@ -37,15 +38,23 @@ export default function ConfirmDialog({
 
               <div className="space-y-1 mb-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Security Override</span>
-                <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{title}</h3>
               </div>
-              <p className="text-sm font-medium text-zinc-400 leading-relaxed mb-8 px-2">{message}</p>
+              
+              {isImpersonating && (
+                <div className="bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase tracking-[0.1em] py-2.5 rounded-xl mb-4 border border-rose-500/20 flex items-center justify-center gap-2">
+                  <ShieldAlert size={12} />
+                  Destructive Action during Impersonation
+                </div>
+              )}
+
+              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed mb-8 px-2">{message}</p>
 
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
                   onClick={onClose}
-                  className="!rounded-xl border-zinc-800"
+                  className="!rounded-xl border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400"
                   disabled={loading}
                 >
                   Cancel

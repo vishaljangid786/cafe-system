@@ -19,12 +19,12 @@ router.use(verifyToken);
 
 router.route('/')
   .get(getTables)
-  .post(authorizeRoles('super_admin', 'admin', 'location_admin'), addTable);
+  .post(authorizeRoles('super_admin', 'admin', 'branch_admin'), addTable);
 
 router.route('/:id')
   .get(getTable)
-  .put(authorizeRoles('super_admin', 'admin', 'location_admin'), updateTable)
-  .delete(authorizeRoles('super_admin', 'admin', 'location_admin'), deleteTable);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateTable)
+  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteTable);
 
 router.route('/:id/book')
   .put(bookTable);

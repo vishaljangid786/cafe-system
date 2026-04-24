@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema(
     },
     address2: {
       type: String,
+      required: [true, 'Address Line 2 is required'],
     },
     city: {
       type: String,
@@ -54,19 +55,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Country is required'],
     },
+    pincode: {
+      type: String,
+      required: [true, 'Pincode is required'],
+    },
     alternatePhone: {
       type: String,
     },
     role: {
       type: String,
-      enum: ['super_admin', 'admin', 'location_admin', 'staff'],
+      enum: ['super_admin', 'admin', 'branch_admin', 'staff', 'chef'],
       default: 'staff',
     },
-    // For Staff and Location Admin
+    // For Staff and Branch Admin
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
-      required: function() { return this.role === 'location_admin' || this.role === 'staff'; },
+      required: function() { return this.role === 'branch_admin' || this.role === 'staff'; },
     },
     // For Admins (Super/Global)
     accessibleLocations: [
@@ -90,7 +95,7 @@ const userSchema = new mongoose.Schema(
     },
     monthlySalary: {
       type: Number,
-      required: function() { return this.role === 'staff'; },
+      required: [true, 'Monthly salary is required'],
     },
     profileImageUrl: {
       type: String,

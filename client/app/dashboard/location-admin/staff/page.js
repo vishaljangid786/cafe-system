@@ -25,7 +25,7 @@ export default function LocationStaffPage() {
   const fetchStaff = async () => {
     try {
       const res = await api.get('/users');
-      setStaff(res.data.data.filter(u => u.role === 'staff'));
+      setStaff(res.data.data);
     } catch (error) {
       toast.error('Failed to sync personnel roster');
     } finally {
@@ -94,7 +94,7 @@ export default function LocationStaffPage() {
           <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-amber-600" size={36} /> Location <span className="ml-3 text-amber-600">Personnel</span>
+                <Users className="mr-4 text-amber-600" size={36} /> Branch <span className="ml-3 text-amber-600">Personnel</span>
               </h1>
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Strategic roster management for operational personnel.</p>
             </div>
@@ -150,11 +150,7 @@ export default function LocationStaffPage() {
                     </div>
                   </div>
 
-                  <div className="mt-10 pt-6 border-t border-gray-50 dark:border-zinc-800 flex justify-between items-center relative z-10">
-                    <div className="flex items-baseline">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-3">Volume</span>
-                      <span className="font-black text-gray-900 dark:text-zinc-100 text-lg">₹{member.monthlySalary?.toLocaleString() || '0'}</span>
-                    </div>
+                  <div className="mt-10 pt-6 border-t border-gray-50 dark:border-zinc-800 flex justify-end items-center relative z-10">
                     <div className="flex space-x-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
@@ -262,11 +258,11 @@ export default function LocationStaffPage() {
           message="This personnel record will be permanently purged from the system network."
         />
 
-        {/* Detailed Personnel Dossier Modal */}
+        {/* Detailed Personnel Details Modal */}
         <Modal
           isOpen={!!viewingStaff}
           onClose={() => setViewingStaff(null)}
-          title="Personnel Dossier Intelligence"
+          title="Personnel Details Intelligence"
           maxWidth="max-w-3xl"
         >
           {viewingStaff && (

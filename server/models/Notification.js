@@ -34,7 +34,7 @@ const notificationSchema = new mongoose.Schema(
     roleTarget: [
       {
         type: String,
-        enum: ['super_admin', 'admin', 'location_admin', 'staff'],
+        enum: ['super_admin', 'admin', 'branch_admin', 'staff'],
       },
     ],
     // Optional scoping to a location

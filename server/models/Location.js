@@ -48,6 +48,11 @@ const locationSchema = new mongoose.Schema(
       type: Number,
       default: 20,
     },
+    dietaryType: {
+      type: String,
+      enum: ['veg', 'non-veg', 'both'],
+      default: 'both',
+    },
   },
   {
     timestamps: true,

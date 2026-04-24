@@ -44,6 +44,7 @@ const createCoupon = asyncHandler(async (req, res) => {
     expiryDate,
     usageLimit,
     appliesTo: appliesTo || {},
+    isActive: req.body.isActive === 'on' || req.body.isActive === 'true' || req.body.isActive === true || req.body.isActive === undefined,
     createdBy: req.user._id,
   });
 
@@ -66,6 +67,10 @@ const updateCoupon = asyncHandler(async (req, res) => {
   if (updates.expiryDate && new Date(updates.expiryDate) <= new Date()) {
     res.status(400);
     throw new Error('Expiry date must be in the future');
+  }
+
+  if (updates.isActive !== undefined) {
+    updates.isActive = updates.isActive === 'on' || updates.isActive === 'true' || updates.isActive === true;
   }
   const coupon = await Coupon.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!coupon) {
@@ -93,7 +98,8 @@ const deleteCoupon = asyncHandler(async (req, res) => {
 // @route   POST /api/coupons/apply
 // @access  Private (Staff, Admin)
 const applyCoupon = asyncHandler(async (req, res) => {
-  const { code, orderAmount, orderItems } = req.body; // orderItems array of {menuItemId, price, quantity}
+  const { code, orderAmount } = req.body; 
+  const orderItems = req.body.orderItems || []; // orderItems array of {menuItemId, price, quantity}
   const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
   if (!coupon) {
     res.status(404);
@@ -138,6 +144,12 @@ const applyCoupon = asyncHandler(async (req, res) => {
   } else {
     // Applies to full order
     applicableSubtotal = orderAmount;
+  }
+
+  // If specific items/categories were targeted but none found in order
+  if (((coupon.appliesTo?.items?.length || 0) > 0 || (coupon.appliesTo?.categories?.length || 0) > 0) && applicableSubtotal === 0) {
+    res.status(400);
+    throw new Error('This coupon is not applicable to the items in your current order');
   }
 
   let discount = 0;

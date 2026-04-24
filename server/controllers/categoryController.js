@@ -83,9 +83,14 @@ const updateCategory = asyncHandler(async (req, res) => {
     }
   }
 
+  const updates = { name, description, icon, sortOrder };
+  if (isActive !== undefined) {
+    updates.isActive = isActive === 'on' || isActive === 'true' || isActive === true;
+  }
+
   const updated = await Category.findByIdAndUpdate(
     req.params.id,
-    { name, description, icon, sortOrder, isActive },
+    updates,
     { new: true, runValidators: true }
   );
 

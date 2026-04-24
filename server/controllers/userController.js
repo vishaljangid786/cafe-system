@@ -4,20 +4,68 @@ const sendNotification = require('../utils/sendNotification');
 
 // @desc    Get all users
 // @route   GET /api/users
-// @access  Private (Admin, Super Admin, Location Admin)
+// @access  Private (Admin, Super Admin, Branch Admin)
 const getUsers = asyncHandler(async (req, res) => {
   let query = {};
 
-  // Location Admin can only see staff from their location
-  if (req.user.role === 'location_admin') {
+  // Hierarchy Visibility Logic
+  if (req.user.role === 'branch_admin') {
     query.assignedLocation = req.user.assignedLocation;
+    query.role = { $in: ['staff', 'chef'] };
+  } else if (req.user.role === 'admin') {
+    query.role = { $in: ['branch_admin', 'staff', 'chef'] };
+  } else if (req.user.role === 'super_admin') {
+    query.role = { $in: ['admin', 'branch_admin', 'staff', 'chef'] };
   }
 
-  const users = await User.find(query).select('-password').populate('assignedLocation', 'name city');
+  // Search functionality
+  if (req.query.search) {
+    const searchRegex = new RegExp(req.query.search, 'i');
+    query.$or = [
+      { name: searchRegex },
+      { email: searchRegex },
+      { role: searchRegex }
+    ];
+  }
+
+  // Optional Filters
+  if (req.query.role && req.user.role !== 'branch_admin') {
+    const viewableRoles = req.user.role === 'super_admin' 
+      ? ['admin', 'branch_admin', 'staff', 'chef'] 
+      : ['branch_admin', 'staff', 'chef'];
+      
+    if (viewableRoles.includes(req.query.role)) {
+      query.role = req.query.role;
+    }
+  }
+
+  if (req.query.locationId && req.user.role !== 'branch_admin') {
+    query.assignedLocation = req.query.locationId;
+  }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const startIndex = (page - 1) * limit;
+  const total = await User.countDocuments(query);
+
+  const users = await User.find(query)
+    .select('-password')
+    .populate('assignedLocation', 'name city')
+    .populate('accessibleLocations', 'name city')
+    .sort({ createdAt: -1 })
+    .skip(startIndex)
+    .limit(limit);
 
   res.json({
     success: true,
     count: users.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
     data: users,
   });
 });
@@ -40,8 +88,8 @@ const promoteUser = asyncHandler(async (req, res) => {
   }
 
   let nextRole = user.role;
-  if (user.role === 'staff') nextRole = 'location_admin';
-  else if (user.role === 'location_admin') nextRole = 'admin';
+  if (user.role === 'staff') nextRole = 'branch_admin';
+  else if (user.role === 'branch_admin') nextRole = 'admin';
   else if (user.role === 'admin') nextRole = 'super_admin';
 
   user.role = nextRole;
@@ -75,8 +123,8 @@ const demoteUser = asyncHandler(async (req, res) => {
   }
 
   let prevRole = user.role;
-  if (user.role === 'admin') prevRole = 'location_admin';
-  else if (user.role === 'location_admin') prevRole = 'staff';
+  if (user.role === 'admin') prevRole = 'branch_admin';
+  else if (user.role === 'branch_admin') prevRole = 'staff';
 
   user.role = prevRole;
   await user.save();
@@ -104,13 +152,13 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   // Location Admin can only update staff from their location
-  if (req.user.role === 'location_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
+  if (req.user.role === 'branch_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
     throw new Error('Not authorized to update users from other locations');
   }
 
   // Prevent location admin from changing roles to anything higher than staff
-  if (req.user.role === 'location_admin' && req.body.role && req.body.role !== 'staff') {
+  if (req.user.role === 'branch_admin' && req.body.role && req.body.role !== 'staff') {
     delete req.body.role;
   }
 
@@ -137,7 +185,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 
   // Restrictions
-  if (req.user.role === 'location_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
+  if (req.user.role === 'branch_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
     throw new Error('Not authorized to delete users from other locations');
   }
@@ -205,7 +253,7 @@ const getUser = asyncHandler(async (req, res) => {
   }
 
   // Location Admin restriction
-  if (req.user.role === 'location_admin' && user.assignedLocation?._id.toString() !== req.user.assignedLocation?.toString()) {
+  if (req.user.role === 'branch_admin' && user.assignedLocation?._id.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
     throw new Error('Not authorized to view users from other locations');
   }
@@ -238,6 +286,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     'city', 
     'state', 
     'country', 
+    'pincode',
     'alternatePhone',
     'highestQualification'
   ];
@@ -257,7 +306,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   await sendNotification({
     title: 'Profile Updated',
-    message: `Personnel dossier for ${user.name} was updated by the owner.`,
+    message: `Personnel Details for ${user.name} was updated by the owner.`,
     type: 'user_action',
     performedByUser: req.user,
     locationId: user.assignedLocation,

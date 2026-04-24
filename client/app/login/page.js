@@ -10,6 +10,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
+import api from '../services/api';
+
 // Validation Schema
 const loginSchema = z.object({
   email: z.string().email('Operational terminal email required').min(1, 'Email is required'),
@@ -32,9 +34,28 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
+    const checkInitialSetup = async () => {
+      try {
+        const res = await api.get('/auth/initial-setup-check');
+        if (res.data.success && res.data.data.isInitialSetup) {
+          router.push('/setup');
+          toast('System uninitialized. Redirecting to Master Setup...', { icon: '🛡️' });
+        }
+      } catch (error) {
+        console.error('Setup check failed:', error.message || error);
+      }
+    };
+
+    if (!loading && !user) {
+      checkInitialSetup();
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
     if (!loading && user) {
       if (user.role === 'super_admin' || user.role === 'admin') router.push('/dashboard/admin');
-      else if (user.role === 'location_admin') router.push('/dashboard/location-admin');
+      else if (user.role === 'branch_admin') router.push('/dashboard/branch-admin');
+      else if (user.role === 'chef') router.push('/dashboard/chef');
       else router.push('/dashboard/staff');
     }
   }, [user, loading, router]);
@@ -50,7 +71,13 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <div className="h-12 w-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
@@ -139,14 +166,44 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">Authorized Access Only</p>
+          <div className="mt-10 flex flex-col items-center gap-6">
+            <div className="flex items-center gap-4 w-full">
+              <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">Quick Access</p>
+              <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 w-full">
+              {[
+                { label: 'Super Admin', email: 'super@cafeos.com', color: 'amber' },
+                { label: 'Admin', email: 'mangyawwas@gandhipath.com', color: 'blue' },
+                { label: 'Branch Admin', email: 'mangyawas@branchadmin.com', color: 'orange' },
+                { label: 'Chef', email: 'cheff@mangyawas.com', color: 'rose' },
+                { label: 'Staff', email: 'staff@mangyawas.com', color: 'emerald' },
+              ].map((testUser) => (
+                <button
+                  key={testUser.label}
+                  type="button"
+                  onClick={() => login(testUser.email, 'password123')}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-${testUser.color}-500/50 hover:bg-${testUser.color}-500/5 transition-all group`}
+                >
+                  <span className={`text-[9px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-${testUser.color}-500 transition-colors`}>
+                    {testUser.label}
+                  </span>
+                  <span className="text-[8px] font-medium text-zinc-400 dark:text-zinc-600 truncate max-w-full">
+                    {testUser.email.split('@')[0]}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600 mt-4">Authorized Access Only</p>
             <div className="h-px w-12 bg-zinc-200 dark:bg-zinc-800" />
             <button
               onClick={() => router.push('/signup')}
               className="text-xs font-bold text-zinc-500 hover:text-amber-500 transition-colors"
             >
-              Need secondary clearance? <span className="text-amber-500 underline underline-offset-4">Register Hub</span>
+              Need secondary clearance? <span className="text-amber-500 underline underline-offset-4">Register Branch</span>
             </button>
           </div>
         </div>

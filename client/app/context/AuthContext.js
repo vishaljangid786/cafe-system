@@ -16,35 +16,44 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = Cookies.get('token');
-      const storedLocation = Cookies.get('selectedLocation');
+      try {
+        const token = Cookies.get('token');
+        const storedLocation = Cookies.get('selectedLocation');
 
-      if (token) {
-        try {
-          const res = await api.get('/auth/profile');
-          const userData = res.data.data;
-          
-          setUser(userData);
-          
-          // Set initial location
-          if (storedLocation) {
-            setSelectedLocation(JSON.parse(storedLocation));
-          } else if (userData.assignedLocation) {
-            setSelectedLocation(userData.assignedLocation);
-          } else if (userData.accessibleLocations?.length > 0) {
-            setSelectedLocation(userData.accessibleLocations[0]);
+        if (token) {
+          try {
+            const res = await api.get('/auth/profile');
+            const userData = res.data.data;
+            
+            setUser(userData);
+            
+            // Set initial location
+            if (storedLocation) {
+              try {
+                setSelectedLocation(JSON.parse(storedLocation));
+              } catch (e) {
+                console.error('Invalid stored location');
+              }
+            } else if (userData.assignedLocation) {
+              setSelectedLocation(userData.assignedLocation);
+            } else if (userData.accessibleLocations?.length > 0) {
+              setSelectedLocation(userData.accessibleLocations[0]);
+            }
+
+            initializeSocket(userData._id);
+          } catch (error) {
+            console.error('Session expired or invalid');
+            Cookies.remove('token');
+            Cookies.remove('user');
+            Cookies.remove('selectedLocation');
+            setUser(null);
           }
-
-          initializeSocket(userData._id);
-        } catch (error) {
-          console.error('Session expired or invalid');
-          Cookies.remove('token');
-          Cookies.remove('user');
-          Cookies.remove('selectedLocation');
-          setUser(null);
         }
+      } catch (err) {
+        console.error('Auth check critical failure', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();
@@ -86,8 +95,10 @@ export const AuthProvider = ({ children }) => {
 
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
-      } else if (userData.role === 'location_admin') {
-        router.push('/dashboard/location-admin');
+      } else if (userData.role === 'branch_admin') {
+        router.push('/dashboard/branch-admin');
+      } else if (userData.role === 'chef') {
+        router.push('/dashboard/chef');
       } else {
         router.push('/dashboard/staff');
       }
@@ -116,8 +127,74 @@ export const AuthProvider = ({ children }) => {
 
   const [globalSearch, setGlobalSearch] = useState('');
 
+  const impersonate = async (userId, viewOnly = false) => {
+    try {
+      const res = await api.post(`/auth/impersonate/${userId}`, { viewOnly });
+      const { token, ...userData } = res.data.data;
+
+      Cookies.set('token', token, { expires: 30 });
+      Cookies.set('user', JSON.stringify(userData), { expires: 30 });
+
+      setUser(userData);
+      
+      const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
+      if (initialLoc) {
+        setSelectedLocation(initialLoc);
+        Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
+      }
+
+      if (socket) {
+        socket.disconnect();
+      }
+      initializeSocket(userData._id);
+
+      if (userData.role === 'super_admin' || userData.role === 'admin') {
+        router.push('/dashboard/admin');
+      } else if (userData.role === 'branch_admin') {
+        router.push('/dashboard/branch-admin');
+      } else if (userData.role === 'chef') {
+        router.push('/dashboard/chef');
+      } else {
+        router.push('/dashboard/staff');
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Impersonation failed' };
+    }
+  };
+
+  const exitImpersonation = async () => {
+    try {
+      const res = await api.post('/auth/exit-impersonation');
+      const { token, ...userData } = res.data.data;
+
+      Cookies.set('token', token, { expires: 30 });
+      Cookies.set('user', JSON.stringify(userData), { expires: 30 });
+
+      setUser(userData);
+      
+      const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
+      if (initialLoc) {
+        setSelectedLocation(initialLoc);
+        Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
+      }
+
+      if (socket) {
+        socket.disconnect();
+      }
+      initializeSocket(userData._id);
+
+      router.push('/dashboard/admin/users');
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Failed to exit impersonation' };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, selectedLocation, switchLocation, globalSearch, setGlobalSearch, loading, login, logout, socket }}>
+    <AuthContext.Provider value={{ user, setUser, selectedLocation, switchLocation, globalSearch, setGlobalSearch, loading, login, logout, socket, impersonate, exitImpersonation }}>
       {children}
     </AuthContext.Provider>
   );

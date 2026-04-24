@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 
 export default function SalaryPage() {
@@ -153,8 +154,7 @@ export default function SalaryPage() {
                   <tr className="bg-gray-50/30 dark:bg-zinc-800/30 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
                     <th className="px-10 py-6">Staff Information</th>
                     <th className="px-10 py-6 text-center">Log Analysis</th>
-                    <th className="px-10 py-6 text-center">Base Rate</th>
-                    <th className="px-10 py-6 text-right">Net Payable</th>
+                    <th className="px-10 py-6 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -217,17 +217,13 @@ export default function SalaryPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-8 text-center">
-                        <div className="text-sm font-black text-gray-900 dark:text-zinc-100">₹{item.monthlySalary.toLocaleString()}</div>
-                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Contract Value</div>
-                      </td>
                       <td className="px-10 py-8 text-right">
-                        <div className="text-2xl font-black text-gray-900 dark:text-zinc-100 group-hover:scale-110 transition-transform origin-right tracking-tighter">
-                          ₹{Math.round(item.calculatedSalary).toLocaleString()}
-                        </div>
-                        <div className="flex items-center justify-end text-[10px] font-black text-green-500 uppercase tracking-widest mt-2 group-hover:translate-x-[-4px] transition-transform">
-                          Ready for disbursement <ArrowRight size={12} className="ml-2" />
-                        </div>
+                        <button 
+                          onClick={() => setViewingUser(item)}
+                          className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
+                        >
+                          View Breakdown
+                        </button>
                       </td>
                     </motion.tr>
                   ))}
@@ -241,7 +237,7 @@ export default function SalaryPage() {
         <Modal
           isOpen={!!viewingUser}
           onClose={() => setViewingUser(null)}
-          title="Personnel Remuneration Dossier"
+          title="Personnel Remuneration Details"
           maxWidth="max-w-2xl"
         >
           {viewingUser && (
@@ -256,7 +252,7 @@ export default function SalaryPage() {
                     <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-2">{viewingUser.email}</p>
                     <div className="flex items-center gap-2 mt-3">
                       <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 rounded-full">
-                        Regular Staff
+                        {viewingUser.role?.replace('_', ' ')}
                       </span>
                       <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
                         Verified Identity
@@ -325,7 +321,7 @@ export default function SalaryPage() {
                   className="flex-1 py-4 !rounded-2xl font-black text-xs uppercase tracking-widest"
                   onClick={() => setViewingUser(null)}
                 >
-                  Close Dossier
+                  Close 
                 </Button>
                 <Button
                   className="flex-1 py-4 !rounded-2xl font-black text-xs uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xl"

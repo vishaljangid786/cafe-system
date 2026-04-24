@@ -5,6 +5,9 @@ const connectDB = require('./config/db');
 // Connect to database
 connectDB();
 
+const { initScheduler } = require('./utils/scheduler');
+initScheduler();
+
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
@@ -17,10 +20,23 @@ const io = require('./config/socket').init(server);
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  // Each user joins a room with their user ID to receive targeted notifications
-  socket.on('join_room', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined room`);
+  // Advanced session management with branch and role scoping
+  socket.on('join_session', ({ userId, branchId, role }) => {
+    // 1. Personal Room
+    if (userId) socket.join(userId);
+    
+    // 2. Branch Room (Everyone in the branch)
+    if (branchId) socket.join(`branch_${branchId}`);
+    
+    // 3. Role Room (Global role-based)
+    if (role) socket.join(`role_${role}`);
+    
+    // 4. Targeted Intersection (Branch + Role)
+    if (branchId && role) {
+      socket.join(`branch_${branchId}_${role}`);
+    }
+    
+    console.log(`User ${userId} (${role}) initialized session for branch ${branchId}`);
   });
 
   socket.on('disconnect', () => {

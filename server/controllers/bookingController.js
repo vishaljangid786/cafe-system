@@ -122,8 +122,8 @@ const getBookings = asyncHandler(async (req, res) => {
   if (date) query.date = new Date(date);
   if (status) query.status = status;
 
-  // For location admins, restrict to their assigned location
-  if (req.user.role === 'location_admin') {
+  // For branch admins, restrict to their assigned location
+  if (req.user.role === 'branch_admin') {
     query.locationId = req.user.assignedLocation;
   }
 
@@ -148,8 +148,8 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Booking not found' });
   }
 
-  // Location admin check
-  if (req.user.role === 'location_admin' && booking.locationId._id.toString() !== req.user.assignedLocation.toString()) {
+  // Branch admin check
+  if (req.user.role === 'branch_admin' && booking.locationId._id.toString() !== req.user.assignedLocation.toString()) {
     return res.status(403).json({ success: false, message: 'Not authorized to update this booking' });
   }
 

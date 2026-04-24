@@ -1,6 +1,8 @@
 const Location = require('../models/Location');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const mongoose = require('mongoose');
 
 // @desc    Get all locations
 // @route   GET /api/locations
@@ -13,18 +15,46 @@ const getLocations = asyncHandler(async (req, res) => {
   if (city) query.city = city;
 
   // Filter based on user access
-  if (req.user.role === 'location_admin' || req.user.role === 'staff') {
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
     query._id = req.user.assignedLocation;
   } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
     query._id = { $in: req.user.accessibleLocations };
   }
 
-  const locations = await Location.find(query).populate('createdBy', 'name email');
+  // 1. Fetch Locations
+  const locations = await Location.find(query).populate('createdBy', 'name email').lean();
+
+  // 2. Fetch Personnel Counts for these locations
+  const locationIds = locations.map(l => l._id);
+  const personnelCounts = await User.aggregate([
+    {
+      $match: {
+        assignedLocation: { $in: locationIds }
+      }
+    },
+    {
+      $group: {
+        _id: '$assignedLocation',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // 3. Map counts to locations
+  const countMap = personnelCounts.reduce((acc, curr) => {
+    acc[curr._id.toString()] = curr.count;
+    return acc;
+  }, {});
+
+  const data = locations.map(loc => ({
+    ...loc,
+    personnelCount: countMap[loc._id.toString()] || 0
+  }));
 
   res.json({
     success: true,
-    count: locations.length,
-    data: locations,
+    count: data.length,
+    data: data,
   });
 });
 
@@ -32,7 +62,7 @@ const getLocations = asyncHandler(async (req, res) => {
 // @route   POST /api/locations
 // @access  Private (Admin, Super Admin)
 const createLocation = asyncHandler(async (req, res) => {
-  const { name, city, state, country, pincode, geoCoordinates } = req.body;
+  const { name, city, state, country, pincode, geoCoordinates, dietaryType } = req.body;
 
   const locationExists = await Location.findOne({ city, name });
   if (locationExists) {
@@ -47,8 +77,16 @@ const createLocation = asyncHandler(async (req, res) => {
     country,
     pincode,
     geoCoordinates,
+    dietaryType,
     createdBy: req.user._id,
   });
+
+  // If an Admin creates a location, automatically add it to their accessible list
+  if (req.user.role === 'admin') {
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { accessibleLocations: location._id }
+    });
+  }
 
   await sendNotification({
     title: 'New Location Created',
@@ -67,7 +105,7 @@ const createLocation = asyncHandler(async (req, res) => {
 // @route   PATCH /api/locations/:id
 // @access  Private (Admin, Super Admin)
 const updateLocation = asyncHandler(async (req, res) => {
-  const { name, city, state, country, pincode, geoCoordinates, status, holdReason } = req.body;
+  const { name, city, state, country, pincode, geoCoordinates, status, holdReason, dietaryType } = req.body;
 
   const location = await Location.findById(req.params.id);
 
@@ -82,6 +120,7 @@ const updateLocation = asyncHandler(async (req, res) => {
   if (country) location.country = country;
   if (pincode) location.pincode = pincode;
   if (geoCoordinates) location.geoCoordinates = geoCoordinates;
+  if (dietaryType) location.dietaryType = dietaryType;
   
   if (status) {
     location.status = status;

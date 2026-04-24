@@ -2,15 +2,27 @@ const mongoose = require('mongoose');
 const Table = require('../models/Table');
 const Expense = require('../models/Expense');
 const Location = require('../models/Location');
+const Attendance = require('../models/Attendance');
+const Transaction = require('../models/Transaction');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Helper to get match criteria based on time filters
-const getDateMatchCriteria = (startDate, endDate) => {
+const getDateMatchCriteria = (startDate, endDate, period, field = 'createdAt') => {
   const match = {};
-  if (startDate || endDate) {
-    match.createdAt = {};
-    if (startDate) match.createdAt.$gte = new Date(startDate);
-    if (endDate) match.createdAt.$lte = new Date(endDate);
+  if (period) {
+    let days;
+    if (period === 'week') days = 7;
+    else if (period === 'month') days = 30;
+    else if (period === 'year') days = 365;
+    else days = parseInt(period);
+
+    if (!isNaN(days)) {
+      match[field] = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
+    }
+  } else if (startDate || endDate) {
+    match[field] = {};
+    if (startDate) match[field].$gte = new Date(startDate);
+    if (endDate) match[field].$lte = new Date(endDate);
   }
   return match;
 };
@@ -20,7 +32,7 @@ const getDateMatchCriteria = (startDate, endDate) => {
 // @access  Private
 const getLocationAnalytics = asyncHandler(async (req, res) => {
   const { startDate, endDate, locationId } = req.query;
-  const targetLocation = req.user.role === 'location_admin' ? req.user.assignedLocation : locationId;
+  const targetLocation = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
 
   if (!targetLocation) {
     res.status(400);
@@ -130,53 +142,77 @@ const compareLocations = asyncHandler(async (req, res) => {
 // @desc    Get advanced analytics for charts
 const getAdvancedAnalytics = asyncHandler(async (req, res) => {
   const { startDate, endDate, locationId } = req.query;
-  const matchCriteria = { type: 'income' };
+  let targetLocation = locationId;
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
+    targetLocation = req.user.assignedLocation;
+  }
   
-  if (locationId) {
-    matchCriteria.locationId = new mongoose.Types.ObjectId(locationId);
-  } else if (req.user.role === 'location_admin') {
-    matchCriteria.locationId = new mongoose.Types.ObjectId(req.user.assignedLocation);
+  let match = {};
+  if (targetLocation && targetLocation !== 'all') {
+    try {
+      match = { locationId: new mongoose.Types.ObjectId(targetLocation) };
+    } catch (e) {
+      console.error("Invalid locationId in analytics:", targetLocation);
+    }
   }
+  
+  const dateMatch = getDateMatchCriteria(startDate, endDate, null, 'date');
+  const transactionMatch = { ...match, ...dateMatch };
+  const expenseMatch = { ...match, ...dateMatch, type: 'expense' };
 
-  const dateMatch = getDateMatchCriteria(startDate, endDate);
-  // Expense uses 'date' field instead of 'createdAt' for fiscal records
-  if (dateMatch.createdAt) {
-    matchCriteria.date = dateMatch.createdAt;
-  }
-
-  // 1. Revenue & Orders Over Time (Daily) from Expenses
-  const timeSeriesAgg = await Expense.aggregate([
-    { $match: matchCriteria },
+  // 1. Transaction Aggregation (Revenue, Profit, Orders)
+  const transactionAgg = await Transaction.aggregate([
+    { $match: { ...transactionMatch, type: { $ne: 'expense' } } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-        revenue: { $sum: "$amount" },
-        orders: { $sum: 1 }
+        revenue: { $sum: "$totalAmount" },
+        profit: { $sum: "$totalProfit" },
+        orders: { $sum: { $cond: [{ $eq: ["$type", "pos_revenue"] }, 1, 0] } }
       }
     },
     { $sort: { "_id": 1 } }
   ]);
 
-  // 2. Summary Stats from Expenses
-  const summaryAgg = await Expense.aggregate([
-    { $match: matchCriteria },
+  // 2. Expense Aggregation (Operational Costs)
+  const expenseAgg = await Transaction.aggregate([
+    { $match: { ...transactionMatch, type: 'expense' } },
     {
       $group: {
-        _id: null,
-        totalRevenue: { $sum: "$amount" },
-        totalOrders: { $sum: 1 },
-        avgOrderValue: { $avg: "$amount" }
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+        expenses: { $sum: "$totalAmount" }
       }
-    }
+    },
+    { $sort: { "_id": 1 } }
   ]);
 
-  // 3. Staff Performance from Expenses
-  const staffAgg = await Expense.aggregate([
-    { $match: matchCriteria },
+  // 3. Merge Time Series
+  const dates = Array.from(new Set([...transactionAgg.map(t => t._id), ...expenseAgg.map(e => e._id)])).sort();
+  const timeSeries = dates.map(date => {
+    const t = transactionAgg.find(item => item._id === date) || { revenue: 0, profit: 0, orders: 0 };
+    const e = expenseAgg.find(item => item._id === date) || { expenses: 0 };
+    return {
+      date,
+      revenue: t.revenue,
+      profit: t.profit,
+      expenses: e.expenses,
+      orders: t.orders
+    };
+  });
+
+  // 4. Summary Stats (Calculate directly from aggregation results for precision)
+  const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
+  const totalProfit = transactionAgg.reduce((acc, curr) => acc + curr.profit, 0);
+  const totalOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
+  const totalExpenses = expenseAgg.reduce((acc, curr) => acc + curr.expenses, 0);
+
+  // 5. Staff Performance (from Transactions)
+  const staffAgg = await Transaction.aggregate([
+    { $match: transactionMatch },
     {
       $lookup: {
         from: "users",
-        localField: "createdBy",
+        localField: "staffId",
         foreignField: "_id",
         as: "staff"
       }
@@ -185,32 +221,81 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: "$staff.name",
-        totalRevenue: { $sum: "$amount" },
+        revenue: { $sum: "$totalAmount" },
         totalOrders: { $sum: 1 }
       }
     },
-    { $sort: { totalRevenue: -1 } }
+    { $sort: { revenue: -1 } }
   ]);
 
-  // 4. Category Sales (This still needs Table/MenuItem data, but we can try to fetch from recent completed tables or a better way)
-  // For now, let's keep it from Table but we should really have an Order model for this.
-  // Given the current architecture, I'll fall back to Table for category sales but revenue is now from Expense.
-  const tableMatch = { status: 'available', totalAmount: 0 }; // This is wrong because completed tables are available
-  // Wait, if tables are reset, we can't get category sales from them easily unless we store it elsewhere.
-  // I will use a dummy/empty array for now to prevent crash, and we'll fix table completion to store this.
-  
+  // 6. Category Sales (from Transactions)
+  const categoryAgg = await Transaction.aggregate([
+    { $match: transactionMatch },
+    { $unwind: "$orders" },
+    {
+      $lookup: {
+        from: "menuitems",
+        localField: "orders.menuItemId",
+        foreignField: "_id",
+        as: "menuItem"
+      }
+    },
+    { $unwind: "$menuItem" },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "menuItem.category",
+        foreignField: "_id",
+        as: "category"
+      }
+    },
+    { $unwind: "$category" },
+    {
+      $group: {
+        _id: "$category.name",
+        value: { $sum: { $multiply: ["$orders.price", "$orders.quantity"] } },
+        count: { $sum: "$orders.quantity" }
+      }
+    },
+    { $sort: { value: -1 } },
+    { $limit: 10 }
+  ]);
+
+  // 7. Recent Expenditures
+  const recentExpenses = await Transaction.find({ ...transactionMatch, type: 'expense' })
+    .sort({ date: -1, createdAt: -1 })
+    .limit(5)
+    .populate('locationId', 'name city')
+    .populate('createdBy', 'name');
+
+  // 8. Recent Revenues
+  const recentRevenues = await Transaction.find({ ...transactionMatch, type: { $in: ['pos_revenue', 'manual_revenue'] } })
+    .sort({ date: -1, createdAt: -1 })
+    .limit(5)
+    .populate('locationId', 'name city')
+    .populate('staffId', 'name')
+    .populate('createdBy', 'name');
+
   res.json({
     success: true,
     data: {
-      timeSeries: timeSeriesAgg.map(t => ({ date: t._id, revenue: t.revenue, orders: t.orders })),
-      categorySales: [], // To be fixed by adding breakdown to Expense
-      staffPerformance: staffAgg.map(s => ({ name: s._id, revenue: s.totalRevenue, orders: s.totalOrders })),
-      summary: summaryAgg[0] || { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0 }
+      timeSeries,
+      categorySales: categoryAgg.map(c => ({ name: c._id, value: c.value, count: c.count })),
+      staffPerformance: staffAgg.map(s => ({ name: s._id, revenue: s.revenue, totalOrders: s.totalOrders })),
+      recentExpenses,
+      recentRevenues,
+      summary: {
+        totalRevenue,
+        totalExpenses,
+        totalOrders,
+        avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+        netProfit: totalProfit - totalExpenses
+      }
     }
   });
 });
 
-const Transaction = require('../models/Transaction');
+
 
 // @desc    Compare multiple locations across key metrics
 // @route   GET /api/analytics/location-comparison
@@ -218,15 +303,7 @@ const getLocationComparison = asyncHandler(async (req, res) => {
   const { locationIds, startDate, endDate, period } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
   
-  const dateMatch = {};
-  if (period) {
-    const days = parseInt(period);
-    dateMatch.date = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
-  } else if (startDate || endDate) {
-    dateMatch.date = {};
-    if (startDate) dateMatch.date.$gte = new Date(startDate);
-    if (endDate) dateMatch.date.$lte = new Date(endDate);
-  }
+  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
 
   const transactionAgg = await Transaction.aggregate([
     { $match: { locationId: { $in: ids }, ...dateMatch } },
@@ -273,15 +350,12 @@ const getLocationComparison = asyncHandler(async (req, res) => {
 // @desc    Identify most profitable location
 // @route   GET /api/analytics/top-locations
 const getTopLocations = asyncHandler(async (req, res) => {
-  const { startDate, endDate, period } = req.query;
-  const dateMatch = {};
-  if (period) {
-    const days = parseInt(period);
-    dateMatch.date = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
-  } else if (startDate || endDate) {
-    dateMatch.date = {};
-    if (startDate) dateMatch.date.$gte = new Date(startDate);
-    if (endDate) dateMatch.date.$lte = new Date(endDate);
+  const { startDate, endDate, period, locationIds } = req.query;
+  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
+  
+  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
+  if (ids.length > 0) {
+    dateMatch.locationId = { $in: ids };
   }
 
   const transactionAgg = await Transaction.aggregate([
@@ -309,16 +383,32 @@ const getTopLocations = asyncHandler(async (req, res) => {
 // @desc    Track trending and most sold items
 // @route   GET /api/analytics/trending-items
 const getTrendingItems = asyncHandler(async (req, res) => {
-  const { locationId, period = 7 } = req.query; // period in days
-  const now = new Date();
-  const currentPeriodStart = new Date(now.setDate(now.getDate() - period));
-  const previousPeriodStart = new Date(new Date(currentPeriodStart).setDate(currentPeriodStart.getDate() - period));
+  const { locationId, locationIds, period = 7, startDate, endDate } = req.query;
+  
+  let currentPeriodStart, currentPeriodEnd, previousPeriodStart;
 
-  const matchCriteria = locationId ? { locationId: new mongoose.Types.ObjectId(locationId) } : {};
+  if (startDate || endDate) {
+    currentPeriodEnd = endDate ? new Date(endDate) : new Date();
+    currentPeriodStart = startDate ? new Date(startDate) : new Date(currentPeriodEnd);
+    if (!startDate) currentPeriodStart.setDate(currentPeriodEnd.getDate() - 7);
+    
+    const duration = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
+    previousPeriodStart = new Date(currentPeriodStart.getTime() - duration);
+  } else {
+    const days = period === 'week' ? 7 : (period === 'month' ? 30 : (period === 'year' ? 365 : parseInt(period)));
+    currentPeriodEnd = new Date();
+    currentPeriodStart = new Date();
+    currentPeriodStart.setDate(currentPeriodEnd.getDate() - days);
+    previousPeriodStart = new Date();
+    previousPeriodStart.setDate(currentPeriodStart.getDate() - days);
+  }
+
+  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : (locationId ? [new mongoose.Types.ObjectId(locationId)] : []);
+  const matchCriteria = ids.length > 0 ? { locationId: { $in: ids } } : {};
 
   // Current Period Sales
   const currentSales = await Transaction.aggregate([
-    { $match: { ...matchCriteria, date: { $gte: currentPeriodStart } } },
+    { $match: { ...matchCriteria, date: { $gte: currentPeriodStart, $lte: currentPeriodEnd } } },
     { $unwind: "$orders" },
     { 
       $group: { 
@@ -358,8 +448,16 @@ const getTrendingItems = asyncHandler(async (req, res) => {
 // @desc    Detect underperforming locations
 // @route   GET /api/analytics/underperforming-locations
 const getUnderperformingLocations = asyncHandler(async (req, res) => {
+  const { startDate, endDate, period, locationIds } = req.query;
+  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
+  
+  const dateMatch = getDateMatchCriteria(startDate, endDate, period || 30, 'date');
+  if (ids.length > 0) {
+    dateMatch.locationId = { $in: ids };
+  }
+
   const transactionAgg = await Transaction.aggregate([
-    { $match: { date: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } }, // Last 30 days
+    { $match: dateMatch }, // Use dynamic date filter
     {
       $group: {
         _id: "$locationId",
@@ -438,6 +536,173 @@ const getProductPerformance = asyncHandler(async (req, res) => {
   res.json({ success: true, data: performanceAgg });
 });
 
+// @desc    Get detailed comparison between locations (staff, items, winners)
+// @route   GET /api/analytics/comparison-details
+const getComparisonDetails = asyncHandler(async (req, res) => {
+  const { locationIds, startDate, endDate, period } = req.query;
+  if (!locationIds) {
+    return res.status(400).json({ success: false, message: "Location IDs are required" });
+  }
+
+  const ids = locationIds.split(',').map(id => new mongoose.Types.ObjectId(id));
+  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
+
+  // 1. Staff-Item Breakdown for each location
+  const detailedAgg = await Transaction.aggregate([
+    { $match: { locationId: { $in: ids }, ...dateMatch } },
+    { $unwind: "$orders" },
+    {
+      $lookup: {
+        from: "users",
+        localField: "staffId",
+        foreignField: "_id",
+        as: "staff"
+      }
+    },
+    { $unwind: "$staff" },
+    {
+      $group: {
+        _id: {
+          locationId: "$locationId",
+          staffId: "$staffId",
+          staffName: "$staff.name",
+          itemId: "$orders.menuItemId",
+          itemName: "$orders.itemName"
+        },
+        quantity: { $sum: "$orders.quantity" },
+        revenue: { $sum: { $multiply: ["$orders.price", "$orders.quantity"] } }
+      }
+    },
+    { $sort: { quantity: -1 } }
+  ]);
+
+  // 3. Attendance Aggregation
+  const attendanceAgg = await Attendance.aggregate([
+    { $match: { locationId: { $in: ids }, date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } },
+    {
+      $group: {
+        _id: { locationId: "$locationId", status: "$status" },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // 4. Format data by location
+  const results = ids.map(id => {
+    const locData = detailedAgg.filter(d => d._id.locationId.equals(id));
+    const locAttendance = attendanceAgg.filter(a => a._id.locationId.equals(id));
+    
+    const attendanceStats = {
+      present: locAttendance.find(a => a._id.status === 'present')?.count || 0,
+      absent: locAttendance.find(a => a._id.status === 'absent')?.count || 0,
+      halfDay: locAttendance.find(a => a._id.status === 'half-day')?.count || 0
+    };
+    const totalAttendance = attendanceStats.present + attendanceStats.absent + attendanceStats.halfDay;
+    attendanceStats.rate = totalAttendance > 0 ? ((attendanceStats.present / totalAttendance) * 100).toFixed(1) : 0;
+
+    // Group by staff
+    const staffBreakdown = [];
+    locData.forEach(d => {
+      let staff = staffBreakdown.find(s => s.staffId.equals(d._id.staffId));
+      if (!staff) {
+        staff = { staffId: d._id.staffId, name: d._id.staffName, items: [] };
+        staffBreakdown.push(staff);
+      }
+      staff.items.push({
+        itemId: d._id.itemId,
+        name: d._id.itemName,
+        quantity: d.quantity,
+        revenue: d.revenue
+      });
+    });
+
+    return {
+      locationId: id,
+      staffSales: staffBreakdown,
+      topItem: locData[0] ? { name: locData[0]._id.itemName, quantity: locData[0].quantity } : null,
+      attendance: attendanceStats
+    };
+  });
+
+  res.json({ success: true, data: results });
+});
+
+// @desc    Get intelligence for a single location hub
+// @route   GET /api/analytics/location-intelligence/:id
+// @access  Private (Admin, Super Admin)
+const getLocationIntelligence = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  // 1. Fiscal Performance (Current Month)
+  const financialStats = await Transaction.aggregate([
+    {
+      $match: {
+        locationId: new mongoose.Types.ObjectId(id),
+        date: { $gte: startOfMonth },
+        status: 'completed'
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        revenue: { $sum: '$totalAmount' },
+        profit: { $sum: '$totalProfit' }
+      }
+    }
+  ]);
+
+  // 2. Expense Metrics
+  const expenseStats = await Expense.aggregate([
+    {
+      $match: {
+        locationId: new mongoose.Types.ObjectId(id),
+        date: { $gte: startOfMonth },
+        status: 'approved'
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  // 3. Workforce Stability (Attendance Rate)
+  const attendanceStats = await Attendance.aggregate([
+    {
+      $match: {
+        locationId: new mongoose.Types.ObjectId(id),
+        date: { $gte: startOfMonth }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        present: { $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] } },
+        total: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const stats = {
+    revenue: financialStats[0]?.revenue || 0,
+    profit: financialStats[0]?.profit || 0,
+    expenses: expenseStats[0]?.total || 0,
+    attendanceRate: attendanceStats[0]?.total > 0 
+      ? (attendanceStats[0].present / attendanceStats[0].total) * 100 
+      : 100
+  };
+
+  res.json({
+    success: true,
+    data: stats
+  });
+});
+
 module.exports = {
   getLocationAnalytics,
   getAllAnalytics,
@@ -447,5 +712,7 @@ module.exports = {
   getTopLocations,
   getTrendingItems,
   getUnderperformingLocations,
-  getProductPerformance
+  getProductPerformance,
+  getComparisonDetails,
+  getLocationIntelligence
 };

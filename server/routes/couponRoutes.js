@@ -14,14 +14,14 @@ const { couponSchema, validate } = require('../middlewares/validateMiddleware');
 router.use(verifyToken);
 
 router.route('/')
-  .get(authorizeRoles('super_admin', 'admin', 'location_admin'), getCoupons)
-  .post(authorizeRoles('super_admin', 'admin'), couponSchema, validate, createCoupon);
+  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getCoupons)
+  .post(authorizeRoles('super_admin', 'admin'), ...couponSchema, validate, createCoupon);
 
 router.post('/apply', applyCoupon);
 
 router.route('/:id')
   .get(getCoupon)
-  .put(authorizeRoles('super_admin', 'admin'), couponSchema, validate, updateCoupon)
+  .put(authorizeRoles('super_admin', 'admin'), ...couponSchema, validate, updateCoupon)
   .delete(authorizeRoles('super_admin', 'admin'), deleteCoupon);
 
 module.exports = router;

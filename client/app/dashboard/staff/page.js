@@ -63,7 +63,7 @@ export default function StaffDashboard() {
                   Time Logs
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-zinc-500 font-medium leading-relaxed flex-grow">
-                  Attendance is recorded by your Location Admin. Review your monthly presence and salary disbursements through notifications.
+                  Attendance is recorded by your Branch Admin. Review your monthly presence and salary disbursements through notifications.
                 </p>
                 <div className="mt-8 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] w-fit">
                   Auto-Sync Enabled

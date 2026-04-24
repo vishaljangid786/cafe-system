@@ -20,6 +20,16 @@ const verifyToken = asyncHandler(async (req, res, next) => {
         throw new Error('Not authorized, user not found');
       }
 
+      if (decoded.impersonatedBy) {
+        req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
+        
+        // Enterprise: View-only restriction
+        if (decoded.isViewOnly && req.method !== 'GET') {
+          res.status(403);
+          throw new Error('Action restricted: View-only impersonation mode is active');
+        }
+      }
+
       next();
     } catch (error) {
       res.status(401);

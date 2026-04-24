@@ -14,15 +14,15 @@ const { bookingSchema, validate } = require('../middlewares/validateMiddleware')
 router.get('/check-availability', verifyToken, checkAvailability);
 
 // Create a booking (any logged-in user)
-router.post('/', verifyToken, bookingSchema, validate, createBooking);
+router.post('/', verifyToken, ...bookingSchema, validate, createBooking);
 
 // Get user's own bookings
 router.get('/my', verifyToken, getUserBookings);
 
 // Get all bookings (Admin/Location Admin)
-router.get('/', verifyToken, authorizeRoles('super_admin', 'admin', 'location_admin'), getBookings);
+router.get('/', verifyToken, authorizeRoles('super_admin', 'admin', 'branch_admin'), getBookings);
 
 // Update booking status (Admin/Location Admin)
-router.patch('/:id/status', verifyToken, authorizeRoles('super_admin', 'admin', 'location_admin'), updateBookingStatus);
+router.patch('/:id/status', verifyToken, authorizeRoles('super_admin', 'admin', 'branch_admin'), updateBookingStatus);
 
 module.exports = router;

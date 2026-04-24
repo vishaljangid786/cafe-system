@@ -6,13 +6,27 @@ import { Button } from '../ui/Button';
 import Modal from '../ui/Modal';
 import toast from 'react-hot-toast';
 
-export default function BillPreview({ isOpen, onClose, onComplete, table, cafeName = "CafeOS" }) {
+export default function BillPreview({ isOpen, onClose, onComplete, table, systemOrders = [], cafeName = "CafeOS" }) {
   const billRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const subtotal = table?.orders?.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0) || 0;
+  // Combine staged items and completed system orders for the final bill
+  const stagedItems = table?.orders || [];
+  const finalizedOrders = systemOrders.filter(o => o.status === 'COMPLETED');
+  
+  const allBillableItems = [
+    ...stagedItems,
+    ...finalizedOrders.flatMap(o => o.items.map(i => ({
+      itemName: i.itemName,
+      quantity: i.quantity,
+      price: i.price
+    })))
+  ];
+
+  const subtotal = allBillableItems.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
   const discount = table?.discountAmount || 0;
-  const total = Math.max(0, subtotal - discount);
+  const taxes = Number((subtotal * 0.05).toFixed(2)); // 5% GST
+  const total = Math.max(0, subtotal + taxes - discount);
   const billId = `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   const dateTime = new Date().toLocaleString();
 
@@ -213,7 +227,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, cafeNa
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {table.orders?.map((item, i) => (
+                {allBillableItems.map((item, i) => (
                   <tr key={i}>
                     <td className="py-2 uppercase font-bold">{item.itemName}</td>
                     <td className="py-2 text-center">{item.quantity}</td>
@@ -229,6 +243,10 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, cafeNa
               <div className="flex justify-between">
                 <span>SUBTOTAL:</span>
                 <span>₹{subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>TAX (GST 5%):</span>
+                <span>₹{taxes.toLocaleString()}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-rose-600">

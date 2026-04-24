@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, HdIcon } from 'lucide-react';
 
 export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amber', delay = 0 }) => {
   const colorMap = {
@@ -20,7 +20,7 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
     >
       <div className="flex justify-between items-start relative z-10">
         <div className={`p-2.5 rounded-xl border bg-gradient-to-br ${colorMap[color]} group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
-          <Icon size={20} />
+          <HdIcon size={20} />
         </div>
 
         {trend && (

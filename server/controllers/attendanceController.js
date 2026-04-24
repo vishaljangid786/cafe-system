@@ -1,6 +1,7 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const Location = require('../models/Location');
+const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 
@@ -12,7 +13,7 @@ const isValidDate = (dateString) => {
 
 // @desc    Mark daily attendance
 // @route   POST /api/attendance/mark
-// @access  Private (Location Admin)
+// @access  Private (Branch Admin)
 const markAttendance = asyncHandler(async (req, res) => {
   const { userId, date, status } = req.body;
 
@@ -28,10 +29,10 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('Cannot mark attendance for future dates');
   }
 
-  // Location Admins can only mark for today
-  if (req.user.role === 'location_admin' && date !== today) {
+  // Branch Admins can only mark for today
+  if (req.user.role === 'branch_admin' && date !== today) {
     res.status(403);
-    throw new Error('Location Admins can only mark or edit attendance for the current day. Contact Admin for past corrections.');
+    throw new Error('Branch Admins can only mark or edit attendance for the current day. Contact Admin for past corrections.');
   }
 
   // Validate user
@@ -41,8 +42,8 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Ensure location admin is marking for their own location
-  if (req.user.role === 'location_admin' && staff.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
+  // Ensure branch admin is marking for their own location
+  if (req.user.role === 'branch_admin' && staff.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
     throw new Error('Not authorized to mark attendance for personnel of another location');
   }
@@ -82,10 +83,10 @@ const markAttendance = asyncHandler(async (req, res) => {
 
 // @desc    Get attendance for a specific location
 // @route   GET /api/attendance/location
-// @access  Private (Location Admin, Admin, Super Admin)
+// @access  Private (Branch Admin, Admin, Super Admin)
 const getLocationAttendance = asyncHandler(async (req, res) => {
   const { date, month, locationId } = req.query;
-  const targetLocationId = req.user.role === 'location_admin' ? req.user.assignedLocation : locationId;
+  const targetLocationId = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
 
   if (!targetLocationId) {
     res.status(400);
@@ -114,11 +115,12 @@ const getLocationAttendance = asyncHandler(async (req, res) => {
 // @route   GET /api/attendance/all
 // @access  Private (Admin, Super Admin)
 const getAllAttendance = asyncHandler(async (req, res) => {
-  const { date, month, userId } = req.query;
+  const { date, month, userId, locationId } = req.query;
   
   let query = {};
   
   if (userId) query.user = userId;
+  if (locationId && locationId !== 'All') query.locationId = locationId;
   if (date) query.date = date;
   else if (month) query.date = { $regex: `^${month}` };
 
@@ -141,15 +143,23 @@ const getAllAttendance = asyncHandler(async (req, res) => {
 // @route   GET /api/attendance/monthly-summary
 // @access  Private (Admin, Super Admin)
 const getMonthlySummary = asyncHandler(async (req, res) => {
-  const { month } = req.query; // Format YYYY-MM
+  const { month, locationId } = req.query; // Format YYYY-MM
   if (!month) {
     res.status(400);
     throw new Error('Month parameter (YYYY-MM) is required');
   }
 
+  let userMatch = { role: 'staff' };
+  let attendanceMatch = { date: { $regex: `^${month}` } };
+
+  if (locationId && locationId !== 'All') {
+    userMatch.assignedLocation = new mongoose.Types.ObjectId(locationId);
+    attendanceMatch.locationId = new mongoose.Types.ObjectId(locationId);
+  }
+
   // 1. Get location-wise staff count & total monthly salaries
   const userAgg = await User.aggregate([
-    { $match: { role: 'staff' } },
+    { $match: userMatch },
     { $group: { 
         _id: '$assignedLocation', 
         totalStaff: { $sum: 1 },
@@ -160,7 +170,7 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
 
   // 2. Get attendance counts per location for the month
   const attendanceAgg = await Attendance.aggregate([
-    { $match: { date: { $regex: `^${month}` } } },
+    { $match: attendanceMatch },
     { $group: {
         _id: '$locationId',
         totalPresent: { $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] } },
@@ -193,9 +203,26 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   });
 });
 
+const getMyAttendance = asyncHandler(async (req, res) => {
+  const { month, startDate, endDate } = req.query;
+  let query = { user: req.user._id };
+  
+  if (month) {
+    query.date = { $regex: `^${month}` };
+  } else if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = startDate;
+    if (endDate) query.date.$lte = endDate;
+  }
+
+  const attendance = await Attendance.find(query).sort({ date: -1 });
+  res.json({ success: true, count: attendance.length, data: attendance });
+});
+
 module.exports = {
   markAttendance,
   getLocationAttendance,
   getAllAttendance,
   getMonthlySummary,
+  getMyAttendance
 };

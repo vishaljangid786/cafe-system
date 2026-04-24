@@ -1,0 +1,340 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Coffee, 
+  ChefHat, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle, 
+  MessageSquare, 
+  Plus, 
+  Trash2, 
+  ChevronRight,
+  Zap,
+  Timer,
+  UtensilsCrossed,
+  ArrowRight,
+  Loader2,
+  RefreshCcw
+} from 'lucide-react';
+import { useAuth } from '@/app/context/AuthContext';
+import api from '@/app/services/api';
+import toast from 'react-hot-toast';
+import { PageTransition, SlideIn } from '../../components/ui/AnimatedContainer';
+import Modal from '../..//components/ui/Modal';
+import { Button } from '../..//components/ui/Button';
+
+export default function ChefDashboard() {
+  const { user, selectedLocation, socket } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [chefNote, setChefNote] = useState('');
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchOrders = useCallback(async (silent = false) => {
+    if (!selectedLocation) return;
+    if (!silent) setLoading(true);
+    try {
+      const branchId = selectedLocation._id || selectedLocation;
+      const res = await api.get(`/orders?branchId=${branchId}`);
+      // Filter out SERVED, COMPLETED, CANCELLED, REJECTED for the active dashboard
+      const activeStatuses = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'];
+      const activeOrders = res.data.data.filter(o => activeStatuses.includes(o.status));
+      setOrders(activeOrders);
+    } catch (error) {
+      toast.error('Failed to sync kitchen stream');
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [selectedLocation]);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    fetchOrders();
+  };
+
+  useEffect(() => {
+    fetchOrders();
+
+    if (socket && selectedLocation) {
+      const branchId = selectedLocation._id || selectedLocation;
+      
+      // Join chef room
+      socket.emit('join_room', `branch_${branchId}_chef`);
+
+      socket.on('order:new', (data) => {
+        toast.success('New Order Incoming!', { icon: '🔥', duration: 4000 });
+        fetchOrders();
+      });
+
+      socket.on('order:update', () => fetchOrders());
+      socket.on('order:cancel', () => {
+        toast.error('Order Cancelled by Admin');
+        fetchOrders();
+      });
+
+      return () => {
+        socket.off('order:new');
+        socket.off('order:update');
+        socket.off('order:cancel');
+      };
+    }
+  }, [socket, selectedLocation, fetchOrders]);
+
+  const handleUpdateStatus = async (orderId, endpoint) => {
+    const loadToast = toast.loading('Updating lifecycle...');
+    try {
+      await api.patch(`/orders/${orderId}/${endpoint}`, {});
+      fetchOrders();
+      toast.success('Protocol updated', { id: loadToast });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Transition blocked', { id: loadToast });
+    }
+  };
+
+  const handleAddNote = async () => {
+    try {
+      await api.patch(`/orders/${selectedOrder._id}/note`, { chefNote });
+      toast.success('Note attached');
+      setShowNoteModal(false);
+      setChefNote('');
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to attach note');
+    }
+  };
+
+  const lanes = [
+    { 
+      id: 'incoming', 
+      title: 'Incoming Orders', 
+      statuses: ['PLACED'], 
+      icon: Zap, 
+      color: 'amber',
+      action: (order) => (
+        <Button 
+          variant="primary" 
+          size="sm" 
+          className="w-full mt-4 !rounded-xl bg-amber-500 hover:bg-amber-600 text-[10px] font-black uppercase tracking-widest"
+          onClick={() => handleUpdateStatus(order._id, 'accept')}
+        >
+          Accept Order
+        </Button>
+      )
+    },
+    { 
+      id: 'preparing', 
+      title: 'In Preparation', 
+      statuses: ['ACCEPTED', 'PREPARING'], 
+      icon: Timer, 
+      color: 'blue',
+      action: (order) => (
+        <div className="mt-4 flex gap-2">
+          {order.status === 'ACCEPTED' ? (
+            <Button 
+              variant="primary" 
+              size="sm" 
+              className="flex-1 !rounded-xl bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest"
+              onClick={() => handleUpdateStatus(order._id, 'start')}
+            >
+              Start Prep
+            </Button>
+          ) : (
+            <Button 
+              variant="primary" 
+              size="sm" 
+              className="flex-1 !rounded-xl bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase tracking-widest"
+              onClick={() => handleUpdateStatus(order._id, 'ready')}
+            >
+              Mark Ready
+            </Button>
+          )}
+          <button 
+            onClick={() => { setSelectedOrder(order); setChefNote(order.chefNote || ''); setShowNoteModal(true); }}
+            className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:text-amber-500 transition-all"
+          >
+            <MessageSquare size={16} />
+          </button>
+        </div>
+      )
+    },
+    { 
+      id: 'ready', 
+      title: 'Fulfillment Ready', 
+      statuses: ['READY'], 
+      icon: UtensilsCrossed, 
+      color: 'emerald',
+      action: () => (
+        <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Awaiting Service</span>
+        </div>
+      )
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
+        <ChefHat size={48} className="text-amber-500 animate-bounce" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Initializing Kitchen Command...</p>
+      </div>
+    );
+  }
+
+  return (
+    <PageTransition>
+      <div className="space-y-8 pb-10">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <ChefHat size={24} className="text-white" />
+              </div>
+              Kitchen Command Deck
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1 font-medium ml-13">Culinary Fulfillment & Lifecycle Management</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 transition-all border border-zinc-200 dark:border-zinc-800 disabled:opacity-50"
+            >
+              <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+            <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+               <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                 Live Sector: <span className="text-amber-500 ml-1">{selectedLocation?.name}</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Lane Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[75vh]">
+          {lanes.map((lane) => (
+            <div key={lane.id} className="flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 overflow-hidden">
+              <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-8 w-8 rounded-xl bg-${lane.color}-500/10 flex items-center justify-center`}>
+                    <lane.icon size={16} className={`text-${lane.color}-500`} />
+                  </div>
+                  <h3 className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{lane.title}</h3>
+                </div>
+                <div className="h-6 px-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <span className="text-[10px] font-black text-zinc-500">
+                    {orders.filter(o => lane.statuses.includes(o.status)).length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <AnimatePresence mode="popLayout">
+                  {orders
+                    .filter(o => lane.statuses.includes(o.status))
+                    .map((order) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        key={order._id}
+                        className="glass-morphism-heavy rounded-[2rem] border border-zinc-100 dark:border-zinc-800 p-5 group hover:border-amber-500/30 transition-all shadow-sm"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1">
+                              TABLE {order.table?.tableNumber || '??'}
+                            </div>
+                            <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                              ID: #{order._id.slice(-6)} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          {order.status === 'PREPARING' && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 animate-pulse">
+                              <Timer size={10} />
+                              <span className="text-[8px] font-black uppercase">Active Prep</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          {order.items.map((item, i) => (
+                            <div key={i} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                              <div className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-600 dark:text-zinc-400">
+                                  {item.quantity}
+                                </div>
+                                <span className="text-[11px] font-black text-zinc-800 dark:text-zinc-200">{item.menuItem?.name || 'Custom Item'}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {order.chefNote && (
+                          <div className="mt-4 p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl border-l-2 border-amber-500 flex items-start gap-2">
+                            <MessageSquare size={12} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-[9px] font-bold text-zinc-500 leading-relaxed italic">"{order.chefNote}"</p>
+                          </div>
+                        )}
+
+                        {lane.action(order)}
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
+
+                {orders.filter(o => lane.statuses.includes(o.status)).length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
+                    <Coffee size={48} strokeWidth={1} />
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] mt-4">Sector Clear</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Note Modal */}
+        <Modal
+          isOpen={showNoteModal}
+          onClose={() => setShowNoteModal(false)}
+          title="Attach Chef Instruction"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 block">Instruction / Delay Alert</label>
+               <textarea
+                 className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all min-h-[120px] dark:text-white shadow-inner"
+                 placeholder="e.g. 5 min delay due to high volume..."
+                 value={chefNote}
+                 onChange={(e) => setChefNote(e.target.value)}
+               />
+            </div>
+            <div className="flex gap-3">
+               <Button 
+                 variant="secondary" 
+                 className="flex-1 !rounded-xl text-[10px] font-black uppercase tracking-widest"
+                 onClick={() => setShowNoteModal(false)}
+               >
+                 Dismiss
+               </Button>
+               <Button 
+                 variant="primary" 
+                 className="flex-1 !rounded-xl bg-amber-500 hover:bg-amber-600 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
+                 onClick={handleAddNote}
+               >
+                 Confirm Note
+               </Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    </PageTransition>
+  );
+}

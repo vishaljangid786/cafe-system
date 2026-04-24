@@ -14,7 +14,7 @@ const getTables = asyncHandler(async (req, res) => {
   }
 
   // Enforce access control
-  if (req.user.role === 'location_admin' || req.user.role === 'staff') {
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
     query.locationId = req.user.assignedLocation;
   } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
     // If admin is requesting a specific location, check if they have access
@@ -28,29 +28,45 @@ const getTables = asyncHandler(async (req, res) => {
     .populate('locationId', 'name city')
     .populate('orders.menuItemId', 'name image price category');
 
+  // Aggregated data for frontend indicators
+  const Order = require('../models/Order');
+  const tablesWithIndicators = await Promise.all(tables.map(async (table) => {
+    const tableObj = table.toObject();
+    // Check if any active (non-completed) orders for this table have notes
+    const activeOrdersWithNotes = await Order.exists({
+      table: table._id,
+      status: { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED'] },
+      chefNote: { $exists: true, $ne: '' }
+    });
+    tableObj.hasActiveNotes = !!activeOrdersWithNotes;
+    return tableObj;
+  }));
+
   res.json({
     success: true,
     count: tables.length,
-    data: tables,
+    data: tablesWithIndicators,
   });
 });
 
 // @desc    Create/Add a table
 // @route   POST /api/tables
-// @access  Private (Admin, Location Admin)
+// @access  Private (Admin, Branch Admin)
 const addTable = asyncHandler(async (req, res) => {
-  let { tableNumber, locationId } = req.body;
+  const { tableNumber, locationId, tableName, capacity } = req.body;
+  
+  let finalLocationId = locationId;
 
-  if (!locationId && (req.user.role === 'location_admin' || req.user.role === 'staff')) {
-    locationId = req.user.assignedLocation;
+  if (!finalLocationId && (req.user.role === 'branch_admin' || req.user.role === 'staff')) {
+    finalLocationId = req.user.assignedLocation;
   }
 
-  if (!locationId) {
+  if (!finalLocationId) {
     res.status(400);
     throw new Error('Location ID is required');
   }
 
-  const tableExists = await Table.findOne({ tableNumber, locationId });
+  const tableExists = await Table.findOne({ tableNumber, locationId: finalLocationId });
   if (tableExists) {
     res.status(400);
     throw new Error('Table already exists in this location');
@@ -58,13 +74,15 @@ const addTable = asyncHandler(async (req, res) => {
 
   const table = await Table.create({
     tableNumber,
-    locationId,
+    tableName,
+    capacity,
+    locationId: finalLocationId,
     createdBy: req.user._id,
   });
 
   await sendNotification({
     title: 'New Table Operational',
-    message: `Table ${table.tableNumber} added to the grid by ${req.user.name}.`,
+    message: `Table ${table.tableName || table.tableNumber} added to the grid by ${req.user.name}.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -94,7 +112,8 @@ const bookTable = asyncHandler(async (req, res) => {
   }
 
   table.isBooked = true;
-  table.numberOfPeople = numberOfPeople;
+  table.numberOfPeople = Number(req.body.numberOfPeople) || table.capacity || 1;
+  table.customerName = req.body.customerName || '';
   table.status = 'booked';
   
   await table.save();
@@ -127,6 +146,10 @@ const updateOrders = asyncHandler(async (req, res) => {
 
   table.orders = orders;
   table.totalAmount = orders.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  
+  if (req.body.customerName !== undefined) table.customerName = req.body.customerName;
+  if (req.body.numberOfPeople !== undefined) table.numberOfPeople = Number(req.body.numberOfPeople);
+
   table.status = 'ongoing';
 
   await table.save();
@@ -158,7 +181,7 @@ const getTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'location_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
+  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
     res.status(403);
     throw new Error('Not authorized to view tables from other locations');
   }
@@ -189,41 +212,55 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.billImage = req.file.path;
   table.status = 'completed';
 
-  const Transaction = require('../models/Transaction');
+  // Finalize all associated orders to trigger revenue recording
+  const Order = require('../models/Order');
+  const sessionOrders = await Order.find({ 
+    table: table._id, 
+    status: { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED'] } 
+  }).populate('items.menuItem');
+  
+  for (const order of sessionOrders) {
+    order.status = 'COMPLETED';
+    order.completedAt = new Date();
+    order.statusHistory.push({
+      status: 'COMPLETED',
+      timestamp: new Date(),
+      updatedBy: req.user._id
+    });
+    
+    if (!order.isBilled) {
+      order.isBilled = true;
+      const Transaction = require('../models/Transaction');
+      
+      const totalProfit = order.items.reduce((acc, item) => {
+        const price = Number(item.menuItem?.price || 0);
+        const costPrice = Number(item.menuItem?.costPrice || 0);
+        return acc + ((price - costPrice) * item.quantity);
+      }, 0);
 
-  const totalProfit = table.orders.reduce((acc, item) => {
-    return acc + ((Number(item.price) - Number(item.costPrice || 0)) * Number(item.quantity));
-  }, 0);
+      await Transaction.create({
+        locationId: order.branch,
+        type: 'REVENUE',
+        source: 'ORDER',
+        orderId: order._id,
+        title: `Table ${table.tableNumber} Revenue`,
+        category: 'Food & Beverage',
+        createdBy: req.user._id,
+        totalAmount: order.totalAmount,
+        totalProfit: totalProfit,
+        date: new Date(),
+        orders: order.items.map(i => ({
+          menuItemId: i.menuItem?._id,
+          itemName: i.menuItem?.name || 'Item',
+          quantity: i.quantity,
+          price: i.menuItem?.price || 0,
+          costPrice: i.menuItem?.costPrice || 0
+        }))
+      });
+    }
+    await order.save();
+  }
 
-  // Archive session as a persistent Transaction
-  await Transaction.create({
-    locationId: table.locationId,
-    tableNumber: table.tableNumber,
-    staffId: req.user._id,
-    orders: table.orders.map(o => ({
-      menuItemId: o.menuItemId,
-      itemName: o.itemName,
-      quantity: o.quantity,
-      price: o.price,
-      costPrice: o.costPrice || 0
-    })),
-    totalAmount: table.totalAmount,
-    totalProfit: totalProfit,
-    billImage: req.file.path,
-    date: new Date()
-  });
-
-  await Expense.create({
-    title: `Revenue: Table ${table.tableNumber}`,
-    description: `Automated fiscal entry from table completion. \nOrders:\n${table.orders.map(o => `- ${o.itemName}: ${o.quantity} units (Profit: ₹${(Number(o.price) - Number(o.costPrice || 0)) * Number(o.quantity)})`).join('\n')}`,
-    amount: table.totalAmount,
-    profit: totalProfit,
-    type: 'income',
-    locationId: table.locationId,
-    proofImage: req.file.path,
-    createdBy: req.user._id,
-    date: new Date(),
-  });
 
   // Reset table
   table.isBooked = false;
@@ -231,6 +268,7 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.orders = [];
   table.totalAmount = 0;
   table.numberOfPeople = 0;
+  table.customerName = '';
   
   await table.save();
 
@@ -259,7 +297,7 @@ const deleteTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'location_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
+  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
     res.status(403);
     throw new Error('Not authorized to delete tables from other locations');
   }
@@ -299,7 +337,7 @@ const completeOrder = asyncHandler(async (req, res) => {
 
 // @desc    Update table details
 // @route   PUT /api/tables/:id
-// @access  Private (Admin, Location Admin)
+// @access  Private (Admin, Branch Admin)
 const updateTable = asyncHandler(async (req, res) => {
   const table = await Table.findById(req.params.id);
 
@@ -308,7 +346,7 @@ const updateTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'location_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
+  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
     res.status(403);
     throw new Error('Not authorized to update tables from other locations');
   }

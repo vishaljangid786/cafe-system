@@ -61,6 +61,16 @@ const menuItemSchema = new mongoose.Schema(
       ref: 'Recipe',
       default: null,
     },
+    dietaryType: {
+      type: String,
+      enum: ['veg', 'non-veg'],
+      default: 'veg',
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: [0, 'Stock cannot be negative'],
+    },
   },
   {
     timestamps: true,
@@ -69,16 +79,14 @@ const menuItemSchema = new mongoose.Schema(
 
 // Validate price is number (done by type)
 // Validate discountedPrice < originalPrice
-menuItemSchema.pre('save', function (next) {
+menuItemSchema.pre('save', async function () {
   if (
     this.discountedPrice !== undefined &&
     this.originalPrice !== undefined &&
     this.discountedPrice >= this.originalPrice
   ) {
-    const error = new Error('Discounted price must be less than original price');
-    return next(error);
+    throw new Error('Discounted price must be less than original price');
   }
-  next();
 });
 
 const MenuItem = mongoose.model('MenuItem', menuItemSchema);

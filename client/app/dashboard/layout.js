@@ -4,8 +4,11 @@ import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from '../components/ui/PageTransition';
+import { useAuth } from '../context/AuthContext';
+import CommandPalette from '../components/ui/CommandPalette';
 
 export default function DashboardLayout({ children }) {
+  const { user, exitImpersonation } = useAuth();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -44,6 +47,24 @@ export default function DashboardLayout({ children }) {
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {user?.impersonatedBy && (
+          <div className="bg-amber-500 text-black px-4 py-2.5 shadow-lg z-[100] relative">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 text-center">
+                <span className="w-2 h-2 rounded-full bg-black animate-pulse shrink-0" />
+                <span className="truncate max-w-[200px] sm:max-w-none">
+                  Impersonating: {user.name} ({user.role})
+                </span>
+              </span>
+              <button 
+                onClick={exitImpersonation}
+                className="bg-black text-amber-500 px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 hover:scale-105 active:scale-95 transition-all whitespace-nowrap shadow-xl"
+              >
+                Exit Session
+              </button>
+            </div>
+          </div>
+        )}
         <Navbar
           onToggleSidebar={() => isMobile ? setIsMobileMenuOpen(!isMobileMenuOpen) : handleToggleSidebar(!isSidebarExpanded)}
           sidebarExpanded={isSidebarExpanded}
@@ -68,6 +89,8 @@ export default function DashboardLayout({ children }) {
 
       {/* Decorative noise overlay for texture */}
       {/* <div className="fixed inset-0 pointer-events-none z-[200] opacity-[0.015] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" /> */}
+      
+      <CommandPalette />
     </div>
   );
 }

@@ -41,9 +41,9 @@ export default function MonthlySummaryPage() {
                 <ArrowLeft size={14} className="mr-2" /> Back to Dashboard
               </Link>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <LayoutDashboard className="mr-3 text-amber-600" size={32} /> Monthly <span className="ml-2 text-amber-600">Operations</span>
+                <LayoutDashboard className="mr-3 text-amber-600" size={32} /> Monthly <span className="ml-2 text-amber-600">Summary</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium uppercase tracking-widest text-[10px]">Personnel Performance & Attendance Analytics</p>
+              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium uppercase tracking-widest text-[10px]">Staff Performance & Attendance Overview</p>
             </div>
             <div
               onClick={() => monthInputRef.current?.showPicker()}
@@ -70,7 +70,7 @@ export default function MonthlySummaryPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <SlideIn className="lg:col-span-2" delay={0.1}>
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800">
-                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Location Attendance Metrics</h2>
+                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Branch Attendance</h2>
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={summary} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -79,8 +79,8 @@ export default function MonthlySummaryPage() {
                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900 }} />
                         <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} />
-                        <Bar dataKey="totalPresentDays" fill="#10B981" name="Presence" radius={[6, 6, 0, 0]} barSize={32} />
-                        <Bar dataKey="totalAbsentDays" fill="#EF4444" name="Absence" radius={[6, 6, 0, 0]} barSize={32} />
+                        <Bar dataKey="totalPresentDays" fill="#10B981" name="Present" radius={[6, 6, 0, 0]} barSize={32} />
+                        <Bar dataKey="totalAbsentDays" fill="#EF4444" name="Absent" radius={[6, 6, 0, 0]} barSize={32} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -89,7 +89,7 @@ export default function MonthlySummaryPage() {
 
               <SlideIn delay={0.2}>
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 h-full">
-                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Staffing Pool</h2>
+                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Staff Count</h2>
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -130,10 +130,10 @@ export default function MonthlySummaryPage() {
                   <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                       <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-100 dark:border-zinc-800">
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Operational Location</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Headcount</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Branch Name</th>
+                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Total Staff</th>
                         <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Presents</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Absences</th>
+                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Absents</th>
                         <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Performance</th>
                       </tr>
                     </thead>

@@ -1,8 +1,7 @@
 'use client';
 import {
-  Calendar, Clock, Users, Search, Filter,
+  Calendar, Clock, Users,
   CheckCircle2, XCircle, AlertCircle,
-  ChevronLeft, ChevronRight, MoreVertical,
   Mail, Phone, MapPin, CalendarDays, Zap,
   Check, X, MessageSquare, LayoutGrid, List
 } from 'lucide-react';
@@ -42,7 +41,7 @@ export default function BookingsManagementPage() {
       const res = await api.get('/bookings', { params });
       setBookings(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync booking matrix');
+      toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
     }
@@ -53,14 +52,14 @@ export default function BookingsManagementPage() {
   }, [selectedLocation, dateFilter, statusFilter]);
 
   const updateStatus = async (id, status) => {
-    const loadToast = toast.loading(`Updating protocol to ${status}...`);
+    const loadToast = toast.loading(`Updating status to ${status}...`);
     try {
       await api.patch(`/bookings/${id}/status`, { status });
-      toast.success(`Protocol ${status}`, { id: loadToast });
+      toast.success(`Booking ${status}`, { id: loadToast });
       fetchBookings();
       setShowDetailModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
     }
   };
 
@@ -94,9 +93,9 @@ export default function BookingsManagementPage() {
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-zinc-900 dark:text-zinc-100">
               <CalendarDays className="text-amber-600" size={36} strokeWidth={2.5} />
-              Reservation <span className="text-amber-600">Grid</span>
+              Booking <span className="text-amber-600">List</span>
             </h1>
-            <p className="text-zinc-500 font-medium mt-1">Monitor and authorize location booking protocols.</p>
+            <p className="text-zinc-500 font-medium mt-1">Manage and track all customer table bookings.</p>
           </div>
 
           <div className="flex gap-3 bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
@@ -152,10 +151,10 @@ export default function BookingsManagementPage() {
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800">
-                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Personnel</th>
-                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Schedule Horizon</th>
-                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Occupancy</th>
-                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Protocol Status</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Customer</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Time & Date</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Guests</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Status</th>
                     <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -193,7 +192,7 @@ export default function BookingsManagementPage() {
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
                           <Users size={16} className="text-zinc-500" />
-                          {booking.numberOfGuests} Units
+                          {booking.numberOfGuests} Persons
                         </div>
                       </td>
                       <td className="px-8 py-6">
@@ -264,7 +263,7 @@ export default function BookingsManagementPage() {
                       </div>
                       <div className="flex items-center gap-3 text-zinc-400">
                         <Users size={16} className="text-amber-500" />
-                        <span className="text-xs font-bold text-zinc-100">{booking.numberOfGuests} Guests Occupancy</span>
+                        <span className="text-xs font-bold text-zinc-100">{booking.numberOfGuests} Persons</span>
                       </div>
                       <div className="flex items-center gap-3 text-zinc-400">
                         <MapPin size={16} className="text-amber-500" />
@@ -293,7 +292,7 @@ export default function BookingsManagementPage() {
                           onClick={() => { setSelectedBooking(booking); setShowDetailModal(true); }}
                           className="w-full py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-amber-600 text-zinc-600 dark:text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
                         >
-                          Protocol Details
+                          View Details
                         </button>
                       )}
                     </div>
@@ -308,20 +307,22 @@ export default function BookingsManagementPage() {
         <Modal
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
-          title="Reservation Specification"
+          title="Booking Details"
           className="max-w-2xl"
         >
           {selectedBooking && (
             <div className="space-y-10">
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-6">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Personnel Data</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Customer Details</h4>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Users size={18} className="text-amber-500" />
                       <div>
                         <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{selectedBooking.userId?.name}</p>
-                        <p className="text-xs text-zinc-500">{selectedBooking.userId?.role?.replace('_', ' ')}</p>
+                        <p className="text-xs text-zinc-500">
+                          {selectedBooking.userId?.role === 'location_admin' || selectedBooking.userId?.role === 'branch_admin' ? 'Branch Admin' : selectedBooking.userId?.role?.replace('_', ' ')}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -336,7 +337,7 @@ export default function BookingsManagementPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Matrix Configuration</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Booking Time</h4>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Calendar size={18} className="text-amber-500" />
@@ -348,7 +349,7 @@ export default function BookingsManagementPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Users size={18} className="text-amber-500" />
-                      <p className="text-sm font-black text-zinc-100">{selectedBooking.numberOfGuests} Guests Units</p>
+                      <p className="text-sm font-black text-zinc-100">{selectedBooking.numberOfGuests} Persons</p>
                     </div>
                   </div>
                 </div>
@@ -356,10 +357,10 @@ export default function BookingsManagementPage() {
 
               <div className="p-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl space-y-3">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-2">
-                  <MessageSquare size={14} /> Special Directives
+                  <MessageSquare size={14} /> Customer Notes
                 </h4>
                 <p className="text-sm text-zinc-300 font-medium leading-relaxed">
-                  {selectedBooking.specialRequests || "No specialized directives established for this reservation protocol."}
+                  {selectedBooking.specialRequests || "No extra notes for this booking."}
                 </p>
               </div>
 
@@ -372,7 +373,7 @@ export default function BookingsManagementPage() {
                       className="flex-1 !py-5 shadow-2xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => updateStatus(selectedBooking._id, 'confirmed')}
                     >
-                      Authorize Protocol
+                      Confirm Booking
                     </Button>
                     <Button
                       variant="outline"
@@ -380,7 +381,7 @@ export default function BookingsManagementPage() {
                       className="flex-1 !py-5 text-rose-500 border-rose-500/20 hover:bg-rose-500/10"
                       onClick={() => updateStatus(selectedBooking._id, 'cancelled')}
                     >
-                      Deny Protocol
+                      Cancel Booking
                     </Button>
                   </>
                 ) : selectedBooking.status === 'confirmed' ? (
@@ -394,7 +395,7 @@ export default function BookingsManagementPage() {
                   </Button>
                 ) : (
                   <div className={`w-full py-5 text-center rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] border ${getStatusColor(selectedBooking.status)}`}>
-                    Protocol {selectedBooking.status}
+                    Booking {selectedBooking.status}
                   </div>
                 )}
               </div>
@@ -405,8 +406,8 @@ export default function BookingsManagementPage() {
         {filteredBookings.length === 0 && !loading && (
           <div className="text-center py-32 bg-amber-600/[0.02] rounded-[4rem] border border-dashed border-zinc-800">
             <Calendar size={64} className="mx-auto text-zinc-800 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-black text-zinc-100 tracking-tight">No Reservation Protocols Detected</h3>
-            <p className="text-zinc-500 font-medium mt-2 max-w-sm mx-auto">The schedule matrix is currently empty for the selected filters. Establish a new node to begin.</p>
+            <h3 className="text-2xl font-black text-zinc-100 tracking-tight">No Bookings Found</h3>
+            <p className="text-zinc-500 font-medium mt-2 max-w-sm mx-auto">The list is currently empty for the selected filters.</p>
           </div>
         )}
       </div>

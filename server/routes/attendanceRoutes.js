@@ -4,6 +4,7 @@ const {
   getLocationAttendance,
   getAllAttendance,
   getMonthlySummary,
+  getMyAttendance,
 } = require('../controllers/attendanceController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
@@ -11,11 +12,14 @@ const router = express.Router();
 
 router.use(verifyToken);
 
+router.route('/my')
+  .get(getMyAttendance);
+
 router.route('/mark')
-  .post(authorizeRoles('location_admin'), markAttendance);
+  .post(authorizeRoles('branch_admin', 'admin', 'super_admin'), markAttendance);
 
 router.route('/location')
-  .get(authorizeRoles('location_admin', 'admin', 'super_admin'), getLocationAttendance);
+  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getLocationAttendance);
 
 router.route('/all')
   .get(authorizeRoles('admin', 'super_admin'), getAllAttendance);

@@ -11,7 +11,13 @@ export const metadata = {
   title: "Cafe Management System | Premium Dashboard",
   description: "Advanced Multi-Location Cafe Management Platform",
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: ['/favicon.svg'],
+    apple: [
+      { url: '/favicon.svg' },
+    ],
   },
 };
 

@@ -6,6 +6,7 @@ const {
   updateMenuItem,
   deleteMenuItem,
   toggleAvailability,
+  updateStock,
 } = require('../controllers/menuItemController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
@@ -18,9 +19,9 @@ router.use(verifyToken);
 router.route('/')
   .get(getMenuItems)
   .post(
-    authorizeRoles('super_admin', 'admin', 'location_admin'),
+    authorizeRoles('super_admin', 'admin', 'branch_admin'),
     upload.single('image'),
-    menuItemSchema,
+    ...menuItemSchema,
     validate,
     createMenuItem
   );
@@ -28,15 +29,18 @@ router.route('/')
 router.route('/:id')
   .get(getMenuItem)
   .put(
-    authorizeRoles('super_admin', 'admin', 'location_admin'),
+    authorizeRoles('super_admin', 'admin', 'branch_admin'),
     upload.single('image'),
-    menuItemSchema,
+    ...menuItemSchema,
     validate,
     updateMenuItem
   )
-  .delete(authorizeRoles('super_admin', 'admin', 'location_admin'), deleteMenuItem);
+  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteMenuItem);
 
 router.route('/:id/availability')
-  .put(authorizeRoles('super_admin', 'admin', 'location_admin'), toggleAvailability);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'chef', 'staff'), toggleAvailability);
+
+router.route('/:id/stock')
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'chef', 'staff'), updateStock);
 
 module.exports = router;

@@ -95,22 +95,22 @@ const menuItems = [
   { itemName: 'Cold Coffee', price: 140 }
 ];
 
+// {
+//   name: 'Super Admin',
+//   email: 'superadmin@cafe.com',
+//   password: 'password123',
+//   role: 'super_admin',
+//   phone: '9876543210',
+//   gender: 'Male',
+//   age: 35,
+//   address1: '123 Admin St',
+//   city: 'Global City',
+//   state: 'State',
+//   country: 'USA',
+//   aadharNumber: '123456789012',
+//   highestQualification: 'Post Graduate'
+// },
 const users = [
-  {
-    name: 'Super Admin',
-    email: 'superadmin@cafe.com',
-    password: 'password123',
-    role: 'super_admin',
-    phone: '9876543210',
-    gender: 'Male',
-    age: 35,
-    address1: '123 Admin St',
-    city: 'Global City',
-    state: 'State',
-    country: 'USA',
-    aadharNumber: '123456789012',
-    highestQualification: 'Post Graduate'
-  },
   {
     name: 'Main Admin',
     email: 'admin@cafe.com',
@@ -126,12 +126,12 @@ const users = [
     aadharNumber: '123456789013',
     highestQualification: 'Graduate'
   },
-  // Location Admins
+  // Branch Admins
   {
     name: 'John Downtown',
     email: 'john.d@cafe.com',
     password: 'password123',
-    role: 'location_admin',
+    role: 'branch_admin',
     locationName: 'Downtown Central',
     phone: '9876543212',
     gender: 'Male',
@@ -147,7 +147,7 @@ const users = [
     name: 'Sarah Uptown',
     email: 'sarah.u@cafe.com',
     password: 'password123',
-    role: 'location_admin',
+    role: 'branch_admin',
     locationName: 'Uptown Bistro',
     phone: '9876543213',
     gender: 'Female',
@@ -232,7 +232,7 @@ const notifications = Array.from({ length: 10 }, (_, i) => ({
   title: `Notification ${i + 1}`,
   message: `This is the message for notification ${i + 1}`,
   type: 'user_action',
-  roleTarget: ['staff', 'location_admin'],
+  roleTarget: ['staff', 'branch_admin'],
   createdBy: '60d5ec49f1b2c82a3c8b4560'
 }));
 

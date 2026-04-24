@@ -36,6 +36,15 @@ const tableSchema = new mongoose.Schema(
       ref: 'Location',
       required: [true, 'Location ID is required'],
     },
+    tableName: {
+      type: String,
+      trim: true,
+    },
+    capacity: {
+      type: Number,
+      default: 1,
+      min: [1, 'Capacity must be at least 1'],
+    },
     isBooked: {
       type: Boolean,
       default: false,
@@ -44,8 +53,16 @@ const tableSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    customerName: {
+      type: String,
+      trim: true,
+    },
     orders: [orderItemSchema],
     totalAmount: {
+      type: Number,
+      default: 0,
+    },
+    activeOrdersCount: {
       type: Number,
       default: 0,
     },

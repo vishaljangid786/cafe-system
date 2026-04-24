@@ -1,19 +1,25 @@
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, User, ArrowRight } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { Button } from '../ui/Button';
 
 export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) {
-  const [members, setMembers] = useState(1);
+  const [members, setMembers] = useState(table?.capacity || 1);
   const [customerName, setCustomerName] = useState('');
+
+  useEffect(() => {
+    if (table) {
+      setMembers(table.capacity || 1);
+    }
+  }, [table]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (members <= 0) return;
     onConfirm({ numberOfPeople: members, customerName });
     onClose();
-    setMembers(1);
+    setMembers(table?.capacity || 1);
     setCustomerName('');
   };
 

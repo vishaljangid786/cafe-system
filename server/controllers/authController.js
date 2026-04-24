@@ -2,10 +2,16 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const jwt = require('jsonwebtoken');
 const sendNotification = require('../utils/sendNotification');
+const AuditLog = require('../models/AuditLog');
 
 // Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, impersonatedBy = null, isViewOnly = false) => {
+  const payload = { id };
+  if (impersonatedBy) {
+    payload.impersonatedBy = impersonatedBy;
+    payload.isViewOnly = isViewOnly;
+  }
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
@@ -16,7 +22,7 @@ const generateToken = (id) => {
 const registerUser = asyncHandler(async (req, res, next) => {
   const {
     name, email, password, phone, gender, age,
-    address1, address2, city, state, country,
+    address1, address2, city, state, country, pincode,
     alternatePhone, role, assignedLocation, accessibleLocations,
     aadharNumber, highestQualification, monthlySalary
   } = req.body;
@@ -32,32 +38,30 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 
   const userCount = await User.countDocuments();
-  
-  if (userCount > 0) {
+  let finalRole = role;
+
+  if (userCount === 0) {
+    finalRole = 'super_admin';
+  } else {
     if (!creator) {
       res.status(401);
       throw new Error('Not authorized to register new personnel');
     }
 
-    if (creator.role === 'location_admin') {
+    if (creator.role === 'branch_admin') {
       if (role !== 'staff') {
         res.status(403);
-        throw new Error('Location Admins can only register Staff members');
+        throw new Error('Branch Admins can only register Staff members');
       }
       if (assignedLocation !== creator.assignedLocation.toString()) {
         res.status(403);
-        throw new Error('Location Admins can only register staff for their own location');
+        throw new Error('Branch Admins can only register staff for their own location');
       }
     } else if (creator.role === 'admin') {
       if (role === 'super_admin') {
         res.status(403);
         throw new Error('Admins cannot register Super Admins');
       }
-    }
-  } else {
-    if (role !== 'super_admin') {
-      res.status(400);
-      throw new Error('The first user registered in the system must be a Super Admin');
     }
   }
 
@@ -68,18 +72,18 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 
   let aadharImage = '';
-  if (req.file) {
-    aadharImage = req.file.path;
-  } else {
-    res.status(400);
-    throw new Error('Aadhar image is required');
+  let profileImageUrl = '';
+
+  if (req.files) {
+    if (req.files.aadharImage) aadharImage = req.files.aadharImage[0].path;
+    if (req.files.profileImage) profileImageUrl = req.files.profileImage[0].path;
   }
 
   const user = await User.create({
     name, email, password, phone, gender, age,
-    address1, address2, city, state, country,
-    alternatePhone, role, assignedLocation, accessibleLocations,
-    aadharNumber, aadharImage, highestQualification, monthlySalary
+    address1, address2, city, state, country, pincode,
+    alternatePhone, role: finalRole, assignedLocation, accessibleLocations,
+    aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary
   });
 
   if (user) {
@@ -136,6 +140,96 @@ const loginUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc    Impersonate another user
+// @route   POST /api/auth/impersonate/:userId
+// @access  Private (Super Admin)
+const impersonateUser = asyncHandler(async (req, res, next) => {
+  if (req.impersonator) {
+    res.status(403);
+    throw new Error('Cannot impersonate while already impersonating');
+  }
+
+  if (req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only Super Admins can impersonate users');
+  }
+
+  const targetUser = await User.findById(req.params.userId).populate('assignedLocation accessibleLocations');
+
+  if (!targetUser) {
+    res.status(404);
+    throw new Error('Target user not found');
+  }
+
+  const { viewOnly } = req.body;
+
+  console.log(`[AUDIT] Super Admin ${req.user._id} (${req.user.email}) initiated impersonation of User ${targetUser._id} (${targetUser.email}) [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-ACCESS'}]`);
+
+  // Record Audit Log
+  await AuditLog.create({
+    action: 'IMPERSONATION_START',
+    performedBy: req.user._id,
+    targetUser: targetUser._id,
+    details: `Super Admin impersonated ${targetUser.name} (${targetUser.role}) in ${viewOnly ? 'VIEW-ONLY' : 'FULL-ACCESS'} mode`,
+    ipAddress: req.ip
+  });
+
+  res.json({
+    success: true,
+    data: {
+      _id: targetUser._id,
+      name: targetUser.name,
+      email: targetUser.email,
+      role: targetUser.role,
+      assignedLocation: targetUser.assignedLocation,
+      accessibleLocations: targetUser.accessibleLocations,
+      impersonatedBy: req.user._id,
+      isViewOnly: !!viewOnly,
+      token: generateToken(targetUser._id, req.user._id, !!viewOnly),
+    }
+  });
+});
+
+// @desc    Exit impersonation
+// @route   POST /api/auth/exit-impersonation
+// @access  Private
+const exitImpersonation = asyncHandler(async (req, res, next) => {
+  if (!req.impersonator) {
+    res.status(400);
+    throw new Error('Not currently impersonating anyone');
+  }
+
+  const originalAdmin = await User.findById(req.impersonator._id).populate('assignedLocation accessibleLocations');
+
+  if (!originalAdmin) {
+    res.status(404);
+    throw new Error('Original admin user not found');
+  }
+
+  console.log(`[AUDIT] Super Admin ${originalAdmin._id} (${originalAdmin.email}) exited impersonation`);
+
+  // Record Audit Log
+  await AuditLog.create({
+    action: 'IMPERSONATION_EXIT',
+    performedBy: originalAdmin._id,
+    details: 'Super Admin exited impersonation mode',
+    ipAddress: req.ip
+  });
+
+  res.json({
+    success: true,
+    data: {
+      _id: originalAdmin._id,
+      name: originalAdmin.name,
+      email: originalAdmin.email,
+      role: originalAdmin.role,
+      assignedLocation: originalAdmin.assignedLocation,
+      accessibleLocations: originalAdmin.accessibleLocations,
+      token: generateToken(originalAdmin._id),
+    }
+  });
+});
+
 // @desc    Get current user profile
 // @route   GET /api/auth/profile
 // @access  Private
@@ -143,9 +237,14 @@ const getProfile = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user._id).populate('assignedLocation accessibleLocations');
 
   if (user) {
+    const userData = user.toObject();
+    if (req.impersonator) {
+      userData.impersonatedBy = req.impersonator;
+    }
+
     res.json({
       success: true,
-      data: user,
+      data: userData,
     });
   } else {
     res.status(404);
@@ -153,8 +252,24 @@ const getProfile = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc    Check if any users exist for initial setup
+// @route   GET /api/auth/initial-setup-check
+// @access  Public
+const initialSetupCheck = asyncHandler(async (req, res, next) => {
+  const userCount = await User.countDocuments();
+  res.json({
+    success: true,
+    data: {
+      isInitialSetup: userCount === 0
+    }
+  });
+});
+
 module.exports = {
   registerUser,
   loginUser,
   getProfile,
+  impersonateUser,
+  exitImpersonation,
+  initialSetupCheck,
 };

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Mail, MapPin, Phone, Users, Trash2, Plus, Loader2, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
+import { Mail, MapPin, Phone, Users, Trash2, Plus, Loader2, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard, Layers, Target, Grid2X2, List } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -9,33 +9,70 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useAuth } from '../../../context/AuthContext';
+import { Filter, ChevronRight, ChevronDown, Search } from 'lucide-react';
 
 export default function LocationStaffPage() {
+  const { user: currentUser } = useAuth();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [roleFilter, setRoleFilter] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [viewingStaff, setViewingStaff] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'tree'
+  const [expandedNodes, setExpandedNodes] = useState({});
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', age: '', gender: 'Male',
     address1: '', city: '', state: '', pincode: '', monthlySalary: ''
   });
+  const [locations, setLocations] = useState([]);
+  const [locationFilter, setLocationFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const limit = 9; // Show 9 per page (3x3 grid)
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [roleFilter, locationFilter, viewMode, page, searchQuery]);
+
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch locations");
+    }
+  };
 
   const fetchStaff = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/users');
-      setStaff(res.data.data.filter(u => u.role === 'staff'));
+      // If in tree mode, we always want all available personnel to build the hierarchy
+      const params = viewMode === 'tree' ? {} : { 
+        role: roleFilter, 
+        locationId: locationFilter,
+        search: searchQuery,
+        page,
+        limit: viewMode === 'tree' ? 1000 : limit 
+      };
+      const res = await api.get('/users', { params });
+      setStaff(res.data.data);
+      if (res.data.pagination) {
+        setPagination(res.data.pagination);
+      }
     } catch (error) {
-      toast.error('Failed to sync personnel roster');
+      toast.error('Failed to load staff list');
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchStaff();
-  }, []);
 
   const handleEdit = (member) => {
     setEditingStaff(member);
@@ -56,10 +93,10 @@ export default function LocationStaffPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Synchronizing updates...');
+    const loadToast = toast.loading('Saving changes...');
     try {
       await api.put(`/users/${editingStaff._id}`, formData);
-      toast.success('Personnel profile updated', { id: loadToast });
+      toast.success('Staff profile updated', { id: loadToast });
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
@@ -69,16 +106,240 @@ export default function LocationStaffPage() {
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) return;
-    const loadToast = toast.loading('Purging personnel record...');
+    const loadToast = toast.loading('Deleting staff record...');
     try {
       await api.delete(`/users/${showDeleteConfirm}`);
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Personnel liquidated', { id: loadToast });
+      toast.success('Staff record deleted', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Purge protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Delete failed', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
+  };
+
+  // No longer needed client-side, using backend filtered data
+  const staffToDisplay = staff;
+
+  const toggleNode = (nodeId) => {
+    setExpandedNodes(prev => ({
+      ...prev,
+      [nodeId]: !prev[nodeId]
+    }));
+  };
+
+  const StaffNode = ({ member, children, level = 0 }) => {
+    const isExpanded = expandedNodes[member._id];
+    const hasChildren = children && children.length > 0;
+
+    return (
+      <div className="space-y-4">
+        <div 
+          className={`group flex items-center p-6 rounded-[2rem] border transition-all cursor-pointer ${
+            isExpanded ? 'bg-amber-500/5 border-amber-500/20 shadow-lg' : 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 hover:border-amber-500/20'
+          } ${!searchQuery || (member.name && member.name.toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}
+          onClick={() => hasChildren && toggleNode(member._id)}
+          style={{ marginLeft: `${level * 40}px` }}
+        >
+          <div className="flex items-center gap-4 flex-1">
+            {hasChildren ? (
+              isExpanded ? <ChevronDown size={20} className="text-amber-600" /> : <ChevronRight size={20} className="text-zinc-400" />
+            ) : (
+              <div className="w-5" />
+            )}
+            
+            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black border ${
+              member.role === 'system_group' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200/20' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-200/10'
+            }`}>
+              {member.role === 'system_group' ? <Layers size={20} /> : member.name.charAt(0)}
+            </div>
+            
+            <div>
+              <p className="font-black text-gray-900 dark:text-zinc-100 text-lg leading-none">{member.name}</p>
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-600">
+                  {member.role === 'system_group' ? 'Department' : (member.role === 'location_admin' || member.role === 'branch_admin') ? 'Branch Admin' : member.role.replace('_', ' ')}
+                </span>
+                {member.assignedLocation && (
+                  <span className="text-[9px] font-bold text-zinc-400 flex items-center gap-1">
+                    <MapPin size={10} /> {member.assignedLocation.city} - {member.assignedLocation.name}
+                  </span>
+                )}
+                {member.role === 'admin' && member.accessibleLocations?.length > 0 && (
+                  <span className="text-[9px] font-bold text-amber-500 flex items-center gap-1">
+                    <Layers size={10} /> {member.accessibleLocations.length} Branches Linked
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {member.role !== 'system_group' && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setViewingStaff(member); }}
+                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-blue-500"
+                    >
+                      <Info size={18} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-amber-600"
+                    >
+                      <Edit3 size={18} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
+                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-rose-500"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
+             </div>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {isExpanded && hasChildren && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden border-l-2 border-amber-500/10 ml-6"
+            >
+              <div className="space-y-4 py-4">
+                {children.map(child => (
+                  <StaffNode key={child._id} member={child} children={child.children} level={level + 1} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  const renderHierarchy = () => {
+    const admins = staff.filter(u => u.role === 'admin');
+    const branchAdmins = staff.filter(u => u.role === 'branch_admin');
+    const operationalStaff = staff.filter(u => ['staff', 'chef'].includes(u.role));
+
+    let roots = [];
+
+    // Helper to match personnel to an admin's scope
+    const getAdminChildren = (admin) => {
+      const accessibleLocs = admin.accessibleLocations || [];
+      const accessibleLocIds = accessibleLocs.map(loc => (loc._id || loc).toString());
+
+      // Group branch personnel by location to show a clear mapping
+      return accessibleLocs.map(loc => {
+        const locId = (loc._id || loc).toString();
+        const locName = loc.name || 'Unknown Branch';
+        
+        const branchAdminsInLoc = branchAdmins.filter(ba => {
+          const baLocId = (ba.assignedLocation?._id || ba.assignedLocation)?.toString();
+          return baLocId === locId;
+        });
+
+        const staffInLoc = operationalStaff.filter(s => {
+          const sLocId = (s.assignedLocation?._id || s.assignedLocation)?.toString();
+          return sLocId === locId;
+        });
+
+        // Combine branch admin and their staff into a sub-hierarchy
+        const mappedBranchAdmins = branchAdminsInLoc.map(ba => ({
+          ...ba,
+          children: staffInLoc.filter(s => {
+             // In our system, staff are directly under the branch, 
+             // but we show them as children of the branch admin for visual hierarchy
+             return true; 
+          })
+        }));
+
+        // If no branch admin, show independent staff under the location node
+        const independentStaff = mappedBranchAdmins.length === 0 ? staffInLoc : [];
+
+        return {
+          _id: `loc_${locId}_${admin._id}`,
+          name: locName,
+          role: 'system_group',
+          children: [...mappedBranchAdmins, ...independentStaff]
+        };
+      });
+    };
+
+    if (currentUser?.role === 'super_admin') {
+      // Admins are the primary roots
+      const mappedAdmins = admins.map(admin => ({
+        ...admin,
+        children: getAdminChildren(admin)
+      }));
+
+      // Identify independent nodes (those not managed by any Main Admin)
+      const linkedBranchAdminIds = new Set(mappedAdmins.flatMap(a => 
+        a.children.flatMap(locNode => locNode.children.filter(c => c.role === 'branch_admin').map(ba => ba._id))
+      ));
+
+      const independentBranches = branchAdmins.filter(ba => !linkedBranchAdminIds.has(ba._id)).map(ba => {
+        const baLocId = (ba.assignedLocation?._id || ba.assignedLocation)?.toString();
+        const staffChildren = operationalStaff.filter(s => {
+          const sLocId = (s.assignedLocation?._id || s.assignedLocation)?.toString();
+          return sLocId === baLocId;
+        });
+        return { ...ba, children: staffChildren };
+      });
+
+      const linkedStaffIds = new Set([
+        ...mappedAdmins.flatMap(a => 
+          a.children.flatMap(locNode => locNode.children.map(s => s._id))
+        ),
+        ...independentBranches.flatMap(ba => ba.children.map(s => s._id))
+      ]);
+      const independentStaff = operationalStaff.filter(s => !linkedStaffIds.has(s._id));
+
+      roots = [...mappedAdmins, ...independentBranches, ...independentStaff];
+    } else if (currentUser?.role === 'admin') {
+      roots = getAdminChildren(currentUser);
+      
+      const linkedStaffIds = new Set(roots.flatMap(ba => ba.children.map(s => s._id)));
+      const myLocIds = (currentUser.accessibleLocations || []).map(loc => (loc._id || loc).toString());
+      const myLocNames = (currentUser.accessibleLocations || []).map(loc => loc.name?.toLowerCase().trim());
+      
+      const myIndependentStaff = operationalStaff.filter(s => {
+        const sLoc = s.assignedLocation;
+        if (!sLoc) return false;
+        const isMyLoc = myLocIds.includes((sLoc._id || sLoc).toString()) || 
+                        myLocNames.includes(sLoc.name?.toLowerCase().trim());
+        return isMyLoc && !linkedStaffIds.has(s._id);
+      });
+      roots = [...roots, ...myIndependentStaff];
+    } else if (currentUser?.role === 'branch_admin') {
+      const myLocId = (currentUser.assignedLocation?._id || currentUser.assignedLocation)?.toString();
+      const myLocName = currentUser.assignedLocation?.name?.toLowerCase().trim();
+      
+      roots = operationalStaff.filter(s => {
+        const sLoc = s.assignedLocation;
+        if (!sLoc) return false;
+        return (sLoc._id || sLoc).toString() === myLocId || 
+               sLoc.name?.toLowerCase().trim() === myLocName;
+      });
+    }
+
+    return (
+      <div className="space-y-6">
+        {roots.length > 0 ? roots.map(root => (
+          <StaffNode key={root._id} member={root} children={root.children} />
+        )) : (
+          <div className="py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-4 border-dashed border-gray-50 dark:border-zinc-800 flex flex-col items-center justify-center opacity-30">
+            <ShieldAlert size={64} className="mb-6" />
+            <p className="font-black text-sm uppercase tracking-widest">No personnel telemetry linked</p>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) return (
@@ -94,11 +355,100 @@ export default function LocationStaffPage() {
           <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-amber-600" size={36} /> Location <span className="ml-3 text-amber-600">Personnel</span>
+                <Users className="mr-4 text-amber-600" size={36} strokeWidth={2.5} /> Staff <span className="ml-3 text-amber-600">Management</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Strategic roster management for operational personnel.</p>
+              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium flex items-center">
+                <Target size={14} className="mr-2 text-amber-600" /> Manage and track all branch employees and their roles.
+              </p>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Filters & Search Grid */}
+              {viewMode === 'list' && (
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Search Bar */}
+                  <div className="relative group min-w-[300px]">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-600 transition-colors">
+                      <Search size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search by name, email or role..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none"
+                    />
+                  </div>
+
+                  {/* Role Filter */}
+                  {(currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && (
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600">
+                        <Filter size={16} />
+                      </div>
+                      <select
+                        value={roleFilter}
+                        onChange={(e) => {
+                          setRoleFilter(e.target.value);
+                          setPage(1);
+                        }}
+                        className="pl-12 pr-8 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-xs font-black uppercase tracking-widest dark:text-zinc-100 outline-none appearance-none min-w-[180px]"
+                      >
+                        <option value="">All Roles</option>
+                        {currentUser?.role === 'super_admin' && <option value="admin">Main Admin</option>}
+                        <option value="branch_admin">Branch Admin</option>
+                        <option value="staff">Staff Member</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Location Filter */}
+                  {(currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && (
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600">
+                        <MapPin size={16} />
+                      </div>
+                      <select
+                        value={locationFilter}
+                        onChange={(e) => {
+                          setLocationFilter(e.target.value);
+                          setPage(1);
+                        }}
+                        className="pl-12 pr-8 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-xs font-black uppercase tracking-widest dark:text-zinc-100 outline-none appearance-none min-w-[180px]"
+                      >
+                        <option value="">All Locations</option>
+                        {locations.map(loc => (
+                          <option key={loc._id} value={loc._id}>{loc.city} - {loc.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+
+              <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl border border-gray-200 dark:border-zinc-700">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm' : 'text-zinc-500'}`}
+                >
+                  <List size={22} />
+                </button>
+                <button
+                  onClick={() => {
+                    setViewMode('tree');
+                    setSearchQuery('');
+                    setRoleFilter('');
+                    setLocationFilter('');
+                    setPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'tree' ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm' : 'text-zinc-500'}`}
+                >
+                  <Grid2X2 size={22} />
+                </button>
+              </div>
 
               <Link href="/signup">
                 <motion.button
@@ -106,88 +456,127 @@ export default function LocationStaffPage() {
                   whileTap={{ scale: 0.95 }}
                   className="bg-zinc-900 dark:bg-amber-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/10 flex items-center"
                 >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Authorize Staff
+                  <Plus size={20} className="mr-3" strokeWidth={3} /> Register Staff
                 </motion.button>
               </Link>
             </div>
           </div>
         </SlideIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {staff.map((member, i) => (
-            <SlideIn key={member._id} delay={i * 0.05}>
-              <CardHover>
-                <div
-                  onClick={() => setViewingStaff(member)}
-                  className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 p-8 relative group overflow-hidden h-full flex flex-col cursor-pointer"
-                >
-                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-125 duration-700">
-                    <Users size={120} />
-                  </div>
-
-                  <div className="flex items-center space-x-5 relative z-10">
-                    <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200/20 shadow-inner">
-                      <span className="text-2xl font-black uppercase">{member.name.charAt(0)}</span>
+        {viewMode === 'list' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {staffToDisplay.map((member, i) => (
+              <SlideIn key={member._id} delay={i * 0.05}>
+                <CardHover>
+                  <div
+                    onClick={() => setViewingStaff(member)}
+                    className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 p-8 relative group overflow-hidden h-full flex flex-col cursor-pointer"
+                  >
+                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10  transition-all duration-300 scale-">
+                      <Users size={120} />
                     </div>
-                    <div>
-                      <h3 className="font-black text-gray-900 dark:text-zinc-100 text-xl tracking-tight leading-tight">{member.name}</h3>
-                      <div className="flex items-center mt-1">
-                        <UserCheck size={12} className="text-amber-600 mr-2" />
-                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">{member.role}</span>
+
+                    <div className="flex items-center space-x-5 relative z-10">
+                      <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200/20 shadow-inner">
+                        <span className="text-2xl font-black uppercase">{member.name.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <h3 className="font-black text-gray-900 dark:text-zinc-100 text-xl tracking-tight leading-tight">{member.name}</h3>
+                        <div className="flex items-center mt-1">
+                          <UserCheck size={12} className="text-amber-600 mr-2" />
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">{(member.role === 'location_admin' || member.role === 'branch_admin') ? 'Branch Admin' : member.role === 'admin' ? 'Main Admin' : member.role}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 space-y-4 relative z-10 flex-grow">
+                      <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 group-hover:text-amber-600 transition-colors">
+                        <Mail size={16} className="mr-4 opacity-40" /> {member.email}
+                      </div>
+                      <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400">
+                        <Phone size={16} className="mr-4 opacity-40" /> {member.phone}
+                      </div>
+                      <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 truncate">
+                        <MapPin size={16} className="mr-4 opacity-40" /> {member.city}, {member.state}
+                      </div>
+                    </div>
+
+                    <div className="mt-10 pt-6 border-t border-gray-50 dark:border-zinc-800 flex justify-end items-center relative z-10">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                          className="p-3 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-2xl transition-all"
+                          title="Edit Profile"
+                        >
+                          <Edit3 size={20} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
+                          className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all"
+                          title="Delete Record"
+                        >
+                          <Trash2 size={20} />
+                        </button>
                       </div>
                     </div>
                   </div>
+                </CardHover>
+              </SlideIn>
+            ))}
+            {staffToDisplay.length === 0 && (
+              <div className="col-span-full py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-4 border-dashed border-gray-50 dark:border-zinc-800 flex flex-col items-center justify-center opacity-30">
+                <ShieldAlert size={64} className="mb-6" />
+                <p className="font-black text-sm uppercase tracking-widest">No staff found</p>
+              </div>
+            )}
 
-                  <div className="mt-8 space-y-4 relative z-10 flex-grow">
-                    <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 group-hover:text-amber-600 transition-colors">
-                      <Mail size={16} className="mr-4 opacity-40" /> {member.email}
-                    </div>
-                    <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400">
-                      <Phone size={16} className="mr-4 opacity-40" /> {member.phone}
-                    </div>
-                    <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 truncate">
-                      <MapPin size={16} className="mr-4 opacity-40" /> {member.city}, {member.state}
-                    </div>
-                  </div>
-
-                  <div className="mt-10 pt-6 border-t border-gray-50 dark:border-zinc-800 flex justify-between items-center relative z-10">
-                    <div className="flex items-baseline">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-3">Volume</span>
-                      <span className="font-black text-gray-900 dark:text-zinc-100 text-lg">₹{member.monthlySalary?.toLocaleString() || '0'}</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                        className="p-3 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-2xl transition-all"
-                        title="Modify Profile"
-                      >
-                        <Edit3 size={20} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
-                        className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all"
-                        title="Liquidate Entry"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
-                  </div>
+            {/* Pagination Controls */}
+            {viewMode === 'list' && pagination.pages > 1 && (
+              <div className="col-span-full flex justify-center items-center gap-4 mt-8">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 text-zinc-500 disabled:opacity-30 hover:text-amber-600 transition-all shadow-sm"
+                >
+                  <ChevronRight size={20} className="rotate-180" />
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`h-12 w-12 rounded-2xl font-black text-xs transition-all ${
+                        page === p 
+                          ? 'bg-amber-600 text-white shadow-xl shadow-amber-600/20 scale-110' 
+                          : 'bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 text-zinc-500 hover:text-amber-600'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
                 </div>
-              </CardHover>
-            </SlideIn>
-          ))}
-          {staff.length === 0 && (
-            <div className="col-span-full py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-4 border-dashed border-gray-50 dark:border-zinc-800 flex flex-col items-center justify-center opacity-30">
-              <ShieldAlert size={64} className="mb-6" />
-              <p className="font-black text-sm uppercase tracking-widest">Roster is currently empty</p>
-            </div>
-          )}
-        </div>
+
+                <button
+                  disabled={page === pagination.pages}
+                  onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                  className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 text-zinc-500 disabled:opacity-30 hover:text-amber-600 transition-all shadow-sm"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <SlideIn direction="up">
+            {renderHierarchy()}
+          </SlideIn>
+        )}
 
         <Modal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          title="Modify Personnel Profile"
+          title="Edit Staff Profile"
         >
           <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -196,7 +585,7 @@ export default function LocationStaffPage() {
                 <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Node</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email</label>
                 <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
             </div>
@@ -221,7 +610,7 @@ export default function LocationStaffPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Base Operations Address</label>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Address</label>
               <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
@@ -239,7 +628,7 @@ export default function LocationStaffPage() {
                 <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Yield (₹)</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Salary (₹)</label>
                 <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
@@ -247,9 +636,9 @@ export default function LocationStaffPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-5 bg-zinc-900 dark:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/20 mt-4"
+              className="w-full py-5 bg-zinc-900 dark:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/20 mt-4 "
             >
-              Update Personnel Records
+              Update Record
             </motion.button>
           </form>
         </Modal>
@@ -258,15 +647,15 @@ export default function LocationStaffPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDelete}
-          title="Liquidate Record?"
-          message="This personnel record will be permanently purged from the system network."
+          title="Delete Record?"
+          message="This record will be permanently deleted from the system."
         />
 
-        {/* Detailed Personnel Dossier Modal */}
+        {/* Detailed Personnel Details Modal */}
         <Modal
           isOpen={!!viewingStaff}
           onClose={() => setViewingStaff(null)}
-          title="Personnel Dossier Intelligence"
+          title="Staff Details"
           maxWidth="max-w-3xl"
         >
           {viewingStaff && (
@@ -283,13 +672,13 @@ export default function LocationStaffPage() {
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{viewingStaff.name}</h2>
+                  <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Staff <span className="text-amber-600">Details</span></h2>
                   <p className="text-sm font-bold text-zinc-400 mt-2 flex items-center justify-center md:justify-start gap-2">
                     <Mail size={14} className="text-amber-600" /> {viewingStaff.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
                     <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-500/20">
-                      {viewingStaff.role}
+                      {(viewingStaff.role === 'location_admin' || viewingStaff.role === 'branch_admin') ? 'Branch Admin' : viewingStaff.role}
                     </span>
                     <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest rounded-full">
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
@@ -301,7 +690,7 @@ export default function LocationStaffPage() {
                 </div>
 
                 <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 text-right min-w-[180px]">
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Yield</p>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Salary</p>
                   <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
@@ -312,14 +701,14 @@ export default function LocationStaffPage() {
                   {/* Identity Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <CreditCard size={14} className="text-amber-600" /> Identity Credentials
+                      <CreditCard size={14} className="text-amber-600" /> Identity Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <Hash className="text-amber-600" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Index</p>
-                          <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Number</p>
+                          <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Added'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -332,7 +721,7 @@ export default function LocationStaffPage() {
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <Award className="text-amber-600" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Academic Standing</p>
+                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Qualification</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
@@ -342,15 +731,15 @@ export default function LocationStaffPage() {
                   {/* Demographic Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Globe size={14} className="text-amber-600" /> Demographic Intelligence
+                      <Globe size={14} className="text-amber-600" /> Personal Info
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Temporal Age</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Solar Years</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
+                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
                       </div>
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender Node</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
                         <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
                       </div>
                     </div>
@@ -361,13 +750,13 @@ export default function LocationStaffPage() {
                   {/* Address Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <MapPin size={14} className="text-amber-600" /> Operational Base
+                      <MapPin size={14} className="text-amber-600" /> Address
                     </h3>
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                       <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
                         {viewingStaff.address1}<br />
                         {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
-                        {viewingStaff.city}, {viewingStaff.state}
+                        {viewingStaff.city}, {viewingStaff.state} - {viewingStaff.pincode}
                       </p>
                     </div>
                   </div>
@@ -411,7 +800,7 @@ export default function LocationStaffPage() {
                   className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
                   onClick={() => setViewingStaff(null)}
                 >
-                  Terminate Inspection
+                  Close
                 </Button>
                 <Button
                   className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-2xl"
@@ -420,7 +809,7 @@ export default function LocationStaffPage() {
                     setViewingStaff(null);
                   }}
                 >
-                  Refine Credentials
+                  Edit Details
                 </Button>
               </div>
             </div>

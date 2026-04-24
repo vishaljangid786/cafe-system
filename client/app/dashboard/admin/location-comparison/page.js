@@ -3,64 +3,57 @@ import { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, AreaChart, Area
+  LineChart, Line, AreaChart, Area, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  PieChart, Pie, Cell
 } from 'recharts';
 import {
   MapPin, Calendar, TrendingUp, TrendingDown, Target,
   Award, AlertTriangle, ArrowUpRight, DollarSign,
-  ShoppingCart, Activity, Zap, ChevronDown, Filter
+  ShoppingCart, Activity, Zap, ChevronDown, Filter,
+  Users, ShoppingBag, Receipt, ArrowRightLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
-const COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e'];
+const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f43f5e'];
 
 export default function LocationComparisonPage() {
   const [locations, setLocations] = useState([]);
-  const [selectedLocations, setSelectedLocations] = useState([]);
+  const [loc1, setLoc1] = useState('');
+  const [loc2, setLoc2] = useState('');
   const [loading, setLoading] = useState(true);
   const [comparisonData, setComparisonData] = useState([]);
-  const [topLocations, setTopLocations] = useState([]);
-  const [underperforming, setUnderperforming] = useState([]);
-  const [trendingItems, setTrendingItems] = useState([]);
-  const [productPerformance, setProductPerformance] = useState([]);
-  const [dateRange, setDateRange] = useState('month'); // week, month, year
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [productViewMode, setProductViewMode] = useState('location'); // location, global
-  const [bottomProducts, setBottomProducts] = useState([]);
+  const [detailedData, setDetailedData] = useState([]);
+  const [dateRange, setDateRange] = useState('month'); // week, month, year, custom
+  const [isLoc1Open, setIsLoc1Open] = useState(false);
+  const [isLoc2Open, setIsLoc2Open] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
   }, []);
 
   useEffect(() => {
-    if (selectedLocations.length > 0) {
+    if (loc1 && loc2) {
       fetchComparison();
-      fetchIntelligence();
     }
-  }, [selectedLocations, dateRange]);
+  }, [loc1, loc2, dateRange]);
 
   const fetchInitialData = async () => {
     try {
-      const [locRes, topRes, underRes] = await Promise.all([
-        api.get('/locations'),
-        api.get('/analytics/top-locations'),
-        api.get('/analytics/underperforming-locations')
-      ]);
-      setLocations(locRes.data.data);
-      setTopLocations(topRes.data.data);
-      setUnderperforming(underRes.data.data);
-
-      // Auto-select top 2 locations initially
-      if (locRes.data.data.length >= 2) {
-        setSelectedLocations(locRes.data.data.slice(0, 2).map(l => l._id));
-      } else if (locRes.data.data.length > 0) {
-        setSelectedLocations([locRes.data.data[0]._id]);
+      const res = await api.get('/locations');
+      const locs = res.data.data;
+      setLocations(locs);
+      
+      if (locs.length >= 2) {
+        setLoc1(locs[0]._id);
+        setLoc2(locs[1]._id);
+      } else if (locs.length > 0) {
+        setLoc1(locs[0]._id);
       }
     } catch (error) {
-      toast.error('Failed to initialize intelligence engine');
+      toast.error('Failed to initialize branches');
     } finally {
       setLoading(false);
     }
@@ -68,124 +61,140 @@ export default function LocationComparisonPage() {
 
   const fetchComparison = async () => {
     try {
-      const res = await api.get(`/analytics/location-comparison?locationIds=${selectedLocations.join(',')}&period=${dateRange}`);
-      setComparisonData(res.data.data);
-    } catch (error) {
-      toast.error('Comparison synchronization failed');
-    }
-  };
-
-  const fetchIntelligence = async () => {
-    try {
-      const periodInDays = dateRange === 'week' ? 7 : (dateRange === 'month' ? 30 : 365);
-      const [trendRes, prodRes] = await Promise.all([
-        api.get(`/analytics/trending-items?period=${periodInDays}`),
-        api.get(`/analytics/product-performance/${selectedLocations[0]}?period=${periodInDays}`)
+      const params = `locationIds=${loc1},${loc2}&period=${dateRange === 'week' ? 7 : (dateRange === 'month' ? 30 : 365)}`;
+      const [compRes, detailRes] = await Promise.all([
+        api.get(`/analytics/location-comparison?${params}`),
+        api.get(`/analytics/comparison-details?${params}`)
       ]);
-      setTrendingItems(trendRes.data.data);
-      setProductPerformance(prodRes.data.data);
-      // Derive bottom products
-      const bottom = [...prodRes.data.data].sort((a, b) => a.quantity - b.quantity).slice(0, 5);
-      setBottomProducts(bottom);
+      setComparisonData(compRes.data.data);
+      setDetailedData(detailRes.data.data);
     } catch (error) {
-      console.error('Failed to fetch detailed intelligence');
+      toast.error('Matrix synchronization failed');
     }
   };
 
-  const toggleLocation = (id) => {
-    setSelectedLocations(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+  const getWinner = (field) => {
+    if (comparisonData.length < 2) return null;
+    const l1 = comparisonData.find(d => d.locationId === loc1);
+    const l2 = comparisonData.find(d => d.locationId === loc2);
+    if (!l1 || !l2) return null;
+    
+    if (l1[field] > l2[field]) return { name: l1.name, diff: ((l1[field] - l2[field]) / (l2[field] || 1) * 100).toFixed(1) };
+    if (l2[field] > l1[field]) return { name: l2.name, diff: ((l2[field] - l1[field]) / (l1[field] || 1) * 100).toFixed(1) };
+    return { name: 'Draw', diff: 0 };
+  };
+
+  const l1Data = comparisonData.find(d => d.locationId === loc1);
+  const l2Data = comparisonData.find(d => d.locationId === loc2);
+  const l1Detail = detailedData.find(d => d.locationId === loc1);
+  const l2Detail = detailedData.find(d => d.locationId === loc2);
+
+  const getRadarData = () => {
+    if (comparisonData.length < 2) return [];
+    const l1 = comparisonData.find(d => d.locationId === loc1);
+    const l2 = comparisonData.find(d => d.locationId === loc2);
+    if (!l1 || !l2) return [];
+
+    const maxRevenue = Math.max(l1.revenue, l2.revenue, 1);
+    const maxProfit = Math.max(l1.netProfit, l2.netProfit, 1);
+    const maxOrders = Math.max(l1.orders, l2.orders, 1);
+    const maxExpenses = Math.max(l1.expenses, l2.expenses, 1);
+    const maxTicket = Math.max(l1.avgOrderValue, l2.avgOrderValue, 1);
+
+    return [
+      { subject: 'Revenue', A: (l1.revenue / maxRevenue) * 100, B: (l2.revenue / maxRevenue) * 100, fullMark: 100 },
+      { subject: 'Net Profit', A: (l1.netProfit / maxProfit) * 100, B: (l2.netProfit / maxProfit) * 100, fullMark: 100 },
+      { subject: 'Orders', A: (l1.orders / maxOrders) * 100, B: (l2.orders / maxOrders) * 100, fullMark: 100 },
+      { subject: 'Ticket Size', A: (l1.avgOrderValue / maxTicket) * 100, B: (l2.avgOrderValue / maxTicket) * 100, fullMark: 100 },
+      { subject: 'Efficiency', A: 100 - (l1.expenses / (l1.revenue || 1) * 100), B: 100 - (l2.expenses / (l2.revenue || 1) * 100), fullMark: 100 },
+      { subject: 'Cost Control', A: (1 - l1.expenses / maxExpenses) * 100, B: (1 - l2.expenses / maxExpenses) * 100, fullMark: 100 },
+    ];
   };
 
   if (loading) return (
-    <div className="space-y-8 p-10">
-      <div className="h-10 w-48 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-xl mb-10" />
+    <div className="p-10 space-y-10">
+      <div className="h-20 w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
+        <div className="h-40 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-[2rem]" />
+        <div className="h-40 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-[2rem]" />
+        <div className="h-40 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-[2rem]" />
       </div>
-      <div className="h-[400px] bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-[2.5rem]" />
-    </div>
-  );
-
-  if (locations.length === 0) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
-      <div className="h-24 w-24 rounded-3xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-        <MapPin size={48} />
-      </div>
-      <div>
-        <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">No Operational Hubs Found</h2>
-        <p className="text-zinc-500 max-w-md mx-auto mt-2 font-medium">
-          The intelligence matrix requires at least one active location to begin benchmarking.
-          Please initialize locations in the Location Manager.
-        </p>
-      </div>
-      <button
-        onClick={() => window.location.reload()}
-        className="px-8 py-4 bg-amber-500 text-white font-black rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform"
-      >
-        Refresh Matrix
-      </button>
+      <div className="h-[500px] w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-[2.5rem]" />
     </div>
   );
 
   return (
     <PageTransition>
       <div className="space-y-10 pb-20">
-        {/* Header & Controls */}
+        {/* Header with Dual Selectors */}
         <SlideIn direction="down">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-            <div>
-              <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center">
-                <Target className="mr-4 text-amber-500" size={40} />
-                Operational <span className="ml-3 text-amber-500">Intelligence</span>
-              </h1>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium mt-2 max-w-xl">
-                Multi-dimensional benchmarking and predictive performance analysis. {selectedLocations.length === 0 && <span className="text-rose-500 font-bold block mt-1">Select at least one hub to synchronize matrix.</span>}
-              </p>
+            <div className="flex items-center gap-6">
+              <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <ArrowRightLeft size={32} />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                  Branch <span className="text-amber-600">Comparison</span>
+                </h1>
+                <p className="text-zinc-500 text-sm font-medium mt-1 uppercase tracking-widest">Compare performance between two branches</p>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              {/* Location Multi-Selector */}
+              {/* Loc 1 Selector */}
               <div className="relative">
                 <button
-                  onClick={() => setIsSelectorOpen(!isSelectorOpen)}
-                  className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-amber-500/50 transition-all group min-w-[240px]"
+                  onClick={() => { setIsLoc1Open(!isLoc1Open); setIsLoc2Open(false); }}
+                  className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-amber-500/50 transition-all min-w-[220px]"
                 >
                   <MapPin size={18} className="text-amber-500" />
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Comparison Nodes</span>
-                    <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">
-                      {selectedLocations.length === 0 ? 'Select Hubs' : `${selectedLocations.length} Hubs Selected`}
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">First Branch</span>
+                    <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{locations.find(l => l._id === loc1)?.name || 'Select Branch'}</span>
                   </div>
-                  <ChevronDown size={16} className={`ml-auto transition-transform ${isSelectorOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={16} className={`ml-auto transition-transform ${isLoc1Open ? 'rotate-180' : ''}`} />
                 </button>
-
                 <AnimatePresence>
-                  {isSelectorOpen && (
+                  {isLoc1Open && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-0 mt-3 w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl z-50 p-4 max-h-[320px] overflow-y-auto custom-scrollbar"
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 mt-3 w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2"
                     >
-                      {locations.map(loc => (
-                        <button
-                          key={loc._id}
-                          onClick={() => toggleLocation(loc._id)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-xl mb-1 transition-colors ${selectedLocations.includes(loc._id)
-                            ? 'bg-amber-500/10 text-amber-500'
-                            : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-500'
-                            }`}
-                        >
-                          <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-colors ${selectedLocations.includes(loc._id) ? 'bg-amber-500 border-amber-500' : 'border-zinc-300 dark:border-zinc-700'
-                            }`}>
-                            {selectedLocations.includes(loc._id) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                          </div>
-                          <span className="text-xs font-bold text-left">{loc.name}</span>
+                      {locations.filter(l => l._id !== loc2).map(loc => (
+                        <button key={loc._id} onClick={() => { setLoc1(loc._id); setIsLoc1Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-amber-500/10 hover:text-amber-500 text-xs font-bold transition-colors">
+                          {loc.name}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
+
+              {/* Loc 2 Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => { setIsLoc2Open(!isLoc2Open); setIsLoc1Open(false); }}
+                  className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-blue-500/50 transition-all min-w-[220px]"
+                >
+                  <MapPin size={18} className="text-blue-500" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Second Branch</span>
+                    <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{locations.find(l => l._id === loc2)?.name || 'Select Branch'}</span>
+                  </div>
+                  <ChevronDown size={16} className={`ml-auto transition-transform ${isLoc2Open ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {isLoc2Open && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 mt-3 w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2"
+                    >
+                      {locations.filter(l => l._id !== loc1).map(loc => (
+                        <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-blue-500/10 hover:text-blue-500 text-xs font-bold transition-colors">
+                          {loc.name}
                         </button>
                       ))}
                     </motion.div>
@@ -196,14 +205,7 @@ export default function LocationComparisonPage() {
               {/* Date Filter */}
               <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                 {['week', 'month', 'year'].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setDateRange(p)}
-                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === p
-                      ? 'bg-white dark:bg-zinc-700 text-amber-500 shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'
-                      }`}
-                  >
+                  <button key={p} onClick={() => setDateRange(p)} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === p ? 'bg-white dark:bg-zinc-700 text-amber-500 shadow-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}>
                     {p}
                   </button>
                 ))}
@@ -212,415 +214,373 @@ export default function LocationComparisonPage() {
           </div>
         </SlideIn>
 
-        {/* Intelligence Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Top Performer Trophy */}
-          <SlideIn delay={0.1}>
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-amber-500/20 relative overflow-hidden group">
-              <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                <Award size={200} />
-              </div>
-              <div className="flex items-center gap-4 mb-6 relative z-10">
-                <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                  <Award size={24} className="text-white" />
+        {/* Winner Analysis Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {[
+            { label: 'Sales Winner', field: 'revenue', icon: DollarSign, color: 'amber' },
+            { label: 'Profit Leader', field: 'netProfit', icon: Zap, color: 'emerald' },
+            { label: 'Order Leader', field: 'orders', icon: ShoppingBag, color: 'blue' },
+            { label: 'Expense Control', field: 'expenses', icon: Receipt, color: 'rose', reverse: true }
+          ].map((item, idx) => {
+            const winner = getWinner(item.field);
+            const isWinner1 = winner?.name === l1Data?.name;
+            return (
+              <SlideIn key={idx} delay={idx * 0.1}>
+                <div className={`p-8 rounded-[2.5rem] border transition-all ${isWinner1 ? 'bg-amber-500/5 border-amber-500/20' : 'bg-blue-500/5 border-blue-500/20'} relative overflow-hidden`}>
+                   <div className="flex items-center gap-4 mb-4">
+                     <item.icon size={20} className={isWinner1 ? 'text-amber-500' : 'text-blue-500'} />
+                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{item.label}</span>
+                   </div>
+                   <div className="flex flex-col gap-4 mt-6">
+                     <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Branch 1</span>
+                        </div>
+                        <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                          {item.field === 'revenue' || item.field === 'netProfit' || item.field === 'expenses' ? '₹' : ''}
+                          {l1Data?.[item.field]?.toLocaleString() || 0}
+                        </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Branch 2</span>
+                        </div>
+                        <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                          {item.field === 'revenue' || item.field === 'netProfit' || item.field === 'expenses' ? '₹' : ''}
+                          {l2Data?.[item.field]?.toLocaleString() || 0}
+                        </span>
+                     </div>
+                     <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+                        <span className="text-[10px] font-black text-zinc-900 dark:text-white truncate max-w-[120px]">{winner?.name} Wins</span>
+                        <span className={`text-[10px] font-black ${winner?.diff > 0 ? 'text-emerald-500' : 'text-zinc-400'}`}>
+                          {winner?.diff > 0 ? `+${winner.diff}%` : '0%'}
+                        </span>
+                     </div>
+                   </div>
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Crown Performer</span>
-              </div>
-              <h2 className="text-3xl font-black mb-2 relative z-10 leading-tight">
-                {topLocations[0]?.name || (loading ? 'Analyzing...' : 'No Data')}
-              </h2>
-              <p className="text-white/80 text-xs font-bold uppercase tracking-wider relative z-10">
-                {topLocations[0]?.city || (loading ? 'Global Matrix' : 'Record Transactions to Populate')}
-              </p>
-              <div className="mt-8 flex items-baseline gap-2 relative z-10">
-                <span className="text-4xl font-black italic">₹{((topLocations[0]?.profit || 0) / 1000).toFixed(1)}K</span>
-                <span className="text-xs font-bold text-white/70 uppercase tracking-widest">Net Profit</span>
-              </div>
-            </div>
-          </SlideIn>
-
-          {/* Top Locations Leaderboard (New) */}
-          <SlideIn delay={0.15}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                    <TrendingUp size={20} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Node Leaderboard</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {topLocations.slice(0, 4).map((loc, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-zinc-400">0{i + 1}</span>
-                      <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{loc.name}</span>
-                    </div>
-                    <span className="text-xs font-black text-amber-500">₹{(loc.profit / 1000).toFixed(1)}K</span>
-                  </div>
-                ))}
-                {topLocations.length === 0 && <p className="text-xs text-zinc-400 italic">No nodes matching criteria.</p>}
-              </div>
-            </div>
-          </SlideIn>
-
-          {/* Critical Attention Card */}
-          <SlideIn delay={0.2}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm group">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-12 w-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                  <AlertTriangle size={24} />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Node Attention</span>
-              </div>
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 mb-1">
-                {underperforming[0]?.name || (loading ? 'Stable Matrix' : 'Optimal Grid')}
-              </h2>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-6">
-                {underperforming[0]?.reason || (underperforming.length > 0 ? 'Operational norms within threshold' : 'No performance lag detected')}
-              </p>
-              <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${underperforming[0]?.score || 0}%` }}
-                  className="h-full bg-rose-500"
-                />
-              </div>
-              <div className="flex justify-between mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                <span>Utilization Score</span>
-                <span className="text-rose-500">{underperforming[0]?.score || 0}%</span>
-              </div>
-            </div>
-          </SlideIn>
-
-          {/* Trending Insight */}
-          <SlideIn delay={0.3}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <TrendingUp size={24} />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Growth Velocity</span>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Global Average Ticket</span>
-                  <span className="text-lg font-black text-zinc-900 dark:text-zinc-100">₹842</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Yield Convergence</span>
-                  <span className="text-lg font-black text-emerald-500">+12.4%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Network Idle Rate</span>
-                  <span className="text-lg font-black text-rose-500">-3.1%</span>
-                </div>
-              </div>
-              <button className="w-full mt-6 py-3 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-amber-500 hover:border-amber-500 transition-all">
-                Download Global Audit
-              </button>
-            </div>
-          </SlideIn>
+              </SlideIn>
+            );
+          })}
         </div>
 
-        {/* Primary Comparison Charts */}
+        {/* Benchmarking Matrix */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Revenue & Profit Benchmarking */}
-          <SlideIn delay={0.4}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm h-full">
-              <div className="flex items-center justify-between mb-10">
-                <div>
-                  <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Yield Benchmarking</h3>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Cross-node revenue vs net profit analysis</p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <span className="text-[10px] font-black uppercase text-zinc-500">Revenue</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-black uppercase text-zinc-500">Profit</span>
-                  </div>
-                </div>
+          {/* Radar Analysis */}
+          <div className="bg-white dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Performance Chart</h3>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Multi-sector performance overview</p>
               </div>
-
-              <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={comparisonData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#888' }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#888' }}
-                    />
-                    <Tooltip
-                      cursor={{ fill: '#88888810' }}
-                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-                    />
-                    <Bar dataKey="revenue" fill="#f59e0b" radius={[6, 6, 0, 0]} barSize={40} />
-                    <Bar dataKey="netProfit" fill="#10b981" radius={[6, 6, 0, 0]} barSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-[8px] font-black uppercase text-zinc-500">{l1Data?.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="text-[8px] font-black uppercase text-zinc-500">{l2Data?.name}</span>
+                </div>
               </div>
             </div>
-          </SlideIn>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={getRadarData()}>
+                  <PolarGrid stroke="#88888820" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 'bold', fill: '#888' }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar
+                    name={l1Data?.name}
+                    dataKey="A"
+                    stroke="#f59e0b"
+                    fill="#f59e0b"
+                    fillOpacity={0.4}
+                  />
+                  <Radar
+                    name={l2Data?.name}
+                    dataKey="B"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.4}
+                  />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-          {/* Revenue Contribution */}
-          <SlideIn delay={0.5}>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm h-full">
-              <div className="mb-10 text-center">
-                <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Market Share</h3>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Percentage of network contribution</p>
+          {/* Sector Comparison Bar Chart */}
+          <div className="bg-white dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm">
+            <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight mb-10">Sales Comparison</h3>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={[
+                  { subject: 'Revenue', A: l1Data?.revenue, B: l2Data?.revenue },
+                  { subject: 'Net Profit', A: l1Data?.netProfit, B: l2Data?.netProfit },
+                  { subject: 'Expenses', A: l1Data?.expenses, B: l2Data?.expenses },
+                  { subject: 'Orders', A: l1Data?.orders, B: l2Data?.orders }
+                ]}>
+                  <XAxis dataKey="subject" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'black', textTransform: 'uppercase' }} />
+                  <Bar name={l1Data?.name} dataKey="A" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                  <Bar name={l2Data?.name} dataKey="B" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Financial Duel Section */}
+        <div className="bg-white dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+             <DollarSign size={200} />
+          </div>
+          
+          <div className="mb-12 text-center">
+            <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Direct <span className="text-amber-500">Comparison</span></h3>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Direct performance comparison between branches</p>
+          </div>
+
+          <div className="space-y-12">
+            {[
+              { label: 'Total Sales', field: 'revenue', colorA: 'bg-amber-500', colorB: 'bg-blue-500', icon: TrendingUp },
+              { label: 'Net Profit', field: 'netProfit', colorA: 'bg-emerald-500', colorB: 'bg-sky-500', icon: Zap },
+              { label: 'Daily Expenses', field: 'expenses', colorA: 'bg-rose-500', colorB: 'bg-indigo-500', icon: Receipt }
+            ].map((metric, i) => {
+              const val1 = l1Data?.[metric.field] || 0;
+              const val2 = l2Data?.[metric.field] || 0;
+              const total = (val1 + val2) || 1;
+              const perc1 = (val1 / total) * 100;
+              const perc2 = (val2 / total) * 100;
+
+              return (
+                <div key={i} className="space-y-4">
+                  <div className="flex justify-between items-end mb-2">
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 italic">₹{val1.toLocaleString()}</span>
+                      <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{l1Data?.name}</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <metric.icon size={16} className="text-zinc-400 mb-1" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">{metric.label}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 italic">₹{val2.toLocaleString()}</span>
+                      <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{l2Data?.name}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="h-3 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full flex overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${perc1}%` }} 
+                      transition={{ duration: 1, delay: i * 0.1 }}
+                      className={`h-full ${metric.colorA} relative group`}
+                    >
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.div>
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${perc2}%` }} 
+                      transition={{ duration: 1, delay: i * 0.1 }}
+                      className={`h-full ${metric.colorB} relative group`}
+                    >
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.div>
+                  </div>
+
+                  <div className="flex justify-between px-2">
+                    <span className="text-[10px] font-black text-zinc-400">{perc1.toFixed(1)}% Share</span>
+                    <span className="text-[10px] font-black text-zinc-400">{perc2.toFixed(1)}% Share</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+          {/* Hub Alpha Details */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black">1</div>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{l1Data?.name} Details</h3>
+            </div>
+            
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Top Selling Item</span>
+                <span className="text-sm font-black text-amber-500">{l1Detail?.topItem?.name || 'N/A'} ({l1Detail?.topItem?.quantity || 0} Sold)</span>
               </div>
+              
+              <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-4">
+                {l1Detail?.staffSales?.map((staff, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-black text-xs">
+                        {staff.name.charAt(0)}
+                      </div>
+                      <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{staff.name}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {staff.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-xs font-medium text-zinc-500">
+                          <span>{item.name}</span>
+                          <span className="font-black text-zinc-900 dark:text-zinc-100">{item.quantity} Qty</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-              <div className="h-[400px] w-full relative">
+          {/* Hub Beta Details */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-black">2</div>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{l2Data?.name} Details</h3>
+            </div>
+            
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Top Selling Item</span>
+                <span className="text-sm font-black text-blue-500">{l2Detail?.topItem?.name || 'N/A'} ({l2Detail?.topItem?.quantity || 0} Sold)</span>
+              </div>
+              
+              <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-4">
+                {l2Detail?.staffSales?.map((staff, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-black text-xs">
+                        {staff.name.charAt(0)}
+                      </div>
+                      <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{staff.name}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {staff.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-xs font-medium text-zinc-500">
+                          <span>{item.name}</span>
+                          <span className="font-black text-zinc-900 dark:text-zinc-100">{item.quantity} Qty</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Workforce Intelligence Section */}
+        <div className="bg-white dark:bg-zinc-950/20 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 shadow-sm">
+          <div className="mb-12 flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Staff <span className="text-blue-500">Performance</span></h3>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Attendance and stability overview</p>
+            </div>
+            <div className="flex items-center gap-4">
+               <div className="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+                 <Users size={16} className="text-blue-500" />
+                 <span className="text-[10px] font-black uppercase text-zinc-500">Stability Gap: {Math.abs((l1Detail?.attendance?.rate || 0) - (l2Detail?.attendance?.rate || 0)).toFixed(1)}%</span>
+               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Hub Alpha Attendance */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                <h4 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{l1Data?.name}</h4>
+              </div>
+              <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={comparisonData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={140}
-                      paddingAngle={8}
-                      dataKey="revenue"
+                      data={[
+                        { name: 'Present', value: l1Detail?.attendance?.present || 0 },
+                        { name: 'Absent', value: l1Detail?.attendance?.absent || 0 },
+                        { name: 'Half-Day', value: l1Detail?.attendance?.halfDay || 0 }
+                      ]}
+                      cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
                     >
-                      {comparisonData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      <Cell fill="#10b981" />
+                      <Cell fill="#f43f5e" />
+                      <Cell fill="#f59e0b" />
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-
-                {/* Custom Legend Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block">Total</span>
-                    <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100 italic">₹{(comparisonData.reduce((acc, curr) => acc + curr.revenue, 0) / 1000).toFixed(1)}K</span>
-                  </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                   <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{l1Detail?.attendance?.rate || 0}%</span>
+                   <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Stability</span>
                 </div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                {comparisonData.map((entry, index) => (
-                  <div key={entry.locationId} className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase truncate">{entry.name}</span>
-                    <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 ml-auto">
-                      {((entry.revenue / comparisonData.reduce((a, c) => a + c.revenue, 1)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                ))}
+            {/* Hub Beta Attendance */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
+                <h4 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">{l2Data?.name}</h4>
+              </div>
+              <div className="h-[300px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Present', value: l2Detail?.attendance?.present || 0 },
+                        { name: 'Absent', value: l2Detail?.attendance?.absent || 0 },
+                        { name: 'Half-Day', value: l2Detail?.attendance?.halfDay || 0 }
+                      ]}
+                      cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
+                    >
+                      <Cell fill="#10b981" />
+                      <Cell fill="#f43f5e" />
+                      <Cell fill="#f59e0b" />
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                   <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{l2Detail?.attendance?.rate || 0}%</span>
+                   <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Stability</span>
+                </div>
               </div>
             </div>
-          </SlideIn>
+          </div>
         </div>
 
-        {/* Detailed Metrics Table */}
-        <SlideIn delay={0.6}>
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-sm">
-            <div className="p-10 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+        {/* Global Most Selling Item Between Both */}
+        <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-10 text-center">
+           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4">Overall Best Seller</h3>
+           <div className="flex flex-col items-center gap-4">
+              <div className="h-20 w-20 rounded-[2rem] bg-white dark:bg-zinc-900 shadow-xl flex items-center justify-center text-amber-500">
+                <Zap size={40} />
+              </div>
               <div>
-                <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">Fiscal Ledger Comparison</h3>
-                <p className="text-sm text-zinc-500 mt-2 font-medium">Granular performance breakdown per node.</p>
+                <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                  {(() => {
+                    const allItems = [...(l1Detail?.staffSales || []), ...(l2Detail?.staffSales || [])]
+                      .flatMap(s => s.items)
+                      .reduce((acc, curr) => {
+                        acc[curr.name] = (acc[curr.name] || 0) + curr.quantity;
+                        return acc;
+                      }, {});
+                    const champion = Object.entries(allItems).sort((a,b) => b[1] - a[1])[0];
+                    return champion ? `${champion[0]} (${champion[1]} Units)` : 'Awaiting Data';
+                  })()}
+                </h2>
+                <p className="text-zinc-500 text-xs font-medium mt-2 italic">Most frequently ordered item across both branches.</p>
               </div>
-              <button className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-amber-500 transition-colors">
-                <ArrowUpRight size={20} />
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-zinc-50/50 dark:bg-zinc-950/50">
-                    <th className="px-10 py-6 text-left text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Location Node</th>
-                    <th className="px-10 py-6 text-right text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Gross Yield</th>
-                    <th className="px-10 py-6 text-right text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Operational Cost</th>
-                    <th className="px-10 py-6 text-right text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Net Profit</th>
-                    <th className="px-10 py-6 text-right text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Avg Ticket</th>
-                    <th className="px-10 py-6 text-right text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Order Vol</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {comparisonData.map((loc) => (
-                    <tr key={loc.locationId} className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group">
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 font-black">
-                            {loc.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{loc.name}</p>
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{loc.city}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8 text-right font-black text-zinc-900 dark:text-zinc-100">₹{loc.revenue.toLocaleString()}</td>
-                      <td className="px-10 py-8 text-right font-black text-rose-500">₹{loc.expenses.toLocaleString()}</td>
-                      <td className="px-10 py-8 text-right font-black text-emerald-500">₹{loc.netProfit.toLocaleString()}</td>
-                      <td className="px-10 py-8 text-right font-black text-zinc-900 dark:text-zinc-100">₹{Math.round(loc.avgOrderValue)}</td>
-                      <td className="px-10 py-8 text-right font-black text-zinc-900 dark:text-zinc-100">{loc.orders}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </SlideIn>
-
-        {/* Product Intelligence Section */}
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Culinary Intelligence</h3>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
-                {productViewMode === 'global' ? 'Network-wide product velocity' : `Performance for ${locations.find(l => l._id === selectedLocations[0])?.name || 'Selected Hub'}`}
-              </p>
-            </div>
-            <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <button
-                onClick={() => setProductViewMode('location')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${productViewMode === 'location' ? 'bg-white dark:bg-zinc-700 text-amber-500 shadow-sm' : 'text-zinc-500'}`}
-              >
-                Hub Specific
-              </button>
-              <button
-                onClick={() => setProductViewMode('global')}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${productViewMode === 'global' ? 'bg-white dark:bg-zinc-700 text-amber-500 shadow-sm' : 'text-zinc-500'}`}
-              >
-                Global Grid
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-            {/* Most Popular Products */}
-            <SlideIn delay={0.7}>
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm h-full">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                    <ShoppingCart size={24} />
-                  </div>
-                  <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Most Popular</h3>
-                </div>
-                <div className="space-y-6">
-                  {(productViewMode === 'global' ? trendingItems : productPerformance).slice(0, 5).map((item, i) => (
-                    <div key={item._id || item.itemId} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-black text-zinc-300 group-hover:text-amber-500 transition-colors">0{i + 1}</span>
-                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">{item.name}</span>
-                      </div>
-                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{item.quantity || item.totalSold || 0} units</span>
-                    </div>
-                  ))}
-                  {(productViewMode === 'global' ? trendingItems : productPerformance).length === 0 && (
-                    <div className="py-10 text-center">
-                      <p className="text-xs font-medium text-zinc-400 italic">No sales recorded {productViewMode === 'location' ? 'at this node' : 'globally'}.</p>
-                      <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-widest font-black">Matrix: Idle</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </SlideIn>
-
-            {/* Least Selling Products (New) */}
-            <SlideIn delay={0.75}>
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm h-full">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="h-12 w-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                    <TrendingDown size={24} />
-                  </div>
-                  <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Cold Items</h3>
-                </div>
-                <div className="space-y-6">
-                  {(productViewMode === 'global' ? [...trendingItems].sort((a, b) => (a.totalSold || 0) - (b.totalSold || 0)) : bottomProducts).slice(0, 5).map((item, i) => (
-                    <div key={item._id || item.itemId} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-black text-zinc-300 group-hover:text-rose-500 transition-colors">0{i + 1}</span>
-                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">{item.name}</span>
-                      </div>
-                      <span className="text-xs font-black text-rose-500">{item.quantity || item.totalSold || 0} units</span>
-                    </div>
-                  ))}
-                  {(productViewMode === 'global' ? trendingItems : bottomProducts).length === 0 && (
-                    <div className="py-10 text-center">
-                      <p className="text-xs font-medium text-zinc-400 italic">No stagnant items detected.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </SlideIn>
-
-            {/* Trending Products */}
-            <SlideIn delay={0.8}>
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-sm">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                    <Activity size={24} />
-                  </div>
-                  <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Trending Items</h3>
-                </div>
-                <div className="space-y-6">
-                  {trendingItems.slice(0, 5).map((item, i) => (
-                    <div key={item.itemId} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                        <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-black">
-                          #{i + 1}
-                        </div>
-                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">{item.name}</span>
-                      </div>
-                      <div className={`flex items-center gap-1 text-[10px] font-black ${item.growth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {item.growth >= 0 ? <ArrowUpRight size={12} /> : <TrendingDown size={12} />}
-                        {Math.abs(item.growth)}%
-                      </div>
-                    </div>
-                  ))}
-                  {trendingItems.length === 0 && (
-                    <p className="text-xs font-medium text-zinc-400 italic">Insufficient historical data to detect trends.</p>
-                  )}
-                </div>
-              </div>
-            </SlideIn>
-
-            {/* Most Profitable Products */}
-            <SlideIn delay={0.9}>
-              <div className="bg-zinc-100 dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 p-6 opacity-10 dark:text-white text-zinc-900">
-                  <DollarSign size={80} />1
-                </div>
-                <div className="flex items-center gap-4 mb-8 relative z-10 ">
-                  <div className="h-12 w-12 rounded-2xl dark:bg-white/10 bg-zinc-900/10 flex items-center justify-center dark:text-white text-zinc-900">
-                    <Zap size={24} />
-                  </div>
-                  <h3 className="text-lg font-black dark:text-white text-zinc-900 tracking-tight">Profit Matrix</h3>
-                </div>
-                <div className="space-y-6 relative z-10">
-                  {(productViewMode === 'global' ? trendingItems : productPerformance).slice().sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).map((item, i) => (
-                    <div key={item._id || item.itemId} className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-zinc-400 dark:text-zinc-600">{item.name}</span>
-                      <span className="text-xs font-black text-emerald-400 dark:text-emerald-600">₹{Math.round(item.profit || 0).toLocaleString()} yield</span>
-                    </div>
-                  ))}
-                  {(productViewMode === 'global' ? trendingItems : productPerformance).length === 0 && (
-                    <p className="text-xs font-medium text-white/40 dark:text-zinc-400 italic">No profitability data available.</p>
-                  )}
-                </div>
-              </div>
-            </SlideIn>
-          </div>
+           </div>
         </div>
       </div>
     </PageTransition>
   );
 }
-

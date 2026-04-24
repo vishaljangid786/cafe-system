@@ -1,6 +1,7 @@
 const Expense = require('../models/Expense');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { logAction } = require('../utils/auditLogger');
 
 // @desc    Add an expense
 // @route   POST /api/expenses
@@ -8,8 +9,8 @@ const sendNotification = require('../utils/sendNotification');
 const addExpense = asyncHandler(async (req, res) => {
   let { title, description, amount, date, locationId, category } = req.body;
 
-  // Auto-assign locationId for location admins/staff
-  if (!locationId && (req.user.role === 'location_admin' || req.user.role === 'staff')) {
+  // Auto-assign locationId for branch admins/staff
+  if (!locationId && (req.user.role === 'branch_admin' || req.user.role === 'staff')) {
     locationId = req.user.assignedLocation;
   }
 
@@ -51,6 +52,8 @@ const addExpense = asyncHandler(async (req, res) => {
     locationId: expense.locationId,
   });
 
+  await logAction(req, 'EXPENSE_ADD', `Added expense: ${expense.title} (₹${expense.amount})`);
+
   res.status(201).json({
     success: true,
     data: expense,
@@ -85,6 +88,8 @@ const updateExpense = asyncHandler(async (req, res) => {
     locationId: expense.locationId,
   });
 
+  await logAction(req, 'EXPENSE_UPDATE', `Updated expense: ${expense.title}`);
+
   res.json({
     success: true,
     data: expense,
@@ -112,6 +117,8 @@ const deleteExpense = asyncHandler(async (req, res) => {
     locationId: expense.locationId,
   });
 
+  await logAction(req, 'EXPENSE_DELETE', `Deleted expense: ${expense.title}`);
+
   res.json({
     success: true,
     message: 'Expense removed',
@@ -128,8 +135,8 @@ const getExpenses = asyncHandler(async (req, res) => {
     query.locationId = req.query.locationId;
   }
 
-  // If user is location_admin, restrict to their location
-  if (req.user.role === 'location_admin' || req.user.role === 'staff') {
+  // If user is branch_admin, restrict to their location
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
     query.locationId = req.user.assignedLocation;
   }
 
