@@ -10,7 +10,9 @@ The application features a modern, high-performance design system with full supp
 -   **Theme Switching**: Managed via `ThemeContext.js`. It persists the user's preference in `localStorage` and respects system settings by default.
 -   **Visual Style**:
     -   **Glassmorphism**: Uses custom utility classes like `.glass`, `.glass-card`, and `.glass-morphism` for a premium translucent feel.
-    -   **Gradients**: Featured amber-to-orange gradients (`text-gradient`) and premium backgrounds.
+    -   **Branch Intelligence Network**: Persistent navigation grid for cross-branch surveillance and diagnostic telemetry.
+    -   **Custom Selection Matrix**: Replaces native browser dropdowns with animated, state-aware selection hubs for global and branch-specific context switching.
+    -   **Micro-animations**: Staggered entry animations and tactical hover-lift transitions using `framer-motion`.
     -   **Input Safety**: Global protection against invalid characters (-, ., e) in number inputs via `ThemeContext` event listeners.
 
 ## 🛣️ Routing & Architecture
