@@ -5,6 +5,7 @@ import { Wallet, Filter, MapPin, ChevronRight, Download, Receipt, PieChart as Pi
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import ExportActions from '../../../components/ui/ExportActions';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -58,97 +59,156 @@ export default function PayrollRecordsPage() {
       <div className="space-y-6">
         {/* Header */}
         <SlideIn direction="down">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-colors">
-            <div>
-              <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Wallet className="mr-4 text-amber-600" size={36} strokeWidth={2.5} /> Salary <span className="ml-3 text-amber-600">Management</span>
-              </h1>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-3 font-medium flex items-center">
-                <Target size={14} className="mr-2 text-amber-600" /> Manage and track staff salaries across all branches.
-              </p>
-            </div>
+          <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-2xl shadow-sm transition-colors">
+            <div className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-amber-500/20 blur-3xl" />
+            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
 
-            <div className="flex flex-wrap gap-4 items-center">
-              {/* Search */}
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-600 transition-colors">
-                  <Activity size={16} />
+            <div className="relative p-5 sm:p-6 lg:p-7">
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                <div className="flex-1">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-amber-700 dark:text-amber-400">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
+                    Payroll Control Center
+                  </div>
+
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-amber-400 shadow-xl shadow-zinc-900/10 dark:bg-amber-500 dark:text-black dark:shadow-amber-500/20">
+                      <Wallet size={28} strokeWidth={2.5} />
+                    </div>
+
+                    <div>
+                      <h1 className="text-3xl font-black leading-none tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
+                        Salary <span className="text-amber-600 dark:text-amber-400">Management</span>
+                      </h1>
+                      <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                        <Target size={15} className="mr-2 shrink-0 text-amber-600 dark:text-amber-400" />
+                        Manage payouts, staff compensation, and branch-wise salary records for the selected cycle.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search staff..."
-                  className="pl-12 pr-6 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 w-64"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setPage(1);
-                  }}
-                />
+
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:w-auto xl:min-w-[820px]">
+                  {/* Search */}
+                  <div className="relative group sm:col-span-2 lg:col-span-1">
+                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                      Search
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-amber-600">
+                        <Activity size={17} />
+                      </div>
+                      <input
+                          type="text"
+                          placeholder="Search staff..."
+                          className="h-[54px] w-full rounded-2xl border border-zinc-200 bg-zinc-50/80 py-4 pl-12 pr-4 text-sm font-bold text-zinc-800 outline-none transition-all placeholder:text-zinc-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-100 dark:focus:bg-zinc-900"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setPage(1);
+                          }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Month Picker */}
+                  <div>
+                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                      Month
+                    </label>
+                    <div
+                        onClick={() => monthInputRef.current?.showPicker()}
+                        className="flex h-[54px] cursor-pointer items-center rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 transition-all hover:border-amber-500/50 focus-within:border-amber-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-500/10 dark:border-zinc-800 dark:bg-zinc-900/70 dark:focus:bg-zinc-900"
+                    >
+                      <input
+                          ref={monthInputRef}
+                          type="month"
+                          className="w-full cursor-pointer border-none bg-transparent text-sm font-bold text-zinc-800 outline-none dark:text-zinc-100"
+                          value={month}
+                          onChange={(e) => {
+                            setMonth(e.target.value);
+                            setPage(1);
+                          }}
+                      />
+                    </div>
+                  </div>
+
+                  <PremiumSelect
+                      label="Role"
+                      value={roleFilter}
+                      onChange={(val) => {
+                        setRoleFilter(val);
+                        setPage(1);
+                      }}
+                      options={[
+                        { label: 'All Roles', value: '' },
+                        { label: 'Main Admin', value: 'admin' },
+                        { label: 'Branch Admin', value: 'branch_admin' },
+                        { label: 'Staff Member', value: 'staff' }
+                      ]}
+                  />
+
+                  <PremiumSelect
+                      label="Location"
+                      value={selectedLocation}
+                      onChange={(val) => {
+                        setSelectedLocation(val);
+                        setPage(1);
+                      }}
+                      options={[
+                        { label: 'All Locations', value: 'All' },
+                        ...locations.map(l => ({ label: l.name, value: l.name }))
+                      ]}
+                  />
+                </div>
               </div>
 
-              {/* Month Picker */}
-              <div
-                onClick={() => monthInputRef.current?.showPicker()}
-                className="flex items-center px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 focus-within:ring-2 focus-within:ring-amber-500 cursor-pointer hover:border-amber-500/50 transition-colors"
-              >
-                <input
-                  ref={monthInputRef}
-                  type="month"
-                  className="bg-transparent border-none outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 cursor-pointer"
-                  value={month}
-                  onChange={(e) => {
-                    setMonth(e.target.value);
-                    setPage(1);
-                  }}
-                />
+              <div className="mt-6 flex flex-col gap-4 border-t border-zinc-200/70 pt-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Records</p>
+                    <p className="mt-1 text-sm font-black text-zinc-900 dark:text-zinc-100">
+                      {filteredSalaries.length} Staff
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Cycle</p>
+                    <p className="mt-1 text-sm font-black text-zinc-900 dark:text-zinc-100">
+                      {month}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">
+                      Scope
+                    </p>
+                    <p className="mt-1 text-sm font-black text-amber-700 dark:text-amber-300">
+                      {selectedLocation === 'All' ? 'All Branches' : selectedLocation}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0">
+                  <ExportActions
+                      data={filteredSalaries}
+                      columns={[
+                        { header: 'Employee', key: 'name' },
+                        { header: 'Email', key: 'email' },
+                        { header: 'Location', key: 'locationName' },
+                        { header: 'Role', key: 'role' },
+                        { header: 'Monthly Salary', key: 'monthlySalary' },
+                        { header: 'Payable Days', key: 'payableDays' },
+                        { header: 'Calculated Payout', key: 'calculatedSalary' }
+                      ]}
+                      filename={`payroll_${month}`}
+                      hasCharts={true}
+                  />
+                </div>
               </div>
-
-              {/* Role Filter */}
-              <select
-                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 appearance-none pr-10 relative"
-                value={roleFilter}
-                onChange={(e) => {
-                  setRoleFilter(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">All Roles</option>
-                <option value="admin">Main Admin</option>
-                <option value="branch_admin">Branch Admin</option>
-                <option value="staff">Staff Member</option>
-              </select>
-
-              {/* Location Filter */}
-              <select
-                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 appearance-none pr-10 relative font-bold"
-                value={selectedLocation}
-                onChange={(e) => {
-                  setSelectedLocation(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="All">All Locations</option>
-                {locations.map(l => <option key={l._id} value={l.name}>{l.name}</option>)}
-              </select>
-
-              <ExportActions
-                data={filteredSalaries}
-                columns={[
-                  { header: 'Employee', key: 'name' },
-                  { header: 'Email', key: 'email' },
-                  { header: 'Location', key: 'locationName' },
-                  { header: 'Role', key: 'role' },
-                  { header: 'Monthly Salary', key: 'monthlySalary' },
-                  { header: 'Payable Days', key: 'payableDays' },
-                  { header: 'Calculated Payout', key: 'calculatedSalary' }
-                ]}
-                filename={`payroll_${month}`}
-                hasCharts={true}
-              />
             </div>
           </div>
         </SlideIn>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
@@ -198,7 +258,7 @@ export default function PayrollRecordsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={selectedLocation === 'All' 
+                      data={selectedLocation === 'All'
                         ? (stats?.locationTotals ? Object.entries(stats.locationTotals).map(([name, total]) => ({ name, value: total })) : [])
                         : filteredSalaries.map(s => ({ name: s.name, value: s.calculatedSalary }))
                       }
@@ -331,17 +391,16 @@ export default function PayrollRecordsPage() {
             >
               <ChevronRight size={20} className="rotate-180" />
             </button>
-            
+
             <div className="flex items-center gap-2">
               {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`h-10 w-10 rounded-xl font-black text-xs transition-all ${
-                    page === p 
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 scale-105' 
+                  className={`h-10 w-10 rounded-xl font-black text-xs transition-all ${page === p
+                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 scale-105'
                       : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-amber-600'
-                  }`}
+                    }`}
                 >
                   {p}
                 </button>
@@ -354,14 +413,14 @@ export default function PayrollRecordsPage() {
               className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 disabled:opacity-30 hover:text-amber-600 transition-all shadow-sm"
             >
               <ChevronRight size={20} />
-              </button>
-            </div>
+            </button>
+          </div>
         )}
 
         {/* Detailed Breakdown Modal */}
         {viewingSalary && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
@@ -413,7 +472,7 @@ export default function PayrollRecordsPage() {
               </div>
 
               <div className="p-8 bg-zinc-50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800">
-                <button 
+                <button
                   onClick={() => setViewingSalary(null)}
                   className="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02]"
                 >

@@ -74,7 +74,6 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   };
 
   const links = getLinks();
-
   const showLabels = isExpanded || isMobile;
 
   const sidebarVariants = {
@@ -85,12 +84,12 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   };
 
   const content = (
-    <div className="h-full flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300 relative overflow-hidden">
+    <div className="h-full flex flex-col bg-transparent border-r border-[var(--color-border)] transition-all duration-300 relative overflow-hidden">
       <NotificationModal isOpen={showNotifModal} onClose={() => setShowNotifModal(false)} />
       {/* Brand Header */}
       <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0 mb-2`}>
         <motion.div layout className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white shadow-sm">
+          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-white shadow-sm">
             <Coffee size={18} strokeWidth={2.5} />
           </div>
           <AnimatePresence mode="wait">
@@ -101,7 +100,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 exit={{ opacity: 0, x: -5 }}
                 className="text-lg font-bold tracking-tight text-[var(--color-text-primary)] whitespace-nowrap"
               >
-                Cafe<span className="text-[var(--color-primary)]">OS</span>
+                Cafe<span className="text-primary">OS</span>
               </motion.span>
             )}
           </AnimatePresence>
@@ -111,7 +110,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       {/* Navigation */}
       <div className={`flex-1 py-2 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}>
         <div className="space-y-1">
-          {links.map((link, idx) => {
+          {links.map((link) => {
             const Icon = link.icon;
             const isExactMatch = ['Overview', 'My Station', 'Order Matrix', 'Live Orders'].includes(link.name);
             const isActive = isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
@@ -122,10 +121,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 href={link.href}
                 onClick={() => isMobile && setIsMobileOpen(false)}
                 className={`
-                  group flex items-center relative py-2.5 rounded-xl transition-all duration-200
+                  group flex items-center relative py-2.5 my-2 rounded-xl transition-all duration-200
                   ${showLabels ? 'px-3' : 'justify-center px-0'}
                   ${isActive
-                    ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-semibold'
+                    ? 'bg-primary text-white font-bold'
                     : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'}
                 `}
               >
@@ -144,7 +143,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                   >
                     <span className="text-sm tracking-tight whitespace-nowrap">{link.name}</span>
                     {link.badge > 0 && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isActive ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-danger)] text-white'}`}>{link.badge}</span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isActive ? 'bg-primary text-white' : 'bg-[var(--color-danger)] text-white'}`}>{link.badge}</span>
                     )}
                   </motion.div>
                 )}
@@ -169,7 +168,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             ${showLabels ? 'justify-start px-3' : 'justify-center'}
           `}
         >
-          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-105 transition-transform">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <Send size={16} />
           </div>
           {showLabels && (
@@ -185,13 +184,13 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             {user.profileImageUrl ? (
               <img src={user.profileImageUrl} alt={user.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-xs font-bold text-[var(--color-primary)]">{user.name.substring(0, 2).toUpperCase()}</span>
+              <span className="text-xs font-bold text-primary">{user.name.substring(0, 2).toUpperCase()}</span>
             )}
             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[var(--color-success)] border-2 border-[var(--color-surface)] rounded-full" />
           </Link>
           {showLabels && (
             <Link href="/dashboard/profile" className="min-w-0 flex-1 group">
-              <p className="text-xs font-bold text-[var(--color-text-primary)] truncate leading-none group-hover:text-[var(--color-primary)] transition-colors">{user.name}</p>
+              <p className="text-xs font-bold text-[var(--color-text-primary)] truncate leading-none group-hover:text-primary transition-colors">{user.name}</p>
               <p className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
             </Link>
           )}

@@ -32,13 +32,13 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
           />
 
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-[9999] pointer-events-none">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-[9999] pointer-events-none overflow-y-auto custom-scrollbar">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`glass-card w-full ${maxWidth} sm:rounded-2xl rounded-t-[2.5rem] rounded-b-2xl overflow-hidden pointer-events-auto shadow-2xl border border-zinc-200 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl`}
+              className={`glass-card w-full ${maxWidth} sm:rounded-2xl rounded-t-[2.5rem] rounded-b-2xl pointer-events-auto shadow-2xl border border-zinc-200 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl relative my-auto`}
             >
               <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between">
                 <div className="space-y-1">
@@ -53,7 +53,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
                 </button>
               </div>
 
-              <div className="p-6 md:p-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
+              <div className="p-6 md:p-8">
                 {children}
               </div>
             </motion.div>

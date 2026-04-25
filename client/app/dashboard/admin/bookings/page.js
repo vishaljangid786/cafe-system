@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function BookingsManagementPage() {
   const { user, selectedLocation, globalSearch } = useAuth();
@@ -128,17 +129,18 @@ export default function BookingsManagementPage() {
                     onChange={(e) => setDateFilter(e.target.value)}
                   />
                 </div>
-                <select
-                  className="flex-1 md:w-48 px-6 py-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500 outline-none font-bold text-sm text-zinc-900 dark:text-zinc-100 appearance-none"
+                <PremiumSelect 
+                  label="Status"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="All">All Status</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Completed">Completed</option>
-                </select>
+                  onChange={(val) => setStatusFilter(val)}
+                  options={[
+                    { label: 'All Status', value: 'All' },
+                    { label: 'Pending', value: 'Pending' },
+                    { label: 'Confirmed', value: 'Confirmed' },
+                    { label: 'Cancelled', value: 'Cancelled' },
+                    { label: 'Completed', value: 'Completed' }
+                  ]}
+                />
               </div>
             </div>
           </div>

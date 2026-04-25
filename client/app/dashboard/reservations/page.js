@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import api from '../../services/api';
 import ExportActions from '../../components/ui/ExportActions';
+import PremiumSelect from '../../components/ui/PremiumSelect';
 
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
@@ -149,27 +150,27 @@ export default function ReservationsPage() {
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-            <select 
-              className="px-4 py-2.5 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+            <PremiumSelect 
+              label="Branch"
               value={filters.locationId}
-              onChange={(e) => setFilters({...filters, locationId: e.target.value})}
-            >
-              <option value="">All Locations</option>
-              {locations.map(loc => (
-                <option key={loc._id} value={loc._id}>{loc.name || loc.city}</option>
-              ))}
-            </select>
+              onChange={(val) => setFilters({...filters, locationId: val})}
+              options={[
+                { label: 'All Locations', value: '' },
+                ...locations.map(loc => ({ label: loc.name || loc.city, value: loc._id }))
+              ]}
+            />
 
-            <select 
-              className="px-4 py-2.5 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+            <PremiumSelect 
+              label="Status"
               value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-            >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              onChange={(val) => setFilters({...filters, status: val})}
+              options={[
+                { label: 'All Statuses', value: '' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Confirmed', value: 'confirmed' },
+                { label: 'Cancelled', value: 'cancelled' }
+              ]}
+            />
 
             <input 
               type="date"

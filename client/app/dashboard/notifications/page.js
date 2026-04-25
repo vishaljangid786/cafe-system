@@ -11,6 +11,7 @@ import api from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
 import PageTransition from '../../components/ui/PageTransition';
 import { Button } from '../../components/ui/Button';
+import PremiumSelect from '../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
 
 const NotificationsPage = () => {
@@ -105,51 +106,98 @@ const NotificationsPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)] transition-colors" size={16} />
-            <input 
-              type="text"
-              placeholder="Search notifications..."
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all text-sm"
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            />
-          </div>
+        <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
 
-          <div className="relative group">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-            <select 
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all text-sm appearance-none"
-              value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            >
-              <option value="all">All Status</option>
-              <option value="unread">Unread Only</option>
-              <option value="read">Read Only</option>
-            </select>
-          </div>
+    {/* 🔍 Search */}
+    <div className="relative group md:col-span-1">
+      {/* Glow */}
+      <div className="absolute inset-0 rounded-xl bg-[var(--color-primary)]/0 group-focus-within:bg-[var(--color-primary)]/10 blur-lg transition-all" />
 
-          <div className="relative group">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-            <input 
-              type="date"
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all text-sm"
-              value={filters.startDate}
-              onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-            />
-          </div>
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)] transition"
+        size={15}
+      />
 
-          <div className="relative group">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-            <input 
-              type="date"
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all text-sm"
-              value={filters.endDate}
-              onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-            />
-          </div>
-        </div>
+      <input
+        type="text"
+        placeholder="Search notifications..."
+        value={filters.search}
+        onChange={(e) =>
+          setFilters((prev) => ({ ...prev, search: e.target.value }))
+        }
+        className="relative w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+      />
+
+      {/* Clear */}
+      {filters.search && (
+        <button
+          onClick={() =>
+            setFilters((prev) => ({ ...prev, search: '' }))
+          }
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-500 transition"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+
+    {/* 🎯 Status */}
+    <PremiumSelect
+      value={filters.status}
+      onChange={(val) =>
+        setFilters((prev) => ({ ...prev, status: val }))
+      }
+      options={[
+        { label: 'All', value: 'all' },
+        { label: 'Unread', value: 'unread' },
+        { label: 'Read', value: 'read' }
+      ]}
+      className="min-w-[120px] max-w-[140px]"
+    />
+
+    {/* 📅 Start Date */}
+    <div className="relative group">
+      <Calendar
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)]"
+        size={15}
+      />
+
+      <input
+        type="date"
+        value={filters.startDate}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            startDate: e.target.value
+          }))
+        }
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+      />
+    </div>
+
+    {/* 📅 End Date */}
+    <div className="relative group">
+      <Calendar
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)]"
+        size={15}
+      />
+
+      <input
+        type="date"
+        value={filters.endDate}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            endDate: e.target.value
+          }))
+        }
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+      />
+    </div>
+
+  </div>
+</div>
 
         {/* Results Section */}
         <div className="space-y-4">

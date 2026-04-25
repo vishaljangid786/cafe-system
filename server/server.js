@@ -11,7 +11,10 @@ initScheduler();
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`\n🚀 CafeOS Backend Synchronized`);
+  console.log(`📡 Control Center: http://localhost:${PORT}`);
+  console.log(`🌐 Global Access: http://127.0.0.1:${PORT}`);
+  console.log(`🛠️  Mode: ${process.env.NODE_ENV || 'development'}\n`);
 });
 
 // Initialize Socket.io

@@ -3,23 +3,24 @@
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { 
-  TrendingDown, Search, Filter, 
-  ChevronRight, Calendar, MapPin, 
+import {
+  TrendingDown, Search, Filter,
+  ChevronRight, Calendar, MapPin,
   ArrowDownRight, Activity, Receipt,
-  Plus, User, Info, ChevronDown, 
+  Plus, User, Info, ChevronDown,
   AlertCircle, Sparkles, Download,
   Layers, Wallet, ArrowUpRight
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -81,7 +82,7 @@ export default function ExpensesPage() {
       } else if (selectedLocation) {
         query.append('locationId', selectedLocation._id || selectedLocation);
       }
-      
+
       const now = new Date();
       let start = '';
       if (timeRange !== 'all') {
@@ -119,13 +120,13 @@ export default function ExpensesPage() {
       const finalLocationId = formData.locationId || (selectedLocation?._id || selectedLocation);
       if (!finalLocationId) throw new Error("Location selection is required for cross-branch archival");
 
-      const data = { 
-        ...formData, 
+      const data = {
+        ...formData,
         title: finalTitle,
         locationId: finalLocationId,
-        type: 'expense' 
+        type: 'expense'
       };
-      
+
       await api.post('/transactions', data);
       toast.success('Expense archived', { id: loadToast });
       setShowAddModal(false);
@@ -163,8 +164,8 @@ export default function ExpensesPage() {
   const filteredData = transactions.filter(t => {
     if (!globalSearch) return true;
     const searchLower = globalSearch.toLowerCase();
-    return t.title?.toLowerCase().includes(searchLower) || 
-           t.description?.toLowerCase().includes(searchLower);
+    return t.title?.toLowerCase().includes(searchLower) ||
+      t.description?.toLowerCase().includes(searchLower);
   });
 
   const totalExpenditure = filteredData.reduce((acc, curr) => acc + curr.totalAmount, 0);
@@ -187,7 +188,7 @@ export default function ExpensesPage() {
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
             <Layers size={200} className="text-rose-500" strokeWidth={1} />
           </div>
-          
+
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -218,8 +219,8 @@ export default function ExpensesPage() {
                   </button>
                 ))}
               </div>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 icon={Plus}
                 onClick={() => setShowAddModal(true)}
                 className="!rounded-2xl !py-4 px-8 bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-600/20 scale-105 hover:scale-110 active:scale-95 transition-all"
@@ -247,21 +248,21 @@ export default function ExpensesPage() {
 
         {/* Dynamic Tabs */}
         <div className="flex items-center gap-10 border-b border-zinc-200 dark:border-zinc-800 px-10">
-          <button 
+          <button
             onClick={() => setActiveTab('all')}
             className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'all' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
           >
             Global Archives
             {activeTab === 'all' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('mine')}
             className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'mine' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
           >
             Personal Vault
             {activeTab === 'mine' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('pending')}
             className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'pending' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
           >
@@ -276,27 +277,27 @@ export default function ExpensesPage() {
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="relative flex-1 w-full group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={20} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Scan records by title, role or description..."
                   className="w-full pl-14 pr-6 py-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl focus:ring-4 focus:ring-rose-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm group-hover:border-rose-500/30"
-                  onChange={(e) => {/* global search logic from context */}}
+                  onChange={(e) => {/* global search logic from context */ }}
                 />
               </div>
               <div className="flex gap-3 w-full md:w-auto">
                 <Button variant="secondary" className="!py-5 px-8 rounded-3xl border-none bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm font-black uppercase text-[10px] tracking-widest">
                   <Filter size={18} className="mr-2" /> Refine
                 </Button>
-                <ExportActions 
-                  data={filteredData} 
+                <ExportActions
+                  data={filteredData}
                   columns={[
                     { header: 'Title', key: 'title' },
                     { header: 'Category', key: 'category' },
                     { header: 'Date', key: item => new Date(item.date).toLocaleDateString() },
                     { header: 'Amount', key: 'totalAmount' },
                     { header: 'Created By', key: item => item.createdBy?.name }
-                  ]} 
-                  filename="expense_vault_export" 
+                  ]}
+                  filename="expense_vault_export"
                 />
               </div>
             </div>
@@ -317,7 +318,7 @@ export default function ExpensesPage() {
                   {paginatedData.map((t, idx) => (
                     <SlideIn key={t._id} delay={idx * 0.03}>
                       <CardHover>
-                        <div 
+                        <div
                           onClick={() => setSelectedExpense(t)}
                           className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex items-center justify-between group hover:border-rose-500/40 transition-all cursor-pointer relative overflow-hidden h-full shadow-sm"
                         >
@@ -354,7 +355,7 @@ export default function ExpensesPage() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-4 pt-10">
-                <button 
+                <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => prev - 1)}
                   className="h-12 w-12 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 disabled:opacity-20 hover:border-rose-500/50 hover:text-rose-500 transition-all shadow-sm"
@@ -365,7 +366,7 @@ export default function ExpensesPage() {
                   <span className="text-zinc-900 dark:text-white">{currentPage}</span>
                   <span className="text-zinc-400">/ {totalPages}</span>
                 </div>
-                <button 
+                <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => prev + 1)}
                   className="h-12 w-12 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 disabled:opacity-20 hover:border-rose-500/50 hover:text-rose-500 transition-all shadow-sm"
@@ -390,8 +391,8 @@ export default function ExpensesPage() {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="colorWhite" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#fff" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#fff" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#fff" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#fff" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <Area type="monotone" dataKey="amount" stroke="#fff" strokeWidth={3} fill="url(#colorWhite)" />
@@ -427,7 +428,7 @@ export default function ExpensesPage() {
                           <span className="text-zinc-900 dark:text-white">{percentage.toFixed(0)}%</span>
                         </div>
                         <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                          <motion.div 
+                          <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${percentage}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -545,17 +546,17 @@ export default function ExpensesPage() {
 
               {selectedExpense.status === 'pending' ? (
                 <div className="flex gap-4 pt-4">
-                  <Button 
-                    variant="primary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-rose-500/20 bg-rose-600 hover:bg-rose-700" 
+                  <Button
+                    variant="primary"
+                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-rose-500/20 bg-rose-600 hover:bg-rose-700"
                     icon={Sparkles}
                     onClick={() => handleApprove(selectedExpense._id)}
                   >
                     Authorize Outflow
                   </Button>
-                  <Button 
-                    variant="secondary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" 
+                  <Button
+                    variant="secondary"
+                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                     onClick={() => handleReject(selectedExpense._id)}
                   >
                     Revoke Request
@@ -563,16 +564,16 @@ export default function ExpensesPage() {
                 </div>
               ) : (
                 <div className="flex gap-4 pt-4">
-                  <Button 
-                    variant="primary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-rose-500/20" 
+                  <Button
+                    variant="primary"
+                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-rose-500/20"
                     icon={Download}
                   >
                     Download Evidence
                   </Button>
-                  <Button 
-                    variant="secondary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-none bg-zinc-100 dark:bg-zinc-800" 
+                  <Button
+                    variant="secondary"
+                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-none bg-zinc-100 dark:bg-zinc-800"
                     onClick={() => setSelectedExpense(null)}
                   >
                     Exit
@@ -588,41 +589,33 @@ export default function ExpensesPage() {
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Archival Title</label>
-                <div className="relative">
-                  <select 
-                    required 
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" 
-                    value={formData.title} 
-                    onChange={e => {
-                      setFormData({...formData, title: e.target.value});
-                      setShowCustomTitle(e.target.value === "Other (Custom Title)");
-                    }}
-                  >
-                    <option value="" disabled>Select Outflow Title</option>
-                    {EXPENSE_TITLES.map(title => (
-                      <option key={title} value={title}>{title}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={20} />
-                </div>
+                <PremiumSelect 
+                  label="Archival Title"
+                  value={formData.title}
+                  onChange={(val) => {
+                    setFormData({ ...formData, title: val });
+                    setShowCustomTitle(val === "Other (Custom Title)");
+                  }}
+                  placeholder="Select Outflow Title"
+                  options={EXPENSE_TITLES.map(title => ({ label: title, value: title }))}
+                />
               </div>
 
               <AnimatePresence>
                 {showCustomTitle && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, height: 0, y: -20 }}
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={{ opacity: 0, height: 0, y: -20 }}
                     className="space-y-3 overflow-hidden"
                   >
                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Specify Custom Title</label>
-                    <input 
-                      required 
-                      className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" 
+                    <input
+                      required
+                      className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
                       placeholder="e.g. Special Equipment Repair"
                       value={formData.customTitle}
-                      onChange={e => setFormData({...formData, customTitle: e.target.value})}
+                      onChange={e => setFormData({ ...formData, customTitle: e.target.value })}
                     />
                   </motion.div>
                 )}
@@ -631,47 +624,44 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Economic Volume (₹)</label>
-                  <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
+                  <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Category Vector</label>
-                  <select className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option value="Operational">Operational</option>
-                    <option value="Inventory">Inventory</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Welfare">Staff Welfare</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <PremiumSelect 
+                    label="Category Vector"
+                    value={formData.category}
+                    onChange={(val) => setFormData({ ...formData, category: val })}
+                    options={[
+                      { label: 'Operational', value: 'Operational' },
+                      { label: 'Inventory', value: 'Inventory' },
+                      { label: 'Utilities', value: 'Utilities' },
+                      { label: 'Marketing', value: 'Marketing' },
+                      { label: 'Staff Welfare', value: 'Welfare' },
+                      { label: 'Other', value: 'Other' }
+                    ]}
+                  />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Target Station Hub</label>
-                <div className="relative">
-                  <select 
-                    required 
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" 
-                    value={formData.locationId || (selectedLocation?._id || selectedLocation || '')} 
-                    onChange={e => setFormData({...formData, locationId: e.target.value})}
-                  >
-                    <option value="" disabled>Select Location</option>
-                    {locations.map(loc => (
-                      <option key={loc._id} value={loc._id}>{loc.name} ({loc.city})</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={20} />
-                </div>
+                <PremiumSelect 
+                  label="Target Station Hub"
+                  icon={MapPin}
+                  value={formData.locationId || (selectedLocation?._id || selectedLocation || '')}
+                  onChange={(val) => setFormData({ ...formData, locationId: val })}
+                  placeholder="Select Location"
+                  options={locations.map(loc => ({ label: `${loc.name} (${loc.city})`, value: loc._id }))}
+                />
               </div>
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Temporal Stamp</label>
-                <input required type="date" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                <input required type="date" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
               </div>
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Intelligence Notes</label>
-                <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Provide specific context for this outflow..." />
+                <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Provide specific context for this outflow..." />
               </div>
             </div>
 

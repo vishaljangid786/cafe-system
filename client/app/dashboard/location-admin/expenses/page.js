@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
 
 export default function LocationExpensesPage() {
@@ -281,17 +282,19 @@ export default function LocationExpensesPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Operational Category</label>
-                <select className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white appearance-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                  <option value="Supplies">Supplies</option>
-                  <option value="Utilities">Utilities</option>
-                  <option value="Rent">Rent</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+                <PremiumSelect 
+                  label="Operational Category"
+                  value={formData.category}
+                  onChange={val => setFormData({...formData, category: val})}
+                  options={[
+                    { label: 'Supplies', value: 'Supplies' },
+                    { label: 'Utilities', value: 'Utilities' },
+                    { label: 'Rent', value: 'Rent' },
+                    { label: 'Maintenance', value: 'Maintenance' },
+                    { label: 'Marketing', value: 'Marketing' },
+                    { label: 'Other', value: 'Other' }
+                  ]}
+                />
               <div className="space-y-1">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Temporal Stamp</label>
                 <input required type="date" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />

@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { 
-  BarChart3, Clock, AlertCircle, CheckCircle2, 
+import {
+  BarChart3, Clock, AlertCircle, CheckCircle2,
   XCircle, Filter, Search, Globe, ChefHat,
-  TrendingUp, Timer, Activity, Zap, 
+  TrendingUp, Timer, Activity, Zap,
   Calendar, ArrowRight, Download, RefreshCw,
   PieChart as PieIcon, LineChart as LineIcon,
   MapPin, Building, Mail, Phone, ChevronDown
@@ -14,8 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../../context/AuthContext';
 import api from '../../../../services/api';
 import toast from 'react-hot-toast';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, AreaChart, Area,
   PieChart, Pie, Sector
 } from 'recharts';
@@ -25,9 +25,9 @@ export default function OrderAnalyticsDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [branchFilter, setBranchFilter] = useState('all');
-  const [dateRange, setDateRange] = useState({ 
-    start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0], 
-    end: new Date().toISOString().split('T')[0] 
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
   });
   const [locations, setLocations] = useState([]);
   const [selectedBranchDetails, setSelectedBranchDetails] = useState(null);
@@ -92,7 +92,7 @@ export default function OrderAnalyticsDashboard() {
                 </div>
               ) : (
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
                     className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all group"
                   >
@@ -106,43 +106,41 @@ export default function OrderAnalyticsDashboard() {
                   <AnimatePresence>
                     {isBranchDropdownOpen && (
                       <>
-                        <div 
-                          className="fixed inset-0 z-40" 
-                          onClick={() => setIsBranchDropdownOpen(false)} 
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsBranchDropdownOpen(false)}
                         />
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           className="absolute top-full left-0 mt-4 w-64 bg-white dark:bg-zinc-900 rounded-[1.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 p-2 overflow-hidden"
                         >
                           <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                            <button 
+                            <button
                               onClick={() => {
                                 setBranchFilter('all');
                                 setIsBranchDropdownOpen(false);
                               }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                branchFilter === 'all' 
-                                ? 'bg-amber-500 text-black' 
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${branchFilter === 'all'
+                                ? 'bg-amber-500 text-black'
                                 : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
-                              }`}
+                                }`}
                             >
                               <Globe size={14} /> Global Network
                             </button>
                             <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2 mx-2" />
                             {locations.map(loc => (
-                              <button 
+                              <button
                                 key={loc._id}
                                 onClick={() => {
                                   setBranchFilter(loc._id);
                                   setIsBranchDropdownOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                  branchFilter === loc._id 
-                                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${branchFilter === loc._id
+                                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
                                   : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
-                                }`}
+                                  }`}
                               >
                                 <Building size={14} /> {loc.name}
                               </button>
@@ -155,12 +153,12 @@ export default function OrderAnalyticsDashboard() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center gap-4 px-6">
               <div className="flex items-center gap-3">
                 <Calendar size={14} className="text-zinc-400" />
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="bg-transparent text-[10px] font-black outline-none text-zinc-900 dark:text-zinc-100 uppercase tracking-widest cursor-pointer"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
@@ -168,8 +166,8 @@ export default function OrderAnalyticsDashboard() {
               </div>
               <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
               <div className="flex items-center gap-3">
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="bg-transparent text-[10px] font-black outline-none text-zinc-900 dark:text-zinc-100 uppercase tracking-widest cursor-pointer"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
@@ -177,7 +175,7 @@ export default function OrderAnalyticsDashboard() {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={fetchAnalytics}
               className="p-3.5 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-xl shadow-zinc-900/10 dark:shadow-none mr-1"
             >
@@ -216,27 +214,24 @@ export default function OrderAnalyticsDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {/* Global Hub Card */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               onClick={() => setBranchFilter('all')}
-              className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${
-                branchFilter === 'all' 
-                ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl' 
+              className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${branchFilter === 'all'
+                ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl'
                 : 'bg-white dark:bg-zinc-900/40 border-zinc-200/50 dark:border-zinc-800/50 hover:border-amber-500/40'
-              }`}
+                }`}
             >
-              <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${
-                branchFilter === 'all' ? 'bg-amber-500/20 opacity-100' : 'bg-amber-500/5 opacity-0 group-hover:opacity-100'
-              }`} />
-              
+              <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${branchFilter === 'all' ? 'bg-amber-500/20 opacity-100' : 'bg-amber-500/5 opacity-0 group-hover:opacity-100'
+                }`} />
+
               <div className="relative z-10 flex flex-col h-full">
                 <div className="flex items-center justify-between mb-6">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                    branchFilter === 'all' 
-                    ? 'bg-amber-500 text-black' 
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${branchFilter === 'all'
+                    ? 'bg-amber-500 text-black'
                     : 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100'
-                  }`}>
+                    }`}>
                     <Globe size={20} strokeWidth={2.5} />
                   </div>
                   {branchFilter === 'all' && (
@@ -245,21 +240,17 @@ export default function OrderAnalyticsDashboard() {
                     </span>
                   )}
                 </div>
-                <h4 className={`text-xl font-black tracking-tighter mb-1 transition-colors ${
-                  branchFilter === 'all' ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
-                }`}>Global Network</h4>
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                  branchFilter === 'all' ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
-                }`}>Consolidated Data Stream</p>
-                
+                <h4 className={`text-xl font-black tracking-tighter mb-1 transition-colors ${branchFilter === 'all' ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                  }`}>Global Network</h4>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${branchFilter === 'all' ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
+                  }`}>Consolidated Data Stream</p>
+
                 <div className="mt-auto pt-6 flex items-center justify-between">
                   <div>
-                    <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
-                      branchFilter === 'all' ? 'text-zinc-500' : 'text-zinc-400'
-                    }`}>Net Capacity</p>
-                    <p className={`text-lg font-black tracking-tighter ${
-                      branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-900 dark:text-zinc-100'
-                    }`}>{data?.metrics?.totalOrders} <span className="text-[10px]">Units</span></p>
+                    <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === 'all' ? 'text-zinc-500' : 'text-zinc-400'
+                      }`}>Net Capacity</p>
+                    <p className={`text-lg font-black tracking-tighter ${branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-900 dark:text-zinc-100'
+                      }`}>{data?.metrics?.totalOrders} <span className="text-[10px]">Units</span></p>
                   </div>
                   <ArrowRight size={16} className={branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-300'} />
                 </div>
@@ -268,69 +259,59 @@ export default function OrderAnalyticsDashboard() {
 
             {/* Branch Specific Cards */}
             {data?.charts?.branchPerformance.map((branch, i) => (
-              <motion.div 
-                key={i} 
+              <motion.div
+                key={i}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => setBranchFilter(branch.id)}
-                className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${
-                  branchFilter === branch.id 
-                  ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl' 
+                className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${branchFilter === branch.id
+                  ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl'
                   : 'bg-white dark:bg-zinc-900/40 border-zinc-200/50 dark:border-zinc-800/50 hover:border-blue-500/40'
-                }`}
+                  }`}
               >
-                <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${
-                  branchFilter === branch.id ? 'bg-blue-500/20 opacity-100' : 'bg-blue-500/5 opacity-0 group-hover:opacity-100'
-                }`} />
-                
+                <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${branchFilter === branch.id ? 'bg-blue-500/20 opacity-100' : 'bg-blue-500/5 opacity-0 group-hover:opacity-100'
+                  }`} />
+
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-6">
-                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                      branchFilter === branch.id 
-                      ? 'bg-blue-500 text-white' 
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${branchFilter === branch.id
+                      ? 'bg-blue-500 text-white'
                       : 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100'
-                    }`}>
+                      }`}>
                       <Building size={20} strokeWidth={2.5} />
                     </div>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedBranchDetails(locations.find(l => l._id === branch.id));
                       }}
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${
-                        branchFilter === branch.id 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${branchFilter === branch.id
+                        ? 'bg-white/10 text-white hover:bg-white/20'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500'
-                      }`}
+                        }`}
                     >
                       <Zap size={14} />
                     </button>
                   </div>
 
-                  <h4 className={`text-xl font-black tracking-tighter mb-1 truncate transition-colors ${
-                    branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
-                  }`}>{branch.name}</h4>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                    branchFilter === branch.id ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
-                  }`}>{branch.city} Sector</p>
-                  
+                  <h4 className={`text-xl font-black tracking-tighter mb-1 truncate transition-colors ${branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                    }`}>{branch.name}</h4>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${branchFilter === branch.id ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
+                    }`}>{branch.city} Sector</p>
+
                   <div className="mt-8 grid grid-cols-2 gap-4">
                     <div>
-                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
-                        branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
-                      }`}>Throughput</p>
-                      <p className={`text-lg font-black tracking-tighter ${
-                        branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
-                      }`}>{branch.totalOrders}</p>
+                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
+                        }`}>Throughput</p>
+                      <p className={`text-lg font-black tracking-tighter ${branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                        }`}>{branch.totalOrders}</p>
                     </div>
                     <div>
-                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
-                        branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
-                      }`}>Efficiency</p>
-                      <p className={`text-lg font-black tracking-tighter ${
-                        branchFilter === branch.id ? 'text-blue-400' : 'text-blue-500'
-                      }`}>{branch.avgPrepTime}m</p>
+                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
+                        }`}>Efficiency</p>
+                      <p className={`text-lg font-black tracking-tighter ${branchFilter === branch.id ? 'text-blue-400' : 'text-blue-500'
+                        }`}>{branch.avgPrepTime}m</p>
                     </div>
                   </div>
                 </div>
@@ -356,14 +337,14 @@ export default function OrderAnalyticsDashboard() {
                 <AreaChart data={data?.charts?.ordersPerHour}>
                   <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis dataKey="hour" stroke="#71717a" fontSize={10} fontWeight={900} />
                   <YAxis stroke="#71717a" fontSize={10} fontWeight={900} />
-                  <Tooltip 
+                  <Tooltip
                     itemStyle={{ color: '#f59e0b', fontSize: '12px', fontWeight: 'bold' }}
                   />
                   <Area type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={4} fillOpacity={1} fill="url(#colorCount)" />
@@ -439,13 +420,13 @@ export default function OrderAnalyticsDashboard() {
                       <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">{chef.avgTime}m</p>
                     </div>
                     <div className="h-10 w-24 rounded-lg overflow-hidden relative">
-                       {/* Mini visual indicator */}
-                       <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-800" />
-                       <motion.div 
+                      {/* Mini visual indicator */}
+                      <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-800" />
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.max(10, 100 - (chef.avgTime * 2))}%` }}
-                        className="absolute inset-0 bg-emerald-500/30 border-r-2 border-emerald-500" 
-                       />
+                        className="absolute inset-0 bg-emerald-500/30 border-r-2 border-emerald-500"
+                      />
                     </div>
                   </div>
                 </div>
@@ -458,8 +439,8 @@ export default function OrderAnalyticsDashboard() {
             </div>
           </div>
         </div>
-        <Modal 
-          isOpen={!!selectedBranchDetails} 
+        <Modal
+          isOpen={!!selectedBranchDetails}
           onClose={() => setSelectedBranchDetails(null)}
           title="Branch Diagnostic Telemetry"
         >
@@ -527,7 +508,7 @@ export default function OrderAnalyticsDashboard() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <button 
+                <button
                   onClick={() => {
                     setBranchFilter(selectedBranchDetails._id);
                     setSelectedBranchDetails(null);

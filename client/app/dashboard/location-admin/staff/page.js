@@ -9,6 +9,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function LocationStaffPage() {
   const [staff, setStaff] = useState([]);
@@ -206,14 +207,16 @@ export default function LocationStaffPage() {
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Age</label>
                 <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Gender</label>
-                <select className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })}>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+                <PremiumSelect 
+                  label="Gender Node"
+                  value={formData.gender}
+                  onChange={val => setFormData({ ...formData, gender: val })}
+                  options={[
+                    { label: 'Male', value: 'Male' },
+                    { label: 'Female', value: 'Female' },
+                    { label: 'Other', value: 'Other' }
+                  ]}
+                />
             </div>
 
             <div>

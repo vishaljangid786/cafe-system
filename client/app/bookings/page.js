@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Clock, Users, MapPin, CheckCircle, XCircle, L
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
+import PremiumSelect from '../components/ui/PremiumSelect';
 
 export default function BookingPage() {
   const { user } = useAuth();
@@ -135,22 +136,15 @@ export default function BookingPage() {
 
               <form onSubmit={handleCheckAvailability} className="relative z-10 space-y-8">
                 {/* Location */}
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
-                    <MapPin size={14} className="mr-2" /> Select Location
-                  </label>
-                  <select
+                  <PremiumSelect 
+                    label="Select Location"
                     value={selectedLocation}
-                    onChange={(e) => { setSelectedLocation(e.target.value); setAvailability(null); }}
-                    className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
-                    required
-                  >
-                    <option value="" disabled>Choose a cafe...</option>
-                    {locations.map(loc => (
-                      <option key={loc._id} value={loc._id}>{loc.name} - {loc.city}</option>
-                    ))}
-                  </select>
-                </div>
+                    onChange={val => { setSelectedLocation(val); setAvailability(null); }}
+                    options={[
+                      { label: 'Choose a cafe...', value: '', disabled: true },
+                      ...(locations.map(loc => ({ label: `${loc.name} - ${loc.city}`, value: loc._id })))
+                    ]}
+                  />
 
                 {/* Date & Guests */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,34 +179,25 @@ export default function BookingPage() {
 
                 {/* Time Slots */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
-                      <Clock size={14} className="mr-2" /> Start Time
-                    </label>
-                    <select
-                      value={startTime}
-                      onChange={(e) => { setStartTime(e.target.value); setAvailability(null); }}
-                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
-                      required
-                    >
-                      <option value="" disabled>Select start time...</option>
-                      {timeSlots.map(time => <option key={`start-${time}`} value={time}>{time}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center">
-                      <Clock size={14} className="mr-2" /> End Time
-                    </label>
-                    <select
-                      value={endTime}
-                      onChange={(e) => { setEndTime(e.target.value); setAvailability(null); }}
-                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
-                      required
-                    >
-                      <option value="" disabled>Select end time...</option>
-                      {timeSlots.map(time => <option key={`end-${time}`} value={time}>{time}</option>)}
-                    </select>
-                  </div>
+                  <PremiumSelect 
+                    label="Start Time"
+                    value={startTime}
+                    onChange={val => { setStartTime(val); setAvailability(null); }}
+                    options={[
+                      { label: 'Select start time...', value: '', disabled: true },
+                      ...(timeSlots.map(time => ({ label: time, value: time })))
+                    ]}
+                  />
+
+                  <PremiumSelect 
+                    label="End Time"
+                    value={endTime}
+                    onChange={val => { setEndTime(val); setAvailability(null); }}
+                    options={[
+                      { label: 'Select end time...', value: '', disabled: true },
+                      ...(timeSlots.map(time => ({ label: time, value: time })))
+                    ]}
+                  />
                 </div>
 
                 {/* Special Requests */}

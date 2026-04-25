@@ -4,7 +4,7 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, HdIcon } from '
 
 export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amber', delay = 0 }) => {
   const colorMap = {
-    amber: 'from-[var(--color-primary)]/20 to-[var(--color-primary-dark)]/5 text-[var(--color-primary)] border-[var(--color-primary)]/20',
+    amber: 'from-primary/20 to-primary-dark/5 text-primary border-primary/20',
     green: 'from-[var(--color-success)]/20 to-[var(--color-success)]/5 text-[var(--color-success)] border-[var(--color-success)]/20',
     blue: 'from-[var(--color-secondary)]/20 to-[var(--color-secondary-dark)]/5 text-[var(--color-secondary)] border-[var(--color-secondary)]/20',
     red: 'from-[var(--color-danger)]/20 to-[var(--color-danger)]/5 text-[var(--color-danger)] border-[var(--color-danger)]/20',
@@ -51,7 +51,7 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
       </div>
 
       {/* Decorative inner glow */}
-      <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-[40px] opacity-10 transition-opacity duration-500 group-hover:opacity-30 pointer-events-none ${color === 'amber' ? 'bg-[var(--color-primary)]' : color === 'green' ? 'bg-[var(--color-success)]' : color === 'blue' ? 'bg-[var(--color-secondary)]' : 'bg-[var(--color-danger)]'
+      <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-[40px] opacity-10 transition-opacity duration-500 group-hover:opacity-30 pointer-events-none ${color === 'amber' ? 'bg-primary' : color === 'green' ? 'bg-[var(--color-success)]' : color === 'blue' ? 'bg-[var(--color-secondary)]' : 'bg-[var(--color-danger)]'
         }`} />
     </motion.div>
   );

@@ -15,7 +15,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
     booked: 'bg-[var(--color-danger)]', // Occupied
     occupied: 'bg-[var(--color-danger)]',
     ongoing: 'bg-[var(--color-secondary)]',
-    reserved: 'bg-[var(--color-primary)]',
+    reserved: 'bg-primary',
   };
 
   const statusTextColors = {
@@ -23,7 +23,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
     booked: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10',
     occupied: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10',
     ongoing: 'text-[var(--color-secondary)] bg-[var(--color-secondary)]/10',
-    reserved: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10',
+    reserved: 'text-primary bg-primary/10',
   };
 
   // Safe calculation for total amount to avoid NaN
@@ -33,14 +33,14 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
     <CardHover>
       <div className={`
         glass-card p-8 rounded-[2.5rem] border relative group transition-all duration-500 flex flex-col h-full
-        ${isAvailable ? 'border-[var(--color-border)]' : 'border-[var(--color-primary)]/30 shadow-[var(--shadow-premium)]'}
+        ${isAvailable ? 'border-[var(--color-border)]' : 'border-primary/30 shadow-[var(--shadow-premium)]'}
       `}>
         {/* Admin Controls Overlay */}
         {isAdmin && (
           <div className="absolute top-8 left-8 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-10">
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(table); }}
-              className="h-8 w-8 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 shadow-sm transition-all"
+              className="h-8 w-8 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-primary hover:border-primary/50 shadow-sm transition-all"
             >
               <Plus size={14} className="rotate-45" />
             </button>
@@ -59,7 +59,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="h-6 w-6 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+              className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
             >
               <MessageSquare size={12} />
             </motion.div>
@@ -75,7 +75,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             <span className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest block mb-1">Terminal</span>
             <h3 className="text-5xl font-black text-[var(--color-text-primary)] tracking-tighter">T{table.tableNumber}</h3>
             {table.tableName && (
-              <span className="text-xs font-black text-[var(--color-primary)] uppercase tracking-tight block mt-1">{table.tableName}</span>
+              <span className="text-xs font-black text-primary uppercase tracking-tight block mt-1">{table.tableName}</span>
             )}
             <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mt-1 block opacity-60 truncate">
               {table.locationId?.name || table.locationName}
@@ -95,13 +95,13 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             <div className="bg-[var(--color-bg-soft)]/50 p-4 rounded-2xl border border-[var(--color-border)] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Culinary Progress</span>
-                <span className="text-[10px] font-black text-[var(--color-primary)] uppercase tracking-tight">{table.activeOrdersCount} Active Unit{table.activeOrdersCount > 1 ? 's' : ''}</span>
+                <span className="text-10px font-black text-primary uppercase tracking-tight">{table.activeOrdersCount} Active Unit{table.activeOrdersCount > 1 ? 's' : ''}</span>
               </div>
               <div className="h-1.5 w-full bg-[var(--color-border)] rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: '60%' }} // Future: calculate based on status breakdown
-                  className="h-full bg-[var(--color-primary)]"
+                  className="h-full bg-primary"
                 />
               </div>
               <div className="flex justify-between text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">
@@ -125,7 +125,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
               <div className="flex items-center justify-between bg-[var(--color-bg-soft)]/50 p-4 rounded-2xl border border-[var(--color-border)]">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Running Bill</span>
-                  <span className="text-2xl font-black text-[var(--color-primary)] tracking-tight">₹{safeTotal.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-primary tracking-tight">₹{safeTotal.toLocaleString()}</span>
                 </div>
                 <Receipt className="text-[var(--color-text-muted)]/30" size={24} />
               </div>
@@ -136,7 +136,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
         <div className="mt-8 pt-4">
           <Button
             variant={isAvailable ? 'outline' : 'primary'}
-            className={`w-full !rounded-[1.5rem] !py-4 text-xs font-black uppercase tracking-widest transition-all ${isAvailable ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800' : 'shadow-lg shadow-amber-500/20'}`}
+            className={`w-full !rounded-[1.5rem] bg-amber-400 !py-4 text-xs font-black uppercase tracking-widest transition-all ${isAvailable ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800' : 'shadow-lg shadow-amber-500/20'}`}
             icon={isAvailable ? Plus : Zap}
             onClick={() => isAvailable ? onAssign(table) : onManage(table)}
           >

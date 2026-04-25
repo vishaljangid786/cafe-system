@@ -6,18 +6,17 @@ import {
   UserPlus, User as UserIcon, MapPin, Image as ImageIcon,
   ArrowLeft, Briefcase, GraduationCap, Eye,
   EyeOff, ShieldCheck, Zap, AlertCircle,
-  User
+  User, Terminal, Activity, Globe, Lock, ArrowRight, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import PremiumSelect from '../components/ui/PremiumSelect';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
-// Validation Schema
 const signupSchema = z.object({
   name: z.string().min(2, 'Identification requires at least 2 characters'),
   email: z.string().email('Operational terminal email required'),
@@ -38,23 +37,12 @@ const signupSchema = z.object({
   pincode: z.string().length(6, 'Pincode must be 6 digits'),
   accessibleLocations: z.array(z.string()).optional(),
 }).refine((data) => {
-  if ((data.role === 'staff' || data.role === 'branch_admin') && !data.assignedLocation) {
-    return false;
-  }
+  if ((data.role === 'staff' || data.role === 'branch_admin') && !data.assignedLocation) return false;
   return true;
 }, {
   message: "Operational branch assignment required for this role",
   path: ["assignedLocation"],
 });
-
-const InputWrapper = ({ label, error, children }) => (
-  <div className="space-y-2">
-    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1">{label}</label>
-    {children}
-    {error && <p className="text-[10px] text-rose-400 font-bold mt-1 ml-1 uppercase tracking-wider">{error}</p>}
-  </div>
-);
-
 
 function SignupContent() {
   const router = useRouter();
@@ -65,12 +53,15 @@ function SignupContent() {
   const [image, setImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [activeStep, setActiveStep] = useState(1);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    control,
+    trigger,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
     resolver: zodResolver(signupSchema),
@@ -99,28 +90,22 @@ function SignupContent() {
     if (isSetup) return [{ value: 'super_admin', label: 'Super Admin' }];
     if (!currentUser) return [{ value: 'super_admin', label: 'Super Admin' }];
     switch (currentUser.role) {
-      case 'super_admin':
-        return [
-          { value: 'admin', label: 'Main Admin' },
-          { value: 'branch_admin', label: 'Branch Admin' },
-          { value: 'staff', label: 'Staff Member' }
-        ];
-      case 'admin':
-        return [
-          { value: 'branch_admin', label: 'Branch Admin' },
-          { value: 'staff', label: 'Staff Member' }
-        ];
-      case 'branch_admin':
-        return [{ value: 'staff', label: 'Staff Member' }];
-      default:
-        return [{ value: 'staff', label: 'Staff Member' }];
+      case 'super_admin': return [{ value: 'admin', label: 'Main Admin' }, { value: 'branch_admin', label: 'Branch Admin' }, { value: 'staff', label: 'Staff Member' }];
+      case 'admin': return [{ value: 'branch_admin', label: 'Branch Admin' }, { value: 'staff', label: 'Staff Member' }];
+      case 'branch_admin': return [{ value: 'staff', label: 'Staff Member' }];
+      default: return [{ value: 'staff', label: 'Staff Member' }];
     }
   };
 
-  const availableRoles = getAvailableRoles();
+  const nextStep = async () => {
+    let fieldsToValidate = [];
+    if (activeStep === 1) fieldsToValidate = ['name', 'email', 'age', 'gender', 'password'];
+    else if (activeStep === 2) fieldsToValidate = ['phone', 'address1', 'address2', 'city', 'state', 'country', 'pincode'];
+    else if (activeStep === 3) fieldsToValidate = ['role', 'assignedLocation', 'highestQualification', 'monthlySalary'];
 
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
+    const isStepValid = await trigger(fieldsToValidate);
+    if (isStepValid) setActiveStep(prev => prev + 1);
+    else toast.error('Resolve validation errors to proceed.');
   };
 
   const onSubmit = async (formData) => {
@@ -128,20 +113,15 @@ function SignupContent() {
     const data = new FormData();
     Object.keys(formData).forEach(key => {
       if (formData[key]) {
-        if (Array.isArray(formData[key])) {
-          formData[key].forEach(val => data.append(key, val));
-        } else {
-          data.append(key, formData[key]);
-        }
+        if (Array.isArray(formData[key])) formData[key].forEach(val => data.append(key, val));
+        else data.append(key, formData[key]);
       }
     });
     if (image) data.append('aadharImage', image);
     if (profileImage) data.append('profileImage', profileImage);
 
     try {
-      await api.post('/auth/register', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.post('/auth/register', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success('Registration sequence complete.', { id: loadToast });
       router.push('/login');
     } catch (error) {
@@ -149,232 +129,200 @@ function SignupContent() {
     }
   };
 
+  const InputField = ({ label, name, type = "text", placeholder, error, ...props }) => (
+    <div className="space-y-2">
+      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">{label}</label>
+      <input
+        {...register(name)}
+        type={type}
+        className={`w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${error ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'}`}
+        placeholder={placeholder}
+        {...props}
+      />
+      {error && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{error}</p>}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 py-12 px-4 relative overflow-hidden transition-colors duration-300">
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/5 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-white dark:bg-[#050505] flex flex-col lg:flex-row transition-colors duration-500">
+      {/* Cinematic Panel */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-zinc-900">
+        <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} className="absolute inset-0 z-0">
+          <img src="/images/signup_bg.png" className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale" alt="" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#050505]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-80" />
+        </motion.div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="flex flex-col items-center mb-12">
-         
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black shadow-2xl shadow-amber-500/20 mb-6">
-            <UserPlus size={32} strokeWidth={2.5} />
+        <div className="relative z-10 w-full p-20 flex flex-col justify-between">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-black shadow-2xl shadow-amber-500/30">
+                <UserPlus size={28} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-amber-500">OS</span></h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Expansion Protocol</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="space-y-12">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
+              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Personnel <br /><span className="text-amber-500 italic">Initialization</span></h2>
+              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">Establish a new operational identity within the Global Matrix. Follow the sequenced onboarding protocol to activate access.</p>
+            </motion.div>
+
+            <div className="space-y-4">
+              {[
+                { step: 1, label: "Identity Core" },
+                { step: 2, label: "Geographical Node" },
+                { step: 3, label: "Protocol Assignment" },
+                { step: 4, label: "Verification Scan" }
+              ].map((s) => (
+                <div key={s.step} className={`flex items-center gap-4 transition-all duration-500 ${activeStep >= s.step ? 'opacity-100 translate-x-2' : 'opacity-30'}`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black border ${activeStep >= s.step ? 'bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/20' : 'border-zinc-700 text-zinc-500'}`}>
+                    {activeStep > s.step ? <CheckCircle2 size={14} /> : s.step}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">{s.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white mb-2">Network <span className="text-amber-500">Expansion</span></h1>
-          <p className="text-sm text-zinc-400 font-medium text-center max-w-md">Initialize new personnel identity within the CafeOS secure matrix.</p>
         </div>
-         {!isSetup && (
-            <button 
-              onClick={() => router.back()}
-              className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-amber-500 transition-colors text-xs font-bold uppercase tracking-widest"
-            >
-              <ArrowLeft size={14} />  Go Back</button>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 bg-zinc-50 dark:bg-[#050505] relative overflow-y-auto custom-scrollbar">
+        <div className="absolute inset-0 lg:hidden opacity-10 pointer-events-none">
+          <img
+            src="/images/signup_bg.png"
+            className="w-full h-full object-cover blur-3xl"
+            alt=""
+          />
+        </div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl relative z-10">
+          {!isSetup && (
+            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-10 flex items-center gap-2 text-zinc-400 hover:text-amber-500 transition-colors text-[10px] font-black uppercase tracking-widest group">
+              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {activeStep > 1 ? 'Previous Sequence' : 'Abort Protocol'}
+            </button>
           )}
 
-        <form onSubmit={handleSubmit(onSubmit, (errs) => {
-          if (Object.keys(errs).length > 0) {
-            toast.error('Protocol violation: Please fill all fields accurately.');
-          }
-        })} className="space-y-8">
-          {/* Section: Identity */}
-          <div className="glass-card !bg-white/40 dark:!bg-zinc-900/40 backdrop-blur-2xl border-zinc-200 dark:border-zinc-800/50 p-8 rounded-2xl shadow-2xl">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-zinc-200 dark:border-zinc-800/50">
-              <User size={18} className="text-amber-500" />
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">Identity Core</h2>
-            </div>
-
-            <div className="flex flex-col items-center mb-10 p-6 bg-amber-500/5 rounded-[2.5rem] border border-amber-500/10 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <UserIcon size={100} />
-              </div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6 relative z-10">Personnel Profile Picture (Optional)</label>
-              <div className="relative group/img z-10">
-                <div className="h-32 w-32 rounded-[2.5rem] bg-white dark:bg-zinc-950 border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden group-hover/img:border-amber-500/50 transition-all shadow-inner">
-                  {profileImage ? (
-                    <img src={URL.createObjectURL(profileImage)} alt="Profile Preview" className="h-full w-full object-cover" />
-                  ) : (
-                    <UserIcon size={32} className="text-zinc-400 group-hover/img:text-amber-500 transition-colors" />
-                  )}
-                  <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
-                </div>
-                <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-amber-500 text-black flex items-center justify-center shadow-lg pointer-events-none group-hover/img:scale-110 transition-transform">
-                  <UserPlus size={18} />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputWrapper label="Full Name" error={errors.name?.message}>
-                <input {...register('name')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="Rahul Sharma" />
-              </InputWrapper>
-              <InputWrapper label="Primary Email" error={errors.email?.message}>
-                <input {...register('email')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="rahul@cafeos.com" />
-              </InputWrapper>
-              <InputWrapper label="Age" error={errors.age?.message}>
-                <input {...register('age')} type="number" className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="24" />
-              </InputWrapper>
-              <InputWrapper label="Gender">
-                <select {...register('gender')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium appearance-none">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </InputWrapper>
-              <InputWrapper label="Key Passphrase" error={errors.password?.message}>
-                <div className="relative">
-                  <input {...register('password')} type={showPassword ? "text" : "password"} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors">
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </InputWrapper>
-              <InputWrapper label="Contact Node" error={errors.phone?.message}>
-                <input {...register('phone')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="+91 XXXXX XXXXX" />
-              </InputWrapper>
-              <div className="md:col-span-2">
-                <InputWrapper label="Address Line 1" error={errors.address1?.message}>
-                  <input {...register('address1')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="Building/Flat No, Street Name" />
-                </InputWrapper>
-              </div>
-              <div className="md:col-span-2">
-                <InputWrapper label="Address Line 2" error={errors.address2?.message}>
-                  <input {...register('address2')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="Locality, Landmark (Optional)" />
-                </InputWrapper>
-              </div>
-              <InputWrapper label="City" error={errors.city?.message}>
-                <input {...register('city')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="Mumbai" />
-              </InputWrapper>
-              <InputWrapper label="State" error={errors.state?.message}>
-                <input {...register('state')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="Maharashtra" />
-              </InputWrapper>
-              <InputWrapper label="Country" error={errors.country?.message}>
-                <input {...register('country')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="India" />
-              </InputWrapper>
-              <InputWrapper label="Pincode" error={errors.pincode?.message}>
-                <input {...register('pincode')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none transition-all text-sm font-medium" placeholder="400001" />
-              </InputWrapper>
-            </div>
+          <div className="mb-12">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">Sequence {activeStep}/4</span>
+            <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">
+              {activeStep === 1 ? 'Identity Initialization' : activeStep === 2 ? 'Geographical Node' : activeStep === 3 ? 'Operational Specs' : 'Verification Scan'}
+            </h2>
           </div>
 
-          {/* Section: Assignment */}
-          <div className="glass-card !bg-white/40 dark:!bg-zinc-900/40 backdrop-blur-2xl border-zinc-200 dark:border-zinc-800/50 p-8 rounded-2xl shadow-2xl">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-zinc-200 dark:border-zinc-800/50">
-              <Briefcase size={18} className="text-amber-500" />
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">Assignment Specs</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputWrapper label="Protocol Role">
-                <select {...register('role')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium appearance-none">
-                  {availableRoles.map(role => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
-              </InputWrapper>
-              {!isSetup && (selectedRole === 'staff' || selectedRole === 'branch_admin') && (
-                <InputWrapper label="Target Branch" error={errors.assignedLocation?.message}>
-                  <select {...register('assignedLocation')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium appearance-none disabled:opacity-50">
-                    <option value="">Select Branch</option>
-                    {locations.map(loc => (
-                      <option key={loc._id} value={loc._id}>{loc.city} - {loc.name}</option>
-                    ))}
-                  </select>
-                </InputWrapper>
-              )}
-
-              {!isSetup && selectedRole === 'admin' && (
-                <div className="md:col-span-2 space-y-3">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Accessible Jurisdictions (Multiple)</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {locations.map(loc => (
-                      <label key={loc._id} className="flex items-center gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 cursor-pointer hover:border-amber-500/50 transition-all">
-                        <input 
-                          type="checkbox" 
-                          value={loc._id}
-                          className="w-4 h-4 rounded border-zinc-300 text-amber-500 focus:ring-amber-500 bg-transparent"
-                          onChange={(e) => {
-                            const current = watch('accessibleLocations') || [];
-                            if (e.target.checked) {
-                              setValue('accessibleLocations', [...current, loc._id]);
-                            } else {
-                              setValue('accessibleLocations', current.filter(id => id !== loc._id));
-                            }
-                          }}
-                        />
-                        <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 uppercase tracking-tight">{loc.name} <span className="text-zinc-400 font-medium">({loc.city})</span></span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <InputWrapper label="Qualification">
-                <select {...register('highestQualification')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium appearance-none">
-                  <option value="12th Pass">12th Pass</option>
-                  <option value="Diploma">Diploma</option>
-                  <option value="Graduate">Graduate</option>
-                  <option value="Post Graduate">Post Graduate</option>
-                </select>
-              </InputWrapper>
-              {(selectedRole === 'staff' || selectedRole === 'branch_admin' || selectedRole === 'admin') && (
-                <InputWrapper label="Compensation (₹)" error={errors.monthlySalary?.message}>
-                  <input {...register('monthlySalary')} type="number" className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium" placeholder="28000" />
-                </InputWrapper>
-              )}
-            </div>
-          </div>
-
-          {/* Section: Verification */}
-          <div className="glass-card !bg-white/40 dark:!bg-zinc-900/40 backdrop-blur-2xl border-zinc-200 dark:border-zinc-800/50 p-8 rounded-2xl shadow-2xl">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-zinc-200 dark:border-zinc-800/50">
-              <GraduationCap size={18} className="text-amber-500" />
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">Identity Verification</h2>
-            </div>
-
-            <div className="space-y-6">
-              <InputWrapper label="Aadhar Node ID" error={errors.aadharNumber?.message}>
-                <input {...register('aadharNumber')} className="w-full px-5 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-white outline-none text-sm font-medium" placeholder="XXXX XXXX XXXX" />
-              </InputWrapper>
-
-              <InputWrapper label="Identity Scan (.jpg / .png) (Optional)">
-                <div className="group relative flex flex-col items-center justify-center min-h-[200px] bg-zinc-100/50 dark:bg-zinc-950/50 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl hover:border-amber-500/50 transition-all cursor-pointer overflow-hidden">
-                  <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} accept="image/*" />
-                  {image ? (
-                    <div className="w-full h-full p-2 flex flex-col items-center">
-                      <img src={URL.createObjectURL(image)} alt="Aadhar Preview" className="w-full h-48 object-contain rounded-xl shadow-lg" />
-                      <div className="mt-3 px-4 py-1.5 bg-amber-500/10 rounded-full border border-amber-500/20">
-                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{image.name}</p>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <AnimatePresence mode="wait">
+              {activeStep === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <div className="flex flex-col items-center mb-8 p-8 bg-amber-500/5 rounded-3xl border border-amber-500/10 group relative overflow-hidden">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Personnel Profile Matrix</label>
+                    <div className="relative">
+                      <div className="h-32 w-32 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden transition-all group-hover:border-amber-500 shadow-xl">
+                        {profileImage ? <img src={URL.createObjectURL(profileImage)} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
                       </div>
+                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-amber-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
                     </div>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-10 w-10 text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" />
-                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-center">Upload Identity Document Scan</p>
-                    </>
+                  </div>
+                  <InputField label="Operational Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
+                  <InputField label="Primary Terminal (Email)" name="email" type="email" placeholder="rahul@cafeos.com" error={errors.email?.message} />
+                  <div className="grid grid-cols-2 gap-6">
+                    <InputField label="Biological Age" name="age" type="number" placeholder="24" error={errors.age?.message} />
+                    <Controller name="gender" control={control} render={({ field }) => (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Gender Identity</label>
+                        <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
+                      </div>
+                    )} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Key Passphrase</label>
+                    <div className="relative group">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        {...register('password')}
+                        className={`w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${errors.password ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'}`}
+                        placeholder="••••••••"
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-500 transition-colors">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.password.message}</p>}
+                  </div>
+                </motion.div>
+              )}
+
+              {activeStep === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <InputField label="Communication Node (Phone)" name="phone" placeholder="+91 XXXXX XXXXX" error={errors.phone?.message} />
+                  <InputField label="Base Sector (Address 1)" name="address1" placeholder="Building/Flat No, Street Name" error={errors.address1?.message} />
+                  <InputField label="Sub-Sector (Address 2)" name="address2" placeholder="Locality, Landmark" error={errors.address2?.message} />
+                  <div className="grid grid-cols-2 gap-6">
+                    <InputField label="City" name="city" placeholder="Mumbai" error={errors.city?.message} />
+                    <InputField label="State/Jurisdiction" name="state" placeholder="Maharashtra" error={errors.state?.message} />
+                    <InputField label="Regional Index (Pincode)" name="pincode" placeholder="400001" error={errors.pincode?.message} />
+                    <InputField label="Sovereign Node (Country)" name="country" placeholder="India" error={errors.country?.message} />
+                  </div>
+                </motion.div>
+              )}
+
+              {activeStep === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <Controller name="role" control={control} render={({ field }) => (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Protocol Role</label>
+                      <PremiumSelect value={field.value} onChange={field.onChange} options={getAvailableRoles()} />
+                    </div>
+                  )} />
+                  {!isSetup && (selectedRole === 'staff' || selectedRole === 'branch_admin') && (
+                    <Controller name="assignedLocation" control={control} render={({ field }) => (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Target Branch Node</label>
+                        <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} placeholder="Select Branch" />
+                        {errors.assignedLocation && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.assignedLocation.message}</p>}
+                      </div>
+                    )} />
                   )}
-                </div>
-              </InputWrapper>
+                  <Controller name="highestQualification" control={control} render={({ field }) => (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Intellectual Clearance</label>
+                      <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: '12th Pass', value: '12th Pass' }, { label: 'Diploma', value: 'Diploma' }, { label: 'Graduate', value: 'Graduate' }, { label: 'Post Graduate', value: 'Post Graduate' }]} />
+                    </div>
+                  )} />
+                  <InputField label="Compensation Deployment (₹)" name="monthlySalary" type="number" placeholder="28000" error={errors.monthlySalary?.message} />
+                </motion.div>
+              )}
+
+              {activeStep === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <InputField label="Aadhar Node ID (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Identity Document Scan</label>
+                    <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl hover:border-amber-500 transition-all cursor-pointer overflow-hidden shadow-xl">
+                      <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
+                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Identity Scan</p></div>}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="flex gap-4 pt-6">
+              {activeStep < 4 ? (
+                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={ArrowRight}>Advance Sequence</Button>
+              ) : (
+                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={Zap}>Initiate Uplink</Button>
+              )}
             </div>
-          </div>
+          </form>
 
-          <div className="pt-6">
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              className="w-full h-16 !text-base shadow-amber-500/20"
-              variant="primary"
-              icon={Zap}
-            >
-              Initiate Onboarding sequence
-            </Button>
-          </div>
-        </form>
-
-        <p className="mt-12 text-center text-[10px] font-bold text-zinc-600 uppercase tracking-[0.4em]">
-          Secure Terminal &copy; 2026 CafeOS
-        </p>
+          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Authorized Network Expansion Protocol &copy; 2026 CafeOS</p>
+        </motion.div>
       </div>
     </div>
   );
@@ -382,11 +330,7 @@ function SignupContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <div className="h-12 w-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="h-16 w-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" /></div>}>
       <SignupContent />
     </Suspense>
   );

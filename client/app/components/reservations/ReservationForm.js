@@ -12,6 +12,7 @@ import {
 import Modal from '../ui/Modal';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import PremiumSelect from '../ui/PremiumSelect';
 import { AnimatePresence,motion } from 'framer-motion';
 
 const EVENT_DESIGNATIONS = [
@@ -188,14 +189,10 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-5 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Event Category</label>
-              <div className="relative">
-                <select
-                  required={!selectedEventType}
-                  className="w-full appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none transition-all text-zinc-900 dark:text-zinc-100 cursor-pointer font-bold"
+                <PremiumSelect 
+                  label="Event Category"
                   value={selectedEventType}
-                  onChange={e => {
-                    const val = e.target.value;
+                  onChange={val => {
                     setSelectedEventType(val);
                     if (val !== 'Other') {
                       setFormData({...formData, eventName: val});
@@ -203,14 +200,9 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                       setFormData({...formData, eventName: ''});
                     }
                   }}
-                >
-                  <option value="">— Select Designation —</option>
-                  {EVENT_DESIGNATIONS.map(d => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              </div>
+                  placeholder="Select Designation"
+                  options={EVENT_DESIGNATIONS.map(d => ({ label: d, value: d }))}
+                />
             </div>
 
             <div className="lg:col-span-7 space-y-2">
@@ -264,23 +256,14 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Assigned Branch</label>
-                <div className="relative">
-                  <select 
-                    required
-                    className="w-full appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold cursor-pointer"
-                    value={formData.locationId}
-                    onChange={e => setFormData({...formData, locationId: e.target.value})}
-                  >
-                    <option value="">Select Branch</option>
-                    {locations.map(loc => (
-                      <option key={loc._id} value={loc._id}>{loc.name || loc.city}</option>
-                    ))}
-                  </select>
-                  <MapPin className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                </div>
-              </div>
+                <PremiumSelect 
+                  icon={MapPin}
+                  label="Assigned Branch"
+                  value={formData.locationId}
+                  onChange={val => setFormData({...formData, locationId: val})}
+                  placeholder="Select Branch"
+                  options={locations.map(loc => ({ label: loc.name || loc.city, value: loc._id }))}
+                />
             </div>
 
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -489,21 +472,16 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Fiscal Status</label>
-              <div className="relative">
-                <select 
-                  className="w-full appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold cursor-pointer"
-                  value={formData.paymentStatus}
-                  onChange={e => setFormData({...formData, paymentStatus: e.target.value})}
-                >
-                  <option value="pending">Pending Settlement</option>
-                  <option value="partial">Partial Liquidation</option>
-                  <option value="paid">Fully Authorized</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              </div>
-            </div>
+              <PremiumSelect 
+                label="Fiscal Status"
+                value={formData.paymentStatus}
+                onChange={val => setFormData({...formData, paymentStatus: val})}
+                options={[
+                  { label: 'Pending Settlement', value: 'pending' },
+                  { label: 'Partial Liquidation', value: 'partial' },
+                  { label: 'Fully Authorized', value: 'paid' }
+                ]}
+              />
           </div>
         </section>
 

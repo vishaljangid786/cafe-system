@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Mail, MapPin, Phone, Users, Trash2, Plus, Loader2, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard, Layers, Target, Grid2X2, List } from 'lucide-react';
+import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, Mail, Phone, MapPin, Edit3, Trash2, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -10,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
-import { Filter, ChevronRight, ChevronDown, Search } from 'lucide-react';
+
 
 export default function LocationStaffPage() {
   const { user: currentUser } = useAuth();
@@ -55,12 +56,12 @@ export default function LocationStaffPage() {
     setLoading(true);
     try {
       // If in tree mode, we always want all available personnel to build the hierarchy
-      const params = viewMode === 'tree' ? {} : { 
-        role: roleFilter, 
+      const params = viewMode === 'tree' ? {} : {
+        role: roleFilter,
         locationId: locationFilter,
         search: searchQuery,
         page,
-        limit: viewMode === 'tree' ? 1000 : limit 
+        limit: viewMode === 'tree' ? 1000 : limit
       };
       const res = await api.get('/users', { params });
       setStaff(res.data.data);
@@ -134,10 +135,9 @@ export default function LocationStaffPage() {
 
     return (
       <div className="space-y-4">
-        <div 
-          className={`group flex items-center p-6 rounded-[2rem] border transition-all cursor-pointer ${
-            isExpanded ? 'bg-amber-500/5 border-amber-500/20 shadow-lg' : 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 hover:border-amber-500/20'
-          } ${!searchQuery || (member.name && member.name.toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}
+        <div
+          className={`group flex items-center p-6 rounded-[2rem] border transition-all cursor-pointer ${isExpanded ? 'bg-amber-500/5 border-amber-500/20 shadow-lg' : 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 hover:border-amber-500/20'
+            } ${!searchQuery || (member.name && member.name.toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}
           onClick={() => hasChildren && toggleNode(member._id)}
           style={{ marginLeft: `${level * 40}px` }}
         >
@@ -147,13 +147,12 @@ export default function LocationStaffPage() {
             ) : (
               <div className="w-5" />
             )}
-            
-            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black border ${
-              member.role === 'system_group' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200/20' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-200/10'
-            }`}>
+
+            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black border ${member.role === 'system_group' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200/20' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-200/10'
+              }`}>
               {member.role === 'system_group' ? <Layers size={20} /> : member.name.charAt(0)}
             </div>
-            
+
             <div>
               <p className="font-black text-gray-900 dark:text-zinc-100 text-lg leading-none">{member.name}</p>
               <div className="flex items-center gap-3 mt-1.5">
@@ -175,36 +174,36 @@ export default function LocationStaffPage() {
           </div>
 
           <div className="flex items-center gap-3">
-             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {member.role !== 'system_group' && (
-                  <>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setViewingStaff(member); }}
-                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-blue-500"
-                    >
-                      <Info size={18} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-amber-600"
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
-                      className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-rose-500"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </>
-                )}
-             </div>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {member.role !== 'system_group' && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setViewingStaff(member); }}
+                    className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-blue-500"
+                  >
+                    <Info size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                    className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-amber-600"
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
+                    className="p-3 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-rose-500"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         <AnimatePresence>
           {isExpanded && hasChildren && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -238,7 +237,7 @@ export default function LocationStaffPage() {
       return accessibleLocs.map(loc => {
         const locId = (loc._id || loc).toString();
         const locName = loc.name || 'Unknown Branch';
-        
+
         const branchAdminsInLoc = branchAdmins.filter(ba => {
           const baLocId = (ba.assignedLocation?._id || ba.assignedLocation)?.toString();
           return baLocId === locId;
@@ -253,9 +252,9 @@ export default function LocationStaffPage() {
         const mappedBranchAdmins = branchAdminsInLoc.map(ba => ({
           ...ba,
           children: staffInLoc.filter(s => {
-             // In our system, staff are directly under the branch, 
-             // but we show them as children of the branch admin for visual hierarchy
-             return true; 
+            // In our system, staff are directly under the branch, 
+            // but we show them as children of the branch admin for visual hierarchy
+            return true;
           })
         }));
 
@@ -279,7 +278,7 @@ export default function LocationStaffPage() {
       }));
 
       // Identify independent nodes (those not managed by any Main Admin)
-      const linkedBranchAdminIds = new Set(mappedAdmins.flatMap(a => 
+      const linkedBranchAdminIds = new Set(mappedAdmins.flatMap(a =>
         a.children.flatMap(locNode => locNode.children.filter(c => c.role === 'branch_admin').map(ba => ba._id))
       ));
 
@@ -293,7 +292,7 @@ export default function LocationStaffPage() {
       });
 
       const linkedStaffIds = new Set([
-        ...mappedAdmins.flatMap(a => 
+        ...mappedAdmins.flatMap(a =>
           a.children.flatMap(locNode => locNode.children.map(s => s._id))
         ),
         ...independentBranches.flatMap(ba => ba.children.map(s => s._id))
@@ -303,28 +302,28 @@ export default function LocationStaffPage() {
       roots = [...mappedAdmins, ...independentBranches, ...independentStaff];
     } else if (currentUser?.role === 'admin') {
       roots = getAdminChildren(currentUser);
-      
+
       const linkedStaffIds = new Set(roots.flatMap(ba => ba.children.map(s => s._id)));
       const myLocIds = (currentUser.accessibleLocations || []).map(loc => (loc._id || loc).toString());
       const myLocNames = (currentUser.accessibleLocations || []).map(loc => loc.name?.toLowerCase().trim());
-      
+
       const myIndependentStaff = operationalStaff.filter(s => {
         const sLoc = s.assignedLocation;
         if (!sLoc) return false;
-        const isMyLoc = myLocIds.includes((sLoc._id || sLoc).toString()) || 
-                        myLocNames.includes(sLoc.name?.toLowerCase().trim());
+        const isMyLoc = myLocIds.includes((sLoc._id || sLoc).toString()) ||
+          myLocNames.includes(sLoc.name?.toLowerCase().trim());
         return isMyLoc && !linkedStaffIds.has(s._id);
       });
       roots = [...roots, ...myIndependentStaff];
     } else if (currentUser?.role === 'branch_admin') {
       const myLocId = (currentUser.assignedLocation?._id || currentUser.assignedLocation)?.toString();
       const myLocName = currentUser.assignedLocation?.name?.toLowerCase().trim();
-      
+
       roots = operationalStaff.filter(s => {
         const sLoc = s.assignedLocation;
         if (!sLoc) return false;
-        return (sLoc._id || sLoc).toString() === myLocId || 
-               sLoc.name?.toLowerCase().trim() === myLocName;
+        return (sLoc._id || sLoc).toString() === myLocId ||
+          sLoc.name?.toLowerCase().trim() === myLocName;
       });
     }
 
@@ -352,114 +351,149 @@ export default function LocationStaffPage() {
     <PageTransition>
       <div className="space-y-10">
         <SlideIn direction="down">
-          <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-amber-600" size={36} strokeWidth={2.5} /> Staff <span className="ml-3 text-amber-600">Management</span>
-              </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium flex items-center">
-                <Target size={14} className="mr-2 text-amber-600" /> Manage and track all branch employees and their roles.
-              </p>
+          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-gray-100 dark:border-zinc-800 p-6 md:p-8 shadow-sm flex flex-col gap-6">
+
+            {/* Top Row */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+              {/* Left: Title */}
+              <div className="flex items-start gap-4">
+                <div className="h-14 w-14 rounded-xl bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-amber-600">
+                  <Users size={26} strokeWidth={2.5} />
+                </div>
+
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    Staff <span className="text-amber-600">Management</span>
+                  </h1>
+
+                  <p className="text-sm text-zinc-500 mt-1 flex items-center gap-2">
+                    <Target size={14} className="text-amber-600" />
+                    Manage and monitor your entire workforce
+                  </p>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-3 flex-wrap">
+
+                {/* View Switch */}
+                <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl border border-gray-200 dark:border-zinc-700">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-lg transition ${viewMode === 'list'
+                      ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm'
+                      : 'text-zinc-500'
+                      }`}
+                  >
+                    <List size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setViewMode('tree');
+                      setSearchQuery('');
+                      setRoleFilter('');
+                      setLocationFilter('');
+                      setPage(1);
+                    }}
+                    className={`p-2 rounded-lg transition ${viewMode === 'tree'
+                      ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm'
+                      : 'text-zinc-500'
+                      }`}
+                  >
+                    <Grid2X2 size={18} />
+                  </button>
+                </div>
+
+                {/* Add Button */}
+                <Link href="/signup">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 bg-zinc-900 dark:bg-amber-600 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg"
+                  >
+                    <Plus size={16} />
+                    Add Staff
+                  </motion.button>
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Filters & Search Grid */}
-              {viewMode === 'list' && (
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Search Bar */}
-                  <div className="relative group min-w-[300px]">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-600 transition-colors">
-                      <Search size={16} />
-                    </div>
+
+            {/* Bottom Row (Filters) */}
+            {viewMode === 'list' && (
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+
+                {/* 🔍 Premium Search */}
+                <div className="relative flex-1 group">
+                  {/* Glow Effect */}
+                  <div className="absolute inset-0 rounded-xl bg-amber-500/0 group-focus-within:bg-amber-500/10 blur-xl transition-all" />
+
+                  {/* Input */}
+                  <div className="relative flex items-center">
+                    <Search size={16} className="absolute left-3 text-zinc-400 group-focus-within:text-amber-600 transition-colors" />
+
                     <input
                       type="text"
-                      placeholder="Search by name, email or role..."
+                      placeholder="Search staff by name, email..."
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none"
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-sm font-medium outline-none transition-all shadow-sm"
                     />
+
+                    {/* Clear Button */}
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 text-zinc-400 hover:text-red-500 transition"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
-
-                  {/* Role Filter */}
-                  {(currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && (
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600">
-                        <Filter size={16} />
-                      </div>
-                      <select
-                        value={roleFilter}
-                        onChange={(e) => {
-                          setRoleFilter(e.target.value);
-                          setPage(1);
-                        }}
-                        className="pl-12 pr-8 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-xs font-black uppercase tracking-widest dark:text-zinc-100 outline-none appearance-none min-w-[180px]"
-                      >
-                        <option value="">All Roles</option>
-                        {currentUser?.role === 'super_admin' && <option value="admin">Main Admin</option>}
-                        <option value="branch_admin">Branch Admin</option>
-                        <option value="staff">Staff Member</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Location Filter */}
-                  {(currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && (
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600">
-                        <MapPin size={16} />
-                      </div>
-                      <select
-                        value={locationFilter}
-                        onChange={(e) => {
-                          setLocationFilter(e.target.value);
-                          setPage(1);
-                        }}
-                        className="pl-12 pr-8 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-xs font-black uppercase tracking-widest dark:text-zinc-100 outline-none appearance-none min-w-[180px]"
-                      >
-                        <option value="">All Locations</option>
-                        {locations.map(loc => (
-                          <option key={loc._id} value={loc._id}>{loc.city} - {loc.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </div>
-              )}
-              
 
-              <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl border border-gray-200 dark:border-zinc-700">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm' : 'text-zinc-500'}`}
-                >
-                  <List size={22} />
-                </button>
-                <button
-                  onClick={() => {
-                    setViewMode('tree');
-                    setSearchQuery('');
-                    setRoleFilter('');
-                    setLocationFilter('');
+                {/* 🎯 Compact Role Filter */}
+                <PremiumSelect
+                  icon={Filter}
+                  value={roleFilter}
+                  onChange={(val) => {
+                    setRoleFilter(val);
                     setPage(1);
                   }}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'tree' ? 'bg-white dark:bg-zinc-900 text-amber-600 shadow-sm' : 'text-zinc-500'}`}
-                >
-                  <Grid2X2 size={22} />
-                </button>
-              </div>
+                  options={[
+                    { label: 'All Roles', value: '' },
+                    ...(currentUser?.role === 'super_admin'
+                      ? [{ label: 'Main Admin', value: 'admin' }]
+                      : []),
+                    { label: 'Branch Admin', value: 'branch_admin' },
+                    { label: 'Staff', value: 'staff' }
+                  ]}
+                  className="min-w-[130px] max-w-[150px]"
+                />
 
-              <Link href="/signup">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-zinc-900 dark:bg-amber-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/10 flex items-center"
-                >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Register Staff
-                </motion.button>
-              </Link>
-            </div>
+                {/* 📍 Compact Location Filter */}
+                <PremiumSelect
+                  icon={MapPin}
+                  value={locationFilter}
+                  onChange={(val) => {
+                    setLocationFilter(val);
+                    setPage(1);
+                  }}
+                  options={[
+                    { label: 'All Locations', value: '' },
+                    ...locations.map(loc => ({
+                      label: `${loc.city} - ${loc.name}`,
+                      value: loc._id
+                    }))
+                  ]}
+                  className="min-w-[150px] max-w-[180px]"
+                />
+              </div>
+            )}
           </div>
         </SlideIn>
 
@@ -540,17 +574,16 @@ export default function LocationStaffPage() {
                 >
                   <ChevronRight size={20} className="rotate-180" />
                 </button>
-                
+
                 <div className="flex items-center gap-2">
                   {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
                     <button
                       key={p}
                       onClick={() => setPage(p)}
-                      className={`h-12 w-12 rounded-2xl font-black text-xs transition-all ${
-                        page === p 
-                          ? 'bg-amber-600 text-white shadow-xl shadow-amber-600/20 scale-110' 
-                          : 'bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 text-zinc-500 hover:text-amber-600'
-                      }`}
+                      className={`h-12 w-12 rounded-2xl font-black text-xs transition-all ${page === p
+                        ? 'bg-amber-600 text-white shadow-xl shadow-amber-600/20 scale-110'
+                        : 'bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 text-zinc-500 hover:text-amber-600'
+                        }`}
                     >
                       {p}
                     </button>
@@ -600,12 +633,16 @@ export default function LocationStaffPage() {
                 <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Gender</label>
-                <select className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })}>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+                <PremiumSelect
+                  label="Gender"
+                  value={formData.gender}
+                  onChange={(val) => setFormData({ ...formData, gender: val })}
+                  options={[
+                    { label: 'Male', value: 'Male' },
+                    { label: 'Female', value: 'Female' },
+                    { label: 'Other', value: 'Other' }
+                  ]}
+                />
               </div>
             </div>
 

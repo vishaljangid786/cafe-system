@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
-import { ShieldCheck, User, Mail, Lock, Phone, MapPin, Zap, ArrowRight, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ShieldCheck, User, Mail, Lock, Phone, MapPin, Zap, ArrowRight, Loader2, Coffee, Shield, Activity, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Button } from '../components/ui/Button';
 
@@ -83,142 +83,200 @@ export default function SetupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <Loader2 className="h-12 w-12 text-amber-500 animate-spin" />
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-16 w-16 text-amber-500 animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Initializing Setup Matrix</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
+    <div className="min-h-screen bg-white dark:bg-[#050505] flex flex-col lg:flex-row transition-colors duration-500 overflow-hidden">
+      {/* Cinematic Side Panel */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-zinc-900">
+        <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} className="absolute inset-0 z-0">
+          <img
+            src="/images/setup_bg.png"
+            className="w-full h-full object-cover opacity-60 mix-blend-luminosity grayscale"
+            alt=""
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#050505]/20 to-[#050505]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-90" />
+        </motion.div>
 
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-2xl z-10"
-      >
-        <div className="flex flex-col items-center mb-10 text-center">
-          <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black shadow-2xl shadow-amber-500/30 mb-8">
-            <ShieldCheck size={40} strokeWidth={2.5} />
+        <div className="relative z-10 w-full p-20 flex flex-col justify-between">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-black shadow-2xl shadow-amber-500/30">
+                <ShieldCheck size={32} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-amber-500">OS</span></h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Genesis Protocol</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="space-y-12">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
+              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Master <br /><span className="text-amber-500 italic">Initialization</span></h2>
+              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">
+                System uninitialized. Establish the primary Super Admin identity to activate the CafeOS neural network and commence operations.
+              </p>
+            </motion.div>
+
+            <div className="flex items-center gap-10">
+              {[
+                { icon: Terminal, label: "Mode", value: "Provisioning" },
+                { icon: Shield, label: "Security", value: "Master Level" },
+                { icon: Activity, label: "Status", value: "Awaiting Core" }
+              ].map((item, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center gap-2 text-amber-500/50">
+                    <item.icon size={12} />
+                    <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+                  </div>
+                  <p className="text-xs font-black text-zinc-100 uppercase tracking-tighter">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="text-5xl font-black tracking-tight mb-3">System <span className="text-amber-500">Initialization</span></h1>
-          <p className="text-zinc-500 dark:text-zinc-400 max-w-md text-lg">Establish the primary Super Admin identity to activate the CafeOS neural network.</p>
+        </div>
+      </div>
+
+      {/* Setup Form Panel */}
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 bg-zinc-50 dark:bg-[#050505] relative overflow-y-auto custom-scrollbar">
+        <div className="absolute inset-0 lg:hidden opacity-10 pointer-events-none">
+          <img
+            src="/images/setup_bg.png"
+            className="w-full h-full object-cover blur-3xl"
+            alt=""
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-card !bg-white/60 dark:!bg-zinc-900/60 backdrop-blur-3xl border-zinc-200 dark:border-zinc-800/50 p-10 rounded-3xl shadow-2xl space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3 md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Identity Name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                  required
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm font-bold"
-                  placeholder="Rahul Sharma"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Core Email</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                  required
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm font-bold"
-                  placeholder="admin@cafeos.com"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Secure Passphrase</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                  required
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm font-bold"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Communication Node</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                  required
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm font-bold"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Aadhar Node ID</label>
-              <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                  required
-                  name="aadharNumber"
-                  value={formData.aadharNumber}
-                  onChange={handleChange}
-                  maxLength={12}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm font-bold"
-                  placeholder="12-digit UIDAI number"
-                />
-              </div>
-            </div>
-
-            <div className="md:col-span-2 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Identity Scan (Aadhar)</label>
-              <div className="group relative flex flex-col items-center justify-center p-8 bg-zinc-100/50 dark:bg-zinc-950/50 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl hover:border-amber-500/50 transition-all cursor-pointer">
-                <input type="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleImageChange} accept="image/*" />
-                <Zap className="h-8 w-8 text-zinc-700 group-hover:text-amber-500 transition-colors mb-2" />
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-center">
-                  {image ? <span className="text-amber-500">{image.name}</span> : 'Upload Identity Document (.jpg, .png)'}
-                </p>
-              </div>
-            </div>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-xl relative z-10 py-10">
+          <div className="mb-12 text-center lg:text-left">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">System Setup Alpha</span>
+            <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Master Identity</h2>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Provide root-level credentials to secure the system.</p>
           </div>
 
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800/50">
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full h-16 !text-lg !font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/20 group"
-              variant="primary"
-            >
-              {submitting ? (
-                <Loader2 className="animate-spin mr-2" />
-              ) : (
-                <>Activate Master Protocol <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" /></>
-              )}
-            </Button>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Full Identity Name</label>
+                <div className="relative group">
+                  <User className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="E.g. Alexander Pierce"
+                  />
+                </div>
+              </div>
 
-        <p className="mt-8 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-[0.5em]">
-          CafeOS Secure Initialization Interface &copy; 2026
-        </p>
-      </motion.div>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Core Terminal (Email)</label>
+                <div className="relative group">
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="admin@cafeos.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Secure Passphrase</label>
+                <div className="relative group">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Contact Node (Phone)</label>
+                <div className="relative group">
+                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="+91 XXXXX XXXXX"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Aadhar Node ID</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    name="aadharNumber"
+                    value={formData.aadharNumber}
+                    onChange={handleChange}
+                    maxLength={12}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="12-digit UID"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-3">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Root Identity Scan (Aadhar)</label>
+                <div className="group relative flex flex-col items-center justify-center min-h-[200px] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2rem] hover:border-amber-500 transition-all cursor-pointer overflow-hidden shadow-xl">
+                  <input type="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} accept="image/*" />
+                  {image ? (
+                    <div className="w-full h-full flex flex-col items-center p-4">
+                      <img src={URL.createObjectURL(image)} alt="Scan" className="w-full h-32 object-contain" />
+                      <p className="mt-2 text-[10px] font-black text-amber-500 uppercase tracking-widest">{image.name}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Zap className="h-10 w-10 text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" />
+                      <p className="text-xs font-black text-zinc-500 uppercase tracking-widest text-center">Upload Master Document Scan</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20"
+                icon={ShieldCheck}
+              >
+                {submitting ? <Loader2 className="animate-spin" /> : 'Activate Master Protocol'}
+              </Button>
+            </div>
+          </form>
+
+          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Root Initialization Interface &copy; 2026 CafeOS</p>
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function BranchesPage() {
   const [locations, setLocations] = useState([]);
@@ -386,29 +387,25 @@ export default function BranchesPage() {
                           onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                         />
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Status</label>
-                        <select
-                          className="w-full px-5 py-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 transition-all font-bold appearance-none"
-                          value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        >
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Dietary Focus</label>
-                        <select
-                          className="w-full px-5 py-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 transition-all font-bold appearance-none"
-                          value={formData.dietaryType}
-                          onChange={(e) => setFormData({ ...formData, dietaryType: e.target.value })}
-                        >
-                          <option value="both">Veg & Non-Veg</option>
-                          <option value="veg">Pure Veg</option>
-                          <option value="non-veg">Non-Veg Specialty</option>
-                        </select>
-                      </div>
+                      <PremiumSelect 
+                        label="Status"
+                        value={formData.status}
+                        onChange={(val) => setFormData({ ...formData, status: val })}
+                        options={[
+                          { label: 'Active', value: 'active' },
+                          { label: 'Inactive', value: 'inactive' }
+                        ]}
+                      />
+                      <PremiumSelect 
+                        label="Dietary Focus"
+                        value={formData.dietaryType}
+                        onChange={(val) => setFormData({ ...formData, dietaryType: val })}
+                        options={[
+                          { label: 'Veg & Non-Veg', value: 'both' },
+                          { label: 'Pure Veg', value: 'veg' },
+                          { label: 'Non-Veg Specialty', value: 'non-veg' }
+                        ]}
+                      />
                     </div>
                   </div>
 
@@ -637,17 +634,15 @@ export default function BranchesPage() {
 
                 <form onSubmit={handlePersonnelUpdate} className="space-y-6">
                    <div className="grid grid-cols-1 gap-6">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Assigned Role</label>
-                        <select 
-                          className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 text-zinc-900 dark:text-zinc-100 appearance-none"
-                          value={personnelFormData.role}
-                          onChange={(e) => setPersonnelFormData({...personnelFormData, role: e.target.value})}
-                        >
-                          <option value="staff">Operational Staff</option>
-                          <option value="branch_admin">Branch Admin</option>
-                        </select>
-                      </div>
+                      <PremiumSelect 
+                        label="Assigned Role"
+                        value={personnelFormData.role}
+                        onChange={(val) => setPersonnelFormData({ ...personnelFormData, role: val })}
+                        options={[
+                          { label: 'Operational Staff', value: 'staff' },
+                          { label: 'Branch Admin', value: 'branch_admin' }
+                        ]}
+                      />
                       <div>
                         <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Monthly Yield (Salary)</label>
                         <div className="relative">

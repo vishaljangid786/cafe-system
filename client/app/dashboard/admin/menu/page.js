@@ -27,10 +27,11 @@ import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import ExportActions from '../../../components/ui/ExportActions';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 const SUGGESTED_ICONS = [
-  '🍽️', '🍕', '🍔', '🍟', '🌭', '🍿', '🥗', '🍝', '🍜', '🍲', '🍣', '🍱', '🍛', '🍚', '🥯', '🥞', '🥓', '🍳', '🍞', '🥐', 
+  '🍽️', '🍕', '🍔', '🍟', '🌭', '🍿', '🥗', '🍝', '🍜', '🍲', '🍣', '🍱', '🍛', '🍚', '🥯', '🥞', '🥓', '🍳', '🍞', '🥐',
   '🍰', '🍦', '🍩', '🍪', '🍫', '☕', '🍵', '🧃', '🥤', '🍺', '🍸', '🍹', '🍷', '🥂', '🍗', '🥩', '🐟', '🍤', '🌮', '🌯'
 ];
 
@@ -51,66 +52,66 @@ export default function MenuManagementPage() {
   const [isLocSelectorOpen, setIsLocSelectorOpen] = useState(false);
 
   const [analytics, setAnalytics] = useState({
-      summary: { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0, netProfit: 0, totalExpenses: 0 },
-      timeSeries: [],
-      categorySales: [],
-      staffPerformance: []
-    });
+    summary: { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0, netProfit: 0, totalExpenses: 0 },
+    timeSeries: [],
+    categorySales: [],
+    staffPerformance: []
+  });
 
 
-      const fetchLocations = async () => {
-        try {
-          const res = await api.get('/locations');
-          setLocations(res.data.data);
-        } catch (error) {
-          console.error("Failed to fetch locations");
-        }
-      };
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch locations");
+    }
+  };
 
-      const fetchAnalytics = async () => {
-        try {
-          const locId = filterLocation === 'all' ? '' : filterLocation;
-          let query = `?locationId=${locId}`;
-    
-          const now = new Date();
-          let start = '';
-          if (timeFilter === '7d') {
-            const d = new Date();
-            d.setDate(now.getDate() - 7);
-            start = d.toISOString().split('T')[0];
-          } else if (timeFilter === '30d') {
-            const d = new Date();
-            d.setDate(now.getDate() - 30);
-            start = d.toISOString().split('T')[0];
-          } else if (timeFilter === 'custom' && customDates.start) {
-            start = customDates.start;
-            if (customDates.end) query += `&endDate=${customDates.end}`;
-          }
-    
-          if (start) query += `&startDate=${start}`;
-    
-          const res = await api.get(`/analytics/advanced${query}`);
-          if (res.data.success) {
-            setAnalytics(res.data.data);
-          }
-        } catch (error) {
-          console.error("Analytics sync error:", error);
-        }
-      };
-    
-      useEffect(() => {
-        fetchLocations();
-      }, []);
-    
-      useEffect(() => {
-        fetchAnalytics();
-      }, [filterLocation, timeFilter, customDates]);
+  const fetchAnalytics = async () => {
+    try {
+      const locId = filterLocation === 'all' ? '' : filterLocation;
+      let query = `?locationId=${locId}`;
 
-      useEffect(() => {
-        if (selectedLocation) {
-          setFilterLocation(selectedLocation._id || selectedLocation);
-        }
-      }, [selectedLocation]);
+      const now = new Date();
+      let start = '';
+      if (timeFilter === '7d') {
+        const d = new Date();
+        d.setDate(now.getDate() - 7);
+        start = d.toISOString().split('T')[0];
+      } else if (timeFilter === '30d') {
+        const d = new Date();
+        d.setDate(now.getDate() - 30);
+        start = d.toISOString().split('T')[0];
+      } else if (timeFilter === 'custom' && customDates.start) {
+        start = customDates.start;
+        if (customDates.end) query += `&endDate=${customDates.end}`;
+      }
+
+      if (start) query += `&startDate=${start}`;
+
+      const res = await api.get(`/analytics/advanced${query}`);
+      if (res.data.success) {
+        setAnalytics(res.data.data);
+      }
+    } catch (error) {
+      console.error("Analytics sync error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [filterLocation, timeFilter, customDates]);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      setFilterLocation(selectedLocation._id || selectedLocation);
+    }
+  }, [selectedLocation]);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,6 +125,10 @@ export default function MenuManagementPage() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  useEffect(() => {
+    if (editingItem) setItemCategory(editingItem.category?._id || '');
+    else setItemCategory('');
+  }, [editingItem]);
   const [editingCategory, setEditingCategory] = useState(null);
 
   // Recipe state
@@ -139,6 +144,7 @@ export default function MenuManagementPage() {
   const itemFileRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [categoryIcon, setCategoryIcon] = useState('🍽️');
+  const [itemCategory, setItemCategory] = useState('');
 
   useEffect(() => {
     if (editingCategory) {
@@ -228,7 +234,7 @@ export default function MenuManagementPage() {
 
     const isGlobal = formData.get('isGlobal') === 'on';
     if (isGlobal) {
-      formData.set('locationId', ''); 
+      formData.set('locationId', '');
     } else if (selectedLocation && !formData.has('locationId')) {
       formData.append('locationId', selectedLocation._id || selectedLocation);
     }
@@ -430,47 +436,17 @@ export default function MenuManagementPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-wrap items-center gap-4">
             {/* Location Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setIsLocSelectorOpen(!isLocSelectorOpen)}
-                className="flex items-center gap-3 px-5 py-2.5 bg-card border border-border rounded-2xl shadow-sm hover:border-accent/50 transition-all min-w-[140px] sm:min-w-[180px]"
-              >
-                <MapPin size={16} className="text-amber-500" />
-                <div className="flex flex-col items-start">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Branch</span>
-                  <span className="text-xs font-black text-foreground">
-                    {filterLocation === 'all' ? 'All Branches' : locations.find(l => l._id === filterLocation)?.name}
-                  </span>
-                </div>
-                <ChevronDown size={14} className={`ml-auto transition-transform ${isLocSelectorOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {isLocSelectorOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 mt-3 w-64 bg-card border border-border rounded-[2rem] shadow-2xl z-50 p-3 max-h-[300px] overflow-y-auto custom-scrollbar"
-                  >
-                    <button
-                      onClick={() => { setFilterLocation('all'); setIsLocSelectorOpen(false); }}
-                      className={`w-full text-left p-3 rounded-xl mb-1 text-xs font-bold transition-colors ${filterLocation === 'all' ? 'bg-amber-500/10 text-amber-500' : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-500'}`}
-                    >
-                      All Branches
-                    </button>
-                    {locations.map(loc => (
-                      <button
-                        key={loc._id}
-                        onClick={() => { setFilterLocation(loc._id); setIsLocSelectorOpen(false); }}
-                        className={`w-full text-left p-3 rounded-xl mb-1 text-xs font-bold transition-colors ${filterLocation === loc._id ? 'bg-amber-500/10 text-amber-500' : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-500'}`}
-                      >
-                        {loc.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <PremiumSelect 
+              icon={MapPin}
+              label="Branch"
+              value={filterLocation}
+              onChange={(val) => setFilterLocation(val)}
+              options={[
+                { label: 'All Branches', value: 'all' },
+                ...locations.map(loc => ({ label: loc.name, value: loc._id }))
+              ]}
+              className="min-w-[200px]"
+            />
 
             {/* Time Filter */}
             <div className="flex items-center gap-3 bg-muted/50 p-1.5 rounded-2xl border border-border shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
@@ -510,13 +486,13 @@ export default function MenuManagementPage() {
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-lg">Popular Categories</CardTitle>
               <div className="flex bg-muted p-1 rounded-lg border border-border shadow-inner">
-                <button 
+                <button
                   onClick={() => setGraphMetric('value')}
                   className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'value' ? 'bg-amber-500 text-black shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
                 >
                   Revenue
                 </button>
-                <button 
+                <button
                   onClick={() => setGraphMetric('count')}
                   className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'count' ? 'bg-amber-500 text-black shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
                 >
@@ -573,7 +549,7 @@ export default function MenuManagementPage() {
           {/* Crew Spotlight */}
           <Card className="lg:col-span-2 !p-8 bg-card border-border shadow-sm overflow-hidden relative" hover={false}>
             <div className="absolute -right-20 -top-20 h-64 w-64 bg-amber-500/5 rounded-full blur-3xl" />
-            
+
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
                 <CardTitle className="text-lg">Branch Momentum</CardTitle>
@@ -595,7 +571,7 @@ export default function MenuManagementPage() {
                     <span className="text-accent">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
                   </h4>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">Solo Operation Mastery</p>
-                  
+
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
                       <p className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">{analytics.staffPerformance[0].totalOrders}</p>
@@ -625,7 +601,7 @@ export default function MenuManagementPage() {
                           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{staff.totalOrders} Orders Handled</p>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-end mb-1">
                           <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Efficiency Matrix</span>
@@ -659,10 +635,10 @@ export default function MenuManagementPage() {
           <div className="bg-card p-6 md:p-10 rounded-[3rem] border border-border shadow-sm space-y-8">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="relative flex-1">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder={activeTab === 'items' ? "Search culinary inventory..." : "Search sector categories..."}
-                  className="w-full pl-14 pr-6 py-4 bg-muted border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-inner transition-all" 
+                  className="w-full pl-14 pr-6 py-4 bg-muted border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-inner transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -677,11 +653,10 @@ export default function MenuManagementPage() {
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                          dietaryFilter === f.id 
-                            ? 'bg-amber-500 text-black shadow-sm' 
+                        className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dietaryFilter === f.id
+                            ? 'bg-amber-500 text-black shadow-sm'
                             : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                        } ${f.color || ''}`}
+                          } ${f.color || ''}`}
                       >
                         {f.label}
                       </button>
@@ -690,7 +665,7 @@ export default function MenuManagementPage() {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-3 h-14 px-6 rounded-2xl border transition-all font-black text-xs uppercase tracking-widest ${showFilters ? 'bg-amber-500 border-amber-600 text-black shadow-lg shadow-amber-500/30' : 'bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-amber-500/30'}`}
                 >
@@ -718,8 +693,8 @@ export default function MenuManagementPage() {
                     <span className="font-black text-xs uppercase tracking-widest">Add New</span>
                   </Button>
 
-                  <ExportActions 
-                    data={activeTab === 'items' ? filteredItems : filteredCategories} 
+                  <ExportActions
+                    data={activeTab === 'items' ? filteredItems : filteredCategories}
                     columns={activeTab === 'items' ? [
                       { header: 'Name', key: 'name' },
                       { header: 'Category', key: item => item.category?.name || 'Uncategorized' },
@@ -762,32 +737,26 @@ export default function MenuManagementPage() {
                 >
                   <div className="p-8 mt-6 bg-muted rounded-3xl border border-border shadow-inner">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                      <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Category</label>
-                        <select
-                          className="w-full px-5 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-sm transition-all"
+                        <PremiumSelect 
+                          label="Category"
                           value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                        >
-                          <option value="All">All Categories</option>
-                          {categories.map(cat => (
-                            <option key={cat._id} value={cat.name}>{cat.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                          onChange={(val) => setSelectedCategory(val)}
+                          options={[
+                            { label: 'All Categories', value: 'All' },
+                            ...categories.map(cat => ({ label: cat.name, value: cat.name }))
+                          ]}
+                        />
 
-                      <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Status</label>
-                        <select
-                          className="w-full px-5 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-sm transition-all"
+                        <PremiumSelect 
+                          label="Status"
                           value={availabilityFilter}
-                          onChange={(e) => setAvailabilityFilter(e.target.value)}
-                        >
-                          <option value="All">All Status</option>
-                          <option value="Available">Active Only</option>
-                          <option value="Unavailable">Inactive Only</option>
-                        </select>
-                      </div>
+                          onChange={(val) => setAvailabilityFilter(val)}
+                          options={[
+                            { label: 'All Status', value: 'All' },
+                            { label: 'Active Only', value: 'Available' },
+                            { label: 'Inactive Only', value: 'Unavailable' }
+                          ]}
+                        />
 
                       <div className="space-y-2.5">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Min Price</label>
@@ -817,22 +786,20 @@ export default function MenuManagementPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Dietary</label>
-                        <select
-                          className="w-full px-5 py-4 bg-card border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none appearance-none font-bold text-sm shadow-sm transition-all text-foreground"
+                        <PremiumSelect 
+                          label="Dietary"
                           value={dietaryFilter}
-                          onChange={(e) => setDietaryFilter(e.target.value)}
-                        >
-                          <option value="All">All Dietary</option>
-                          <option value="veg">Veg Only</option>
-                          <option value="non-veg">Non-Veg Only</option>
-                        </select>
-                      </div>
+                          onChange={(val) => setDietaryFilter(val)}
+                          options={[
+                            { label: 'All Dietary', value: 'All' },
+                            { label: 'Veg Only', value: 'veg' },
+                            { label: 'Non-Veg Only', value: 'non-veg' }
+                          ]}
+                        />
                     </div>
-                    
+
                     <div className="mt-8 flex justify-end">
-                      <button 
+                      <button
                         onClick={() => {
                           setSearchTerm('');
                           setSelectedCategory('All');
@@ -874,9 +841,8 @@ export default function MenuManagementPage() {
                           <span className="px-3 py-1 bg-background/80 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest border border-border">
                             {item.category?.name || 'Unsorted'}
                           </span>
-                          <span className={`px-3 py-1 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest border self-start ${
-                            item.dietaryType === 'veg' ? 'bg-green-500/20 border-green-500/30 text-green-500' : 'bg-red-500/20 border-red-500/30 text-red-500'
-                          }`}>
+                          <span className={`px-3 py-1 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest border self-start ${item.dietaryType === 'veg' ? 'bg-green-500/20 border-green-500/30 text-green-500' : 'bg-red-500/20 border-red-500/30 text-red-500'
+                            }`}>
                             {item.dietaryType}
                           </span>
                         </div>
@@ -1011,11 +977,11 @@ export default function MenuManagementPage() {
           maxWidth="max-w-5xl"
         >
           <form onSubmit={handleItemSubmit} className="p-2 space-y-12">
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               {/* Left Column */}
               <div className="lg:col-span-7 space-y-10">
-                
+
                 {/* Specifications */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -1028,40 +994,35 @@ export default function MenuManagementPage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Item Name</label>
-                      <input 
-                        name="name" 
-                        defaultValue={editingItem?.name} 
-                        required 
-                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
-                        placeholder="e.g. Masala Dosa" 
+                      <input
+                        name="name"
+                        defaultValue={editingItem?.name}
+                        required
+                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                        placeholder="e.g. Masala Dosa"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Category</label>
-                        <div className="relative">
-                          <select 
-                            name="category" 
-                            defaultValue={editingItem?.category?._id} 
-                            required 
-                            className="w-full appearance-none px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all cursor-pointer"
-                          >
-                            <option value="">Select Category</option>
-                            {categories.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
-                          </select>
-                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={16} />
-                        </div>
+                        <input type="hidden" name="category" value={itemCategory} />
+                        <PremiumSelect 
+                          label="Category"
+                          value={itemCategory}
+                          onChange={(val) => setItemCategory(val)}
+                          placeholder="Select Category"
+                          options={categories.map(cat => ({ label: cat.name, value: cat._id }))}
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Prep Time (Min)</label>
                         <div className="relative">
-                          <input 
-                            name="preparationTime" 
-                            type="number" 
-                            defaultValue={editingItem?.preparationTime || 10} 
-                            required 
-                            className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
+                          <input
+                            name="preparationTime"
+                            type="number"
+                            defaultValue={editingItem?.preparationTime || 10}
+                            required
+                            className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
                           />
                           <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                         </div>
@@ -1070,11 +1031,11 @@ export default function MenuManagementPage() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Description</label>
-                      <textarea 
-                        name="description" 
-                        defaultValue={editingItem?.description} 
-                        rows="3" 
-                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none" 
+                      <textarea
+                        name="description"
+                        defaultValue={editingItem?.description}
+                        rows="3"
+                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none"
                         placeholder="Describe the item..."
                       />
                     </div>
@@ -1084,12 +1045,12 @@ export default function MenuManagementPage() {
                       <div className="flex gap-4">
                         {['veg', 'non-veg'].map((type) => (
                           <label key={type} className="flex-1 flex items-center justify-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-amber-500/50 transition-all">
-                            <input 
-                              type="radio" 
-                              name="dietaryType" 
-                              value={type} 
-                              defaultChecked={editingItem ? editingItem.dietaryType === type : type === 'veg'} 
-                              className="w-4 h-4 accent-amber-600" 
+                            <input
+                              type="radio"
+                              name="dietaryType"
+                              value={type}
+                              defaultChecked={editingItem ? editingItem.dietaryType === type : type === 'veg'}
+                              className="w-4 h-4 accent-amber-600"
                             />
                             <span className={`text-[10px] font-black uppercase tracking-widest ${type === 'veg' ? 'text-green-500' : 'text-red-500'}`}>
                               {type}
@@ -1116,12 +1077,12 @@ export default function MenuManagementPage() {
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Base Price (₹)</label>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
-                          <input 
-                            name="price" 
-                            type="number" 
-                            defaultValue={editingItem?.price} 
-                            required 
-                            className="w-full pl-10 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all" 
+                          <input
+                            name="price"
+                            type="number"
+                            defaultValue={editingItem?.price}
+                            required
+                            className="w-full pl-10 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all"
                           />
                         </div>
                       </div>
@@ -1130,12 +1091,12 @@ export default function MenuManagementPage() {
                           <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 ml-1">Cost Price (₹)</label>
                           <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500/50 font-bold">₹</span>
-                            <input 
-                              name="costPrice" 
-                              type="number" 
-                              defaultValue={editingItem?.costPrice || 0} 
-                              required 
-                              className="w-full pl-10 pr-5 py-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 outline-none focus:ring-2 focus:ring-amber-500 font-black text-amber-600 transition-all" 
+                            <input
+                              name="costPrice"
+                              type="number"
+                              defaultValue={editingItem?.costPrice || 0}
+                              required
+                              className="w-full pl-10 pr-5 py-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 outline-none focus:ring-2 focus:ring-amber-500 font-black text-amber-600 transition-all"
                             />
                           </div>
                         </div>
@@ -1145,21 +1106,21 @@ export default function MenuManagementPage() {
                     <div className="space-y-4 p-5 bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
                       <div className="space-y-2">
                         <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Original Price (Strikethrough ₹)</label>
-                        <input 
-                          name="originalPrice" 
-                          type="number" 
-                          defaultValue={editingItem?.originalPrice} 
-                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
+                        <input
+                          name="originalPrice"
+                          type="number"
+                          defaultValue={editingItem?.originalPrice}
+                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
                           placeholder="The 'Old' price"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Offer Price (New Payable ₹)</label>
-                        <input 
-                          name="discountedPrice" 
-                          type="number" 
-                          defaultValue={editingItem?.discountedPrice} 
-                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
+                        <input
+                          name="discountedPrice"
+                          type="number"
+                          defaultValue={editingItem?.discountedPrice}
+                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
                           placeholder="The 'Sale' price"
                         />
                       </div>
@@ -1170,7 +1131,7 @@ export default function MenuManagementPage() {
 
               {/* Right Column */}
               <div className="lg:col-span-5 space-y-10">
-                
+
                 {/* Visuals */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -1220,25 +1181,25 @@ export default function MenuManagementPage() {
                   <div className="space-y-4">
                     <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
                       <span className="text-xs font-bold text-zinc-900 dark:text-white">Active Availability</span>
-                      <input 
-                        type="checkbox" 
-                        name="isAvailable" 
-                        defaultChecked={editingItem ? editingItem.isAvailable : true} 
-                        className="w-5 h-5 accent-amber-600 rounded-lg" 
+                      <input
+                        type="checkbox"
+                        name="isAvailable"
+                        defaultChecked={editingItem ? editingItem.isAvailable : true}
+                        className="w-5 h-5 accent-amber-600 rounded-lg"
                       />
                     </label>
-                    
+
                     {(user?.role === 'admin' || user?.role === 'super_admin') && (
                       <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
                         <div>
                           <span className="text-xs font-bold text-zinc-900 dark:text-white block">Global Item</span>
                           <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-tight italic">Available for every branch</span>
                         </div>
-                        <input 
-                          type="checkbox" 
-                          name="isGlobal" 
-                          defaultChecked={editingItem ? !editingItem.locationId : true} 
-                          className="w-5 h-5 accent-amber-600 rounded-lg" 
+                        <input
+                          type="checkbox"
+                          name="isGlobal"
+                          defaultChecked={editingItem ? !editingItem.locationId : true}
+                          className="w-5 h-5 accent-amber-600 rounded-lg"
                         />
                       </label>
                     )}
@@ -1247,11 +1208,11 @@ export default function MenuManagementPage() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Current Stock Level</label>
                       <div className="relative">
                         <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                        <input 
-                          name="stock" 
-                          type="number" 
-                          defaultValue={editingItem?.stock || 0} 
-                          className="w-full pl-12 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
+                        <input
+                          name="stock"
+                          type="number"
+                          defaultValue={editingItem?.stock || 0}
+                          className="w-full pl-12 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
                         />
                       </div>
                     </div>
@@ -1259,7 +1220,7 @@ export default function MenuManagementPage() {
                 </section>
 
                 {/* Recipe */}
-                <div 
+                <div
                   onClick={() => setShowRecipeEditor(!showRecipeEditor)}
                   className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${showRecipeEditor ? 'bg-amber-500/10 border-amber-500/30' : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/20'}`}
                 >
@@ -1298,9 +1259,9 @@ export default function MenuManagementPage() {
                           <List size={18} className="text-amber-500" />
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ingredients</h4>
                         </div>
-                        <button 
-                          type="button" 
-                          onClick={addIngredient} 
+                        <button
+                          type="button"
+                          onClick={addIngredient}
                           className="px-4 py-1.5 rounded-full bg-amber-500/10 text-[9px] font-black uppercase text-amber-600 hover:bg-amber-500 hover:text-black transition-all"
                         >
                           + Add
@@ -1308,9 +1269,9 @@ export default function MenuManagementPage() {
                       </div>
                       <div className="space-y-3">
                         {recipeData.ingredients.map((ing, idx) => (
-                          <motion.div 
+                          <motion.div
                             layout
-                            key={idx} 
+                            key={idx}
                             className="flex gap-3 items-center p-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800"
                           >
                             <div className="flex-[3]">
@@ -1331,20 +1292,21 @@ export default function MenuManagementPage() {
                               />
                             </div>
                             <div className="flex-2">
-                              <select
+                              <PremiumSelect 
                                 value={ing.unit}
-                                onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
-                                className="w-full px-3 py-2.5 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase appearance-none text-center outline-none"
-                              >
-                                <option value="grams">Grams</option>
-                                <option value="ml">ML</option>
-                                <option value="pcs">Pcs</option>
-                                <option value="tsp">TSP</option>
-                              </select>
+                                onChange={(val) => updateIngredient(idx, 'unit', val)}
+                                options={[
+                                  { label: 'Grams', value: 'grams' },
+                                  { label: 'ML', value: 'ml' },
+                                  { label: 'Pcs', value: 'pcs' },
+                                  { label: 'TSP', value: 'tsp' }
+                                ]}
+                                className="!py-0"
+                              />
                             </div>
-                            <button 
-                              type="button" 
-                              onClick={() => removeIngredient(idx)} 
+                            <button
+                              type="button"
+                              onClick={() => removeIngredient(idx)}
                               className="h-10 w-10 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                             >
                               <Minus size={16} />
@@ -1361,9 +1323,9 @@ export default function MenuManagementPage() {
                           <Zap size={18} className="text-amber-500" />
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Steps</h4>
                         </div>
-                        <button 
-                          type="button" 
-                          onClick={addInstruction} 
+                        <button
+                          type="button"
+                          onClick={addInstruction}
                           className="px-4 py-1.5 rounded-full bg-amber-500/10 text-[9px] font-black uppercase text-amber-600 hover:bg-amber-500 hover:text-black transition-all"
                         >
                           + Add
@@ -1382,9 +1344,9 @@ export default function MenuManagementPage() {
                               rows="2"
                               className="w-full px-5 py-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold resize-none outline-none focus:ring-1 focus:ring-amber-500 transition-all"
                             />
-                            <button 
-                              type="button" 
-                              onClick={() => removeInstruction(idx)} 
+                            <button
+                              type="button"
+                              onClick={() => removeInstruction(idx)}
                               className="h-10 w-10 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all h-fit opacity-0 group-hover:opacity-100"
                             >
                               <Minus size={16} />
@@ -1418,10 +1380,10 @@ export default function MenuManagementPage() {
               >
                 Cancel
               </button>
-              <Button 
-                type="submit" 
-                variant="primary" 
-                icon={Save} 
+              <Button
+                type="submit"
+                variant="primary"
+                icon={Save}
                 className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
               >
                 {editingItem ? 'Save Updates' : 'Add Item'}
@@ -1438,7 +1400,7 @@ export default function MenuManagementPage() {
           maxWidth="max-w-2xl"
         >
           <form onSubmit={handleCategorySubmit} className="p-2 space-y-10">
-            
+
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
@@ -1450,24 +1412,24 @@ export default function MenuManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-6 space-y-2">
                   <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Item Name</label>
-                  <input 
-                    name="name" 
-                    defaultValue={editingCategory?.name} 
-                    required 
-                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all" 
-                    placeholder="e.g. South Indian" 
+                  <input
+                    name="name"
+                    defaultValue={editingCategory?.name}
+                    required
+                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                    placeholder="e.g. South Indian"
                   />
                 </div>
                 <div className="md:col-span-6 space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Visual Icon & Suggestions</label>
                   <div className="flex gap-3">
                     <div className="relative group shrink-0">
-                      <input 
-                        name="icon" 
+                      <input
+                        name="icon"
                         value={categoryIcon}
                         onChange={(e) => setCategoryIcon(e.target.value)}
-                        required 
-                        className="w-20 px-2 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold text-center text-2xl transition-all" 
+                        required
+                        className="w-20 px-2 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold text-center text-2xl transition-all"
                       />
                     </div>
                     <div className="flex-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-2 overflow-hidden">
@@ -1490,24 +1452,24 @@ export default function MenuManagementPage() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Categorical Scope (Description)</label>
-                <textarea 
-                  name="description" 
-                  defaultValue={editingCategory?.description} 
-                  rows="3" 
-                  className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none" 
-                  placeholder="Define the scope of culinary nodes within this sector..." 
+                <textarea
+                  name="description"
+                  defaultValue={editingCategory?.description}
+                  rows="3"
+                  className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none"
+                  placeholder="Define the scope of culinary nodes within this sector..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Hierarchy Index (Sort Order)</label>
-                  <input 
-                    name="sortOrder" 
-                    type="number" 
-                    defaultValue={editingCategory?.sortOrder || 0} 
-                    required 
-                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all" 
+                  <input
+                    name="sortOrder"
+                    type="number"
+                    defaultValue={editingCategory?.sortOrder || 0}
+                    required
+                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all"
                   />
                 </div>
                 <div className="flex flex-col justify-end pb-1">
@@ -1534,10 +1496,10 @@ export default function MenuManagementPage() {
               >
                 Abort Protocol
               </button>
-              <Button 
-                type="submit" 
-                variant="primary" 
-                icon={Save} 
+              <Button
+                type="submit"
+                variant="primary"
+                icon={Save}
                 className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
               >
                 {editingCategory ? 'Synchronize Sector' : 'Initialize Sector'}

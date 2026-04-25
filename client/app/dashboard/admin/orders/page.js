@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { 
-  BarChart3, Clock, AlertCircle, CheckCircle2, 
+import {
+  BarChart3, Clock, AlertCircle, CheckCircle2,
   XCircle, Filter, Search, Globe, ChefHat,
   TrendingUp, Timer, Activity, ShieldAlert,
   ArrowUpRight, ArrowDownRight, MoreVertical,
@@ -11,9 +11,10 @@ import { PageTransition, SlideIn, CardHover } from '../../../components/ui/Anima
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, AreaChart, Area
 } from 'recharts';
 import Modal from '../../../components/ui/Modal';
@@ -77,7 +78,7 @@ export default function AdminOrdersDashboard() {
     }
   };
 
-  const filteredOrders = orders.filter(o => 
+  const filteredOrders = orders.filter(o =>
     o.table?.tableNumber?.toString().includes(searchTerm) ||
     o.branch?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o._id.includes(searchTerm)
@@ -102,16 +103,15 @@ export default function AdminOrdersDashboard() {
                 {locations.find(l => l._id === branchFilter)?.name || 'My Branch'}
               </div>
             ) : (
-              <select 
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-black outline-none"
+              <PremiumSelect 
+                label="Operational Sector"
                 value={branchFilter}
-                onChange={(e) => setBranchFilter(e.target.value)}
-              >
-                <option value="all">Global Matrix</option>
-                {locations.map(loc => (
-                  <option key={loc._id} value={loc._id}>{loc.name}</option>
-                ))}
-              </select>
+                onChange={val => setBranchFilter(val)}
+                options={[
+                  { label: 'Global Matrix', value: 'all' },
+                  ...(locations.map(loc => ({ label: loc.name, value: loc._id })))
+                ]}
+              />
             )}
             <div className="flex bg-muted rounded-xl p-1 border border-border shadow-inner">
               <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-card shadow-sm text-accent' : 'text-muted-foreground hover:text-foreground'}`}><LayoutGrid size={16} /></button>
@@ -122,32 +122,32 @@ export default function AdminOrdersDashboard() {
 
         {/* Analytics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            label="Avg Prep Time" 
-            value={`${analytics?.avgPrepTime || 0}m`} 
-            sub="ACCEPTED → READY" 
-            icon={Timer} 
+          <StatCard
+            label="Avg Prep Time"
+            value={`${analytics?.avgPrepTime || 0}m`}
+            sub="ACCEPTED → READY"
+            icon={Timer}
             color="amber"
           />
-          <StatCard 
-            label="Live Throughput" 
-            value={orders.filter(o => ['ACCEPTED', 'PREPARING'].includes(o.status)).length} 
-            sub="Active Kitchens" 
-            icon={Activity} 
+          <StatCard
+            label="Live Throughput"
+            value={orders.filter(o => ['ACCEPTED', 'PREPARING'].includes(o.status)).length}
+            sub="Active Kitchens"
+            icon={Activity}
             color="blue"
           />
-          <StatCard 
-            label="Delayed Orders" 
-            value={analytics?.mostDelayed?.length || 0} 
-            sub="Critical Threshold (>20m)" 
-            icon={AlertCircle} 
+          <StatCard
+            label="Delayed Orders"
+            value={analytics?.mostDelayed?.length || 0}
+            sub="Critical Threshold (>20m)"
+            icon={AlertCircle}
             color="rose"
           />
-          <StatCard 
-            label="Completion Rate" 
-            value={`${((orders.filter(o => o.status === 'SERVED').length / (orders.length || 1)) * 100).toFixed(0)}%`} 
-            sub="Global Fulfillment" 
-            icon={CheckCircle2} 
+          <StatCard
+            label="Completion Rate"
+            value={`${((orders.filter(o => o.status === 'SERVED').length / (orders.length || 1)) * 100).toFixed(0)}%`}
+            sub="Global Fulfillment"
+            icon={CheckCircle2}
             color="emerald"
           />
         </div>
@@ -166,7 +166,7 @@ export default function AdminOrdersDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis dataKey="name" stroke="#71717a" fontSize={10} fontWeight={900} />
                   <YAxis stroke="#71717a" fontSize={10} fontWeight={900} />
-                  <Tooltip 
+                  <Tooltip
                     itemStyle={{ color: '#f59e0b', fontSize: '12px', fontWeight: 'bold' }}
                   />
                   <Bar dataKey="avgTime" radius={[8, 8, 0, 0]} name="Avg Time (min)">
@@ -214,7 +214,7 @@ export default function AdminOrdersDashboard() {
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">Live Monitor Matrix</h3>
             <div className="relative w-64">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
-              <input 
+              <input
                 type="text"
                 placeholder="Filter matrix..."
                 className="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-[10px] font-bold outline-none border border-transparent focus:border-amber-500/30"
@@ -227,9 +227,9 @@ export default function AdminOrdersDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <AnimatePresence mode="popLayout">
               {filteredOrders.map((order) => (
-                <AdminOrderCard 
-                  key={order._id} 
-                  order={order} 
+                <AdminOrderCard
+                  key={order._id}
+                  order={order}
                   onCancel={handleCancel}
                   onForceComplete={handleForceComplete}
                 />
@@ -306,13 +306,13 @@ function AdminOrderCard({ order, onCancel, onForceComplete }) {
 
         {!['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status) && (
           <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
-            <button 
+            <button
               onClick={() => onCancel(order._id)}
               className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/5 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={() => onForceComplete(order._id)}
               className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
             >

@@ -64,7 +64,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
       <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={onToggleSidebar}
-          className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-soft)] transition-all rounded-xl border border-transparent hover:border-[var(--color-border)]"
+          className="p-2 text-[var(--color-text-muted)] hover:text-primary hover:bg-[var(--color-bg-soft)] transition-all rounded-xl border border-transparent hover:border-[var(--color-border)]"
         >
           {isMobile ? (
             <Menu size={20} />
@@ -81,9 +81,9 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               metaKey: true,
               bubbles: true 
              }))}
-            className="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:border-[var(--color-primary)]/50 transition-all text-[var(--color-text-muted)] group min-w-[280px] shadow-sm backdrop-blur-sm"
+            className="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:border-primary/50 transition-all text-[var(--color-text-muted)] group min-w-[280px] shadow-sm backdrop-blur-sm"
           >
-            <Search size={16} className="group-hover:text-[var(--color-primary)] transition-colors" />
+            <Search size={16} className="group-hover:text-primary transition-colors" />
             <span className="text-[11px] font-bold">Search system or switch user...</span>
             <div className="ml-auto flex items-center gap-1">
               <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[10px] font-black text-[var(--color-text-muted)]">
@@ -99,7 +99,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         {/* Location Selector Dropdown */}
         {!isMobile && <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-2xl border bg-[var(--color-bg-soft)]/50 border-[var(--color-border)] backdrop-blur-sm">
 
-          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
             <MapPin size={14} />
           </div>
 
@@ -130,7 +130,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`p-2.5 relative transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm ${showNotifications ? 'text-[var(--color-primary)] bg-[var(--color-bg)] shadow-sm' : 'text-[var(--color-text-muted)]'}`}
+            className={`p-2.5 relative transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm ${showNotifications ? 'text-primary bg-[var(--color-bg)] shadow-sm' : 'text-[var(--color-text-muted)]'}`}
           >
             <Bell size={18} />
             {unreadCount > 0 && (
@@ -151,9 +151,9 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           </div>
           <Link
             href="/dashboard/profile"
-            className="h-11 w-11 rounded-2xl bg-[var(--gradient-primary)] p-[1.5px] group cursor-pointer shadow-lg shadow-[var(--color-primary)]/10 hover:shadow-[var(--color-primary)]/20 transition-all active:scale-95 overflow-hidden"
+            className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-[1.5px] group cursor-pointer shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95 overflow-hidden"
           >
-            <div className="h-full w-full rounded-[0.9rem] bg-[var(--color-bg)] flex items-center justify-center text-[var(--color-primary)] overflow-hidden">
+            <div className="h-full w-full rounded-[0.9rem] bg-[var(--color-bg)] flex items-center justify-center text-primary overflow-hidden">
               {user.profileImageUrl ? (
                 <img
                   src={user.profileImageUrl}

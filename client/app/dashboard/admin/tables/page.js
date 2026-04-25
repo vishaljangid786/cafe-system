@@ -8,7 +8,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/app/context/AuthContext';
-import Dropdown from '../../../components/ui/Dropdown';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { Button } from '@/app/components/ui/Button';
@@ -391,7 +391,7 @@ export default function AdminTablesPage() {
             <div className="h-12 w-px bg-border mx-2 hidden sm:block" />
             <Button 
               variant="primary" 
-              className="!rounded-2xl !py-4 shadow-xl shadow-accent/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-[0.2em]"
+              className="!rounded-2xl !py-4 shadow-xl shadow-accent/20 bg-amber-400 hover:bg-amber-700 text-[10px] font-black uppercase tracking-[0.2em]"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -437,8 +437,8 @@ export default function AdminTablesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-56">
-            <Dropdown
+          <div className="w-full sm:w-64">
+            <PremiumSelect 
               options={locationOptions}
               value={selectedLocation}
               onChange={setSelectedLocation}
@@ -466,10 +466,13 @@ export default function AdminTablesPage() {
         <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={isEditing ? 'Modify Protocol' : 'Initialize New Unit'} maxWidth="max-w-md">
           <form onSubmit={handleAddTable} className="space-y-4">
             {!isEditing && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Target Location</label>
-                <Dropdown options={locations.map(l => ({ value: l._id, label: l.name }))} value={newTableLocation} onChange={setNewTableLocation} placeholder="Select Location" />
-              </div>
+              <PremiumSelect 
+                label="Target Location"
+                options={locations.map(l => ({ value: l._id, label: l.name }))} 
+                value={newTableLocation} 
+                onChange={setNewTableLocation} 
+                placeholder="Select Location" 
+              />
             )}
             <div className="space-y-1">
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Table ID</label>

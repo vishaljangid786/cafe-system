@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { CalendarCheck, Calendar, Filter, MapPin, CheckCircle2, XCircle, PieChart as PieIcon, Activity } from 'lucide-react';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -44,45 +45,79 @@ export default function GlobalAttendancePage() {
     <PageTransition>
       <div className="space-y-6">
         {/* Header & Controls */}
-        <SlideIn direction="down">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-4 md:p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-colors">
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight">
-                <CalendarCheck className="mr-3 text-amber-600" size={28} /> Staff <span className="ml-2 text-amber-600">Attendance</span>
-              </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-1">Track daily attendance for all branches.</p>
-            </div>
+<SlideIn direction="down">
+  <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-2xl p-5 md:p-7 shadow-[var(--shadow-premium)] transition-all">
 
-            <div className="flex flex-wrap gap-4">
-              <div
-                onClick={() => dateInputRef.current?.showPicker()}
-                className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 cursor-pointer hover:border-amber-500/50 transition-colors"
-              >
-                <div className="p-2 text-gray-400"><Calendar size={18} /></div>
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  className="bg-transparent outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 pr-3 cursor-pointer"
-                  value={filters.date}
-                  onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                />
-              </div>
+    {/* subtle gradient glow */}
+    <div className="absolute inset-0 opacity-30 pointer-events-none bg-[var(--gradient-primary)] blur-3xl" />
 
-              <div className="flex items-center space-x-2 bg-gray-50 dark:bg-zinc-800 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-700">
-                <div className="p-2 text-gray-400"><MapPin size={18} /></div>
-                <select
-                  className="bg-transparent outline-none text-sm font-bold text-gray-700 dark:text-zinc-200 pr-8 appearance-none"
-                  value={filters.locationId}
-                  onChange={(e) => setFilters({ ...filters, locationId: e.target.value })}
-                >
-                  <option value="All">All Locations</option>
-                  {locations.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
-                </select>
-              </div>
-            </div>
+    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+      {/* LEFT: Title Section */}
+      <div className="space-y-2">
+        <h1 className="text-2xl md:text-3xl font-black tracking-tight flex items-center">
+          <div className="p-2 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] mr-3">
+            <CalendarCheck size={22} />
           </div>
-        </SlideIn>
 
+          <span className="text-[var(--color-text-primary)]">
+            Staff
+          </span>
+
+          <span className="ml-2 bg-clip-text text-transparent bg-[var(--gradient-primary)]">
+            Attendance
+          </span>
+        </h1>
+
+        <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-medium">
+          Real-time tracking across all branches with smart insights.
+        </p>
+      </div>
+
+      {/* RIGHT: Controls */}
+      <div className="flex flex-wrap items-center gap-3">
+
+        {/* Date Picker */}
+        <div
+          onClick={() => dateInputRef.current?.showPicker()}
+          className="group flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] hover:border-[var(--color-primary)]/40 transition-all cursor-pointer"
+        >
+          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-105 transition-transform">
+            <Calendar size={16} />
+          </div>
+
+          <input
+            ref={dateInputRef}
+            type="date"
+            className="bg-transparent outline-none text-sm font-semibold text-[var(--color-text-primary)] cursor-pointer"
+            value={filters.date}
+            onChange={(e) =>
+              setFilters({ ...filters, date: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Branch Select */}
+        <div className="min-w-[180px]">
+          <PremiumSelect
+            icon={MapPin}
+            value={filters.locationId}
+            onChange={(val) =>
+              setFilters({ ...filters, locationId: val })
+            }
+            options={[
+              { label: 'All Locations', value: 'All' },
+              ...locations.map((l) => ({
+                label: l.name,
+                value: l._id,
+              })),
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</SlideIn>
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SlideIn delay={0.1}>

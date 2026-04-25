@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function StaffMenuPage() {
   const { selectedLocation } = useAuth();
@@ -149,42 +150,37 @@ export default function StaffMenuPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-                <div className="space-y-1.5">
-                  <select
-                    className="w-full lg:w-48 px-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-inner"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                  >
-                    <option value="All">All Sectors</option>
-                    {categories.map(cat => (
-                      <option key={cat._id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
+                <PremiumSelect 
+                  label="Category Sector"
+                  value={selectedCategory}
+                  onChange={val => setSelectedCategory(val)}
+                  options={[
+                    { label: 'All Sectors', value: 'All' },
+                    ...(categories.map(cat => ({ label: cat.name, value: cat.name })))
+                  ]}
+                />
 
-                <div className="space-y-1.5">
-                  <select
-                    className="w-full lg:w-48 px-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-inner"
-                    value={availabilityFilter}
-                    onChange={(e) => setAvailabilityFilter(e.target.value)}
-                  >
-                    <option value="All">All Status</option>
-                    <option value="Available">Active Only</option>
-                    <option value="Unavailable">Inactive Only</option>
-                  </select>
-                </div>
+                <PremiumSelect 
+                  label="Node Status"
+                  value={availabilityFilter}
+                  onChange={val => setAvailabilityFilter(val)}
+                  options={[
+                    { label: 'All Status', value: 'All' },
+                    { label: 'Active Only', value: 'Available' },
+                    { label: 'Inactive Only', value: 'Unavailable' }
+                  ]}
+                />
 
-                <div className="space-y-1.5">
-                  <select
-                    className="w-full lg:w-48 px-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none appearance-none font-bold text-sm shadow-inner"
-                    value={dietaryFilter}
-                    onChange={(e) => setDietaryFilter(e.target.value)}
-                  >
-                    <option value="All">All Dietary</option>
-                    <option value="veg">Veg Only</option>
-                    <option value="non-veg">Non-Veg Only</option>
-                  </select>
-                </div>
+                <PremiumSelect 
+                  label="Dietary Matrix"
+                  value={dietaryFilter}
+                  onChange={val => setDietaryFilter(val)}
+                  options={[
+                    { label: 'All Dietary', value: 'All' },
+                    { label: 'Veg Only', value: 'veg' },
+                    { label: 'Non-Veg Only', value: 'non-veg' }
+                  ]}
+                />
               </div>
             </div>
           </div>

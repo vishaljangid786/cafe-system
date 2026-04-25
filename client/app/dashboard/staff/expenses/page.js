@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -383,26 +384,15 @@ export default function StaffExpensesPage() {
         <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Personal Outflow" maxWidth="max-w-xl">
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Archival Title</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
-                    value={formData.title}
-                    onChange={e => {
-                      setFormData({ ...formData, title: e.target.value });
-                      setShowCustomTitle(e.target.value === "Other (Custom Title)");
-                    }}
-                  >
-                    <option value="" disabled>Select Outflow Title</option>
-                    {EXPENSE_TITLES.map(title => (
-                      <option key={title} value={title}>{title}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={20} />
-                </div>
-              </div>
+                <PremiumSelect 
+                  label="Archival Title"
+                  value={formData.title}
+                  onChange={val => {
+                    setFormData({ ...formData, title: val });
+                    setShowCustomTitle(val === "Other (Custom Title)");
+                  }}
+                  options={EXPENSE_TITLES.map(title => ({ label: title, value: title }))}
+                />
 
               <AnimatePresence>
                 {showCustomTitle && (
@@ -429,17 +419,19 @@ export default function StaffExpensesPage() {
                   <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Economic Volume (₹)</label>
                   <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Category Vector</label>
-                  <select className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
-                    <option value="Operational">Operational</option>
-                    <option value="Inventory">Inventory</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Welfare">Staff Welfare</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <PremiumSelect 
+                  label="Category Vector"
+                  value={formData.category}
+                  onChange={val => setFormData({ ...formData, category: val })}
+                  options={[
+                    { label: 'Operational', value: 'Operational' },
+                    { label: 'Inventory', value: 'Inventory' },
+                    { label: 'Utilities', value: 'Utilities' },
+                    { label: 'Marketing', value: 'Marketing' },
+                    { label: 'Staff Welfare', value: 'Welfare' },
+                    { label: 'Other', value: 'Other' }
+                  ]}
+                />
               </div>
 
               <div className="space-y-3">

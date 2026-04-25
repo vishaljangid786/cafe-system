@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
+import CinematicBackground from "./components/ui/CinematicBackground";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const outfit = Outfit({ subsets: ["latin"], variable: '--font-outfit' });
@@ -45,8 +46,11 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} font-sans bg-[var(--color-bg)] text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
+      <body className={`${inter.variable} ${outfit.variable} font-sans bg-transparent text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
+        <div id="cinematic-root" />
+        <div className="scan-line" />
         <ThemeProvider>
+          <CinematicBackground />
           <AuthProvider>
             <NotificationProvider>
               <Toaster
@@ -56,7 +60,9 @@ export default function RootLayout({ children }) {
                   duration: 4000,
                 }}
               />
-              {children}
+              <div className="relative z-10 min-h-screen">
+                {children}
+              </div>
             </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -7,6 +7,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useNotifications } from '../context/NotificationContext';
 import { Button } from './ui/Button';
+import PremiumSelect from './ui/PremiumSelect';
 
 const NotificationModal = ({ isOpen, onClose }) => {
   const { refresh } = useNotifications();
@@ -68,14 +69,14 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
         className="fixed inset-0 bg-black/60 backdrop-blur-md z-[-1]"
       />
-      
+
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -95,60 +96,46 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Channel Type</label>
-              <select 
-                className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                value={formData.targetType}
-                onChange={(e) => setFormData({ ...formData, targetType: e.target.value, targetId: '' })}
-              >
-                <option value="individual">Individual Node</option>
-                {targets.roles.length > 0 && <option value="role">Role Broadcast</option>}
-                {targets.branches.length > 0 && <option value="branch">Branch Direct</option>}
-                {targets.roles.includes('all') && <option value="system">Global System</option>}
-              </select>
-            </div>
+            <PremiumSelect 
+              label="Channel Type"
+              value={formData.targetType}
+              onChange={val => setFormData({ ...formData, targetType: val, targetId: '' })}
+              options={[
+                { label: 'Individual Node', value: 'individual' },
+                ...(targets.roles.length > 0 ? [{ label: 'Role Broadcast', value: 'role' }] : []),
+                ...(targets.branches.length > 0 ? [{ label: 'Branch Direct', value: 'branch' }] : []),
+                ...(targets.roles.includes('all') ? [{ label: 'Global System', value: 'system' }] : [])
+              ]}
+            />
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Priority</label>
-              <select 
-                className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-              >
-                <option value="low">Low Priority</option>
-                <option value="medium">Standard</option>
-                <option value="high">Urgent</option>
-              </select>
-            </div>
-          </div>
+            <PremiumSelect 
+              label="Priority"
+              value={formData.priority}
+              onChange={val => setFormData({ ...formData, priority: val })}
+              options={[
+                { label: 'Low Priority', value: 'low' },
+                { label: 'Standard', value: 'medium' },
+                { label: 'Urgent', value: 'high' }
+              ]}
+            />
+        
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Select Target</label>
-            <select 
-              required
-              className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              value={formData.targetId}
-              onChange={(e) => setFormData({ ...formData, targetId: e.target.value })}
-            >
-              <option value="" disabled>Choose Recipient...</option>
-              {formData.targetType === 'individual' && targets.users.map(u => (
-                <option key={u._id} value={u._id}>{u.name} ({u.role.replace('_', ' ')})</option>
-              ))}
-              {formData.targetType === 'role' && targets.roles.map(r => (
-                <option key={r} value={r}>{r.replace('_', ' ').toUpperCase()}</option>
-              ))}
-              {formData.targetType === 'branch' && targets.branches.map(b => (
-                <option key={b._id} value={b._id}>{b.name} - {b.city}</option>
-              ))}
-              {formData.targetType === 'system' && <option value="all">Entire Network</option>}
-            </select>
-          </div>
+          <PremiumSelect 
+            label="Select Target"
+            value={formData.targetId}
+            onChange={val => setFormData({ ...formData, targetId: val })}
+            options={[
+              { label: 'Choose Recipient...', value: '', disabled: true },
+              ...(formData.targetType === 'individual' ? targets.users.map(u => ({ label: `${u.name} (${u.role.replace('_', ' ')})`, value: u._id })) : []),
+              ...(formData.targetType === 'role' ? targets.roles.map(r => ({ label: r.replace('_', ' ').toUpperCase(), value: r })) : []),
+              ...(formData.targetType === 'branch' ? targets.branches.map(b => ({ label: `${b.name} - ${b.city}`, value: b._id })) : []),
+              ...(formData.targetType === 'system' ? [{ label: 'Entire Network', value: 'all' }] : [])
+            ]}
+          />
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Transmission Title</label>
-            <input 
+            <input
               required
               className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
               placeholder="Enter subject..."
@@ -159,7 +146,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Message Intelligence</label>
-            <textarea 
+            <textarea
               required
               rows={4}
               className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 resize-none"
@@ -170,10 +157,10 @@ const NotificationModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button 
+            <Button
               type="submit"
-              variant="primary" 
-              className="flex-1 !rounded-2xl !py-4 font-black uppercase tracking-[0.2em] text-[10px] shadow-[var(--shadow-premium)]" 
+              variant="primary"
+              className="flex-1 !rounded-2xl !py-4 font-black uppercase tracking-[0.2em] text-[10px] shadow-[var(--shadow-premium)]"
               icon={Send}
               loading={loading}
             >

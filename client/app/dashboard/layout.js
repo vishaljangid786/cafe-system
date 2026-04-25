@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-hidden selection:bg-[var(--color-primary)]/30 selection:text-[var(--color-primary)] font-sans transition-colors duration-300">
+    <div className="flex h-screen bg-transparent text-[var(--color-text-primary)] overflow-hidden selection:bg-[var(--color-primary)]/30 selection:text-[var(--color-primary)] font-sans transition-colors duration-300">
       {/* Sidebar - Desktop & Mobile */}
       <Sidebar
         isExpanded={isSidebarExpanded}
@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }) {
           isMobile={isMobile}
         />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--color-bg)]/50 p-4 md:p-8 custom-scrollbar relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 md:p-8 custom-scrollbar relative">
           <PageTransition>
             <div className="max-w-[1600px] mx-auto">
               {children}

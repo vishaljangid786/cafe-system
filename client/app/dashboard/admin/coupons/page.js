@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function CouponsManagementPage() {
   const { selectedLocation } = useAuth();
@@ -131,7 +132,6 @@ export default function CouponsManagementPage() {
     } catch (error) {
       toast.error('Failed to delete coupon', { id: loadToast });
     }
-    setShowDeleteConfirm(null);
   };
 
   const filteredCoupons = coupons.filter(coupon => {
@@ -197,7 +197,7 @@ export default function CouponsManagementPage() {
               setAppliesToType('full_order');
               setShowCouponModal(true); 
             }}
-            className="!py-4 px-8 shadow-2xl shadow-amber-600/20"
+            className="!py-3.5 !px-6 !rounded-2xl shadow-xl shadow-amber-600/20 text-xs font-black uppercase tracking-widest bg-amber-400 hover-scale active:scale-95"
           >
             Create Coupon
           </Button>
@@ -249,26 +249,32 @@ export default function CouponsManagementPage() {
           </Card>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 shadow-sm">
+        {/* Search & Filter Protocol */}
+        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl p-4 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 shadow-sm">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" size={18} />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" size={18} />
             <input
               type="text"
-              placeholder="Search by code..."
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100"
+              placeholder="Search by coupon code..."
+              className="w-full pl-12 pr-4 py-3.5 bg-zinc-50/50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-[1.25rem] focus:ring-4 focus:ring-amber-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <select
-            className="px-6 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none font-bold text-sm text-zinc-900 dark:text-zinc-100 appearance-none min-w-[200px]"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div className="md:w-64">
+            <PremiumSelect 
+              icon={Filter}
+              placeholder="Filter by status"
+              value={statusFilter}
+              onChange={val => setStatusFilter(val)}
+              options={[
+                { label: 'All Statuses', value: 'All' },
+                { label: 'Active', value: 'Active' },
+                { label: 'Inactive', value: 'Inactive' }
+              ]}
+              className="!rounded-[1.25rem]"
+            />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-900/30 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm transition-colors">
@@ -390,30 +396,31 @@ export default function CouponsManagementPage() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Discount Magnitude</label>
-                      <div className="flex bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                        <div className="relative flex-1">
-                          <input 
-                            required
-                            name="discountValue"
-                            type="number"
-                            defaultValue={editingCoupon?.discountValue}
-                            onChange={handleInputChange}
-                            className="w-full pl-4 pr-12 py-3 bg-transparent text-zinc-900 dark:text-zinc-100 outline-none font-black text-lg"
-                            placeholder="0"
-                          />
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                            <select 
-                              name="discountType" 
-                              defaultValue={editingCoupon?.discountType || 'percentage'}
+                        <div className="flex bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 gap-4">
+                          <div className="relative flex-1">
+                            <input 
+                              required
+                              name="discountValue"
+                              type="number"
+                              defaultValue={editingCoupon?.discountValue}
                               onChange={handleInputChange}
-                              className="bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:bg-amber-500 hover:text-black transition-all"
-                            >
-                              <option value="percentage">%</option>
-                              <option value="fixed">₹</option>
-                            </select>
+                              className="w-full pl-4 pr-4 py-3 bg-transparent text-zinc-900 dark:text-zinc-100 outline-none font-black text-lg"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="w-32">
+                            <PremiumSelect 
+                              name="discountType"
+                              value={previewData.discountType}
+                              onChange={val => setPreviewData(prev => ({ ...prev, discountType: val }))}
+                              options={[
+                                { label: '% Percentage', value: 'percentage' },
+                                { label: '₹ Fixed', value: 'fixed' }
+                              ]}
+                            />
+                            <input type="hidden" name="discountType" value={previewData.discountType} />
                           </div>
                         </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -523,7 +530,7 @@ export default function CouponsManagementPage() {
 
                     <div className="relative flex justify-between items-end">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Max Benefit</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Benefit Magnitude</p>
                         <p className="text-2xl font-black text-white">
                           {previewData.discountType === 'fixed' ? '₹' : ''}
                           {previewData.discountValue || (editingCoupon?.discountValue || '0')}
@@ -571,29 +578,20 @@ export default function CouponsManagementPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="space-y-4 overflow-hidden"
                       >
-                        <div className="relative">
-                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
-                          <select 
-                            className="w-full pl-10 pr-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl outline-none text-xs font-bold appearance-none disabled:opacity-50"
-                            disabled={itemsLoading}
-                            value=""
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val && !selectedItems.includes(val)) {
-                                setSelectedItems([...selectedItems, val]);
-                              }
-                            }}
-                          >
-                            <option value="">{itemsLoading ? 'Syncing items...' : 'Search & Select Items...'}</option>
-                            {menuItems.length > 0 ? (
-                              menuItems.map(item => (
-                                <option key={item._id} value={item._id}>{item.name}</option>
-                              ))
-                            ) : !itemsLoading && (
-                              <option disabled>No items found for this branch</option>
-                            )}
-                          </select>
-                        </div>
+                        <PremiumSelect 
+                          label="Inventory Selection"
+                          disabled={itemsLoading}
+                          value=""
+                          onChange={val => {
+                            if (val && !selectedItems.includes(val)) {
+                              setSelectedItems([...selectedItems, val]);
+                            }
+                          }}
+                          options={[
+                            { label: itemsLoading ? 'Syncing items...' : 'Search & Select Items...', value: '' },
+                            ...(menuItems.map(item => ({ label: item.name, value: item._id })))
+                          ]}
+                        />
                         <div className="flex flex-wrap gap-2">
                           {selectedItems.map(itemId => {
                             const item = menuItems.find(i => i._id === itemId);

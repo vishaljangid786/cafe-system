@@ -25,6 +25,7 @@ import { Button } from '../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ExportActions from '../../components/ui/ExportActions';
+import PremiumSelect from '../../components/ui/PremiumSelect';
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -134,19 +135,28 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10 pb-20">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Cinematic System Intelligence Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[95]">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Business Overview</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white flex flex-wrap items-baseline gap-2 sm:gap-3">
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
+              <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/80">System: Synchronized</span>
+            </div>
+            <div className="h-px w-8 bg-zinc-200 dark:bg-zinc-800" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Node: {filterLocation === 'all' ? 'Global Matrix' : 'Branch Sector'}</span>
+          </motion.div>
+
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
             {filterLocation === 'all' ? 'Network' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
-            <span className="text-amber-500">Analytics</span>
+            <span className="text-amber-500 not-italic">Analytics</span>
           </h1>
-          <p className="text-sm text-zinc-400 font-medium max-w-lg leading-relaxed">
-            Live sales tracking and performance overview for {filterLocation === 'all' ? 'all branches' : (locations.find(l => l._id === filterLocation)?.name || 'selected branch')}.
+          <p className="text-sm text-zinc-400 font-medium max-w-lg leading-relaxed border-l-2 border-amber-500/30 pl-4">
+            Real-time operational telemetry for {filterLocation === 'all' ? 'all synchronized branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected node')}.
           </p>
         </div>
 
@@ -163,48 +173,17 @@ export default function AdminDashboard() {
             filename="analytics_report" 
             hasCharts={true}
           />
-          {/* Location Filter */}
-          <div className="relative">
-            <button
-              onClick={() => setIsLocSelectorOpen(!isLocSelectorOpen)}
-              className="flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-amber-500/50 transition-all min-w-[140px] sm:min-w-[180px]"
-            >
-              <MapPin size={16} className="text-amber-500" />
-              <div className="flex flex-col items-start">
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Branch Switcher</span>
-                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-                  {filterLocation === 'all' ? 'All Branches' : locations.find(l => l._id === filterLocation)?.name}
-                </span>
-              </div>
-              <ChevronDown size={14} className={`ml-auto transition-transform ${isLocSelectorOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <AnimatePresence>
-              {isLocSelectorOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full left-0 mt-3 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl z-50 p-3 max-h-[300px] overflow-y-auto custom-scrollbar"
-                >
-                  <button
-                    onClick={() => { setFilterLocation('all'); setIsLocSelectorOpen(false); }}
-                    className={`w-full text-left p-3 rounded-xl mb-1 text-xs font-bold transition-colors ${filterLocation === 'all' ? 'bg-amber-500/10 text-amber-500' : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-500'}`}
-                  >
-                    All Branches
-                  </button>
-                  {locations.map(loc => (
-                    <button
-                      key={loc._id}
-                      onClick={() => { setFilterLocation(loc._id); setIsLocSelectorOpen(false); }}
-                      className={`w-full text-left p-3 rounded-xl mb-1 text-xs font-bold transition-colors ${filterLocation === loc._id ? 'bg-amber-500/10 text-amber-500' : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-500'}`}
-                    >
-                      {loc.name}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <PremiumSelect 
+            icon={MapPin}
+            label="Branch Switcher"
+            value={filterLocation}
+            onChange={(val) => setFilterLocation(val)}
+            options={[
+              { label: 'All Branches', value: 'all' },
+              ...locations.map(loc => ({ label: loc.name, value: loc._id }))
+            ]}
+            className="min-w-[200px]"
+          />
 
           <div className="flex items-center gap-3 bg-white/40 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
             {['today', '7d', '30d', 'all', 'custom'].map(t => (
