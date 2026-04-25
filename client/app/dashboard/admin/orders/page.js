@@ -5,7 +5,7 @@ import {
   XCircle, Filter, Search, Globe, ChefHat,
   TrendingUp, Timer, Activity, ShieldAlert,
   ArrowUpRight, ArrowDownRight, MoreVertical,
-  Edit3, Trash2, Zap, LayoutGrid, List
+  Edit3, Trash2, Zap, LayoutGrid, List, ChevronRight
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -304,20 +304,22 @@ function AdminOrderCard({ order, onCancel, onForceComplete }) {
           ))}
         </div>
 
-        <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
-          <button 
-            onClick={() => onCancel(order._id)}
-            className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/5 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={() => onForceComplete(order._id)}
-            className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
-          >
-            Force Served
-          </button>
-        </div>
+        {!['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status) && (
+          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
+            <button 
+              onClick={() => onCancel(order._id)}
+              className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/5 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={() => onForceComplete(order._id)}
+              className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
+            >
+              Force Served
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   );

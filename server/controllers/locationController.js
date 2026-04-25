@@ -16,7 +16,12 @@ const getLocations = asyncHandler(async (req, res) => {
 
   // Filter based on user access
   if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
-    query._id = req.user.assignedLocation;
+    if (req.user.assignedLocation) {
+      query._id = req.user.assignedLocation;
+    } else {
+      // If no assigned location, they shouldn't see any locations
+      query._id = new mongoose.Types.ObjectId(); // Non-existent ID
+    }
   } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
     query._id = { $in: req.user.accessibleLocations };
   }

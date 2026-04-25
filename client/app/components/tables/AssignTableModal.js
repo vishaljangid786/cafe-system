@@ -9,9 +9,12 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
   const [customerName, setCustomerName] = useState('');
 
   useEffect(() => {
-    if (table) {
-      setMembers(table.capacity || 1);
-    }
+    const initMembers = () => {
+      if (table) {
+        setMembers(table.capacity || 1);
+      }
+    };
+    initMembers();
   }, [table]);
 
   const handleSubmit = (e) => {

@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden selection:bg-accent/30 selection:text-accent font-sans transition-colors duration-300">
+    <div className="flex h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-hidden selection:bg-[var(--color-primary)]/30 selection:text-[var(--color-primary)] font-sans transition-colors duration-300">
       {/* Sidebar - Desktop & Mobile */}
       <Sidebar
         isExpanded={isSidebarExpanded}
@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }) {
           isMobile={isMobile}
         />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background/50 p-4 md:p-8 custom-scrollbar relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--color-bg)]/50 p-4 md:p-8 custom-scrollbar relative">
           <PageTransition>
             <div className="max-w-[1600px] mx-auto">
               {children}
@@ -83,8 +83,8 @@ export default function DashboardLayout({ children }) {
         </main>
 
         {/* Premium ambient glows */}
-        <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
-        <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-orange-600/5 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
+        <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[var(--color-primary)]/10 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
+        <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[var(--color-secondary)]/10 rounded-full blur-[160px] pointer-events-none z-[-1] animate-pulse-slow" />
       </div>
 
       {/* Decorative noise overlay for texture */}

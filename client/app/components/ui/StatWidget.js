@@ -4,10 +4,10 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, HdIcon } from '
 
 export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amber', delay = 0 }) => {
   const colorMap = {
-    amber: 'from-amber-500/20 to-amber-600/5 text-amber-500 border-amber-500/20',
-    green: 'from-emerald-500/20 to-emerald-600/5 text-emerald-500 border-emerald-500/20',
-    blue: 'from-blue-500/20 to-blue-600/5 text-blue-500 border-blue-500/20',
-    red: 'from-rose-500/20 to-rose-600/5 text-rose-500 border-rose-500/20',
+    amber: 'from-[var(--color-primary)]/20 to-[var(--color-primary-dark)]/5 text-[var(--color-primary)] border-[var(--color-primary)]/20',
+    green: 'from-[var(--color-success)]/20 to-[var(--color-success)]/5 text-[var(--color-success)] border-[var(--color-success)]/20',
+    blue: 'from-[var(--color-secondary)]/20 to-[var(--color-secondary-dark)]/5 text-[var(--color-secondary)] border-[var(--color-secondary)]/20',
+    red: 'from-[var(--color-danger)]/20 to-[var(--color-danger)]/5 text-[var(--color-danger)] border-[var(--color-danger)]/20',
   };
 
   return (
@@ -15,8 +15,8 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4, scale: 1.01 }}
-      className="glass-card rounded-2xl p-5 relative overflow-hidden group border border-white/5 dark:border-zinc-800/50"
+      whileHover={{ scale: 1.02 }}
+      className="glass-card rounded-2xl p-5 relative overflow-hidden group border border-[var(--color-border)]/50 hover-glow focus-ring"
     >
       <div className="flex justify-between items-start relative z-10">
         <div className={`p-2.5 rounded-xl border bg-gradient-to-br ${colorMap[color]} group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
@@ -25,8 +25,8 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
 
         {trend && (
           <div className={`flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border ${isUp
-            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-            : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+            ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20'
+            : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20'
             }`}>
             {isUp ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
             {trend}
@@ -35,15 +35,15 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
       </div>
 
       <div className="mt-5 relative z-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 dark:text-zinc-400">
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--color-text-muted)]">
           {label}
         </p>
         <div className="flex items-baseline mt-1 space-x-1">
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+          <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
             {value}
           </p>
           {trend && (
-            <span className={`text-[10px] font-medium ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <span className={`text-[10px] font-medium ${isUp ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
               vs last month
             </span>
           )}
@@ -51,7 +51,7 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
       </div>
 
       {/* Decorative inner glow */}
-      <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-[40px] opacity-10 transition-opacity duration-500 group-hover:opacity-30 pointer-events-none ${color === 'amber' ? 'bg-amber-500' : color === 'green' ? 'bg-emerald-500' : color === 'blue' ? 'bg-blue-500' : 'bg-rose-500'
+      <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-[40px] opacity-10 transition-opacity duration-500 group-hover:opacity-30 pointer-events-none ${color === 'amber' ? 'bg-[var(--color-primary)]' : color === 'green' ? 'bg-[var(--color-success)]' : color === 'blue' ? 'bg-[var(--color-secondary)]' : 'bg-[var(--color-danger)]'
         }`} />
     </motion.div>
   );

@@ -5,8 +5,10 @@ import {
   XCircle, Filter, Search, Globe, ChefHat,
   TrendingUp, Timer, Activity, Zap, 
   Calendar, ArrowRight, Download, RefreshCw,
-  PieChart as PieIcon, LineChart as LineIcon
+  PieChart as PieIcon, LineChart as LineIcon,
+  MapPin, Building, Mail, Phone, ChevronDown
 } from 'lucide-react';
+import Modal from '../../../../components/ui/Modal';
 import { PageTransition, SlideIn, CardHover } from '../../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../../context/AuthContext';
@@ -28,6 +30,8 @@ export default function OrderAnalyticsDashboard() {
     end: new Date().toISOString().split('T')[0] 
   });
   const [locations, setLocations] = useState([]);
+  const [selectedBranchDetails, setSelectedBranchDetails] = useState(null);
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
 
   const fetchAnalytics = async () => {
     try {
@@ -76,47 +80,106 @@ export default function OrderAnalyticsDashboard() {
             <p className="text-zinc-500 text-sm font-bold mt-1 tracking-tight">Deep-dive behavioral mapping and kitchen performance auditing.</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-zinc-900 p-2 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <div className="flex items-center gap-2 px-4 border-r border-zinc-100 dark:border-zinc-800">
-              <Globe size={16} className="text-zinc-400" />
+          <div className="flex flex-wrap items-center gap-6 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl p-2.5 rounded-[2rem] border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl relative z-[60]">
+            {/* Branch Selector - Premium Custom Dropdown */}
+            <div className="relative border-r border-zinc-200 dark:border-zinc-800 pr-4 ml-2">
               {user?.role === 'branch_admin' ? (
-                <span className="text-xs font-black text-amber-500 py-2">
-                  {locations.find(l => l._id === branchFilter)?.name || 'My Branch'}
-                </span>
+                <div className="flex items-center gap-3 px-4 py-2 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                  <Globe size={14} className="text-amber-500" />
+                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                    {locations.find(l => l._id === branchFilter)?.name || 'My Branch'}
+                  </span>
+                </div>
               ) : (
-                <select 
-                  className="bg-transparent text-xs font-black outline-none py-2"
-                  value={branchFilter}
-                  onChange={(e) => setBranchFilter(e.target.value)}
-                >
-                  <option value="all">Global Network</option>
-                  {locations.map(loc => (
-                    <option key={loc._id} value={loc._id}>{loc.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all group"
+                  >
+                    <Globe size={16} className={`${branchFilter === 'all' ? 'text-amber-500' : 'text-blue-500'} group-hover:rotate-12 transition-transform`} />
+                    <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.15em]">
+                      {branchFilter === 'all' ? 'Global Network' : locations.find(l => l._id === branchFilter)?.name}
+                    </span>
+                    <ChevronDown size={14} className={`text-zinc-400 transition-transform duration-300 ${isBranchDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isBranchDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsBranchDropdownOpen(false)} 
+                        />
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute top-full left-0 mt-4 w-64 bg-white dark:bg-zinc-900 rounded-[1.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 p-2 overflow-hidden"
+                        >
+                          <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                            <button 
+                              onClick={() => {
+                                setBranchFilter('all');
+                                setIsBranchDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                branchFilter === 'all' 
+                                ? 'bg-amber-500 text-black' 
+                                : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+                              }`}
+                            >
+                              <Globe size={14} /> Global Network
+                            </button>
+                            <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2 mx-2" />
+                            {locations.map(loc => (
+                              <button 
+                                key={loc._id}
+                                onClick={() => {
+                                  setBranchFilter(loc._id);
+                                  setIsBranchDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                  branchFilter === loc._id 
+                                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                                  : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+                                }`}
+                              >
+                                <Building size={14} /> {loc.name}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
             </div>
             
-            <div className="flex items-center gap-3 px-4">
-              <Calendar size={16} className="text-zinc-400" />
-              <input 
-                type="date" 
-                className="bg-transparent text-[10px] font-black outline-none"
-                value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              />
-              <ArrowRight size={12} className="text-zinc-300" />
-              <input 
-                type="date" 
-                className="bg-transparent text-[10px] font-black outline-none"
-                value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              />
+            <div className="flex items-center gap-4 px-6">
+              <div className="flex items-center gap-3">
+                <Calendar size={14} className="text-zinc-400" />
+                <input 
+                  type="date" 
+                  className="bg-transparent text-[10px] font-black outline-none text-zinc-900 dark:text-zinc-100 uppercase tracking-widest cursor-pointer"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                />
+              </div>
+              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+              <div className="flex items-center gap-3">
+                <input 
+                  type="date" 
+                  className="bg-transparent text-[10px] font-black outline-none text-zinc-900 dark:text-zinc-100 uppercase tracking-widest cursor-pointer"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                />
+              </div>
             </div>
 
             <button 
               onClick={fetchAnalytics}
-              className="p-3 bg-amber-500 text-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"
+              className="p-3.5 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-xl shadow-zinc-900/10 dark:shadow-none mr-1"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -130,6 +193,150 @@ export default function OrderAnalyticsDashboard() {
           <MetricCard label="Cancellations" value={data?.metrics?.cancelledOrders} icon={XCircle} color="rose" />
           <MetricCard label="Rejections" value={data?.metrics?.rejectedOrders} icon={AlertCircle} color="rose" />
           <MetricCard label="Peak Hour" value={data?.metrics?.peakHour} icon={Zap} color="emerald" />
+        </div>
+
+        {/* Strategic Infrastructure - Persistent Navigation Grid */}
+        <div className="xl:col-span-12 space-y-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-500/80 flex items-center gap-3 mb-2">
+                <div className="h-1 w-8 bg-amber-500 rounded-full" />
+                Strategic Infrastructure
+              </h3>
+              <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">Operational <span className="text-zinc-400">Nodes</span></h2>
+              <p className="text-sm font-bold text-zinc-500 mt-2 max-w-xl leading-relaxed">Real-time throughput and efficiency telemetry across the global culinary grid.</p>
+            </div>
+            <div className="flex items-center gap-3 p-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
+              <div className="px-4 py-2 bg-white dark:bg-zinc-800 rounded-xl shadow-sm">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mr-2">Status:</span>
+                <span className="text-xs font-black text-emerald-500">Live Grid</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            {/* Global Hub Card */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => setBranchFilter('all')}
+              className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${
+                branchFilter === 'all' 
+                ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl' 
+                : 'bg-white dark:bg-zinc-900/40 border-zinc-200/50 dark:border-zinc-800/50 hover:border-amber-500/40'
+              }`}
+            >
+              <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${
+                branchFilter === 'all' ? 'bg-amber-500/20 opacity-100' : 'bg-amber-500/5 opacity-0 group-hover:opacity-100'
+              }`} />
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+                    branchFilter === 'all' 
+                    ? 'bg-amber-500 text-black' 
+                    : 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100'
+                  }`}>
+                    <Globe size={20} strokeWidth={2.5} />
+                  </div>
+                  {branchFilter === 'all' && (
+                    <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-widest border border-amber-500/30">
+                      Active Focal Point
+                    </span>
+                  )}
+                </div>
+                <h4 className={`text-xl font-black tracking-tighter mb-1 transition-colors ${
+                  branchFilter === 'all' ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                }`}>Global Network</h4>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${
+                  branchFilter === 'all' ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
+                }`}>Consolidated Data Stream</p>
+                
+                <div className="mt-auto pt-6 flex items-center justify-between">
+                  <div>
+                    <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
+                      branchFilter === 'all' ? 'text-zinc-500' : 'text-zinc-400'
+                    }`}>Net Capacity</p>
+                    <p className={`text-lg font-black tracking-tighter ${
+                      branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-900 dark:text-zinc-100'
+                    }`}>{data?.metrics?.totalOrders} <span className="text-[10px]">Units</span></p>
+                  </div>
+                  <ArrowRight size={16} className={branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-300'} />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Branch Specific Cards */}
+            {data?.charts?.branchPerformance.map((branch, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => setBranchFilter(branch.id)}
+                className={`group relative p-6 rounded-[2.5rem] border overflow-hidden cursor-pointer transition-all duration-500 ${
+                  branchFilter === branch.id 
+                  ? 'bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white shadow-2xl' 
+                  : 'bg-white dark:bg-zinc-900/40 border-zinc-200/50 dark:border-zinc-800/50 hover:border-blue-500/40'
+                }`}
+              >
+                <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-opacity duration-700 ${
+                  branchFilter === branch.id ? 'bg-blue-500/20 opacity-100' : 'bg-blue-500/5 opacity-0 group-hover:opacity-100'
+                }`} />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+                      branchFilter === branch.id 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100'
+                    }`}>
+                      <Building size={20} strokeWidth={2.5} />
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBranchDetails(locations.find(l => l._id === branch.id));
+                      }}
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${
+                        branchFilter === branch.id 
+                        ? 'bg-white/10 text-white hover:bg-white/20' 
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500'
+                      }`}
+                    >
+                      <Zap size={14} />
+                    </button>
+                  </div>
+
+                  <h4 className={`text-xl font-black tracking-tighter mb-1 truncate transition-colors ${
+                    branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                  }`}>{branch.name}</h4>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${
+                    branchFilter === branch.id ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
+                  }`}>{branch.city} Sector</p>
+                  
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <div>
+                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
+                        branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
+                      }`}>Throughput</p>
+                      <p className={`text-lg font-black tracking-tighter ${
+                        branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
+                      }`}>{branch.totalOrders}</p>
+                    </div>
+                    <div>
+                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${
+                        branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
+                      }`}>Efficiency</p>
+                      <p className={`text-lg font-black tracking-tighter ${
+                        branchFilter === branch.id ? 'text-blue-400' : 'text-blue-500'
+                      }`}>{branch.avgPrepTime}m</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         {/* Charts Matrix */}
@@ -251,6 +458,91 @@ export default function OrderAnalyticsDashboard() {
             </div>
           </div>
         </div>
+        <Modal 
+          isOpen={!!selectedBranchDetails} 
+          onClose={() => setSelectedBranchDetails(null)}
+          title="Branch Diagnostic Telemetry"
+        >
+          {selectedBranchDetails && (
+            <div className="space-y-10 p-2">
+              <div className="flex items-center gap-8 p-8 bg-zinc-50 dark:bg-zinc-950/50 rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl" />
+                <div className="h-24 w-24 rounded-3xl bg-white dark:bg-zinc-900 text-blue-500 flex items-center justify-center shadow-xl border border-zinc-200/50 dark:border-zinc-800 relative z-10">
+                  <Building size={48} strokeWidth={1.5} />
+                </div>
+                <div className="relative z-10">
+                  <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none mb-3">{selectedBranchDetails.name}</h3>
+                  <div className="flex flex-wrap gap-3">
+                    <span className="px-3 py-1 rounded-lg bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-[9px] font-black uppercase tracking-widest">
+                      Node ID: {selectedBranchDetails._id.substring(0, 8)}
+                    </span>
+                    <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase tracking-widest border border-blue-500/20">
+                      {selectedBranchDetails.city} Sector
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 flex flex-col gap-4 group hover:border-amber-500/30 transition-all">
+                  <div className="h-12 w-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-amber-500 transition-colors">
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Communication Node</p>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedBranchDetails.contactEmail || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="p-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 flex flex-col gap-4 group hover:border-amber-500/30 transition-all">
+                  <div className="h-12 w-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-amber-500 transition-colors">
+                    <Phone size={22} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Secure Line</p>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedBranchDetails.contactPhone || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative p-8 bg-amber-500/5 border border-amber-500/10 rounded-[2.5rem] overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 text-amber-500/10 group-hover:rotate-12 transition-transform duration-700">
+                  <MapPin size={80} />
+                </div>
+                <div className="relative z-10">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 flex items-center gap-3 mb-6">
+                    <div className="h-1 w-6 bg-amber-500 rounded-full" />
+                    Operational Perimeter
+                  </h4>
+                  <div className="space-y-4">
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 leading-tight max-w-xs">
+                      {selectedBranchDetails.address}
+                    </p>
+                    <div className="flex items-center gap-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                      <span>ZIP: {selectedBranchDetails.pincode}</span>
+                      <span className="h-1 w-1 bg-zinc-300 rounded-full" />
+                      <span>REGION: {selectedBranchDetails.country}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    setBranchFilter(selectedBranchDetails._id);
+                    setSelectedBranchDetails(null);
+                  }}
+                  className="w-full py-5 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white rounded-3xl text-xs font-black uppercase tracking-[0.3em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-zinc-900/20 dark:shadow-white/10"
+                >
+                  Synchronize Matrix
+                </button>
+                <p className="text-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                  Authorized access only • Global grid surveillance enabled
+                </p>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </PageTransition>
   );

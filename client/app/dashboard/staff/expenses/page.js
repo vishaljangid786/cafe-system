@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { 
-  TrendingDown, Search, Filter, 
-  ChevronRight, Calendar, MapPin, 
+import {
+  TrendingDown, Search, Filter,
+  ChevronRight, Calendar, MapPin,
   ArrowDownRight, Activity, Receipt,
-  Plus, User, Info, ChevronDown, 
-  Sparkles, Download, Layers, Wallet, ArrowUpRight
+  Plus, User, Info, ChevronDown,
+  Sparkles, Download, Wallet, ArrowUpRight
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
-import { 
-  AreaChart, Area, XAxis, Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
@@ -33,14 +33,13 @@ const EXPENSE_TITLES = [
   "Other (Custom Title)"
 ];
 
-export default function BranchExpensesPage() {
+export default function StaffExpensesPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'mine', 'pending'
   const [selectedExpense, setSelectedExpense] = useState(null);
   const itemsPerPage = 12;
 
@@ -52,7 +51,7 @@ export default function BranchExpensesPage() {
     customTitle: '',
     amount: '',
     category: 'Operational',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toLocaleDateString('en-CA'),
     description: ''
   });
 
@@ -61,13 +60,7 @@ export default function BranchExpensesPage() {
       setLoading(true);
       const query = new URLSearchParams();
       query.append('type', 'expense');
-      
-      if (activeTab === 'mine') {
-        query.append('myExpenses', 'true');
-      } else if (activeTab === 'pending') {
-        query.append('status', 'pending');
-      }
-      
+
       const now = new Date();
       let start = '';
       if (timeRange !== 'all') {
@@ -89,7 +82,7 @@ export default function BranchExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  }, [timeRange, activeTab]);
+  }, [timeRange]);
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
@@ -98,50 +91,25 @@ export default function BranchExpensesPage() {
       const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
       if (!finalTitle) throw new Error("Title is required");
 
-      const data = { 
-        ...formData, 
+      const data = {
+        ...formData,
         title: finalTitle,
-        type: 'expense' 
+        type: 'expense'
       };
-      
+
       await api.post('/transactions', data);
       toast.success('Expense archived', { id: loadToast });
       setShowAddModal(false);
-      setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
+      setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toLocaleDateString('en-CA'), description: '' });
       fetchExpenses();
     } catch (error) {
-      toast.error(error.message || 'Protocol failure', { id: loadToast });
-    }
-  };
-
-  const handleApprove = async (id) => {
-    const loadToast = toast.loading('Authorizing expenditure...');
-    try {
-      await api.patch(`/transactions/${id}/approve`);
-      toast.success('Expense authorized', { id: loadToast });
-      setSelectedExpense(null);
-      fetchExpenses();
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Authorization failed';
+      const msg = error.response?.data?.message || error.message || 'Protocol failure';
       toast.error(msg, { id: loadToast });
     }
   };
 
-  const handleReject = async (id) => {
-    const loadToast = toast.loading('Revoking expenditure...');
-    try {
-      await api.patch(`/transactions/${id}/reject`);
-      toast.error('Expense revoked', { id: loadToast });
-      setSelectedExpense(null);
-      fetchExpenses();
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Revocation failed';
-      toast.error(msg, { id: loadToast });
-    }
-  };
-
-  const filteredData = transactions.filter(t => 
-    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredData = transactions.filter(t =>
+    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -162,9 +130,9 @@ export default function BranchExpensesPage() {
         {/* Cinematic Header */}
         <div className="relative group overflow-hidden bg-white dark:bg-zinc-900 rounded-[3rem] p-10 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-rose-500/5">
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
-            <Receipt size={200} className="text-rose-500" strokeWidth={1} />
+            <Activity size={200} className="text-rose-500" strokeWidth={1} />
           </div>
-          
+
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -173,11 +141,11 @@ export default function BranchExpensesPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-zinc-900 dark:text-white leading-none">
-                    Branch <span className="text-rose-500">Expenses</span>
+                    My <span className="text-rose-500">Expenses</span>
                   </h1>
                   <p className="text-zinc-500 font-bold mt-2 flex items-center gap-2 text-sm">
                     <Sparkles size={14} className="text-amber-500" />
-                    Tracking local operational costs and resource outflow.
+                    Record and track your personal operational spend.
                   </p>
                 </div>
               </div>
@@ -195,8 +163,8 @@ export default function BranchExpensesPage() {
                   </button>
                 ))}
               </div>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 icon={Plus}
                 onClick={() => setShowAddModal(true)}
                 className="!rounded-2xl !py-4 px-8 bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-600/20 scale-105 hover:scale-110 active:scale-95 transition-all"
@@ -207,54 +175,29 @@ export default function BranchExpensesPage() {
           </div>
         </div>
 
-        {/* Dynamic Tabs */}
-        <div className="flex items-center gap-10 border-b border-zinc-200 dark:border-zinc-800 px-10">
-          <button 
-            onClick={() => setActiveTab('all')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'all' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
-          >
-            Branch Archives
-            {activeTab === 'all' && <motion.div layoutId="tab-underline-ba" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-          </button>
-          <button 
-            onClick={() => setActiveTab('mine')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'mine' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
-          >
-            My Expenses
-            {activeTab === 'mine' && <motion.div layoutId="tab-underline-ba" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-          </button>
-          <button 
-            onClick={() => setActiveTab('pending')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'pending' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
-          >
-            Pending Review
-            {activeTab === 'pending' && <motion.div layoutId="tab-underline-ba" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-          </button>
-        </div>
-
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
           <div className="xl:col-span-2 space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="relative flex-1 w-full group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Scan branch records..."
+                <input
+                  type="text"
+                  placeholder="Scan your records..."
                   className="w-full pl-14 pr-6 py-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl focus:ring-4 focus:ring-rose-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex gap-3 w-full md:w-auto">
-                <ExportActions 
-                  data={filteredData} 
+                <ExportActions
+                  data={filteredData}
                   columns={[
                     { header: 'Title', key: 'title' },
                     { header: 'Category', key: 'category' },
                     { header: 'Date', key: item => new Date(item.date).toLocaleDateString() },
                     { header: 'Amount', key: 'totalAmount' }
-                  ]} 
-                  filename="branch_expense_vault" 
+                  ]}
+                  filename="my_expense_vault"
                 />
               </div>
             </div>
@@ -263,14 +206,17 @@ export default function BranchExpensesPage() {
               {loading ? (
                 [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-[2rem]" />)
               ) : paginatedData.length === 0 ? (
-                <div className="sm:col-span-2 py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800">
-                  <p className="text-zinc-500 font-bold text-lg tracking-tight">No branch expenditure nodes detected.</p>
+                <div className="sm:col-span-2 py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center">
+                  <div className="h-20 w-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-300 mb-6">
+                    <Receipt size={40} strokeWidth={1} />
+                  </div>
+                  <p className="text-zinc-500 font-bold text-lg tracking-tight">No personal expenditure nodes detected.</p>
                 </div>
               ) : (
                 paginatedData.map((t, idx) => (
                   <SlideIn key={t._id} delay={idx * 0.03}>
                     <CardHover>
-                      <div 
+                      <div
                         onClick={() => setSelectedExpense(t)}
                         className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex items-center justify-between group hover:border-rose-500/40 transition-all cursor-pointer shadow-sm"
                       >
@@ -279,22 +225,28 @@ export default function BranchExpensesPage() {
                             <ArrowDownRight size={24} strokeWidth={2.5} />
                           </div>
                           <div className="space-y-1.5">
-                            <h4 className="font-black text-zinc-900 dark:text-white tracking-tight text-base line-clamp-1">
-                              {t.title}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-black text-zinc-900 dark:text-white tracking-tight text-base line-clamp-1">
+                                {t.title}
+                              </h4>
+                              {t.status === 'pending' && <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />}
+                            </div>
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
                                 {new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                               </span>
-                              <span className="text-[9px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/5 px-2.5 py-1 rounded-lg border border-rose-500/10">
-                                {t.category}
+                              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${t.status === 'approved' ? 'text-rose-500 bg-rose-500/5 border-rose-500/10' :
+                                  t.status === 'rejected' ? 'text-zinc-500 bg-zinc-500/5 border-zinc-500/10' :
+                                    'text-amber-500 bg-amber-500/5 border-amber-500/10 animate-pulse'
+                                }`}>
+                                {t.status}
                               </span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xl font-black text-rose-500 tracking-tighter leading-none">-₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 mt-2">Settled</p>
+                          <p className={`text-xl font-black tracking-tighter leading-none ${t.status === 'rejected' ? 'text-zinc-400 line-through' : 'text-rose-500'}`}>-₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 mt-2">Personal</p>
                         </div>
                       </div>
                     </CardHover>
@@ -306,21 +258,21 @@ export default function BranchExpensesPage() {
 
           <div className="space-y-8">
             <SlideIn direction="right" delay={0.2}>
-              <div className="bg-gradient-to-br from-zinc-800 to-black dark:from-zinc-900 dark:to-zinc-950 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">
-                  <Activity size={100} strokeWidth={1} />
+              <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-200 dark:border-zinc-800 shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                  <Wallet size={100} strokeWidth={1} />
                 </div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-80 mb-6">Local Velocity</h3>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Personal Velocity</h3>
                 <div className="space-y-6 relative z-10">
                   <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
-                        <Area type="monotone" dataKey="amount" stroke="#f43f5e" strokeWidth={3} fill="#f43f5e30" />
+                        <Area type="monotone" dataKey="amount" stroke="#f43f5e" strokeWidth={3} fill="#f43f5e10" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="border-t border-white/10 pt-6">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Cumulative Outflow</p>
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 pt-6">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Outflow</p>
                     <p className="text-2xl font-black tracking-tighter mt-1 text-rose-500">₹{totalExpenditure.toLocaleString()}</p>
                   </div>
                 </div>
@@ -359,7 +311,7 @@ export default function BranchExpensesPage() {
                 </div>
                 <div className="text-left md:text-right bg-zinc-50 dark:bg-zinc-950 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 min-w-[200px]">
                   <p className="text-4xl font-black text-rose-500 tracking-tighter">₹{selectedExpense.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Certified Value</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Personal Cost</p>
                 </div>
               </div>
 
@@ -377,17 +329,10 @@ export default function BranchExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Automated Node'}</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Protocol'}</p>
+                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Protocol User'}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
-                  {selectedExpense.approvedBy && (
-                    <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                        <Sparkles size={10} className="text-amber-500" /> Authorized By {selectedExpense.approvedBy.name}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
@@ -423,50 +368,30 @@ export default function BranchExpensesPage() {
                 </div>
               )}
 
-              {selectedExpense.status === 'pending' ? (
-                <div className="flex gap-4 pt-4">
-                  <Button 
-                    variant="primary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-rose-500/20 bg-rose-600 hover:bg-rose-700" 
-                    icon={Sparkles}
-                    onClick={() => handleApprove(selectedExpense._id)}
-                  >
-                    Authorize Outflow
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" 
-                    onClick={() => handleReject(selectedExpense._id)}
-                  >
-                    Revoke Request
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  variant="secondary" 
-                  className="w-full !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-none bg-zinc-100 dark:bg-zinc-800" 
-                  onClick={() => setSelectedExpense(null)}
-                >
-                  Exit
-                </Button>
-              )}
+              <Button
+                variant="secondary"
+                className="w-full !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-none bg-zinc-100 dark:bg-zinc-800"
+                onClick={() => setSelectedExpense(null)}
+              >
+                Exit
+              </Button>
             </div>
           )}
         </Modal>
 
         {/* Add Modal */}
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Resource Outflow" maxWidth="max-w-xl">
+        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Personal Outflow" maxWidth="max-w-xl">
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Archival Title</label>
                 <div className="relative">
-                  <select 
-                    required 
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" 
-                    value={formData.title} 
+                  <select
+                    required
+                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
+                    value={formData.title}
                     onChange={e => {
-                      setFormData({...formData, title: e.target.value});
+                      setFormData({ ...formData, title: e.target.value });
                       setShowCustomTitle(e.target.value === "Other (Custom Title)");
                     }}
                   >
@@ -481,19 +406,19 @@ export default function BranchExpensesPage() {
 
               <AnimatePresence>
                 {showCustomTitle && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, height: 0, y: -20 }}
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={{ opacity: 0, height: 0, y: -20 }}
                     className="space-y-3 overflow-hidden"
                   >
                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Specify Custom Title</label>
-                    <input 
-                      required 
-                      className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" 
+                    <input
+                      required
+                      className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
                       placeholder="e.g. Special Equipment Repair"
                       value={formData.customTitle}
-                      onChange={e => setFormData({...formData, customTitle: e.target.value})}
+                      onChange={e => setFormData({ ...formData, customTitle: e.target.value })}
                     />
                   </motion.div>
                 )}
@@ -502,11 +427,11 @@ export default function BranchExpensesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Economic Volume (₹)</label>
-                  <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
+                  <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Category Vector</label>
-                  <select className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                  <select className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white appearance-none focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
                     <option value="Operational">Operational</option>
                     <option value="Inventory">Inventory</option>
                     <option value="Utilities">Utilities</option>
@@ -519,12 +444,12 @@ export default function BranchExpensesPage() {
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Temporal Stamp</label>
-                <input required type="date" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                <input required type="date" readOnly className="w-full rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold text-zinc-500 dark:text-zinc-400 cursor-not-allowed outline-none" value={formData.date} />
               </div>
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Intelligence Notes</label>
-                <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Provide specific context for this outflow..." />
+                <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Provide specific context for this outflow..." />
               </div>
             </div>
 

@@ -54,12 +54,18 @@ const validateOrderTransition = async (req, res, next) => {
 
     const currentStatus = order.status;
 
+    const isTerminal = ['CANCELLED', 'REJECTED', 'COMPLETED'].includes(currentStatus);
+    const isForceComplete = req.originalUrl.endsWith('/force-complete');
+
     // 1. Check if the transition is logically allowed
+    // Note: Force-complete is allowed from any non-terminal state by admins
     if (!ALLOWED_TRANSITIONS[currentStatus].includes(nextStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Strict Protocol Violation: Cannot transition from ${currentStatus} to ${nextStatus}`
-      });
+      if (!(isForceComplete && !isTerminal)) {
+        return res.status(400).json({
+          success: false,
+          message: `Strict Protocol Violation: Cannot transition from ${currentStatus} to ${nextStatus}`
+        });
+      }
     }
 
     // 2. Check if the user role has permission for this status

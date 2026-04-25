@@ -24,21 +24,25 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['expense', 'user_action', 'table_action'],
-      required: true,
+      enum: ['expense', 'user_action', 'table_action', 'announcement', 'alert', 'message'],
+      default: 'announcement',
     },
-    createdBy: {
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
     },
-    roleTarget: [
-      {
-        type: String,
-        enum: ['super_admin', 'admin', 'branch_admin', 'staff'],
-      },
-    ],
-    // Optional scoping to a location
-    locationId: {
+    // Scoping for broadcast
+    roleTarget: {
+      type: String,
+      enum: ['super_admin', 'admin', 'branch_admin', 'staff', 'chef', 'all'],
+    },
+    locationTarget: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
     },
@@ -48,6 +52,10 @@ const notificationSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Indexes for fast retrieval
+notificationSchema.index({ 'recipients.user': 1, 'recipients.isRead': 1 });
+notificationSchema.index({ createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 module.exports = Notification;

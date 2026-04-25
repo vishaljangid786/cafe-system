@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
@@ -26,6 +27,7 @@ import toast from 'react-hot-toast';
 import ExportActions from '../../components/ui/ExportActions';
 
 export default function AdminDashboard() {
+  const { theme } = useTheme();
   const router = useRouter();
   const { user, selectedLocation: authLocation } = useAuth();
   const [locations, setLocations] = useState([]);
@@ -43,7 +45,18 @@ export default function AdminDashboard() {
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
   const [isLocSelectorOpen, setIsLocSelectorOpen] = useState(false);
 
-  const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+  const isDark = theme === 'dark';
+
+  const chartColors = {
+    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+    text: isDark ? '#71717a' : '#71717a', // zinc-500
+    tooltipBg: isDark ? '#18181b' : '#ffffff', // zinc-900 or white
+    tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
+  };
+
+  const COLORS = isDark 
+    ? ['#fbbf24', '#60a5fa', '#34d399', '#f87171', '#a78bfa', '#f472b6']
+    : ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
   const fetchLocations = async () => {
     try {
@@ -211,15 +224,15 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-4 p-6 bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm"
+          className="flex gap-4 p-6 glass-card border border-[var(--color-border)] rounded-3xl premium-shadow"
         >
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase text-zinc-500 mb-2 ml-1">Start Date</label>
-            <input type="date" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+            <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
+            <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase text-zinc-500 mb-2 ml-1">End Date</label>
-            <input type="date" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+            <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
+            <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
           </div>
         </motion.div>
       )}
@@ -232,16 +245,16 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 !p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+        <Card className="lg:col-span-2 !p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <CardTitle className="text-xl">Sales Trends</CardTitle>
-            <TrendingUp size={20} className="text-amber-500" />
+            <TrendingUp size={20} className="text-[var(--color-primary)]" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={analytics.timeSeries}>
                 <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                   </linearGradient>
@@ -250,9 +263,17 @@ export default function AdminDashboard() {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#71717a' }} tickFormatter={v => `₹${v / 1000}k`} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} tickFormatter={v => `₹${v / 1000}k`} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: chartColors.tooltipBg,
+                    borderColor: chartColors.tooltipBorder,
+                    borderRadius: '16px', 
+                    border: '1px solid',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                  }}
+                />
                 <Area type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                 <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
                 <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
@@ -262,7 +283,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Orders Timeline */}
-        <Card className="!p-8 bg-zinc-950/20 border-zinc-800/50 export-chart" hover={false}>
+        <Card className="!p-8 glass-card border-[var(--color-border)] export-chart premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-10">
             <div className="space-y-1">
               <CardTitle className="text-xl">Daily Orders</CardTitle>
@@ -275,10 +296,18 @@ export default function AdminDashboard() {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics?.timeSeries}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#71717a' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#71717a' }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: chartColors.tooltipBg,
+                    borderColor: chartColors.tooltipBorder,
+                    borderRadius: '16px', 
+                    border: '1px solid',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                  }}
+                />
                 <Bar dataKey="orders" fill="#3b82f6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

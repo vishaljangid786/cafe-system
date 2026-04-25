@@ -6,14 +6,27 @@ import { LayoutDashboard, Users, Calendar, Wallet, Loader2, ArrowLeft } from 'lu
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Link from 'next/link';
 import { motion } from 'framer-motion'
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function MonthlySummaryPage() {
+  const { theme } = useTheme();
   const monthInputRef = useRef(null);
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
 
-  const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6'];
+  const isDark = theme === 'dark';
+
+  const COLORS = isDark 
+    ? ['#fbbf24', '#34d399', '#60a5fa', '#f87171', '#a78bfa'] // Amber 400, Emerald 400, Blue 400, Red 400, Violet 400
+    : ['#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6']; // Amber 500, Emerald 500, Blue 500, Red 500, Violet 500
+
+  const chartColors = {
+    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+    text: isDark ? '#71717a' : '#71717a', // zinc-500
+    tooltipBg: isDark ? '#18181b' : '#ffffff', // zinc-900 or white
+    tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
+  };
 
   const fetchSummary = async () => {
     setLoading(true);
@@ -35,24 +48,24 @@ export default function MonthlySummaryPage() {
     <PageTransition>
       <div className="space-y-8">
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center glass-card p-6 md:p-8 rounded-[2rem] premium-shadow gap-6">
             <div>
-              <Link href="/dashboard/admin" className="text-xs font-black text-amber-600 uppercase tracking-widest flex items-center mb-4 hover:translate-x-[-4px] transition-transform w-fit">
+              <Link href="/dashboard/admin" className="text-xs font-black text-[var(--color-primary)] uppercase tracking-widest flex items-center mb-4 hover:translate-x-[-4px] transition-transform w-fit">
                 <ArrowLeft size={14} className="mr-2" /> Back to Dashboard
               </Link>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <LayoutDashboard className="mr-3 text-amber-600" size={32} /> Monthly <span className="ml-2 text-amber-600">Summary</span>
+              <h1 className="text-3xl font-black text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+                <LayoutDashboard className="mr-3 text-[var(--color-primary)]" size={32} /> Monthly <span className="ml-2 text-[var(--color-primary)]">Summary</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-3 font-medium uppercase tracking-widest text-[10px]">Staff Performance & Attendance Overview</p>
+              <p className="text-[var(--color-text-muted)] text-sm mt-3 font-medium uppercase tracking-widest text-[10px]">Staff Performance & Attendance Overview</p>
             </div>
             <div
               onClick={() => monthInputRef.current?.showPicker()}
-              className="bg-gray-50 dark:bg-zinc-800 p-2 rounded-2xl border border-gray-200 dark:border-zinc-700 cursor-pointer hover:border-amber-500/50 transition-colors"
+              className="bg-[var(--color-bg-soft)] p-2 rounded-2xl border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)]/50 transition-colors"
             >
               <input
                 ref={monthInputRef}
                 type="month"
-                className="bg-transparent border-none outline-none p-2 text-sm font-black text-gray-900 dark:text-zinc-100 uppercase tracking-widest cursor-pointer"
+                className="bg-transparent border-none outline-none p-2 text-sm font-black text-[var(--color-text-primary)] uppercase tracking-widest cursor-pointer"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
               />
@@ -69,16 +82,25 @@ export default function MonthlySummaryPage() {
           <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <SlideIn className="lg:col-span-2" delay={0.1}>
-                <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800">
-                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Branch Attendance</h2>
+                <div className="glass-card p-8 rounded-[2.5rem] premium-shadow h-full">
+                  <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight mb-8">Branch Attendance</h2>
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={summary} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="locationName" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900 }} />
-                        <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                        <XAxis dataKey="locationName" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: chartColors.text }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: chartColors.text }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: chartColors.tooltipBg,
+                            borderColor: chartColors.tooltipBorder,
+                            borderRadius: '16px', 
+                            border: '1px solid',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                          }}
+                          itemStyle={{ fontWeight: 900, fontSize: '12px' }}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: chartColors.text }} />
                         <Bar dataKey="totalPresentDays" fill="#10B981" name="Present" radius={[6, 6, 0, 0]} barSize={32} />
                         <Bar dataKey="totalAbsentDays" fill="#EF4444" name="Absent" radius={[6, 6, 0, 0]} barSize={32} />
                       </BarChart>
@@ -88,8 +110,8 @@ export default function MonthlySummaryPage() {
               </SlideIn>
 
               <SlideIn delay={0.2}>
-                <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 h-full">
-                  <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-8">Staff Count</h2>
+                <div className="glass-card p-8 rounded-[2.5rem] premium-shadow h-full">
+                  <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight mb-8">Staff Count</h2>
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -102,21 +124,30 @@ export default function MonthlySummaryPage() {
                           innerRadius={60}
                           outerRadius={85}
                           paddingAngle={8}
-                          stroke="none"
+                          stroke={isDark ? '#18181b' : '#ffffff'}
+                          strokeWidth={2}
                         >
                           {summary.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: chartColors.tooltipBg,
+                            borderColor: chartColors.tooltipBorder,
+                            borderRadius: '16px', 
+                            border: '1px solid',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="mt-8 space-y-3">
                     {summary.map((loc, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500">
+                      <div key={idx} className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
                         <span className="flex items-center"><div className="h-2 w-2 rounded-full mr-2" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div> {loc.locationName}</span>
-                        <span className="text-gray-900 dark:text-zinc-100">{loc.totalStaff} Staff</span>
+                        <span className="text-[var(--color-text-primary)]">{loc.totalStaff} Staff</span>
                       </div>
                     ))}
                   </div>
@@ -125,34 +156,34 @@ export default function MonthlySummaryPage() {
             </div>
 
             <SlideIn direction="up" delay={0.3}>
-              <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+              <div className="glass-card rounded-[2.5rem] premium-shadow overflow-hidden border border-[var(--color-border)]">
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                      <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-100 dark:border-zinc-800">
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Branch Name</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Total Staff</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Presents</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Absents</th>
-                        <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Performance</th>
+                      <tr className="bg-[var(--color-bg-soft)] border-b border-[var(--color-border)]">
+                        <th className="px-8 py-6 text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Branch Name</th>
+                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Total Staff</th>
+                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Presents</th>
+                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Absents</th>
+                        <th className="px-8 py-6 text-right text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Performance</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                    <tbody className="divide-y divide-[var(--color-border)]">
                       {summary.map((loc, idx) => {
                         const totalDays = loc.totalPresentDays + loc.totalAbsentDays;
                         const percentage = totalDays > 0 ? (loc.totalPresentDays / totalDays) * 100 : 0;
                         return (
-                          <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group">
-                            <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-gray-900 dark:text-zinc-100 tracking-tight group-hover:text-amber-600 transition-colors">{loc.locationName}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-bold text-gray-600 dark:text-zinc-400">{loc.totalStaff}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-green-600">{loc.totalPresentDays}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-red-600">{loc.totalAbsentDays}</td>
+                          <tr key={idx} className="hover:bg-[var(--color-bg-soft)]/50 transition-colors group">
+                            <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-[var(--color-text-primary)] tracking-tight group-hover:text-[var(--color-primary)] transition-colors">{loc.locationName}</td>
+                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-bold text-[var(--color-text-muted)]">{loc.totalStaff}</td>
+                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-green-500">{loc.totalPresentDays}</td>
+                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-red-500">{loc.totalAbsentDays}</td>
                             <td className="px-8 py-6 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end">
-                                <span className={`text-xs font-black mr-3 tracking-tighter ${percentage > 90 ? 'text-green-600' : percentage > 75 ? 'text-amber-600' : 'text-red-600'}`}>
+                                <span className={`text-xs font-black mr-3 tracking-tighter ${percentage > 90 ? 'text-green-500' : percentage > 75 ? 'text-amber-500' : 'text-red-500'}`}>
                                   {percentage.toFixed(1)}%
                                 </span>
-                                <div className="w-20 bg-gray-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                                <div className="w-20 bg-[var(--color-bg-soft)] rounded-full h-1.5 overflow-hidden">
                                   <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${percentage}%` }}

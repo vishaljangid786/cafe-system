@@ -12,25 +12,25 @@ export const Button = ({
   loading = false
 }) => {
   const variants = {
-    primary: 'bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40',
-    secondary: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700',
-    outline: 'border border-zinc-200 dark:border-zinc-700 bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white',
-    ghost: 'bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100',
-    danger: 'bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white shadow-lg shadow-rose-500/10',
-    glass: 'glass-morphism text-zinc-900 dark:text-white hover:bg-white/20'
+    primary: 'bg-[var(--gradient-primary)] text-black shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-premium)]',
+    secondary: 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] border border-[var(--color-border)]',
+    outline: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+    ghost: 'bg-transparent hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
+    danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white shadow-[var(--shadow-soft)]',
+    glass: 'glass-morphism text-[var(--color-text-primary)] hover:bg-white/10 dark:hover:bg-black/10'
   };
 
   return (
     <motion.button
       type={type}
-      whileHover={!disabled && !loading ? { scale: 1.02, y: -1 } : {}}
+      whileHover={!disabled && !loading ? { scale: 1.02 } : {}}
       whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
       onClick={onClick}
       disabled={disabled || loading}
       className={`
         relative inline-flex items-center justify-center px-5 py-2.5 
         rounded-xl font-semibold text-sm tracking-wide transition-all duration-300
-        disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden
+        disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden focus-ring
         ${variants[variant]}
         ${className}
       `}

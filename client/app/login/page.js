@@ -126,7 +126,7 @@ export default function LoginPage() {
               <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1">Email Terminal</label>
               <input
                 {...register('email')}
-                className={`block w-full px-5 py-3.5 rounded-xl border bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white outline-none transition-all font-medium text-sm ${errors.email ? 'border-rose-500/50 ring-2 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50'}`}
+                className={`block w-full px-5 py-3.5 ${errors.email ? 'border-rose-500/50 ring-2 ring-rose-500/10' : ''}`}
                 placeholder="admin@cafeos.com"
               />
               {errors.email && <p className="text-[10px] text-rose-400 font-bold mt-1 ml-1 uppercase tracking-wider">{errors.email.message}</p>}
@@ -138,13 +138,13 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   {...register('password')}
-                  className={`block w-full px-5 py-3.5 rounded-xl border bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white outline-none transition-all font-medium text-sm pr-12 ${errors.password ? 'border-rose-500/50 ring-2 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50'}`}
+                  className={`block w-full px-5 py-3.5 pr-12 ${errors.password ? 'border-rose-500/50 ring-2 ring-rose-500/10' : ''}`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>

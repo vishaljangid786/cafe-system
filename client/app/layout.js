@@ -2,6 +2,7 @@ import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -23,18 +24,40 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${outfit.variable} font-sans bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('theme');
+                  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  const theme = savedTheme || systemTheme;
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${inter.variable} ${outfit.variable} font-sans bg-[var(--color-bg)] text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
         <ThemeProvider>
           <AuthProvider>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                className: '!bg-zinc-900 !text-zinc-100 !border !border-zinc-800 !rounded-2xl !p-4 !text-sm !font-bold',
-                duration: 4000,
-              }}
-            />
-            {children}
+            <NotificationProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  className: '!bg-[var(--color-surface)] !text-[var(--color-text-primary)] !border !border-[var(--color-border)] !rounded-[var(--radius-lg)] !p-4 !text-sm !font-bold !shadow-[var(--shadow-premium)]',
+                  duration: 4000,
+                }}
+              />
+              {children}
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

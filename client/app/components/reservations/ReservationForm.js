@@ -73,10 +73,29 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
   }, [editData]);
 
   useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data } = await api.get('/locations');
+        setLocations(data.data);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
     fetchLocations();
   }, []);
 
   useEffect(() => {
+    const fetchTables = async (locId) => {
+      try {
+        const { data } = await api.get('/tables', {
+          params: { locationId: locId }
+        });
+        setTables(data.data);
+      } catch (error) {
+        console.error('Error fetching tables:', error);
+      }
+    };
+
     if (formData.locationId) {
       fetchTables(formData.locationId);
     } else {
@@ -87,53 +106,33 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
   // Check availability when core fields change
   useEffect(() => {
-    const { locationId, date, startTime, endTime, reservationType } = formData;
+    const checkAvailability = async () => {
+      try {
+        setCheckingAvailability(true);
+        const { data } = await api.get('/reservations/availability', {
+          params: {
+            locationId: formData.locationId,
+            date: formData.date,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            reservationType: formData.reservationType,
+            tableIds: formData.tableIds,
+            excludeId: editData?._id
+          }
+        });
+        setAvailabilityStatus(data);
+      } catch (error) {
+        console.error('Error checking availability:', error);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    const { locationId, date, startTime, endTime } = formData;
     if (locationId && date && startTime && endTime) {
       checkAvailability();
     }
-  }, [formData.locationId, formData.date, formData.startTime, formData.endTime, formData.reservationType, formData.tableIds]);
-
-  const fetchLocations = async () => {
-    try {
-      const { data } = await api.get('/locations');
-      setLocations(data.data);
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-    }
-  };
-
-  const fetchTables = async (locId) => {
-    try {
-      const { data } = await api.get('/tables', {
-        params: { locationId: locId }
-      });
-      setTables(data.data);
-    } catch (error) {
-      console.error('Error fetching tables:', error);
-    }
-  };
-
-  const checkAvailability = async () => {
-    try {
-      setCheckingAvailability(true);
-      const { data } = await api.get('/reservations/availability', {
-        params: {
-          locationId: formData.locationId,
-          date: formData.date,
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-          reservationType: formData.reservationType,
-          tableIds: formData.tableIds,
-          excludeId: editData?._id
-        }
-      });
-      setAvailabilityStatus(data);
-    } catch (error) {
-      console.error('Error checking availability:', error);
-    } finally {
-      setCheckingAvailability(false);
-    }
-  };
+  }, [formData.locationId, formData.date, formData.startTime, formData.endTime, formData.reservationType, formData.tableIds, editData?._id]);
 
   const handleTableToggle = (tableId) => {
     setFormData(prev => {

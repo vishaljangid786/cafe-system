@@ -101,10 +101,10 @@ export default function AdminTablesPage() {
         api.get('/menu'),
         api.get('/locations')
       ]);
-      setMenuItems(menuRes.data.data);
-      setLocations(locRes.data.data);
+      setMenuItems(menuRes?.data?.data || []);
+      setLocations(locRes?.data?.data || []);
     } catch (error) {
-      console.error("Resource sync failed");
+      console.error("Resource sync failed:", error.response?.data || error.message);
     }
   };
 

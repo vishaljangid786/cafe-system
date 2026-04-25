@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema(
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
-      required: function() { return this.role === 'branch_admin' || this.role === 'staff'; },
+      required: function() { return ['branch_admin', 'staff', 'chef'].includes(this.role); },
     },
     // For Admins (Super/Global)
     accessibleLocations: [

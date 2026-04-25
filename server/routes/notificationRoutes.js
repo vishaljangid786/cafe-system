@@ -1,26 +1,20 @@
 const express = require('express');
-const {
-  getNotifications,
-  markAsRead,
-  markAllAsRead,
-  getUnreadCount,
+const router = express.Router();
+const { 
+  getNotifications, 
+  markAsRead, 
+  markAllAsRead, 
+  createNotification,
+  getTargetOptions
 } = require('../controllers/notificationController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
-const router = express.Router();
-
 router.use(verifyToken);
 
-router.route('/')
-  .get(getNotifications);
-
-router.route('/unread-count')
-  .get(getUnreadCount);
-
-router.route('/read-all')
-  .patch(markAllAsRead);
-
-router.route('/:id/read')
-  .patch(markAsRead);
+router.get('/', getNotifications);
+router.get('/targets', getTargetOptions);
+router.post('/', createNotification);
+router.patch('/read-all', markAllAsRead);
+router.patch('/:id/read', markAsRead);
 
 module.exports = router;

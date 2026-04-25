@@ -27,8 +27,8 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const discount = table?.discountAmount || 0;
   const taxes = Number((subtotal * 0.05).toFixed(2)); // 5% GST
   const total = Math.max(0, subtotal + taxes - discount);
-  const billId = `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  const dateTime = new Date().toLocaleString();
+  const [billId] = useState(() => `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+  const [dateTime] = useState(() => new Date().toLocaleString());
 
   const handlePrint = () => {
     const printContent = billRef.current.innerHTML;

@@ -2,6 +2,8 @@ const Table = require('../models/Table');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 
+const Order = require('../models/Order');
+
 // @desc    Get all tables for a location
 // @route   GET /api/tables
 // @access  Private
@@ -29,7 +31,6 @@ const getTables = asyncHandler(async (req, res) => {
     .populate('orders.menuItemId', 'name image price category');
 
   // Aggregated data for frontend indicators
-  const Order = require('../models/Order');
   const tablesWithIndicators = await Promise.all(tables.map(async (table) => {
     const tableObj = table.toObject();
     // Check if any active (non-completed) orders for this table have notes
@@ -196,8 +197,9 @@ const getTable = asyncHandler(async (req, res) => {
 // @route   PUT /api/tables/:id/bill
 // @access  Private
 const uploadBill = asyncHandler(async (req, res) => {
-  const table = await Table.findById(req.params.id);
   const Expense = require('../models/Expense');
+  const Order = require('../models/Order');
+  const table = await Table.findById(req.params.id);
 
   if (!table) {
     res.status(404);
@@ -213,7 +215,6 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.status = 'completed';
 
   // Finalize all associated orders to trigger revenue recording
-  const Order = require('../models/Order');
   const sessionOrders = await Order.find({ 
     table: table._id, 
     status: { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED'] } 

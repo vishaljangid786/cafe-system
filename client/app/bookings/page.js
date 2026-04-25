@@ -22,11 +22,6 @@ export default function BookingPage() {
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [myBookings, setMyBookings] = useState([]);
 
-  useEffect(() => {
-    fetchLocations();
-    fetchMyBookings();
-  }, []);
-
   const fetchLocations = async () => {
     try {
       const res = await api.get('/locations');
@@ -44,6 +39,14 @@ export default function BookingPage() {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    const init = async () => {
+      await fetchLocations();
+      await fetchMyBookings();
+    };
+    init();
+  }, []);
 
   const handleCheckAvailability = async (e) => {
     e.preventDefault();

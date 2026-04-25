@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, Utensils,
   ChevronRight, ArrowRight, MessageSquare,
   Globe, User, Calendar, Hash, Loader2, Play,
-  RefreshCcw
+  RefreshCcw, Coffee
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';

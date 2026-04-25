@@ -75,6 +75,15 @@ const transactionSchema = new mongoose.Schema(
       required: true,
     },
     billImage: String, // Archival proof for POS or Receipt for Expense
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,

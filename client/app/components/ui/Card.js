@@ -8,12 +8,12 @@ export const Card = ({ children, className = '', hover = true, delay = 0 }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
       whileHover={hover ? {
-        y: -4,
-        scale: 1.01,
-        transition: { duration: 0.2, ease: "easeOut" }
+        scale: 1.02,
+        transition: { duration: 0.3, ease: "easeOut" }
       } : {}}
       className={`
         glass-card rounded-2xl p-6 relative overflow-hidden group
+        hover-glow focus-ring
         ${className}
       `}
     >
@@ -31,13 +31,13 @@ export const Card = ({ children, className = '', hover = true, delay = 0 }) => {
 };
 
 export const CardTitle = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-bold tracking-tight text-foreground ${className}`}>
+  <h3 className={`text-lg font-bold tracking-tight text-[var(--color-text-primary)] ${className}`}>
     {children}
   </h3>
 );
 
 export const CardDescription = ({ children, className = '' }) => (
-  <p className={`text-sm text-muted-foreground font-medium leading-relaxed ${className}`}>
+  <p className={`text-sm text-[var(--color-text-muted)] font-medium leading-relaxed ${className}`}>
     {children}
   </p>
 );

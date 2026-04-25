@@ -1,19 +1,24 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
+import NotificationModal from './NotificationModal';
 import {
   Coffee, LayoutDashboard, Users, MapPin,
   Receipt, CalendarCheck, Wallet, ChevronLeft,
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
   ChevronRight, Target, TrendingUp,
-  Calendar
+  Calendar, Bell, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
+  const [showNotifModal, setShowNotifModal] = useState(false);
 
   if (!user) return null;
 
@@ -52,14 +57,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       links.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
       links.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
       links.push({ name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar });
+      links.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
     } else {
       links.push({ name: 'My Station', href: '/dashboard/staff', icon: LayoutDashboard });
       links.push({ name: 'Live Orders', href: '/dashboard/staff/orders', icon: Receipt });
       links.push({ name: 'Manage Tables', href: '/dashboard/staff/tables', icon: Coffee });
       links.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
+      links.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
       links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
     }
 
+    links.push({ name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadCount });
     links.push({ name: 'My Profile', href: '/dashboard/profile', icon: Settings });
 
     return links;
@@ -77,22 +85,23 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   };
 
   const content = (
-    <div className="h-full flex flex-col glass-morphism bg-card/90 backdrop-blur-3xl border-y-0 border-l border-r border-border transition-colors duration-300">
+    <div className="h-full flex flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] transition-all duration-300 relative overflow-hidden">
+      <NotificationModal isOpen={showNotifModal} onClose={() => setShowNotifModal(false)} />
       {/* Brand Header */}
-      <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0`}>
+      <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0 mb-2`}>
         <motion.div layout className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black shadow-lg shadow-amber-500/20">
-            <Coffee size={22} strokeWidth={2.5} />
+          <div className="h-9 w-9 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white shadow-sm">
+            <Coffee size={18} strokeWidth={2.5} />
           </div>
           <AnimatePresence mode="wait">
             {showLabels && (
               <motion.span
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -5 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white whitespace-nowrap"
+                exit={{ opacity: 0, x: -5 }}
+                className="text-lg font-bold tracking-tight text-[var(--color-text-primary)] whitespace-nowrap"
               >
-                Cafe<span className="text-amber-500 font-black">OS</span>
+                Cafe<span className="text-[var(--color-primary)]">OS</span>
               </motion.span>
             )}
           </AnimatePresence>
@@ -100,12 +109,12 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       </div>
 
       {/* Navigation */}
-      <div className={`flex-1 py-4 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}>
+      <div className={`flex-1 py-2 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}>
         <div className="space-y-1">
           {links.map((link, idx) => {
             const Icon = link.icon;
-            const isOverview = link.name === 'Overview' || link.name === 'My Station';
-            const isActive = isOverview ? pathname === link.href : pathname.startsWith(link.href);
+            const isExactMatch = ['Overview', 'My Station', 'Order Matrix', 'Live Orders'].includes(link.name);
+            const isActive = isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
 
             return (
               <Link
@@ -113,35 +122,35 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 href={link.href}
                 onClick={() => isMobile && setIsMobileOpen(false)}
                 className={`
-                  group flex items-center relative py-2.5 rounded-xl transition-all duration-300
+                  group flex items-center relative py-2.5 rounded-xl transition-all duration-200
                   ${showLabels ? 'px-3' : 'justify-center px-0'}
                   ${isActive
-                    ? 'bg-amber-500/10 text-amber-500'
-                    : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-200'}
+                    ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-semibold'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'}
                 `}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0 transition-transform group-hover:scale-110" />
+                <div className="relative z-10">
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0 transition-transform group-hover:scale-105" />
+                  {link.badge > 0 && !showLabels && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--color-surface)]" />
+                  )}
+                </div>
 
                 {showLabels && (
-                  <motion.span
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="ml-3 text-sm font-semibold tracking-tight whitespace-nowrap"
+                    className="ml-3 flex-1 flex items-center justify-between z-10"
                   >
-                    {link.name}
-                  </motion.span>
-                )}
-
-                {isActive && (
-                  <motion.div
-                    layoutId="active-pill"
-                    className="absolute left-0 w-1 h-5 rounded-r-full bg-amber-500"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
+                    <span className="text-sm tracking-tight whitespace-nowrap">{link.name}</span>
+                    {link.badge > 0 && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isActive ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-danger)] text-white'}`}>{link.badge}</span>
+                    )}
+                  </motion.div>
                 )}
 
                 {!showLabels && !isMobile && (
-                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-[var(--color-text-primary)] text-[var(--color-bg)] text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-lg">
                     {link.name}
                   </div>
                 )}
@@ -151,43 +160,51 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         </div>
       </div>
 
+      {/* Transmission Hub Action */}
+      <div className="px-3 mb-4">
+        <button
+          onClick={() => setShowNotifModal(true)}
+          className={`
+            w-full flex items-center gap-3 p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg)] transition-all group
+            ${showLabels ? 'justify-start px-3' : 'justify-center'}
+          `}
+        >
+          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-105 transition-transform">
+            <Send size={16} />
+          </div>
+          {showLabels && (
+            <span className="text-xs font-bold text-[var(--color-text-primary)]">Dispatch Alert</span>
+          )}
+        </button>
+      </div>
+
       {/* User Footer */}
-      <div className={`p-4 mt-auto border-t border-zinc-200 dark:border-zinc-800/50`}>
+      <div className={`p-4 mt-auto border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]/50`}>
         <div className={`flex items-center gap-3 ${showLabels ? '' : 'justify-center'}`}>
-          <Link href="/dashboard/profile" className="h-9 w-9 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
+          <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
             {user.profileImageUrl ? (
               <img src={user.profileImageUrl} alt={user.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-[10px] font-bold text-amber-500">{user.name.substring(0, 2).toUpperCase()}</span>
+              <span className="text-xs font-bold text-[var(--color-primary)]">{user.name.substring(0, 2).toUpperCase()}</span>
             )}
-            <div className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border-2 border-zinc-950 rounded-full" />
+            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[var(--color-success)] border-2 border-[var(--color-surface)] rounded-full" />
           </Link>
           {showLabels && (
             <Link href="/dashboard/profile" className="min-w-0 flex-1 group">
-              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate leading-none group-hover:text-amber-500 transition-colors">{user.name}</p>
-              <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+              <p className="text-xs font-bold text-[var(--color-text-primary)] truncate leading-none group-hover:text-[var(--color-primary)] transition-colors">{user.name}</p>
+              <p className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
             </Link>
           )}
           {showLabels && (
             <button
               onClick={logout}
-              className="p-1.5 text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+              className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-lg transition-all"
             >
               <LogOut size={16} />
             </button>
           )}
         </div>
       </div>
-
-      {/* Collapse Toggle (Desktop only) */}
-      {!isMobile && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="absolute -right-3 top-10 h-6 w-6 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-amber-500 transition-colors z-50 shadow-sm"
-        >
-          {isExpanded ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-        </button>
-      )}
     </div>
   );
 

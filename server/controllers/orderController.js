@@ -139,6 +139,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
       totalAmount: order.totalAmount,
       totalProfit: totalProfit,
       date: new Date(),
+      status: 'approved',
       orders: order.items.map(i => ({
         menuItemId: i.menuItem?._id || i.menuItem,
         itemName: i.itemName || 'Item',
@@ -347,16 +348,20 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
   const { branchId, startDate, endDate } = req.query;
   const query = {};
 
-  if (branchId && branchId !== 'all') query.branch = branchId;
-  else if (req.user.role === 'branch_admin') query.branch = req.user.assignedLocation;
-
   if (startDate && endDate) {
     query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
   }
 
+  // Fetch all orders for the timeframe to build the global context
   const allOrders = await Order.find(query)
     .populate('assignedChef', 'name')
-    .populate('table', 'tableNumber');
+    .populate('table', 'tableNumber')
+    .populate('branch', 'name city');
+
+  // Filter orders for specific branch if requested (for main metrics and other charts)
+  const filteredOrders = (branchId && branchId !== 'all') 
+    ? allOrders.filter(o => o.branch?._id?.toString() === branchId || o.branch?.toString() === branchId)
+    : allOrders;
 
   let totalPrepTime = 0;
   let prepCount = 0;
@@ -365,7 +370,39 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
   const hourlyCounts = Array(24).fill(0);
   const delayedOrders = [];
 
+  const branchStats = {};
+  
+  // 1. Calculate Branch Performance (ALWAYS Global context for the timeframe)
   allOrders.forEach(order => {
+    const bId = order.branch?._id?.toString() || order.branch?.toString();
+    if (bId) {
+      if (!branchStats[bId]) {
+        branchStats[bId] = { 
+          name: order.branch?.name || 'Unknown Branch', 
+          city: order.branch?.city || '',
+          totalOrders: 0, 
+          totalPrepTime: 0, 
+          prepCount: 0,
+          cancelledCount: 0 
+        };
+      }
+      branchStats[bId].totalOrders++;
+      if (order.status === 'CANCELLED') branchStats[bId].cancelledCount++;
+      
+      const acceptedAt = order.statusHistory.find(h => h.status === 'ACCEPTED')?.timestamp;
+      const readyAt = order.statusHistory.find(h => h.status === 'READY')?.timestamp;
+      if (acceptedAt && readyAt) {
+        const duration = (new Date(readyAt) - new Date(acceptedAt)) / 1000 / 60;
+        if (!isNaN(duration)) {
+          branchStats[bId].totalPrepTime += duration;
+          branchStats[bId].prepCount++;
+        }
+      }
+    }
+  });
+
+  // 2. Calculate Main Metrics and Charts (Context-sensitive to branchId)
+  filteredOrders.forEach(order => {
     statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
     const hour = new Date(order.createdAt).getHours();
     hourlyCounts[hour]++;
@@ -378,6 +415,7 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
       if (!isNaN(duration)) {
         totalPrepTime += duration;
         prepCount++;
+        
         if (order.assignedChef) {
           const chefId = order.assignedChef._id.toString();
           if (!chefStats[chefId]) {
@@ -400,6 +438,15 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
     }
   });
 
+  const branchPerformance = Object.entries(branchStats).map(([id, stats]) => ({
+    id,
+    name: stats.name,
+    city: stats.city,
+    totalOrders: stats.totalOrders,
+    avgPrepTime: stats.prepCount > 0 ? (stats.totalPrepTime / stats.prepCount).toFixed(1) : 0,
+    cancellationRate: ((stats.cancelledCount / stats.totalOrders) * 100).toFixed(1)
+  }));
+
   const peakHourVal = Math.max(...hourlyCounts);
   const peakHour = hourlyCounts.indexOf(peakHourVal);
 
@@ -407,7 +454,7 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
     success: true,
     data: {
       metrics: {
-        totalOrders: allOrders.length,
+        totalOrders: filteredOrders.length,
         avgPrepTime: prepCount > 0 ? (totalPrepTime / prepCount).toFixed(2) : 0,
         cancelledOrders: statusCounts['CANCELLED'] || 0,
         rejectedOrders: statusCounts['REJECTED'] || 0,
@@ -420,7 +467,8 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
           name: c.name,
           avgTime: (c.totalPrepTime / c.count).toFixed(2),
           total: c.count
-        }))
+        })),
+        branchPerformance
       },
       delayedOrders: delayedOrders.sort((a, b) => b.duration - a.duration).slice(0, 10)
     }
