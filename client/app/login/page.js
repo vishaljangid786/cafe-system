@@ -263,10 +263,10 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
               {[
                 { label: 'Super', email: 'super@cafeos.com', color: 'amber' },
-                { label: 'Admin', email: 'admin1@cafeos.com', color: 'zinc' },
-                { label: 'Branch', email: 'manager.skylineterrace@cafeos.com', color: 'zinc' },
-                { label: 'Chef', email: 'chef1.centralhub@cafeos.com', color: 'zinc' },
-                { label: 'Staff', email: 'staff1.centralhub@cafeos.com', color: 'zinc' },
+                { label: 'Admin', email: 'admin@admin.com', color: 'zinc' },
+                { label: 'Branch', email: 'vaishali@cafeos.com', color: 'zinc' },
+                { label: 'Chef', email: 'chef@vaishali.com', color: 'zinc' },
+                { label: 'Staff', email: 'staff@vaishali.com', color: 'zinc' },
               ].map((testUser) => (
                 <button
                   key={testUser.label}
