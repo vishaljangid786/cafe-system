@@ -251,9 +251,24 @@ exports.getReservations = async (req, res) => {
     let query = {};
 
     if (date) query.date = new Date(date);
-    if (locationId) query.locationId = locationId;
     if (status) query.status = status;
     if (eventName) query.eventName = { $regex: eventName, $options: 'i' };
+
+    // STRICT RBAC
+    if (req.user.role === 'super_admin') {
+      if (locationId && locationId !== 'all') query.locationId = locationId;
+    } else if (req.user.role === 'admin') {
+      if (locationId && locationId !== 'all') {
+        const isAccessible = req.user.accessibleLocations?.some(loc => loc.toString() === locationId);
+        if (!isAccessible) return res.status(403).json({ message: 'Access denied to this location' });
+        query.locationId = locationId;
+      } else {
+        query.locationId = { $in: req.user.accessibleLocations || [] };
+      }
+    } else {
+      // Branch Admin, Chef, Staff
+      query.locationId = req.user.assignedLocation;
+    }
 
     if (search) {
       query.$or = [
@@ -263,12 +278,31 @@ exports.getReservations = async (req, res) => {
       ];
     }
 
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const skip = (page - 1) * limit;
+
+    const total = await Reservation.countDocuments(query);
+
     const reservations = await Reservation.find(query)
       .populate('locationId', 'name')
       .populate('tableIds', 'tableNumber')
-      .sort({ date: -1, startTime: -1 });
+      .sort({ date: -1, startTime: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.status(200).json(reservations);
+    res.status(200).json({ 
+      success: true, 
+      count: reservations.length, 
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      },
+      data: reservations 
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -24,7 +24,7 @@ export default function StaffAttendancePage() {
         setAttendance(attRes.data.data);
         setSalaryData(salRes.data.data);
       } catch (error) {
-        console.error('Personnel telemetry sync failure');
+        console.error('Failed to load attendance');
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ export default function StaffAttendancePage() {
   if (loading && attendance.length === 0) return (
     <div className="flex flex-col items-center justify-center h-96 space-y-4">
       <Loader2 className="animate-spin text-amber-500" size={40} />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Syncing Personnel Matrix...</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Loading records...</p>
     </div>
   );
 
@@ -53,9 +53,9 @@ export default function StaffAttendancePage() {
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-zinc-900 dark:text-zinc-100">
               <CalendarDays className="text-amber-500" size={36} strokeWidth={2.5} />
-              Personnel <span className="text-amber-500">Metrics</span>
+              Attendance & <span className="text-amber-500">Salary</span>
             </h1>
-            <p className="text-zinc-500 font-medium mt-1">Live work-cycle telemetry and fiscal disbursements.</p>
+            <p className="text-zinc-500 font-medium mt-1">Track your daily attendance and monthly salary.</p>
           </div>
           
           <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm backdrop-blur-md">
@@ -85,22 +85,22 @@ export default function StaffAttendancePage() {
                     <div className="h-8 w-8 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
                       <Wallet className="text-amber-500" size={16} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">Fiscal Disbursement</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">Salary for this month</span>
                   </div>
                   <h2 className="text-6xl font-black tracking-tighter mb-2">
                     ₹{Math.round(salaryData?.calculatedSalary || 0).toLocaleString()}
                   </h2>
-                  <p className="text-zinc-400 font-medium text-sm">Estimated payout for the <span className="text-white font-bold">{new Date(month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span> operational cycle.</p>
+                  <p className="text-zinc-400 font-medium text-sm">Estimated payout for <span className="text-white font-bold">{new Date(month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>.</p>
                 </div>
 
                 <div className="flex flex-wrap gap-4">
                   <div className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-1">Base Yield</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-1">Basic Salary</p>
                     <p className="text-sm font-bold tracking-tight">₹{user.monthlySalary?.toLocaleString()}</p>
                   </div>
                   <div className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-1">Payable Cycle</p>
-                    <p className="text-sm font-bold tracking-tight text-amber-500">{salaryData?.payableDays} Nodes</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-1">Paid Days</p>
+                    <p className="text-sm font-bold tracking-tight text-amber-500">{salaryData?.payableDays} Days</p>
                   </div>
                 </div>
               </div>
@@ -122,7 +122,7 @@ export default function StaffAttendancePage() {
           </div>
         </SlideIn>
 
-        {/* Filter & Logs Matrix */}
+        {/* Attendance Logs */}
         <div className="space-y-6">
           <SlideIn delay={0.2} direction="up">
             <div className="flex flex-col md:flex-row gap-4 items-center px-4">
@@ -130,7 +130,7 @@ export default function StaffAttendancePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Filter matrix logs..."
+                  placeholder="Search by date or status..."
                   className="w-full pl-12 pr-6 py-4 bg-white/40 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -141,7 +141,7 @@ export default function StaffAttendancePage() {
                   <Filter size={18} />
                 </div>
                 <div className="px-5 py-3.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  History Nodes: {filteredAttendance.length}
+                  Total Logs: {filteredAttendance.length}
                 </div>
               </div>
             </div>
@@ -153,9 +153,9 @@ export default function StaffAttendancePage() {
                 <table className="w-full text-left border-separate border-spacing-0">
                   <thead>
                     <tr className="bg-zinc-50/50 dark:bg-zinc-900/50 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">Operational Date</th>
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-center">Status Protocol</th>
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-right">Matrix Sync Time</th>
+                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">Date</th>
+                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-center">Status</th>
+                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-right">Recorded Time</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
@@ -170,7 +170,7 @@ export default function StaffAttendancePage() {
                               <p className="text-sm font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
                                 {new Date(log.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
                               </p>
-                              <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-0.5">Cycle Verification Active</p>
+                              <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-0.5">Record Verified</p>
                             </div>
                           </div>
                         </td>
@@ -189,7 +189,7 @@ export default function StaffAttendancePage() {
                               {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
                             <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-tighter mt-1 flex items-center gap-1.5">
-                              <Activity size={8} /> Matrix Logged
+                              <Activity size={8} /> Attendance Recorded
                             </p>
                           </div>
                         </td>
@@ -200,7 +200,7 @@ export default function StaffAttendancePage() {
                         <td colSpan="3" className="px-8 py-20 text-center">
                           <div className="flex flex-col items-center opacity-30">
                             <TrendingUp size={40} className="mb-4" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">No Personnel Nodes Detected</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">No attendance records found</p>
                           </div>
                         </td>
                       </tr>

@@ -26,6 +26,9 @@ export default function ReservationsPage() {
     locationId: '',
     date: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
   const [locations, setLocations] = useState([]);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -34,19 +37,22 @@ export default function ReservationsPage() {
   useEffect(() => {
     fetchReservations();
     fetchLocations();
-  }, [filters, searchTerm]);
+  }, [filters, searchTerm, currentPage]);
 
   const fetchReservations = async () => {
     try {
       setLoading(true);
       const params = {
         ...filters,
-        search: searchTerm
+        search: searchTerm,
+        page: currentPage,
+        limit: itemsPerPage
       };
       const { data } = await api.get('/reservations', {
         params
       });
-      setReservations(data);
+      setReservations(data.data);
+      setTotalPages(data.pagination.pages);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
@@ -136,32 +142,32 @@ export default function ReservationsPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="glass-morphism p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+      <div className="glass-morphism p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          <div className="md:col-span-5 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
             <input 
               type="text" 
               placeholder="Search by event, customer or phone..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="md:col-span-3">
             <PremiumSelect 
-              label="Branch"
               value={filters.locationId}
               onChange={(val) => setFilters({...filters, locationId: val})}
               options={[
-                { label: 'All Locations', value: '' },
+                { label: 'All Branches', value: '' },
                 ...locations.map(loc => ({ label: loc.name || loc.city, value: loc._id }))
               ]}
             />
+          </div>
 
+          <div className="md:col-span-2">
             <PremiumSelect 
-              label="Status"
               value={filters.status}
               onChange={(val) => setFilters({...filters, status: val})}
               options={[
@@ -171,10 +177,12 @@ export default function ReservationsPage() {
                 { label: 'Cancelled', value: 'cancelled' }
               ]}
             />
+          </div>
 
+          <div className="md:col-span-2">
             <input 
               type="date"
-              className="px-4 py-2.5 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
               value={filters.date}
               onChange={(e) => setFilters({...filters, date: e.target.value})}
             />
@@ -275,6 +283,31 @@ export default function ReservationsPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reservation Form Modal */}

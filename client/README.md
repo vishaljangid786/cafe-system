@@ -31,6 +31,8 @@ All routes under `/dashboard` are protected by `middleware.js` and require a val
     -   `summary`, `orders`, `payroll`, `tables`, `staff`, `attendance`, `bookings`, `revenue`, `menu`, `coupons`, `location-comparison`, `expenses`, `users`, `locations`.
 -   **Branch Admin (`/dashboard/branch-admin`)**:
     -   `tables`, `staff`, `attendance`, `bookings`, `revenue`, `menu`, `salary`, `expenses`.
+-   **Location Admin (`/dashboard/location-admin`)**:
+    -   Specialized administrative oversight for specific operational nodes.
 -   **Chef (`/dashboard/chef`)**:
     -   Main chef portal and `expenses`.
 -   **Staff (`/dashboard/staff`)**:
@@ -45,21 +47,23 @@ All routes under `/dashboard` are protected by `middleware.js` and require a val
 ### `/app`
 The core of the application containing pages, layouts, and global styles.
 -   **`components/`**: Reusable UI components.
-    -   `ui/`: Base UI elements (buttons, inputs, etc.).
-    -   `tables/`: Specialized data table components.
-    -   `reservations/`, `Navbar.js`, `Sidebar.js`, `NotificationModal.js`.
+    -   **`ui/`**: Atomic design elements (Buttons, Cards, Modals, PageTransitions, etc.).
+    -   **`tables/`**: Specialized components for data grids (AssignTableModal, BillPreview, TableCard).
+    -   **`reservations/`**: Management tools for guest bookings.
+    -   `Navbar.js`, `Sidebar.js`, `NotificationPanel.js`.
 -   **`context/`**: React Context providers for global state.
-    -   `AuthContext.js`: Handles login/logout and user state.
-    -   `ThemeContext.js`: Manages dark/light theme and input validations.
-    -   `NotificationContext.js`: Manages real-time notifications via Socket.io.
+    -   `AuthContext.js`: Security and session management.
+    -   `ThemeContext.js`: Aesthetics and input safety protocols.
+    -   `NotificationContext.js`: Real-time synchronization via Socket.io.
+-   **`dashboard/`**: Role-based routing modules (admin, branch-admin, location-admin, chef, staff).
 -   **`services/`**: API integration layer.
-    -   `api.js`: Axios instance with interceptors for auth tokens and error handling.
--   **`globals.css`**: Tailwind 4 configuration and custom utility classes.
+    -   `api.js`: Centralized Axios configuration for backend communication.
+-   **`globals.css`**: Tailwind CSS 4 configuration and cinematic design tokens.
 
 ### Root Files
--   **`middleware.js`**: Route guards and RBAC (Role-Based Access Control) logic.
--   **`next.config.mjs`**: Next.js configuration.
--   **`package.json`**: Dependency management (includes Recharts, Lucide, Framer Motion, etc.).
+-   **`middleware.js`**: Universal route guarding and RBAC enforcement.
+-   **`next.config.mjs`**: Next.js framework parameters.
+-   **`package.json`**: Integrated dependency matrix (Recharts, Lucide, Framer Motion, Axios).
 
 ## 🚀 Getting Started
 

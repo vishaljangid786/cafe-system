@@ -27,18 +27,18 @@ io.on('connection', (socket) => {
   socket.on('join_session', ({ userId, branchId, role }) => {
     // 1. Personal Room
     if (userId) socket.join(userId);
-    
+
     // 2. Branch Room (Everyone in the branch)
     if (branchId) socket.join(`branch_${branchId}`);
-    
+
     // 3. Role Room (Global role-based)
     if (role) socket.join(`role_${role}`);
-    
+
     // 4. Targeted Intersection (Branch + Role)
     if (branchId && role) {
       socket.join(`branch_${branchId}_${role}`);
     }
-    
+
     console.log(`User ${userId} (${role}) initialized session for branch ${branchId}`);
   });
 

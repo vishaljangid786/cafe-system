@@ -57,7 +57,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     : (['admin', 'super_admin'].includes(user.role) ? 'Select Branch' : 'Assigned Branch');
 
   return (
-    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[90] sticky top-0 transition-all duration-300 ${isScrolled
+    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[200] sticky top-0 transition-all duration-300 ${isScrolled
       ? 'glass bg-[var(--color-bg)]/60 backdrop-blur-xl border-b border-[var(--color-border)] shadow-[var(--shadow-premium)]'
       : 'bg-transparent border-b border-transparent'
       }`}>
@@ -123,7 +123,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           <button
             onClick={toggleTheme}
             className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm"
-            title="Toggle Protocol"
+            title="Toggle Theme"
           >
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>

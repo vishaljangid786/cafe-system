@@ -85,6 +85,8 @@ const reservationSchema = new mongoose.Schema(
 reservationSchema.index({ locationId: 1, date: 1, status: 1 });
 reservationSchema.index({ reservationType: 1 });
 reservationSchema.index({ customerPhone: 1 });
+reservationSchema.index({ userId: 1 });
+reservationSchema.index({ date: -1 });
 
 const Reservation = mongoose.model('Reservation', reservationSchema);
 module.exports = Reservation;

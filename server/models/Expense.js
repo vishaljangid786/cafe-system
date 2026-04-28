@@ -23,6 +23,16 @@ const expenseSchema = new mongoose.Schema(
       enum: ['expense', 'income'],
       default: 'expense',
     },
+    category: {
+      type: String,
+      required: [true, 'Category is required'],
+      default: 'misc',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected', 'live', 'completed'],
+      default: 'pending',
+    },
     date: {
       type: Date,
       required: [true, 'Date is required'],
@@ -49,6 +59,10 @@ const expenseSchema = new mongoose.Schema(
 );
 
 expenseSchema.index({ locationId: 1, date: -1 });
+expenseSchema.index({ status: 1 });
+expenseSchema.index({ category: 1 });
+expenseSchema.index({ createdBy: 1 });
+expenseSchema.index({ type: 1 });
 
 const Expense = mongoose.model('Expense', expenseSchema);
 module.exports = Expense;

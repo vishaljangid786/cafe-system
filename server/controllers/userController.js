@@ -13,7 +13,17 @@ const getUsers = asyncHandler(async (req, res) => {
     query.assignedLocation = req.user.assignedLocation;
     query.role = { $in: ['staff', 'chef'] };
   } else if (req.user.role === 'admin') {
-    query.role = { $in: ['branch_admin', 'staff', 'chef'] };
+    // Admins see branch admins and staff under their accessible locations
+    const allowedLocs = (req.user.accessibleLocations || []).map(id => id.toString());
+    query.$and = [
+      { role: { $in: ['branch_admin', 'staff', 'chef'] } },
+      { 
+        $or: [
+          { assignedLocation: { $in: allowedLocs } },
+          { accessibleLocations: { $in: allowedLocs } } // If an admin has access to another admin's location
+        ]
+      }
+    ];
   } else if (req.user.role === 'super_admin') {
     query.role = { $in: ['admin', 'branch_admin', 'staff', 'chef'] };
   }
@@ -30,10 +40,10 @@ const getUsers = asyncHandler(async (req, res) => {
 
   // Optional Filters
   if (req.query.role && req.user.role !== 'branch_admin') {
-    const viewableRoles = req.user.role === 'super_admin' 
-      ? ['admin', 'branch_admin', 'staff', 'chef'] 
+    const viewableRoles = req.user.role === 'super_admin'
+      ? ['admin', 'branch_admin', 'staff', 'chef']
       : ['branch_admin', 'staff', 'chef'];
-      
+
     if (viewableRoles.includes(req.query.role)) {
       query.role = req.query.role;
     }
@@ -277,15 +287,15 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   // Fields allowed to be updated by user themselves
   const allowedFields = [
-    'name', 
-    'phone', 
-    'age', 
-    'gender', 
-    'address1', 
-    'address2', 
-    'city', 
-    'state', 
-    'country', 
+    'name',
+    'phone',
+    'age',
+    'gender',
+    'address1',
+    'address2',
+    'city',
+    'state',
+    'country',
     'pincode',
     'alternatePhone',
     'highestQualification'
@@ -326,6 +336,33 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Change password
+// @route   PUT /api/users/change-password
+// @access  Private
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400);
+    throw new Error('Please provide current and new password');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user || !(await user.matchPassword(currentPassword))) {
+    res.status(401);
+    throw new Error('Invalid current password');
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.json({
+    success: true,
+    message: 'Password updated successfully',
+  });
+});
+
 module.exports = {
   getUsers,
   getUser,
@@ -335,4 +372,5 @@ module.exports = {
   demoteUser,
   toggleBlocklist,
   updateProfile,
+  changePassword,
 };

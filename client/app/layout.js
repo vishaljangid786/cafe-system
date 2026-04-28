@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} font-sans bg-transparent text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${outfit.variable} font-sans bg-transparent text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
         <div id="cinematic-root" />
         <div className="scan-line" />
         <ThemeProvider>

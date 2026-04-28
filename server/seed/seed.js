@@ -399,8 +399,8 @@ const seedNotifications = async (adminId, users) => {
       title: faker.hacker.ingverb() + ' Update',
       message: faker.hacker.phrase(),
       type: faker.helpers.arrayElement(['user_action', 'expense', 'table_action']),
-      roleTarget: ['branch_admin', 'admin'],
-      createdBy: adminId
+      roleTarget: faker.helpers.arrayElement(['branch_admin', 'admin', 'super_admin']),
+      sender: adminId
     });
   }
   return await Notification.insertMany(notifications);
@@ -424,12 +424,15 @@ const executeSeeding = async () => {
       gender: 'Male',
       age: 32,
       address1: 'Central Headquarters, Sector Alpha',
+      address2: 'Suite 404, Cyber Node',
       city: 'Jaipur',
       state: 'Rajasthan',
       country: 'India',
+      pincode: '302001',
       aadharNumber: '111122223333',
       aadharImage: 'https://res.cloudinary.com/demo/image/upload/v1625055000/sample.jpg',
       highestQualification: 'Post Graduate',
+      monthlySalary: 0,
       profileImageUrl: 'https://i.pravatar.cc/150?u=super'
     });
     await superAdmin.save();
@@ -453,12 +456,15 @@ const executeSeeding = async () => {
         gender: i % 2 === 0 ? 'Female' : 'Male',
         age: 38,
         address1: 'Corporate Sector, Hub ' + i,
+        address2: 'Tower ' + i,
         city: 'Jaipur',
         state: 'Rajasthan',
         country: 'India',
+        pincode: '302001',
         aadharNumber: `44445555666${i}`,
         aadharImage: 'https://res.cloudinary.com/demo/image/upload/v1625055000/sample.jpg',
         highestQualification: 'Post Graduate',
+        monthlySalary: 75000,
         accessibleLocations: locations.map(l => l._id),
         profileImageUrl: `https://i.pravatar.cc/150?u=admin${i}`
       });
@@ -476,9 +482,11 @@ const executeSeeding = async () => {
         gender: faker.helpers.arrayElement(['Male', 'Female']),
         age: 29,
         address1: faker.location.streetAddress(),
+        address2: faker.location.secondaryAddress(),
         city: loc.city,
         state: loc.state,
         country: loc.country,
+        pincode: loc.pincode || faker.location.zipCode('######'),
         aadharNumber: faker.string.numeric(12),
         aadharImage: 'https://res.cloudinary.com/demo/image/upload/v1625055000/sample.jpg',
         highestQualification: 'Graduate',
@@ -498,9 +506,11 @@ const executeSeeding = async () => {
           gender: faker.helpers.arrayElement(['Male', 'Female']),
           age: 34,
           address1: faker.location.streetAddress(),
+          address2: faker.location.secondaryAddress(),
           city: loc.city,
           state: loc.state,
           country: loc.country,
+          pincode: loc.pincode || faker.location.zipCode('######'),
           aadharNumber: faker.string.numeric(12),
           aadharImage: 'https://res.cloudinary.com/demo/image/upload/v1625055000/sample.jpg',
           highestQualification: 'Diploma',
@@ -521,9 +531,11 @@ const executeSeeding = async () => {
           gender: faker.helpers.arrayElement(['Male', 'Female']),
           age: 23,
           address1: faker.location.streetAddress(),
+          address2: faker.location.secondaryAddress(),
           city: loc.city,
           state: loc.state,
           country: loc.country,
+          pincode: loc.pincode || faker.location.zipCode('######'),
           aadharNumber: faker.string.numeric(12),
           aadharImage: 'https://res.cloudinary.com/demo/image/upload/v1625055000/sample.jpg',
           highestQualification: 'Graduate',

@@ -4,6 +4,7 @@ const Expense = require('../models/Expense');
 const Location = require('../models/Location');
 const Attendance = require('../models/Attendance');
 const Transaction = require('../models/Transaction');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Helper to get match criteria based on time filters
@@ -111,7 +112,7 @@ const compareLocations = asyncHandler(async (req, res) => {
 
   const locQuery = { isPermanentlyDeleted: false };
   if (status) locQuery.status = status;
-  
+
   const locations = await Location.find(locQuery);
 
   let comparisonData = locations.map((loc) => {
@@ -133,7 +134,7 @@ const compareLocations = asyncHandler(async (req, res) => {
   });
 
   if (sort === 'highest profit') comparisonData.sort((a, b) => b.profit - a.profit);
-  
+
   res.json({ success: true, data: comparisonData });
 });
 
@@ -141,24 +142,44 @@ const compareLocations = asyncHandler(async (req, res) => {
 // @route   GET /api/analytics/advanced
 // @desc    Get advanced analytics for charts
 const getAdvancedAnalytics = asyncHandler(async (req, res) => {
-  const { startDate, endDate, locationId } = req.query;
-  let targetLocation = locationId;
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
-    targetLocation = req.user.assignedLocation;
-  }
-  
+  const { startDate, endDate, locationId, adminId } = req.query;
   let match = {};
-  if (targetLocation && targetLocation !== 'all') {
-    try {
-      match = { locationId: new mongoose.Types.ObjectId(targetLocation) };
-    } catch (e) {
-      console.error("Invalid locationId in analytics:", targetLocation);
+
+  // Security Layer: Role-based Location Restriction
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
+    // Branch Admin/Staff: Strictly restricted to their ONE assigned location
+    match = { locationId: new mongoose.Types.ObjectId(req.user.assignedLocation) };
+  } else if (req.user.role === 'admin') {
+    // Admin: Restricted to their LIST of accessible locations
+    const allowedIds = req.user.accessibleLocations || [];
+    
+    if (locationId && locationId !== 'all') {
+      // Trying to view a specific location
+      if (allowedIds.some(id => id.toString() === locationId)) {
+        match = { locationId: new mongoose.Types.ObjectId(locationId.toString()) };
+      } else {
+        // Unauthorized access attempt to a location not in their list
+        match = { locationId: { $in: [] } }; // Return empty data
+      }
+    } else {
+      // Trying to view "All" - restricted to their allowed subset
+      match = { locationId: { $in: allowedIds.map(id => new mongoose.Types.ObjectId(id.toString())) } };
+    }
+  } else if (req.user.role === 'super_admin') {
+    // Super Admin: Global access
+    if (locationId && locationId !== 'all') {
+      match = { locationId: new mongoose.Types.ObjectId(locationId) };
     }
   }
-  
+
+  // Personnel Filtering: Admin/Super Admin can filter by who created/managed the records
+  if (adminId && (req.user.role === 'super_admin' || req.user.role === 'admin')) {
+    match.createdBy = new mongoose.Types.ObjectId(adminId);
+  }
+
   const dateMatch = getDateMatchCriteria(startDate, endDate, null, 'date');
   const transactionMatch = { ...match, ...dateMatch };
-  const expenseMatch = { ...match, ...dateMatch, type: 'expense' };
+  const expenseMatch = { ...match, ...dateMatch, type: 'expense', status: 'approved' };
 
   // 1. Transaction Aggregation (Revenue, Profit, Orders)
   const transactionAgg = await Transaction.aggregate([
@@ -168,7 +189,7 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
         revenue: { $sum: "$totalAmount" },
         profit: { $sum: "$totalProfit" },
-        orders: { $sum: { $cond: [{ $eq: ["$type", "pos_revenue"] }, 1, 0] } }
+        orders: { $sum: { $cond: [{ $ne: ["$type", "expense"] }, 1, 0] } }
       }
     },
     { $sort: { "_id": 1 } }
@@ -199,6 +220,28 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
       orders: t.orders
     };
   });
+
+  // 3.5 Personnel & Salary Data (Role-based)
+  let personnelStats = null;
+  if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+    const userMatch = { ...match };
+    // Exclude super admins and admins from the personnel salary list for privacy/security
+    userMatch.role = { $in: ['branch_admin', 'staff', 'chef'] };
+    
+    const personnelAgg = await User.aggregate([
+      { $match: userMatch },
+      {
+        $group: {
+          _id: null,
+          totalMonthlySalary: { $sum: "$monthlySalary" },
+          staffCount: { $sum: { $cond: [{ $eq: ["$role", "staff"] }, 1, 0] } },
+          chefCount: { $sum: { $cond: [{ $eq: ["$role", "chef"] }, 1, 0] } },
+          adminCount: { $sum: { $cond: [{ $eq: ["$role", "branch_admin"] }, 1, 0] } }
+        }
+      }
+    ]);
+    personnelStats = personnelAgg[0] || { totalMonthlySalary: 0, staffCount: 0, chefCount: 0, adminCount: 0 };
+  }
 
   // 4. Summary Stats (Calculate directly from aggregation results for precision)
   const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
@@ -269,7 +312,7 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
     .populate('createdBy', 'name');
 
   // 8. Recent Revenues
-  const recentRevenues = await Transaction.find({ ...transactionMatch, type: { $in: ['pos_revenue', 'manual_revenue'] } })
+  const recentRevenues = await Transaction.find({ ...transactionMatch, type: { $ne: 'expense' } })
     .sort({ date: -1, createdAt: -1 })
     .limit(5)
     .populate('locationId', 'name city')
@@ -284,12 +327,13 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
       staffPerformance: staffAgg.map(s => ({ name: s._id, revenue: s.revenue, totalOrders: s.totalOrders })),
       recentExpenses,
       recentRevenues,
+      personnelStats,
       summary: {
         totalRevenue,
         totalExpenses,
         totalOrders,
         avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
-        netProfit: totalProfit - totalExpenses
+        netProfit: totalRevenue - totalExpenses
       }
     }
   });
@@ -302,7 +346,7 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
 const getLocationComparison = asyncHandler(async (req, res) => {
   const { locationIds, startDate, endDate, period } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
-  
+
   const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
 
   const transactionAgg = await Transaction.aggregate([
@@ -328,7 +372,7 @@ const getLocationComparison = asyncHandler(async (req, res) => {
   const comparisonData = locations.map(loc => {
     const trans = transactionAgg.find(t => t._id.toString() === loc._id.toString()) || { revenue: 0, orders: 0, profit: 0, avgOrderValue: 0 };
     const exp = expenseAgg.find(e => e._id.toString() === loc._id.toString()) || { totalExpense: 0 };
-    
+
     // Net Profit = (Transaction Profit) - (Operational Expenses)
     // Transaction Profit is (Price - CostPrice) of items. 
     // Operational Expenses are things like rent, electricity added via Expense model.
@@ -352,7 +396,7 @@ const getLocationComparison = asyncHandler(async (req, res) => {
 const getTopLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, period, locationIds } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
-  
+
   const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
   if (ids.length > 0) {
     dateMatch.locationId = { $in: ids };
@@ -384,14 +428,14 @@ const getTopLocations = asyncHandler(async (req, res) => {
 // @route   GET /api/analytics/trending-items
 const getTrendingItems = asyncHandler(async (req, res) => {
   const { locationId, locationIds, period = 7, startDate, endDate } = req.query;
-  
+
   let currentPeriodStart, currentPeriodEnd, previousPeriodStart;
 
   if (startDate || endDate) {
     currentPeriodEnd = endDate ? new Date(endDate) : new Date();
     currentPeriodStart = startDate ? new Date(startDate) : new Date(currentPeriodEnd);
     if (!startDate) currentPeriodStart.setDate(currentPeriodEnd.getDate() - 7);
-    
+
     const duration = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
     previousPeriodStart = new Date(currentPeriodStart.getTime() - duration);
   } else {
@@ -410,14 +454,14 @@ const getTrendingItems = asyncHandler(async (req, res) => {
   const currentSales = await Transaction.aggregate([
     { $match: { ...matchCriteria, date: { $gte: currentPeriodStart, $lte: currentPeriodEnd } } },
     { $unwind: "$orders" },
-    { 
-      $group: { 
-        _id: "$orders.menuItemId", 
-        name: { $first: "$orders.itemName" }, 
+    {
+      $group: {
+        _id: "$orders.menuItemId",
+        name: { $first: "$orders.itemName" },
         currentQty: { $sum: "$orders.quantity" },
         revenue: { $sum: { $multiply: ["$orders.price", "$orders.quantity"] } },
         profit: { $sum: { $multiply: [{ $subtract: ["$orders.price", "$orders.costPrice"] }, "$orders.quantity"] } }
-      } 
+      }
     }
   ]);
 
@@ -431,7 +475,7 @@ const getTrendingItems = asyncHandler(async (req, res) => {
   const trends = currentSales.map(curr => {
     const prev = previousSales.find(p => p._id.toString() === curr._id.toString()) || { previousQty: 0 };
     const growth = prev.previousQty === 0 ? 100 : ((curr.currentQty - prev.previousQty) / prev.previousQty) * 100;
-    
+
     return {
       itemId: curr._id,
       name: curr.name,
@@ -450,7 +494,7 @@ const getTrendingItems = asyncHandler(async (req, res) => {
 const getUnderperformingLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, period, locationIds } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
-  
+
   const dateMatch = getDateMatchCriteria(startDate, endDate, period || 30, 'date');
   if (ids.length > 0) {
     dateMatch.locationId = { $in: ids };
@@ -468,17 +512,17 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
   ]);
 
   const locations = await Location.find({ isPermanentlyDeleted: false }, 'name city status');
-  
+
   const results = locations.map(loc => {
     const stats = transactionAgg.find(t => t._id.toString() === loc._id.toString()) || { totalOrders: 0, totalRevenue: 0 };
-    
+
     // Utilization Score = (orders + revenue_weight) - idle_penalty
     // Simplified: Revenue per order vs overhead
     const score = (stats.totalOrders * 10) + (stats.totalRevenue / 1000);
-    
+
     let alert = 'stable';
     let reason = '';
-    
+
     if (score < 50) {
       alert = 'critical';
       reason = 'Low footfall and revenue';
@@ -591,7 +635,7 @@ const getComparisonDetails = asyncHandler(async (req, res) => {
   const results = ids.map(id => {
     const locData = detailedAgg.filter(d => d._id.locationId.equals(id));
     const locAttendance = attendanceAgg.filter(a => a._id.locationId.equals(id));
-    
+
     const attendanceStats = {
       present: locAttendance.find(a => a._id.status === 'present')?.count || 0,
       absent: locAttendance.find(a => a._id.status === 'absent')?.count || 0,
@@ -692,8 +736,8 @@ const getLocationIntelligence = asyncHandler(async (req, res) => {
     revenue: financialStats[0]?.revenue || 0,
     profit: financialStats[0]?.profit || 0,
     expenses: expenseStats[0]?.total || 0,
-    attendanceRate: attendanceStats[0]?.total > 0 
-      ? (attendanceStats[0].present / attendanceStats[0].total) * 100 
+    attendanceRate: attendanceStats[0]?.total > 0
+      ? (attendanceStats[0].present / attendanceStats[0].total) * 100
       : 100
   };
 

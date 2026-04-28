@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import io from 'socket.io-client';
 import Modal from '../../../components/ui/Modal';
 import { formatDistanceToNow } from 'date-fns';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
@@ -25,6 +26,9 @@ export default function StaffOrdersPage() {
   const [filterType, setFilterType] = useState('branch'); // 'my' or 'branch'
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 12;
   
   // Data for creation
   const [tables, setTables] = useState([]);
@@ -33,6 +37,12 @@ export default function StaffOrdersPage() {
   const [stagedItems, setStagedItems] = useState([]);
   const [menuSearch, setMenuSearch] = useState('');
   const [stats, setStats] = useState(null);
+  
+  // Advanced Filtering
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const fetchStats = async () => {
     try {
@@ -47,19 +57,41 @@ export default function StaffOrdersPage() {
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const branchId = user?.assignedLocation?._id || user?.assignedLocation;
+      
+      let query = `?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=${itemsPerPage}`;
+      if (filterType === 'branch') query += `&branchId=${branchId}`;
+      
       const endpoint = filterType === 'my' 
-        ? `/orders/my-stats-staff` 
-        : `/orders?branchId=${branchId}`;
+        ? `/orders/my-stats-staff${query}` 
+        : `/orders${query}`;
       
       const res = await api.get(endpoint);
       if (res.data.success) {
-        setOrders(filterType === 'my' ? res.data.data.recentOrders : res.data.data);
+        if (filterType === 'my') {
+          setOrders(res.data.data.recentOrders || []);
+          setTotalPages(1); // My stats usually doesn't paginate recent orders in the same way
+        } else {
+          setOrders(res.data.data);
+          setTotalPages(res.data.pagination?.pages || 1);
+        }
       }
     } catch (error) {
       toast.error('Failed to sync orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories');
+      if (res.data.success) {
+        setCategories(res.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load categories');
     }
   };
 
@@ -81,9 +113,10 @@ export default function StaffOrdersPage() {
     if (user) {
       fetchOrders();
       fetchStats();
+      fetchCategories();
       if (showCreateModal) fetchDataForCreation();
     }
-  }, [user, filterType, showCreateModal]);
+  }, [user, filterType, showCreateModal, startDate, endDate, currentPage]);
 
   useEffect(() => {
     if (!user) return;
@@ -161,10 +194,19 @@ export default function StaffOrdersPage() {
     toast.success(`Added ${item.name}`, { duration: 1000 });
   };
 
-  const filteredOrders = orders.filter(order => 
-    order.table?.tableNumber?.toString().includes(searchTerm) ||
-    order._id.includes(searchTerm)
-  );
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = 
+      order.table?.tableNumber?.toString().includes(searchTerm) ||
+      order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.items.some(item => 
+        (item.menuItem?.name || item.itemName || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    
+    const matchesCategory = selectedCategory === 'all' || 
+      order.items.some(item => item.menuItem?.category === selectedCategory);
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <PageTransition>
@@ -201,31 +243,77 @@ export default function StaffOrdersPage() {
         </div>
 
         {/* Filters & Search */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-4 flex p-1.5 bg-muted rounded-2xl border border-border">
-            <button 
-              onClick={() => setFilterType('branch')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'branch' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <Globe size={14} /> Branch Orders
-            </button>
-            <button 
-              onClick={() => setFilterType('my')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'my' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <User size={14} /> My Orders
-            </button>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3 flex p-1.5 bg-muted rounded-2xl border border-border">
+              <button 
+                onClick={() => setFilterType('branch')}
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'branch' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Globe size={14} /> Branch
+              </button>
+              <button 
+                onClick={() => setFilterType('my')}
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${filterType === 'my' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <User size={14} /> My
+              </button>
+            </div>
+
+            <div className="md:col-span-6 relative">
+              <input 
+                type="text"
+                placeholder="Search by table, ID or food name..."
+                className="w-full pr-6 py-4 bg-card border border-border rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <PremiumSelect 
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                options={[
+                  { label: 'All Categories', value: 'all' },
+                  ...categories.map(cat => ({ label: cat.name, value: cat._id }))
+                ]}
+              />
+            </div>
           </div>
 
-          <div className="md:col-span-8 relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-            <input 
-              type="text"
-              placeholder="Search by table or Order ID..."
-              className="w-full pl-14 pr-6 py-4 bg-card border border-border rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-4 bg-muted/30 p-2 rounded-2xl border border-border">
+              <div className="flex-1 relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                <input 
+                  type="date"
+                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-accent/20"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <ArrowRight size={16} className="text-muted-foreground" />
+              <div className="flex-1 relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                <input 
+                  type="date"
+                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-accent/20"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <button 
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="p-3 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
+                title="Clear Dates"
+              >
+                <RefreshCcw size={14} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -274,6 +362,31 @@ export default function StaffOrdersPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {filterType === 'branch' && totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-card border border-border rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Sector Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Create Order Modal */}
         <Modal 

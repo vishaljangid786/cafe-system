@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
               setSelectedLocation(userData.accessibleLocations[0]);
             }
 
-            initializeSocket(userData._id);
+            initializeSocket(userData);
           } catch (error) {
             console.error('Session expired or invalid');
             Cookies.remove('token');
@@ -59,11 +59,17 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const initializeSocket = (userId) => {
+  const initializeSocket = (userData) => {
+    if (!userData) return;
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
     const newSocket = io(socketUrl);
     newSocket.on('connect', () => {
-      newSocket.emit('join_room', userId);
+      const branchId = selectedLocation?._id || selectedLocation || userData.assignedLocation?._id || userData.assignedLocation;
+      newSocket.emit('join_session', { 
+        userId: userData._id, 
+        branchId: branchId,
+        role: userData.role 
+      });
     });
     setSocket(newSocket);
   };
@@ -71,7 +77,14 @@ export const AuthProvider = ({ children }) => {
   const switchLocation = (location) => {
     setSelectedLocation(location);
     Cookies.set('selectedLocation', JSON.stringify(location), { expires: 30 });
-    // Reload or trigger re-fetch in components
+    
+    if (socket && user) {
+      socket.emit('join_session', {
+        userId: user._id,
+        branchId: location._id || location,
+        role: user.role
+      });
+    }
   };
 
   const login = async (email, password) => {
@@ -91,7 +104,7 @@ export const AuthProvider = ({ children }) => {
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
       }
 
-      initializeSocket(userData._id);
+      initializeSocket(userData);
 
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
@@ -146,7 +159,7 @@ export const AuthProvider = ({ children }) => {
       if (socket) {
         socket.disconnect();
       }
-      initializeSocket(userData._id);
+      initializeSocket(userData);
 
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
@@ -183,7 +196,7 @@ export const AuthProvider = ({ children }) => {
       if (socket) {
         socket.disconnect();
       }
-      initializeSocket(userData._id);
+      initializeSocket(userData);
 
       router.push('/dashboard/admin/users');
 

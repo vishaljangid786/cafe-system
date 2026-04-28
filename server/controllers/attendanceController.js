@@ -23,7 +23,7 @@ const markAttendance = asyncHandler(async (req, res) => {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  
+
   if (date > today) {
     res.status(400);
     throw new Error('Cannot mark attendance for future dates');
@@ -99,14 +99,28 @@ const getLocationAttendance = asyncHandler(async (req, res) => {
     query.date = date; // Exact match YYYY-MM-DD
   } else if (month) {
     // Month should be YYYY-MM format
-    query.date = { $regex: `^${month}` }; 
+    query.date = { $regex: `^${month}` };
   }
 
-  const attendance = await Attendance.find(query).populate('user', 'name email role');
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await Attendance.countDocuments(query);
+  const attendance = await Attendance.find(query)
+    .populate('user', 'name email role')
+    .skip(skip)
+    .limit(limit);
 
   res.json({
     success: true,
     count: attendance.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
     data: attendance,
   });
 });
@@ -116,22 +130,35 @@ const getLocationAttendance = asyncHandler(async (req, res) => {
 // @access  Private (Admin, Super Admin)
 const getAllAttendance = asyncHandler(async (req, res) => {
   const { date, month, userId, locationId } = req.query;
-  
+
   let query = {};
-  
+
   if (userId) query.user = userId;
   if (locationId && locationId !== 'All') query.locationId = locationId;
   if (date) query.date = date;
   else if (month) query.date = { $regex: `^${month}` };
 
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await Attendance.countDocuments(query);
   const attendance = await Attendance.find(query)
     .populate('user', 'name email role assignedLocation')
     .populate('locationId', 'name')
-    .sort({ date: -1 });
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit);
 
   res.json({
     success: true,
     count: attendance.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
     data: attendance.map(att => ({
       ...att._doc,
       locationName: att.locationId?.name || 'Unknown'
@@ -160,10 +187,11 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   // 1. Get location-wise staff count & total monthly salaries
   const userAgg = await User.aggregate([
     { $match: userMatch },
-    { $group: { 
-        _id: '$assignedLocation', 
+    {
+      $group: {
+        _id: '$assignedLocation',
         totalStaff: { $sum: 1 },
-        totalMonthlySalaries: { $sum: '$monthlySalary' } 
+        totalMonthlySalaries: { $sum: '$monthlySalary' }
       }
     }
   ]);
@@ -171,7 +199,8 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   // 2. Get attendance counts per location for the month
   const attendanceAgg = await Attendance.aggregate([
     { $match: attendanceMatch },
-    { $group: {
+    {
+      $group: {
         _id: '$locationId',
         totalPresent: { $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] } },
         totalAbsent: { $sum: { $cond: [{ $eq: ['$status', 'absent'] }, 1, 0] } },
@@ -184,11 +213,11 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   const summary = await Promise.all(userAgg.map(async (uAgg) => {
     const attObj = attendanceAgg.find(a => a._id?.toString() === uAgg._id?.toString());
     const location = await Location.findById(uAgg._id);
-    
+
     const present = attObj ? attObj.totalPresent : 0;
     const absent = attObj ? attObj.totalAbsent : 0;
     const halfDay = attObj ? attObj.totalHalfDay : 0;
-    
+
     return {
       locationName: location?.name || 'Unknown',
       totalStaff: uAgg.totalStaff,
@@ -205,8 +234,12 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
 
 const getMyAttendance = asyncHandler(async (req, res) => {
   const { month, startDate, endDate } = req.query;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
+
   let query = { user: req.user._id };
-  
+
   if (month) {
     query.date = { $regex: `^${month}` };
   } else if (startDate || endDate) {
@@ -215,8 +248,20 @@ const getMyAttendance = asyncHandler(async (req, res) => {
     if (endDate) query.date.$lte = endDate;
   }
 
-  const attendance = await Attendance.find(query).sort({ date: -1 });
-  res.json({ success: true, count: attendance.length, data: attendance });
+  const total = await Attendance.countDocuments(query);
+  const attendance = await Attendance.find(query).sort({ date: -1 }).skip(skip).limit(limit);
+
+  res.json({ 
+    success: true, 
+    count: attendance.length, 
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
+    data: attendance 
+  });
 });
 
 module.exports = {

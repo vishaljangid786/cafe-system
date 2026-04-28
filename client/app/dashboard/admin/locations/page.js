@@ -28,6 +28,7 @@ export default function BranchesPage() {
   const [personnelFormData, setPersonnelFormData] = useState({
     name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
   });
+  const [personnelTab, setPersonnelTab] = useState('staff'); // 'staff' or 'chef'
 
   const fetchLocations = async () => {
     try {
@@ -516,41 +517,56 @@ export default function BranchesPage() {
 
                    <section>
                       <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
-                          <Users size={14} className="text-blue-500" /> Operational Staff
-                        </h3>
-                        <span className="text-[10px] font-black text-zinc-400">{personnel.filter(p => p.role === 'staff').length} Total</span>
+                        <div className="flex flex-col">
+                          <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                            <Users size={14} className={personnelTab === 'staff' ? "text-blue-500" : "text-amber-500"} /> Personnel Force
+                          </h3>
+                        </div>
+                        <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                          <button 
+                            onClick={() => setPersonnelTab('staff')}
+                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${personnelTab === 'staff' ? 'bg-white dark:bg-zinc-800 text-blue-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                          >
+                            Staff ({personnel.filter(p => p.role === 'staff').length})
+                          </button>
+                          <button 
+                            onClick={() => setPersonnelTab('chef')}
+                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${personnelTab === 'chef' ? 'bg-white dark:bg-zinc-800 text-amber-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                          >
+                            Chef ({personnel.filter(p => p.role === 'chef').length})
+                          </button>
+                        </div>
                       </div>
 
                       <div className="space-y-4">
                         {fetchingPersonnel ? (
                           [1,2,3].map(i => <div key={i} className="h-20 bg-zinc-50 dark:bg-zinc-900 rounded-2xl animate-pulse" />)
-                        ) : personnel.filter(p => p.role === 'staff').length === 0 ? (
+                        ) : personnel.filter(p => p.role === personnelTab).length === 0 ? (
                           <div className="p-10 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 text-center">
-                             <p className="text-zinc-500 text-xs font-medium">No records found.</p>
+                             <p className="text-zinc-500 text-xs font-medium">No {personnelTab} records found.</p>
                           </div>
                         ) : (
-                          personnel.filter(p => p.role === 'staff').map(staff => (
-                            <div key={staff._id} className="p-5 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl flex items-center justify-between group hover:border-blue-500/30 transition-all">
+                          personnel.filter(p => p.role === personnelTab).map(member => (
+                            <div key={member._id} className={`p-5 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl flex items-center justify-between group hover:border-${personnelTab === 'staff' ? 'blue' : 'amber'}-500/30 transition-all`}>
                                <div className="flex items-center gap-4">
-                                  <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                    {staff.name.charAt(0)}
+                                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs ${personnelTab === 'staff' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600'}`}>
+                                    {member.name.charAt(0)}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{staff.name}</p>
+                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{member.name}</p>
                                   </div>
                                </div>
                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <motion.button 
                                     whileHover={{ scale: 1.1 }}
-                                    onClick={() => handleUserAction(staff._id, 'promote')}
+                                    onClick={() => handleUserAction(member._id, 'promote')}
                                     className="p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" title="Promote"
                                   >
                                     <ArrowUp size={14} />
                                   </motion.button>
                                   <motion.button 
                                     whileHover={{ scale: 1.1 }}
-                                    onClick={() => handleUserAction(staff._id, 'delete')}
+                                    onClick={() => handleUserAction(member._id, 'delete')}
                                     className="p-2 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/10" title="Delete"
                                   >
                                     <Trash2 size={14} />

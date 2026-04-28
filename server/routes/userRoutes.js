@@ -7,7 +7,8 @@ const {
   promoteUser,
   demoteUser,
   toggleBlocklist,
-  updateProfile
+  updateProfile,
+  changePassword
 } = require('../controllers/userController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
@@ -17,6 +18,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.put('/update-profile', upload.single('profileImage'), updateProfile);
+router.put('/change-password', changePassword);
 
 router.route('/')
   .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUsers);

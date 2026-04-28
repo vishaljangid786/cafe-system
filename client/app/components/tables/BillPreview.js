@@ -10,16 +10,18 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const billRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Combine staged items and completed system orders for the final bill
+  // Combine staged items and completed/served system orders for the final bill
   const stagedItems = table?.orders || [];
-  const finalizedOrders = systemOrders.filter(o => o.status === 'COMPLETED');
+  // Include SERVED and COMPLETED orders in the bill. 
+  // PENDING items are also usually billable if they were sent to the kitchen.
+  const finalizedOrders = systemOrders.filter(o => ['SERVED', 'COMPLETED', 'PENDING'].includes(o.status));
   
   const allBillableItems = [
     ...stagedItems,
     ...finalizedOrders.flatMap(o => o.items.map(i => ({
-      itemName: i.itemName,
+      itemName: i.itemName || i.menuItem?.name,
       quantity: i.quantity,
-      price: i.price
+      price: i.price || i.menuItem?.price || 0
     })))
   ];
 
@@ -74,11 +76,13 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
             .border-dashed { border-style: dashed; }
             .text-xs { font-size: 10px; }
             .text-xl { font-size: 20px; }
-            .text-base { font-size: 16px; }
+            .text-base { font-size: 14px; }
             .opacity-70 { opacity: 0.7; }
+            .text-zinc-500 { color: #71717a; }
             .space-y-1 > * + * { margin-top: 0.25rem; }
             table { width: 100%; border-collapse: collapse; }
-            th { border-bottom: 1px solid #000; }
+            th { border-bottom: 1px solid #000; font-weight: 900; }
+            td { padding-top: 4px; padding-bottom: 4px; }
             @media print {
               body { width: 350px; margin: 0 auto; padding: 10mm; }
               .no-print { display: none; }
@@ -105,12 +109,12 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
   const handleFinalize = async () => {
     if (!billRef.current) {
-      toast.error('Registry terminal not ready');
+      toast.error('Bill preview not ready');
       return;
     }
 
     setIsGenerating(true);
-    const loadToast = toast.loading('Generating bill proof...');
+    const loadToast = toast.loading('Creating bill...');
 
     try {
       // Small delay to ensure styles are fully calculated
@@ -159,7 +163,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          toast.error('Capture protocol failed', { id: loadToast });
+          toast.error('Failed to create image', { id: loadToast });
           setIsGenerating(false);
           return;
         }
@@ -170,14 +174,14 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           await onComplete(file, total);
           toast.success('Bill generated successfully', { id: loadToast });
         } catch (err) {
-          toast.error('Ledger archival failed', { id: loadToast });
+          toast.error('Failed to save bill', { id: loadToast });
         } finally {
           setIsGenerating(false);
         }
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Bill Generation Error:', error);
-      toast.error('Failed to generate bill proof', { id: loadToast });
+      toast.error('Failed to create bill image', { id: loadToast });
       setIsGenerating(false);
     }
   };
@@ -188,7 +192,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Session Completion & Billing"
+      title="Checkout & Billing"
       maxWidth="max-w-lg"
     >
       <div className="space-y-8 ">
@@ -201,8 +205,10 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           >
             <div className="text-center space-y-1">
               <h2 className="text-xl font-bold uppercase tracking-tighter">{cafeName}</h2>
-              <p className="text-[10px] font-medium opacity-70">Operational Matrix Terminal</p>
-              <p className="text-[10px]">{dateTime}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                {table.locationId?.name || table.locationName || 'Main Branch'}
+              </p>
+              <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
             </div>
 
             <div className="border-t border-dashed border-black my-4"></div>
@@ -212,7 +218,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
               <span>{billId}</span>
             </div>
             <div className="flex justify-between text-xs font-bold uppercase mt-1">
-              <span>Terminal:</span>
+              <span>Table:</span>
               <span>T{table.tableNumber}</span>
             </div>
 
@@ -223,6 +229,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                 <tr className="text-left border-b border-black">
                   <th className="pb-2">ITEM</th>
                   <th className="pb-2 text-center">QTY</th>
+                  <th className="pb-2 text-center">RATE</th>
                   <th className="pb-2 text-right">PRICE</th>
                 </tr>
               </thead>
@@ -231,6 +238,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                   <tr key={i}>
                     <td className="py-2 uppercase font-bold">{item.itemName}</td>
                     <td className="py-2 text-center">{item.quantity}</td>
+                    <td className="py-2 text-center">₹{Number(item.price || 0).toLocaleString()}</td>
                     <td className="py-2 text-right">₹{(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString()}</td>
                   </tr>
                 ))}
@@ -264,7 +272,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
             <div className="text-center text-[10px] space-y-1 italic">
               <p>Thank you for visiting {cafeName}!</p>
-              <p>Keep the matrix running.</p>
+              <p>Visit again soon!</p>
               <p>*** End of Receipt ***</p>
             </div>
           </div>
@@ -282,7 +290,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           </Button>
           <Button
             variant="primary"
-            className="flex-1 !rounded-2xl shadow-lg shadow-amber-500/20"
+            className="flex-1 !rounded-2xl shadow-lg bg-primary shadow-amber-500/20"
             icon={isGenerating ? Loader2 : Check}
             onClick={handleFinalize}
             disabled={isGenerating}

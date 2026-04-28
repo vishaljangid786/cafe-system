@@ -94,7 +94,7 @@ export default function BranchExpensesPage() {
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Archiving expense...');
+    const loadToast = toast.loading('Adding expense...');
     try {
       const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
       if (!finalTitle) throw new Error("Title is required");
@@ -111,15 +111,15 @@ export default function BranchExpensesPage() {
       setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
       fetchExpenses();
     } catch (error) {
-      toast.error(error.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.message || 'Action failed', { id: loadToast });
     }
   };
 
   const handleApprove = async (id) => {
-    const loadToast = toast.loading('Authorizing expenditure...');
+    const loadToast = toast.loading('Approving expense...');
     try {
       await api.patch(`/transactions/${id}/approve`);
-      toast.success('Expense authorized', { id: loadToast });
+      toast.success('Expense approved', { id: loadToast });
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
@@ -129,10 +129,10 @@ export default function BranchExpensesPage() {
   };
 
   const handleReject = async (id) => {
-    const loadToast = toast.loading('Revoking expenditure...');
+    const loadToast = toast.loading('Rejecting expense...');
     try {
       await api.patch(`/transactions/${id}/reject`);
-      toast.error('Expense revoked', { id: loadToast });
+      toast.error('Expense rejected', { id: loadToast });
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
@@ -141,12 +141,19 @@ export default function BranchExpensesPage() {
     }
   };
 
-  const filteredData = transactions.filter(t => 
-    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = transactions.filter(t => {
+    const matchesSearch = t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         t.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (activeTab === 'all') {
+      return matchesSearch && t.status === 'approved';
+    }
+    return matchesSearch;
+  });
 
-  const totalExpenditure = filteredData.reduce((acc, curr) => acc + curr.totalAmount, 0);
+  const totalExpenditure = transactions
+    .filter(t => t.status === 'approved')
+    .reduce((acc, curr) => acc + curr.totalAmount, 0);
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -178,7 +185,7 @@ export default function BranchExpensesPage() {
                   </h1>
                   <p className="text-zinc-500 font-bold mt-2 flex items-center gap-2 text-sm">
                     <Sparkles size={14} className="text-amber-500" />
-                    Tracking local operational costs and resource outflow.
+                    Track your daily expenses and costs.
                   </p>
                 </div>
               </div>
@@ -214,7 +221,7 @@ export default function BranchExpensesPage() {
             onClick={() => setActiveTab('all')}
             className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'all' ? 'text-rose-500' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}
           >
-            Branch Archives
+            All Expenses
             {activeTab === 'all' && <motion.div layoutId="tab-underline-ba" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-500 rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
           </button>
           <button 
@@ -240,7 +247,7 @@ export default function BranchExpensesPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={20} />
                 <input 
                   type="text" 
-                  placeholder="Scan branch records..."
+                  placeholder="Search expenses..."
                   className="w-full pl-14 pr-6 py-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl focus:ring-4 focus:ring-rose-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -265,7 +272,7 @@ export default function BranchExpensesPage() {
                 [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-[2rem]" />)
               ) : paginatedData.length === 0 ? (
                 <div className="sm:col-span-2 py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800">
-                  <p className="text-zinc-500 font-bold text-lg tracking-tight">No branch expenditure nodes detected.</p>
+                  <p className="text-zinc-500 font-bold text-lg tracking-tight">No expenses found.</p>
                 </div>
               ) : (
                 paginatedData.map((t, idx) => (
@@ -311,7 +318,7 @@ export default function BranchExpensesPage() {
                 <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">
                   <Activity size={100} strokeWidth={1} />
                 </div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-80 mb-6">Local Velocity</h3>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-80 mb-6">Expense Trend</h3>
                 <div className="space-y-6 relative z-10">
                   <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -321,7 +328,7 @@ export default function BranchExpensesPage() {
                     </ResponsiveContainer>
                   </div>
                   <div className="border-t border-white/10 pt-6">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Cumulative Outflow</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Expense</p>
                     <p className="text-2xl font-black tracking-tighter mt-1 text-rose-500">₹{totalExpenditure.toLocaleString()}</p>
                   </div>
                 </div>
@@ -332,7 +339,7 @@ export default function BranchExpensesPage() {
 
         {/* Modal components are shared and will be identical to Admin for UI consistency */}
         {/* Detail Modal */}
-        <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Record Dossier" maxWidth="max-w-2xl">
+        <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Expense Details" maxWidth="max-w-2xl">
           {selectedExpense && (
             <div className="space-y-10">
               <div className="flex flex-col md:flex-row justify-between items-start gap-6">
@@ -360,14 +367,14 @@ export default function BranchExpensesPage() {
                 </div>
                 <div className="text-left md:text-right bg-zinc-50 dark:bg-zinc-950 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 min-w-[200px]">
                   <p className="text-4xl font-black text-rose-500 tracking-tighter">₹{selectedExpense.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Certified Value</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Total Amount</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-6 flex items-center gap-2">
-                    <User size={12} className="text-rose-500" /> Origin Agent
+                    <User size={12} className="text-rose-500" /> Created By
                   </p>
                   <div className="flex items-center gap-5">
                     <div className="h-16 w-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-500 overflow-hidden shadow-inner">
@@ -378,14 +385,14 @@ export default function BranchExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Automated Node'}</p>
+                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Protocol'}</p>
                     </div>
                   </div>
                   {selectedExpense.approvedBy && (
                     <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                       <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                        <Sparkles size={10} className="text-amber-500" /> Authorized By {selectedExpense.approvedBy.name}
+                        <Sparkles size={10} className="text-amber-500" /> Approved By {selectedExpense.approvedBy.name}
                       </p>
                     </div>
                   )}
@@ -393,7 +400,7 @@ export default function BranchExpensesPage() {
 
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-6 flex items-center gap-2">
-                    <MapPin size={12} className="text-rose-500" /> Station Hub
+                    <MapPin size={12} className="text-rose-500" /> Branch
                   </p>
                   <div className="space-y-1">
                     <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.locationId?.name || 'Central Command'}</p>
@@ -403,21 +410,21 @@ export default function BranchExpensesPage() {
               </div>
 
               <div className="space-y-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2 ml-2">
-                  <Info size={12} className="text-rose-500" /> Descriptive Intelligence
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2 mb-2 ml-4">
+                  <Info size={12} className="text-rose-500" /> Description
                 </p>
                 <div className="p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 relative">
                   <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed italic relative z-10">
-                    "{selectedExpense.description || "No descriptive intelligence was archived for this particular resource outflow."}"
+                    "{selectedExpense.description || "No description provided."}"
                   </p>
                 </div>
               </div>
 
               {selectedExpense.billImage && (
                 <div className="space-y-6">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2 ml-2">
-                    <Sparkles size={12} className="text-rose-500" /> Archival Evidence
-                  </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2 mb-2 ml-4">
+                  <Sparkles size={12} className="text-rose-500" /> Bill Image
+                </p>
                   <div className="rounded-[3rem] overflow-hidden border-4 border-zinc-50 dark:border-zinc-900 bg-white dark:bg-zinc-950 p-3 shadow-2xl relative group">
                     <img src={selectedExpense.billImage} alt="Evidence" className="w-full h-auto rounded-[2.5rem] transition-all duration-1000 group-hover:scale-[1.02]" />
                   </div>
@@ -432,14 +439,14 @@ export default function BranchExpensesPage() {
                     icon={Sparkles}
                     onClick={() => handleApprove(selectedExpense._id)}
                   >
-                    Authorize Outflow
+                    Approve Expense
                   </Button>
                   <Button 
                     variant="secondary" 
                     className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" 
                     onClick={() => handleReject(selectedExpense._id)}
                   >
-                    Revoke Request
+                    Reject Expense
                   </Button>
                 </div>
               ) : (
@@ -456,11 +463,11 @@ export default function BranchExpensesPage() {
         </Modal>
 
         {/* Add Modal */}
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Resource Outflow" maxWidth="max-w-xl">
+        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Expense" maxWidth="max-w-xl">
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
                 <PremiumSelect 
-                  label="Archival Title"
+                  label="Expense Title"
                   value={formData.title}
                   onChange={val => {
                     setFormData({...formData, title: val});
@@ -491,11 +498,11 @@ export default function BranchExpensesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Economic Volume (₹)</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Amount (₹)</label>
                   <input required type="number" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-black dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
                 </div>
                 <PremiumSelect 
-                  label="Category Vector"
+                  label="Category"
                   value={formData.category}
                   onChange={val => setFormData({...formData, category: val})}
                   options={[
@@ -510,17 +517,17 @@ export default function BranchExpensesPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Temporal Stamp</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Date</label>
                 <input required type="date" className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Intelligence Notes</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Description</label>
                 <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Provide specific context for this outflow..." />
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full !rounded-[2rem] !py-6 shadow-2xl shadow-rose-600/30 font-black uppercase tracking-[0.4em] text-sm" icon={Sparkles}>Finalize Outflow</Button>
+            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-[2rem] !py-6 shadow-2xl shadow-rose-600/30 font-black uppercase tracking-[0.4em] text-sm" icon={Sparkles}>Save Expense</Button>
           </form>
         </Modal>
       </div>

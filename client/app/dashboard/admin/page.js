@@ -15,7 +15,8 @@ import {
   ArrowUpRight, Target, Flame, Layers, Filter,
   ChefHat, Utensils, Receipt, ShoppingBag,
   ChevronDown,
-  MapPin
+  MapPin,
+  User
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import { StatWidget } from '../../components/ui/StatWidget';
@@ -26,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ExportActions from '../../components/ui/ExportActions';
 import PremiumSelect from '../../components/ui/PremiumSelect';
+import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
     tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
   };
 
-  const COLORS = isDark 
+  const COLORS = isDark
     ? ['#fbbf24', '#60a5fa', '#34d399', '#f87171', '#a78bfa', '#f472b6']
     : ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -73,7 +75,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const params = new URLSearchParams();
       if (filterLocation !== 'all') params.append('locationId', filterLocation);
-      
+
       const now = new Date();
       let start = '';
       let end = '';
@@ -89,7 +91,7 @@ export default function AdminDashboard() {
         else if (timeFilter === '3m') d.setMonth(now.getMonth() - 3);
         else if (timeFilter === '6m') d.setMonth(now.getMonth() - 6);
         else if (timeFilter === '1y') d.setFullYear(now.getFullYear() - 1);
-        
+
         start = d.toISOString().split('T')[0];
         end = now.toISOString().split('T')[0];
       }
@@ -122,6 +124,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAnalytics();
   }, [filterLocation, timeFilter, customDates]);
+
   if (loading) return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -138,44 +141,44 @@ export default function AdminDashboard() {
       {/* Cinematic System Intelligence Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[95]">
         <div className="space-y-2">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
             <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
               <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/80">System: Synchronized</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/80">System: Online</span>
             </div>
             <div className="h-px w-8 bg-zinc-200 dark:bg-zinc-800" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Node: {filterLocation === 'all' ? 'Global Matrix' : 'Branch Sector'}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">{filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}</span>
           </motion.div>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
-            {filterLocation === 'all' ? 'Network' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
-            <span className="text-amber-500 not-italic">Analytics</span>
+            {filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
+            <span className="text-amber-500 not-italic">Overview</span>
           </h1>
           <p className="text-sm text-zinc-400 font-medium max-w-lg leading-relaxed border-l-2 border-amber-500/30 pl-4">
-            Real-time operational telemetry for {filterLocation === 'all' ? 'all synchronized branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected node')}.
+            Real-time data for {filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-4">
-          <ExportActions 
-            data={analytics?.timeSeries || []} 
+          <ExportActions
+            data={analytics?.timeSeries || []}
             columns={[
               { header: 'Date', key: 'date' },
               { header: 'Revenue', key: 'revenue' },
               { header: 'Profit', key: 'profit' },
               { header: 'Expenses', key: 'expenses' },
               { header: 'Orders', key: 'orders' }
-            ]} 
-            filename="analytics_report" 
+            ]}
+            filename="analytics_report"
             hasCharts={true}
           />
-          <PremiumSelect 
+          <PremiumSelect
             icon={MapPin}
-            label="Branch Switcher"
+            label="Select Branch"
             value={filterLocation}
             onChange={(val) => setFilterLocation(val)}
             options={[
@@ -216,17 +219,20 @@ export default function AdminDashboard() {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <StatWidget label="Total Orders" value={analytics.summary.totalOrders || '0'} icon={<ShoppingBag size={20} />} color="blue" delay={0.3} />
         <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
         <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
         <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.2} />
+        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+          <StatWidget label="Total Payroll" value={`₹${analytics?.personnelStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.4} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 !p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
-            <CardTitle className="text-xl">Sales Trends</CardTitle>
+            <CardTitle className="text-xl">Sales Report</CardTitle>
             <TrendingUp size={20} className="text-[var(--color-primary)]" />
           </div>
           <div className="h-[300px] w-full">
@@ -244,13 +250,13 @@ export default function AdminDashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} tickFormatter={v => `₹${v / 1000}k`} />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: chartColors.tooltipBg,
                     borderColor: chartColors.tooltipBorder,
-                    borderRadius: '16px', 
+                    borderRadius: '16px',
                     border: '1px solid',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                   }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
@@ -266,7 +272,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-10">
             <div className="space-y-1">
               <CardTitle className="text-xl">Daily Orders</CardTitle>
-              <CardDescription>Daily order count summary.</CardDescription>
+              <CardDescription>Total orders per day.</CardDescription>
             </div>
             <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
               <Layers size={20} />
@@ -278,13 +284,13 @@ export default function AdminDashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: chartColors.tooltipBg,
                     borderColor: chartColors.tooltipBorder,
-                    borderRadius: '16px', 
+                    borderRadius: '16px',
                     border: '1px solid',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                   }}
                 />
                 <Bar dataKey="orders" fill="#3b82f6" radius={[6, 6, 0, 0]} />
@@ -301,7 +307,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Expenses</CardTitle>
-              <CardDescription>Latest spending across branches.</CardDescription>
+              <CardDescription>Latest expenses from all branches.</CardDescription>
             </div>
             <div className="h-10 w-10 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
               <TrendingDown size={20} />
@@ -323,7 +329,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <h5 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{exp.title}</h5>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{exp.locationId?.name || 'Global'}</p>
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{exp.locationId?.name || 'Main Office'}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -333,15 +339,15 @@ export default function AdminDashboard() {
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent expenditures recorded.</div>
+              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent expenses found.</div>
             )}
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push('/dashboard/admin/expenses')}
             className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
           >
-            View Full Records
+            View All Expenses
           </Button>
         </Card>
 
@@ -384,18 +390,62 @@ export default function AdminDashboard() {
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent revenue detected.</div>
+              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent sales found.</div>
             )}
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push('/dashboard/admin/revenue')}
             className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
           >
-            View All Records
+            View All Sales
           </Button>
         </Card>
       </div>
+
+      {/* Personnel & Payroll Section */}
+      {(user?.role === 'admin' || user?.role === 'super_admin') && analytics?.personnelStats && (
+        <SlideIn delay={0.4}>
+          <Card className="!p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-500">
+                    <Users size={24} />
+                  </div>
+                  <CardTitle className="text-2xl">Personnel & Payroll</CardTitle>
+                </div>
+                <CardDescription>Breakdown of branch staff, chefs and monthly salary obligations.</CardDescription>
+              </div>
+              <div className="px-6 py-3 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl">
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Monthly Payroll Total</p>
+                <p className="text-3xl font-black text-indigo-600 tracking-tighter">₹{analytics.personnelStats.totalMonthlySalary.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { label: 'Total Staff', count: analytics.personnelStats.staffCount, icon: Users, color: 'blue' },
+                { label: 'Total Chefs', count: analytics.personnelStats.chefCount, icon: ChefHat, color: 'amber' },
+                { label: 'Branch Admins', count: analytics.personnelStats.adminCount, icon: User, color: 'indigo' }
+              ].map((item, i) => (
+                <div key={i} className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between group hover:border-indigo-500/20 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className={`h-12 w-12 rounded-2xl bg-${item.color === 'blue' ? 'blue' : item.color === 'amber' ? 'amber' : 'indigo'}-500/10 flex items-center justify-center text-${item.color === 'blue' ? 'blue' : item.color === 'amber' ? 'amber' : 'indigo'}-500 group-hover:scale-110 transition-transform`}>
+                      <item.icon size={22} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{item.label}</p>
+                      <p className="text-2xl font-black text-zinc-900 dark:text-white">{item.count}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="text-zinc-300 -rotate-90" size={18} />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </SlideIn>
+      )}
     </div>
   );
 }

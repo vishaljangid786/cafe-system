@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: [true, 'Phone number is required'],
+      match: [/^[0-9]{10}$/, 'Please add a valid 10-digit phone number'],
     },
     gender: {
       type: String,
@@ -34,6 +35,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Age is required'],
       min: [18, 'User must be at least 18 years old'],
+      max: [99, 'Age cannot be more than 99'],
     },
     address1: {
       type: String,
@@ -41,7 +43,7 @@ const userSchema = new mongoose.Schema(
     },
     address2: {
       type: String,
-      required: [true, 'Address Line 2 is required'],
+      default: '',
     },
     city: {
       type: String,
@@ -57,10 +59,12 @@ const userSchema = new mongoose.Schema(
     },
     pincode: {
       type: String,
-      required: [true, 'Pincode is required'],
+      match: [/^[0-9]{6}$/, 'Please add a valid 6-digit pincode'],
+      default: '110001'
     },
     alternatePhone: {
       type: String,
+      match: [/^[0-9]{10}$/, 'Please add a valid 10-digit phone number'],
     },
     role: {
       type: String,
@@ -83,6 +87,7 @@ const userSchema = new mongoose.Schema(
     aadharNumber: {
       type: String,
       required: [true, 'Aadhar Number is required'],
+      match: [/^[0-9]{12}$/, 'Please add a valid 12-digit Aadhar number'],
     },
     aadharImage: {
       type: String, // Cloudinary URL
@@ -95,7 +100,7 @@ const userSchema = new mongoose.Schema(
     },
     monthlySalary: {
       type: Number,
-      required: [true, 'Monthly salary is required'],
+      default: 0,
     },
     profileImageUrl: {
       type: String,
@@ -124,6 +129,9 @@ userSchema.pre('save', async function () {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+userSchema.index({ role: 1 });
+userSchema.index({ assignedLocation: 1 });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

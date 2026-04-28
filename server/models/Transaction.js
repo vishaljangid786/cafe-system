@@ -95,6 +95,8 @@ transactionSchema.index({ locationId: 1, type: 1, date: -1 });
 transactionSchema.index({ 'orders.menuItemId': 1, date: -1 });
 transactionSchema.index({ staffId: 1, date: -1 });
 transactionSchema.index({ createdBy: 1, date: -1 });
+transactionSchema.index({ status: 1 });
+transactionSchema.index({ category: 1 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 module.exports = Transaction;

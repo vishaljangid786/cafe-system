@@ -160,7 +160,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
             <Button
               type="submit"
               variant="primary"
-              className="flex-1 !rounded-2xl !py-4 font-black uppercase tracking-[0.2em] text-[10px] shadow-[var(--shadow-premium)]"
+              className="bg-primary flex-1 !rounded-2xl !py-4 font-black uppercase tracking-[0.2em] text-[10px] shadow-[var(--shadow-premium)]"
               icon={Send}
               loading={loading}
             >
@@ -171,7 +171,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
       </motion.div>
     </div>,
     document.body
-  );
+  );1
 };
 
 export default NotificationModal;

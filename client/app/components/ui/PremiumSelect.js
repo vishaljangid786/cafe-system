@@ -12,7 +12,8 @@ export default function PremiumSelect({
   label,
   error,
   icon: Icon,
-  className = ""
+  className = "",
+  multiple = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -53,8 +54,13 @@ export default function PremiumSelect({
     };
   }, [isOpen]);
 
-  const selectedOption = options.find(opt => opt.value === value) || options.find(opt => opt === value);
-  const displayLabel = typeof selectedOption === 'object' ? selectedOption.label : selectedOption;
+  let displayLabel = placeholder;
+  if (multiple && Array.isArray(value)) {
+    displayLabel = value.length > 0 ? `${value.length} Selected` : placeholder;
+  } else {
+    const selectedOption = options.find(opt => opt.value === value) || options.find(opt => opt === value);
+    displayLabel = selectedOption ? (typeof selectedOption === 'object' ? selectedOption.label : selectedOption) : placeholder;
+  }
 
   const dropdownMenu = (
     <AnimatePresence>
@@ -80,15 +86,25 @@ export default function PremiumSelect({
               options.map((option, idx) => {
                 const optValue = typeof option === 'object' ? option.value : option;
                 const optLabel = typeof option === 'object' ? option.label : option;
-                const isSelected = optValue === value;
+                const isSelected = multiple 
+                  ? (Array.isArray(value) && value.includes(optValue))
+                  : optValue === value;
 
                 return (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => {
-                      onChange(optValue);
-                      setIsOpen(false);
+                      if (multiple) {
+                        const newValue = Array.isArray(value) ? [...value] : [];
+                        const index = newValue.indexOf(optValue);
+                        if (index > -1) newValue.splice(index, 1);
+                        else newValue.push(optValue);
+                        onChange(newValue);
+                      } else {
+                        onChange(optValue);
+                        setIsOpen(false);
+                      }
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${isSelected
                         ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'

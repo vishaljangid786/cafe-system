@@ -13,8 +13,29 @@ const getCoupons = asyncHandler(async (req, res) => {
   } else if (active === 'false') {
     filter.isActive = false;
   }
-  const coupons = await Coupon.find(filter).populate('createdBy', 'name');
-  res.json({ success: true, count: coupons.length, data: coupons });
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await Coupon.countDocuments(filter);
+
+  const coupons = await Coupon.find(filter)
+    .populate('createdBy', 'name')
+    .skip(skip)
+    .limit(limit);
+
+  res.json({ 
+    success: true, 
+    count: coupons.length, 
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
+    data: coupons 
+  });
 });
 
 // @desc    Create a new coupon

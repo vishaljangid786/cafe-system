@@ -42,7 +42,7 @@ export default function TablesPage() {
       const res = await api.get('/tables');
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync floor plan');
+      toast.error('Failed to load tables');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function TablesPage() {
         setMenuItems(menuRes.data.data);
         setCoupons(couponRes.data.data);
       } catch (error) {
-        console.error("Matrix sync failed");
+        console.error("Load failed");
       }
     };
     fetchResources();
@@ -67,7 +67,7 @@ export default function TablesPage() {
 
   const handleAddTable = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Initializing table...');
+    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Adding table...');
     try {
       if (isEditing) {
         await api.put(`/tables/${selectedTable._id}`, {
@@ -83,7 +83,7 @@ export default function TablesPage() {
           capacity: Number(newTableCapacity),
           locationId: user.assignedLocation?._id
         });
-        toast.success('Table initialized', { id: loadToast });
+        toast.success('Table added', { id: loadToast });
       }
       setShowAddModal(false);
       setIsEditing(false);
@@ -92,7 +92,7 @@ export default function TablesPage() {
       setNewTableCapacity('1');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Error', { id: loadToast });
     }
   };
 
@@ -111,16 +111,16 @@ export default function TablesPage() {
   };
 
   const handleAssignConfirm = async (data) => {
-    const loadToast = toast.loading('Securing table...');
+    const loadToast = toast.loading('Booking table...');
     try {
       await api.put(`/tables/${selectedTable._id}/book`, {
         numberOfPeople: Number(data.numberOfPeople),
         customerName: data.customerName
       });
       fetchTables();
-      toast.success('Table secured', { id: loadToast });
+      toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Encryption error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Booking error', { id: loadToast });
     }
   };
 
@@ -135,7 +135,7 @@ export default function TablesPage() {
 
   const handleStageOrder = (e) => {
     e.preventDefault();
-    if (!orderItem.itemName || !orderItem.price) return toast.error('Designation & Yield required');
+    if (!orderItem.itemName || !orderItem.price) return toast.error('Name & Price required');
 
     const newItem = {
       ...orderItem,
@@ -148,12 +148,12 @@ export default function TablesPage() {
     setPendingOrders(prev => [...prev, newItem]);
     setOrderItem({ itemName: '', quantity: 1, price: '', menuItemId: '', categoryId: '' });
     setShowMenuGrid(false);
-    toast.success('Added to local staging');
+    toast.success('Added to order');
   };
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
-    const loadToast = toast.loading('Validating offer code...');
+    const loadToast = toast.loading('Checking coupon...');
     try {
       const subtotal = pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
       const res = await api.post('/coupons/apply', {
@@ -168,9 +168,9 @@ export default function TablesPage() {
       });
       setAppliedCoupon(res.data.data);
       setDiscountAmount(res.data.data.discount);
-      toast.success('Offer code applied', { id: loadToast });
+      toast.success('Coupon applied', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid offer code', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Invalid coupon', { id: loadToast });
     }
   };
 
@@ -209,14 +209,14 @@ export default function TablesPage() {
       setSelectedTable(res.data.data);
       setPendingOrders([...newOrders]);
       fetchTables();
-      toast.success('Item purged', { id: loadToast });
+      toast.success('Item removed', { id: loadToast });
     } catch (error) {
-      toast.error('Purge failed', { id: loadToast });
+      toast.error('Removal failed', { id: loadToast });
     }
   };
 
   const handleFinalizeSession = async (file, finalTotal) => {
-    const loadToast = toast.loading('Archiving session...');
+    const loadToast = toast.loading('Generating bill...');
     const data = new FormData();
     data.append('billImage', file);
     try {
@@ -227,9 +227,9 @@ export default function TablesPage() {
       setShowOrderModal(false);
       setSelectedTable(null);
       fetchTables();
-      toast.success('Session archived to ledger', { id: loadToast });
+      toast.success('Bill generated and saved', { id: loadToast });
     } catch (error) {
-      toast.error('Archival protocol failed', { id: loadToast });
+      toast.error('Bill generation failed', { id: loadToast });
     }
   };
 
@@ -242,13 +242,13 @@ export default function TablesPage() {
 
 
   const handleDeleteTable = async () => {
-    const loadToast = toast.loading('Purging table...');
+    const loadToast = toast.loading('Deleting table...');
     try {
       await api.delete(`/tables/${showDeleteConfirm}`);
       fetchTables();
-      toast.success('Table liquidated', { id: loadToast });
+      toast.success('Table removed', { id: loadToast });
     } catch (error) {
-      toast.error('Protocol error', { id: loadToast });
+      toast.error('Error', { id: loadToast });
     }
   };
 
@@ -277,7 +277,7 @@ export default function TablesPage() {
               </div>
               {user?.assignedLocation?.name || 'Tables'}
             </h1>
-            <p className="text-xs text-zinc-500 mt-1 font-medium">Operational command — floor management</p>
+            <p className="text-xs text-zinc-500 mt-1 font-medium">Manage tables and orders</p>
           </div>
           <Button
             variant="primary"
@@ -413,12 +413,12 @@ export default function TablesPage() {
         <Modal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          title={isEditing ? 'Refine Table Configuration' : 'Initialize New Table'}
+          title={isEditing ? 'Edit Table' : 'Add New Table'}
           maxWidth="max-w-md"
         >
           <form onSubmit={handleAddTable} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Protocol Number</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Number</label>
               <input
                 required
                 type="number"
@@ -429,17 +429,17 @@ export default function TablesPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Name / Designation</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Name (Optional)</label>
               <input
                 type="text"
                 className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableName}
                 onChange={e => setNewTableName(e.target.value)}
-                placeholder="e.g. Window Corner, Poolside-1"
+                placeholder="e.g. Window Corner"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Seating Capacity (Members)</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Seating Capacity</label>
               <input
                 required
                 type="number"
@@ -456,7 +456,7 @@ export default function TablesPage() {
               className="w-full !rounded-2xl !py-5 shadow-xl shadow-amber-600/20"
               icon={isEditing ? Edit3 : Plus}
             >
-              {isEditing ? 'Update Configuration' : 'Confirm Initialization'}
+              {isEditing ? 'Update Table' : 'Add Table'}
             </Button>
           </form>
         </Modal>
@@ -464,7 +464,7 @@ export default function TablesPage() {
         <Modal
           isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          title={`Session Matrix: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
+          title={`Table: ${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
@@ -473,7 +473,7 @@ export default function TablesPage() {
               <div className="lg:col-span-5 flex flex-col h-full bg-zinc-50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 overflow-hidden">
                 <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                    <ShoppingBag size={14} className="mr-2 text-amber-600" /> Active Registry
+                    <ShoppingBag size={14} className="mr-2 text-amber-600" /> Current Order
                   </h3>
                   <span className="text-[10px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-3 py-1 rounded-full uppercase tracking-widest">
                     {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)} Items
@@ -537,7 +537,7 @@ export default function TablesPage() {
                   {pendingOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Registry is Empty</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Order is Empty</p>
                     </div>
                   )}
                 </div>
@@ -571,7 +571,7 @@ export default function TablesPage() {
                       icon={Receipt}
                       onClick={() => setIsBillPreviewOpen(true)}
                     >
-                      Finalize & Bill
+                      Print Bill & Checkout
                     </Button>
                   </div>
                 </div>
@@ -586,7 +586,7 @@ export default function TablesPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu matrix..."
+                    placeholder="Search menu..."
                     className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
@@ -597,7 +597,7 @@ export default function TablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-amber-500" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-amber-500" /> Best Sellers
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
@@ -649,7 +649,7 @@ export default function TablesPage() {
 
                 {/* Main Menu Grid */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">All Items</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {menuItems
                       .filter(m => m.name.toLowerCase().includes(menuSearch.toLowerCase()))
@@ -707,7 +707,7 @@ export default function TablesPage() {
                 <div className="p-6 bg-zinc-50 dark:bg-zinc-950/30 rounded-3xl border border-zinc-100 dark:border-zinc-800">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -720,7 +720,7 @@ export default function TablesPage() {
                           onClick={handleApplyCoupon}
                           className="px-6 bg-zinc-900 dark:bg-zinc-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
                         >
-                          Verify
+                          Apply
                         </button>
                       </div>
                     </div>
@@ -740,8 +740,8 @@ export default function TablesPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDeleteTable}
-          title="Decommission Table?"
-          message="This table will be permanently removed from the floor grid."
+          title="Delete Table?"
+          message="This table will be removed from the system."
         />
 
         <BillPreview

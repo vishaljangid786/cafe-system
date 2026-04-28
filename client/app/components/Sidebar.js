@@ -10,7 +10,7 @@ import {
   Receipt, CalendarCheck, Wallet, ChevronLeft,
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
   ChevronRight, Target, TrendingUp,
-  Calendar, Bell, Send
+  Calendar, Bell, Send, History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,7 +25,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   const getLinks = () => {
     const role = user.role;
     const links = [];
-
+    if (role === 'super_admin') {
+      links.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
+    }
     if (role === 'super_admin' || role === 'admin') {
       links.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
       links.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
@@ -38,14 +40,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       links.push({ name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed });
       links.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
       links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      links.push({ name: 'Order Matrix', href: '/dashboard/admin/orders', icon: Receipt });
-      links.push({ name: 'Order Analytics', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      links.push({ name: 'Comparison', href: '/dashboard/admin/location-comparison', icon: Target });
+      links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
+      links.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+      links.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
     } else if (role === 'branch_admin') {
       links.push({ name: 'Overview', href: '/dashboard/branch-admin', icon: LayoutDashboard });
-      links.push({ name: 'Order Matrix', href: '/dashboard/admin/orders', icon: Receipt });
-      links.push({ name: 'Order Analytics', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      links.push({ name: 'My Staff', href: '/dashboard/branch-admin/staff', icon: Users });
+      links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
+      links.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+      links.push({ name: 'Staff List', href: '/dashboard/branch-admin/staff', icon: Users });
       links.push({ name: 'Attendance', href: '/dashboard/branch-admin/attendance', icon: CalendarCheck });
       links.push({ name: 'Salaries', href: '/dashboard/branch-admin/salary', icon: Wallet });
       links.push({ name: 'Revenue', href: '/dashboard/branch-admin/revenue', icon: TrendingUp });
@@ -56,16 +58,21 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     } else if (role === 'chef') {
       links.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
       links.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
+      links.push({ name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp });
+      links.push({ name: 'Work History', href: '/dashboard/staff/work-history', icon: History });
       links.push({ name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar });
       links.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
     } else {
-      links.push({ name: 'My Station', href: '/dashboard/staff', icon: LayoutDashboard });
-      links.push({ name: 'Live Orders', href: '/dashboard/staff/orders', icon: Receipt });
-      links.push({ name: 'Manage Tables', href: '/dashboard/staff/tables', icon: Coffee });
+      links.push({ name: 'My Dashboard', href: '/dashboard/staff', icon: LayoutDashboard });
+      links.push({ name: 'New Orders', href: '/dashboard/staff/orders', icon: Receipt });
+      links.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
       links.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
+      links.push({ name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp });
+      links.push({ name: 'Work History', href: '/dashboard/staff/work-history', icon: History });
       links.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
       links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
     }
+
 
     links.push({ name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadCount });
     links.push({ name: 'My Profile', href: '/dashboard/profile', icon: Settings });
@@ -112,7 +119,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         <div className="space-y-1">
           {links.map((link) => {
             const Icon = link.icon;
-            const isExactMatch = ['Overview', 'My Station', 'Order Matrix', 'Live Orders'].includes(link.name);
+            const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders'].includes(link.name);
             const isActive = isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
 
             return (
@@ -172,7 +179,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             <Send size={16} />
           </div>
           {showLabels && (
-            <span className="text-xs font-bold text-[var(--color-text-primary)]">Dispatch Alert</span>
+            <span className="text-xs font-bold text-[var(--color-text-primary)]">Send Message</span>
           )}
         </button>
       </div>

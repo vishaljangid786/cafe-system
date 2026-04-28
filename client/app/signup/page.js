@@ -18,17 +18,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 const signupSchema = z.object({
-  name: z.string().min(2, 'Identification requires at least 2 characters'),
-  email: z.string().email('Operational terminal email required'),
-  password: z.string().min(6, 'Protocol requires at least 6 characters'),
-  phone: z.string().regex(/^\+?[0-9]{10,12}$/, 'Invalid contact node ID'),
-  age: z.string().refine((val) => parseInt(val) >= 18, 'Minimum operational age is 18'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
+  age: z.string().refine((val) => {
+    const n = parseInt(val);
+    return n >= 18 && n <= 99;
+  }, 'Age must be between 18 and 99'),
   gender: z.string(),
   role: z.string(),
   assignedLocation: z.string().optional(),
   highestQualification: z.string(),
-  monthlySalary: z.string().min(1, 'Compensation deployment required'),
-  aadharNumber: z.string().length(12, 'Aadhar Node ID must be 12 digits'),
+  monthlySalary: z.string().min(1, 'Salary details are required'),
+  aadharNumber: z.string().length(12, 'Aadhar number must be 12 digits'),
   address1: z.string().min(1, 'Address Line 1 is required'),
   address2: z.string().min(1, 'Address Line 2 is required'),
   city: z.string().min(1, 'City is required'),
@@ -37,10 +40,10 @@ const signupSchema = z.object({
   pincode: z.string().length(6, 'Pincode must be 6 digits'),
   accessibleLocations: z.array(z.string()).optional(),
 }).refine((data) => {
-  if ((data.role === 'staff' || data.role === 'branch_admin') && !data.assignedLocation) return false;
+  if (['staff', 'branch_admin', 'chef'].includes(data.role) && !data.assignedLocation) return false;
   return true;
 }, {
-  message: "Operational branch assignment required for this role",
+  message: "Please select a branch for this role",
   path: ["assignedLocation"],
 });
 
@@ -90,10 +93,25 @@ function SignupContent() {
     if (isSetup) return [{ value: 'super_admin', label: 'Super Admin' }];
     if (!currentUser) return [{ value: 'super_admin', label: 'Super Admin' }];
     switch (currentUser.role) {
-      case 'super_admin': return [{ value: 'admin', label: 'Main Admin' }, { value: 'branch_admin', label: 'Branch Admin' }, { value: 'staff', label: 'Staff Member' }];
-      case 'admin': return [{ value: 'branch_admin', label: 'Branch Admin' }, { value: 'staff', label: 'Staff Member' }];
-      case 'branch_admin': return [{ value: 'staff', label: 'Staff Member' }];
-      default: return [{ value: 'staff', label: 'Staff Member' }];
+      case 'super_admin': return [
+        { value: 'admin', label: 'Main Admin' },
+        { value: 'branch_admin', label: 'Branch Admin' },
+        { value: 'staff', label: 'Staff Member' },
+        { value: 'chef', label: 'Chef' }
+      ];
+      case 'admin': return [
+        { value: 'branch_admin', label: 'Branch Admin' },
+        { value: 'staff', label: 'Staff Member' },
+        { value: 'chef', label: 'Chef' }
+      ];
+      case 'branch_admin': return [
+        { value: 'staff', label: 'Staff Member' },
+        { value: 'chef', label: 'Chef' }
+      ];
+      default: return [
+        { value: 'staff', label: 'Staff Member' },
+        { value: 'chef', label: 'Chef' }
+      ];
     }
   };
 
@@ -109,7 +127,7 @@ function SignupContent() {
   };
 
   const onSubmit = async (formData) => {
-    const loadToast = toast.loading('Initializing personnel profile...');
+    const loadToast = toast.loading('Creating account...');
     const data = new FormData();
     Object.keys(formData).forEach(key => {
       if (formData[key]) {
@@ -122,10 +140,10 @@ function SignupContent() {
 
     try {
       await api.post('/auth/register', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success('Registration sequence complete.', { id: loadToast });
+      toast.success('Account created successfully.', { id: loadToast });
       router.push('/login');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Sequence failure. Verify data.', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Failed to create account. Please check your data.', { id: loadToast });
     }
   };
 
@@ -161,23 +179,23 @@ function SignupContent() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-amber-500">OS</span></h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Expansion Protocol</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">New Account</p>
               </div>
             </div>
           </motion.div>
 
           <div className="space-y-12">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
-              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Personnel <br /><span className="text-amber-500 italic">Initialization</span></h2>
-              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">Establish a new operational identity within the Global Matrix. Follow the sequenced onboarding protocol to activate access.</p>
+              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Create <br /><span className="text-amber-500 italic">Account</span></h2>
+              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">Create your account to manage your cafe. Follow the simple steps below to get started.</p>
             </motion.div>
 
             <div className="space-y-4">
               {[
-                { step: 1, label: "Identity Core" },
-                { step: 2, label: "Geographical Node" },
-                { step: 3, label: "Protocol Assignment" },
-                { step: 4, label: "Verification Scan" }
+                { step: 1, label: "Basic Details" },
+                { step: 2, label: "Address" },
+                { step: 3, label: "Job Details" },
+                { step: 4, label: "Documents" }
               ].map((s) => (
                 <div key={s.step} className={`flex items-center gap-4 transition-all duration-500 ${activeStep >= s.step ? 'opacity-100 translate-x-2' : 'opacity-30'}`}>
                   <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black border ${activeStep >= s.step ? 'bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/20' : 'border-zinc-700 text-zinc-500'}`}>
@@ -203,14 +221,14 @@ function SignupContent() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl relative z-10">
           {!isSetup && (
             <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-10 flex items-center gap-2 text-zinc-400 hover:text-amber-500 transition-colors text-[10px] font-black uppercase tracking-widest group">
-              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {activeStep > 1 ? 'Previous Sequence' : 'Abort Protocol'}
+              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {activeStep > 1 ? 'Go Back' : 'Cancel'}
             </button>
           )}
 
           <div className="mb-12">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">Sequence {activeStep}/4</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">Step {activeStep}/4</span>
             <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">
-              {activeStep === 1 ? 'Identity Initialization' : activeStep === 2 ? 'Geographical Node' : activeStep === 3 ? 'Operational Specs' : 'Verification Scan'}
+              {activeStep === 1 ? 'Basic Details' : activeStep === 2 ? 'Address' : activeStep === 3 ? 'Job Details' : 'Documents'}
             </h2>
           </div>
 
@@ -219,7 +237,7 @@ function SignupContent() {
               {activeStep === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <div className="flex flex-col items-center mb-8 p-8 bg-amber-500/5 rounded-3xl border border-amber-500/10 group relative overflow-hidden">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Personnel Profile Matrix</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Profile Picture</label>
                     <div className="relative">
                       <div className="h-32 w-32 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden transition-all group-hover:border-amber-500 shadow-xl">
                         {profileImage ? <img src={URL.createObjectURL(profileImage)} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
@@ -228,19 +246,19 @@ function SignupContent() {
                       <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-amber-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
                     </div>
                   </div>
-                  <InputField label="Operational Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
-                  <InputField label="Primary Terminal (Email)" name="email" type="email" placeholder="rahul@cafeos.com" error={errors.email?.message} />
+                  <InputField label="Full Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
+                  <InputField label="Email Address" name="email" type="email" placeholder="rahul@cafeos.com" error={errors.email?.message} />
                   <div className="grid grid-cols-2 gap-6">
-                    <InputField label="Biological Age" name="age" type="number" placeholder="24" error={errors.age?.message} />
+                    <InputField label="Age" name="age" type="number" placeholder="24" error={errors.age?.message} onInput={(e) => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} />
                     <Controller name="gender" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Gender Identity</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Gender</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
                       </div>
                     )} />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Key Passphrase</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
                     <div className="relative group">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -259,14 +277,14 @@ function SignupContent() {
 
               {activeStep === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <InputField label="Communication Node (Phone)" name="phone" placeholder="+91 XXXXX XXXXX" error={errors.phone?.message} />
-                  <InputField label="Base Sector (Address 1)" name="address1" placeholder="Building/Flat No, Street Name" error={errors.address1?.message} />
-                  <InputField label="Sub-Sector (Address 2)" name="address2" placeholder="Locality, Landmark" error={errors.address2?.message} />
+                  <InputField label="Phone Number" name="phone" placeholder="9876543210" error={errors.phone?.message} onInput={(e) => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} />
+                  <InputField label="Address Line 1" name="address1" placeholder="Building/Flat No, Street Name" error={errors.address1?.message} />
+                  <InputField label="Address Line 2" name="address2" placeholder="Locality, Landmark" error={errors.address2?.message} />
                   <div className="grid grid-cols-2 gap-6">
                     <InputField label="City" name="city" placeholder="Mumbai" error={errors.city?.message} />
-                    <InputField label="State/Jurisdiction" name="state" placeholder="Maharashtra" error={errors.state?.message} />
-                    <InputField label="Regional Index (Pincode)" name="pincode" placeholder="400001" error={errors.pincode?.message} />
-                    <InputField label="Sovereign Node (Country)" name="country" placeholder="India" error={errors.country?.message} />
+                    <InputField label="State" name="state" placeholder="Maharashtra" error={errors.state?.message} />
+                    <InputField label="Pincode" name="pincode" placeholder="400001" error={errors.pincode?.message} onInput={(e) => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} />
+                    <InputField label="Country" name="country" placeholder="India" error={errors.country?.message} />
                   </div>
                 </motion.div>
               )}
@@ -275,37 +293,45 @@ function SignupContent() {
                 <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <Controller name="role" control={control} render={({ field }) => (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Protocol Role</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Your Role</label>
                       <PremiumSelect value={field.value} onChange={field.onChange} options={getAvailableRoles()} />
                     </div>
                   )} />
-                  {!isSetup && (selectedRole === 'staff' || selectedRole === 'branch_admin') && (
+                  {!isSetup && (['staff', 'branch_admin', 'chef'].includes(selectedRole)) && (
                     <Controller name="assignedLocation" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Target Branch Node</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Select Branch</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} placeholder="Select Branch" />
                         {errors.assignedLocation && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.assignedLocation.message}</p>}
                       </div>
                     )} />
                   )}
+                  {!isSetup && selectedRole === 'admin' && (
+                    <Controller name="accessibleLocations" control={control} render={({ field }) => (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Accessible Locations (Multi-Control)</label>
+                        <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
+                      </div>
+                    )} />
+                  )}
                   <Controller name="highestQualification" control={control} render={({ field }) => (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Intellectual Clearance</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Highest Qualification</label>
                       <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: '12th Pass', value: '12th Pass' }, { label: 'Diploma', value: 'Diploma' }, { label: 'Graduate', value: 'Graduate' }, { label: 'Post Graduate', value: 'Post Graduate' }]} />
                     </div>
                   )} />
-                  <InputField label="Compensation Deployment (₹)" name="monthlySalary" type="number" placeholder="28000" error={errors.monthlySalary?.message} />
+                  <InputField label="Monthly Salary (₹)" name="monthlySalary" type="number" placeholder="28000" error={errors.monthlySalary?.message} />
                 </motion.div>
               )}
 
               {activeStep === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <InputField label="Aadhar Node ID (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} />
+                  <InputField label="Aadhar Number (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} onInput={(e) => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} />
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Identity Document Scan</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Upload Aadhar Image</label>
                     <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl hover:border-amber-500 transition-all cursor-pointer overflow-hidden shadow-xl">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
-                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Identity Scan</p></div>}
+                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
                 </motion.div>
@@ -314,14 +340,14 @@ function SignupContent() {
 
             <div className="flex gap-4 pt-6">
               {activeStep < 4 ? (
-                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={ArrowRight}>Advance Sequence</Button>
+                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={ArrowRight}>Next Step</Button>
               ) : (
-                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={Zap}>Initiate Uplink</Button>
+                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={Zap}>Create Account</Button>
               )}
             </div>
           </form>
 
-          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Authorized Network Expansion Protocol &copy; 2026 CafeOS</p>
+          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Cafe Management System &copy; 2026 CafeOS</p>
         </motion.div>
       </div>
     </div>

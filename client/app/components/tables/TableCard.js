@@ -1,5 +1,5 @@
 "use client"
-import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare } from 'lucide-react';
+import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CardHover } from '../ui/AnimatedContainer';
 import { Button } from '../ui/Button';
@@ -32,7 +32,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
   return (
     <CardHover>
       <div className={`
-        glass-card p-8 rounded-[2.5rem] border relative group transition-all duration-500 flex flex-col h-full
+        glass-card p-8 rounded-[2.5rem] border relative group transition-all duration-500 flex flex-col h-full min-h-[480px] w-full
         ${isAvailable ? 'border-[var(--color-border)]' : 'border-primary/30 shadow-[var(--shadow-premium)]'}
       `}>
         {/* Admin Controls Overlay */}
@@ -42,13 +42,13 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
               onClick={(e) => { e.stopPropagation(); onEdit(table); }}
               className="h-8 w-8 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-primary hover:border-primary/50 shadow-sm transition-all"
             >
-              <Plus size={14} className="rotate-45" />
+              <Pencil size={14} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(table._id); }}
               className="h-8 w-8 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/50 shadow-sm transition-all"
             >
-              <Receipt size={14} className="text-[var(--color-danger)]/70" />
+              <Trash2 size={14} className="text-[var(--color-danger)]/70" />
             </button>
           </div>
         )}

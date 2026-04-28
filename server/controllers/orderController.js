@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const User = require('../models/User');
+const MenuItem = require('../models/MenuItem');
+const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 
@@ -13,6 +15,37 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const { branch, table: tableId, items, totalAmount } = req.body;
 
+  // Stock Check and Deduction
+  for (const item of items) {
+    const branchStock = await BranchStock.findOne({ menuItem: item.menuItem, branch });
+    if (branchStock) {
+      if (branchStock.stock < item.quantity) {
+        res.status(400);
+        throw new Error(`Insufficient stock for item. Only ${branchStock.stock} remaining.`);
+      }
+      if (!branchStock.isAvailable) {
+        res.status(400);
+        throw new Error(`Item is currently unavailable at this branch.`);
+      }
+    }
+  }
+
+  // Atomically decrease stock
+  for (const item of items) {
+    await BranchStock.findOneAndUpdate(
+      { menuItem: item.menuItem, branch },
+      {
+        $inc: { stock: -item.quantity },
+      },
+      { new: true }
+    ).then(async (updatedStock) => {
+      if (updatedStock && updatedStock.stock <= 0) {
+        updatedStock.isAvailable = false;
+        await updatedStock.save();
+      }
+    });
+  }
+
   const order = await Order.create({
     branch,
     table: tableId,
@@ -20,15 +53,15 @@ const createOrder = asyncHandler(async (req, res) => {
     totalAmount,
     createdBy: req.user._id,
     status: 'PLACED',
-    statusHistory: [{ 
-      status: 'PLACED', 
+    statusHistory: [{
+      status: 'PLACED',
       timestamp: new Date(),
       updatedBy: req.user._id
     }]
   });
 
   // Increment active orders count and update table status
-  await Table.findByIdAndUpdate(tableId, { 
+  await Table.findByIdAndUpdate(tableId, {
     status: 'ongoing',
     $inc: { activeOrdersCount: 1 }
   });
@@ -46,7 +79,6 @@ const getOrders = asyncHandler(async (req, res) => {
   const filter = {};
 
   if (status) filter.status = status;
-  if (branchId && branchId !== 'all') filter.branch = branchId;
   if (tableId) filter.table = tableId;
   if (isBilled !== undefined) filter.isBilled = isBilled === 'true';
   if (createdBy) filter.createdBy = createdBy;
@@ -55,19 +87,50 @@ const getOrders = asyncHandler(async (req, res) => {
     filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
   }
 
-  if (['branch_admin', 'chef', 'staff'].includes(req.user.role)) {
+  // STRICT RBAC
+  if (req.user.role === 'super_admin') {
+    if (branchId && branchId !== 'all') filter.branch = branchId;
+  } else if (req.user.role === 'admin') {
+    if (branchId && branchId !== 'all') {
+      const isAccessible = req.user.accessibleLocations?.some(loc => loc.toString() === branchId);
+      if (!isAccessible) return res.status(403).json({ message: 'Access denied to this location' });
+      filter.branch = branchId;
+    } else {
+      filter.branch = { $in: req.user.accessibleLocations || [] };
+    }
+  } else {
+    // Branch Admin, Chef, Staff
     filter.branch = req.user.assignedLocation;
   }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await Order.countDocuments(filter);
 
   const orders = await Order.find(filter)
     .populate('branch', 'name city')
     .populate('table', 'tableNumber')
     .populate('createdBy', 'name')
     .populate('assignedChef', 'name')
-    .populate('items.menuItem', 'name price dietaryType')
-    .sort({ createdAt: -1 });
+    .populate('items.menuItem', 'name price dietaryType category')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
-  res.json({ success: true, count: orders.length, data: orders });
+  res.json({ 
+    success: true, 
+    count: orders.length, 
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
+    data: orders 
+  });
 });
 
 // @desc    Update order status
@@ -87,10 +150,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 
   order.status = status;
-  order.statusHistory.push({ 
-    status, 
+  order.statusHistory.push({
+    status,
     timestamp: new Date(),
-    updatedBy: req.user._id 
+    updatedBy: req.user._id
   });
 
   if (status === 'COMPLETED') {
@@ -101,10 +164,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
   const io = getIO();
   const branchId = order.branch.toString();
-  
+
   // Real-time notifications
   io.to(`branch_${branchId}`).emit('order:update', { orderId: order._id, status: order.status });
-  
+
   if (status === 'READY') {
     io.to(`branch_${branchId}_staff`).emit('order:ready', { orderId: order._id, message: 'Order Ready!' });
   }
@@ -121,7 +184,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
     // Create REVENUE Transaction
     const Transaction = require('../models/Transaction');
-    
+
     // Calculate total profit for this specific order
     const totalProfit = order.items.reduce((acc, item) => {
       // price and costPrice are already numbers from the previous turns' fixes
@@ -150,7 +213,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     });
 
     // Decrement active orders count
-    await Table.findByIdAndUpdate(order.table, { 
+    await Table.findByIdAndUpdate(order.table, {
       $inc: { activeOrdersCount: -1 }
     });
 
@@ -180,9 +243,62 @@ const updateOrderItems = asyncHandler(async (req, res) => {
     throw new Error(`Cannot modify order in ${order.status} status`);
   }
 
+  // Stock Adjustment Logic
+  const oldItems = order.items;
+  const newItems = items;
+
+  // Calculate delta for each item
+  const itemMap = {}; // { menuItemId: delta }
+
+  // Decrease for old items (we will restore them conceptually then subtract new ones)
+  oldItems.forEach(item => {
+    const id = item.menuItem.toString();
+    itemMap[id] = (itemMap[id] || 0) + item.quantity;
+  });
+
+  // Subtract new items
+  newItems.forEach(item => {
+    const id = item.menuItem.toString();
+    itemMap[id] = (itemMap[id] || 0) - item.quantity;
+  });
+
+  // itemMap now contains positive numbers for stock restoration, negative for depletion
+  for (const [menuItemId, delta] of Object.entries(itemMap)) {
+    if (delta < 0) {
+      // Depletion: check stock
+      const needed = Math.abs(delta);
+      const branchStock = await BranchStock.findOne({ menuItem: menuItemId, branch: order.branch });
+      if (branchStock && branchStock.stock < needed) {
+        res.status(400);
+        throw new Error(`Insufficient stock for one or more items. Adjustment failed.`);
+      }
+    }
+  }
+
+  // Atomically update stock
+  for (const [menuItemId, delta] of Object.entries(itemMap)) {
+    if (delta !== 0) {
+      const updatedStock = await BranchStock.findOneAndUpdate(
+        { menuItem: menuItemId, branch: order.branch },
+        {
+          $inc: { stock: delta },
+        },
+        { new: true, upsert: true }
+      );
+
+      if (updatedStock) {
+        updatedStock.isAvailable = updatedStock.stock > 0;
+        await updatedStock.save();
+      }
+    }
+  }
+
   order.items = items;
   order.totalAmount = totalAmount;
   await order.save();
+
+  const io = getIO();
+  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
 
   res.json({ success: true, data: order });
 });
@@ -203,18 +319,34 @@ const rejectOrder = asyncHandler(async (req, res) => {
   order.status = 'REJECTED';
   order.rejectReason = rejectReason;
   order.assignedChef = req.user._id;
-  order.statusHistory.push({ 
-    status: 'REJECTED', 
+
+  // Restore Stock
+  for (const item of order.items) {
+    await BranchStock.findOneAndUpdate(
+      { menuItem: item.menuItem, branch: order.branch },
+      {
+        $inc: { stock: item.quantity },
+        isAvailable: true
+      }
+    );
+  }
+
+  order.statusHistory.push({
+    status: 'REJECTED',
     timestamp: new Date(),
-    updatedBy: req.user._id 
+    updatedBy: req.user._id
   });
-  
+
   // Decrement active orders count on rejection
-  await Table.findByIdAndUpdate(order.table, { 
+  await Table.findByIdAndUpdate(order.table, {
     $inc: { activeOrdersCount: -1 }
   });
-  
+
   await order.save();
+
+  const io = getIO();
+  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: 'REJECTED' });
+
   res.json({ success: true, data: order });
 });
 
@@ -230,17 +362,28 @@ const cancelOrder = asyncHandler(async (req, res) => {
     throw new Error('Unauthorized to cancel orders');
   }
   order.status = 'CANCELLED';
-  order.statusHistory.push({ 
-    status: 'CANCELLED', 
+
+  // Restore Stock
+  for (const item of order.items) {
+    await BranchStock.findOneAndUpdate(
+      { menuItem: item.menuItem, branch: order.branch },
+      {
+        $inc: { stock: item.quantity },
+        isAvailable: true
+      }
+    );
+  }
+  order.statusHistory.push({
+    status: 'CANCELLED',
     timestamp: new Date(),
     updatedBy: req.user._id
   });
-  
+
   // Decrement active orders count on cancellation
-  await Table.findByIdAndUpdate(order.table, { 
+  await Table.findByIdAndUpdate(order.table, {
     $inc: { activeOrdersCount: -1 }
   });
-  
+
   await order.save();
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:cancel', { orderId: order._id });
@@ -259,10 +402,10 @@ const addChefNote = asyncHandler(async (req, res) => {
     { chefNote: req.body.chefNote },
     { new: true }
   );
-  
+
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:note', { orderId: order._id, chefNote: req.body.chefNote });
-  
+
   res.json({ success: true, data: order });
 });
 
@@ -359,7 +502,7 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
     .populate('branch', 'name city');
 
   // Filter orders for specific branch if requested (for main metrics and other charts)
-  const filteredOrders = (branchId && branchId !== 'all') 
+  const filteredOrders = (branchId && branchId !== 'all')
     ? allOrders.filter(o => o.branch?._id?.toString() === branchId || o.branch?.toString() === branchId)
     : allOrders;
 
@@ -371,24 +514,24 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
   const delayedOrders = [];
 
   const branchStats = {};
-  
+
   // 1. Calculate Branch Performance (ALWAYS Global context for the timeframe)
   allOrders.forEach(order => {
     const bId = order.branch?._id?.toString() || order.branch?.toString();
     if (bId) {
       if (!branchStats[bId]) {
-        branchStats[bId] = { 
-          name: order.branch?.name || 'Unknown Branch', 
+        branchStats[bId] = {
+          name: order.branch?.name || 'Unknown Branch',
           city: order.branch?.city || '',
-          totalOrders: 0, 
-          totalPrepTime: 0, 
+          totalOrders: 0,
+          totalPrepTime: 0,
           prepCount: 0,
-          cancelledCount: 0 
+          cancelledCount: 0
         };
       }
       branchStats[bId].totalOrders++;
       if (order.status === 'CANCELLED') branchStats[bId].cancelledCount++;
-      
+
       const acceptedAt = order.statusHistory.find(h => h.status === 'ACCEPTED')?.timestamp;
       const readyAt = order.statusHistory.find(h => h.status === 'READY')?.timestamp;
       if (acceptedAt && readyAt) {
@@ -415,7 +558,7 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
       if (!isNaN(duration)) {
         totalPrepTime += duration;
         prepCount++;
-        
+
         if (order.assignedChef) {
           const chefId = order.assignedChef._id.toString();
           if (!chefStats[chefId]) {
@@ -492,6 +635,9 @@ const getOrder = asyncHandler(async (req, res) => {
 const getMyChefStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { startDate, endDate } = req.query;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
 
   let query = { assignedChef: userId };
   if (startDate || endDate) {
@@ -504,19 +650,16 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     }
   }
 
-  const orders = await Order.find(query)
-    .populate('table', 'tableNumber')
-    .populate('items.menuItem', 'name');
-  
+  const allOrders = await Order.find(query);
+
   let totalPrepTime = 0;
   let prepCount = 0;
-  
-  // Count rejections within the same timeframe
+
   let rejectionsQuery = { assignedChef: userId, status: 'REJECTED' };
   if (query.createdAt) rejectionsQuery.createdAt = query.createdAt;
   const rejections = await Order.countDocuments(rejectionsQuery);
 
-  orders.forEach(order => {
+  allOrders.forEach(order => {
     const acceptedAt = order.statusHistory.find(h => h.status === 'ACCEPTED')?.timestamp;
     const readyAt = order.statusHistory.find(h => h.status === 'READY')?.timestamp;
     if (acceptedAt && readyAt) {
@@ -525,13 +668,34 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     }
   });
 
+  const paginatedOrders = await Order.find(query)
+    .populate('table', 'tableNumber')
+    .populate('items.menuItem', 'name')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const ordersByDateMap = {};
+  allOrders.forEach(o => {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    ordersByDateMap[dateStr] = (ordersByDateMap[dateStr] || 0) + 1;
+  });
+  const ordersByDate = Object.entries(ordersByDateMap).map(([date, count]) => ({ date, count }));
+
   res.json({
     success: true,
     data: {
-      totalOrders: orders.length,
+      totalOrders: allOrders.length,
       avgPrepTime: prepCount > 0 ? (totalPrepTime / prepCount).toFixed(2) : 0,
       rejectionsCount: rejections,
-      recentOrders: orders.sort((a, b) => b.createdAt - a.createdAt).slice(0, 10)
+      recentOrders: paginatedOrders,
+      ordersByDate: ordersByDate.slice(-10), // Last 10 days
+      pagination: {
+        total: allOrders.length,
+        page,
+        pages: Math.ceil(allOrders.length / limit),
+        limit
+      }
     }
   });
 });
@@ -539,8 +703,11 @@ const getMyChefStats = asyncHandler(async (req, res) => {
 const getMyStaffStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { startDate, endDate } = req.query;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
 
-  let query = { 
+  let query = {
     $or: [
       { createdBy: userId },
       { servedBy: userId }
@@ -557,21 +724,38 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
     }
   }
 
-  const orders = await Order.find(query)
+  const allOrders = await Order.find(query);
+  const createdCount = allOrders.filter(o => o.createdBy.toString() === userId.toString()).length;
+  const servedCount = allOrders.filter(o => o.servedBy?.toString() === userId.toString()).length;
+
+  const paginatedOrders = await Order.find(query)
     .populate('table', 'tableNumber')
     .populate('items.menuItem', 'name')
-    .sort({ createdAt: -1 });
-  
-  const createdCount = orders.filter(o => o.createdBy.toString() === userId.toString()).length;
-  const servedCount = orders.filter(o => o.servedBy?.toString() === userId.toString()).length;
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const ordersByDateMap = {};
+  allOrders.forEach(o => {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    ordersByDateMap[dateStr] = (ordersByDateMap[dateStr] || 0) + 1;
+  });
+  const ordersByDate = Object.entries(ordersByDateMap).map(([date, count]) => ({ date, count }));
 
   res.json({
     success: true,
     data: {
-      totalOrders: orders.length,
+      totalOrders: allOrders.length,
       createdCount,
       servedCount,
-      recentOrders: orders.slice(0, 15)
+      recentOrders: paginatedOrders,
+      ordersByDate: ordersByDate.slice(-10), // Last 10 days
+      pagination: {
+        total: allOrders.length,
+        page,
+        pages: Math.ceil(allOrders.length / limit),
+        limit
+      }
     }
   });
 });

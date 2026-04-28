@@ -21,6 +21,9 @@ export default function BookingsManagementPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('All');
@@ -39,8 +42,9 @@ export default function BookingsManagementPage() {
       };
       if (statusFilter !== 'All') params.status = statusFilter.toLowerCase();
 
-      const res = await api.get('/bookings', { params });
+      const res = await api.get(`/bookings?page=${currentPage}&limit=${itemsPerPage}`, { params });
       setBookings(res.data.data);
+      setTotalPages(res.data.pagination.pages);
     } catch (error) {
       toast.error('Failed to load bookings');
     } finally {
@@ -50,7 +54,7 @@ export default function BookingsManagementPage() {
 
   useEffect(() => {
     fetchBookings();
-  }, [selectedLocation, dateFilter, statusFilter]);
+  }, [selectedLocation, dateFilter, statusFilter, currentPage]);
 
   const updateStatus = async (id, status) => {
     const loadToast = toast.loading(`Updating status to ${status}...`);
@@ -410,6 +414,31 @@ export default function BookingsManagementPage() {
             <Calendar size={64} className="mx-auto text-zinc-800 mb-6" strokeWidth={1} />
             <h3 className="text-2xl font-black text-zinc-100 tracking-tight">No Bookings Found</h3>
             <p className="text-zinc-500 font-medium mt-2 max-w-sm mx-auto">The list is currently empty for the selected filters.</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-white/40 dark:bg-zinc-900/30 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 mt-10 shadow-sm backdrop-blur-md transition-colors">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              Protocol Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-white dark:hover:bg-zinc-700"
+              >
+                Prev Node
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-white dark:hover:bg-zinc-700"
+              >
+                Next Node
+              </button>
+            </div>
           </div>
         )}
       </div>

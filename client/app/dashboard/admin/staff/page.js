@@ -293,28 +293,20 @@ export default function LocationStaffPage() {
 
       const linkedStaffIds = new Set([
         ...mappedAdmins.flatMap(a =>
-          a.children.flatMap(locNode => locNode.children.map(s => s._id))
+          a.children.flatMap(locNode => locNode.children.flatMap(c => {
+            if (c.role === 'branch_admin' && c.children) {
+              return [c._id, ...c.children.map(s => s._id)];
+            }
+            return [c._id];
+          }))
         ),
-        ...independentBranches.flatMap(ba => ba.children.map(s => s._id))
+        ...independentBranches.flatMap(ba => [ba._id, ...ba.children.map(s => s._id)])
       ]);
-      const independentStaff = operationalStaff.filter(s => !linkedStaffIds.has(s._id));
 
+      const independentStaff = operationalStaff.filter(s => !linkedStaffIds.has(s._id));
       roots = [...mappedAdmins, ...independentBranches, ...independentStaff];
     } else if (currentUser?.role === 'admin') {
       roots = getAdminChildren(currentUser);
-
-      const linkedStaffIds = new Set(roots.flatMap(ba => ba.children.map(s => s._id)));
-      const myLocIds = (currentUser.accessibleLocations || []).map(loc => (loc._id || loc).toString());
-      const myLocNames = (currentUser.accessibleLocations || []).map(loc => loc.name?.toLowerCase().trim());
-
-      const myIndependentStaff = operationalStaff.filter(s => {
-        const sLoc = s.assignedLocation;
-        if (!sLoc) return false;
-        const isMyLoc = myLocIds.includes((sLoc._id || sLoc).toString()) ||
-          myLocNames.includes(sLoc.name?.toLowerCase().trim());
-        return isMyLoc && !linkedStaffIds.has(s._id);
-      });
-      roots = [...roots, ...myIndependentStaff];
     } else if (currentUser?.role === 'branch_admin') {
       const myLocId = (currentUser.assignedLocation?._id || currentUser.assignedLocation)?.toString();
       const myLocName = currentUser.assignedLocation?.name?.toLowerCase().trim();
@@ -626,11 +618,11 @@ export default function LocationStaffPage() {
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Phone</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect
@@ -662,7 +654,7 @@ export default function LocationStaffPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pincode</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Salary (₹)</label>

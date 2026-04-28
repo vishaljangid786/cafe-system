@@ -96,6 +96,7 @@ const orderSchema = new mongoose.Schema(
 
 // Index for createdAt as requested
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ createdBy: 1 });
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;

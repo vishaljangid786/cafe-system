@@ -52,14 +52,14 @@ export default function SalaryPage() {
               <div>
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="px-3 py-1 bg-amber-100 dark:bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-amber-200 dark:border-amber-500/20">
-                    Financial Operations
+                    Accounts
                   </div>
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-black text-gray-900 dark:text-zinc-100 tracking-tighter leading-tight">
-                  Staff <span className="text-amber-600">Remuneration</span>
+                  Staff <span className="text-amber-600">Salary</span>
                 </h1>
                 <p className="text-gray-500 dark:text-zinc-500 text-sm mt-4 font-medium max-w-md">
-                  Real-time payroll engine processing monthly disbursements based on validated attendance logs.
+                  Monthly salary calculation based on staff attendance.
                 </p>
               </div>
 
@@ -92,7 +92,7 @@ export default function SalaryPage() {
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                 <DollarSign size={120} />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">Gross Disbursement</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">Total Salary Payout</p>
               <div className="text-4xl font-black tracking-tighter">₹{totalPayout.toLocaleString()}</div>
               <div className="mt-6 flex items-center text-[10px] font-black uppercase bg-white/10 w-fit px-3 py-1 rounded-full border border-white/10">
                 <TrendingUp size={12} className="mr-2" /> +4.2% vs last month
@@ -102,7 +102,7 @@ export default function SalaryPage() {
 
           <SlideIn delay={0.2}>
             <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-4">Headcount Efficiency</p>
+              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-4">Average Attendance</p>
               <div className="text-4xl font-black text-gray-900 dark:text-zinc-100 tracking-tighter">
                 {salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100).toFixed(1) : 0}%
               </div>
@@ -118,7 +118,7 @@ export default function SalaryPage() {
 
           <SlideIn delay={0.3}>
             <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-4">Average Take-Home</p>
+              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-4">Average Salary</p>
               <div className="text-4xl font-black text-gray-900 dark:text-zinc-100 tracking-tighter">
                 ₹{salaries.length > 0 ? Math.round(totalPayout / salaries.length).toLocaleString() : 0}
               </div>
@@ -134,13 +134,13 @@ export default function SalaryPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-[3rem] shadow-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
             <div className="p-8 border-b border-gray-50 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
               <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight flex items-center">
-                <FileText className="mr-3 text-amber-600" size={24} /> Detailed <span className="ml-2 text-amber-600">Breakdown</span>
+                <FileText className="mr-3 text-amber-600" size={24} /> Salary <span className="ml-2 text-amber-600">List</span>
               </h2>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Search employee..."
+                  placeholder="Search Staff..."
                   className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 outline-none text-xs font-bold dark:text-zinc-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -152,9 +152,9 @@ export default function SalaryPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/30 dark:bg-zinc-800/30 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
-                    <th className="px-10 py-6">Staff Information</th>
-                    <th className="px-10 py-6 text-center">Log Analysis</th>
-                    <th className="px-10 py-6 text-right">Action</th>
+                    <th className="px-10 py-6">Staff Details</th>
+                    <th className="px-10 py-6 text-center">Attendance Summary</th>
+                    <th className="px-10 py-6 text-right">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -169,7 +169,7 @@ export default function SalaryPage() {
                       <td colSpan="4" className="px-10 py-32 text-center">
                         <div className="flex flex-col items-center opacity-20">
                           <Receipt size={64} className="mb-4" />
-                          <p className="text-sm font-black uppercase tracking-widest">Zero entries found</p>
+                          <p className="text-sm font-black uppercase tracking-widest">No records found</p>
                         </div>
                       </td>
                     </tr>
@@ -201,11 +201,11 @@ export default function SalaryPage() {
                           <div className="flex -space-x-2 mb-3">
                             <div className="w-10 h-10 rounded-xl bg-green-500 text-white flex flex-col items-center justify-center border-2 border-white dark:border-zinc-900 shadow-md">
                               <span className="text-xs font-black leading-none">{item.totalPresent}</span>
-                              <span className="text-[6px] font-black uppercase">Prs</span>
+                              <span className="text-[6px] font-black uppercase">Pres</span>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex flex-col items-center justify-center border-2 border-white dark:border-zinc-900 shadow-md">
                               <span className="text-xs font-black leading-none">{item.totalHalfDay}</span>
-                              <span className="text-[6px] font-black uppercase">Hlf</span>
+                              <span className="text-[6px] font-black uppercase">Half</span>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-red-500 text-white flex flex-col items-center justify-center border-2 border-white dark:border-zinc-900 shadow-md">
                               <span className="text-xs font-black leading-none">{item.totalAbsent}</span>
@@ -222,7 +222,7 @@ export default function SalaryPage() {
                           onClick={() => setViewingUser(item)}
                           className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
                         >
-                          View Breakdown
+                          View Salary
                         </button>
                       </td>
                     </motion.tr>
@@ -237,7 +237,7 @@ export default function SalaryPage() {
         <Modal
           isOpen={!!viewingUser}
           onClose={() => setViewingUser(null)}
-          title="Personnel Remuneration Details"
+          title="Staff Salary Details"
           maxWidth="max-w-2xl"
         >
           {viewingUser && (
@@ -255,13 +255,13 @@ export default function SalaryPage() {
                         {viewingUser.role?.replace('_', ' ')}
                       </span>
                       <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                        Verified Identity
+                        Staff
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Contracted Base</p>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Salary</p>
                   <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">
                     ₹{viewingUser.monthlySalary.toLocaleString()}
                   </p>
@@ -272,7 +272,7 @@ export default function SalaryPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Attendance Analysis ({month})</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Attendance Detail ({month})</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/10">
                         <p className="text-[10px] font-black uppercase text-green-600 mb-1">Present</p>
@@ -299,7 +299,7 @@ export default function SalaryPage() {
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform">
                       <Wallet size={80} />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-4">Calculated Net Payable</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-4">Net Salary to Pay</p>
                     <div className="text-4xl font-black tracking-tighter mb-2">₹{Math.round(viewingUser.calculatedSalary).toLocaleString()}</div>
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-60">
                       Based on {viewingUser.payableDays} Effective Days
@@ -309,7 +309,7 @@ export default function SalaryPage() {
                   <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/10 flex items-start gap-3">
                     <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-[10px] font-bold text-amber-900/60 dark:text-amber-200/60 leading-relaxed uppercase tracking-widest">
-                      Calculated using automated payroll algorithm weighting full days, half days, and late deductions.
+                      Salary calculated based on total working days and attendance.
                     </p>
                   </div>
                 </div>
@@ -326,10 +326,10 @@ export default function SalaryPage() {
                 <Button
                   className="flex-1 py-4 !rounded-2xl font-black text-xs uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xl"
                   onClick={() => {
-                    toast.success('Paystub exported to secure matrix');
+                    toast.success('Salary slip exported');
                   }}
                 >
-                  Generate Paystub
+                  Download Salary Slip
                 </Button>
               </div>
             </div>

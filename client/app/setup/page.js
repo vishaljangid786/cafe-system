@@ -24,7 +24,9 @@ export default function SetupPage() {
     city: 'System',
     state: 'Global',
     country: 'India',
-    highestQualification: 'Post Graduate'
+    pincode: '110001',
+    highestQualification: 'Post Graduate',
+    monthlySalary: '0'
   });
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function SetupPage() {
       return;
     }
     setSubmitting(true);
-    const loadToast = toast.loading('Initializing primary Super Admin...');
+    const loadToast = toast.loading('Creating admin account...');
 
     try {
       const data = new FormData();
@@ -71,10 +73,10 @@ export default function SetupPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      toast.success('System initialized. Welcome, Super Admin.', { id: loadToast });
+      toast.success('Setup complete. Welcome!', { id: loadToast });
       router.push('/login');
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'Setup failure. Verify parameters.';
+      const msg = error.response?.data?.message || error.message || 'Setup failed. Please check your details.';
       toast.error(msg, { id: loadToast });
     } finally {
       setSubmitting(false);
@@ -86,7 +88,7 @@ export default function SetupPage() {
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-16 w-16 text-amber-500 animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Initializing Setup Matrix</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Loading Setup</p>
         </div>
       </div>
     );
@@ -114,24 +116,24 @@ export default function SetupPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-amber-500">OS</span></h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Genesis Protocol</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Initial Setup</p>
               </div>
             </div>
           </motion.div>
 
           <div className="space-y-12">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
-              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Master <br /><span className="text-amber-500 italic">Initialization</span></h2>
+              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Admin <br /><span className="text-amber-500 italic">Setup</span></h2>
               <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">
-                System uninitialized. Establish the primary Super Admin identity to activate the CafeOS neural network and commence operations.
+                System is not set up yet. Please create the main administrator account to start using the system.
               </p>
             </motion.div>
 
             <div className="flex items-center gap-10">
               {[
-                { icon: Terminal, label: "Mode", value: "Provisioning" },
-                { icon: Shield, label: "Security", value: "Master Level" },
-                { icon: Activity, label: "Status", value: "Awaiting Core" }
+                { icon: Terminal, label: "Mode", value: "Setup" },
+                { icon: Shield, label: "Security", value: "High Level" },
+                { icon: Activity, label: "Status", value: "Ready" }
               ].map((item, i) => (
                 <div key={i} className="space-y-1">
                   <div className="flex items-center gap-2 text-amber-500/50">
@@ -158,15 +160,15 @@ export default function SetupPage() {
 
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-xl relative z-10 py-10">
           <div className="mb-12 text-center lg:text-left">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">System Setup Alpha</span>
-            <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Master Identity</h2>
-            <p className="text-sm text-zinc-500 font-medium mt-2">Provide root-level credentials to secure the system.</p>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">System Setup</span>
+            <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Admin Details</h2>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Enter your details to create the main admin account.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2 md:col-span-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Full Identity Name</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Full Name</label>
                 <div className="relative group">
                   <User className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
                   <input
@@ -181,7 +183,7 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Core Terminal (Email)</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Email Address</label>
                 <div className="relative group">
                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
                   <input
@@ -197,7 +199,7 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Secure Passphrase</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
                 <div className="relative group">
                   <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
                   <input
@@ -213,7 +215,7 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Contact Node (Phone)</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Phone Number</label>
                 <div className="relative group">
                   <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
                   <input
@@ -228,9 +230,9 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Aadhar Node ID</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Aadhar Number</label>
                 <div className="relative group">
-                  <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <Shield className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
                   <input
                     required
                     name="aadharNumber"
@@ -238,13 +240,29 @@ export default function SetupPage() {
                     onChange={handleChange}
                     maxLength={12}
                     className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
-                    placeholder="12-digit UID"
+                    placeholder="12-digit Number"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Pincode</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input
+                    required
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    maxLength={6}
+                    className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    placeholder="6-digit Pincode"
                   />
                 </div>
               </div>
 
               <div className="md:col-span-2 space-y-3">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Root Identity Scan (Aadhar)</label>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Upload Aadhar Image</label>
                 <div className="group relative flex flex-col items-center justify-center min-h-[200px] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2rem] hover:border-amber-500 transition-all cursor-pointer overflow-hidden shadow-xl">
                   <input type="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} accept="image/*" />
                   {image ? (
@@ -255,7 +273,7 @@ export default function SetupPage() {
                   ) : (
                     <>
                       <Zap className="h-10 w-10 text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" />
-                      <p className="text-xs font-black text-zinc-500 uppercase tracking-widest text-center">Upload Master Document Scan</p>
+                      <p className="text-xs font-black text-zinc-500 uppercase tracking-widest text-center">Upload Photo</p>
                     </>
                   )}
                 </div>
@@ -269,12 +287,12 @@ export default function SetupPage() {
                 className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20"
                 icon={ShieldCheck}
               >
-                {submitting ? <Loader2 className="animate-spin" /> : 'Activate Master Protocol'}
+                {submitting ? <Loader2 className="animate-spin" /> : 'Finish Setup'}
               </Button>
             </div>
           </form>
 
-          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Root Initialization Interface &copy; 2026 CafeOS</p>
+          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Cafe Management System &copy; 2026 CafeOS</p>
         </motion.div>
       </div>
     </div>

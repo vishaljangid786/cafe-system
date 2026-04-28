@@ -26,7 +26,7 @@ export default function StaffDashboard() {
               Welcome back, <span className="text-amber-600">{user?.name?.split(' ')[0]}</span>!
             </h1>
             <p className="text-gray-500 dark:text-zinc-500 font-medium tracking-tight">
-              Operational portal for the <span className="text-gray-900 dark:text-zinc-200 font-black">{user?.assignedLocation?.city}</span> node.
+              Staff dashboard for the <span className="text-gray-900 dark:text-zinc-200 font-black">{user?.assignedLocation?.city}</span> branch.
             </p>
           </div>
         </SlideIn>
@@ -40,13 +40,13 @@ export default function StaffDashboard() {
                     <Coffee size={28} />
                   </div>
                   <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 mb-3 tracking-tight flex items-center">
-                    Floor Command
+                    Tables & Orders
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-zinc-500 font-medium leading-relaxed mb-8 flex-grow">
                     Manage active tables, take orders, and generate real-time bills for your assigned customers.
                   </p>
                   <div className="flex items-center text-amber-600 font-black text-xs uppercase tracking-widest group-hover:translate-x-2 transition-transform">
-                    Open Table Manager <ArrowRight size={14} className="ml-2" />
+                    Open Tables <ArrowRight size={14} className="ml-2" />
                   </div>
                 </div>
               </Link>
@@ -66,7 +66,7 @@ export default function StaffDashboard() {
                   Attendance is recorded by your Branch Admin. Review your monthly presence and salary disbursements through notifications.
                 </p>
                 <div className="mt-8 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] w-fit">
-                  Auto-Sync Enabled
+                  Active
                 </div>
               </div>
             </CardHover>

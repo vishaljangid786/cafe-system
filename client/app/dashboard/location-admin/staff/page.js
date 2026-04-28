@@ -28,7 +28,7 @@ export default function LocationStaffPage() {
       const res = await api.get('/users');
       setStaff(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync personnel roster');
+      toast.error('Failed to load staff list');
     } finally {
       setLoading(false);
     }
@@ -57,10 +57,10 @@ export default function LocationStaffPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Synchronizing updates...');
+    const loadToast = toast.loading('Saving changes...');
     try {
       await api.put(`/users/${editingStaff._id}`, formData);
-      toast.success('Personnel profile updated', { id: loadToast });
+      toast.success('Staff profile updated', { id: loadToast });
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
@@ -70,13 +70,13 @@ export default function LocationStaffPage() {
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) return;
-    const loadToast = toast.loading('Purging personnel record...');
+    const loadToast = toast.loading('Removing staff member...');
     try {
       await api.delete(`/users/${showDeleteConfirm}`);
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Personnel liquidated', { id: loadToast });
+      toast.success('Staff member removed', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Purge protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Error removing staff', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
@@ -95,9 +95,9 @@ export default function LocationStaffPage() {
           <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-amber-600" size={36} /> Branch <span className="ml-3 text-amber-600">Personnel</span>
+                <Users className="mr-4 text-amber-600" size={36} /> Branch <span className="ml-3 text-amber-600">Staff</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Strategic roster management for operational personnel.</p>
+              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Manage your branch staff and their details.</p>
             </div>
             <div className="flex items-center space-x-6">
 
@@ -107,7 +107,7 @@ export default function LocationStaffPage() {
                   whileTap={{ scale: 0.95 }}
                   className="bg-zinc-900 dark:bg-amber-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/10 flex items-center"
                 >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Authorize Staff
+                  <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
                 </motion.button>
               </Link>
             </div>
@@ -156,14 +156,14 @@ export default function LocationStaffPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
                         className="p-3 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-2xl transition-all"
-                        title="Modify Profile"
+                        title="Edit Profile"
                       >
                         <Edit3 size={20} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
                         className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all"
-                        title="Liquidate Entry"
+                        title="Remove Staff"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -176,7 +176,7 @@ export default function LocationStaffPage() {
           {staff.length === 0 && (
             <div className="col-span-full py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-4 border-dashed border-gray-50 dark:border-zinc-800 flex flex-col items-center justify-center opacity-30">
               <ShieldAlert size={64} className="mb-6" />
-              <p className="font-black text-sm uppercase tracking-widest">Roster is currently empty</p>
+              <p className="font-black text-sm uppercase tracking-widest">Staff list is empty</p>
             </div>
           )}
         </div>
@@ -184,7 +184,7 @@ export default function LocationStaffPage() {
         <Modal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          title="Modify Personnel Profile"
+          title="Edit Staff Profile"
         >
           <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -193,7 +193,7 @@ export default function LocationStaffPage() {
                 <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Node</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
                 <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function LocationStaffPage() {
                 <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
                 <PremiumSelect 
-                  label="Gender Node"
+                  label="Gender"
                   value={formData.gender}
                   onChange={val => setFormData({ ...formData, gender: val })}
                   options={[
@@ -220,7 +220,7 @@ export default function LocationStaffPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Base Operations Address</label>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Address</label>
               <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
@@ -238,7 +238,7 @@ export default function LocationStaffPage() {
                 <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Yield (₹)</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Salary (₹)</label>
                 <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function LocationStaffPage() {
               whileTap={{ scale: 0.98 }}
               className="w-full py-5 bg-zinc-900 dark:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/20 mt-4"
             >
-              Update Personnel Records
+              Update Staff Records
             </motion.button>
           </form>
         </Modal>
@@ -257,15 +257,15 @@ export default function LocationStaffPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDelete}
-          title="Liquidate Record?"
-          message="This personnel record will be permanently purged from the system network."
+          title="Remove Staff Member?"
+          message="This staff member will be permanently removed from the system."
         />
 
         {/* Detailed Personnel Details Modal */}
         <Modal
           isOpen={!!viewingStaff}
           onClose={() => setViewingStaff(null)}
-          title="Personnel Details Intelligence"
+          title="Staff Details"
           maxWidth="max-w-3xl"
         >
           {viewingStaff && (
@@ -294,13 +294,13 @@ export default function LocationStaffPage() {
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                      Active Deployment
+                      Working
                     </span>
                   </div>
                 </div>
 
                 <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 text-right min-w-[180px]">
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Yield</p>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Salary</p>
                   <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
@@ -311,27 +311,27 @@ export default function LocationStaffPage() {
                   {/* Identity Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <CreditCard size={14} className="text-amber-600" /> Identity Credentials
+                      <CreditCard size={14} className="text-amber-600" /> Identity Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <Hash className="text-amber-600" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Index</p>
+                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Number</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <Phone className="text-amber-600" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Primary Contact</p>
+                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Phone Number</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.phone}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <Award className="text-amber-600" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Academic Standing</p>
+                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Qualification</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
@@ -341,15 +341,15 @@ export default function LocationStaffPage() {
                   {/* Demographic Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Globe size={14} className="text-amber-600" /> Demographic Intelligence
+                      <Globe size={14} className="text-amber-600" /> Personal Details
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Temporal Age</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Solar Years</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
+                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
                       </div>
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender Node</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
                         <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
                       </div>
                     </div>
@@ -360,7 +360,7 @@ export default function LocationStaffPage() {
                   {/* Address Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <MapPin size={14} className="text-amber-600" /> Operational Base
+                      <MapPin size={14} className="text-amber-600" /> Address
                     </h3>
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                       <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
@@ -374,7 +374,7 @@ export default function LocationStaffPage() {
                   {/* Document Proof Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Info size={14} className="text-amber-600" /> Identity Proof (Aadhar)
+                      <Info size={14} className="text-amber-600" /> Aadhar Card
                     </h3>
                     {viewingStaff.aadharImage ? (
                       <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
@@ -390,13 +390,13 @@ export default function LocationStaffPage() {
                           className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
                         >
                           <Globe size={24} className="text-amber-500" />
-                          <span className="font-black text-[10px] uppercase tracking-widest">Verify Original Scan</span>
+                          <span className="font-black text-[10px] uppercase tracking-widest">View Original Image</span>
                         </a>
                       </div>
                     ) : (
                       <div className="rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center justify-center text-zinc-400 aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-center">Identity Scan Missing</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-center">Aadhar Image Missing</p>
                       </div>
                     )}
                   </div>
@@ -410,7 +410,7 @@ export default function LocationStaffPage() {
                   className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
                   onClick={() => setViewingStaff(null)}
                 >
-                  Terminate Inspection
+                  Close
                 </Button>
                 <Button
                   className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-2xl"
@@ -419,7 +419,7 @@ export default function LocationStaffPage() {
                     setViewingStaff(null);
                   }}
                 >
-                  Refine Credentials
+                  Edit Details
                 </Button>
               </div>
             </div>

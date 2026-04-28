@@ -51,6 +51,14 @@ const menuItemSchema = new mongoose.Schema(
       ref: 'Location',
       default: null,
     },
+    availableBranches: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Location',
+    }],
+    isGlobal: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

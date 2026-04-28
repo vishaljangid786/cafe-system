@@ -11,6 +11,7 @@ import Modal from '../../../components/ui/Modal';
 import TableCard from '../../../components/tables/TableCard';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function StaffTablesPage() {
   const { user, socket } = useAuth();
@@ -89,8 +90,10 @@ export default function StaffTablesPage() {
   };
 
   const fetchMenu = async () => {
+    if (!user?.assignedLocation) return;
     try {
-      const res = await api.get('/menu');
+      const locId = user.assignedLocation?._id || user.assignedLocation;
+      const res = await api.get(`/menu?locationId=${locId}`);
       setMenuItems(res.data.data);
     } catch (error) {
       console.error("Menu sync failed");
@@ -104,10 +107,8 @@ export default function StaffTablesPage() {
 
   useEffect(() => {
     if (socket && user?.assignedLocation) {
-      const branchId = user.assignedLocation._id || user.assignedLocation;
-      socket.emit('join_room', `branch_${branchId}`);
-      socket.emit('join_room', `branch_${branchId}_staff`);
-
+      // Listeners are now attached to rooms joined in AuthContext
+      socket.on('table:update', () => fetchTables(true));
       socket.on('order:new', () => fetchTables(true));
       socket.on('order:update', () => {
         fetchTables(true);
@@ -119,6 +120,7 @@ export default function StaffTablesPage() {
       });
 
       return () => {
+        socket.off('table:update');
         socket.off('order:new');
         socket.off('order:update');
         socket.off('order:ready');
@@ -453,27 +455,23 @@ export default function StaffTablesPage() {
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 dark:text-white"
+                        className="w-full bg-muted border border-border rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                        Table Party
-                      </label>
-                      <div className="relative">
-                        <input 
-                          type="number"
-                          disabled={user?.role === 'staff'}
-                          className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all disabled:opacity-40 text-foreground"
-                          value={selectedTable.numberOfPeople || 0}
-                          onChange={(e) => handleSyncOrders(pendingOrders, { numberOfPeople: e.target.value })}
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <Users size={14} className="text-muted-foreground" />
-                        </div>
-                      </div>
+                    <div>
+                      <PremiumSelect
+                        label="Table Party"
+                        placeholder="Select Guests"
+                        options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
+                          value: i + 1,
+                          label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
+                        }))}
+                        value={selectedTable.numberOfPeople || 1}
+                        onChange={(val) => handleSyncOrders(pendingOrders, { numberOfPeople: val })}
+                        icon={Users}
+                      />
                     </div>
                   </div>
                 </div>
@@ -747,6 +745,7 @@ export default function StaffTablesPage() {
                         <div
                           key={item._id}
                           onClick={() => {
+                            if (!item.isAvailable) return toast.error(`${item.name} is currently out of stock!`, { icon: '🚫' });
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
                             let newOrders;
@@ -768,7 +767,7 @@ export default function StaffTablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-card p-4 rounded-3xl border border-border hover:border-accent/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-accent/5"
+                          className={`bg-card p-4 rounded-3xl border transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-accent/5 ${!item.isAvailable ? 'opacity-50 grayscale' : 'hover:border-accent/30'}`}
                         >
                           <div className="h-24 w-full rounded-2xl bg-muted overflow-hidden relative shadow-inner">
                             {item.image ? (
@@ -778,21 +777,38 @@ export default function StaffTablesPage() {
                                 <Coffee size={20} />
                               </div>
                             )}
+                            
+                            {!item.isAvailable && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px]">
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] px-3 py-1 border border-white/30 rounded-full">Sold Out</span>
+                              </div>
+                            )}
+
                             <div className="absolute top-2 left-2">
                               <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest text-white ${item.dietaryType === 'veg' ? 'bg-green-500' : 'bg-red-500'}`}>
                                 {item.dietaryType || 'Cuisine'}
                               </div>
                             </div>
-                            <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                              <Plus className="text-white drop-shadow-md" size={32} strokeWidth={3} />
-                            </div>
+                            
+                            {item.isAvailable && (
+                              <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                <Plus className="text-white drop-shadow-md" size={32} strokeWidth={3} />
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <div className="text-[11px] font-black text-foreground leading-tight truncate">{item.name}</div>
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="text-[11px] font-black text-foreground leading-tight truncate flex-1">{item.name}</div>
+                              {item.isAvailable && item.stock !== undefined && (
+                                <div className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter shrink-0 ${item.stock < 10 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                  {item.stock} left
+                                </div>
+                              )}
+                            </div>
                             <div className="flex items-center justify-between mt-1">
                               <div className="text-[10px] font-bold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                               <div className="h-6 w-6 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-accent group-hover:text-black transition-all">
-                                <Plus size={12} />
+                                {item.isAvailable ? <Plus size={12} /> : <Zap size={10} className="opacity-40" />}
                               </div>
                             </div>
                           </div>

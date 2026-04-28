@@ -34,7 +34,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
                 {reservation.status}
               </span>
               <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] border-[var(--color-border)]">
-                {reservation.reservationType === 'full-location' ? 'Full Branch' : 'Table Selective'}
+                {reservation.reservationType === 'full-location' ? 'Full Branch' : 'Table Booking'}
               </span>
             </div>
             <h2 className="text-2xl font-black text-[var(--color-text-primary)] leading-tight">
@@ -45,7 +45,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
             </p>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">Fiscal Impact</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">Total Amount</span>
             <span className="text-3xl font-black text-[var(--color-text-primary)]">
               ₹{reservation.totalAmount}
             </span>
@@ -57,7 +57,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
           <div className="space-y-6">
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] mb-4 flex items-center gap-2">
-                <CalendarDays size={14} /> Chrono Protocol
+                <CalendarDays size={14} /> Timing
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -65,7 +65,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
                     <Calendar size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Scheduled Date</p>
+                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Date</p>
                     <p className="font-bold text-[var(--color-text-primary)]">
                       {format(new Date(reservation.date), 'EEEE, MMMM do, yyyy')}
                     </p>
@@ -76,7 +76,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
                     <Clock size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Time Phase</p>
+                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Time</p>
                     <p className="font-bold text-[var(--color-text-primary)]">
                       {reservation.startTime} — {reservation.endTime}
                     </p>
@@ -87,7 +87,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
                     <MapPin size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Assigned Location</p>
+                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-tighter">Location</p>
                     <p className="font-bold text-[var(--color-text-primary)]">
                       {reservation.locationId?.name}
                     </p>
@@ -100,7 +100,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
             {reservation.reservationType === 'table' && (
               <div>
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] mb-4 flex items-center gap-2">
-                  <Users size={14} /> Resource Allocation
+                  <Users size={14} /> Tables
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {reservation.tableIds?.map(table => (
@@ -118,7 +118,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
           <div className="space-y-6">
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] mb-4 flex items-center gap-2">
-                <Users size={14} /> Client Identity
+                <Users size={14} /> Customer
               </h3>
               <div className="p-4 rounded-2xl bg-[var(--color-bg-soft)]/50 border border-[var(--color-border)]">
                 <p className="text-lg font-black text-[var(--color-text-primary)] leading-none mb-1">{reservation.customerName}</p>
@@ -130,15 +130,15 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
 
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] mb-4 flex items-center gap-2">
-                <CreditCard size={14} /> Fiscal Ledger
+                <CreditCard size={14} /> Payment
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-bg-soft)]/30">
-                  <span className="text-xs font-bold text-[var(--color-text-muted)]">Advance Commitment</span>
+                  <span className="text-xs font-bold text-[var(--color-text-muted)]">Advance Paid</span>
                   <span className="font-black text-[var(--color-primary)]">₹{reservation.advancePayment}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-bg-soft)]/30">
-                  <span className="text-xs font-bold text-[var(--color-text-muted)]">Outstanding Balance</span>
+                  <span className="text-xs font-bold text-[var(--color-text-muted)]">Pending Amount</span>
                   <span className="font-black text-[var(--color-text-primary)]">
                     ₹{reservation.totalAmount - reservation.advancePayment}
                   </span>
@@ -158,7 +158,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
         {reservation.notes && (
           <div className="pt-6 border-t border-[var(--color-border)]">
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] mb-3 flex items-center gap-2">
-              <FileText size={14} /> Protocol Notes
+              <FileText size={14} /> Notes
             </h3>
             <div className="p-4 rounded-2xl bg-[var(--color-bg-soft)]/50 border border-[var(--color-border)] italic text-[var(--color-text-muted)] text-sm">
               &quot;{reservation.notes}&quot;
@@ -182,7 +182,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
               }}
               className="px-8 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg)] font-black rounded-xl transition-all shadow-[var(--shadow-premium)] hover:scale-[1.02]"
             >
-              Modify Protocol
+              Edit Reservation
             </button>
           )}
         </div>

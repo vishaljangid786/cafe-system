@@ -28,17 +28,21 @@ export default function AdminOrdersDashboard() {
   const [branchFilter, setBranchFilter] = useState('all');
   const [locations, setLocations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 24; // Grids look better with 24 (4 columns)
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const branchQuery = branchFilter !== 'all' ? `?branchId=${branchFilter}` : '';
+      const branchQuery = branchFilter !== 'all' ? `&branchId=${branchFilter}` : '';
       const [orderRes, analyticsRes, locRes] = await Promise.all([
-        api.get(`/orders${branchQuery}`),
-        api.get(`/orders/analytics${branchQuery}`),
+        api.get(`/orders?page=${currentPage}&limit=${itemsPerPage}${branchQuery}`),
+        api.get(`/orders/analytics?${branchQuery.replace('&', '')}`),
         api.get('/locations')
       ]);
       setOrders(orderRes.data.data);
+      setTotalPages(orderRes.data.pagination.pages);
       setAnalytics(analyticsRes.data.data);
       setLocations(locRes.data.data);
     } catch (error) {
@@ -56,7 +60,7 @@ export default function AdminOrdersDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [branchFilter]);
+  }, [branchFilter, currentPage]);
 
   const handleForceComplete = async (id) => {
     try {
@@ -103,7 +107,7 @@ export default function AdminOrdersDashboard() {
                 {locations.find(l => l._id === branchFilter)?.name || 'My Branch'}
               </div>
             ) : (
-              <PremiumSelect 
+              <PremiumSelect
                 label="Operational Sector"
                 value={branchFilter}
                 onChange={val => setBranchFilter(val)}
@@ -236,6 +240,31 @@ export default function AdminOrdersDashboard() {
               ))}
             </AnimatePresence>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-8 py-6 bg-card border border-border rounded-[2rem] mt-10 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Matrix Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+                >
+                  Previous Sector
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+                >
+                  Next Sector
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </PageTransition>

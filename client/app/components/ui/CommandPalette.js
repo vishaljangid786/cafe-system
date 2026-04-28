@@ -52,9 +52,9 @@ export default function CommandPalette() {
         // Search local navigation and users
         const navItems = [
           { type: 'nav', name: 'Go to Dashboard', path: '/dashboard/admin', icon: Navigation },
-          { type: 'nav', name: 'Personnel Matrix', path: '/dashboard/admin/users', icon: User },
-          { type: 'nav', name: 'Menu & Inventory', path: '/dashboard/admin/menu', icon: FileSpreadsheet },
-          { type: 'nav', name: 'Expense Logs', path: '/dashboard/admin/expenses', icon: Shield },
+          { type: 'nav', name: 'Staff List', path: '/dashboard/admin/users', icon: User },
+          { type: 'nav', name: 'Menu & Items', path: '/dashboard/admin/menu', icon: FileSpreadsheet },
+          { type: 'nav', name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
         ].filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
 
         let userResults = [];
@@ -151,7 +151,7 @@ export default function CommandPalette() {
 
               <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
                 {loading && (
-                  <div className="p-4 text-center text-zinc-400 text-sm font-medium">Synchronizing matrix...</div>
+                  <div className="p-4 text-center text-zinc-400 text-sm font-medium">Searching...</div>
                 )}
                 
                 {!loading && results.length === 0 && search && (
@@ -166,9 +166,9 @@ export default function CommandPalette() {
                     <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-2">Quick Navigation</div>
                     <div className="grid grid-cols-1 gap-1">
                       {[
-                        { name: 'Personnel Matrix', path: '/dashboard/admin/users', icon: User },
-                        { name: 'Analytics Terminal', path: '/dashboard/admin', icon: Navigation },
-                        { name: 'Financial Logs', path: '/dashboard/admin/expenses', icon: Shield },
+                        { name: 'Staff List', path: '/dashboard/admin/users', icon: User },
+                        { name: 'Dashboard', path: '/dashboard/admin', icon: Navigation },
+                        { name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
                       ].map((item, idx) => (
                         <button
                           key={idx}
@@ -218,7 +218,7 @@ export default function CommandPalette() {
                 </div>
                 <div className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <Command size={12} />
-                  Enterprise Matrix v1.0
+                  Cafe Management v1.0
                 </div>
               </div>
             </motion.div>

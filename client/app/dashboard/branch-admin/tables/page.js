@@ -11,6 +11,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import TableCard from '../../../components/tables/TableCard';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
+import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
 
 export default function TablesPage() {
@@ -568,26 +569,23 @@ export default function TablesPage() {
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-zinc-300 dark:text-white"
+                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-zinc-300 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">
-                        Table Party
-                      </label>
-                      <div className="relative">
-                        <input 
-                          type="number"
-                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
-                          value={selectedTable.numberOfPeople || 0}
-                          onChange={(e) => handleSyncOrders(pendingOrders, { numberOfPeople: e.target.value })}
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <Users size={14} className="text-zinc-400" />
-                        </div>
-                      </div>
+                    <div>
+                      <PremiumSelect
+                        label="Table Party"
+                        placeholder="Select Guests"
+                        options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
+                          value: i + 1,
+                          label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
+                        }))}
+                        value={selectedTable.numberOfPeople || 1}
+                        onChange={(val) => handleSyncOrders(pendingOrders, { numberOfPeople: val })}
+                        icon={Users}
+                      />
                     </div>
                   </div>
                 </div>

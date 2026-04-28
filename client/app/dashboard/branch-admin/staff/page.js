@@ -22,11 +22,16 @@ export default function BranchStaffPage() {
     name: '', email: '', phone: '', age: '', gender: 'Male',
     address1: '', city: '', state: '', pincode: '', monthlySalary: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 12;
 
   const fetchStaff = async () => {
     try {
-      const res = await api.get('/users');
+      setLoading(true);
+      const res = await api.get(`/users?page=${currentPage}&limit=${itemsPerPage}`);
       setStaff(res.data.data);
+      setTotalPages(res.data.pagination.pages);
     } catch (error) {
       toast.error('Failed to sync personnel roster');
     } finally {
@@ -36,7 +41,7 @@ export default function BranchStaffPage() {
 
   useEffect(() => {
     fetchStaff();
-  }, []);
+  }, [currentPage]);
 
   const handleEdit = (member) => {
     setEditingStaff(member);
@@ -74,9 +79,9 @@ export default function BranchStaffPage() {
     try {
       await api.delete(`/users/${showDeleteConfirm}`);
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Personnel liquidated', { id: loadToast });
+      toast.success('Staff record removed', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Purge protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Delete failed', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
@@ -107,7 +112,7 @@ export default function BranchStaffPage() {
                   whileTap={{ scale: 0.95 }}
                   className="bg-zinc-900 dark:bg-amber-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/10 flex items-center"
                 >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Authorize Staff
+                  <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
                 </motion.button>
               </Link>
             </div>
@@ -181,6 +186,31 @@ export default function BranchStaffPage() {
           )}
         </div>
 
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              Protocol Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         <Modal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
@@ -201,11 +231,11 @@ export default function BranchStaffPage() {
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Phone</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect 
@@ -237,7 +267,7 @@ export default function BranchStaffPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pincode</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Yield (₹)</label>
@@ -347,8 +377,8 @@ export default function BranchStaffPage() {
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Temporal Age</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Solar Years</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
+                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
                       </div>
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender Node</p>

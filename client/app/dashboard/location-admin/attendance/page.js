@@ -28,7 +28,7 @@ export default function AttendancePage() {
         setStaff(staffRes.data.data.filter(u => u.role === 'staff'));
         setAttendance(attRes.data.data);
       } catch (error) {
-        toast.error('Failed to sync roster');
+        toast.error('Failed to load staff');
       } finally {
         setLoading(false);
       }
@@ -42,14 +42,14 @@ export default function AttendancePage() {
   };
 
   const handleMarkAttendance = async (userId, status) => {
-    const loadToast = toast.loading(`Authorizing status: ${status}...`);
+    const loadToast = toast.loading(`Setting status: ${status}...`);
     try {
       await api.post('/attendance/mark', { userId, date, status });
       const attRes = await api.get(`/attendance/location?date=${date}`);
       setAttendance(attRes.data.data);
-      toast.success('Roster synchronized', { id: loadToast });
+      toast.success('Attendance updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Error', { id: loadToast });
     }
   };
 
@@ -65,9 +65,9 @@ export default function AttendancePage() {
           <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <CalendarCheck className="mr-4 text-amber-600" size={36} /> Daily <span className="ml-3 text-amber-600">Roster</span>
+                <CalendarCheck className="mr-4 text-amber-600" size={36} /> Staff <span className="ml-3 text-amber-600">Attendance</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Synchronize staff presence and operational availability.</p>
+              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Track staff presence and availability.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -75,7 +75,7 @@ export default function AttendancePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Filter Roster..."
+                  placeholder="Search Staff..."
                   className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 text-xs font-bold dark:text-zinc-100 outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -105,9 +105,9 @@ export default function AttendancePage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Personnel Identity</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Matrix</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action Command</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff Details</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                  <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Mark Attendance</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
@@ -122,7 +122,7 @@ export default function AttendancePage() {
                     <td colSpan="3" className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <UserX size={48} className="mb-4" />
-                        <p className="font-black text-xs uppercase tracking-widest">No personnel matching search</p>
+                        <p className="font-black text-xs uppercase tracking-widest">No staff found</p>
                       </div>
                     </td>
                   </tr>
@@ -198,7 +198,7 @@ export default function AttendancePage() {
       <Modal
         isOpen={!!viewingStaff}
         onClose={() => setViewingStaff(null)}
-        title="Personnel Details"
+        title="Staff Details"
         maxWidth="max-w-3xl"
       >
         {viewingStaff && (
@@ -226,13 +226,13 @@ export default function AttendancePage() {
                     ID: {viewingStaff._id.slice(-6).toUpperCase()}
                   </span>
                   <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                    Active Deployment
+                    Active
                   </span>
                 </div>
               </div>
 
               <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 text-right min-w-[180px]">
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Base</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Salary</p>
                 <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
               </div>
             </div>
@@ -247,8 +247,8 @@ export default function AttendancePage() {
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                       <Hash className="text-amber-600" size={20} />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Index</p>
-                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Number</p>
+                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -261,7 +261,7 @@ export default function AttendancePage() {
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                       <Award className="text-amber-600" size={20} />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Academic Standing</p>
+                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Highest Qualification</p>
                         <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
                       </div>
                     </div>
@@ -270,15 +270,15 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Globe size={14} className="text-amber-600" /> Demographic Intelligence
+                    <Globe size={14} className="text-amber-600" /> Staff Information
                   </h3>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Temporal Age</p>
-                      <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Solar Years</p>
+                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
+                      <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
                     </div>
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender Node</p>
+                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
                       <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
                     </div>
                   </div>
@@ -288,7 +288,7 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <MapPin size={14} className="text-amber-600" /> Operational Base
+                    <MapPin size={14} className="text-amber-600" /> Address
                   </h3>
                   <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                     <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
@@ -317,7 +317,7 @@ export default function AttendancePage() {
                         className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
                       >
                         <Globe size={24} className="text-amber-500" />
-                        <span className="font-black text-[10px] uppercase tracking-widest">Verify Original Scan</span>
+                        <span className="font-black text-[10px] uppercase tracking-widest">View Full Image</span>
                       </a>
                     </div>
                   ) : (
@@ -336,7 +336,7 @@ export default function AttendancePage() {
                 className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
                 onClick={() => setViewingStaff(null)}
               >
-                Return to Roster
+                Close
               </Button>
             </div>
           </div>

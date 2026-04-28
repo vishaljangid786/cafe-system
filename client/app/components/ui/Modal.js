@@ -42,7 +42,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             >
               <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between">
                 <div className="space-y-1">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">System Protocol</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">Details</h3>
                   <p className="text-lg font-bold text-zinc-700 dark:text-slate-200 tracking-tight">{title}</p>
                 </div>
                 <button

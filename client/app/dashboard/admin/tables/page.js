@@ -139,7 +139,7 @@ export default function AdminTablesPage() {
     e.preventDefault();
     if (!isEditing && !newTableLocation) return toast.error('Select a location first');
     
-    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Initializing table...');
+    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Creating table...');
     try {
       if (isEditing) {
         await api.put(`/tables/${selectedTable._id}`, { 
@@ -155,7 +155,7 @@ export default function AdminTablesPage() {
           capacity: Number(newTableCapacity),
           locationId: newTableLocation
         });
-        toast.success('Table initialized', { id: loadToast });
+        toast.success('Table created', { id: loadToast });
       }
       setShowAddModal(false);
       setIsEditing(false);
@@ -164,7 +164,7 @@ export default function AdminTablesPage() {
       setNewTableCapacity('4');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
     }
   };
 
@@ -178,19 +178,19 @@ export default function AdminTablesPage() {
   };
 
   const handleDeleteTable = async () => {
-    const loadToast = toast.loading('Purging table...');
+    const loadToast = toast.loading('Deleting table...');
     try {
       await api.delete(`/tables/${showDeleteConfirm}`);
       fetchTables();
       setShowDeleteConfirm(null);
-      toast.success('Table liquidated', { id: loadToast });
+      toast.success('Table deleted', { id: loadToast });
     } catch (error) {
-      toast.error('Protocol error', { id: loadToast });
+      toast.error('Delete failed', { id: loadToast });
     }
   };
 
   const handleBookTable = async (table) => {
-    const loadToast = toast.loading('Securing table...');
+    const loadToast = toast.loading('Booking table...');
     try {
       const res = await api.put(`/tables/${table._id}/book`, {
         numberOfPeople: table.capacity || 1,
@@ -198,9 +198,9 @@ export default function AdminTablesPage() {
       });
       fetchTables();
       handleOpenOrder(res.data.data);
-      toast.success('Table secured', { id: loadToast });
+      toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Encryption error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Booking failed', { id: loadToast });
     }
   };
 
@@ -282,9 +282,9 @@ export default function AdminTablesPage() {
   };
 
   const handleFinalizeSession = async (file) => {
-    const loadToast = toast.loading('Archiving session...');
+    const loadToast = toast.loading('Closing session...');
     if (!selectedTable.customerName) {
-      toast.error('Customer identity required for archival', { id: loadToast });
+      toast.error('Customer name required', { id: loadToast });
       return;
     }
     const data = new FormData();
@@ -297,17 +297,17 @@ export default function AdminTablesPage() {
       setShowOrderModal(false);
       setSelectedTable(null);
       fetchTables();
-      toast.success('Session archived', { id: loadToast });
+      toast.success('Session closed', { id: loadToast });
     } catch (error) {
-      toast.error('Archival failure', { id: loadToast });
+      toast.error('Failed to close session', { id: loadToast });
     }
   };
 
   const handleSendToKitchen = async () => {
-    if (pendingOrders.length === 0) return toast.error('No items staged for production');
-    if (!selectedTable.customerName) return toast.error('Guest identity required');
+    if (pendingOrders.length === 0) return toast.error('No items added to order');
+    if (!selectedTable.customerName) return toast.error('Customer name required');
 
-    const loadToast = toast.loading('Transmitting to kitchen...');
+    const loadToast = toast.loading('Sending to kitchen...');
     try {
       const payload = {
         branch: selectedTable.locationId?._id || selectedTable.locationId,
@@ -327,9 +327,9 @@ export default function AdminTablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Transmission Successful', { id: loadToast });
+      toast.success('Order sent successfully', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Transmission failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Failed to send order', { id: loadToast });
     }
   };
 
@@ -376,9 +376,9 @@ export default function AdminTablesPage() {
               <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <Globe size={24} className="text-white" />
               </div>
-              Global Floor Matrix
+              Table Management
             </h1>
-            <p className="text-xs text-muted-foreground font-medium ml-13">Supervisory command — all sectors active</p>
+            <p className="text-xs text-muted-foreground font-medium ml-13">Manage all tables across all branches</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -408,8 +408,8 @@ export default function AdminTablesPage() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
           {[
-            { label: 'Total Matrix', val: stats.total, color: 'amber', icon: Globe },
-            { label: 'Live Sessions', val: stats.occupied, color: 'amber', icon: Zap },
+            { label: 'Total Tables', val: stats.total, color: 'amber', icon: Globe },
+            { label: 'Active Tables', val: stats.occupied, color: 'amber', icon: Zap },
             { label: 'Total Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
@@ -463,7 +463,7 @@ export default function AdminTablesPage() {
           </AnimatePresence>
         </div>
 
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={isEditing ? 'Modify Protocol' : 'Initialize New Unit'} maxWidth="max-w-md">
+        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={isEditing ? 'Update Table' : 'Add New Table'} maxWidth="max-w-md">
           <form onSubmit={handleAddTable} className="space-y-4">
             {!isEditing && (
               <PremiumSelect 
@@ -486,11 +486,11 @@ export default function AdminTablesPage() {
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Seating Capacity</label>
               <input required type="number" className="w-full rounded-xl bg-muted border border-border p-4 text-sm font-bold text-foreground" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
             </div>
-            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-xl shadow-accent/10" icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Confirm Update' : 'Initialize Unit'}</Button>
+            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-xl shadow-accent/10" icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Save Changes' : 'Add Table'}</Button>
           </form>
         </Modal>
 
-        <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Session Matrix: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
+        <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
               <div className="lg:col-span-5 flex flex-col h-full bg-muted/30 rounded-[2.5rem] border border-border overflow-hidden shadow-2xl">
@@ -498,46 +498,43 @@ export default function AdminTablesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center mb-1">
-                        <ShoppingBag size={14} className="mr-2" /> Session Core
+                        <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Order Registry</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Current Order</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xl font-black text-foreground tracking-tighter">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Units Staged</span>
+                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Items</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6 p-5 bg-card rounded-[2rem] border border-border shadow-sm">
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1 flex items-center gap-2">
-                        Guest Identity <span className="text-rose-500 font-bold">*</span>
+                        Customer Name <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 text-foreground"
+                        className="w-full bg-muted border border-border rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 text-foreground"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                        Table Party
-                      </label>
-                      <div className="relative">
-                        <input 
-                          type="number"
-                          className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground"
-                          value={selectedTable.numberOfPeople || 0}
-                          onChange={(e) => handleSyncOrders(pendingOrders, { numberOfPeople: e.target.value })}
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <Users size={14} className="text-muted-foreground" />
-                        </div>
-                      </div>
+                    <div>
+                      <PremiumSelect
+                        label="Number of Guests"
+                        placeholder="Select Guests"
+                        options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
+                          value: i + 1,
+                          label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
+                        }))}
+                        value={selectedTable.numberOfPeople || 1}
+                        onChange={(val) => handleSyncOrders(pendingOrders, { numberOfPeople: val })}
+                        icon={Users}
+                      />
                     </div>
                   </div>
                 </div>
@@ -593,14 +590,14 @@ export default function AdminTablesPage() {
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-muted-foreground" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registry is Empty</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No items added yet</p>
                     </div>
                   )}
 
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-border">
                       <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                        <Zap size={14} /> Production Queue (OMS)
+                        <Zap size={14} /> Kitchen Queue
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
@@ -631,13 +628,13 @@ export default function AdminTablesPage() {
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
-                                      const loadToast = toast.loading('Generating fiscal proof...');
+                                      const loadToast = toast.loading('Generating bill...');
                                       try {
                                         await api.post(`/orders/${order._id}/generate-bill`);
-                                        toast.success('Bill Generated & Locked', { id: loadToast });
+                                        toast.success('Bill generated successfully', { id: loadToast });
                                         fetchSystemOrders(selectedTable._id);
                                       } catch (err) {
-                                        toast.error('Billing Failure', { id: loadToast });
+                                        toast.error('Failed to generate bill', { id: loadToast });
                                       }
                                     }}
                                     className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-amber-500/20"
@@ -654,7 +651,7 @@ export default function AdminTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground">No active production units</div>
+                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground">No orders in kitchen</div>
                         )}
                       </div>
                     </div>
@@ -664,7 +661,7 @@ export default function AdminTablesPage() {
                 <div className="p-8 border-t border-border bg-card/50 space-y-6">
                   <div className="space-y-3">
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                      <span>Production Subtotal</span>
+                      <span>Subtotal</span>
                       <span className="text-foreground">₹{systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
@@ -675,7 +672,7 @@ export default function AdminTablesPage() {
                     )}
                     <div className="h-px bg-border my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-black uppercase text-amber-600 tracking-[0.3em] mb-2">Billed Total</span>
+                      <span className="text-[10px] font-black uppercase text-amber-600 tracking-[0.3em] mb-2">Total Amount</span>
                       <span className="text-4xl font-black text-foreground tracking-tighter">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
@@ -700,7 +697,7 @@ export default function AdminTablesPage() {
                           icon={Receipt}
                           onClick={() => {
                             const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                            if (!allReady) return toast.error('Culinary Protocol: All orders must be SERVED before finalization');
+                            if (!allReady) return toast.error('Note: All orders must be SERVED before finalization');
                             setIsBillPreviewOpen(true);
                           }}
                         >
@@ -718,7 +715,7 @@ export default function AdminTablesPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu matrix..."
+                    placeholder="Search menu items..."
                     className="w-full rounded-2xl bg-muted border border-border pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all text-foreground shadow-sm"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}

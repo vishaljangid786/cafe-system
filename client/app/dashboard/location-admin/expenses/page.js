@@ -35,7 +35,7 @@ export default function LocationExpensesPage() {
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
-    category: 'Operational',
+    category: 'Daily',
     date: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -59,7 +59,7 @@ export default function LocationExpensesPage() {
       const expensesOnly = res.data.data.filter(t => t.type === 'expense');
       setTransactions(expensesOnly);
     } catch (err) {
-      console.error('Expenses sync failed');
+      console.error('Expenses load failed');
     } finally {
       setLoading(false);
     }
@@ -71,16 +71,16 @@ export default function LocationExpensesPage() {
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Archiving expense...');
+    const loadToast = toast.loading('Saving expense...');
     try {
       const data = { ...formData, type: 'expense' };
       await api.post('/transactions', data);
-      toast.success('Expense archived', { id: loadToast });
+      toast.success('Expense saved', { id: loadToast });
       setShowAddModal(false);
-      setFormData({ title: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
+      setFormData({ title: '', amount: '', category: 'Daily', date: new Date().toISOString().split('T')[0], description: '' });
       fetchExpenses();
     } catch (error) {
-      toast.error('Protocol failure', { id: loadToast });
+      toast.error('Error', { id: loadToast });
     }
   };
 
@@ -109,7 +109,7 @@ export default function LocationExpensesPage() {
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
               <TrendingDown className="mr-4 text-rose-500" size={36} /> Branch <span className="ml-3 text-rose-500">Expenses</span>
             </h1>
-            <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Tracking local operational costs and resource outflow.</p>
+            <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Tracking branch expenses and daily costs.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
@@ -141,9 +141,9 @@ export default function LocationExpensesPage() {
               <Activity size={120} className="text-rose-500" />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Outflow Velocity</h2>
+              <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Expense Trend</h2>
               <div className="text-right">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local Spend</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total Spend</p>
                 <p className="text-2xl font-black text-rose-500 tracking-tighter">₹{totalExpenditure.toLocaleString()}</p>
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function LocationExpensesPage() {
 
         {/* Data List */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Latest Operational Nodes</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Recent Expenses</h3>
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-2xl" />)}
@@ -225,7 +225,7 @@ export default function LocationExpensesPage() {
                             </span>
                           </div>
                           <p className="text-[8px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/5 px-2 py-0.5 rounded-md mt-2 w-fit">
-                            {t.category || 'Operational'}
+                            {t.category || 'Daily'}
                           </p>
                         </div>
                       </div>
@@ -273,17 +273,17 @@ export default function LocationExpensesPage() {
           <form onSubmit={handleAddExpense} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Protocol Title</label>
-                <input required className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Daily Groceries" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Expense Title</label>
+                <input required className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Groceries" />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Volume (₹)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Amount (₹)</label>
                 <input required type="number" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-black dark:text-white" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <PremiumSelect 
-                  label="Operational Category"
+                  label="Category"
                   value={formData.category}
                   onChange={val => setFormData({...formData, category: val})}
                   options={[
@@ -296,15 +296,15 @@ export default function LocationExpensesPage() {
                   ]}
                 />
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Temporal Stamp</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Date</label>
                 <input required type="date" className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-bold dark:text-white" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Descriptive Data</label>
-              <textarea className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-medium dark:text-white" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Add archival notes..." />
+              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Description</label>
+              <textarea className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-4 text-sm font-medium dark:text-white" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Add details..." />
             </div>
-            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-xl shadow-rose-600/10" icon={Receipt}>Finalize Protocol</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-xl shadow-rose-600/10" icon={Receipt}>Add Expense</Button>
           </form>
         </Modal>
       </div>

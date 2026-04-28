@@ -20,6 +20,9 @@ export default function StaffMenuPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,7 +38,10 @@ export default function StaffMenuPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage
+      };
       if (selectedLocation) params.locationId = selectedLocation._id || selectedLocation;
 
       const [itemsRes, catsRes] = await Promise.all([
@@ -43,9 +49,10 @@ export default function StaffMenuPage() {
         api.get('/categories')
       ]);
       setMenuItems(itemsRes.data.data);
+      setTotalPages(itemsRes.data.pagination.pages);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Failed to sync menu matrix');
+      toast.error('Failed to load menu items');
     } finally {
       setLoading(false);
     }
@@ -78,7 +85,7 @@ export default function StaffMenuPage() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedLocation]);
+  }, [selectedLocation, currentPage]);
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -107,9 +114,9 @@ export default function StaffMenuPage() {
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4">
               <UtensilsCrossed className="text-amber-600" size={36} strokeWidth={2.5} />
-              Menu <span className="text-amber-600">Inventory</span>
+              Menu <span className="text-amber-600">Items</span>
             </h1>
-            <p className="text-muted-foreground font-medium mt-1">Reference culinary nodes and real-time availability.</p>
+            <p className="text-muted-foreground font-medium mt-1">Check and manage food availability and stock.</p>
           </div>
         </div>
 
@@ -120,7 +127,7 @@ export default function StaffMenuPage() {
               <div className="relative flex-1 w-full">
                 <input
                   type="text"
-                  placeholder="Search for culinary nodes..."
+                  placeholder="Search for food items..."
                   className="w-full pl-14 pr-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-bold text-sm shadow-inner"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -129,7 +136,7 @@ export default function StaffMenuPage() {
                 {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
                   <div className="flex bg-muted/50 p-1 rounded-xl border border-border mt-4 w-fit shadow-inner">
                     {[
-                      { id: 'All', label: 'All Matrix' },
+                      { id: 'All', label: 'All Items' },
                       { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
                       { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
                     ].map((f) => (
@@ -151,17 +158,17 @@ export default function StaffMenuPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
                 <PremiumSelect 
-                  label="Category Sector"
+                  label="Food Category"
                   value={selectedCategory}
                   onChange={val => setSelectedCategory(val)}
                   options={[
-                    { label: 'All Sectors', value: 'All' },
+                    { label: 'All Categories', value: 'All' },
                     ...(categories.map(cat => ({ label: cat.name, value: cat.name })))
                   ]}
                 />
 
                 <PremiumSelect 
-                  label="Node Status"
+                  label="Item Status"
                   value={availabilityFilter}
                   onChange={val => setAvailabilityFilter(val)}
                   options={[
@@ -172,7 +179,7 @@ export default function StaffMenuPage() {
                 />
 
                 <PremiumSelect 
-                  label="Dietary Matrix"
+                  label="Food Type"
                   value={dietaryFilter}
                   onChange={val => setDietaryFilter(val)}
                   options={[
@@ -220,7 +227,7 @@ export default function StaffMenuPage() {
                       {item.discountedPrice && (
                         <div className="absolute bottom-4 left-4">
                           <span className="px-3 py-1 bg-amber-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-600/30">
-                            Offer Node
+                            Special Offer
                           </span>
                         </div>
                       )}
@@ -243,7 +250,7 @@ export default function StaffMenuPage() {
                       </div>
 
                       <p className="text-xs text-muted-foreground line-clamp-2 font-medium mb-6 leading-relaxed">
-                        {item.description || 'No descriptive data available for this node.'}
+                        {item.description || 'No description available for this item.'}
                       </p>
 
                       <div className="mt-auto flex items-center justify-between border-t border-border pt-5">
@@ -280,11 +287,36 @@ export default function StaffMenuPage() {
           </AnimatePresence>
         </div>
 
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-card border border-border rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Inventory Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {filteredItems.length === 0 && !loading && (
           <div className="text-center py-32 bg-accent/5 rounded-[4rem] border border-dashed border-accent/20">
             <UtensilsCrossed size={64} className="mx-auto text-accent/10 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-black text-foreground tracking-tight">Matrix Empty</h3>
-            <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">No culinary nodes match your current query parameters.</p>
+            <h3 className="text-2xl font-black text-foreground tracking-tight">No Items Found</h3>
+            <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">No food items found matching your search.</p>
           </div>
         )}
 

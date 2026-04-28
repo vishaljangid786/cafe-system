@@ -9,6 +9,16 @@ The administrative engine of the Cafe Management System, providing a high-perfor
 - **Real-time**: Socket.io for room-based broadcasting
 - **Cloud Imaging**: Cloudinary integration for menu and personnel assets
 
+## 📁 Directory Structure
+
+- **`/config`**: System parameters and third-party integrations (MongoDB, Socket.io, Cloudinary).
+- **`/controllers`**: Business logic implementations for all system entities (Orders, Users, Branches, etc.).
+- **`/middlewares`**: Operational protocols including Auth, OMS State Machine, and Request Validation.
+- **`/models`**: Mongoose schemas defining the system's data architecture (Attendance, AuditLog, Order, Recipe, etc.).
+- **`/routes`**: RESTful endpoint definitions organized by functional domain.
+- **`/utils`**: High-level utility services (Audit Logging, Scheduled Tasks, Export Services).
+- **`/seed` & `/scripts`**: Database initialization tools and migration protocols.
+
 ## 🛡️ Operational Logic
 
 ### Order Management System (OMS)
@@ -28,16 +38,28 @@ The `/orders/analytics` engine performs real-time performance aggregation, inclu
 - **Throughput Leaderboards**: Ranks personnel based on throughput volume and efficiency metrics.
 - **Persistent Context**: Always provides global branch performance data, even when specific filters are applied to main metrics.
 
-## 📡 API Reference
+## 📡 API Reference Matrix
 
 ### Order Operations (`/api/orders`)
 - `GET /analytics`: Deep-dive performance and distribution data.
 - `PATCH /:id/status`: Transition an order through the lifecycle.
 - `POST /force-complete`: Administrative override for terminal state transition.
 
-### Location Management (`/api/locations`)
-- `GET /`: Retrieve all active operational nodes.
-- `POST /`: Initialize a new branch (Super Admin only).
+### Infrastructure & Personnel
+- **Locations (`/api/locations`)**: Branch lifecycle management and status synchronization.
+- **Attendance (`/api/attendance`)**: Presence tracking and biometric-style clock logs.
+- **Salary (`/api/salary`)**: Automated compensation history and payout records.
+
+### Financial & Inventory
+- **Transactions (`/api/transactions`)**: Integrated revenue and expense ledger.
+- **Menu (`/api/menu`)**: Culinary catalog management with category mapping.
+- **Recipes (`/api/recipes`)**: Culinary blueprints and ingredient mapping.
+- **Coupons (`/api/coupons`)**: Promotional engine with transactional locking logic.
+
+### Diagnostics & Reporting
+- **Analytics (`/api/analytics`)**: Strategic financial and operational telemetry.
+- **Export (`/api/export`)**: PDF/Excel generation for bills and administrative reports.
+- **Notifications (`/api/notifications`)**: Real-time alert archival and delivery.
 
 ## 🚀 Getting Started
 

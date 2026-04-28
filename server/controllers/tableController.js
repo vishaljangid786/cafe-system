@@ -1,6 +1,7 @@
 const Table = require('../models/Table');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { getIO } = require('../config/socket');
 
 const Order = require('../models/Order');
 
@@ -89,6 +90,9 @@ const addTable = asyncHandler(async (req, res) => {
     locationId: table.locationId,
   });
 
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'add' });
+
   res.status(201).json({
     success: true,
     data: table,
@@ -127,6 +131,9 @@ const bookTable = asyncHandler(async (req, res) => {
     locationId: table.locationId,
   });
 
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'book' });
+
   res.json({
     success: true,
     data: table,
@@ -162,6 +169,9 @@ const updateOrders = asyncHandler(async (req, res) => {
     performedByUser: req.user,
     locationId: table.locationId,
   });
+
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'order' });
 
   res.json({
     success: true,
@@ -281,6 +291,9 @@ const uploadBill = asyncHandler(async (req, res) => {
     locationId: table.locationId,
   });
 
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'bill' });
+
   res.json({
     success: true,
     data: table,
@@ -304,6 +317,9 @@ const deleteTable = asyncHandler(async (req, res) => {
   }
 
   await table.deleteOne();
+
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'delete' });
 
   res.json({
     success: true,
@@ -329,6 +345,9 @@ const completeOrder = asyncHandler(async (req, res) => {
   table.numberOfPeople = 0;
   
   await table.save();
+
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'complete' });
 
   res.json({
     success: true,
@@ -356,6 +375,9 @@ const updateTable = asyncHandler(async (req, res) => {
     new: true,
     runValidators: true,
   });
+
+  const io = getIO();
+  io.to(`branch_${updatedTable.locationId}`).emit('table:update', { tableId: updatedTable._id, action: 'update' });
 
   res.json({
     success: true,

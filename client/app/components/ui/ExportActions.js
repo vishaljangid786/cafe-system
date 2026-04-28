@@ -108,7 +108,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         return;
       }
 
-      toast.loading('Initializing native chart capture sequence...', { id: 'chart-export' });
+      toast.loading('Preparing chart images...', { id: 'chart-export' });
 
       for (let i = 0; i < charts.length; i++) {
         const chartContainer = charts[i];
@@ -134,7 +134,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
           continue;
         }
 
-        // Native SVG Capture Protocol (Awaited)
+        // Capture chart
         await new Promise((resolve, reject) => {
           const clonedSvg = svgElement.cloneNode(true);
           const width = svgElement.clientWidth || 800;
@@ -183,11 +183,11 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         await new Promise(r => setTimeout(r, 300));
       }
 
-      toast.success('Visual analytics captured successfully', { id: 'chart-export' });
+      toast.success('Images saved successfully', { id: 'chart-export' });
       setShowOptions(false);
     } catch (error) {
       console.error('Chart Export Error:', error);
-      toast.error('Export protocol failed: ' + error.message, { id: 'chart-export' });
+      toast.error('Export failed: ' + error.message, { id: 'chart-export' });
     }
   };
 

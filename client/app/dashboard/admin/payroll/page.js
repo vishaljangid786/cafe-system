@@ -24,7 +24,12 @@ export default function PayrollRecordsPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [viewingSalary, setViewingSalary] = useState(null);
-  const { user: currentUser } = api; // Or get from context if needed, but we'll use location_admin check logic later.
+  const [activeTab, setActiveTab] = useState('staff'); // 'staff', 'chef', 'branch_admin', 'admin'
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
+  });
+  const { user: currentUser } = api; 
 
 
   useEffect(() => {
@@ -32,7 +37,7 @@ export default function PayrollRecordsPage() {
       try {
         setLoading(true);
         const [salRes, locRes] = await Promise.all([
-          api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&role=${roleFilter}&search=${searchQuery}&page=${page}&limit=10`),
+          api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
           api.get('/locations')
         ]);
         setSalaries(salRes.data.data);
@@ -49,7 +54,7 @@ export default function PayrollRecordsPage() {
       }
     };
     fetchData();
-  }, [month, selectedLocation, roleFilter, searchQuery, page]);
+  }, [month, selectedLocation, activeTab, searchQuery, page]);
 
   const filteredSalaries = salaries; // Now filtered by backend
 
@@ -134,21 +139,6 @@ export default function PayrollRecordsPage() {
                   </div>
 
                   <PremiumSelect
-                      label="Role"
-                      value={roleFilter}
-                      onChange={(val) => {
-                        setRoleFilter(val);
-                        setPage(1);
-                      }}
-                      options={[
-                        { label: 'All Roles', value: '' },
-                        { label: 'Main Admin', value: 'admin' },
-                        { label: 'Branch Admin', value: 'branch_admin' },
-                        { label: 'Staff Member', value: 'staff' }
-                      ]}
-                  />
-
-                  <PremiumSelect
                       label="Location"
                       value={selectedLocation}
                       onChange={(val) => {
@@ -163,6 +153,32 @@ export default function PayrollRecordsPage() {
                 </div>
               </div>
 
+              {/* Role Tabs Integrated for Alignment */}
+              <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-zinc-100 dark:border-zinc-800/50 pt-8">
+                {[
+                  { id: 'staff', label: 'Staff' },
+                  { id: 'chef', label: 'Chefs' },
+                  { id: 'branch_admin', label: 'Branch Admins' },
+                  { id: 'admin', label: 'Main Admins' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setPage(1);
+                    }}
+                    className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${
+                      activeTab === tab.id 
+                        ? `bg-zinc-900 dark:bg-amber-600 text-white border-transparent shadow-xl shadow-amber-600/20 scale-105` 
+                        : `bg-white/50 dark:bg-zinc-900/50 text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/30`
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+             
               <div className="mt-6 flex flex-col gap-4 border-t border-zinc-200/70 pt-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
@@ -279,6 +295,8 @@ export default function PayrollRecordsPage() {
             </div>
           </SlideIn>
 
+          
+
           {/* Comparative Cost Graph */}
           <SlideIn delay={0.5}>
             <div className="export-chart bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
@@ -310,6 +328,8 @@ export default function PayrollRecordsPage() {
           </SlideIn>
         </div>
 
+
+
         {/* Salary Table */}
         <SlideIn direction="up" delay={0.4}>
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
@@ -320,7 +340,9 @@ export default function PayrollRecordsPage() {
                     <th className="px-6 py-4">Employee</th>
                     <th className="px-6 py-4">Role</th>
                     <th className="px-6 py-4">Branch</th>
-                    <th className="px-6 py-4 text-center">Working Days</th>
+                    {['staff', 'chef'].includes(activeTab) && (
+                      <th className="px-6 py-4 text-center">Working Days</th>
+                    )}
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -360,17 +382,56 @@ export default function PayrollRecordsPage() {
                             {s.locationName || 'Unassigned'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="text-sm font-black text-amber-600">{s.payableDays}</span>
-                          <span className="text-[10px] text-gray-400 ml-1">/ {s.daysInMonth || 30}</span>
-                        </td>
+                        {['staff', 'chef'].includes(activeTab) && (
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-sm font-black text-amber-600">{s.payableDays}</span>
+                            <span className="text-[10px] text-gray-400 ml-1">/ {s.daysInMonth || 30}</span>
+                          </td>
+                        )}
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => setViewingSalary(s)}
-                            className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-amber-600 transition-all shadow-sm"
-                          >
-                            View Breakdown
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {['staff', 'chef'].includes(activeTab) ? (
+                              <button
+                                onClick={() => setViewingSalary(s)}
+                                className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+                              >
+                                View Breakdown
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingUser(s);
+                                  setEditFormData({
+                                    name: s.name,
+                                    email: s.email,
+                                    phone: s.phone || '',
+                                    monthlySalary: s.monthlySalary || '',
+                                    role: s.role,
+                                    address1: s.address1 || ''
+                                  });
+                                }}
+                                className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-purple-600 transition-all shadow-sm"
+                              >
+                                View Profile
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setEditingUser(s);
+                                setEditFormData({
+                                  name: s.name,
+                                  email: s.email,
+                                  phone: s.phone || '',
+                                  monthlySalary: s.monthlySalary || '',
+                                  role: s.role,
+                                  address1: s.address1 || ''
+                                });
+                              }}
+                              className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-amber-500 text-black rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+                            >
+                              Update
+                            </button>
+                          </div>
                         </td>
                       </motion.tr>
                     ))
@@ -479,6 +540,72 @@ export default function PayrollRecordsPage() {
                   Close Records
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* User Edit Modal */}
+        {editingUser && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+             <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2.5rem] p-10 border border-zinc-200 dark:border-zinc-800 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-8">
+                 <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-2xl font-black text-black shadow-lg shadow-amber-500/20">
+                      {editingUser.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">{editingUser.name}</h2>
+                      <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest mt-2">Update Credentials</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-400 transition-colors">
+                   <X size={24} />
+                 </button>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const loadToast = toast.loading("Updating user profile...");
+                try {
+                  await api.put(`/users/${editingUser._id || editingUser.userId}`, editFormData);
+                  toast.success("Profile updated successfully", { id: loadToast });
+                  setEditingUser(null);
+                  // Refresh current view
+                  window.location.reload();
+                } catch (error) {
+                  toast.error("Update failed", { id: loadToast });
+                }
+              }} className="space-y-6">
+                 <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Full Name</label>
+                      <input className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Monthly Salary (₹)</label>
+                      <input type="number" className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Contact</label>
+                        <input className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Role</label>
+                        <input disabled className="w-full px-5 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-400 outline-none opacity-60" value={editFormData.role} />
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="flex gap-4 pt-4">
+                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-xs font-black uppercase tracking-widest text-zinc-500">Abort</button>
+                    <button type="submit" className="flex-1 py-4 rounded-2xl bg-zinc-900 dark:bg-amber-600 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-600/20">Update Profile</button>
+                 </div>
+              </form>
             </motion.div>
           </div>
         )}

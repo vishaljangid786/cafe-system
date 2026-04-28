@@ -127,12 +127,31 @@ const getBookings = asyncHandler(async (req, res) => {
     query.locationId = req.user.assignedLocation;
   }
 
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await Booking.countDocuments(query);
+
   const bookings = await Booking.find(query)
     .populate('userId', 'name email phone')
     .populate('locationId', 'name')
-    .sort('-date -createdAt');
+    .sort('-date -createdAt')
+    .skip(skip)
+    .limit(limit);
 
-  res.status(200).json({ success: true, count: bookings.length, data: bookings });
+  res.status(200).json({ 
+    success: true, 
+    count: bookings.length, 
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
+    data: bookings 
+  });
 });
 
 // @desc    Update booking status

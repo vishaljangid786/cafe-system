@@ -26,7 +26,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100]"
+            className="fixed inset-0 z-[999]"
           />
           
           <motion.div 
@@ -34,7 +34,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute top-full right-0 mt-4 w-96 max-h-[600px] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl z-[120] flex flex-col overflow-hidden backdrop-blur-xl bg-opacity-95"
+            className="absolute top-full right-0 mt-4 w-96 max-h-[600px] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl z-[1000] flex flex-col overflow-hidden backdrop-blur-xl bg-opacity-95"
           >
             {/* Header */}
             <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-bg-soft)]">
@@ -48,9 +48,9 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                   )}
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-[var(--color-text-primary)] uppercase tracking-widest leading-none">Transmission Center</h2>
+                  <h2 className="text-sm font-black text-[var(--color-text-primary)] uppercase tracking-widest leading-none">Notifications</h2>
                   <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
-                    <span className="h-1 w-1 bg-amber-500 rounded-full" /> Intelligence Archives
+                    <span className="h-1 w-1 bg-amber-500 rounded-full" /> Recent Updates
                   </p>
                 </div>
               </div>
@@ -58,7 +58,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                 <button 
                   onClick={refresh}
                   className="p-2 hover:bg-amber-500/10 hover:text-amber-500 rounded-xl transition-all text-[var(--color-text-muted)]"
-                  title="Sync Matrix"
+                  title="Refresh"
                 >
                   <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
                 </button>
@@ -74,10 +74,10 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-opacity-50">
               <div className="flex items-center justify-between px-2 mb-2">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Live Node Feed</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Recent Activity</h3>
                 {unreadCount > 0 && (
                   <button onClick={markAllAsRead} className="text-[9px] font-black text-amber-500 hover:text-amber-600 uppercase tracking-widest transition-colors">
-                    Acknowledge All
+                    Mark all read
                   </button>
                 )}
               </div>
@@ -132,7 +132,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                   <div className="h-16 w-16 rounded-3xl bg-[var(--color-bg-soft)] flex items-center justify-center mb-4 shadow-inner">
                     <Zap size={32} className="opacity-20" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em]">Matrix Clear - No Transmissions</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em]">No new notifications</p>
                 </div>
               )}
             </div>
@@ -144,7 +144,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-zinc-700 transition-all shadow-xl shadow-zinc-900/10 group"
               >
-                View Full Archive
+                View All Notifications
                 <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
             </div>

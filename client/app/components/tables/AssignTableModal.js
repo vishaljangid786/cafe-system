@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Users, User, ArrowRight } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { Button } from '../ui/Button';
+import toast from 'react-hot-toast';
+import PremiumSelect from '../ui/PremiumSelect';
 
 export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) {
   const [members, setMembers] = useState(table?.capacity || 1);
@@ -20,6 +22,10 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (members <= 0) return;
+    if (members > (table?.capacity || 4)) {
+      toast.error(`Table capacity is ${table?.capacity || 4} members max!`);
+      return;
+    }
     onConfirm({ numberOfPeople: members, customerName });
     onClose();
     setMembers(table?.capacity || 1);
@@ -35,20 +41,18 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Number of Members</label>
-            <div className="relative">
-              <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              <input
-                type="number"
-                min="1"
-                required
-                className="w-full pl-12 pr-4 py-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500 outline-none transition-all font-bold text-sm"
-                value={members}
-                onChange={(e) => setMembers(Number(e.target.value))}
-                placeholder="e.g. 4"
-              />
-            </div>
+          <div>
+            <PremiumSelect
+              label="Number of Members"
+              placeholder="Select Members"
+              options={Array.from({ length: Number(table?.capacity) || 4 }, (_, i) => ({
+                value: i + 1,
+                label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
+              }))}
+              value={members || 1}
+              onChange={(val) => setMembers(val)}
+              icon={Users}
+            />
           </div>
 
           <div className="space-y-2">

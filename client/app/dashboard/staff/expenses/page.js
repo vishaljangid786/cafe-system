@@ -42,6 +42,7 @@ export default function StaffExpensesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 12;
 
   // Modal State
@@ -61,6 +62,9 @@ export default function StaffExpensesPage() {
       setLoading(true);
       const query = new URLSearchParams();
       query.append('type', 'expense');
+      query.append('page', currentPage);
+      query.append('limit', itemsPerPage);
+      if (searchTerm) query.append('search', searchTerm);
 
       const now = new Date();
       let start = '';
@@ -74,6 +78,7 @@ export default function StaffExpensesPage() {
 
       const res = await api.get(`/transactions?${query.toString()}`);
       setTransactions(res.data.data);
+      setTotalPages(res.data.pagination?.totalPages || 1);
     } catch (err) {
       console.error('Expenses sync failed');
     } finally {
@@ -83,7 +88,7 @@ export default function StaffExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  }, [timeRange]);
+  }, [timeRange, currentPage, searchTerm]);
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
@@ -109,16 +114,9 @@ export default function StaffExpensesPage() {
     }
   };
 
-  const filteredData = transactions.filter(t =>
-    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredData = transactions;
   const totalExpenditure = filteredData.reduce((acc, curr) => acc + curr.totalAmount, 0);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedData = transactions;
 
   const chartData = [...filteredData].reverse().slice(-30).map(t => ({
     date: new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
@@ -252,9 +250,34 @@ export default function StaffExpensesPage() {
                       </div>
                     </CardHover>
                   </SlideIn>
-                ))
+                  ))
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-8 py-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] mt-10 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  Vault Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-8">
@@ -445,7 +468,7 @@ export default function StaffExpensesPage() {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full !rounded-[2rem] !py-6 shadow-2xl shadow-rose-600/30 font-black uppercase tracking-[0.4em] text-sm" icon={Sparkles}>Finalize Outflow</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-[2rem] bg-primary !py-6 shadow-2xl shadow-rose-600/30 font-black uppercase tracking-[0.4em] text-sm" icon={Sparkles}>Finalize Outflow</Button>
           </form>
         </Modal>
       </div>

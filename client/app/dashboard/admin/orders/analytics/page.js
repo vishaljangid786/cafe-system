@@ -75,9 +75,9 @@ export default function OrderAnalyticsDashboard() {
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-zinc-900 dark:text-zinc-100">
               <TrendingUp className="text-amber-500" size={36} />
-              Culinary Intelligence
+              Order Analysis
             </h1>
-            <p className="text-zinc-500 text-sm font-bold mt-1 tracking-tight">Deep-dive behavioral mapping and kitchen performance auditing.</p>
+            <p className="text-zinc-500 text-sm font-bold mt-1 tracking-tight">Detailed report of orders and kitchen performance.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl p-2.5 rounded-[2rem] border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl relative z-[60]">
@@ -98,7 +98,7 @@ export default function OrderAnalyticsDashboard() {
                   >
                     <Globe size={16} className={`${branchFilter === 'all' ? 'text-amber-500' : 'text-blue-500'} group-hover:rotate-12 transition-transform`} />
                     <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.15em]">
-                      {branchFilter === 'all' ? 'Global Network' : locations.find(l => l._id === branchFilter)?.name}
+                      {branchFilter === 'all' ? 'All Branches' : locations.find(l => l._id === branchFilter)?.name}
                     </span>
                     <ChevronDown size={14} className={`text-zinc-400 transition-transform duration-300 ${isBranchDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -127,7 +127,7 @@ export default function OrderAnalyticsDashboard() {
                                 : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
                                 }`}
                             >
-                              <Globe size={14} /> Global Network
+                              <Globe size={14} /> All Branches
                             </button>
                             <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2 mx-2" />
                             {locations.map(loc => (
@@ -199,15 +199,15 @@ export default function OrderAnalyticsDashboard() {
             <div>
               <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-500/80 flex items-center gap-3 mb-2">
                 <div className="h-1 w-8 bg-amber-500 rounded-full" />
-                Strategic Infrastructure
+                Branch Performance
               </h3>
-              <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">Operational <span className="text-zinc-400">Nodes</span></h2>
-              <p className="text-sm font-bold text-zinc-500 mt-2 max-w-xl leading-relaxed">Real-time throughput and efficiency telemetry across the global culinary grid.</p>
+              <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">Branch <span className="text-zinc-400">List</span></h2>
+              <p className="text-sm font-bold text-zinc-500 mt-2 max-w-xl leading-relaxed">View real-time orders and efficiency across all branches.</p>
             </div>
             <div className="flex items-center gap-3 p-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
               <div className="px-4 py-2 bg-white dark:bg-zinc-800 rounded-xl shadow-sm">
                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mr-2">Status:</span>
-                <span className="text-xs font-black text-emerald-500">Live Grid</span>
+                <span className="text-xs font-black text-emerald-500">Live</span>
               </div>
             </div>
           </div>
@@ -236,19 +236,19 @@ export default function OrderAnalyticsDashboard() {
                   </div>
                   {branchFilter === 'all' && (
                     <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-widest border border-amber-500/30">
-                      Active Focal Point
+                      Active
                     </span>
                   )}
                 </div>
                 <h4 className={`text-xl font-black tracking-tighter mb-1 transition-colors ${branchFilter === 'all' ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
-                  }`}>Global Network</h4>
+                  }`}>All Branches</h4>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${branchFilter === 'all' ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
-                  }`}>Consolidated Data Stream</p>
+                  }`}>Combined Data</p>
 
                 <div className="mt-auto pt-6 flex items-center justify-between">
                   <div>
                     <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === 'all' ? 'text-zinc-500' : 'text-zinc-400'
-                      }`}>Net Capacity</p>
+                      }`}>Total Orders</p>
                     <p className={`text-lg font-black tracking-tighter ${branchFilter === 'all' ? 'text-amber-500' : 'text-zinc-900 dark:text-zinc-100'
                       }`}>{data?.metrics?.totalOrders} <span className="text-[10px]">Units</span></p>
                   </div>
@@ -298,18 +298,18 @@ export default function OrderAnalyticsDashboard() {
                   <h4 className={`text-xl font-black tracking-tighter mb-1 truncate transition-colors ${branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
                     }`}>{branch.name}</h4>
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${branchFilter === branch.id ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500'
-                    }`}>{branch.city} Sector</p>
+                    }`}>{branch.city} Area</p>
 
                   <div className="mt-8 grid grid-cols-2 gap-4">
                     <div>
                       <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
-                        }`}>Throughput</p>
+                        }`}>Orders</p>
                       <p className={`text-lg font-black tracking-tighter ${branchFilter === branch.id ? 'text-white dark:text-zinc-900' : 'text-zinc-900 dark:text-zinc-100'
                         }`}>{branch.totalOrders}</p>
                     </div>
                     <div>
                       <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${branchFilter === branch.id ? 'text-zinc-500' : 'text-zinc-400'
-                        }`}>Efficiency</p>
+                        }`}>Avg Time</p>
                       <p className={`text-lg font-black tracking-tighter ${branchFilter === branch.id ? 'text-blue-400' : 'text-blue-500'
                         }`}>{branch.avgPrepTime}m</p>
                     </div>
@@ -327,9 +327,9 @@ export default function OrderAnalyticsDashboard() {
             <div className="flex items-center justify-between mb-10">
               <div>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                  <LineIcon size={16} className="text-amber-500" /> Hourly Volume Distribution
+                  <LineIcon size={16} className="text-amber-500" /> Hourly Orders
                 </h3>
-                <p className="text-[10px] font-bold text-zinc-500 mt-1 uppercase tracking-tight">Order density across 24-hour cycle</p>
+                <p className="text-[10px] font-bold text-zinc-500 mt-1 uppercase tracking-tight">Orders received throughout the day</p>
               </div>
             </div>
             <div className="h-[350px] w-full">
@@ -356,7 +356,7 @@ export default function OrderAnalyticsDashboard() {
           {/* Status Breakdown Pie */}
           <div className="xl:col-span-4 glass-morphism rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 p-8 flex flex-col">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 mb-8 flex items-center gap-2">
-              <PieIcon size={16} className="text-blue-500" /> Status Segmentation
+              <PieIcon size={16} className="text-blue-500" /> Order Status
             </h3>
             <div className="flex-1 min-h-[300px] w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -394,9 +394,9 @@ export default function OrderAnalyticsDashboard() {
             <div className="flex items-center justify-between mb-10">
               <div>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                  <ChefHat size={16} className="text-amber-500" /> Culinary Throughput Ranking
+                  <ChefHat size={16} className="text-amber-500" /> Top Performing Chefs
                 </h3>
-                <p className="text-[10px] font-bold text-zinc-500 mt-1 uppercase tracking-tight">Average preparation time and total volume by chef</p>
+                <p className="text-[10px] font-bold text-zinc-500 mt-1 uppercase tracking-tight">Average cooking time and total orders by chef</p>
               </div>
               <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 dark:bg-white dark:text-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">
                 <Download size={14} /> Export Dataset
@@ -433,7 +433,7 @@ export default function OrderAnalyticsDashboard() {
               ))}
               {(!data?.charts?.chefPerformance || data.charts.chefPerformance.length === 0) && (
                 <div className="lg:col-span-4 h-40 flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 dark:border-zinc-800/50 rounded-[2.5rem] opacity-30 italic text-xs font-bold text-zinc-500">
-                  Insufficient throughput data to generate rankings.
+                  Not enough data to show rankings.
                 </div>
               )}
             </div>
@@ -442,7 +442,7 @@ export default function OrderAnalyticsDashboard() {
         <Modal
           isOpen={!!selectedBranchDetails}
           onClose={() => setSelectedBranchDetails(null)}
-          title="Branch Diagnostic Telemetry"
+          title="Branch Details"
         >
           {selectedBranchDetails && (
             <div className="space-y-10 p-2">
@@ -455,10 +455,10 @@ export default function OrderAnalyticsDashboard() {
                   <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none mb-3">{selectedBranchDetails.name}</h3>
                   <div className="flex flex-wrap gap-3">
                     <span className="px-3 py-1 rounded-lg bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-[9px] font-black uppercase tracking-widest">
-                      Node ID: {selectedBranchDetails._id.substring(0, 8)}
+                      Branch ID: {selectedBranchDetails._id.substring(0, 8)}
                     </span>
                     <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase tracking-widest border border-blue-500/20">
-                      {selectedBranchDetails.city} Sector
+                      {selectedBranchDetails.city} Area
                     </span>
                   </div>
                 </div>
@@ -470,7 +470,7 @@ export default function OrderAnalyticsDashboard() {
                     <Mail size={22} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Communication Node</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Email</p>
                     <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedBranchDetails.contactEmail || 'N/A'}</p>
                   </div>
                 </div>
@@ -479,7 +479,7 @@ export default function OrderAnalyticsDashboard() {
                     <Phone size={22} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Secure Line</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Phone</p>
                     <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedBranchDetails.contactPhone || 'N/A'}</p>
                   </div>
                 </div>
@@ -492,7 +492,7 @@ export default function OrderAnalyticsDashboard() {
                 <div className="relative z-10">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 flex items-center gap-3 mb-6">
                     <div className="h-1 w-6 bg-amber-500 rounded-full" />
-                    Operational Perimeter
+                    Branch Address
                   </h4>
                   <div className="space-y-4">
                     <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 leading-tight max-w-xs">
@@ -501,7 +501,7 @@ export default function OrderAnalyticsDashboard() {
                     <div className="flex items-center gap-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
                       <span>ZIP: {selectedBranchDetails.pincode}</span>
                       <span className="h-1 w-1 bg-zinc-300 rounded-full" />
-                      <span>REGION: {selectedBranchDetails.country}</span>
+                      <span>COUNTRY: {selectedBranchDetails.country}</span>
                     </div>
                   </div>
                 </div>
@@ -515,10 +515,10 @@ export default function OrderAnalyticsDashboard() {
                   }}
                   className="w-full py-5 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white rounded-3xl text-xs font-black uppercase tracking-[0.3em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-zinc-900/20 dark:shadow-white/10"
                 >
-                  Synchronize Matrix
+                  View Details
                 </button>
                 <p className="text-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
-                  Authorized access only • Global grid surveillance enabled
+                  Authorized access only
                 </p>
               </div>
             </div>

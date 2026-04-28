@@ -1,1 +1,6 @@
 otp optin 
+
+ @vishal  sudo systemctl enable --now apache2
+sudo systemctl enable --now mariadb
+
+

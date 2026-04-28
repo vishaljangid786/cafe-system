@@ -37,11 +37,14 @@ const SUGGESTED_ICONS = [
 
 export default function MenuManagementPage() {
   const router = useRouter();
-  const { selectedLocation, user } = useAuth();
+  const { selectedLocation, switchLocation, user } = useAuth();
   const [activeTab, setActiveTab] = useState('items'); // 'items' or 'categories'
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
   const [graphMetric, setGraphMetric] = useState('value'); // 'value' (revenue) or 'count' (volume)
 
   // Analytics states
@@ -126,9 +129,18 @@ export default function MenuManagementPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   useEffect(() => {
-    if (editingItem) setItemCategory(editingItem.category?._id || '');
-    else setItemCategory('');
-  }, [editingItem]);
+    if (editingItem) {
+      setItemCategory(editingItem.category?._id || '');
+      setSelectedBranches(editingItem.availableBranches || []);
+      setIsGlobalItem(editingItem.isGlobal || false);
+      setItemDietaryType(editingItem.dietaryType || 'veg');
+    } else {
+      setItemCategory('');
+      setSelectedBranches(selectedLocation ? [selectedLocation._id || selectedLocation] : []);
+      setIsGlobalItem(false);
+      setItemDietaryType('veg');
+    }
+  }, [editingItem, selectedLocation]);
   const [editingCategory, setEditingCategory] = useState(null);
 
   // Recipe state
@@ -145,6 +157,9 @@ export default function MenuManagementPage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [categoryIcon, setCategoryIcon] = useState('🍽️');
   const [itemCategory, setItemCategory] = useState('');
+  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [isGlobalItem, setIsGlobalItem] = useState(false);
+  const [itemDietaryType, setItemDietaryType] = useState('veg');
 
   useEffect(() => {
     if (editingCategory) {
@@ -158,16 +173,23 @@ export default function MenuManagementPage() {
     try {
       setLoading(true);
       const params = {};
-      if (selectedLocation) params.locationId = selectedLocation._id || selectedLocation;
+      
+      // Prioritize explicit filterLocation from the dropdown, fallback to context selectedLocation
+      const targetLoc = filterLocation !== 'all' ? filterLocation : (selectedLocation?._id || selectedLocation);
+      if (targetLoc && targetLoc !== 'all') params.locationId = targetLoc;
+
+      params.page = currentPage;
+      params.limit = itemsPerPage;
 
       const [itemsRes, catsRes] = await Promise.all([
         api.get('/menu', { params }),
         api.get('/categories')
       ]);
       setMenuItems(itemsRes.data.data);
+      setTotalPages(itemsRes.data.pagination.pages);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Failed to sync menu matrix');
+      toast.error('Failed to load menu items');
       console.error(error);
     } finally {
       setLoading(false);
@@ -176,7 +198,7 @@ export default function MenuManagementPage() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedLocation]);
+  }, [selectedLocation, filterLocation, currentPage]);
 
   const fetchRecipe = async (menuItemId) => {
     try {
@@ -198,29 +220,29 @@ export default function MenuManagementPage() {
     const data = Object.fromEntries(formData);
     data.isActive = formData.get('isActive') === 'on';
 
-    const loadToast = toast.loading(editingCategory ? 'Updating sector...' : 'Initializing sector...');
+    const loadToast = toast.loading(editingCategory ? 'Updating category...' : 'Creating category...');
     try {
       if (editingCategory) {
         await api.put(`/categories/${editingCategory._id}`, data);
-        toast.success('Sector synchronized', { id: loadToast });
+        toast.success('Category updated', { id: loadToast });
       } else {
         await api.post('/categories', data);
-        toast.success('New sector established', { id: loadToast });
+        toast.success('New category created', { id: loadToast });
       }
       setShowCategoryModal(false);
       setEditingCategory(null);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
     }
   };
 
   const deleteCategory = async (id) => {
-    if (!confirm('Deactivate this sector? All linked nodes will be orphaned.')) return;
-    const loadToast = toast.loading('Deactivating sector...');
+    if (!confirm('Deactivate this category? All items in this category will be unassigned.')) return;
+    const loadToast = toast.loading('Deactivating category...');
     try {
       await api.delete(`/categories/${id}`);
-      toast.success('Sector offline', { id: loadToast });
+      toast.success('Category deactivated', { id: loadToast });
       fetchData();
     } catch (error) {
       toast.error('Deactivation failed', { id: loadToast });
@@ -232,12 +254,24 @@ export default function MenuManagementPage() {
     e.preventDefault();
     const formData = new FormData(e.target);
 
-    const isGlobal = formData.get('isGlobal') === 'on';
-    if (isGlobal) {
-      formData.set('locationId', '');
-    } else if (selectedLocation && !formData.has('locationId')) {
-      formData.append('locationId', selectedLocation._id || selectedLocation);
+    // Image requirement check for new items
+    if (!editingItem && !itemFileRef.current?.files[0]) {
+      return toast.error("Image is required for new items");
     }
+
+    formData.set('isGlobal', isGlobalItem);
+    formData.delete('availableBranches'); // Clean up any existing
+    if (!isGlobalItem) {
+      selectedBranches.forEach(id => {
+        formData.append('availableBranches', id);
+        // Add branch-specific stock
+        const stockVal = formData.get(`stock_${id}`);
+        if (stockVal !== null) {
+          formData.append(`branchStock_${id}`, stockVal);
+        }
+      });
+    }
+    formData.set('dietaryType', itemDietaryType);
 
     // Validation: discountedPrice < originalPrice
     const originalPrice = formData.get('originalPrice') ? parseFloat(formData.get('originalPrice')) : null;
@@ -247,7 +281,7 @@ export default function MenuManagementPage() {
       return toast.error(`Pricing logic error: Offer Price (₹${discPrice}) cannot be higher than the Original Price (₹${originalPrice})`);
     }
 
-    const loadToast = toast.loading(editingItem ? 'Updating node...' : 'Deploying node...');
+    const loadToast = toast.loading(editingItem ? 'Updating item...' : 'Adding item...');
     try {
       let itemId;
       if (editingItem) {
@@ -255,13 +289,13 @@ export default function MenuManagementPage() {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         itemId = res.data.data._id;
-        toast.success('Node synchronized', { id: loadToast });
+        toast.success('Item updated', { id: loadToast });
       } else {
         const res = await api.post('/menu', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         itemId = res.data.data._id;
-        toast.success('New node operational', { id: loadToast });
+        toast.success('Item added', { id: loadToast });
       }
 
       // Handle Recipe Upsert if visible
@@ -270,7 +304,7 @@ export default function MenuManagementPage() {
           menuItemId: itemId,
           ...recipeData
         });
-        toast.success('Recipe matrix synced');
+        toast.success('Recipe updated');
       }
 
       setShowItemModal(false);
@@ -279,7 +313,7 @@ export default function MenuManagementPage() {
       setShowRecipeEditor(false);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Deployment failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
     }
   };
 
@@ -289,18 +323,18 @@ export default function MenuManagementPage() {
       setMenuItems(items => items.map(item =>
         item._id === id ? { ...item, isAvailable: !item.isAvailable } : item
       ));
-      toast.success('Matrix state toggled');
+      toast.success('Availability updated');
     } catch (error) {
       toast.error('Toggle failed');
     }
   };
 
   const deleteItem = async (id) => {
-    if (!confirm('Erase this menu node permanently?')) return;
-    const loadToast = toast.loading('Erasing node...');
+    if (!confirm('Delete this item permanently?')) return;
+    const loadToast = toast.loading('Deleting item...');
     try {
       await api.delete(`/menu/${id}`);
-      toast.success('Node erased', { id: loadToast });
+      toast.success('Item deleted', { id: loadToast });
       fetchData();
     } catch (error) {
       toast.error('Erasure failed', { id: loadToast });
@@ -436,11 +470,14 @@ export default function MenuManagementPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-wrap items-center gap-4">
             {/* Location Selector */}
-            <PremiumSelect 
+            <PremiumSelect
               icon={MapPin}
               label="Branch"
-              value={filterLocation}
-              onChange={(val) => setFilterLocation(val)}
+              value={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation || 'all')}
+              onChange={(val) => {
+                const loc = val === 'all' ? 'all' : locations.find(l => l._id === val);
+                switchLocation(loc);
+              }}
               options={[
                 { label: 'All Branches', value: 'all' },
                 ...locations.map(loc => ({ label: loc.name, value: loc._id }))
@@ -527,7 +564,7 @@ export default function MenuManagementPage() {
                   {graphMetric === 'value' ? `₹${analytics?.summary?.totalRevenue?.toLocaleString()}` : analytics?.summary?.totalOrders}
                 </span>
                 <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {graphMetric === 'value' ? 'Gross Yield' : 'Total Orders'}
+                  {graphMetric === 'value' ? 'Total Revenue' : 'Total Orders'}
                 </span>
               </div>
             </div>
@@ -580,7 +617,7 @@ export default function MenuManagementPage() {
                     <div className="h-12 w-px bg-zinc-200 dark:bg-zinc-800" />
                     <div className="text-center">
                       <p className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-1">Matrix Yield</p>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-1">Total Earnings</p>
                     </div>
                   </div>
                 </div>
@@ -604,7 +641,7 @@ export default function MenuManagementPage() {
 
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-end mb-1">
-                          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Efficiency Matrix</span>
+                          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Performance</span>
                           <span className="text-xs font-black text-zinc-900 dark:text-white">₹{staff.revenue.toLocaleString()}</span>
                         </div>
                         <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
@@ -637,33 +674,14 @@ export default function MenuManagementPage() {
               <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder={activeTab === 'items' ? "Search culinary inventory..." : "Search sector categories..."}
+                  placeholder={activeTab === 'items' ? "Search food items..." : "Search food categories..."}
                   className="w-full pl-14 pr-6 py-4 bg-muted border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-inner transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
 
-                {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-                  <div className="flex bg-muted p-1 rounded-xl border border-border mt-4 w-fit">
-                    {[
-                      { id: 'All', label: 'All Items' },
-                      { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
-                      { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
-                    ].map((f) => (
-                      <button
-                        key={f.id}
-                        onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dietaryFilter === f.id
-                            ? 'bg-amber-500 text-black shadow-sm'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                          } ${f.color || ''}`}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
+
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
@@ -711,6 +729,26 @@ export default function MenuManagementPage() {
                 </div>
               </div>
             </div>
+            {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
+              <div className="flex bg-muted p-1 rounded-xl border border-border mt-4 w-fit">
+                {[
+                  { id: 'All', label: 'All Items' },
+                  { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
+                  { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setDietaryFilter(f.id)}
+                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dietaryFilter === f.id
+                      ? 'bg-amber-500 text-black shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                      } ${f.color || ''}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-3">
               <button
@@ -737,65 +775,68 @@ export default function MenuManagementPage() {
                 >
                   <div className="p-8 mt-6 bg-muted rounded-3xl border border-border shadow-inner">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        <PremiumSelect 
-                          label="Category"
-                          value={selectedCategory}
-                          onChange={(val) => setSelectedCategory(val)}
-                          options={[
-                            { label: 'All Categories', value: 'All' },
-                            ...categories.map(cat => ({ label: cat.name, value: cat.name }))
-                          ]}
-                        />
+                      <PremiumSelect
+                        label="Category"
+                        value={selectedCategory}
+                        onChange={(val) => setSelectedCategory(val)}
+                        options={[
+                          { label: 'All Categories', value: 'All' },
+                          ...categories.map(cat => ({ label: cat.name, value: cat.name }))
+                        ]}
+                      />
 
-                        <PremiumSelect 
-                          label="Status"
-                          value={availabilityFilter}
-                          onChange={(val) => setAvailabilityFilter(val)}
-                          options={[
-                            { label: 'All Status', value: 'All' },
-                            { label: 'Active Only', value: 'Available' },
-                            { label: 'Inactive Only', value: 'Unavailable' }
-                          ]}
-                        />
-
-                      <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Min Price</label>
-                        <div className="relative">
-                          <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-                          <input
-                            type="number"
-                            placeholder="Min"
-                            className="w-full pl-10 pr-4 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
-                            value={minPrice}
-                            onChange={(e) => setMinPrice(e.target.value)}
+                      {activeTab !== 'categories' && (
+                        <>
+                          <PremiumSelect
+                            label="Status"
+                            value={availabilityFilter}
+                            onChange={(val) => setAvailabilityFilter(val)}
+                            options={[
+                              { label: 'All Status', value: 'All' },
+                              { label: 'Active Only', value: 'Available' },
+                              { label: 'Inactive Only', value: 'Unavailable' }
+                            ]}
                           />
-                        </div>
-                      </div>
 
-                      <div className="space-y-2.5">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Min Price</label>
-                        <div className="relative">
-                          <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                          <input
-                            type="number"
-                            placeholder="Min"
-                            className="w-full pl-10 pr-4 py-4 bg-card border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-sm transition-all text-foreground"
-                            value={maxPrice}
-                            onChange={(e) => setMaxPrice(e.target.value)}
-                          />
-                        </div>
-                      </div>
+                          <div className="space-y-2.5">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Min Price</label>
+                            <div className="relative">
+                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                              <input
+                                type="number"
+                                placeholder="Min"
+                                className="w-full pl-10 pr-4 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
+                                value={minPrice}
+                                onChange={(e) => setMinPrice(e.target.value)}
+                              />
+                            </div>
+                          </div>
 
-                        <PremiumSelect 
-                          label="Dietary"
-                          value={dietaryFilter}
-                          onChange={(val) => setDietaryFilter(val)}
-                          options={[
-                            { label: 'All Dietary', value: 'All' },
-                            { label: 'Veg Only', value: 'veg' },
-                            { label: 'Non-Veg Only', value: 'non-veg' }
-                          ]}
-                        />
+                          <div className="space-y-2.5">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Max Price</label>
+                            <div className="relative">
+                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                              <input
+                                type="number"
+                                placeholder="Max"
+                                className="w-full pl-10 pr-4 py-4  bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
+                                value={maxPrice}
+                                onChange={(e) => setMaxPrice(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <PremiumSelect
+                            label="Dietary"
+                            value={dietaryFilter}
+                            onChange={(val) => setDietaryFilter(val)}
+                            options={[
+                              { label: 'All Dietary', value: 'All' },
+                              { label: 'Veg Only', value: 'veg' },
+                              { label: 'Non-Veg Only', value: 'non-veg' }
+                            ]}
+                          /></>
+                      )}
                     </div>
 
                     <div className="mt-8 flex justify-end">
@@ -1006,7 +1047,7 @@ export default function MenuManagementPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <input type="hidden" name="category" value={itemCategory} />
-                        <PremiumSelect 
+                        <PremiumSelect
                           label="Category"
                           value={itemCategory}
                           onChange={(val) => setItemCategory(val)}
@@ -1043,21 +1084,43 @@ export default function MenuManagementPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Dietary Type</label>
                       <div className="flex gap-4">
-                        {['veg', 'non-veg'].map((type) => (
-                          <label key={type} className="flex-1 flex items-center justify-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-amber-500/50 transition-all">
-                            <input
-                              type="radio"
-                              name="dietaryType"
-                              value={type}
-                              defaultChecked={editingItem ? editingItem.dietaryType === type : type === 'veg'}
-                              className="w-4 h-4 accent-amber-600"
-                            />
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${type === 'veg' ? 'text-green-500' : 'text-red-500'}`}>
-                              {type}
-                            </span>
-                          </label>
-                        ))}
+                        {['veg', 'non-veg'].map((type) => {
+                          const isInvalid = !isGlobalItem && selectedBranches.some(branchId => {
+                            const branch = locations.find(l => l._id === branchId);
+                            if (branch?.dietaryType === 'veg' && type === 'non-veg') return true;
+                            if (branch?.dietaryType === 'non-veg' && type === 'veg') return true;
+                            return false;
+                          });
+
+                          return (
+                            <label
+                              key={type}
+                              className={`flex-1 flex items-center justify-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border transition-all ${isInvalid ? 'opacity-40 cursor-not-allowed border-rose-500/20' : 'border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-amber-500/50'}`}
+                            >
+                              <input
+                                type="radio"
+                                name="dietaryType"
+                                value={type}
+                                checked={itemDietaryType === type}
+                                onChange={() => !isInvalid && setItemDietaryType(type)}
+                                disabled={isInvalid}
+                                className="w-4 h-4 accent-amber-600"
+                              />
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${type === 'veg' ? 'text-green-500' : 'text-red-500'}`}>
+                                {type}
+                              </span>
+                            </label>
+                          );
+                        })}
                       </div>
+                      {!isGlobalItem && selectedBranches.some(branchId => {
+                        const branch = locations.find(l => l._id === branchId);
+                        return branch?.dietaryType === 'veg' || branch?.dietaryType === 'non-veg';
+                      }) && (
+                          <p className="text-[8px] font-bold text-amber-600 mt-2 uppercase tracking-tight italic">
+                            * Some selected branches have strict dietary restrictions.
+                          </p>
+                        )}
                     </div>
                   </div>
                 </section>
@@ -1167,7 +1230,15 @@ export default function MenuManagementPage() {
                       </div>
                     )}
                   </div>
-                  <input type="file" name="image" ref={itemFileRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+                  <input 
+                    type="file" 
+                    name="image" 
+                    ref={itemFileRef} 
+                    onChange={handleImageChange} 
+                    className="hidden" 
+                    accept="image/*"
+                    required={!editingItem}
+                  />
                 </section>
 
                 {/* Status */}
@@ -1190,18 +1261,81 @@ export default function MenuManagementPage() {
                     </label>
 
                     {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                      <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
-                        <div>
-                          <span className="text-xs font-bold text-zinc-900 dark:text-white block">Global Item</span>
-                          <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-tight italic">Available for every branch</span>
-                        </div>
-                        <input
-                          type="checkbox"
-                          name="isGlobal"
-                          defaultChecked={editingItem ? !editingItem.locationId : true}
-                          className="w-5 h-5 accent-amber-600 rounded-lg"
-                        />
-                      </label>
+                      <div className="space-y-4">
+                        <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
+                          <div>
+                            <span className="text-xs font-bold text-zinc-900 dark:text-white block">Global Item</span>
+                            <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-tight italic">Available for every branch</span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isGlobalItem}
+                            onChange={(e) => setIsGlobalItem(e.target.checked)}
+                            className="w-5 h-5 accent-amber-600 rounded-lg"
+                          />
+                        </label>
+
+                        {!isGlobalItem && (
+                          <>
+                            <div className="space-y-3 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Target Branches</label>
+                              <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 no-scrollbar">
+                                {locations.map(loc => (
+                                  <label key={loc._id} className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-900 cursor-pointer hover:border-amber-500/20 transition-all">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedBranches.includes(loc._id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedBranches([...selectedBranches, loc._id]);
+                                        } else {
+                                          setSelectedBranches(selectedBranches.filter(id => id !== loc._id));
+                                        }
+                                      }}
+                                      className="w-4 h-4 accent-amber-600 rounded"
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-bold text-foreground truncate">{loc.name}</span>
+                                      <span className={`text-[7px] font-black uppercase tracking-tighter ${loc.dietaryType === 'veg' ? 'text-green-500' : loc.dietaryType === 'non-veg' ? 'text-red-500' : 'text-blue-500'}`}>
+                                        {loc.dietaryType}
+                                      </span>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            {selectedBranches.length > 0 && (
+                              <div className="space-y-4 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Branch Stock Matrix</h4>
+                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 no-scrollbar">
+                                  {locations.filter(l => selectedBranches.includes(l._id)).map(loc => {
+                                    const bStock = editingItem?.branchStocks?.find(bs => bs.branch === loc._id);
+                                    return (
+                                      <div key={loc._id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-900">
+                                        <div className="flex flex-col">
+                                          <span className="text-[10px] font-black text-foreground">{loc.name}</span>
+                                          <span className="text-[7px] text-zinc-400 uppercase tracking-widest">{loc.city}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <div className="relative w-20">
+                                            <input
+                                              type="number"
+                                              name={`stock_${loc._id}`}
+                                              defaultValue={bStock ? bStock.stock : (editingItem?.stock || 0)}
+                                              className="w-full pl-3 pr-2 py-2 bg-muted border border-border rounded-lg text-xs font-black outline-none focus:ring-1 focus:ring-amber-500"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     )}
 
                     <div className="space-y-2">
@@ -1292,7 +1426,7 @@ export default function MenuManagementPage() {
                               />
                             </div>
                             <div className="flex-2">
-                              <PremiumSelect 
+                              <PremiumSelect
                                 value={ing.unit}
                                 onChange={(val) => updateIngredient(idx, 'unit', val)}
                                 options={[
@@ -1384,7 +1518,7 @@ export default function MenuManagementPage() {
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
+                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl bg-primary shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
               >
                 {editingItem ? 'Save Updates' : 'Add Item'}
               </Button>
@@ -1494,13 +1628,13 @@ export default function MenuManagementPage() {
                 onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}
                 className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-rose-500 transition-all"
               >
-                Abort Protocol
+                Cancel
               </button>
               <Button
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
+                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em] bg-primary"
               >
                 {editingCategory ? 'Synchronize Sector' : 'Initialize Sector'}
               </Button>
@@ -1511,11 +1645,34 @@ export default function MenuManagementPage() {
         {(filteredItems.length === 0 && activeTab === 'items' && !loading) || (filteredCategories.length === 0 && activeTab === 'categories' && !loading) ? (
           <div className="text-center py-32 bg-amber-600/[0.02] rounded-[4rem] border border-dashed border-amber-600/20 col-span-full w-full">
             <UtensilsCrossed size={64} className="mx-auto text-amber-600/10 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">No {activeTab === 'items' ? 'Culinary Nodes' : 'Logical Sectors'} Detected</h3>
-            <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'sector'} matrix is currently empty for the selected filters. Establish a new {activeTab === 'items' ? 'node' : 'sector'} to begin.</p>
-            <Button variant="outline" className="mt-8 px-10 rounded-2xl" icon={Plus} onClick={() => activeTab === 'items' ? setShowItemModal(true) : setShowCategoryModal(true)}>Establish {activeTab === 'items' ? 'Node' : 'Sector'}</Button>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
+            <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
+            <Button variant="outline" className="mt-8 px-10 rounded-2xl" icon={Plus} onClick={() => activeTab === 'items' ? setShowItemModal(true) : setShowCategoryModal(true)}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
           </div>
         ) : null}
+        {activeTab === 'items' && totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-card border border-border rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Inventory Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

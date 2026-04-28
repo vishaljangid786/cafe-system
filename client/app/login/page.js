@@ -12,8 +12,8 @@ import * as z from 'zod';
 import api from '../services/api';
 
 const loginSchema = z.object({
-  email: z.string().email('Operational terminal email required').min(1, 'Email is required'),
-  password: z.string().min(6, 'Protocol requires at least 6 characters'),
+  email: z.string().email('Enter a valid email address').min(1, 'Email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 export default function LoginPage() {
@@ -37,7 +37,7 @@ export default function LoginPage() {
         const res = await api.get('/auth/initial-setup-check');
         if (res.data.success && res.data.data.isInitialSetup) {
           router.push('/setup');
-          toast('System uninitialized. Redirecting to Master Setup...', { icon: '🛡️' });
+          toast('System not set up yet. Taking you to setup...', { icon: '🛡️' });
         }
       } catch (error) {
         if (error.message === 'Network Error') {
@@ -63,10 +63,10 @@ export default function LoginPage() {
     setServerError('');
     const res = await login(data.email, data.password);
     if (res.success) {
-      toast.success('Access Granted. Welcome back.');
+      toast.success('Login successful. Welcome back.');
     } else {
       setServerError(res.message);
-      toast.error(res.message || 'Authentication protocol failure');
+      toast.error(res.message || 'Login failed. Please check your details.');
     }
   };
 
@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-16 w-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Initializing OS</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Loading System</p>
         </div>
       </div>
     );
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 <h1 className="text-4xl font-black tracking-tighter text-white leading-none">
                   Cafe<span className="text-amber-500">OS</span>
                 </h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">V4.0 Advanced Control</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Smart Cafe Management</p>
               </div>
             </div>
           </motion.div>
@@ -128,11 +128,11 @@ export default function LoginPage() {
               className="max-w-md"
             >
               <h2 className="text-6xl font-black text-white tracking-tighter leading-[0.9]">
-                Precision <br />
-                <span className="text-amber-500 italic">Hospitality</span>
+                Modern <br />
+                <span className="text-amber-500 italic">Cafe Management</span>
               </h2>
               <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">
-                Next-generation management system for high-density cafe operations. Secure your terminal to begin synchronization.
+                Manage your cafe branches, staff, and orders all in one place. Please login to your account to continue.
               </p>
             </motion.div>
 
@@ -143,9 +143,9 @@ export default function LoginPage() {
               className="flex items-center gap-10"
             >
               {[
-                { icon: Terminal, label: "System", value: "Operational" },
-                { icon: Activity, label: "Latency", value: "0.4ms" },
-                { icon: Globe, label: "Network", value: "Global Matrix" }
+                { icon: Terminal, label: "System", value: "Online" },
+                { icon: Activity, label: "Speed", value: "Fast" },
+                { icon: Globe, label: "Network", value: "Connected" }
               ].map((item, i) => (
                 <div key={i} className="space-y-1">
                   <div className="flex items-center gap-2 text-amber-500/50">
@@ -184,8 +184,8 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1 text-center lg:text-left mb-10">
-            <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Secure Login</h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Authorization Required for Terminal Access</p>
+            <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Login</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Please enter your details to access your account</p>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -204,7 +204,7 @@ export default function LoginPage() {
             </AnimatePresence>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Operational ID (Email)</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Email Address</label>
               <div className="relative group">
                 <input
                   {...register('email')}
@@ -219,7 +219,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Key Passphrase</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
               <div className="relative group">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -248,7 +248,7 @@ export default function LoginPage() {
               className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl shadow-xl shadow-amber-500/20 bg-amber-500 text-black hover:bg-amber-600 border-none transition-all duration-500"
               icon={Zap}
             >
-              Establish Uplink
+              Login to Account
             </Button>
           </form>
 
@@ -256,17 +256,17 @@ export default function LoginPage() {
           <div className="mt-12 space-y-8">
             <div className="flex items-center gap-4">
               <div className="h-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Diagnostic Override</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Quick Login (Testing Only)</p>
               <div className="h-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800" />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
               {[
                 { label: 'Super', email: 'super@cafeos.com', color: 'amber' },
-                { label: 'Admin', email: 'mangyawwas@gandhipath.com', color: 'zinc' },
-                { label: 'Branch', email: 'mangyawas@branchadmin.com', color: 'zinc' },
-                { label: 'Chef', email: 'cheff@mangyawas.com', color: 'zinc' },
-                { label: 'Staff', email: 'staff@mangyawas.com', color: 'zinc' },
+                { label: 'Admin', email: 'admin1@cafeos.com', color: 'zinc' },
+                { label: 'Branch', email: 'manager.skylineterrace@cafeos.com', color: 'zinc' },
+                { label: 'Chef', email: 'chef1.centralhub@cafeos.com', color: 'zinc' },
+                { label: 'Staff', email: 'staff1.centralhub@cafeos.com', color: 'zinc' },
               ].map((testUser) => (
                 <button
                   key={testUser.label}
@@ -278,7 +278,7 @@ export default function LoginPage() {
                     {testUser.label}
                   </span>
                   <span className="text-[7px] font-bold text-zinc-400 dark:text-zinc-600 mt-1 truncate max-w-full italic">
-                    SYS-RECOVERY
+                    TEST-LOGIN
                   </span>
                 </button>
               ))}
@@ -287,13 +287,13 @@ export default function LoginPage() {
             <div className="flex flex-col items-center gap-6 pt-4">
               <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full">
                 <Lock size={10} className="text-amber-500" />
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">Secure AES-256 Link Active</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">Secure Connection Active</span>
               </div>
               <button
                 onClick={() => router.push('/signup')}
                 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-amber-500 transition-colors flex items-center gap-2 group"
               >
-                New Node? <span className="text-amber-500 underline underline-offset-4 decoration-2">Register Branch</span>
+                New here? <span className="text-amber-500 underline underline-offset-4 decoration-2">Create Account</span>
               </button>
             </div>
           </div>

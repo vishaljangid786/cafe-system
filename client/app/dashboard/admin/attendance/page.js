@@ -19,17 +19,21 @@ export default function GlobalAttendancePage() {
     date: new Date().toISOString()?.split('T')[0],
     locationId: 'All'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [attRes, summaryRes, locRes] = await Promise.all([
-          api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}`),
+          api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`),
           api.get(`/attendance/monthly-summary?month=${filters.date.slice(0, 7)}&locationId=${filters.locationId}`),
           api.get('/locations')
         ]);
         setAttendance(attRes.data.data);
+        setTotalPages(attRes.data.pagination?.pages || 1);
         setSummary(summaryRes.data.data);
         setLocations(locRes.data.data);
       } catch (err) {
@@ -39,7 +43,7 @@ export default function GlobalAttendancePage() {
       }
     };
     fetchData();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   return (
     <PageTransition>
@@ -289,6 +293,31 @@ export default function GlobalAttendancePage() {
             </div>
           </div>
         </SlideIn>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-8 py-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+              Matrix Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

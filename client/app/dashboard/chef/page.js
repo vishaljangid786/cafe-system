@@ -33,6 +33,7 @@ export default function ChefDashboard() {
   const [chefNote, setChefNote] = useState('');
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeLaneTab, setActiveLaneTab] = useState('incoming');
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!selectedLocation) return;
@@ -45,7 +46,7 @@ export default function ChefDashboard() {
       const activeOrders = res.data.data.filter(o => activeStatuses.includes(o.status));
       setOrders(activeOrders);
     } catch (error) {
-      toast.error('Failed to sync kitchen stream');
+      toast.error('Failed to load orders');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -61,13 +62,9 @@ export default function ChefDashboard() {
     fetchOrders();
 
     if (socket && selectedLocation) {
-      const branchId = selectedLocation._id || selectedLocation;
-      
-      // Join chef room
-      socket.emit('join_room', `branch_${branchId}_chef`);
-
+      // Listeners are now attached to rooms joined in AuthContext
       socket.on('order:new', (data) => {
-        toast.success('New Order Incoming!', { icon: '🔥', duration: 4000 });
+        toast.success('New Order!', { icon: '🔥', duration: 4000 });
         fetchOrders();
       });
 
@@ -86,20 +83,20 @@ export default function ChefDashboard() {
   }, [socket, selectedLocation, fetchOrders]);
 
   const handleUpdateStatus = async (orderId, endpoint) => {
-    const loadToast = toast.loading('Updating lifecycle...');
+    const loadToast = toast.loading('Updating status...');
     try {
       await api.patch(`/orders/${orderId}/${endpoint}`, {});
       fetchOrders();
-      toast.success('Protocol updated', { id: loadToast });
+      toast.success('Status updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Transition blocked', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Error updating status', { id: loadToast });
     }
   };
 
   const handleAddNote = async () => {
     try {
       await api.patch(`/orders/${selectedOrder._id}/note`, { chefNote });
-      toast.success('Note attached');
+      toast.success('Note saved');
       setShowNoteModal(false);
       setChefNote('');
       fetchOrders();
@@ -111,7 +108,7 @@ export default function ChefDashboard() {
   const lanes = [
     { 
       id: 'incoming', 
-      title: 'Incoming Orders', 
+      title: 'New Orders', 
       statuses: ['PLACED'], 
       icon: Zap, 
       color: 'amber',
@@ -128,7 +125,7 @@ export default function ChefDashboard() {
     },
     { 
       id: 'preparing', 
-      title: 'In Preparation', 
+      title: 'Cooking', 
       statuses: ['ACCEPTED', 'PREPARING'], 
       icon: Timer, 
       color: 'blue',
@@ -164,13 +161,13 @@ export default function ChefDashboard() {
     },
     { 
       id: 'ready', 
-      title: 'Fulfillment Ready', 
+      title: 'Ready to Serve', 
       statuses: ['READY'], 
       icon: UtensilsCrossed, 
       color: 'emerald',
       action: () => (
         <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Awaiting Service</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Pick up</span>
         </div>
       )
     }
@@ -180,7 +177,7 @@ export default function ChefDashboard() {
     return (
       <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
         <ChefHat size={48} className="text-amber-500 animate-bounce" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Initializing Kitchen Command...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Opening Kitchen...</p>
       </div>
     );
   }
@@ -195,9 +192,9 @@ export default function ChefDashboard() {
               <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <ChefHat size={24} className="text-white" />
               </div>
-              Kitchen Command Deck
+              Kitchen
             </h1>
-            <p className="text-xs text-zinc-500 mt-1 font-medium ml-13">Culinary Fulfillment & Lifecycle Management</p>
+            <p className="text-xs text-zinc-500 mt-1 font-medium ml-13">Manage kitchen orders</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -209,16 +206,33 @@ export default function ChefDashboard() {
             </button>
             <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                 Live Sector: <span className="text-amber-500 ml-1">{selectedLocation?.name}</span>
+                 Branch: <span className="text-amber-500 ml-1">{selectedLocation?.name}</span>
                </div>
             </div>
           </div>
         </div>
 
+        {/* Mobile Lane Switcher Tabs */}
+        <div className="flex lg:hidden bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 gap-2 mb-4">
+          {lanes.map(l => (
+            <button
+              key={l.id}
+              onClick={() => setActiveLaneTab(l.id)}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${activeLaneTab === l.id ? (l.id === 'incoming' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : l.id === 'preparing' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20') : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}`}
+            >
+              <l.icon size={14} />
+              {l.title}
+            </button>
+          ))}
+        </div>
+
         {/* Lane Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[75vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[60vh]">
           {lanes.map((lane) => (
-            <div key={lane.id} className="flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 overflow-hidden">
+            <div 
+              key={lane.id} 
+              className={`flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 overflow-hidden ${activeLaneTab === lane.id ? 'flex' : 'hidden lg:flex'}`}
+            >
               <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`h-8 w-8 rounded-xl bg-${lane.color}-500/10 flex items-center justify-center`}>
@@ -258,7 +272,7 @@ export default function ChefDashboard() {
                           {order.status === 'PREPARING' && (
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 animate-pulse">
                               <Timer size={10} />
-                              <span className="text-[8px] font-black uppercase">Active Prep</span>
+                              <span className="text-[8px] font-black uppercase">Cooking</span>
                             </div>
                           )}
                         </div>
@@ -291,7 +305,7 @@ export default function ChefDashboard() {
                 {orders.filter(o => lane.statuses.includes(o.status)).length === 0 && (
                   <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
                     <Coffee size={48} strokeWidth={1} />
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] mt-4">Sector Clear</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] mt-4">All done</p>
                   </div>
                 )}
               </div>
@@ -303,12 +317,12 @@ export default function ChefDashboard() {
         <Modal
           isOpen={showNoteModal}
           onClose={() => setShowNoteModal(false)}
-          title="Attach Chef Instruction"
+          title="Add Note for Staff"
           maxWidth="max-w-md"
         >
           <div className="space-y-6">
             <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 block">Instruction / Delay Alert</label>
+               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 block">Note / Message</label>
                <textarea
                  className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all min-h-[120px] dark:text-white shadow-inner"
                  placeholder="e.g. 5 min delay due to high volume..."
@@ -322,14 +336,14 @@ export default function ChefDashboard() {
                  className="flex-1 !rounded-xl text-[10px] font-black uppercase tracking-widest"
                  onClick={() => setShowNoteModal(false)}
                >
-                 Dismiss
+                 Cancel
                </Button>
                <Button 
                  variant="primary" 
                  className="flex-1 !rounded-xl bg-amber-500 hover:bg-amber-600 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
                  onClick={handleAddNote}
                >
-                 Confirm Note
+                 Save Note
                </Button>
             </div>
           </div>

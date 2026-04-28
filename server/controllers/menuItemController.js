@@ -1,4 +1,6 @@
 const MenuItem = require('../models/MenuItem');
+const Location = require('../models/Location');
+const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { logAction } = require('../utils/auditLogger');
 
@@ -26,20 +28,60 @@ const getMenuItems = asyncHandler(async (req, res) => {
     filter.dietaryType = dietaryType;
   }
 
-  // Location filter: global items (locationId: null) + location-specific
+  // Location filter: global items (isGlobal: true) + branch-specific
   if (locationId && locationId !== 'all' && locationId !== 'undefined' && locationId !== 'null') {
-    filter.$or = [{ locationId: null }, { locationId }];
+    filter.$or = [{ isGlobal: true }, { availableBranches: locationId }];
   }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const skip = (page - 1) * limit;
+
+  const total = await MenuItem.countDocuments(filter);
 
   const items = await MenuItem.find(filter)
     .populate('category', 'name icon')
     .populate('createdBy', 'name')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  // If locationId is provided, merge branch-specific stock and availability
+  let mergedItems = items;
+  if (locationId && locationId !== 'all' && locationId !== 'undefined' && locationId !== 'null') {
+    const branchStocks = await BranchStock.find({ branch: locationId });
+    const stockMap = {};
+    branchStocks.forEach(bs => {
+      stockMap[bs.menuItem.toString()] = bs;
+    });
+
+    mergedItems = items.map(item => {
+      const itemObj = item.toObject();
+      const branchStock = stockMap[item._id.toString()];
+      if (branchStock) {
+        itemObj.stock = branchStock.stock;
+        itemObj.isAvailable = item.isAvailable && branchStock.isAvailable;
+        itemObj.branchSpecificStock = branchStock.stock;
+      } else if (!item.isGlobal) {
+        // If not global and no stock record for this branch, it shouldn't be available
+        itemObj.isAvailable = false;
+        itemObj.stock = 0;
+      }
+      return itemObj;
+    });
+  }
 
   res.json({
     success: true,
-    count: items.length,
-    data: items,
+    count: mergedItems.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      limit
+    },
+    data: mergedItems,
   });
 });
 
@@ -56,9 +98,14 @@ const getMenuItem = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
+  const branchStocks = await BranchStock.find({ menuItem: item._id });
+
   res.json({
     success: true,
-    data: item,
+    data: {
+      ...item.toObject(),
+      branchStocks,
+    },
   });
 });
 
@@ -68,7 +115,8 @@ const getMenuItem = asyncHandler(async (req, res) => {
 const createMenuItem = asyncHandler(async (req, res, next) => {
   const {
     name, category, price, costPrice, originalPrice, discountedPrice,
-    description, isAvailable, preparationTime, locationId, dietaryType, stock
+    description, isAvailable, preparationTime, locationId, dietaryType, stock,
+    isGlobal, availableBranches
   } = req.body;
 
   // Validate discountedPrice < originalPrice before creating
@@ -81,6 +129,34 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     throw new Error('Discounted price must be less than original price');
   }
 
+  const isGlobalItem = isGlobal === 'on' || isGlobal === 'true' || isGlobal === true;
+  let branchIds = [];
+  
+  if (!isGlobalItem) {
+    if (Array.isArray(availableBranches)) {
+      branchIds = availableBranches;
+    } else if (availableBranches) {
+      branchIds = availableBranches.split(',');
+    } else if (locationId) {
+      branchIds = [locationId];
+    }
+  }
+
+  // Dietary Validation
+  if (!isGlobalItem && branchIds.length > 0) {
+    const branches = await Location.find({ _id: { $in: branchIds } });
+    for (const branch of branches) {
+      if (branch.dietaryType === 'veg' && dietaryType !== 'veg') {
+        res.status(400);
+        throw new Error(`Branch "${branch.name || branch.city}" is Veg-only. Cannot add non-veg items.`);
+      }
+      if (branch.dietaryType === 'non-veg' && dietaryType !== 'non-veg') {
+        res.status(400);
+        throw new Error(`Branch "${branch.name || branch.city}" is Non-Veg only. Cannot add veg items.`);
+      }
+    }
+  }
+
   const itemData = {
     name,
     category,
@@ -89,7 +165,8 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     description,
     isAvailable: isAvailable === 'on' || isAvailable === 'true' || isAvailable === true || isAvailable === undefined,
     preparationTime: preparationTime ? Number(preparationTime) : 10,
-    locationId: locationId || null,
+    isGlobal: isGlobalItem,
+    availableBranches: isGlobalItem ? [] : branchIds,
     dietaryType: dietaryType || 'veg',
     stock: stock ? Number(stock) : 0,
     createdBy: req.user._id,
@@ -105,6 +182,20 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
 
   const item = await MenuItem.create(itemData);
   await item.populate('category', 'name icon');
+
+  // Initialize BranchStock for all assigned branches
+  if (!isGlobalItem && branchIds.length > 0) {
+    const stockDocs = branchIds.map(branchId => {
+      const specificStock = req.body[`branchStock_${branchId}`];
+      return {
+        menuItem: item._id,
+        branch: branchId,
+        stock: specificStock !== undefined ? Number(specificStock) : (stock ? Number(stock) : 0),
+        isAvailable: specificStock !== undefined ? Number(specificStock) > 0 : true
+      };
+    });
+    await BranchStock.insertMany(stockDocs);
+  }
 
   await logAction(req, 'MENU_ITEM_CREATE', `Created menu item: ${item.name} (₹${item.price})`);
 
@@ -126,7 +217,8 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
 
   const {
     name, category, price, costPrice, originalPrice, discountedPrice,
-    description, isAvailable, preparationTime, locationId, dietaryType, stock
+    description, isAvailable, preparationTime, locationId, dietaryType, stock,
+    isGlobal, availableBranches
   } = req.body;
 
   // Validate discountedPrice < originalPrice
@@ -154,7 +246,43 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     updates.isAvailable = isAvailable === 'on' || isAvailable === 'true' || isAvailable === true;
   }
   if (preparationTime !== undefined) updates.preparationTime = Number(preparationTime);
-  if (locationId !== undefined) updates.locationId = locationId || null;
+  
+  const isGlobalItem = isGlobal !== undefined ? (isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) : item.isGlobal;
+  let branchIds = item.availableBranches;
+
+  if (isGlobal !== undefined || availableBranches !== undefined || locationId !== undefined) {
+    if (isGlobalItem) {
+      branchIds = [];
+    } else {
+      if (Array.isArray(availableBranches)) {
+        branchIds = availableBranches;
+      } else if (typeof availableBranches === 'string') {
+        branchIds = availableBranches.split(',');
+      } else if (locationId) {
+        branchIds = [locationId];
+      }
+    }
+  }
+
+  const finalDietaryType = dietaryType || item.dietaryType;
+
+  // Dietary Validation for update
+  if (!isGlobalItem && branchIds.length > 0) {
+    const branches = await Location.find({ _id: { $in: branchIds } });
+    for (const branch of branches) {
+      if (branch.dietaryType === 'veg' && finalDietaryType !== 'veg') {
+        res.status(400);
+        throw new Error(`Branch "${branch.name || branch.city}" is Veg-only. Cannot assign non-veg items.`);
+      }
+      if (branch.dietaryType === 'non-veg' && finalDietaryType !== 'non-veg') {
+        res.status(400);
+        throw new Error(`Branch "${branch.name || branch.city}" is Non-Veg only. Cannot assign veg items.`);
+      }
+    }
+  }
+
+  updates.isGlobal = isGlobalItem;
+  updates.availableBranches = branchIds;
   if (dietaryType !== undefined) updates.dietaryType = dietaryType;
   if (stock !== undefined) updates.stock = Number(stock);
 
@@ -167,6 +295,39 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     new: true,
     runValidators: true,
   }).populate('category', 'name icon');
+
+  // Synchronize BranchStock records
+  if (updates.isGlobal !== undefined || updates.availableBranches !== undefined) {
+    if (updates.isGlobal) {
+      // If item becomes global, we can either keep or remove branch stocks. 
+      // Usually, global items might use a different inventory logic or we just remove branch-specifics.
+      // For now, let's keep it simple: if global, branch-specific stock is ignored.
+      await BranchStock.deleteMany({ menuItem: updated._id });
+    } else if (updates.availableBranches) {
+      // Remove stocks for branches no longer assigned
+      await BranchStock.deleteMany({ 
+        menuItem: updated._id, 
+        branch: { $nin: updates.availableBranches } 
+      });
+      
+      // Add or Update stocks for branches
+      for (const branchId of updates.availableBranches) {
+        const specificStock = req.body[`branchStock_${branchId}`];
+        const stockToSet = specificStock !== undefined ? Number(specificStock) : (stock ? Number(stock) : 0);
+        
+        await BranchStock.findOneAndUpdate(
+          { menuItem: updated._id, branch: branchId },
+          { 
+            $set: { 
+              stock: stockToSet,
+              isAvailable: stockToSet > 0
+            } 
+          },
+          { upsert: true, new: true }
+        );
+      }
+    }
+  }
 
   await logAction(req, 'MENU_ITEM_UPDATE', `Updated menu item: ${updated.name}`);
 
@@ -216,11 +377,11 @@ const toggleAvailability = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update menu item stock
+// @desc    Update menu item stock for a specific branch
 // @route   PUT /api/menu/:id/stock
 // @access  Private
 const updateStock = asyncHandler(async (req, res) => {
-  const { stock } = req.body;
+  const { stock, branchId } = req.body;
   const item = await MenuItem.findById(req.params.id);
 
   if (!item) {
@@ -228,14 +389,28 @@ const updateStock = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
-  item.stock = Number(stock);
-  await item.save();
-
-  res.json({
-    success: true,
-    data: item,
-    message: `Stock updated for ${item.name}`,
-  });
+  if (branchId) {
+    const branchStock = await BranchStock.findOneAndUpdate(
+      { menuItem: item._id, branch: branchId },
+      { stock: Number(stock), isAvailable: Number(stock) > 0 },
+      { new: true, upsert: true }
+    );
+    
+    res.json({
+      success: true,
+      data: branchStock,
+      message: `Stock updated for ${item.name} at branch.`,
+    });
+  } else {
+    // Fallback for global stock if no branchId (deprecated behavior)
+    item.stock = Number(stock);
+    await item.save();
+    res.json({
+      success: true,
+      data: item,
+      message: `Global stock updated for ${item.name}`,
+    });
+  }
 });
 
 module.exports = {

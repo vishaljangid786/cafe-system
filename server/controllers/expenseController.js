@@ -125,19 +125,59 @@ const deleteExpense = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get all expenses (with location filtering)
+// @desc    Get all expenses (with location filtering, search, pagination)
 // @route   GET /api/expenses
 // @access  Private
 const getExpenses = asyncHandler(async (req, res) => {
   let query = {};
 
-  if (req.query.locationId) {
-    query.locationId = req.query.locationId;
+  // STRICT RBAC
+  if (req.user.role === 'super_admin') {
+    // Can see everything, but respect query filter if provided
+    if (req.query.locationId) {
+      query.locationId = req.query.locationId;
+    }
+  } else if (req.user.role === 'admin') {
+    // Admins can only see expenses from their accessible locations
+    if (req.query.locationId) {
+      // Validate requested location is in accessible locations
+      const isAccessible = req.user.accessibleLocations?.some(
+        loc => loc.toString() === req.query.locationId
+      );
+      if (!isAccessible) {
+        return res.status(403).json({ success: false, message: 'Access denied to this location' });
+      }
+      query.locationId = req.query.locationId;
+    } else {
+      query.locationId = { $in: req.user.accessibleLocations || [] };
+    }
+  } else {
+    // Branch Admin, Chef, Staff
+    query.locationId = req.user.assignedLocation;
   }
 
-  // If user is branch_admin, restrict to their location
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
-    query.locationId = req.user.assignedLocation;
+  // If chef, they can only see expenses created by them
+  if (req.user.role === 'chef') {
+    query.createdBy = req.user._id;
+  }
+
+  // Search by title or category
+  if (req.query.search) {
+    const searchRegex = new RegExp(req.query.search, 'i');
+    query.$or = [
+      { title: searchRegex },
+      { category: searchRegex }
+    ];
+  }
+
+  // Filter by status
+  if (req.query.status) {
+    query.status = req.query.status;
+  }
+
+  // Filter by category
+  if (req.query.category) {
+    query.category = req.query.category;
   }
 
   // Date Filtering
@@ -153,16 +193,32 @@ const getExpenses = asyncHandler(async (req, res) => {
     }
   }
 
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const startIndex = (page - 1) * limit;
+
+  const total = await Expense.countDocuments(query);
+
   const expenses = await Expense.find(query)
     .sort({ date: -1 })
+    .skip(startIndex)
+    .limit(limit)
     .populate('createdBy', 'name email')
-    .populate('locationId', 'name');
+    .populate('locationId', 'name')
+    .lean();
 
   res.json({
     success: true,
     count: expenses.length,
+    total,
+    pagination: {
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      itemsPerPage: limit
+    },
     data: expenses.map(exp => ({
-      ...exp._doc,
+      ...exp,
       locationName: exp.locationId?.name || 'Unknown'
     })),
   });

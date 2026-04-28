@@ -24,6 +24,9 @@ export default function CouponsManagementPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20;
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,8 +56,9 @@ export default function CouponsManagementPage() {
   const fetchCoupons = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/coupons');
+      const res = await api.get(`/coupons?page=${currentPage}&limit=${itemsPerPage}`);
       setCoupons(res.data.data);
+      setTotalPages(res.data.pagination.pages);
     } catch (error) {
       toast.error('Failed to load coupons');
     } finally {
@@ -67,7 +71,7 @@ export default function CouponsManagementPage() {
       setItemsLoading(true);
       const params = {};
       if (selectedLocation) params.locationId = selectedLocation._id || selectedLocation;
-      
+
       const res = await api.get('/menu', { params });
       if (res.data.success) {
         setMenuItems(res.data.data);
@@ -82,7 +86,7 @@ export default function CouponsManagementPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchMenuItems();
@@ -190,12 +194,12 @@ export default function CouponsManagementPage() {
           <Button
             variant="primary"
             icon={Plus}
-            onClick={() => { 
-              setEditingCoupon(null); 
+            onClick={() => {
+              setEditingCoupon(null);
               setPreviewData({ code: '', discountValue: 0, discountType: 'percentage', maxDiscount: 0 });
               setSelectedItems([]);
               setAppliesToType('full_order');
-              setShowCouponModal(true); 
+              setShowCouponModal(true);
             }}
             className="!py-3.5 !px-6 !rounded-2xl shadow-xl shadow-amber-600/20 text-xs font-black uppercase tracking-widest bg-amber-400 hover-scale active:scale-95"
           >
@@ -232,7 +236,7 @@ export default function CouponsManagementPage() {
             </div>
             <div className="mt-4">
               <h4 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tighter">
-                {coupons.sort((a,b) => (b.usedCount || 0) - (a.usedCount || 0))[0]?.code || 'N/A'}
+                {coupons.sort((a, b) => (b.usedCount || 0) - (a.usedCount || 0))[0]?.code || 'N/A'}
               </h4>
               <p className="text-xs text-zinc-500 mt-1 font-medium">Top Performing Coupon</p>
             </div>
@@ -262,7 +266,7 @@ export default function CouponsManagementPage() {
             />
           </div>
           <div className="md:w-64">
-            <PremiumSelect 
+            <PremiumSelect
               icon={Filter}
               placeholder="Filter by status"
               value={statusFilter}
@@ -315,8 +319,8 @@ export default function CouponsManagementPage() {
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
                       <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-amber-500 transition-all duration-1000" 
+                        <div
+                          className="h-full bg-amber-500 transition-all duration-1000"
                           style={{ width: `${coupon.usageLimit ? Math.min(100, (coupon.usedCount / coupon.usageLimit) * 100) : 100}%` }}
                         />
                       </div>
@@ -355,6 +359,31 @@ export default function CouponsManagementPage() {
               ))}
             </tbody>
           </table>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-8 py-6 bg-zinc-50 dark:bg-zinc-950/50 border-t border-zinc-200 dark:border-zinc-800">
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                Protocol Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                  Prev Node
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                  Next Node
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <Modal
@@ -365,10 +394,10 @@ export default function CouponsManagementPage() {
         >
           <form onSubmit={handleCouponSubmit} className="space-y-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-              
+
               {/* Left Column: Configuration Matrix */}
               <div className="lg:col-span-7 space-y-10">
-                
+
                 {/* 1. Identity & Magnitude */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -377,13 +406,13 @@ export default function CouponsManagementPage() {
                     </div>
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Identity & Magnitude</h4>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Coupon Code</label>
                       <div className="relative group">
                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
-                        <input 
+                        <input
                           required
                           name="code"
                           defaultValue={editingCoupon?.code}
@@ -396,31 +425,31 @@ export default function CouponsManagementPage() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Discount Magnitude</label>
-                        <div className="flex bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 gap-4">
-                          <div className="relative flex-1">
-                            <input 
-                              required
-                              name="discountValue"
-                              type="number"
-                              defaultValue={editingCoupon?.discountValue}
-                              onChange={handleInputChange}
-                              className="w-full pl-4 pr-4 py-3 bg-transparent text-zinc-900 dark:text-zinc-100 outline-none font-black text-lg"
-                              placeholder="0"
-                            />
-                          </div>
-                          <div className="w-32">
-                            <PremiumSelect 
-                              name="discountType"
-                              value={previewData.discountType}
-                              onChange={val => setPreviewData(prev => ({ ...prev, discountType: val }))}
-                              options={[
-                                { label: '% Percentage', value: 'percentage' },
-                                { label: '₹ Fixed', value: 'fixed' }
-                              ]}
-                            />
-                            <input type="hidden" name="discountType" value={previewData.discountType} />
-                          </div>
+                      <div className="flex bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 gap-4">
+                        <div className="relative flex-1">
+                          <input
+                            required
+                            name="discountValue"
+                            type="number"
+                            defaultValue={editingCoupon?.discountValue}
+                            onChange={handleInputChange}
+                            className="w-full pl-4 pr-4 py-3 bg-transparent text-zinc-900 dark:text-zinc-100 outline-none font-black text-lg"
+                            placeholder="0"
+                          />
                         </div>
+                        <div className="w-32">
+                          <PremiumSelect
+                            name="discountType"
+                            value={previewData.discountType}
+                            onChange={val => setPreviewData(prev => ({ ...prev, discountType: val }))}
+                            options={[
+                              { label: '% Percentage', value: 'percentage' },
+                              { label: '₹ Fixed', value: 'fixed' }
+                            ]}
+                          />
+                          <input type="hidden" name="discountType" value={previewData.discountType} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -439,10 +468,10 @@ export default function CouponsManagementPage() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Minimum Order Value</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
-                        <input 
-                          name="minOrderAmount" 
-                          type="number" 
-                          defaultValue={editingCoupon?.minOrderAmount || 0} 
+                        <input
+                          name="minOrderAmount"
+                          type="number"
+                          defaultValue={editingCoupon?.minOrderAmount || 0}
                           className="w-full pl-10 pr-5 py-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
                         />
                       </div>
@@ -451,10 +480,10 @@ export default function CouponsManagementPage() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Maximum Discount Cap</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
-                        <input 
-                          name="maxDiscount" 
-                          type="number" 
-                          defaultValue={editingCoupon?.maxDiscount} 
+                        <input
+                          name="maxDiscount"
+                          type="number"
+                          defaultValue={editingCoupon?.maxDiscount}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-5 py-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
                           placeholder="No Cap"
@@ -478,12 +507,12 @@ export default function CouponsManagementPage() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Expiry Horizon</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                        <input 
+                        <input
                           required
-                          name="expiryDate" 
-                          type="date" 
-                          defaultValue={editingCoupon?.expiryDate ? new Date(editingCoupon.expiryDate).toISOString().split('T')[0] : ''} 
-                          className="w-full pl-12 pr-5 py-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-rose-500/20 font-bold" 
+                          name="expiryDate"
+                          type="date"
+                          defaultValue={editingCoupon?.expiryDate ? new Date(editingCoupon.expiryDate).toISOString().split('T')[0] : ''}
+                          className="w-full pl-12 pr-5 py-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-rose-500/20 font-bold"
                         />
                       </div>
                     </div>
@@ -491,10 +520,10 @@ export default function CouponsManagementPage() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Total Redemption Limit</label>
                       <div className="relative">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                        <input 
-                          name="usageLimit" 
-                          type="number" 
-                          defaultValue={editingCoupon?.usageLimit} 
+                        <input
+                          name="usageLimit"
+                          type="number"
+                          defaultValue={editingCoupon?.usageLimit}
                           className="w-full pl-12 pr-5 py-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-rose-500/20 font-bold"
                           placeholder="Infinite"
                         />
@@ -506,7 +535,7 @@ export default function CouponsManagementPage() {
 
               {/* Right Column: Visibility & Live Preview */}
               <div className="lg:col-span-5 space-y-10">
-                
+
                 {/* Live Identity Card */}
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Live Preview Identity</h4>
@@ -578,7 +607,7 @@ export default function CouponsManagementPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="space-y-4 overflow-hidden"
                       >
-                        <PremiumSelect 
+                        <PremiumSelect
                           label="Inventory Selection"
                           disabled={itemsLoading}
                           value=""
@@ -608,7 +637,7 @@ export default function CouponsManagementPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  
+
                   {/* Status Toggle */}
                   <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-950 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 mt-6">
                     <div className="flex items-center gap-3">
@@ -634,14 +663,14 @@ export default function CouponsManagementPage() {
                 onClick={() => { setShowCouponModal(false); setEditingCoupon(null); }}
                 className="text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-rose-500 transition-colors"
               >
-                Abort Protocol
+                Cancel
               </button>
               <Button
                 type="submit"
                 variant="primary"
                 className="!py-6 !px-16 !rounded-3xl shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.3em] bg-amber-500 text-black hover:bg-amber-600 active:scale-95 transition-all"
               >
-                {editingCoupon ? 'Synchronize Updates' : 'Authorize New Coupon'}
+                {editingCoupon ? 'Synchronize Updates' : 'Add Coupon'}
               </Button>
             </div>
           </form>
