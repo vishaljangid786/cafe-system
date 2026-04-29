@@ -34,7 +34,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute top-full right-0 mt-4 w-96 max-h-[600px] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl z-[1000] flex flex-col overflow-hidden backdrop-blur-xl bg-opacity-95"
+            className="absolute top-full right-0 mt-4 w-96 max-h-[600px] bg-white/95 dark:bg-zinc-950/95 border border-zinc-200 dark:border-zinc-800/50 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-[2rem] z-[1000] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
             <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-bg-soft)]">
@@ -89,7 +89,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={notif._id}
-                    className={`relative p-4 rounded-2xl border transition-all duration-300 group ${notif.isRead ? 'bg-[var(--color-bg-soft)]/30 border-[var(--color-border)] opacity-60' : 'bg-[var(--color-surface)] border-amber-500/10 shadow-sm hover:border-amber-500/30'}`}
+                    className={`relative p-4 rounded-2xl border transition-all duration-300 group ${notif.isRead ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800/50 opacity-60' : 'bg-white dark:bg-zinc-900 border-amber-500/20 shadow-sm hover:border-amber-500/40 hover:shadow-md'}`}
                   >
                     <div className="flex gap-4">
                       <div className={`h-9 w-9 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)} shadow-sm`}>

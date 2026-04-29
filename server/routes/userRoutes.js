@@ -8,7 +8,8 @@ const {
   demoteUser,
   toggleBlocklist,
   updateProfile,
-  changePassword
+  changePassword,
+  updateUserPermissions
 } = require('../controllers/userController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
@@ -27,6 +28,9 @@ router.route('/:id')
   .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUser)
   .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateUser)
   .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteUser);
+
+router.route('/:id/permissions')
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateUserPermissions);
 
 router.route('/:id/promote')
   .patch(authorizeRoles('super_admin', 'admin'), promoteUser);

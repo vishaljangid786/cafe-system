@@ -9,8 +9,8 @@ import {
   Coffee, LayoutDashboard, Users, MapPin,
   Receipt, CalendarCheck, Wallet, ChevronLeft,
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
-  ChevronRight, Target, TrendingUp,
-  Calendar, Bell, Send, History
+  ChevronRight, Target, TrendingUp, Crown, Package,
+  Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,9 +27,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     const links = [];
     if (role === 'super_admin') {
       links.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
+      links.push({ name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity });
     }
     if (role === 'super_admin' || role === 'admin') {
-      links.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
+      if (role === 'super_admin') {
+        links.push({ name: 'Executive Hub', href: '/dashboard/super-admin', icon: Zap });
+      } else {
+        links.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
+      }
       links.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
       links.push({ name: 'Staff', href: '/dashboard/admin/staff', icon: Users });
       links.push({ name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck });
@@ -38,11 +43,18 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       links.push({ name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt });
       links.push({ name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee });
       links.push({ name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed });
+      links.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
       links.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
+      links.push({ name: 'Loyalty & CRM', href: '/dashboard/admin/customers', icon: Crown });
       links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
       links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
       links.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
       links.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
+      links.push({ name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp });
+      links.push({ name: 'Payment Intel', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+      links.push({ name: 'Command Center', href: '/dashboard/admin/command-center', icon: AlertCircle });
+      links.push({ name: 'Smart Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+      links.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
     } else if (role === 'branch_admin') {
       links.push({ name: 'Overview', href: '/dashboard/branch-admin', icon: LayoutDashboard });
       links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
@@ -54,7 +66,11 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       links.push({ name: 'Expenses', href: '/dashboard/branch-admin/expenses', icon: Receipt });
       links.push({ name: 'Tables', href: '/dashboard/branch-admin/tables', icon: Coffee });
       links.push({ name: 'Menu', href: '/dashboard/branch-admin/menu', icon: UtensilsCrossed });
+      links.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
+      links.push({ name: 'Loyalty & CRM', href: '/dashboard/admin/customers', icon: Crown });
+      links.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
       links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      links.push({ name: 'Staff Reports', href: '/dashboard/branch-admin/staff-reports', icon: TrendingUp });
     } else if (role === 'chef') {
       links.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
       links.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });

@@ -1,6 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 // Route imports
@@ -22,12 +27,37 @@ const reservationRoutes = require('./routes/reservationRoutes');
 const exportRoutes = require('./routes/exportRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const superAdminRoutes = require('./routes/superAdminRoutes');
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+
+// Security Middlewares
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Specific Rate Limiter for Login
+const loginLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // limit each IP to 10 login attempts per hour
+  message: 'Too many login attempts, please try again in an hour.'
+});
+app.use('/api/auth/login', loginLimiter);
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -52,6 +82,9 @@ app.use('/api/reservations', reservationRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 // Base route
 app.get('/', (req, res) => {
   res.send('Cafe Management API is running...');

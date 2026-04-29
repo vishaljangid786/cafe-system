@@ -73,7 +73,7 @@ The core of the application containing pages, layouts, and global styles.
     ```
 
 2.  **Configure Environment**:
-    Create a `.env.local` file with:
+    Create a `.env` or `.env.local` file with:
     ```env
     NEXT_PUBLIC_API_URL=http://localhost:5000/api
     ```

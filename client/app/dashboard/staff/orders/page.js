@@ -16,6 +16,7 @@ import io from 'socket.io-client';
 import Modal from '../../../components/ui/Modal';
 import { formatDistanceToNow } from 'date-fns';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
@@ -45,6 +46,7 @@ export default function StaffOrdersPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const fetchStats = async () => {
+    if (!['staff', 'branch_admin'].includes(user?.role)) return;
     try {
       const res = await api.get('/orders/my-stats-staff');
       if (res.data.success) {
@@ -61,24 +63,27 @@ export default function StaffOrdersPage() {
       const branchId = user?.assignedLocation?._id || user?.assignedLocation;
       
       let query = `?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=${itemsPerPage}`;
-      if (filterType === 'branch') query += `&branchId=${branchId}`;
+      if (filterType === 'branch' && branchId) query += `&branchId=${branchId}`;
       
-      const endpoint = filterType === 'my' 
+      const endpoint = (filterType === 'my' && ['staff', 'branch_admin'].includes(user?.role))
         ? `/orders/my-stats-staff${query}` 
         : `/orders${query}`;
       
       const res = await api.get(endpoint);
       if (res.data.success) {
         if (filterType === 'my') {
-          setOrders(res.data.data.recentOrders || []);
-          setTotalPages(1); // My stats usually doesn't paginate recent orders in the same way
+          setOrders(res.data.data?.recentOrders || []);
+          setTotalPages(1);
         } else {
-          setOrders(res.data.data);
+          setOrders(res.data.data || []);
           setTotalPages(res.data.pagination?.pages || 1);
         }
       }
     } catch (error) {
-      toast.error('Failed to sync orders');
+      console.error('Order sync error:', error);
+      if (['staff', 'branch_admin'].includes(user?.role)) {
+        toast.error('Failed to sync orders');
+      }
     } finally {
       setLoading(false);
     }
@@ -141,6 +146,7 @@ export default function StaffOrdersPage() {
 
     socket.on('order:update', () => fetchOrders());
     socket.on('order:cancel', () => fetchOrders());
+    socket.on('order:note', () => fetchOrders());
 
     return () => socket.close();
   }, [user]);
@@ -203,7 +209,7 @@ export default function StaffOrdersPage() {
       );
     
     const matchesCategory = selectedCategory === 'all' || 
-      order.items.some(item => item.menuItem?.category === selectedCategory);
+      order.items.some(item => (item.menuItem?.category?._id || item.menuItem?.category) === selectedCategory);
     
     return matchesSearch && matchesCategory;
   });
@@ -282,38 +288,14 @@ export default function StaffOrdersPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-4 bg-muted/30 p-2 rounded-2xl border border-border">
-              <div className="flex-1 relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-                <input 
-                  type="date"
-                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-accent/20"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <ArrowRight size={16} className="text-muted-foreground" />
-              <div className="flex-1 relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-                <input 
-                  type="date"
-                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-accent/20"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-              <button 
-                onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
-                }}
-                className="p-3 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
-                title="Clear Dates"
-              >
-                <RefreshCcw size={14} />
-              </button>
-            </div>
+          <div className="w-full max-w-md">
+            <UniversalDateFilter
+              onFilterChange={({ startDate, endDate }) => {
+                setStartDate(startDate);
+                setEndDate(endDate);
+              }}
+              loading={loading}
+            />
           </div>
         </div>
 

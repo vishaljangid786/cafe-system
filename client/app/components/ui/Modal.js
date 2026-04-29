@@ -32,18 +32,18 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
           />
 
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-[9999] pointer-events-none overflow-y-auto custom-scrollbar">
+          <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4 z-[9999] pointer-events-none overflow-hidden">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              initial={{ scale: 0.95, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`glass-card w-full ${maxWidth} sm:rounded-2xl rounded-t-[2.5rem] rounded-b-2xl pointer-events-auto shadow-2xl border border-zinc-200 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl relative my-auto`}
+              exit={{ scale: 0.95, opacity: 0, y: 50 }}
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              className={`glass-card w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-2xl rounded-t-[2.5rem] pointer-events-auto shadow-2xl border border-zinc-200 dark:border-zinc-800/50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-2xl relative flex flex-col mt-auto sm:mt-0`}
             >
-              <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between">
+              <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between shrink-0">
                 <div className="space-y-1">
                   <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">Details</h3>
-                  <p className="text-lg font-bold text-zinc-700 dark:text-slate-200 tracking-tight">{title}</p>
+                  <p className="text-base sm:text-lg font-bold text-zinc-700 dark:text-slate-200 tracking-tight line-clamp-1">{title}</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -53,7 +53,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
                 </button>
               </div>
 
-              <div className="p-6 md:p-8">
+              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
                 {children}
               </div>
             </motion.div>

@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
 import {
   BarChart3, Clock, AlertCircle, CheckCircle2,
   XCircle, Filter, Search, Globe, ChefHat,
@@ -62,6 +64,26 @@ export default function AdminOrdersDashboard() {
     fetchData();
   }, [branchFilter, currentPage]);
 
+  useEffect(() => {
+    if (!user) return;
+    const socket = io(SOCKET_URL);
+    
+    socket.on('connect', () => {
+      socket.emit('join_session', { 
+        userId: user._id, 
+        branchId: user.assignedLocation?._id || user.assignedLocation || 'global',
+        role: user.role
+      });
+    });
+
+    socket.on('order:update', () => fetchData());
+    socket.on('order:cancel', () => fetchData());
+    socket.on('order:note', () => fetchData());
+    socket.on('order:new', () => fetchData());
+
+    return () => socket.close();
+  }, [user, branchFilter]);
+
   const handleForceComplete = async (id) => {
     try {
       await api.patch(`/orders/${id}/force-complete`);
@@ -92,32 +114,34 @@ export default function AdminOrdersDashboard() {
     <PageTransition>
       <div className="space-y-10 pb-20">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 sticky-filter !-mt-0">
           <div>
             <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-foreground">
               <ShieldAlert className="text-accent" size={32} />
               Operational Oversight
             </h1>
-            <p className="text-muted-foreground text-sm font-bold mt-1 tracking-tight">Cross-branch order surveillance and performance analytics.</p>
+            <p className="text-muted-foreground text-sm font-bold mt-1 tracking-tight hidden md:block">Cross-branch order surveillance and performance analytics.</p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
             {user?.role === 'branch_admin' ? (
-              <div className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-black text-amber-500 border border-amber-500/20">
+              <div className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-black text-amber-500 border border-amber-500/20 whitespace-nowrap">
                 {locations.find(l => l._id === branchFilter)?.name || 'My Branch'}
               </div>
             ) : (
-              <PremiumSelect
-                label="Operational Sector"
-                value={branchFilter}
-                onChange={val => setBranchFilter(val)}
-                options={[
-                  { label: 'Global Matrix', value: 'all' },
-                  ...(locations.map(loc => ({ label: loc.name, value: loc._id })))
-                ]}
-              />
+              <div className="min-w-[140px]">
+                <PremiumSelect
+                  label="Sector"
+                  value={branchFilter}
+                  onChange={val => setBranchFilter(val)}
+                  options={[
+                    { label: 'Global', value: 'all' },
+                    ...(locations.map(loc => ({ label: loc.name, value: loc._id })))
+                  ]}
+                />
+              </div>
             )}
-            <div className="flex bg-muted rounded-xl p-1 border border-border shadow-inner">
+            <div className="flex bg-muted rounded-xl p-1 border border-border shadow-inner shrink-0">
               <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-card shadow-sm text-accent' : 'text-muted-foreground hover:text-foreground'}`}><LayoutGrid size={16} /></button>
               <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-card shadow-sm text-accent' : 'text-muted-foreground hover:text-foreground'}`}><List size={16} /></button>
             </div>

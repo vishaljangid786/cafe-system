@@ -21,6 +21,7 @@ import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import { useTheme } from '../../../context/ThemeContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 
 export default function RevenuePage() {
   const { theme } = useTheme();
@@ -29,6 +30,8 @@ export default function RevenuePage() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // NEW STATES FOR SERVER-SIDE PAGINATION & SEARCH
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,31 +73,8 @@ export default function RevenuePage() {
         query.append('locationId', locId);
       }
 
-      const now = new Date();
-      let start = '';
-      let end = '';
-
-      if (timeRange === 'custom') {
-        start = customDates.start;
-        end = customDates.end;
-      } else if (timeRange === 'today') {
-        start = now.toISOString().split('T')[0];
-        end = start;
-      } else if (timeRange === 'this_week') {
-        const d = new Date();
-        d.setDate(now.getDate() - now.getDay());
-        start = d.toISOString().split('T')[0];
-      } else if (timeRange === 'this_month') {
-        const d = new Date();
-        d.setDate(1);
-        start = d.toISOString().split('T')[0];
-      } else if (timeRange !== 'all') {
-        const d = new Date();
-        if (timeRange === '7d') d.setDate(now.getDate() - 7);
-        else if (timeRange === '1m') d.setMonth(now.getMonth() - 1);
-        else if (timeRange === '3m') d.setMonth(now.getMonth() - 3);
-        start = d.toISOString().split('T')[0];
-      }
+      let start = startDate;
+      let end = endDate;
 
       if (start) query.append('startDate', start);
       if (end) query.append('endDate', end);
@@ -134,7 +114,7 @@ export default function RevenuePage() {
     if (user?.role === 'super_admin' || user?.role === 'admin') {
       fetchLocations();
     }
-  }, [selectedLocation, timeRange, customDates, currentPage, searchQuery, amountRange]);
+  }, [selectedLocation, startDate, endDate, currentPage, searchQuery, amountRange]);
 
   // With server-side filtering, transactions is already paginated
   const paginatedData = transactions || [];
@@ -159,7 +139,7 @@ export default function RevenuePage() {
             </h1>
             <p className="text-[var(--color-text-muted)] font-medium mt-1">Track your earnings and sales data.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 bg-[var(--color-bg-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
             {(user?.role === 'super_admin' || user?.role === 'admin') && (
               <PremiumSelect
                 icon={MapPin}
@@ -176,34 +156,15 @@ export default function RevenuePage() {
                 className="min-w-[180px] !py-2"
               />
             )}
-            {['7d', '1m', '3m', 'all', 'custom'].map(t => (
-              <button
-                key={t}
-                onClick={() => setTimeRange(t)}
-                className={`px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeRange === t ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
-              >
-                {t}
-              </button>
-            ))}
+            <UniversalDateFilter
+              onFilterChange={({ startDate, endDate }) => {
+                setStartDate(startDate);
+                setEndDate(endDate);
+              }}
+              loading={loading}
+            />
           </div>
         </div>
-
-        {timeRange === 'custom' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex gap-4 p-6 glass-card border border-[var(--color-border)] rounded-3xl premium-shadow"
-          >
-            <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
-              <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-emerald-500" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
-            </div>
-            <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
-              <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-emerald-500" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
-            </div>
-          </motion.div>
-        )}
 
         {/* Graph Section */}
         <SlideIn delay={0.1}>

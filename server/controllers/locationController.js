@@ -2,6 +2,7 @@ const Location = require('../models/Location');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { logActivity } = require('../utils/auditLogger');
 const mongoose = require('mongoose');
 
 // @desc    Get all locations
@@ -93,12 +94,13 @@ const createLocation = asyncHandler(async (req, res) => {
     });
   }
 
-  await sendNotification({
-    title: 'New Location Created',
-    message: `Location "${location.city} - ${location.name}" was created by ${req.user.name}.`,
-    type: 'user_action',
-    performedByUser: req.user,
-  });
+  await logActivity(
+    req.user,
+    'LOCATION_CREATE',
+    `Created new branch: ${location.city} - ${location.name}`,
+    req,
+    { locationId: location._id }
+  );
 
   res.status(201).json({
     success: true,
@@ -138,12 +140,13 @@ const updateLocation = asyncHandler(async (req, res) => {
 
   await location.save();
 
-  await sendNotification({
-    title: 'Location Updated',
-    message: `Location "${location.city} - ${location.name}" was updated by ${req.user.name}.`,
-    type: 'user_action',
-    performedByUser: req.user,
-  });
+  await logActivity(
+    req.user,
+    'LOCATION_UPDATE',
+    `Updated branch details for ${location.city} - ${location.name}`,
+    req,
+    { locationId: location._id, changes: req.body }
+  );
 
   res.json({
     success: true,
@@ -164,6 +167,14 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
 
   location.status = 'deleted';
   await location.save();
+
+  await logActivity(
+    req.user,
+    'LOCATION_DELETE',
+    `Soft-deleted branch: ${location.city} - ${location.name}`,
+    req,
+    { locationId: location._id }
+  );
 
   res.json({
     success: true,

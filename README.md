@@ -130,7 +130,7 @@ The backend is built on **Express.js** and **MongoDB**, utilizing a modular rout
 
 ### Frontend Node
 1. `npm install`
-2. Configure `.env.local` (NEXT_PUBLIC_API_URL)
+2. Configure `.env` or `.env.local` (`NEXT_PUBLIC_API_URL`)
 3. `npm run dev`
 
 ---

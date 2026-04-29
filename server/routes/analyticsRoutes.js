@@ -10,7 +10,12 @@ const {
   getUnderperformingLocations,
   getProductPerformance,
   getComparisonDetails,
-  getLocationIntelligence
+  getLocationIntelligence,
+  getStaffReports,
+  getPaymentIntelligence,
+  getBranchComparisonSuite,
+  getCommandCenterStats,
+  getForecastingAnalytics
 } = require('../controllers/analyticsController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
@@ -50,5 +55,20 @@ router.route('/comparison-details')
 
 router.route('/location-intelligence/:id')
   .get(authorizeRoles('admin', 'super_admin'), getLocationIntelligence);
+
+router.route('/staff-reports')
+  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getStaffReports);
+
+router.route('/payment-intelligence')
+  .get(authorizeRoles('admin', 'super_admin'), getPaymentIntelligence);
+
+router.route('/branch-comparison-suite')
+  .get(authorizeRoles('admin', 'super_admin'), getBranchComparisonSuite);
+
+router.route('/command-center')
+  .get(authorizeRoles('admin', 'super_admin'), getCommandCenterStats);
+
+router.route('/forecasting')
+  .get(authorizeRoles('admin', 'super_admin'), getForecastingAnalytics);
 
 module.exports = router;

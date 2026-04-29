@@ -302,3 +302,51 @@ input:-webkit-autofill:active {
   0% { transform: translateY(-100vh); }
   100% { transform: translateY(100vh); }
 }
+/* Mobile Optimizations */
+@layer utilities {
+  .responsive-table-container {
+    @apply w-full overflow-x-auto pb-4 custom-scrollbar;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .sticky-filter {
+    @apply sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 -mx-6 px-6 py-4 mb-6;
+  }
+
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  /* Force vertical layout for tables on small screens */
+  .stack-table-mobile {
+    @apply block w-full;
+  }
+  
+  .stack-table-mobile thead {
+    @apply hidden;
+  }
+  
+  .stack-table-mobile tr {
+    @apply block mb-6 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm;
+  }
+  
+  .stack-table-mobile td {
+    @apply block text-right py-2 px-0 border-none relative pl-1/2 min-h-[2.5rem];
+  }
+  
+  .stack-table-mobile td::before {
+    content: attr(data-label);
+    @apply absolute left-0 w-1/2 font-black text-[10px] uppercase tracking-widest text-zinc-500 text-left;
+  }
+}
+
+/* Adjust main content padding for bottom nav on mobile */
+@media (max-width: 768px) {
+  main, .dashboard-content {
+    @apply pb-24;
+  }
+}

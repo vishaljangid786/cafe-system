@@ -3,6 +3,7 @@ const Table = require('../models/Table');
 const User = require('../models/User');
 const MenuItem = require('../models/MenuItem');
 const BranchStock = require('../models/BranchStock');
+const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 
@@ -13,7 +14,19 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Only staff can create orders');
   }
 
-  const { branch, table: tableId, items, totalAmount } = req.body;
+  const { branch, table: tableId, items, totalAmount, customerPhone, customerName } = req.body;
+
+  // Anti-Spam Check: Prevent duplicate orders within 10 seconds
+  const recentOrder = await Order.findOne({
+    table: tableId,
+    branch,
+    createdAt: { $gte: new Date(Date.now() - 10000) }
+  });
+
+  if (recentOrder) {
+    res.status(429);
+    throw new Error('Please wait 10 seconds before placing another order for this table.');
+  }
 
   // Stock Check and Deduction
   for (const item of items) {
@@ -49,6 +62,8 @@ const createOrder = asyncHandler(async (req, res) => {
   const order = await Order.create({
     branch,
     table: tableId,
+    customerPhone,
+    customerName,
     items,
     totalAmount,
     createdBy: req.user._id,
@@ -221,6 +236,97 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     const table = await Table.findById(order.table);
     if (table && table.activeOrdersCount <= 0) {
       await Table.findByIdAndUpdate(order.table, { status: 'available' });
+    }
+
+    // Customer CRM Lifecycle Hooks
+    if (order.customerPhone) {
+      const Customer = require('../models/Customer');
+      const Coupon = require('../models/Coupon');
+      
+      let customer = await Customer.findOne({ phone: order.customerPhone });
+      if (!customer) {
+        customer = new Customer({
+          phone: order.customerPhone,
+          name: order.customerName || 'Valued Customer',
+          branch: order.branch
+        });
+      }
+
+      customer.visits += 1;
+      customer.totalSpend += order.totalAmount;
+      customer.lastVisit = new Date();
+      
+      const pointsEarned = Math.floor(order.totalAmount / 100);
+      customer.loyaltyPoints += pointsEarned;
+
+      order.items.forEach(item => {
+        const itemId = item.menuItem?._id?.toString() || item.menuItem?.toString();
+        if (itemId) {
+          const currentCount = customer.favoriteItems.get(itemId) || 0;
+          customer.favoriteItems.set(itemId, currentCount + item.quantity);
+        }
+      });
+
+      if (customer.loyaltyPoints >= 100) {
+        customer.loyaltyPoints -= 100;
+        const couponCode = `REWARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + 30);
+
+        await Coupon.create({
+          code: couponCode,
+          discountType: 'fixed',
+          discountValue: 100,
+          minOrderAmount: 300,
+          expiryDate: expiry,
+          usageLimit: 1,
+          createdBy: req.user._id,
+          isActive: true
+        });
+        
+        io.to(`branch_${branchId}`).emit('customer:reward_unlocked', { phone: customer.phone, couponCode });
+      }
+
+      await customer.save();
+    }
+
+    // Inventory Auto-Deduction Logic
+    const Recipe = require('../models/Recipe');
+    const BranchInventory = require('../models/BranchInventory');
+    const BranchStock = require('../models/BranchStock');
+
+    for (const item of order.items) {
+      const recipe = await Recipe.findOne({ menuItemId: item.menuItem?._id || item.menuItem });
+      if (recipe) {
+        for (const ing of recipe.ingredients) {
+          if (ing.ingredient) {
+            const deduction = Number(ing.quantity || 0) * Number(item.quantity || 1);
+            const updatedInv = await BranchInventory.findOneAndUpdate(
+              { branch: order.branch, ingredient: ing.ingredient },
+              { $inc: { stock: -deduction } },
+              { new: true }
+            ).populate('ingredient');
+
+            // Trigger Socket alert if low stock
+            if (updatedInv && updatedInv.stock <= updatedInv.minThreshold) {
+              const io = require('../config/socket').getIO();
+              io.to(`branch_${order.branch}_admin`).emit('inventory:low_stock', {
+                ingredient: updatedInv.ingredient.name,
+                stock: updatedInv.stock,
+                unit: updatedInv.ingredient.unit
+              });
+            }
+
+            // If stock hits 0, disable MenuItem availability
+            if (updatedInv && updatedInv.stock <= 0) {
+              await BranchStock.findOneAndUpdate(
+                { branch: order.branch, menuItem: item.menuItem?._id || item.menuItem },
+                { isAvailable: false }
+              );
+            }
+          }
+        }
+      }
     }
   }
 
@@ -397,14 +503,83 @@ const addChefNote = asyncHandler(async (req, res) => {
     throw new Error('Only chefs can add notes');
   }
   req.body = req.body || {};
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { chefNote: req.body.chefNote },
-    { new: true }
-  );
+  
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  order.chefNote = req.body.chefNote;
+  await order.save();
+
+  // Duplicate Prevention Check (60 seconds)
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const duplicate = await Notification.findOne({
+    title: 'New Chef Note',
+    message: `Chef left a note on Order #${order._id.toString().slice(-6)}: "${req.body.chefNote}"`,
+    sender: req.user._id,
+    createdAt: { $gte: oneMinuteAgo }
+  });
+
+  if (!duplicate) {
+    const recipients = [];
+    
+    if (order.createdBy) {
+      recipients.push({ user: order.createdBy, isRead: false });
+    }
+    
+    const branchAdmins = await User.find({ role: 'branch_admin', assignedLocation: order.branch });
+    branchAdmins.forEach(u => recipients.push({ user: u._id, isRead: false }));
+    
+    const admins = await User.find({ role: 'admin', accessibleLocations: order.branch });
+    admins.forEach(u => recipients.push({ user: u._id, isRead: false }));
+    
+    const supers = await User.find({ role: 'super_admin' });
+    supers.forEach(u => recipients.push({ user: u._id, isRead: false }));
+
+    const uniqueRecipients = [];
+    const seen = new Set();
+    recipients.forEach(r => {
+      const idStr = r.user.toString();
+      if (!seen.has(idStr) && idStr !== req.user._id.toString()) {
+        seen.add(idStr);
+        uniqueRecipients.push(r);
+      }
+    });
+
+    if (uniqueRecipients.length > 0) {
+      const notification = await Notification.create({
+        title: 'New Chef Note',
+        message: `Chef left a note on Order #${order._id.toString().slice(-6)}: "${req.body.chefNote}"`,
+        type: 'message',
+        priority: 'medium',
+        sender: req.user._id,
+        recipients: uniqueRecipients
+      });
+
+      const io = getIO();
+      uniqueRecipients.forEach(r => {
+        io.to(r.user.toString()).emit('new_notification', {
+          _id: notification._id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          priority: notification.priority,
+          createdAt: notification.createdAt,
+          sender: {
+            name: req.user.name,
+            role: req.user.role,
+            profileImageUrl: req.user.profileImageUrl
+          }
+        });
+      });
+    }
+  }
 
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:note', { orderId: order._id, chefNote: req.body.chefNote });
+  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
 
   res.json({ success: true, data: order });
 });
@@ -634,12 +809,13 @@ const getOrder = asyncHandler(async (req, res) => {
 
 const getMyChefStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, category, foodItem, branch, paymentType, coupon } = req.query;
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 20;
   const skip = (page - 1) * limit;
 
   let query = { assignedChef: userId };
+
   if (startDate || endDate) {
     query.createdAt = {};
     if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -650,14 +826,29 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     }
   }
 
-  const allOrders = await Order.find(query);
+  if (branch) query.branch = branch;
+  if (paymentType) query.paymentType = paymentType;
+  if (coupon) query.coupon = coupon;
+
+  if (category) {
+    const MenuItem = mongoose.model('MenuItem');
+    const itemsInCat = await MenuItem.find({ category }).select('_id');
+    const menuItemIds = itemsInCat.map(i => i._id);
+    query['items.menuItem'] = { $in: menuItemIds };
+  }
+
+  if (foodItem) {
+    query['items.menuItem'] = foodItem;
+  }
+
+  const allOrders = await Order.find(query)
+    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } });
 
   let totalPrepTime = 0;
   let prepCount = 0;
-
-  let rejectionsQuery = { assignedChef: userId, status: 'REJECTED' };
-  if (query.createdAt) rejectionsQuery.createdAt = query.createdAt;
-  const rejections = await Order.countDocuments(rejectionsQuery);
+  let totalSales = 0;
+  const itemCounts = {};
+  const catCounts = {};
 
   allOrders.forEach(order => {
     const acceptedAt = order.statusHistory.find(h => h.status === 'ACCEPTED')?.timestamp;
@@ -666,7 +857,60 @@ const getMyChefStats = asyncHandler(async (req, res) => {
       totalPrepTime += (new Date(readyAt) - new Date(acceptedAt)) / 1000 / 60;
       prepCount++;
     }
+
+    if (order.status === 'SERVED') {
+      totalSales += order.totalAmount;
+    }
+
+    order.items.forEach(it => {
+      if (it.menuItem) {
+        const itemId = it.menuItem._id.toString();
+        const itemName = it.menuItem.name;
+        const catName = it.menuItem.category?.name || 'Uncategorized';
+        
+        itemCounts[itemId] = (itemCounts[itemId] || { name: itemName, count: 0 });
+        itemCounts[itemId].count += it.quantity;
+        
+        catCounts[catName] = (catCounts[catName] || 0) + it.quantity;
+      }
+    });
   });
+
+  let bestSellingItem = 'None';
+  let maxItemCount = 0;
+  Object.values(itemCounts).forEach(it => {
+    if (it.count > maxItemCount) {
+      maxItemCount = it.count;
+      bestSellingItem = it.name;
+    }
+  });
+
+  let bestSellingCategory = 'None';
+  let maxCatCount = 0;
+  Object.entries(catCounts).forEach(([cat, count]) => {
+    if (count > maxCatCount) {
+      maxCatCount = count;
+      bestSellingCategory = cat;
+    }
+  });
+
+  const completedCount = allOrders.filter(o => o.status === 'SERVED').length;
+  const cancelledCount = allOrders.filter(o => o.status === 'CANCELLED').length;
+  const unacceptedCount = allOrders.filter(o => o.status === 'PLACED' || o.status === 'REJECTED').length;
+
+  const Attendance = mongoose.model('Attendance');
+  let attQuery = { user: userId };
+  if (startDate || endDate) {
+    attQuery.date = {};
+    if (startDate) attQuery.date.$gte = startDate;
+    if (endDate) attQuery.date.$lte = endDate;
+  }
+  const attendances = await Attendance.find(attQuery);
+  const presentCount = attendances.filter(a => a.status === 'present').length;
+  const halfDayCount = attendances.filter(a => a.status === 'half-day').length;
+  const monthlySalary = req.user.monthlySalary || 0;
+  const dailyRate = monthlySalary / 30;
+  const dailyPayout = (presentCount * dailyRate) + (halfDayCount * dailyRate * 0.5);
 
   const paginatedOrders = await Order.find(query)
     .populate('table', 'tableNumber')
@@ -676,20 +920,47 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     .limit(limit);
 
   const ordersByDateMap = {};
+  const ordersByWeekMap = {};
+  const ordersByMonthMap = {};
+
   allOrders.forEach(o => {
-    const dateStr = new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dateObj = new Date(o.createdAt);
+    const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     ordersByDateMap[dateStr] = (ordersByDateMap[dateStr] || 0) + 1;
+
+    // Week trend
+    const weekStr = `Week ${Math.ceil(dateObj.getDate() / 7)}`;
+    ordersByWeekMap[weekStr] = (ordersByWeekMap[weekStr] || 0) + 1;
+
+    // Month trend
+    const monthStr = dateObj.toLocaleDateString('en-US', { month: 'long' });
+    ordersByMonthMap[monthStr] = (ordersByMonthMap[monthStr] || 0) + 1;
   });
+
   const ordersByDate = Object.entries(ordersByDateMap).map(([date, count]) => ({ date, count }));
+  const ordersByWeek = Object.entries(ordersByWeekMap).map(([week, count]) => ({ week, count }));
+  const ordersByMonth = Object.entries(ordersByMonthMap).map(([month, count]) => ({ month, count }));
 
   res.json({
     success: true,
     data: {
       totalOrders: allOrders.length,
+      highestValue: allOrders.length > 0 ? Math.max(...allOrders.map(o => o.totalAmount)) : 0,
+      lowestValue: allOrders.length > 0 ? Math.min(...allOrders.map(o => o.totalAmount)) : 0,
+      completedOrders: completedCount,
+      cancelledOrders: cancelledCount,
+      unacceptedOrders: unacceptedCount,
+      avgTicketSize: completedCount > 0 ? (totalSales / completedCount).toFixed(2) : 0,
+      totalSales,
+      dailyPayout: dailyPayout.toFixed(2),
+      bestSellingCategory,
+      bestSellingItem,
       avgPrepTime: prepCount > 0 ? (totalPrepTime / prepCount).toFixed(2) : 0,
-      rejectionsCount: rejections,
+      successRate: allOrders.length > 0 ? ((completedCount / allOrders.length) * 100).toFixed(2) : 0,
       recentOrders: paginatedOrders,
-      ordersByDate: ordersByDate.slice(-10), // Last 10 days
+      ordersByDate: ordersByDate.slice(-10),
+      ordersByWeek,
+      ordersByMonth,
       pagination: {
         total: allOrders.length,
         page,
@@ -702,31 +973,112 @@ const getMyChefStats = asyncHandler(async (req, res) => {
 
 const getMyStaffStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, category, foodItem, branch, paymentType, coupon } = req.query;
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 20;
   const skip = (page - 1) * limit;
 
   let query = {
-    $or: [
-      { createdBy: userId },
-      { servedBy: userId }
+    $and: [
+      {
+        $or: [
+          { createdBy: userId },
+          { servedBy: userId }
+        ]
+      }
     ]
   };
 
   if (startDate || endDate) {
-    query.createdAt = {};
-    if (startDate) query.createdAt.$gte = new Date(startDate);
+    let dateQ = {};
+    if (startDate) dateQ.$gte = new Date(startDate);
     if (endDate) {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      query.createdAt.$lte = end;
+      dateQ.$lte = end;
     }
+    query.$and.push({ createdAt: dateQ });
   }
 
-  const allOrders = await Order.find(query);
+  if (branch) query.$and.push({ branch });
+  if (paymentType) query.$and.push({ paymentType });
+  if (coupon) query.$and.push({ coupon });
+
+  if (category) {
+    const MenuItem = mongoose.model('MenuItem');
+    const itemsInCat = await MenuItem.find({ category }).select('_id');
+    const menuItemIds = itemsInCat.map(i => i._id);
+    query.$and.push({ 'items.menuItem': { $in: menuItemIds } });
+  }
+
+  if (foodItem) {
+    query.$and.push({ 'items.menuItem': foodItem });
+  }
+
+  const allOrders = await Order.find(query)
+    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } });
+
   const createdCount = allOrders.filter(o => o.createdBy.toString() === userId.toString()).length;
   const servedCount = allOrders.filter(o => o.servedBy?.toString() === userId.toString()).length;
+
+  let totalSales = 0;
+  const itemCounts = {};
+  const catCounts = {};
+
+  allOrders.forEach(order => {
+    if (order.status === 'SERVED') {
+      totalSales += order.totalAmount;
+    }
+
+    order.items.forEach(it => {
+      if (it.menuItem) {
+        const itemId = it.menuItem._id.toString();
+        const itemName = it.menuItem.name;
+        const catName = it.menuItem.category?.name || 'Uncategorized';
+        
+        itemCounts[itemId] = (itemCounts[itemId] || { name: itemName, count: 0 });
+        itemCounts[itemId].count += it.quantity;
+        
+        catCounts[catName] = (catCounts[catName] || 0) + it.quantity;
+      }
+    });
+  });
+
+  let bestSellingItem = 'None';
+  let maxItemCount = 0;
+  Object.values(itemCounts).forEach(it => {
+    if (it.count > maxItemCount) {
+      maxItemCount = it.count;
+      bestSellingItem = it.name;
+    }
+  });
+
+  let bestSellingCategory = 'None';
+  let maxCatCount = 0;
+  Object.entries(catCounts).forEach(([cat, count]) => {
+    if (count > maxCatCount) {
+      maxCatCount = count;
+      bestSellingCategory = cat;
+    }
+  });
+
+  const completedCount = allOrders.filter(o => o.status === 'SERVED').length;
+  const cancelledCount = allOrders.filter(o => o.status === 'CANCELLED').length;
+  const unacceptedCount = allOrders.filter(o => o.status === 'PLACED' || o.status === 'REJECTED').length;
+
+  const Attendance = mongoose.model('Attendance');
+  let attQuery = { user: userId };
+  if (startDate || endDate) {
+    attQuery.date = {};
+    if (startDate) attQuery.date.$gte = startDate;
+    if (endDate) attQuery.date.$lte = endDate;
+  }
+  const attendances = await Attendance.find(attQuery);
+  const presentCount = attendances.filter(a => a.status === 'present').length;
+  const halfDayCount = attendances.filter(a => a.status === 'half-day').length;
+  const monthlySalary = req.user.monthlySalary || 0;
+  const dailyRate = monthlySalary / 30;
+  const dailyPayout = (presentCount * dailyRate) + (halfDayCount * dailyRate * 0.5);
 
   const paginatedOrders = await Order.find(query)
     .populate('table', 'tableNumber')
@@ -736,20 +1088,48 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
     .limit(limit);
 
   const ordersByDateMap = {};
+  const ordersByWeekMap = {};
+  const ordersByMonthMap = {};
+
   allOrders.forEach(o => {
-    const dateStr = new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dateObj = new Date(o.createdAt);
+    const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     ordersByDateMap[dateStr] = (ordersByDateMap[dateStr] || 0) + 1;
+
+    // Week trend
+    const weekStr = `Week ${Math.ceil(dateObj.getDate() / 7)}`;
+    ordersByWeekMap[weekStr] = (ordersByWeekMap[weekStr] || 0) + 1;
+
+    // Month trend
+    const monthStr = dateObj.toLocaleDateString('en-US', { month: 'long' });
+    ordersByMonthMap[monthStr] = (ordersByMonthMap[monthStr] || 0) + 1;
   });
+
   const ordersByDate = Object.entries(ordersByDateMap).map(([date, count]) => ({ date, count }));
+  const ordersByWeek = Object.entries(ordersByWeekMap).map(([week, count]) => ({ week, count }));
+  const ordersByMonth = Object.entries(ordersByMonthMap).map(([month, count]) => ({ month, count }));
 
   res.json({
     success: true,
     data: {
       totalOrders: allOrders.length,
+      highestValue: allOrders.length > 0 ? Math.max(...allOrders.map(o => o.totalAmount)) : 0,
+      lowestValue: allOrders.length > 0 ? Math.min(...allOrders.map(o => o.totalAmount)) : 0,
+      completedOrders: completedCount,
+      cancelledOrders: cancelledCount,
+      unacceptedOrders: unacceptedCount,
+      avgTicketSize: completedCount > 0 ? (totalSales / completedCount).toFixed(2) : 0,
+      totalSales,
+      dailyPayout: dailyPayout.toFixed(2),
+      bestSellingCategory,
+      bestSellingItem,
       createdCount,
       servedCount,
+      successRate: allOrders.length > 0 ? ((completedCount / allOrders.length) * 100).toFixed(2) : 0,
       recentOrders: paginatedOrders,
-      ordersByDate: ordersByDate.slice(-10), // Last 10 days
+      ordersByDate: ordersByDate.slice(-10),
+      ordersByWeek,
+      ordersByMonth,
       pagination: {
         total: allOrders.length,
         page,

@@ -97,6 +97,7 @@ const promoteUser = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to promote this user');
   }
 
+  const oldRole = user.role;
   let nextRole = user.role;
   if (user.role === 'staff') nextRole = 'branch_admin';
   else if (user.role === 'branch_admin') nextRole = 'admin';
@@ -104,6 +105,9 @@ const promoteUser = asyncHandler(async (req, res) => {
 
   user.role = nextRole;
   await user.save();
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(req, 'USER_PROMOTED', { oldRole, newRole: nextRole }, user._id, 'User');
 
   await sendNotification({
     title: 'User Promoted',
@@ -132,12 +136,16 @@ const demoteUser = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to demote this user');
   }
 
+  const oldRole = user.role;
   let prevRole = user.role;
   if (user.role === 'admin') prevRole = 'branch_admin';
   else if (user.role === 'branch_admin') prevRole = 'staff';
 
   user.role = prevRole;
   await user.save();
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(req, 'USER_DEMOTED', { oldRole, newRole: prevRole }, user._id, 'User');
 
   await sendNotification({
     title: 'User Demoted',
@@ -167,15 +175,32 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to update users from other locations');
   }
 
-  // Prevent location admin from changing roles to anything higher than staff
-  if (req.user.role === 'branch_admin' && req.body.role && req.body.role !== 'staff') {
-    delete req.body.role;
+  // Fields allowed to be updated by admins via this route
+  const updatableFields = ['name', 'email', 'phone', 'assignedLocation', 'accessibleLocations', 'active', 'gender', 'age'];
+  const updateData = {};
+  
+  updatableFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
+
+  // Only Super Admin can change roles to 'admin' or 'super_admin'
+  if (req.body.role) {
+    if (req.user.role === 'super_admin') {
+      updateData.role = req.body.role;
+    } else if (req.user.role === 'admin' && !['admin', 'super_admin'].includes(req.body.role)) {
+      updateData.role = req.body.role;
+    }
   }
 
-  const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+  const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: updateData }, {
     new: true,
     runValidators: true,
   }).select('-password');
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(req, 'USER_UPDATED', { changedFields: Object.keys(updateData) }, user._id, 'User');
 
   res.json({
     success: true,
@@ -210,6 +235,9 @@ const deleteUser = asyncHandler(async (req, res) => {
   const locationId = user.assignedLocation;
 
   await user.deleteOne();
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(req, 'USER_DELETED', { userName }, userId, 'User');
 
   await sendNotification({
     title: 'User Deleted',
@@ -363,6 +391,64 @@ const changePassword = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update user permissions
+// @route   PUT /api/users/:id/permissions
+// @access  Private (Super Admin, Admin, Branch Admin)
+const updateUserPermissions = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Hierarchy Authorization Rules
+  // SUPER_ADMIN > ADMIN > BRANCH_ADMIN > LOCATION_ADMIN > STAFF/CHEF
+  // Super Admin -> Admin
+  // Admin -> Branch Admin / Location Admin
+  // Branch Admin -> Staff / Chef
+  
+  const actorRole = req.user.role;
+  const targetRole = user.role;
+
+  let isAuthorized = false;
+
+  if (actorRole === 'super_admin' && targetRole === 'admin') {
+    isAuthorized = true;
+  } else if (actorRole === 'admin' && (targetRole === 'branch_admin' || targetRole === 'location_admin')) {
+    isAuthorized = true;
+  } else if (actorRole === 'branch_admin' && (targetRole === 'staff' || targetRole === 'chef')) {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
+    res.status(403);
+    throw new Error(`As a ${actorRole}, you cannot assign permissions to a ${targetRole}`);
+  }
+
+  // Superior cannot assign permissions above own level
+  if (actorRole !== 'super_admin') {
+    const actorPermissions = req.user.permissions || {};
+    const requestedPermissions = req.body.permissions || {};
+    
+    for (const key in requestedPermissions) {
+      if (requestedPermissions[key] === true && !actorPermissions[key]) {
+        res.status(403);
+        throw new Error(`You cannot assign the permission '${key}' because you do not have it`);
+      }
+    }
+  }
+
+  user.permissions = req.body.permissions;
+  await user.save();
+
+  res.json({
+    success: true,
+    message: 'Permissions updated successfully',
+    data: user.permissions
+  });
+});
+
 module.exports = {
   getUsers,
   getUser,
@@ -373,4 +459,5 @@ module.exports = {
   toggleBlocklist,
   updateProfile,
   changePassword,
+  updateUserPermissions,
 };

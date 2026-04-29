@@ -154,6 +154,20 @@ const createNotification = asyncHandler(async (req, res) => {
     throw new Error('No valid recipients found for this target');
   }
 
+  // Duplicate Prevention Check (60 seconds)
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const duplicate = await Notification.findOne({
+    title,
+    message,
+    sender: req.user._id,
+    createdAt: { $gte: oneMinuteAgo }
+  });
+
+  if (duplicate) {
+    res.status(409);
+    throw new Error('Duplicate notification detected. Please wait before resending.');
+  }
+
   const notification = await Notification.create({
     title,
     message,
@@ -192,31 +206,29 @@ function validateHierarchy(sender, receiver) {
   const sRole = sender.role;
   const rRole = receiver.role;
   const sBranch = sender.assignedLocation?.toString();
-  const rBranch = receiver.assignedLocation?.toString();
 
   if (sRole === 'super_admin') return true;
 
-  if (sRole === 'admin') {
-    // Admin -> Super Admin
+  // Any lower role can notify higher role
+  const roleOrder = ['staff', 'chef', 'branch_admin', 'location_admin', 'admin', 'super_admin'];
+  const sIndex = roleOrder.indexOf(sRole);
+  const rIndex = roleOrder.indexOf(rRole);
+
+  if (rIndex > sIndex) {
     if (rRole === 'super_admin') return true;
-    // Admin -> Own branch users
-    if (sBranch === rBranch) return true;
+    if (rRole === 'admin') {
+      if (!sBranch) return true;
+      return receiver.accessibleLocations?.some(loc => loc.toString() === sBranch);
+    }
+    if (rRole === 'branch_admin' || rRole === 'location_admin') {
+      return receiver.assignedLocation?.toString() === sBranch;
+    }
     return false;
   }
 
-  if (sRole === 'branch_admin') {
-    // Branch Admin -> Their Admin (anyone with role 'admin' in their branch)
-    if (rRole === 'admin' && sBranch === rBranch) return true;
-    // Branch Admin -> Their branch staff/chefs
-    if (sBranch === rBranch && (rRole === 'staff' || rRole === 'chef')) return true;
-    return false;
-  }
-
-  if (sRole === 'staff' || sRole === 'chef') {
-    // Staff/Chef -> Only Branch Admin in their branch
-    if (rRole === 'branch_admin' && sBranch === rBranch) return true;
-    return false;
-  }
+  // Same level or higher to lower
+  if (sRole === 'admin' && sBranch === receiver.assignedLocation?.toString()) return true;
+  if (sRole === 'branch_admin' && sBranch === receiver.assignedLocation?.toString()) return true;
 
   return false;
 }
@@ -235,31 +247,38 @@ const getTargetOptions = asyncHandler(async (req, res) => {
 
   if (role === 'super_admin') {
     users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
-    roles = ['super_admin', 'admin', 'branch_admin', 'staff', 'chef', 'all'];
+    roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
     const Location = mongoose.model('Location');
     branches = await Location.find().select('name city');
   } 
   else if (role === 'admin') {
-    // Super Admins
     const supers = await User.find({ role: 'super_admin' }).select('name role');
-    // Own branch users
-    const branchUsers = await User.find({ assignedLocation: branchId, _id: { $ne: user._id } }).select('name role');
+    const accessibleBranches = user.accessibleLocations || [];
+    const branchUsers = await User.find({ 
+      assignedLocation: { $in: accessibleBranches }, 
+      _id: { $ne: user._id } 
+    }).select('name role');
     users = [...supers, ...branchUsers];
-    branches = branchId ? [await mongoose.model('Location').findById(branchId).select('name')] : [];
+    
+    const Location = mongoose.model('Location');
+    branches = await Location.find({ _id: { $in: accessibleBranches } }).select('name');
   }
   else if (role === 'branch_admin') {
-    // Their Admin (Admin in same branch)
-    const admins = await User.find({ role: 'admin', assignedLocation: branchId }).select('name role');
-    // Staff/Chefs in same branch
+    const admins = await User.find({ role: 'admin', accessibleLocations: branchId }).select('name role');
     const staff = await User.find({ 
       assignedLocation: branchId, 
-      role: { $in: ['staff', 'chef'] } 
+      role: { $in: ['staff', 'chef', 'location_admin'] } 
     }).select('name role');
-    users = [...admins, ...staff];
+    const supers = await User.find({ role: 'super_admin' }).select('name role');
+    
+    users = [...supers, ...admins, ...staff];
   }
   else if (role === 'staff' || role === 'chef') {
-    // Only Branch Admin
-    users = await User.find({ role: 'branch_admin', assignedLocation: branchId }).select('name role');
+    const branchAdmins = await User.find({ role: 'branch_admin', assignedLocation: branchId }).select('name role');
+    const admins = await User.find({ role: 'admin', accessibleLocations: branchId }).select('name role');
+    const supers = await User.find({ role: 'super_admin' }).select('name role');
+    
+    users = [...supers, ...admins, ...branchAdmins];
   }
 
   res.json({

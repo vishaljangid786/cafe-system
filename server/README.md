@@ -72,8 +72,10 @@ The `/orders/analytics` engine performs real-time performance aggregation, inclu
    Create a `.env` file with:
    ```env
    PORT=5000
+   NODE_ENV=development
    MONGO_URI=your_mongodb_connection_string
    JWT_SECRET=your_secret_key
+   JWT_EXPIRE=30d
    CLOUDINARY_CLOUD_NAME=name
    CLOUDINARY_API_KEY=key
    CLOUDINARY_API_SECRET=secret

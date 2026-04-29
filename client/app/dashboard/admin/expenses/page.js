@@ -347,13 +347,13 @@ export default function ExpensesPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
           {/* Main List Section */}
           <div className="xl:col-span-2 space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex flex-col md:flex-row gap-4 items-center sticky-filter !-mt-0">
               <div className="relative flex-1 w-full group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={20} />
                 <input
                   type="text"
-                  placeholder="Search expenses by title or category..."
-                  className="w-full pl-14 pr-6 py-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl focus:ring-4 focus:ring-rose-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm group-hover:border-rose-500/30"
+                  placeholder="Search matrix..."
+                  className="w-full pl-14 pr-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl focus:ring-4 focus:ring-rose-500/10 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -361,13 +361,13 @@ export default function ExpensesPage() {
                   }}
                 />
               </div>
-              <div className="flex gap-3 w-full md:w-auto">
+              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                 <Button
                   variant="secondary"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`!py-5 px-8 rounded-3xl border-none transition-all shadow-sm font-black uppercase text-[10px] tracking-widest ${showFilters ? 'bg-rose-500 text-white' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-rose-500 hover:text-white'}`}
+                  className={`!py-4 px-6 rounded-2xl border-none transition-all shadow-sm font-black uppercase text-[9px] tracking-widest shrink-0 ${showFilters ? 'bg-rose-500 text-white' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}`}
                 >
-                  <Filter size={18} className="mr-2" /> Refine
+                  <Filter size={16} className="mr-2" /> Refine
                 </Button>
                 <ExportActions
                   data={paginatedData}

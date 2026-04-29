@@ -250,8 +250,8 @@ export default function UsersManagementPage() {
         </div>
 
         <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="min-w-[1000px] w-full divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="responsive-table-container">
+            <table className="min-w-[1000px] w-full divide-y divide-zinc-100 dark:divide-zinc-800 stack-table-mobile">
               <thead className="bg-zinc-50/50 dark:bg-zinc-800/50">
                 <tr>
                   <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">User</th>
@@ -282,18 +282,18 @@ export default function UsersManagementPage() {
                   </tr>
                 ) : filteredUsers.map((user) => (
                   <tr key={user._id} className={`hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors group ${user.isBlocked ? 'opacity-50' : ''}`}>
-                    <td className="px-8 py-6 whitespace-nowrap">
+                    <td data-label="User" className="px-8 py-6 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black text-sm border ${user.isBlocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 border-amber-200/20'}`}>
                           {user.name.split(' ').map(n => n[0]).join('')}
                         </div>
-                        <div className="ml-4">
+                        <div className="ml-4 text-left">
                           <div className="text-sm font-black text-zinc-900 dark:text-zinc-100">{user.name}</div>
                           <div className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap">
+                    <td data-label="Role" className="px-8 py-6 whitespace-nowrap">
                       <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] ${user.role === 'super_admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10' :
                         user.role === 'admin' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10' :
                           user.role === 'branch_admin' || user.role === 'location_admin' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
@@ -301,7 +301,7 @@ export default function UsersManagementPage() {
                         {user.role === 'branch_admin' || user.role === 'location_admin' ? 'Branch Admin' : user.role.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm font-bold text-zinc-500 dark:text-zinc-400">
+                    <td data-label="Branch" className="px-8 py-6 whitespace-nowrap text-sm font-bold text-zinc-500 dark:text-zinc-400">
                       {user.role === 'admin' ? (
                         user.accessibleLocations?.length > 0 ? (
                           <span>
@@ -317,12 +317,12 @@ export default function UsersManagementPage() {
                         user.assignedLocation?.name || <span className="opacity-30">N/A</span>
                       )}
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap text-center">
+                    <td data-label="Status" className="px-8 py-6 whitespace-nowrap text-center">
                       <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg ${user.isBlocked ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                         {user.isBlocked ? 'Blocked' : 'Active'}
                       </span>
                     </td>
-                    <td className="px-8 py-6 whitespace-nowrap text-right">
+                    <td data-label="Actions" className="px-8 py-6 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end space-x-2 ">
                         <button onClick={() => handleToggleBlock(user._id)} className={`p-2 rounded-xl transition-colors ${user.isBlocked ? 'text-green-600 hover:bg-green-50' : 'text-red-400 hover:bg-red-50'}`} title={user.isBlocked ? 'Unblock' : 'Block'}>
                           {user.isBlocked ? <Unlock size={18} /> : <Ban size={18} />}

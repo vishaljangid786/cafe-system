@@ -5,6 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import CinematicBackground from "./components/ui/CinematicBackground";
+import BottomNav from "./components/BottomNav";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const outfit = Outfit({ subsets: ["latin"], variable: '--font-outfit' });
@@ -62,6 +63,7 @@ export default function RootLayout({ children }) {
               />
               <div className="relative z-10 min-h-screen">
                 {children}
+                <BottomNav />
               </div>
             </NotificationProvider>
           </AuthProvider>

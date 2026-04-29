@@ -1,6 +1,7 @@
 const Coupon = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { logActivity } = require('../utils/auditLogger');
 
 // @desc    Get all coupons (admin view)
 // @route   GET /api/coupons
@@ -69,13 +70,13 @@ const createCoupon = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  // Notify staff about new active coupon
-  await sendNotification({
-    title: 'New Coupon Available',
-    message: `Coupon ${coupon.code} is now active!`,
-    type: 'coupon_created',
-    performedByUser: req.user,
-  });
+  await logActivity(
+    req.user,
+    'COUPON_CREATE',
+    `Created coupon ${coupon.code} with ${discountValue}${discountType === 'percentage' ? '%' : ' INR'} discount`,
+    req,
+    { couponId: coupon._id }
+  );
 
   res.status(201).json({ success: true, data: coupon });
 });
@@ -93,11 +94,21 @@ const updateCoupon = asyncHandler(async (req, res) => {
   if (updates.isActive !== undefined) {
     updates.isActive = updates.isActive === 'on' || updates.isActive === 'true' || updates.isActive === true;
   }
+
   const coupon = await Coupon.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!coupon) {
     res.status(404);
     throw new Error('Coupon not found');
   }
+
+  await logActivity(
+    req.user,
+    'COUPON_UPDATE',
+    `Updated coupon ${coupon.code} configuration`,
+    req,
+    { couponId: coupon._id, changes: updates }
+  );
+
   res.json({ success: true, data: coupon });
 });
 
@@ -112,6 +123,15 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   }
   coupon.isActive = false;
   await coupon.save();
+
+  await logActivity(
+    req.user,
+    'COUPON_DEACTIVATE',
+    `Deactivated coupon ${coupon.code}`,
+    req,
+    { couponId: coupon._id }
+  );
+
   res.json({ success: true, message: 'Coupon deactivated' });
 });
 

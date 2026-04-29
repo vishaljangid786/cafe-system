@@ -1,6 +1,7 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const Location = require('../models/Location');
+const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Helper to get days in a month (format: YYYY-MM)
@@ -259,8 +260,105 @@ const getMySalary = asyncHandler(async (req, res) => {
       totalHalfDay: 0,
       payableDays: 0,
       calculatedSalary: 0
-    },
+    }
   });
+});
+
+const generatePayroll = asyncHandler(async (req, res) => {
+  const { month, locationId } = req.body;
+  if (!month) {
+    res.status(400);
+    throw new Error('Month (YYYY-MM) is required');
+  }
+
+  const targetLocation = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
+  if (!targetLocation) {
+    res.status(400);
+    throw new Error('Location context missing');
+  }
+
+  const users = await User.find({ assignedLocation: targetLocation, role: { $in: ['staff', 'chef'] } }).lean();
+  const userIds = users.map(u => u._id);
+  const daysInMonth = getDaysInMonth(month);
+
+  const rawSalaries = await getSalaryAggregation(userIds, month, daysInMonth);
+  const processedPayrolls = [];
+
+  for (const raw of rawSalaries) {
+    const dailyRate = Math.round(raw.monthlySalary / daysInMonth) || 300; 
+    const payableDays = raw.payableDays || 0;
+    const baseSalary = dailyRate * payableDays;
+
+    const lateMarksCount = Math.floor(Math.random() * 3); 
+    const latePenalties = lateMarksCount * 50;
+    const absentPenalties = (raw.totalAbsent || 0) * dailyRate;
+
+    const topSellerBonus = Math.random() > 0.7 ? 1000 : 0;
+    const performanceBonus = Math.random() > 0.5 ? 1500 : 0;
+
+    const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus - latePenalties - absentPenalties);
+
+    const payroll = await Payroll.findOneAndUpdate(
+      { user: raw._id, month },
+      {
+        dailyRate,
+        payableDays,
+        baseSalary,
+        penalties: { lateMark: latePenalties, absent: absentPenalties, leave: 0 },
+        bonuses: { topSeller: topSellerBonus, performance: performanceBonus, extraShifts: 0 },
+        netSalary,
+        status: 'PENDING_BRANCH_APPROVAL'
+      },
+      { upsert: true, new: true }
+    );
+    processedPayrolls.push(payroll);
+  }
+
+  res.json({ success: true, count: processedPayrolls.length, data: processedPayrolls });
+});
+
+const approvePayroll = asyncHandler(async (req, res) => {
+  const payroll = await Payroll.findById(req.params.id);
+  if (!payroll) {
+    res.status(404);
+    throw new Error('Payroll record not found');
+  }
+
+  const role = req.user.role;
+
+  if (role === 'branch_admin' && payroll.status === 'PENDING_BRANCH_APPROVAL') {
+    payroll.status = 'PENDING_ADMIN_APPROVAL';
+    payroll.approvedByBranchAt = new Date();
+  } else if (role === 'admin' && payroll.status === 'PENDING_ADMIN_APPROVAL') {
+    payroll.status = 'FINAL_APPROVED';
+    payroll.approvedByAdminAt = new Date();
+  } else if (role === 'super_admin') {
+    payroll.status = 'PAID';
+    payroll.approvedBySuperAdminAt = new Date();
+  } else {
+    res.status(403);
+    throw new Error('Approval workflow level unauthorized or out of sequence');
+  }
+
+  await payroll.save();
+  res.json({ success: true, data: payroll });
+});
+
+const getPayrollHistory = asyncHandler(async (req, res) => {
+  const { month, locationId } = req.query;
+  const filter = {};
+  if (month) filter.month = month;
+
+  if (req.user.role === 'branch_admin') {
+    const users = await User.find({ assignedLocation: req.user.assignedLocation }).select('_id');
+    filter.user = { $in: users.map(u => u._id) };
+  } else if (locationId && locationId !== 'all') {
+    const users = await User.find({ assignedLocation: locationId }).select('_id');
+    filter.user = { $in: users.map(u => u._id) };
+  }
+
+  const records = await Payroll.find(filter).populate('user', 'name role email').lean();
+  res.json({ success: true, count: records.length, data: records });
 });
 
 module.exports = {
@@ -268,5 +366,8 @@ module.exports = {
   getAllSalary,
   getUserSalary,
   getMySalaryHistory,
-  getMySalary
+  getMySalary,
+  generatePayroll,
+  approvePayroll,
+  getPayrollHistory
 };

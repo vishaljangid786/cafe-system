@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import toast from 'react-hot-toast';
 import { Wallet, Filter, MapPin, ChevronRight, Download, Receipt, PieChart as PieIcon, Activity, FileText, Target, X } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
@@ -36,11 +37,18 @@ export default function PayrollRecordsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [salRes, locRes] = await Promise.all([
+        const [salRes, locRes, payRes] = await Promise.all([
           api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
-          api.get('/locations')
+          api.get('/locations'),
+          api.get(`/salary/payroll/history?month=${month}`)
         ]);
-        setSalaries(salRes.data.data);
+        
+        const mergedSalaries = salRes.data.data.map(s => {
+          const payroll = payRes.data.data?.find(p => p.user?._id === s._id);
+          return { ...s, payrollRecord: payroll };
+        });
+
+        setSalaries(mergedSalaries);
         setStats({
           totalPayroll: salRes.data.totalPayrollCost,
           locationTotals: salRes.data.locationTotals
@@ -205,7 +213,24 @@ export default function PayrollRecordsPage() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0">
+                <div className="flex shrink-0 items-center gap-4">
+                  <button
+                    onClick={async () => {
+                      const loadToast = toast.loading("Processing payroll matrix...");
+                      try {
+                        const locObj = locations.find(l => l.name === selectedLocation);
+                        await api.post('/salary/generate', { month, locationId: locObj?._id || 'all' });
+                        toast.success("Payroll schemas synchronized confidently", { id: loadToast });
+                        setTimeout(() => window.location.reload(), 1000);
+                      } catch (e) {
+                        toast.error("Process constraints mapped", { id: loadToast });
+                      }
+                    }}
+                    className="h-[54px] px-6 py-3 bg-zinc-900 dark:bg-amber-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] shadow-md shadow-amber-500/10"
+                  >
+                    Generate Monthly Payroll
+                  </button>
+
                   <ExportActions
                       data={filteredSalaries}
                       columns={[
@@ -391,12 +416,33 @@ export default function PayrollRecordsPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {['staff', 'chef'].includes(activeTab) ? (
-                              <button
-                                onClick={() => setViewingSalary(s)}
-                                className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-amber-600 transition-all shadow-sm"
-                              >
-                                View Breakdown
-                              </button>
+                              <div className="flex items-center gap-2">
+                                {s.payrollRecord && (
+                                  <button
+                                    onClick={async () => {
+                                      const loadToast = toast.loading("Approving payroll schema...");
+                                      try {
+                                        await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
+                                        toast.success("Tier Approval Locked", { id: loadToast });
+                                        setTimeout(() => window.location.reload(), 1000);
+                                      } catch (e) {
+                                        toast.error(e.response?.data?.message || "Constraint hit", { id: loadToast });
+                                      }
+                                    }}
+                                    className="text-[10px] font-black uppercase tracking-widest px-3 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm"
+                                  >
+                                    {s.payrollRecord.status === 'PENDING_BRANCH_APPROVAL' ? 'Branch Appr' : 
+                                     s.payrollRecord.status === 'PENDING_ADMIN_APPROVAL' ? 'Admin Appr' : 
+                                     s.payrollRecord.status === 'FINAL_APPROVED' ? 'Final Appr' : 'Paid'}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setViewingSalary(s)}
+                                  className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+                                >
+                                  View Breakdown
+                                </button>
+                              </div>
                             ) : (
                               <button
                                 onClick={() => {
@@ -520,22 +566,111 @@ export default function PayrollRecordsPage() {
                   </div>
                 </div>
 
+                {viewingSalary.payrollRecord && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Bonuses</p>
+                      <p className="text-xl font-black">
+                        + ₹{((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Penalties</p>
+                      <p className="text-xl font-black">
+                        - ₹{((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="p-6 rounded-[2rem] bg-amber-600 text-white shadow-xl shadow-amber-600/20">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Final Calculated Payout</span>
-                    <span className="px-2 py-0.5 bg-white/20 rounded-md text-[8px] font-black uppercase">Verified</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Final Net Payout</span>
+                    <span className="px-2 py-0.5 bg-white/20 rounded-md text-[8px] font-black uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
                   </div>
-                  <p className="text-4xl font-black tracking-tighter">₹{viewingSalary.calculatedSalary?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <p className="text-4xl font-black tracking-tighter">
+                    ₹{(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </p>
                   <p className="text-[9px] font-medium opacity-70 mt-3 flex items-center gap-1">
-                    <Receipt size={10} /> Based on attendance matrix for {month}
+                    <Receipt size={10} /> Based on attendance and automated schemas for {month}
                   </p>
                 </div>
               </div>
 
-              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Payslip - ${viewingSalary.name}</title>
+                          <style>
+                            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #18181b; }
+                            .header { text-align: center; border-bottom: 2px solid #e4e4e7; padding-bottom: 20px; margin-bottom: 30px; }
+                            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                            .box { padding: 20px; background: #f4f4f5; border-radius: 12px; }
+                            .title { font-size: 10px; text-transform: uppercase; font-weight: 800; color: #71717a; letter-spacing: 0.1em; }
+                            .val { font-size: 24px; font-weight: 800; margin-top: 4px; }
+                            .total { background: #18181b; color: white; padding: 24px; border-radius: 16px; margin-top: 30px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e4e4e7; }
+                            th { font-size: 10px; text-transform: uppercase; font-weight: 800; color: #71717a; }
+                            td { font-weight: 600; }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="header">
+                            <h2>Cafe Management System</h2>
+                            <h1>Salary Payslip</h1>
+                            <p style="color: #71717a; font-weight: 600;">Cycle: ${month} &bull; Generated on: ${new Date().toLocaleDateString()}</p>
+                          </div>
+                          <div class="grid">
+                            <div class="box">
+                              <div class="title">Employee Profile</div>
+                              <div class="val" style="font-size: 18px;">${viewingSalary.name}</div>
+                              <div style="color: #71717a; font-size: 12px; margin-top: 4px; font-weight: 600;">${viewingSalary.email}</div>
+                            </div>
+                            <div class="box">
+                              <div class="title">Designation & Location</div>
+                              <div class="val" style="font-size: 18px;">${viewingSalary.role?.replace('_', ' ').toUpperCase()}</div>
+                              <div style="color: #71717a; font-size: 12px; margin-top: 4px; font-weight: 600;">${viewingSalary.locationName || 'N/A'}</div>
+                            </div>
+                          </div>
+                          
+                          <table>
+                            <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+                            <tbody>
+                              <tr><td>Base Fixed Salary (Monthly)</td><td>₹${viewingSalary.monthlySalary?.toLocaleString() || 0}</td></tr>
+                              <tr><td>Payable Days Factor (${viewingSalary.payableDays}/${viewingSalary.daysInMonth})</td><td>₹${(viewingSalary.payrollRecord?.baseSalary || viewingSalary.calculatedSalary || 0).toLocaleString()}</td></tr>
+                              ${viewingSalary.payrollRecord ? `
+                                <tr><td>Performance & Operations Bonus</td><td style="color: #059669;">+ ₹${((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}</td></tr>
+                                <tr><td>Late & Absence Penalties</td><td style="color: #e11d48;">- ₹${((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}</td></tr>
+                              ` : ''}
+                            </tbody>
+                          </table>
+
+                          <div class="total">
+                            <div class="title" style="color: #a1a1aa;">Net Payable Amount</div>
+                            <div class="val" style="font-size: 32px; margin-top: 8px;">₹${(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #a1a1aa; margin-top: 8px; border-top: 1px dashed #3f3f46; padding-top: 8px;">
+                              Status: ${viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'PROVISIONAL'}
+                            </div>
+                          </div>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    setTimeout(() => printWindow.print(), 500);
+                  }}
+                  className="flex-1 py-4 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                >
+                  Print Payslip
+                </button>
+
                 <button
                   onClick={() => setViewingSalary(null)}
-                  className="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02]"
+                  className="flex-1 py-4 rounded-2xl bg-zinc-900 dark:bg-amber-600 text-white dark:text-zinc-900 text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-xl shadow-zinc-900/10 dark:shadow-amber-600/20"
                 >
                   Close Records
                 </button>

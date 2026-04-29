@@ -68,14 +68,26 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['super_admin', 'admin', 'branch_admin', 'staff', 'chef'],
+      enum: ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'],
       default: 'staff',
+    },
+    permissions: {
+      viewRevenue: { type: Boolean, default: false },
+      editRevenue: { type: Boolean, default: false },
+      viewOrders: { type: Boolean, default: false },
+      manageOrders: { type: Boolean, default: false },
+      forceComplete: { type: Boolean, default: false },
+      exportReports: { type: Boolean, default: false },
+      manageStaff: { type: Boolean, default: false },
+      manageNotifications: { type: Boolean, default: false },
+      viewAnalytics: { type: Boolean, default: false },
+      manageCoupons: { type: Boolean, default: false },
     },
     // For Staff and Branch Admin
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
-      required: function() { return ['branch_admin', 'staff', 'chef'].includes(this.role); },
+      required: function() { return ['branch_admin', 'location_admin', 'staff', 'chef'].includes(this.role); },
     },
     // For Admins (Super/Global)
     accessibleLocations: [
@@ -132,6 +144,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 userSchema.index({ role: 1 });
 userSchema.index({ assignedLocation: 1 });
+userSchema.index({ isBlocked: 1 });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

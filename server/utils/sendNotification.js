@@ -16,23 +16,20 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
     const roleTarget = [];
 
     // Determine target roles hierarchically
-    if (performedByUser.role === 'staff') {
+    if (performedByUser.role === 'staff' || performedByUser.role === 'chef') {
       roleTarget.push('branch_admin', 'admin', 'super_admin');
     } else if (performedByUser.role === 'branch_admin') {
       roleTarget.push('admin', 'super_admin');
     } else if (performedByUser.role === 'admin') {
       roleTarget.push('super_admin');
     } else {
-      // Super admin performed action, no higher role exists (maybe notify other super admins?)
       return; 
     }
 
-    // Build query to find eligible recipients
     const query = { role: { $in: roleTarget }, _id: { $ne: performedByUser._id } };
 
     const users = await User.find(query);
 
-    // Filter by location if necessary (branch_admins only care about their location)
     const recipientsList = [];
     const targetLocationId = locationId || performedByUser.assignedLocation;
 
@@ -42,25 +39,22 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
           recipientsList.push({ user: u._id, isRead: false });
         }
       } else {
-        // admin and super_admin get everything
         recipientsList.push({ user: u._id, isRead: false });
       }
     });
 
     if (recipientsList.length === 0) return;
 
-    // Create DB Record
     const notification = await Notification.create({
       title,
       message,
       type,
-      createdBy: performedByUser._id,
-      roleTarget,
+      sender: performedByUser._id,
       recipients: recipientsList,
     });
 
-    // Populate createdBy for the real-time payload
-    await notification.populate('createdBy', 'name email role');
+    // Populate sender for the real-time payload
+    await notification.populate('sender', 'name email role');
 
     // Emit via Socket.io
     const io = getIO();

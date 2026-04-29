@@ -13,6 +13,15 @@ const orderSchema = new mongoose.Schema(
       ref: 'Table',
       required: true,
     },
+    customerPhone: {
+      type: String,
+      default: null,
+      index: true
+    },
+    customerName: {
+      type: String,
+      default: null
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -78,6 +87,16 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: [0, 'Total amount cannot be negative'],
     },
+    paymentType: {
+      type: String,
+      enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
+      default: 'CASH',
+    },
+    coupon: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Coupon',
+      default: null,
+    },
     statusHistory: [
       {
         status: String,
@@ -94,9 +113,20 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-// Index for createdAt as requested
+// Index for analytical and dashboard capabilities
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ createdBy: 1 });
+orderSchema.index({ assignedChef: 1 });
+orderSchema.index({ servedBy: 1 });
+orderSchema.index({ paymentType: 1 });
+
+orderSchema.query.byBranch = function(branchId) {
+  return this.where({ branch: branchId });
+};
+
+orderSchema.query.active = function() {
+  return this.where({ status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] } });
+};
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;
