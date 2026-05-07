@@ -1,0 +1,152 @@
+.
+├── client
+│   ├── AGENTS.md
+│   ├── app
+│   │   ├── bookings
+│   │   ├── components
+│   │   ├── context
+│   │   ├── dashboard
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.js
+│   │   ├── login
+│   │   ├── page.js
+│   │   ├── scratch
+│   │   ├── services
+│   │   └── signup
+│   ├── CLAUDE.md
+│   ├── eslint.config.mjs
+│   ├── jsconfig.json
+│   ├── lint_output_2.txt
+│   ├── lint_output_3.txt
+│   ├── lint_output_4.txt
+│   ├── lint_output_5.txt
+│   ├── lint_output.txt
+│   ├── middleware.js
+│   ├── next.config.mjs
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.mjs
+│   ├── public
+│   │   ├── favicon.png
+│   │   ├── favicon.svg
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── images
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   └── window.svg
+│   └── README.md
+├── COMPREHENSIVE_AUDIT_REPORT.md
+├── KNOWLEDGE.md
+├── PROJECT_MAP.txt
+├── README.md
+├── scratch
+├── server
+│   ├── app.js
+│   ├── check_attendance.js
+│   ├── check_user.js
+│   ├── config
+│   │   ├── cloudinary.js
+│   │   ├── db.js
+│   │   └── socket.js
+│   ├── controllers
+│   │   ├── analyticsController.js
+│   │   ├── attendanceController.js
+│   │   ├── authController.js
+│   │   ├── bookingController.js
+│   │   ├── categoryController.js
+│   │   ├── couponController.js
+│   │   ├── customerController.js
+│   │   ├── expenseController.js
+│   │   ├── inventoryController.js
+│   │   ├── locationController.js
+│   │   ├── menuItemController.js
+│   │   ├── notificationController.js
+│   │   ├── orderController.js
+│   │   ├── recipeController.js
+│   │   ├── reservationController.js
+│   │   ├── salaryController.js
+│   │   ├── superAdminController.js
+│   │   ├── tableController.js
+│   │   ├── transactionController.js
+│   │   └── userController.js
+│   ├── get_ids.js
+│   ├── get_token.js
+│   ├── get_users.js
+│   ├── middlewares
+│   │   ├── authMiddleware.js
+│   │   ├── errorMiddleware.js
+│   │   ├── omsMiddleware.js
+│   │   ├── uploadMiddleware.js
+│   │   └── validateMiddleware.js
+│   ├── migrateTransactions.js
+│   ├── models
+│   │   ├── Attendance.js
+│   │   ├── AuditLog.js
+│   │   ├── Booking.js
+│   │   ├── BranchInventory.js
+│   │   ├── BranchStock.js
+│   │   ├── Category.js
+│   │   ├── Coupon.js
+│   │   ├── Customer.js
+│   │   ├── Expense.js
+│   │   ├── Ingredient.js
+│   │   ├── Location.js
+│   │   ├── MenuItem.js
+│   │   ├── Notification.js
+│   │   ├── Order.js
+│   │   ├── Payroll.js
+│   │   ├── Recipe.js
+│   │   ├── Reservation.js
+│   │   ├── Table.js
+│   │   ├── Transaction.js
+│   │   ├── User.js
+│   │   └── WasteRecord.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── README.md
+│   ├── routes
+│   │   ├── analyticsRoutes.js
+│   │   ├── attendanceRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── bookingRoutes.js
+│   │   ├── categoryRoutes.js
+│   │   ├── couponRoutes.js
+│   │   ├── customerRoutes.js
+│   │   ├── expenseRoutes.js
+│   │   ├── exportRoutes.js
+│   │   ├── inventoryRoutes.js
+│   │   ├── locationRoutes.js
+│   │   ├── menuRoutes.js
+│   │   ├── notificationRoutes.js
+│   │   ├── orderRoutes.js
+│   │   ├── recipeRoutes.js
+│   │   ├── reservationRoutes.js
+│   │   ├── salaryRoutes.js
+│   │   ├── seedRoutes.js
+│   │   ├── superAdminRoutes.js
+│   │   ├── tableRoutes.js
+│   │   ├── transactionRoutes.js
+│   │   └── userRoutes.js
+│   ├── scratch
+│   ├── scripts
+│   │   └── migrate-menu.js
+│   ├── seed
+│   │   └── data.js
+│   ├── seed_attendance.js
+│   ├── seed_data_task.js
+│   ├── seed_orders.js
+│   ├── server.js
+│   ├── test_login.js
+│   └── utils
+│       ├── accessControl.js
+│       ├── asyncHandler.js
+│       ├── auditLogger.js
+│       ├── exportService.js
+│       ├── scheduler.js
+│       └── sendNotification.js
+├── VULNERABILITY_AUDIT_REPORT.md
+└── workspace-audit-report.md
+
+24 directories, 126 files
