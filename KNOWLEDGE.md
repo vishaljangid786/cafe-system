@@ -130,3 +130,4 @@ The system uses a strict location-scoping pattern to ensure data privacy between
 3. **API Calls**: Always use the `api` service (Axios) to ensure JWT headers are included.
 4. **Error Handling**: Wrap controller logic in `asyncHandler`.
 5. **Security**: Location access must be enforced in the controller using `scopedLocationId`.
+6. **Financial Integrity**: When creating orders or transactions, always snapshot prices and costPrices instead of relying on live MenuItem data, to ensure historical accuracy.

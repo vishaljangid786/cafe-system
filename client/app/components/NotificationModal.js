@@ -175,7 +175,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
       </motion.div>
     </div>,
     document.body
-  );1
+  );
 };
 
 export default NotificationModal;

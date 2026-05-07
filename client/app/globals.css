@@ -3,9 +3,8 @@
 @theme {
   --color-bg-deep: #050505;
   --color-surface-dark: #0a0a0a;
-  --color-accent-amber: #3b82f6;
   --color-accent-blue: #3b82f6;
-  
+
   --color-primary: var(--color-primary);
   --color-primary-dark: #1d4ed8;
   --color-success: var(--color-success);
@@ -168,7 +167,7 @@
   }
 
   .responsive-table-container::-webkit-scrollbar-thumb:hover {
-    background-color: #f59e0b;
+    background-color: var(--color-primary);
   }
 
   .stack-table-mobile td {

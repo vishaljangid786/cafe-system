@@ -243,46 +243,14 @@ const uploadBill = asyncHandler(async (req, res) => {
     status: { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED'] } 
   }).populate('items.menuItem');
   
+  const { finalizeOrder } = require('../utils/orderFinalizer');
+  
   for (const order of sessionOrders) {
-    order.status = 'COMPLETED';
-    order.completedAt = new Date();
-    order.statusHistory.push({
-      status: 'COMPLETED',
-      timestamp: new Date(),
-      updatedBy: req.user._id
-    });
-    
-    if (!order.isBilled) {
-      order.isBilled = true;
-      const Transaction = require('../models/Transaction');
-      
-      const totalProfit = order.items.reduce((acc, item) => {
-        const price = Number(item.menuItem?.price || 0);
-        const costPrice = Number(item.menuItem?.costPrice || 0);
-        return acc + ((price - costPrice) * item.quantity);
-      }, 0);
-
-      await Transaction.create({
-        locationId: order.branch,
-        type: 'REVENUE',
-        source: 'ORDER',
-        orderId: order._id,
-        title: `Table ${table.tableNumber} Revenue`,
-        category: 'Food & Beverage',
-        createdBy: req.user._id,
-        totalAmount: order.totalAmount,
-        totalProfit: totalProfit,
-        date: new Date(),
-        orders: order.items.map(i => ({
-          menuItemId: i.menuItem?._id,
-          itemName: i.menuItem?.name || 'Item',
-          quantity: i.quantity,
-          price: i.menuItem?.price || 0,
-          costPrice: i.menuItem?.costPrice || 0
-        }))
-      });
+    try {
+      await finalizeOrder(order, req.user);
+    } catch (err) {
+      console.error(`Order ${order._id} finalization failed:`, err.message);
     }
-    await order.save();
   }
 
 

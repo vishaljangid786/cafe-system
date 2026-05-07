@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 
@@ -248,7 +249,6 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   if (role === 'super_admin') {
     users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
     roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
-    const Location = mongoose.model('Location');
     branches = await Location.find().select('name city');
   } 
   else if (role === 'admin') {
@@ -260,7 +260,6 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     }).select('name role');
     users = [...supers, ...branchUsers];
     
-    const Location = mongoose.model('Location');
     branches = await Location.find({ _id: { $in: accessibleBranches } }).select('name');
   }
   else if (role === 'branch_admin') {

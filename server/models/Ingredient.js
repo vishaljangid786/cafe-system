@@ -20,6 +20,10 @@ const ingredientSchema = new mongoose.Schema(
     baseCost: {
       type: Number,
       default: 0,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     }
   },
   { timestamps: true }

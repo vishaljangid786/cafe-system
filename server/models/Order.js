@@ -44,6 +44,15 @@ const orderSchema = new mongoose.Schema(
           ref: 'MenuItem',
           required: true,
         },
+        itemName: String, // Snapshot name
+        price: {
+          type: Number,
+          required: true,
+        },
+        costPrice: {
+          type: Number,
+          default: 0,
+        },
         quantity: {
           type: Number,
           required: true,

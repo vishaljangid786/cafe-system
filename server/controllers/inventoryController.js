@@ -99,17 +99,15 @@ const getInventoryAlerts = asyncHandler(async (req, res) => {
     enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
   }
 
-  const query = {};
-  if (branchId) query.branch = branchId;
+  const query = { $expr: { $lte: ['$stock', '$minThreshold'] } };
+  if (branchId) query.branch = new mongoose.Types.ObjectId(branchId);
 
   const alerts = await BranchInventory.find(query)
     .populate('ingredient')
     .populate('branch', 'name')
     .lean();
 
-  const filteredAlerts = alerts.filter(item => item.stock <= item.minThreshold);
-
-  res.json({ success: true, count: filteredAlerts.length, data: filteredAlerts });
+  res.json({ success: true, count: alerts.length, data: alerts });
 });
 
 // @desc    Get Purchase Suggestions
@@ -159,22 +157,12 @@ const getIngredients = asyncHandler(async (req, res) => {
 // @route   GET /api/inventory
 const getAllInventory = asyncHandler(async (req, res) => {
   const { isActive, branchId } = req.query;
+  const { scopedLocationId } = require('../utils/accessControl');
   const query = {};
 
-  // RBAC Enforcement
-  if (req.user.role === 'super_admin') {
-    if (branchId && branchId !== 'all') query.branch = branchId;
-  } else if (req.user.role === 'admin') {
-    const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
-    if (branchId && branchId !== 'all') {
-      if (!allowed.includes(branchId)) return res.status(403).json({ success: false, message: 'Access denied' });
-      query.branch = branchId;
-    } else {
-      query.branch = { $in: allowed };
-    }
-  } else {
-    query.branch = req.user.assignedLocation;
-  }
+  // Standard RBAC Enforcement
+  const branch = scopedLocationId(req, branchId);
+  if (branch) query.branch = branch;
   
   const inventory = await BranchInventory.find(query)
     .populate({
@@ -190,6 +178,29 @@ const getAllInventory = asyncHandler(async (req, res) => {
   res.json({ success: true, data: filteredInventory });
 });
 
+// @desc    Internal helper to deduct ingredients when an order is completed
+const deductIngredientsFromRecipe = async (order, branchId) => {
+  try {
+    for (const item of order.items) {
+      const recipe = await Recipe.findOne({ menuItemId: item.menuItem });
+      if (!recipe) continue;
+
+      for (const ingredientInfo of recipe.ingredients) {
+        const deductionQuantity = ingredientInfo.quantity * item.quantity;
+        
+        await BranchInventory.findOneAndUpdate(
+          { branch: branchId, ingredient: ingredientInfo.ingredient },
+          { $inc: { stock: -deductionQuantity } }
+        );
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Ingredient deduction failed:', error);
+    return false;
+  }
+};
+
 module.exports = {
   getBranchInventory,
   updateInventory,
@@ -198,5 +209,6 @@ module.exports = {
   getPurchaseSuggestions,
   createIngredient,
   getIngredients,
-  getAllInventory
+  getAllInventory,
+  deductIngredientsFromRecipe
 };

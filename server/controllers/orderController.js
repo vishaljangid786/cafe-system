@@ -67,34 +67,45 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  // 2. Deduction Stage: Atomically decrease stock with safety check
+  // 2. Deduction Stage: Atomically decrease stock and prepare snapshots
   const deductionResults = [];
+  const itemsWithSnapshots = [];
   try {
     for (const item of items) {
+      const menuItem = await MenuItem.findById(item.menuItem);
+      if (!menuItem) throw new Error('Menu item not found');
+
       const updatedStock = await BranchStock.findOneAndUpdate(
         { 
           menuItem: item.menuItem, 
           branch, 
-          stock: { $gte: item.quantity } // Ensure stock is still enough during update
+          stock: { $gte: item.quantity }
         },
         { $inc: { stock: -item.quantity } },
         { new: true }
       );
 
       if (!updatedStock) {
-        // This means stock was depleted between our validation and this update
-        throw new Error(`Stock depleted for ${item.name || 'item'} during processing. Please try again.`);
+        throw new Error(`Stock depleted for ${menuItem.name} during processing.`);
       }
 
-      // Auto-deactivate if stock hits zero
       if (updatedStock.stock <= 0 && updatedStock.isAvailable) {
         await BranchStock.findByIdAndUpdate(updatedStock._id, { isAvailable: false });
       }
       
       deductionResults.push({ id: updatedStock._id, quantity: item.quantity });
+      
+      itemsWithSnapshots.push({
+        menuItem: menuItem._id,
+        itemName: menuItem.name,
+        price: menuItem.price,
+        costPrice: menuItem.costPrice || 0,
+        quantity: item.quantity,
+        notes: item.notes
+      });
     }
   } catch (error) {
-    // 3. Rollback Stage (Simple Manual Rollback for deduncted items)
+    // 3. Rollback Stage
     for (const rolledBackItem of deductionResults) {
       await BranchStock.findByIdAndUpdate(rolledBackItem.id, { 
         $inc: { stock: rolledBackItem.quantity },
@@ -102,7 +113,7 @@ const createOrder = asyncHandler(async (req, res) => {
       });
     }
     res.status(400);
-    throw new Error(error.message || 'Order processing failed due to stock sync issues.');
+    throw new Error(error.message || 'Order processing failed.');
   }
 
   const order = await Order.create({
@@ -110,7 +121,7 @@ const createOrder = asyncHandler(async (req, res) => {
     table: tableId,
     customerPhone,
     customerName,
-    items,
+    items: itemsWithSnapshots,
     totalAmount,
     createdBy: req.user._id,
     status: 'PLACED',
@@ -223,48 +234,11 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 
   if (status === 'COMPLETED') {
-    // IDEMPOTENCY PROTECTION: Prevent duplicate revenue entries
-    if (order.isBilled) {
-      res.status(400);
-      throw new Error('This order has already been finalized and billed.');
-    }
+    const { finalizeOrder } = require('../utils/orderFinalizer');
+    await finalizeOrder(order, req.user);
+    return res.json({ success: true, data: order });
+  }
 
-    order.completedAt = new Date();
-    order.isBilled = true;
-
-    // Create REVENUE Transaction
-    const Transaction = require('../models/Transaction');
-
-    // Calculate total profit for this specific order
-    const totalProfit = order.items.reduce((acc, item) => {
-      // price and costPrice are already numbers from the previous turns' fixes
-      const price = Number(item.price || 0);
-      const costPrice = Number(item.menuItem?.costPrice || item.costPrice || 0);
-      return acc + ((price - costPrice) * item.quantity);
-    }, 0);
-
-    await Transaction.create({
-      locationId: order.branch,
-      type: 'REVENUE',
-      source: 'ORDER',
-      orderId: order._id,
-      staffId: req.user._id,
-      createdBy: req.user._id,
-      paymentType: order.paymentType || 'CASH',
-      title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
-      category: 'Sales',
-      totalAmount: order.totalAmount,
-      totalProfit: totalProfit,
-      date: new Date(),
-      status: 'approved',
-      orders: order.items.map(i => ({
-        menuItemId: i.menuItem?._id || i.menuItem,
-        itemName: i.itemName || 'Item',
-        quantity: i.quantity,
-        price: i.price,
-        costPrice: i.menuItem?.costPrice || i.costPrice || 0
-      }))
-    });
 
     // Decrement active orders count
     await Table.findByIdAndUpdate(order.table, {
@@ -367,7 +341,6 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         }
       }
     }
-  }
 
   res.json({ success: true, data: order });
 });

@@ -27,6 +27,13 @@ The final stage of security hardening focused on closing advanced IDOR gaps and 
   - Refactored 10+ analytics endpoints to use the unified `scopedLocationId` utility, eliminating manual RBAC logic.
 - **[FIXED] Infrastructure Governance**:
   - Escalated `createLocation` and `softDeleteLocation` privileges to `super_admin` only.
+- **[FIXED] Ingredient Auto-Deduction (Operational)**:
+  - Implemented automated ingredient stock deduction based on recipes. Previously, ingredients were static while finished stock was deducted.
+- **[FIXED] Financial Logic Consolidation**:
+  - Centralized order finalization into `orderFinalizer.js` to eliminate double-billing risks and ensure 100% accurate revenue snapshots.
+- **[FIXED] Data Lifecycle Integrity**:
+  - Migrated `Ingredient` model to support soft-deletion (`isActive`), preventing orphan references in historical recipes.
+
 
 ---
 

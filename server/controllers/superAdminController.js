@@ -60,7 +60,7 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
 
   // 3. Top Performers
   const topChefs = await Order.aggregate([
-    { $group: { _id: '$chef', orderCount: { $sum: 1 } } },
+    { $group: { _id: '$assignedChef', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
     { $limit: 1 },
     { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' } },
@@ -69,7 +69,7 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
   ]);
 
   const topStaff = await Order.aggregate([
-    { $group: { _id: '$servedBy', orderCount: { $sum: 1 } } },
+    { $group: { _id: '$createdBy', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
     { $limit: 1 },
     { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' } },
@@ -106,31 +106,17 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
 // @route   GET /api/super-admin/audit-logs
 // @access  Private (Super Admin)
 const getAuditLogs = asyncHandler(async (req, res) => {
+  const { escapeRegex, clampLimit, scopedLocationId } = require('../utils/accessControl');
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 50;
-  const skip = (page - 1) * limit;
+  const pageNum = parseInt(page);
+  const limitNum = clampLimit(limit, 50);
+  const skip = (pageNum - 1) * limitNum;
 
   const query = {};
   
-  // RBAC Enforcement for Audit Logs
-  if (req.user.role === 'super_admin') {
-    if (req.query.locationId && req.query.locationId !== 'all') {
-      query.locationId = req.query.locationId;
-    }
-  } else if (req.user.role === 'admin') {
-    const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
-    if (req.query.locationId && req.query.locationId !== 'all') {
-      if (!allowed.includes(req.query.locationId)) {
-        return res.status(403).json({ success: false, message: 'Access denied to this location' });
-      }
-      query.locationId = req.query.locationId;
-    } else {
-      query.locationId = { $in: allowed };
-    }
-  } else {
-    // Other roles restricted to their own location
-    query.locationId = req.user.assignedLocation;
-  }
+  const branch = scopedLocationId(req, req.query.locationId);
+  if (branch) query.locationId = branch;
 
   if (req.query.actionType) query.action = req.query.actionType;
   if (req.query.userId) query.performedBy = req.query.userId;

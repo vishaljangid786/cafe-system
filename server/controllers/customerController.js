@@ -7,12 +7,16 @@ const asyncHandler = require('../utils/asyncHandler');
 const getCustomers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = '', sort = '-totalSpend' } = req.query;
 
-  const { escapeRegex, clampLimit } = require('../utils/accessControl');
+  const { escapeRegex, clampLimit, scopedLocationId } = require('../utils/accessControl');
   const pageNum = parseInt(page);
   const limitNum = clampLimit(limit, 50);
   const skip = (pageNum - 1) * limitNum;
 
   const query = {};
+  
+  const branch = scopedLocationId(req, req.query.locationId);
+  if (branch) query.branch = branch;
+
   if (search) {
     const cleanSearch = escapeRegex(search);
     query.$or = [
