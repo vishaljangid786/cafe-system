@@ -2,6 +2,7 @@ const Expense = require('../models/Expense');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
+const { enforceLocationAccess, escapeRegex, clampLimit } = require('../utils/accessControl');
 
 // @desc    Add an expense
 // @route   POST /api/expenses
@@ -18,6 +19,8 @@ const addExpense = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Location ID is required');
   }
+
+  enforceLocationAccess(req, res, locationId, 'Not authorized to create expenses for this location');
 
   // Map category to description if description is empty
   if (!description && category) {
@@ -71,6 +74,12 @@ const updateExpense = asyncHandler(async (req, res) => {
     throw new Error('Expense not found');
   }
 
+  enforceLocationAccess(req, res, expense.locationId, 'Not authorized to update this expense');
+
+  if (req.body.locationId) {
+    enforceLocationAccess(req, res, req.body.locationId, 'Not authorized to move expenses to this location');
+  }
+
   if (req.file) {
     req.body.proofImage = req.file.path;
   }
@@ -106,6 +115,8 @@ const deleteExpense = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Expense not found');
   }
+
+  enforceLocationAccess(req, res, expense.locationId, 'Not authorized to delete this expense');
 
   await expense.deleteOne();
 
@@ -163,7 +174,7 @@ const getExpenses = asyncHandler(async (req, res) => {
 
   // Search by title or category
   if (req.query.search) {
-    const searchRegex = new RegExp(req.query.search, 'i');
+    const searchRegex = new RegExp(escapeRegex(req.query.search), 'i');
     query.$or = [
       { title: searchRegex },
       { category: searchRegex }
@@ -195,7 +206,7 @@ const getExpenses = asyncHandler(async (req, res) => {
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const startIndex = (page - 1) * limit;
 
   const total = await Expense.countDocuments(query);

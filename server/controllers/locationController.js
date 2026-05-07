@@ -30,7 +30,7 @@ const getLocations = asyncHandler(async (req, res) => {
   // 1. Fetch Locations
   const locations = await Location.find(query).populate('createdBy', 'name email').lean();
 
-  // 2. Fetch Personnel Counts for these locations
+  // 2. Fetch Staff Counts for these locations
   const locationIds = locations.map(l => l._id);
   const personnelCounts = await User.aggregate([
     {
@@ -121,6 +121,20 @@ const updateLocation = asyncHandler(async (req, res) => {
     throw new Error('Location not found');
   }
 
+  // RBAC Enforcement: Admin can only update locations they have access to
+  if (req.user.role === 'admin') {
+    const isAccessible = req.user.accessibleLocations?.some(
+      loc => loc.toString() === location._id.toString()
+    );
+    if (!isAccessible) {
+      res.status(403);
+      throw new Error('You do not have permission to update this location');
+    }
+  } else if (req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only administrators can update location details');
+  }
+
   if (name) location.name = name;
   if (city) location.city = city;
   if (state) location.state = state;
@@ -163,6 +177,20 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
   if (!location || location.isPermanentlyDeleted) {
     res.status(404);
     throw new Error('Location not found');
+  }
+
+  // RBAC Enforcement: Admin can only delete locations they have access to
+  if (req.user.role === 'admin') {
+    const isAccessible = req.user.accessibleLocations?.some(
+      loc => loc.toString() === location._id.toString()
+    );
+    if (!isAccessible) {
+      res.status(403);
+      throw new Error('You do not have permission to delete this location');
+    }
+  } else if (req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only administrators can delete locations');
   }
 
   location.status = 'deleted';

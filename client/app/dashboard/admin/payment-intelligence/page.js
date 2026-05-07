@@ -7,10 +7,11 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
-    amber: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    amber: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
@@ -18,29 +19,47 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
   };
 
   return (
-    <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-6 border border-zinc-200/50 dark:border-zinc-800/50 flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${colorMap[color] || 'text-zinc-500 bg-zinc-500/10'}`}>
+    <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-3xl p-6 border border-[var(--color-border)] flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${colorMap[color] || 'text-[var(--color-text-muted)] bg-[var(--color-surface-soft)]'}`}>
         <Icon size={20} />
       </div>
       <div>
-        <p className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight leading-none">{value}</p>
-        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2">{label}</p>
-        {sub && <p className="text-[9px] font-bold text-zinc-500 mt-0.5">{sub}</p>}
+        <p className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-2">{label}</p>
+        {sub && <p className="text-[9px] font-bold text-[var(--color-text-secondary)] mt-0.5">{sub}</p>}
       </div>
     </div>
   );
 }
 
-export default function PaymentIntelligencePage() {
+export default function PaymentInformationPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState([]);
   const [filters, setFilters] = useState({
     date: '',
     period: '',
     startDate: '',
     endDate: '',
-    financialYear: ''
+    financialYear: '',
+    branchId: 'all'
   });
+
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to load branches');
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLocations();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -51,18 +70,22 @@ export default function PaymentIntelligencePage() {
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
       if (filters.financialYear) params.financialYear = filters.financialYear;
+      if (filters.branchId && filters.branchId !== 'all') params.branchId = filters.branchId;
 
       const res = await api.get('/analytics/payment-intelligence', { params });
       setStats(res.data.data);
     } catch (error) {
-      toast.error('Failed to load payment intelligence metrics');
+      toast.error('Failed to load payment info metrics');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    const timer = setTimeout(() => {
+      fetchStats();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [filters]);
 
   const handleFilterChange = (key, value) => {
@@ -81,96 +104,108 @@ export default function PaymentIntelligencePage() {
     <div className="max-w-[1600px] mx-auto pb-20 space-y-10">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
+        <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl bg-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
             <CreditCard size={24} className="text-white" />
           </div>
-          Payment Intelligence Dashboard
+          Payment Information Dashboard
         </h1>
-        <p className="text-xs text-zinc-500 mt-1 font-medium ml-13">Analyze Cash vs UPI metrics effortlessly.</p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">Analyze Cash vs UPI metrics effortlessly.</p>
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-8 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm space-y-6">
-        <div className="flex items-center gap-2 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-6">
+        <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
           <Filter size={16} className="text-violet-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Payment Analytics Filters</span>
+          <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-secondary)]">Payment Analytics Filters</span>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+              <Building size={12} /> Branch Center
+            </label>
+            <PremiumSelect
+              value={filters.branchId}
+              onChange={(val) => handleFilterChange('branchId', val)}
+              options={[
+                { label: 'Global Network', value: 'all' },
+                ...locations.map(loc => ({ label: loc.name, value: loc._id }))
+              ]}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Exact Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Time Period
             </label>
-            <select
+            <PremiumSelect
               value={filters.period}
-              onChange={(e) => handleFilterChange('period', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
-            >
-              <option value="">Select Period</option>
-              <option value="week">Past Week</option>
-              <option value="month">Past Month</option>
-              <option value="year">Past Year</option>
-            </select>
+              onChange={(val) => handleFilterChange('period', val)}
+              options={[
+                { label: 'Select Period', value: '' },
+                { label: 'Today', value: '1' },
+                { label: 'Past Week', value: 'week' },
+                { label: 'Past Month', value: 'month' },
+                { label: 'Past Year', value: 'year' }
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Financial Year
             </label>
-            <select
+            <PremiumSelect
               value={filters.financialYear}
-              onChange={(e) => handleFilterChange('financialYear', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
-            >
-              <option value="">Select FY</option>
-              <option value="2024">FY 2024-25</option>
-              <option value="2025">FY 2025-26</option>
-              <option value="2026">FY 2026-27</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Custom Start
-            </label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
+              onChange={(val) => handleFilterChange('financialYear', val)}
+              options={[
+                { label: 'Select FY', value: '' },
+                { label: 'FY 2024-25', value: '2024' },
+                { label: 'FY 2025-26', value: '2025' },
+                { label: 'FY 2026-27', value: '2026' }
+              ]}
+              className="w-full"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Custom End
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+              <Calendar size={12} /> Custom Range
             </label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-violet-500 focus:outline-none transition-all"
+              />
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-violet-500 focus:outline-none transition-all"
+              />
+            </div>
           </div>
-        </div>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] rounded-3xl" />)}
         </div>
       ) : (
         <>
@@ -183,7 +218,7 @@ export default function PaymentIntelligencePage() {
           </div>
 
           {stats?.highestUPIBranch && (
-            <div className="bg-gradient-to-r from-violet-500 to-fuchsia-500 p-6 rounded-3xl text-white flex items-center justify-between shadow-lg">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-3xl text-white flex items-center justify-between shadow-lg">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest opacity-80 flex items-center gap-1"><Award size={14} /> Peak digital hub</span>
                 <p className="text-2xl font-black mt-1">{stats.highestUPIBranch.name}</p>
@@ -198,8 +233,8 @@ export default function PaymentIntelligencePage() {
           {/* Charts & Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Trend Graph */}
-            <div className="lg:col-span-12 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 mb-6 flex items-center gap-3">
+            <div className="lg:col-span-12 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-violet-500" /> Payment Trend Timeline (₹)
               </h3>
               <div className="h-[350px]">
@@ -228,8 +263,8 @@ export default function PaymentIntelligencePage() {
             </div>
 
             {/* Branch Wise Mode Comparison */}
-            <div className="lg:col-span-12 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 mb-6 flex items-center gap-3">
+            <div className="lg:col-span-12 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
                 <BarChart2 size={16} className="text-violet-500" /> Sector Allocation by payment mode (₹)
               </h3>
               <div className="h-[400px]">

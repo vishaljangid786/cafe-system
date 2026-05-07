@@ -5,7 +5,6 @@ import Papa from 'papaparse';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 
 export default function ExportActions({ data = [], columns = [], filename = 'export', hasCharts = false }) {
@@ -86,11 +85,28 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         return row;
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
-      
-      XLSX.writeFile(workbook, generateFileName('xlsx'));
+      const escapeCell = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const headers = columns.map(col => `<th>${escapeCell(col.header)}</th>`).join('');
+      const rows = exportData.map(row => (
+        `<tr>${columns.map(col => `<td>${escapeCell(row[col.header])}</td>`).join('')}</tr>`
+      )).join('');
+      const workbookHtml = `
+        <html>
+          <head><meta charset="utf-8" /></head>
+          <body><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></body>
+        </html>
+      `;
+      const blob = new Blob([workbookHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = generateFileName('xls');
+      link.click();
+      URL.revokeObjectURL(url);
       
       toast.success('Excel downloaded successfully');
       setShowOptions(false);
@@ -216,7 +232,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         startY: 20,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [245, 158, 11] } // amber-500
+        headStyles: { fillColor: [245, 158, 11] } // blue-500
       });
 
       doc.save(generateFileName('pdf'));
@@ -291,21 +307,21 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
   };
 
   return (
-    <div className="relative z-40">
-      <div className="flex items-center gap-2">
+    <div className="relative z-40 w-full sm:w-auto">
+      <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
         {showDateFilter && (
-          <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-2 shadow-sm w-full sm:w-auto">
             <input 
               type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border-none outline-none dark:text-zinc-200"
+              className="px-2 py-1.5 text-xs bg-transparent border border-[var(--color-border)] sm:border-none rounded-lg sm:rounded-none outline-none text-[var(--color-text-primary)] w-full sm:w-auto"
               value={dateFilter.startDate}
               onChange={e => setDateFilter({...dateFilter, startDate: e.target.value})}
               title="Start Date"
             />
-            <span className="text-zinc-400 text-xs">-</span>
+            <span className="text-[var(--color-text-muted)] text-xs hidden sm:inline">-</span>
             <input 
               type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border-none outline-none dark:text-zinc-200"
+              className="px-2 py-1.5 text-xs bg-transparent border border-[var(--color-border)] sm:border-none rounded-lg sm:rounded-none outline-none text-[var(--color-text-primary)] w-full sm:w-auto"
               value={dateFilter.endDate}
               onChange={e => setDateFilter({...dateFilter, endDate: e.target.value})}
               title="End Date"
@@ -315,7 +331,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         
         <button
           onClick={() => setShowDateFilter(!showDateFilter)}
-          className={`p-2.5 rounded-xl border transition-all ${showDateFilter ? 'bg-amber-500/10 border-amber-500 text-amber-600' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-amber-500 hover:text-amber-600'}`}
+          className={`p-2.5 rounded-xl border transition-all ${showDateFilter ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)] text-[var(--color-primary)]' : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]'}`}
           title="Date Range Filter"
         >
           <Calendar size={18} />
@@ -323,7 +339,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
 
         <button
           onClick={() => setShowOptions(!showOptions)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-amber-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-amber-600/20"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-primary)] text-black rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[var(--color-primary)]/20 w-full sm:w-auto"
         >
           <Download size={16} />
           Export
@@ -331,24 +347,24 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
       </div>
 
       {showOptions && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
           <button
             onClick={handleCSV}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
             <FileSpreadsheet size={16} className="text-green-600" />
             Download CSV
           </button>
           <button
             onClick={handleExcel}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
             <FileSpreadsheet size={16} className="text-emerald-500" />
-            Download Excel (.xlsx)
+            Download Excel (.xls)
           </button>
           <button
             onClick={handlePDF}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
             <FileText size={16} className="text-red-500" />
             Download PDF
@@ -356,16 +372,16 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
           {hasCharts && (
             <button
               onClick={handleChartExport}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full text-left"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
             >
-              <ImageIcon size={16} className="text-amber-500" />
+              <ImageIcon size={16} className="text-blue-500" />
               Export Charts as Images
             </button>
           )}
-          <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1 mx-4"></div>
+          <div className="h-px bg-[var(--color-border)] my-1 mx-4"></div>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
             <Printer size={16} className="text-blue-500" />
             Print Data

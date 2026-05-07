@@ -76,7 +76,6 @@ export default function TablesPage() {
   };
 
   useEffect(() => {
-    fetchTables();
     const fetchResources = async () => {
       try {
         const [menuRes, couponRes] = await Promise.all([
@@ -86,10 +85,15 @@ export default function TablesPage() {
         setMenuItems(menuRes.data.data);
         setCoupons(couponRes.data.data);
       } catch (error) {
-        console.error("Matrix sync failed");
+        console.error("List sync failed");
       }
     };
-    fetchResources();
+    const timer = setTimeout(() => {
+      fetchTables();
+      fetchResources();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [user]);
 
   useEffect(() => {
@@ -143,7 +147,7 @@ export default function TablesPage() {
       setNewTableCapacity('1');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
     }
   };
 
@@ -297,9 +301,9 @@ export default function TablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Transmission Successful', { id: loadToast });
+      toast.success('Update Successful', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Transmission failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Update failure', { id: loadToast });
     }
   };
 
@@ -331,7 +335,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Session archived to ledger', { id: loadToast });
     } catch (error) {
-      toast.error('Archival protocol failed', { id: loadToast });
+      toast.error('Archival rule failed', { id: loadToast });
     }
   };
 
@@ -350,7 +354,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Table liquidated', { id: loadToast });
     } catch (error) {
-      toast.error('Protocol error', { id: loadToast });
+      toast.error('System Rule error', { id: loadToast });
     }
   };
 
@@ -374,7 +378,7 @@ export default function TablesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <div className="h-10 w-10 rounded-2xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Globe size={24} className="text-white" />
               </div>
               Branch Command Grid
@@ -389,8 +393,8 @@ export default function TablesPage() {
                   onClick={() => setStatusFilter(f)}
                   className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                     statusFilter === f 
-                      ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' 
-                      : 'text-zinc-500 hover:text-amber-500'
+                      ? 'bg-blue-500 text-black shadow-lg shadow-blue-500/20' 
+                      : 'text-zinc-500 hover:text-blue-500'
                   }`}
                 >
                   {f}
@@ -401,14 +405,14 @@ export default function TablesPage() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 transition-all border border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
+              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/10 transition-all border border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-zinc-200 dark:bg-zinc-800 mx-2 hidden sm:block" />
             <Button 
               variant="primary" 
-              className="!rounded-2xl !py-4 shadow-xl shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-[0.2em]"
+              className="!rounded-2xl !py-4 shadow-xl shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-[0.2em]"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -445,26 +449,109 @@ export default function TablesPage() {
         </div>
 
         {/* Table Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          <AnimatePresence mode='popLayout'>
-            {tables
-              .filter(t => {
-                if (statusFilter === 'available') return t.status === 'available';
-                if (statusFilter === 'occupied') return t.status !== 'available';
-                return true;
-              })
-              .map((table, i) => (
-                <SlideIn key={table._id} delay={i * 0.02} direction="up">
-                  <TableCard
-                    table={table}
-                    onAssign={handleBookTable}
-                    onManage={handleOpenOrder}
-                    onEdit={handleEditTable}
-                    onDelete={setShowDeleteConfirm}
-                  />
-                </SlideIn>
-              ))}
-          </AnimatePresence>
+        <div className="overflow-x-auto rounded-[2.5rem] border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-3xl shadow-2xl">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Table Info</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">State</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Capacity</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence mode='popLayout'>
+                {tables
+                  .filter(t => {
+                    if (statusFilter === 'available') return t.status === 'available';
+                    if (statusFilter === 'occupied') return t.status !== 'available';
+                    return true;
+                  })
+                  .map((table, i) => (
+                    <motion.tr 
+                      key={table._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                      className="group border-b border-[var(--color-border)] hover:bg-[var(--color-primary)]/5 transition-all cursor-pointer"
+                    >
+                      <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                        <div className="flex items-center gap-4">
+                          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black border group-hover:scale-110 transition-transform ${
+                            table.status === 'available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                          }`}>
+                            T{table.tableNumber}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-[var(--color-text-primary)]">{table.tableName || `Table ${table.tableNumber}`}</p>
+                            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">ID: {table._id.slice(-6).toUpperCase()}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                          table.status === 'available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${table.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
+                          {table.status}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                        <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
+                          <Users size={14} className="text-zinc-500" />
+                          <span className="text-sm font-bold">{table.capacity} Guests</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {table.status === 'available' ? (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); handleBookTable(table); }}
+                              className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all"
+                            >
+                              <Check size={18} />
+                            </motion.button>
+                          ) : (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); handleOpenOrder(table); }}
+                              className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all"
+                            >
+                              <ShoppingBag size={18} />
+                            </motion.button>
+                          )}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
+                            className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:text-blue-500 transition-all"
+                          >
+                            <Edit3 size={18} />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(table._id); }}
+                            className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
+                          >
+                            <Trash2 size={18} />
+                          </motion.button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+          {tables.length === 0 && (
+            <div className="p-20 text-center text-zinc-500">
+              <Globe size={48} className="mx-auto mb-4 opacity-20" />
+              <p className="text-sm font-black uppercase tracking-widest">No tables discovered in this sector</p>
+            </div>
+          )}
         </div>
 
         {tables.length === 0 && (
@@ -492,11 +579,11 @@ export default function TablesPage() {
         >
           <form onSubmit={handleAddTable} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Protocol Number</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table System Rule Number</label>
               <input
                 required
                 type="number"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableNumber}
                 onChange={e => setNewTableNumber(e.target.value)}
                 placeholder="e.g. 101"
@@ -506,7 +593,7 @@ export default function TablesPage() {
               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Name / Designation</label>
               <input
                 type="text"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableName}
                 onChange={e => setNewTableName(e.target.value)}
                 placeholder="e.g. Window Corner, Poolside-1"
@@ -518,7 +605,7 @@ export default function TablesPage() {
                 required
                 type="number"
                 min="1"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableCapacity}
                 onChange={e => setNewTableCapacity(e.target.value)}
                 placeholder="e.g. 4"
@@ -527,7 +614,7 @@ export default function TablesPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full !rounded-2xl !py-5 shadow-xl shadow-amber-600/20"
+              className="w-full !rounded-2xl !py-5 shadow-xl shadow-blue-600/20"
               icon={isEditing ? Edit3 : Plus}
             >
               {isEditing ? 'Update Configuration' : 'Confirm Initialization'}
@@ -538,7 +625,7 @@ export default function TablesPage() {
         <Modal
           isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          title={`Session Matrix: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
+          title={`Session List: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
@@ -548,8 +635,8 @@ export default function TablesPage() {
                 <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-br from-zinc-50/50 to-white dark:from-zinc-950/50 dark:to-zinc-900/50 space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center mb-1">
-                        <ShoppingBag size={14} className="mr-2" /> Session Core
+                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center mb-1">
+                        <ShoppingBag size={14} className="mr-2" /> Session Details
                       </h3>
                       <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Order Registry</p>
                     </div>
@@ -569,7 +656,7 @@ export default function TablesPage() {
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all placeholder:text-zinc-300 dark:text-white"
+                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-zinc-300 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
@@ -597,12 +684,12 @@ export default function TablesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={order.uid || `${order.menuItemId || order.itemName}-${idx}`}
-                      className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 group hover:border-amber-500/20 transition-all"
+                      className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 group hover:border-blue-500/20 transition-all"
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden relative border border-zinc-200 dark:border-zinc-700">
                           {order.image ? (
-                            <img src={order.image} className="h-full w-full object-cover" />
+                            <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-zinc-300">
                               <Coffee size={16} />
@@ -631,7 +718,7 @@ export default function TablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-amber-600 w-16 text-right">
+                        <div className="text-sm font-black text-blue-600 w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -654,7 +741,7 @@ export default function TablesPage() {
                   {/* System Orders Section (OMS) */}
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
-                      <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                         <Zap size={14} /> Production Queue (OMS)
                       </h3>
                       <div className="space-y-3">
@@ -662,7 +749,7 @@ export default function TablesPage() {
                           systemOrders.map((order) => (
                             <div key={order._id} className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 flex items-center justify-between group shadow-sm">
                               <div className="flex items-center gap-3">
-                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`} />
+                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-blue-500 animate-pulse'}`} />
                                 <div>
                                   <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">#{order._id.slice(-6)}</div>
                                   <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{order.status}</div>
@@ -671,9 +758,9 @@ export default function TablesPage() {
                               
                               {/* Chef Note Display */}
                               {order.chefNote && (
-                                <div className="flex-1 mx-4 px-3 py-2 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 group/note relative">
-                                  <MessageSquare size={12} className="text-amber-500 flex-shrink-0" />
-                                  <p className="text-[9px] font-bold text-amber-700 dark:text-amber-400 leading-tight line-clamp-1">{order.chefNote}</p>
+                                <div className="flex-1 mx-4 px-3 py-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2 group/note relative">
+                                  <MessageSquare size={12} className="text-blue-500 flex-shrink-0" />
+                                  <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 leading-tight line-clamp-1">{order.chefNote}</p>
                                   
                                   {/* Hover expansion */}
                                   <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-zinc-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
@@ -721,7 +808,7 @@ export default function TablesPage() {
                   <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                     <Button
                       variant="primary"
-                      className="w-full !rounded-2xl !py-4 shadow-xl shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-widest"
+                      className="w-full !rounded-2xl !py-4 shadow-xl shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest"
                       icon={Zap}
                       onClick={handleSendToKitchen}
                       disabled={pendingOrders.length === 0}
@@ -735,7 +822,7 @@ export default function TablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('Culinary Protocol: All orders must be SERVED before finalization');
+                          if (!allReady) return toast.error('Culinary System Rule: All orders must be SERVED before finalization');
                           setIsBillPreviewOpen(true);
                         }}
                       >
@@ -750,13 +837,13 @@ export default function TablesPage() {
               <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
                 {/* Search & Top Filters */}
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu matrix..."
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                    placeholder="Search the menu list..."
+                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -766,13 +853,13 @@ export default function TablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-amber-500" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-blue-500" /> Top Performing Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group"
+                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/30 transition-all cursor-pointer group"
                           onClick={() => {
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
@@ -798,7 +885,7 @@ export default function TablesPage() {
                         >
                           <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-zinc-100 dark:bg-zinc-800 relative">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={24} /></div>
                             )}
@@ -810,7 +897,7 @@ export default function TablesPage() {
                             </div>
                           </div>
                           <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-amber-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-blue-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -848,11 +935,11 @@ export default function TablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-white dark:bg-zinc-900/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/20 transition-all cursor-pointer flex items-center gap-3 group"
+                          className="bg-white dark:bg-zinc-900/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/20 transition-all cursor-pointer flex items-center gap-3 group"
                         >
                           <div className="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden relative">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-zinc-300">
                                 <Coffee size={14} />
@@ -864,9 +951,9 @@ export default function TablesPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 leading-tight truncate">{item.name}</div>
-                            <div className="text-[10px] font-bold text-amber-600 mt-0.5">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[10px] font-bold text-blue-600 mt-0.5">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                           </div>
-                          <div className="h-6 w-6 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                          <div className="h-6 w-6 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
                             <Plus size={12} />
                           </div>
                         </div>
@@ -883,7 +970,7 @@ export default function TablesPage() {
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />

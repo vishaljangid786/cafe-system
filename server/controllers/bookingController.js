@@ -3,6 +3,7 @@ const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
+const { enforceLocationAccess, clampLimit } = require('../utils/accessControl');
 
 // Helper to calculate total guests booked for a specific time range
 const getBookedGuests = async (locationId, date, startTime, endTime, excludeBookingId = null) => {
@@ -39,6 +40,8 @@ const checkAvailability = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
 
+  enforceLocationAccess(req, res, locationId, 'Not authorized to check this location');
+
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
   const requestedGuests = parseInt(numberOfGuests, 10);
@@ -64,6 +67,8 @@ const createBooking = asyncHandler(async (req, res) => {
   if (!location) {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
+
+  enforceLocationAccess(req, res, locationId, 'Not authorized to book this location');
 
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
@@ -118,18 +123,23 @@ const getBookings = asyncHandler(async (req, res) => {
   const { locationId, date, status } = req.query;
   const query = {};
 
-  if (locationId) query.locationId = locationId;
+  if (locationId) {
+    enforceLocationAccess(req, res, locationId, 'Not authorized to view this location');
+    query.locationId = locationId;
+  }
   if (date) query.date = new Date(date);
   if (status) query.status = status;
 
   // For branch admins, restrict to their assigned location
   if (req.user.role === 'branch_admin') {
     query.locationId = req.user.assignedLocation;
+  } else if (req.user.role === 'admin' && !locationId) {
+    query.locationId = { $in: req.user.accessibleLocations || [] };
   }
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await Booking.countDocuments(query);
@@ -167,10 +177,7 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Booking not found' });
   }
 
-  // Branch admin check
-  if (req.user.role === 'branch_admin' && booking.locationId._id.toString() !== req.user.assignedLocation.toString()) {
-    return res.status(403).json({ success: false, message: 'Not authorized to update this booking' });
-  }
+  enforceLocationAccess(req, res, booking.locationId._id, 'Not authorized to update this booking');
 
   // If changing to confirmed, check capacity again just in case
   if (status === 'confirmed' && booking.status !== 'confirmed') {

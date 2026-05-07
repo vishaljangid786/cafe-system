@@ -4,6 +4,7 @@ const Location = require('../models/Location');
 const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
 
 // Helper to validate date format (YYYY-MM-DD)
 const isValidDate = (dateString) => {
@@ -54,6 +55,8 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('Target personnel has no assigned location');
   }
 
+  enforceLocationAccess(req, res, targetLocationId, 'Not authorized to mark attendance for this location');
+
   // Upsert attendance
   const attendance = await Attendance.findOneAndUpdate(
     { user: userId, date },
@@ -93,17 +96,19 @@ const getLocationAttendance = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
+  enforceLocationAccess(req, res, targetLocationId, 'Not authorized to view attendance for this location');
+
   let query = { locationId: targetLocationId };
 
   if (date) {
     query.date = date; // Exact match YYYY-MM-DD
   } else if (month) {
     // Month should be YYYY-MM format
-    query.date = { $regex: `^${month}` };
+    query.date = { $regex: `^${escapeRegex(month)}` };
   }
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await Attendance.countDocuments(query);
@@ -134,12 +139,17 @@ const getAllAttendance = asyncHandler(async (req, res) => {
   let query = {};
 
   if (userId) query.user = userId;
-  if (locationId && locationId !== 'All') query.locationId = locationId;
+  if (locationId && locationId !== 'All') {
+    enforceLocationAccess(req, res, locationId, 'Not authorized to view attendance for this location');
+    query.locationId = locationId;
+  } else if (req.user.role === 'admin') {
+    query.locationId = { $in: req.user.accessibleLocations || [] };
+  }
   if (date) query.date = date;
-  else if (month) query.date = { $regex: `^${month}` };
+  else if (month) query.date = { $regex: `^${escapeRegex(month)}` };
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await Attendance.countDocuments(query);
@@ -159,10 +169,13 @@ const getAllAttendance = asyncHandler(async (req, res) => {
       pages: Math.ceil(total / limit),
       limit
     },
-    data: attendance.map(att => ({
-      ...att._doc,
-      locationName: att.locationId?.name || 'Unknown'
-    })),
+    data: attendance.map(att => {
+      const attObj = att.toObject ? att.toObject() : att;
+      return {
+        ...attObj,
+        locationName: att.locationId?.name || 'Unknown'
+      };
+    }),
   });
 });
 
@@ -180,8 +193,17 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   let attendanceMatch = { date: { $regex: `^${month}` } };
 
   if (locationId && locationId !== 'All') {
-    userMatch.assignedLocation = new mongoose.Types.ObjectId(locationId);
-    attendanceMatch.locationId = new mongoose.Types.ObjectId(locationId);
+    if (mongoose.Types.ObjectId.isValid(locationId)) {
+      enforceLocationAccess(req, res, locationId, 'Not authorized to view this summary');
+      userMatch.assignedLocation = new mongoose.Types.ObjectId(locationId);
+      attendanceMatch.locationId = new mongoose.Types.ObjectId(locationId);
+    } else {
+      // If invalid ID provided and not "All", return empty result safely
+      return res.json({ success: true, data: [] });
+    }
+  } else if (req.user.role === 'admin') {
+    userMatch.assignedLocation = { $in: req.user.accessibleLocations || [] };
+    attendanceMatch.locationId = { $in: req.user.accessibleLocations || [] };
   }
 
   // 1. Get location-wise staff count & total monthly salaries
@@ -235,13 +257,13 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
 const getMyAttendance = asyncHandler(async (req, res) => {
   const { month, startDate, endDate } = req.query;
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   let query = { user: req.user._id };
 
   if (month) {
-    query.date = { $regex: `^${month}` };
+    query.date = { $regex: `^${escapeRegex(month)}` };
   } else if (startDate || endDate) {
     query.date = {};
     if (startDate) query.date.$gte = startDate;

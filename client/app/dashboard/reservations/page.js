@@ -34,11 +34,6 @@ export default function ReservationsPage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchReservations();
-    fetchLocations();
-  }, [filters, searchTerm, currentPage]);
-
   const fetchReservations = async () => {
     try {
       setLoading(true);
@@ -69,12 +64,21 @@ export default function ReservationsPage() {
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchReservations();
+      fetchLocations();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [filters, searchTerm, currentPage]);
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'pending': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'cancelled': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
+      case 'confirmed': return 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20';
+      case 'pending': return 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20';
+      case 'cancelled': return 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20';
+      default: return 'bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border-[var(--color-text-muted)]/20';
     }
   };
 
@@ -83,13 +87,13 @@ export default function ReservationsPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
               <CalendarDays size={24} />
             </div>
             Reservations
           </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Manage table and full-location bookings across all branches.</p>
+          <p className="text-[var(--color-text-secondary)] mt-1">Manage table and full-location bookings across all branches.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -113,7 +117,7 @@ export default function ReservationsPage() {
               setSelectedReservation(null);
               setIsFormOpen(true);
             }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl transition-all shadow-lg shadow-amber-500/20"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white font-bold rounded-xl transition-all shadow-lg shadow-[var(--color-primary)]/20"
           >
             <Plus size={20} />
             New Reservation
@@ -124,32 +128,32 @@ export default function ReservationsPage() {
       {/* Stats Quick View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Bookings', value: reservations.length, icon: CalendarDays, color: 'blue' },
-          { label: 'Confirmed Today', value: reservations.filter(r => r.status === 'confirmed').length, icon: CheckCircle2, color: 'emerald' },
-          { label: 'Pending Requests', value: reservations.filter(r => r.status === 'pending').length, icon: AlertCircle, color: 'amber' },
-          { label: 'Cancelled', value: reservations.filter(r => r.status === 'cancelled').length, icon: XCircle, color: 'rose' },
+          { label: 'Total Bookings', value: reservations.length, icon: CalendarDays, color: 'var(--color-secondary)' },
+          { label: 'Confirmed Today', value: reservations.filter(r => r.status === 'confirmed').length, icon: CheckCircle2, color: 'var(--color-success)' },
+          { label: 'Pending Requests', value: reservations.filter(r => r.status === 'pending').length, icon: AlertCircle, color: 'var(--color-primary)' },
+          { label: 'Cancelled', value: reservations.filter(r => r.status === 'cancelled').length, icon: XCircle, color: 'var(--color-danger)' },
         ].map((stat, i) => (
-          <div key={i} className="glass-morphism p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+          <div key={i} className="glass-card p-4 rounded-2xl border border-[var(--color-border)]">
             <div className="flex items-center justify-between">
-              <div className={`p-2 rounded-lg bg-${stat.color}-500/10 text-${stat.color}-500`}>
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${stat.color}1a`, color: stat.color }}>
                 <stat.icon size={20} />
               </div>
-              <span className="text-2xl font-bold">{stat.value}</span>
+              <span className="text-2xl font-bold text-[var(--color-text-primary)]">{stat.value}</span>
             </div>
-            <p className="text-xs font-medium text-zinc-500 mt-2 uppercase tracking-wider">{stat.label}</p>
+            <p className="text-xs font-medium text-[var(--color-text-muted)] mt-2 uppercase tracking-wider">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Filters & Search */}
-      <div className="glass-morphism p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="glass-morphism p-6 rounded-[2rem] border border-[var(--color-border)] shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           <div className="md:col-span-5 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
             <input 
               type="text" 
               placeholder="Search by event, customer or phone..."
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -182,7 +186,7 @@ export default function ReservationsPage() {
           <div className="md:col-span-2">
             <input 
               type="date"
-              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+              className="w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
               value={filters.date}
               onChange={(e) => setFilters({...filters, date: e.target.value})}
             />
@@ -191,11 +195,11 @@ export default function ReservationsPage() {
       </div>
 
       {/* Main Content Table */}
-      <div className="glass-morphism rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="glass-morphism rounded-2xl border border-[var(--color-border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-100/50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-bold uppercase tracking-wider">
+              <tr className="bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] text-xs font-bold uppercase tracking-wider">
                 <th className="px-6 py-4">Event & Type</th>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Date & Time</th>
@@ -205,16 +209,16 @@ export default function ReservationsPage() {
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[var(--color-border)]">
               {loading ? (
                 Array(5).fill(0).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={7} className="px-6 py-8 h-12 bg-zinc-100/20 dark:bg-zinc-800/20"></td>
+                  <td colSpan={7} className="px-6 py-8 h-12 bg-[var(--color-surface-soft)]/50"></td>
                   </tr>
                 ))
               ) : reservations.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-muted)]">
                     No reservations found matching your criteria.
                   </td>
                 </tr>
@@ -226,16 +230,16 @@ export default function ReservationsPage() {
                       setSelectedReservation(res);
                       setIsDetailsOpen(true);
                     }}
-                    className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                    className="hover:bg-[var(--color-surface-soft)]/60 transition-colors group cursor-pointer"
                   >
                     <td className="px-6 py-4">
-                      <div className="font-bold text-zinc-900 dark:text-zinc-100">{res.eventName}</div>
+                      <div className="font-bold text-[var(--color-text-primary)]">{res.eventName}</div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${res.reservationType === 'full-location' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
                           {res.reservationType === 'full-location' ? 'Full Location' : 'Table Booking'}
                         </span>
                         {res.reservationType === 'table' && (
-                          <span className="text-[10px] text-zinc-500">
+                          <span className="text-[10px] text-[var(--color-text-muted)]">
                             {res.tableIds?.length} Tables
                           </span>
                         )}
@@ -243,27 +247,27 @@ export default function ReservationsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-sm">{res.customerName}</div>
-                      <div className="flex items-center gap-1 text-xs text-zinc-500 mt-0.5">
+                      <div className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] mt-0.5">
                         <Phone size={12} />
                         {res.customerPhone}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium">{format(new Date(res.date), 'MMM dd, yyyy')}</div>
-                      <div className="flex items-center gap-1 text-xs text-zinc-500 mt-0.5">
+                      <div className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] mt-0.5">
                         <Clock size={12} />
                         {res.startTime} - {res.endTime}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-                        <MapPin size={14} className="text-amber-500" />
+                      <div className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]">
+                        <MapPin size={14} className="text-[var(--color-primary)]" />
                         {res.locationId?.name}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-bold">${res.totalAmount}</div>
-                      <span className={`text-[10px] font-bold uppercase tracking-tight ${res.paymentStatus === 'paid' ? 'text-emerald-500' : res.paymentStatus === 'partial' ? 'text-amber-500' : 'text-zinc-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-tight ${res.paymentStatus === 'paid' ? 'text-emerald-500' : res.paymentStatus === 'partial' ? 'text-blue-500' : 'text-zinc-400'}`}>
                         {res.paymentStatus}
                       </span>
                     </td>
@@ -273,7 +277,7 @@ export default function ReservationsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button className="p-2 text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all">
+                      <button className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-lg transition-all">
                         <MoreVertical size={18} />
                       </button>
                     </td>
@@ -286,22 +290,22 @@ export default function ReservationsPage() {
         
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface-soft)] border-t border-[var(--color-border)]">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
               >
                 Next
               </button>

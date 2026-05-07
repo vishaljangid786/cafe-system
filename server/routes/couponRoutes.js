@@ -8,20 +8,20 @@ const {
   deleteCoupon,
   applyCoupon
 } = require('../controllers/couponController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
 const { couponSchema, validate } = require('../middlewares/validateMiddleware');
 
 router.use(verifyToken);
 
 router.route('/')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getCoupons)
-  .post(authorizeRoles('super_admin', 'admin'), ...couponSchema, validate, createCoupon);
+  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), authorizePermissions('manageCoupons'), getCoupons)
+  .post(authorizeRoles('super_admin', 'admin'), authorizePermissions('manageCoupons'), ...couponSchema, validate, createCoupon);
 
 router.post('/apply', applyCoupon);
 
 router.route('/:id')
-  .get(getCoupon)
-  .put(authorizeRoles('super_admin', 'admin'), ...couponSchema, validate, updateCoupon)
-  .delete(authorizeRoles('super_admin', 'admin'), deleteCoupon);
+  .get(authorizePermissions('manageCoupons'), getCoupon)
+  .put(authorizeRoles('super_admin', 'admin'), authorizePermissions('manageCoupons'), ...couponSchema, validate, updateCoupon)
+  .delete(authorizeRoles('super_admin', 'admin'), authorizePermissions('manageCoupons'), deleteCoupon);
 
 module.exports = router;

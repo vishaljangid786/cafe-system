@@ -29,7 +29,7 @@ import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
-const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 const SUGGESTED_ICONS = [
   '🍽️', '🍕', '🍔', '🍟', '🌭', '🍿', '🥗', '🍝', '🍜', '🍲', '🍣', '🍱', '🍛', '🍚', '🥯', '🥞', '🥓', '🍳', '🍞', '🥐',
   '🍰', '🍦', '🍩', '🍪', '🍫', '☕', '🍵', '🧃', '🥤', '🍺', '🍸', '🍹', '🍷', '🥂', '🍗', '🥩', '🐟', '🍤', '🌮', '🌯'
@@ -103,16 +103,25 @@ export default function MenuManagementPage() {
   };
 
   useEffect(() => {
-    fetchLocations();
+    const timer = setTimeout(() => {
+      fetchLocations();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    fetchAnalytics();
+    const timer = setTimeout(() => {
+      fetchAnalytics();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [filterLocation, timeFilter, customDates]);
 
   useEffect(() => {
     if (selectedLocation) {
-      setFilterLocation(selectedLocation._id || selectedLocation);
+      const timer = setTimeout(() => {
+        setFilterLocation(selectedLocation._id || selectedLocation);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [selectedLocation]);
 
@@ -128,18 +137,29 @@ export default function MenuManagementPage() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const itemFileRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [categoryIcon, setCategoryIcon] = useState('🍽️');
+  const [itemCategory, setItemCategory] = useState('');
+  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [isGlobalItem, setIsGlobalItem] = useState(false);
+  const [itemDietaryType, setItemDietaryType] = useState('veg');
+
   useEffect(() => {
-    if (editingItem) {
-      setItemCategory(editingItem.category?._id || '');
-      setSelectedBranches(editingItem.availableBranches || []);
-      setIsGlobalItem(editingItem.isGlobal || false);
-      setItemDietaryType(editingItem.dietaryType || 'veg');
-    } else {
-      setItemCategory('');
-      setSelectedBranches(selectedLocation ? [selectedLocation._id || selectedLocation] : []);
-      setIsGlobalItem(false);
-      setItemDietaryType('veg');
-    }
+    const timer = setTimeout(() => {
+      if (editingItem) {
+        setItemCategory(editingItem.category?._id || '');
+        setSelectedBranches(editingItem.availableBranches || []);
+        setIsGlobalItem(editingItem.isGlobal || false);
+        setItemDietaryType(editingItem.dietaryType || 'veg');
+      } else {
+        setItemCategory('');
+        setSelectedBranches(selectedLocation ? [selectedLocation._id || selectedLocation] : []);
+        setIsGlobalItem(false);
+        setItemDietaryType('veg');
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [editingItem, selectedLocation]);
   const [editingCategory, setEditingCategory] = useState(null);
 
@@ -152,21 +172,15 @@ export default function MenuManagementPage() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Form refs
-  const itemFileRef = useRef(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [categoryIcon, setCategoryIcon] = useState('🍽️');
-  const [itemCategory, setItemCategory] = useState('');
-  const [selectedBranches, setSelectedBranches] = useState([]);
-  const [isGlobalItem, setIsGlobalItem] = useState(false);
-  const [itemDietaryType, setItemDietaryType] = useState('veg');
-
   useEffect(() => {
-    if (editingCategory) {
-      setCategoryIcon(editingCategory.icon || '🍽️');
-    } else {
-      setCategoryIcon('🍽️');
-    }
+    const timer = setTimeout(() => {
+      if (editingCategory) {
+        setCategoryIcon(editingCategory.icon || '🍽️');
+      } else {
+        setCategoryIcon('🍽️');
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [editingCategory]);
 
   const fetchData = async () => {
@@ -197,7 +211,10 @@ export default function MenuManagementPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [selectedLocation, filterLocation, currentPage]);
 
   const fetchRecipe = async (menuItemId) => {
@@ -433,7 +450,7 @@ export default function MenuManagementPage() {
 
   if (loading && menuItems.length === 0) return (
     <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
     </div>
   );
 
@@ -443,23 +460,23 @@ export default function MenuManagementPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-3xl font-black text-foreground flex items-center tracking-tight leading-none">
-              <Utensils className="mr-4 text-accent" size={36} strokeWidth={2.5} /> Menu <span className="ml-3 text-accent">Management</span>
+            <h1 className="text-3xl font-black text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+              <Utensils className="mr-4 text-[var(--color-primary)]" size={36} strokeWidth={2.5} /> Menu <span className="text-[var(--color-primary)] ml-3">Management</span>
             </h1>
-            <p className="text-muted-foreground text-sm mt-3 font-medium flex items-center">
-              <Target size={14} className="mr-2 text-accent" /> Manage food items and categories for your branches.
+            <p className="text-[var(--color-text-muted)] text-sm mt-3 font-medium flex items-center">
+              <Target size={14} className="mr-2 text-[var(--color-primary)]" /> Manage food items and categories for your branches.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 sm:gap-3 bg-muted/30 p-1.5 rounded-2xl border border-border">
+          <div className="flex flex-wrap gap-2 sm:gap-3 bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)]">
             <button
               onClick={() => setActiveTab('items')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'items' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'items' ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)]'}`}
             >
               <Package size={16} /> Items
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'categories' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'categories' ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)]'}`}
             >
               <Layers size={16} /> Categories
             </button>
@@ -486,12 +503,12 @@ export default function MenuManagementPage() {
             />
 
             {/* Time Filter */}
-            <div className="flex items-center gap-3 bg-muted/50 p-1.5 rounded-2xl border border-border shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
+            <div className="flex items-center gap-3 bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
               {['7d', '30d', 'all', 'custom'].map(t => (
                 <button
                   key={t}
                   onClick={() => setTimeFilter(t)}
-                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeFilter === t ? 'bg-accent text-black shadow-lg shadow-accent/20' : 'text-muted-foreground hover:text-foreground hover:bg-card'}`}
+                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeFilter === t ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-soft)]'}`}
                 >
                   {t}
                 </button>
@@ -504,34 +521,34 @@ export default function MenuManagementPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-4 p-6 bg-card border border-border rounded-3xl shadow-sm"
+            className="flex gap-4 p-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-sm"
           >
             <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-muted-foreground mb-2 ml-1">Start Date</label>
-              <input type="date" className="w-full bg-muted border border-border rounded-xl p-3 text-xs font-bold text-foreground outline-none focus:ring-2 focus:ring-accent/20 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
+              <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-muted-foreground mb-2 ml-1">End Date</label>
-              <input type="date" className="w-full bg-muted border border-border rounded-xl p-3 text-xs font-bold text-foreground outline-none focus:ring-2 focus:ring-accent/20 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
+              <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
             </div>
           </motion.div>
         )}
 
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="!p-8 bg-card border-border shadow-sm" hover={false}>
+          <Card className="!p-8 bg-[var(--color-surface)] border-[var(--color-border)] shadow-sm" hover={false}>
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-lg">Popular Categories</CardTitle>
-              <div className="flex bg-muted p-1 rounded-lg border border-border shadow-inner">
+              <div className="flex bg-[var(--color-bg-soft)] p-1 rounded-lg border border-[var(--color-border)] shadow-inner">
                 <button
                   onClick={() => setGraphMetric('value')}
-                  className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'value' ? 'bg-amber-500 text-black shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+                  className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'value' ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                 >
                   Revenue
                 </button>
                 <button
                   onClick={() => setGraphMetric('count')}
-                  className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'count' ? 'bg-amber-500 text-black shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+                  className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${graphMetric === 'count' ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                 >
                   Volume
                 </button>
@@ -554,16 +571,16 @@ export default function MenuManagementPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    itemStyle={{ color: '#f59e0b', fontSize: '12px', fontWeight: '900' }}
+                    itemStyle={{ color: 'var(--color-primary)', fontSize: '12px', fontWeight: '900' }}
                     labelStyle={{ display: 'none' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-black text-foreground">
+                <span className="text-xl font-black text-[var(--color-text-primary)]">
                   {graphMetric === 'value' ? `₹${analytics?.summary?.totalRevenue?.toLocaleString()}` : analytics?.summary?.totalOrders}
                 </span>
-                <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
+                <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">
                   {graphMetric === 'value' ? 'Total Revenue' : 'Total Orders'}
                 </span>
               </div>
@@ -573,9 +590,9 @@ export default function MenuManagementPage() {
                 <div key={idx} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                    <span className="text-xs font-bold text-zinc-500 dark:text-zinc-300">{cat.name}</span>
+                    <span className="text-xs font-bold text-[var(--color-text-muted)]">{cat.name}</span>
                   </div>
-                  <span className="text-xs font-black text-zinc-900 dark:text-white">
+                  <span className="text-xs font-black text-[var(--color-text-primary)]">
                     {graphMetric === 'value' ? `₹${cat.value.toLocaleString()}` : `${cat.count} Units`}
                   </span>
                 </div>
@@ -584,15 +601,15 @@ export default function MenuManagementPage() {
           </Card>
 
           {/* Crew Spotlight */}
-          <Card className="lg:col-span-2 !p-8 bg-card border-border shadow-sm overflow-hidden relative" hover={false}>
-            <div className="absolute -right-20 -top-20 h-64 w-64 bg-amber-500/5 rounded-full blur-3xl" />
+          <Card className="lg:col-span-2 !p-8 bg-[var(--color-surface)] border-[var(--color-border)] shadow-sm overflow-hidden relative" hover={false}>
+            <div className="absolute -right-20 -top-20 h-64 w-64 bg-[var(--color-primary)]/5 rounded-full blur-3xl" />
 
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
                 <CardTitle className="text-lg">Branch Momentum</CardTitle>
-                <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Live operational performance</CardDescription>
+                <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Live operational performance</CardDescription>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                 <Users size={18} />
               </div>
             </div>
@@ -600,24 +617,24 @@ export default function MenuManagementPage() {
             <div className="relative z-10">
               {analytics?.staffPerformance?.length === 1 ? (
                 /* Solo Hero View */
-                <div className="flex flex-col items-center justify-center py-10 text-center bg-amber-500/[0.02] rounded-[2rem] border border-dashed border-amber-500/20">
-                  <div className="h-24 w-24 rounded-full bg-amber-500/10 flex items-center justify-center mb-6 border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-                    <Zap size={40} className="text-amber-500 animate-pulse" />
+                <div className="flex flex-col items-center justify-center py-10 text-center bg-[var(--color-primary)]/[0.02] rounded-[2rem] border border-dashed border-[var(--color-primary)]/20">
+                  <div className="h-24 w-24 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center mb-6 border border-[var(--color-primary)]/20 shadow-2xl shadow-[var(--color-primary)]/10">
+                    <Zap size={40} className="text-[var(--color-primary)] animate-pulse" />
                   </div>
-                  <h4 className="text-2xl font-black text-foreground uppercase tracking-tighter max-w-md">
-                    <span className="text-accent">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
+                  <h4 className="text-2xl font-black text-[var(--color-text-primary)] uppercase tracking-tighter max-w-md">
+                    <span className="text-[var(--color-primary)]">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
                   </h4>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">Solo Operation Mastery</p>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-2">Solo Operation Mastery</p>
 
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
-                      <p className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">{analytics.staffPerformance[0].totalOrders}</p>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-1">Orders Synced</p>
+                      <p className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter">{analytics.staffPerformance[0].totalOrders}</p>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">Orders Synced</p>
                     </div>
-                    <div className="h-12 w-px bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-12 w-px bg-[var(--color-border)]" />
                     <div className="text-center">
-                      <p className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-1">Total Earnings</p>
+                      <p className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">Total Earnings</p>
                     </div>
                   </div>
                 </div>
@@ -625,31 +642,31 @@ export default function MenuManagementPage() {
                 /* Team Mosaic View */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {analytics?.staffPerformance?.slice(0, 4).map((staff, idx) => (
-                    <div key={idx} className="group p-5 rounded-3xl bg-muted border border-border hover:border-accent/30 transition-all duration-500">
+                    <div key={idx} className="group p-5 rounded-3xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all duration-500">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center font-black text-amber-500 text-xs shadow-sm">
+                        <div className="h-10 w-10 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center font-black text-[var(--color-primary)] text-xs shadow-sm">
                           {staff.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-black text-zinc-900 dark:text-zinc-100 truncate">{staff.name}</span>
-                            <span className="text-[9px] font-black text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase">Rank #{idx + 1}</span>
+                            <span className="text-sm font-black text-[var(--color-text-primary)] truncate">{staff.name}</span>
+                            <span className="text-[9px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-full uppercase">Rank #{idx + 1}</span>
                           </div>
-                          <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{staff.totalOrders} Orders Handled</p>
+                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">{staff.totalOrders} Orders Handled</p>
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-end mb-1">
-                          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Performance</span>
-                          <span className="text-xs font-black text-zinc-900 dark:text-white">₹{staff.revenue.toLocaleString()}</span>
+                          <span className="text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Performance</span>
+                          <span className="text-xs font-black text-[var(--color-text-primary)]">₹{staff.revenue.toLocaleString()}</span>
                         </div>
-                        <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-[var(--color-bg-soft)] rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${(staff.revenue / (analytics?.staffPerformance[0]?.revenue || 1)) * 100}%` }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+                            className="h-full bg-[var(--color-primary)] rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]"
                           />
                         </div>
                       </div>
@@ -660,7 +677,7 @@ export default function MenuManagementPage() {
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
                   <Users size={32} className="mb-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">No Active Personnel Data</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">No Active Staff Data</p>
                 </div>
               )}
             </div>
@@ -669,13 +686,13 @@ export default function MenuManagementPage() {
 
         {/* Control Center */}
         <SlideIn direction="down">
-          <div className="bg-card p-6 md:p-10 rounded-[3rem] border border-border shadow-sm space-y-8">
+          <div className="bg-[var(--color-surface)] p-6 md:p-10 rounded-[3rem] border border-[var(--color-border)] shadow-sm space-y-8">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="relative flex-1">
                 <input
                   type="text"
                   placeholder={activeTab === 'items' ? "Search food items..." : "Search food categories..."}
-                  className="w-full pl-14 pr-6 py-4 bg-muted border border-border rounded-2xl focus:ring-2 focus:ring-accent/20 outline-none font-bold text-sm shadow-inner transition-all"
+                  className="w-full pl-14 pr-6 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none font-bold text-sm shadow-inner transition-all text-[var(--color-text-primary)]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -685,13 +702,13 @@ export default function MenuManagementPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-3 h-14 px-6 rounded-2xl border transition-all font-black text-xs uppercase tracking-widest ${showFilters ? 'bg-amber-500 border-amber-600 text-black shadow-lg shadow-amber-500/30' : 'bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-amber-500/30'}`}
+                  className={`flex items-center gap-3 h-14 px-6 rounded-2xl border transition-all font-black text-xs uppercase tracking-widest ${showFilters ? 'bg-[var(--color-primary)] border-[var(--color-primary-dark)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/30' : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/30'}`}
                 >
                   <Filter size={18} />
                   Filters
                 </button>
 
-                <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
+                <div className="h-10 w-px bg-[var(--color-border)] mx-1 hidden sm:block" />
                 <div className="flex items-center gap-3 flex-1 sm:flex-none">
                   <Button
                     variant="primary"
@@ -705,7 +722,7 @@ export default function MenuManagementPage() {
                         setShowCategoryModal(true);
                       }
                     }}
-                    className="flex-1 sm:flex-none h-14 px-8 rounded-2xl bg-amber-500 text-black border-none hover:bg-amber-600 transition-all gap-3"
+                    className="flex-1 sm:flex-none h-14 px-8 rounded-2xl bg-[var(--color-primary)] text-[var(--color-bg-base)] border-none hover:bg-[var(--color-primary)]/90 transition-all gap-3"
                   >
                     <Plus size={20} strokeWidth={3} />
                     <span className="font-black text-xs uppercase tracking-widest">Add New</span>
@@ -730,18 +747,18 @@ export default function MenuManagementPage() {
               </div>
             </div>
             {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-              <div className="flex bg-muted p-1 rounded-xl border border-border mt-4 w-fit">
+              <div className="flex bg-[var(--color-surface-soft)] p-1 rounded-xl border border-[var(--color-border)] mt-4 w-fit">
                 {[
                   { id: 'All', label: 'All Items' },
-                  { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
-                  { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
+                  { id: 'veg', label: 'Veg Only', color: 'text-[var(--color-success)]' },
+                  { id: 'non-veg', label: 'Non-Veg', color: 'text-[var(--color-danger)]' }
                 ].map((f) => (
                   <button
                     key={f.id}
                     onClick={() => setDietaryFilter(f.id)}
                     className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dietaryFilter === f.id
-                      ? 'bg-amber-500 text-black shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                      ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-sm'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                       } ${f.color || ''}`}
                   >
                     {f.label}
@@ -753,13 +770,13 @@ export default function MenuManagementPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => router.push('/dashboard/admin/expenses')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-danger)]/10 text-[var(--color-danger)] text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-danger)] hover:text-[var(--color-bg-base)] transition-all"
               >
                 <TrendingDown size={14} /> Expenses
               </button>
               <button
                 onClick={() => router.push('/dashboard/admin/revenue')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-success)] hover:text-[var(--color-bg-base)] transition-all"
               >
                 <TrendingUp size={14} /> Income
               </button>
@@ -773,7 +790,7 @@ export default function MenuManagementPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-8 mt-6 bg-muted rounded-3xl border border-border shadow-inner">
+                  <div className="p-8 mt-6 bg-[var(--color-surface-soft)] rounded-3xl border border-[var(--color-border)] shadow-inner">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                       <PremiumSelect
                         label="Category"
@@ -799,13 +816,13 @@ export default function MenuManagementPage() {
                           />
 
                           <div className="space-y-2.5">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Min Price</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Min Price</label>
                             <div className="relative">
-                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={14} />
                               <input
                                 type="number"
                                 placeholder="Min"
-                                className="w-full pl-10 pr-4 py-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
+                                className="w-full pl-10 pr-4 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none font-bold text-sm shadow-sm transition-all text-[var(--color-text-primary)]"
                                 value={minPrice}
                                 onChange={(e) => setMinPrice(e.target.value)}
                               />
@@ -813,13 +830,13 @@ export default function MenuManagementPage() {
                           </div>
 
                           <div className="space-y-2.5">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Max Price</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Max Price</label>
                             <div className="relative">
-                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={14} />
                               <input
                                 type="number"
                                 placeholder="Max"
-                                className="w-full pl-10 pr-4 py-4  bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none font-bold text-sm shadow-sm transition-all"
+                                className="w-full pl-10 pr-4 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none font-bold text-sm shadow-sm transition-all text-[var(--color-text-primary)]"
                                 value={maxPrice}
                                 onChange={(e) => setMaxPrice(e.target.value)}
                               />
@@ -849,7 +866,7 @@ export default function MenuManagementPage() {
                           setMaxPrice('');
                           setDietaryFilter('All');
                         }}
-                        className="text-[10px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-700 transition-colors py-2 px-4 bg-amber-500/10 rounded-xl"
+                        className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] hover:opacity-80 transition-colors py-2 px-4 bg-[var(--color-primary)]/10 rounded-xl"
                       >
                         Reset All Filters
                       </button>
@@ -868,35 +885,35 @@ export default function MenuManagementPage() {
               {filteredItems.map((item, i) => (
                 <SlideIn key={item._id} delay={i * 0.05}>
                   <CardHover>
-                    <div className={`group bg-card rounded-[2.5rem] overflow-hidden border border-border relative flex flex-col h-full transition-all duration-300 ${!item.isAvailable && 'opacity-60 grayscale'}`}>
+                    <div className={`group bg-[var(--color-surface)] rounded-[2.5rem] overflow-hidden border border-[var(--color-border)] relative flex flex-col h-full transition-all duration-300 ${!item.isAvailable && 'opacity-60 grayscale'}`}>
                       {/* Image */}
-                      <div className="h-52 relative overflow-hidden bg-muted">
+                      <div className="h-52 relative overflow-hidden bg-[var(--color-surface-soft)]">
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <div className="w-full h-full flex items-center justify-center text-[var(--color-text-muted)]">
                             <ImageIcon size={48} strokeWidth={1} />
                           </div>
                         )}
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
-                          <span className="px-3 py-1 bg-background/80 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest border border-border">
+                          <span className="px-3 py-1 bg-[var(--color-surface)]/80 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest border border-[var(--color-border)] text-[var(--color-text-primary)]">
                             {item.category?.name || 'Unsorted'}
                           </span>
-                          <span className={`px-3 py-1 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest border self-start ${item.dietaryType === 'veg' ? 'bg-green-500/20 border-green-500/30 text-green-500' : 'bg-red-500/20 border-red-500/30 text-red-500'
+                          <span className={`px-3 py-1 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest border self-start ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]/20 border-[var(--color-success)]/30 text-[var(--color-success)]' : 'bg-[var(--color-danger)]/20 border-[var(--color-danger)]/30 text-[var(--color-danger)]'
                             }`}>
                             {item.dietaryType}
                           </span>
                         </div>
                         <button
                           onClick={() => toggleAvailability(item._id)}
-                          className={`absolute top-4 right-4 p-2 rounded-xl backdrop-blur-md border transition-all ${item.isAvailable ? 'bg-green-500/20 border-green-500/30 text-green-500' : 'bg-red-500/20 border-red-500/30 text-red-500'}`}
+                          className={`absolute top-4 right-4 p-2 rounded-xl backdrop-blur-md border transition-all ${item.isAvailable ? 'bg-[var(--color-success)]/20 border-[var(--color-success)]/30 text-[var(--color-success)]' : 'bg-[var(--color-danger)]/20 border-[var(--color-danger)]/30 text-[var(--color-danger)]'}`}
                         >
                           {item.isAvailable ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
                         </button>
 
                         {item.discountedPrice && (
                           <div className="absolute bottom-4 left-4">
-                            <span className="px-3 py-1 bg-amber-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-600/30">
+                            <span className="px-3 py-1 bg-[var(--color-primary)] text-[var(--color-bg-base)] rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/30">
                               Sale
                             </span>
                           </div>
@@ -906,26 +923,26 @@ export default function MenuManagementPage() {
                       {/* Content */}
                       <div className="p-6 md:p-8 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-xl font-black tracking-tight line-clamp-1 text-foreground">{item.name}</h3>
+                          <h3 className="text-xl font-black tracking-tight line-clamp-1 text-[var(--color-text-primary)]">{item.name}</h3>
                           <div className="flex flex-col items-end">
-                            <span className="text-lg font-black text-accent flex items-center">
+                            <span className="text-lg font-black text-[var(--color-primary)] flex items-center">
                               <IndianRupee size={16} />{item.discountedPrice || item.price}
                             </span>
                             {(item.discountedPrice || item.originalPrice) && (
-                              <span className="text-[10px] text-muted-foreground line-through font-bold">
+                              <span className="text-[10px] text-[var(--color-text-muted)] line-through font-bold">
                                 ₹{item.originalPrice || item.price}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <p className="text-xs text-muted-foreground line-clamp-2 font-medium mb-6 leading-relaxed">
+                        <p className="text-xs text-[var(--color-text-muted)] line-clamp-2 font-medium mb-6 leading-relaxed">
                           {item.description || 'No description added.'}
                         </p>
 
-                        <div className="mt-auto flex items-center justify-between border-t border-border pt-5">
-                          <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                            <Clock size={14} className="text-amber-600" />
+                        <div className="mt-auto flex items-center justify-between border-t border-[var(--color-border)] pt-5">
+                          <div className="flex items-center gap-2 text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-widest">
+                            <Clock size={14} className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]" />
                             {item.preparationTime} Min
                           </div>
                           <div className="flex gap-2">
@@ -936,13 +953,13 @@ export default function MenuManagementPage() {
                                 setImagePreview(item.image);
                                 fetchRecipe(item._id);
                               }}
-                              className="p-3 rounded-xl bg-muted hover:bg-amber-600 text-muted-foreground hover:text-white transition-all shadow-sm"
+                              className="p-3 rounded-xl bg-[var(--color-surface-soft)] hover:bg-[var(--color-primary)] text-[var(--color-text-muted)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
                             >
                               <Edit2 size={16} />
                             </button>
                             <button
                               onClick={() => deleteItem(item._id)}
-                              className="p-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all shadow-sm"
+                              className="p-3 rounded-xl bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)] text-[var(--color-danger)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -960,45 +977,45 @@ export default function MenuManagementPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCategories.map((cat, i) => (
               <SlideIn key={cat._id} delay={i * 0.05}>
-                <Card className="!p-8 group relative overflow-hidden border border-border hover:border-amber-600/30 transition-all">
-                  <div className="absolute top-0 right-0 p-8 text-amber-600 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Card className="!p-8 group relative overflow-hidden border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all">
+                  <div className="absolute top-0 right-0 p-8 text-[var(--color-primary)] opacity-5 group-hover:opacity-10 transition-opacity">
                     <Layers size={80} />
                   </div>
 
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="h-14 w-14 rounded-2xl bg-amber-600/10 border border-amber-600/20 flex items-center justify-center text-2xl">
+                    <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-2xl">
                       {cat.icon || '🍽️'}
                     </div>
                     <div>
-                      <h3 className="text-xl font-black tracking-tight">{cat.name}</h3>
+                      <h3 className="text-xl font-black tracking-tight text-[var(--color-text-primary)]">{cat.name}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
                           Items: {menuItems.filter(m => (m.category?._id || m.category) === cat._id).length}
                         </p>
-                        <div className="h-1 w-1 rounded-full bg-border" />
-                        <p className="text-[9px] font-black uppercase tracking-widest text-accent">
+                        <div className="h-1 w-1 rounded-full bg-[var(--color-border)]" />
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-primary)]">
                           Sold: {analytics.categorySales.find(cs => cs.name === cat.name)?.count || 0}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <p className="text-sm text-muted-foreground font-medium mb-8 min-h-[40px]">{cat.description || 'No description added.'}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] font-medium mb-8 min-h-[40px]">{cat.description || 'No description added.'}</p>
 
-                  <div className="flex justify-between items-center pt-4 border-t border-border">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${cat.isActive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                  <div className="flex justify-between items-center pt-4 border-t border-[var(--color-border)]">
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${cat.isActive ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'}`}>
                       {cat.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => { setEditingCategory(cat); setShowCategoryModal(true); }}
-                        className="p-2.5 rounded-xl bg-muted hover:bg-amber-600 text-muted-foreground hover:text-white transition-all"
+                        className="p-2.5 rounded-xl bg-[var(--color-surface-soft)] hover:bg-[var(--color-primary)] text-[var(--color-text-muted)] hover:text-[var(--color-bg-base)] transition-all"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => deleteCategory(cat._id)}
-                        className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all"
+                        className="p-2.5 rounded-xl bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)] text-[var(--color-danger)] hover:text-[var(--color-bg-base)] transition-all"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1026,20 +1043,20 @@ export default function MenuManagementPage() {
                 {/* Specifications */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                       <UtensilsCrossed size={16} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Details</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Details</h4>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Item Name</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Item Name</label>
                       <input
                         name="name"
                         defaultValue={editingItem?.name}
                         required
-                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                        className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                         placeholder="e.g. Masala Dosa"
                       />
                     </div>
@@ -1056,33 +1073,33 @@ export default function MenuManagementPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Prep Time (Min)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Prep Time (Min)</label>
                         <div className="relative">
                           <input
                             name="preparationTime"
                             type="number"
                             defaultValue={editingItem?.preparationTime || 10}
                             required
-                            className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                            className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                           />
-                          <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                          <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Description</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Description</label>
                       <textarea
                         name="description"
                         defaultValue={editingItem?.description}
                         rows="3"
-                        className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none"
+                        className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all resize-none text-[var(--color-text-primary)]"
                         placeholder="Describe the item..."
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Dietary Type</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Dietary Type</label>
                       <div className="flex gap-4">
                         {['veg', 'non-veg'].map((type) => {
                           const isInvalid = !isGlobalItem && selectedBranches.some(branchId => {
@@ -1095,7 +1112,7 @@ export default function MenuManagementPage() {
                           return (
                             <label
                               key={type}
-                              className={`flex-1 flex items-center justify-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border transition-all ${isInvalid ? 'opacity-40 cursor-not-allowed border-rose-500/20' : 'border-zinc-200 dark:border-zinc-800 cursor-pointer hover:border-amber-500/50'}`}
+                              className={`flex-1 flex items-center justify-center gap-3 p-4 bg-[var(--color-bg-soft)] rounded-2xl border transition-all ${isInvalid ? 'opacity-40 cursor-not-allowed border-[var(--color-danger)]/20' : 'border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)]/50'}`}
                             >
                               <input
                                 type="radio"
@@ -1104,9 +1121,9 @@ export default function MenuManagementPage() {
                                 checked={itemDietaryType === type}
                                 onChange={() => !isInvalid && setItemDietaryType(type)}
                                 disabled={isInvalid}
-                                className="w-4 h-4 accent-amber-600"
+                                className="w-4 h-4 accent-[var(--color-primary)]"
                               />
-                              <span className={`text-[10px] font-black uppercase tracking-widest ${type === 'veg' ? 'text-green-500' : 'text-red-500'}`}>
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${type === 'veg' ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                                 {type}
                               </span>
                             </label>
@@ -1117,7 +1134,7 @@ export default function MenuManagementPage() {
                         const branch = locations.find(l => l._id === branchId);
                         return branch?.dietaryType === 'veg' || branch?.dietaryType === 'non-veg';
                       }) && (
-                          <p className="text-[8px] font-bold text-amber-600 mt-2 uppercase tracking-tight italic">
+                          <p className="text-[8px] font-bold text-[var(--color-primary)] mt-2 uppercase tracking-tight italic">
                             * Some selected branches have strict dietary restrictions.
                           </p>
                         )}
@@ -1128,62 +1145,62 @@ export default function MenuManagementPage() {
                 {/* Pricing */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <div className="h-8 w-8 rounded-lg bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
                       <IndianRupee size={16} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Pricing</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Pricing</h4>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Base Price (₹)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Base Price (₹)</label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
                           <input
                             name="price"
                             type="number"
                             defaultValue={editingItem?.price}
                             required
-                            className="w-full pl-10 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all"
+                            className="w-full pl-10 pr-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-black transition-all text-[var(--color-text-primary)]"
                           />
                         </div>
                       </div>
                       {(user?.role === 'admin' || user?.role === 'location_admin' || user?.role === 'super_admin') && (
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 ml-1">Cost Price (₹)</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] ml-1">Cost Price (₹)</label>
                           <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500/50 font-bold">₹</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-primary)]/50 font-bold">₹</span>
                             <input
                               name="costPrice"
                               type="number"
                               defaultValue={editingItem?.costPrice || 0}
                               required
-                              className="w-full pl-10 pr-5 py-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 outline-none focus:ring-2 focus:ring-amber-500 font-black text-amber-600 transition-all"
+                              className="w-full pl-10 pr-5 py-4 bg-[var(--color-primary)]/5 rounded-2xl border border-[var(--color-primary)]/20 outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-black text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] transition-all"
                             />
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-4 p-5 bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                    <div className="space-y-4 p-5 bg-[var(--color-surface-soft)] rounded-3xl border border-dashed border-[var(--color-border)]">
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Original Price (Strikethrough ₹)</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">Original Price (Strikethrough ₹)</label>
                         <input
                           name="originalPrice"
                           type="number"
                           defaultValue={editingItem?.originalPrice}
-                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                          className="w-full px-4 py-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                           placeholder="The 'Old' price"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Offer Price (New Payable ₹)</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">Offer Price (New Payable ₹)</label>
                         <input
                           name="discountedPrice"
                           type="number"
                           defaultValue={editingItem?.discountedPrice}
-                          className="w-full px-4 py-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                          className="w-full px-4 py-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                           placeholder="The 'Sale' price"
                         />
                       </div>
@@ -1198,21 +1215,21 @@ export default function MenuManagementPage() {
                 {/* Visuals */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+                    <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                       <ImageIcon size={16} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Item Photo</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Item Photo</h4>
                   </div>
 
                   <div
                     onClick={() => itemFileRef.current.click()}
-                    className="aspect-square rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center cursor-pointer hover:bg-amber-500/5 hover:border-amber-500/30 transition-all overflow-hidden relative group"
+                    className="aspect-square rounded-[3rem] border-2 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--color-primary)]/5 hover:border-[var(--color-primary)]/30 transition-all overflow-hidden relative group"
                   >
                     {imagePreview ? (
                       <>
                         <img src={imagePreview} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-6 text-center">
-                          <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3">
+                        <div className="absolute inset-0 bg-[var(--color-bg-deep)]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[var(--color-bg-base)] p-6 text-center">
+                          <div className="h-12 w-12 rounded-full bg-[var(--color-bg-base)]/20 backdrop-blur-md flex items-center justify-center mb-3">
                             <ImageIcon size={20} />
                           </div>
                           <p className="text-[10px] font-black uppercase tracking-widest">Change Image</p>
@@ -1220,12 +1237,12 @@ export default function MenuManagementPage() {
                       </>
                     ) : (
                       <div className="p-8 text-center space-y-4">
-                        <div className="h-20 w-20 rounded-[2rem] bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto text-zinc-400 group-hover:scale-110 transition-transform group-hover:text-amber-500">
+                        <div className="h-20 w-20 rounded-[2rem] bg-[var(--color-bg-soft)] flex items-center justify-center mx-auto text-[var(--color-text-muted)] group-hover:scale-110 transition-transform group-hover:text-[var(--color-primary)]">
                           <ImageIcon size={32} />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Add Image</p>
-                          <p className="text-[8px] text-zinc-400 uppercase mt-1">PNG / WEBP Supported</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Add Image</p>
+                          <p className="text-[8px] text-[var(--color-text-muted)] uppercase mt-1">PNG / WEBP Supported</p>
                         </div>
                       </div>
                     )}
@@ -1244,44 +1261,44 @@ export default function MenuManagementPage() {
                 {/* Status */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-zinc-500/10 flex items-center justify-center text-zinc-500">
+                    <div className="h-8 w-8 rounded-lg bg-[var(--color-text-muted)]/10 flex items-center justify-center text-[var(--color-text-muted)]">
                       <Zap size={16} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Settings</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Settings</h4>
                   </div>
                   <div className="space-y-4">
-                    <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
-                      <span className="text-xs font-bold text-zinc-900 dark:text-white">Active Availability</span>
+                    <label className="flex items-center justify-between p-5 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] cursor-pointer group">
+                      <span className="text-xs font-bold text-[var(--color-text-primary)]">Active Availability</span>
                       <input
                         type="checkbox"
                         name="isAvailable"
                         defaultChecked={editingItem ? editingItem.isAvailable : true}
-                        className="w-5 h-5 accent-amber-600 rounded-lg"
+                        className="w-5 h-5 accent-[var(--color-primary)] rounded-lg"
                       />
                     </label>
 
                     {(user?.role === 'admin' || user?.role === 'super_admin') && (
                       <div className="space-y-4">
-                        <label className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer group">
+                        <label className="flex items-center justify-between p-5 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] cursor-pointer group">
                           <div>
-                            <span className="text-xs font-bold text-zinc-900 dark:text-white block">Global Item</span>
-                            <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-tight italic">Available for every branch</span>
+                            <span className="text-xs font-bold text-[var(--color-text-primary)] block">Global Item</span>
+                            <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-tight italic">Available for every branch</span>
                           </div>
                           <input
                             type="checkbox"
                             checked={isGlobalItem}
                             onChange={(e) => setIsGlobalItem(e.target.checked)}
-                            className="w-5 h-5 accent-amber-600 rounded-lg"
+                            className="w-5 h-5 accent-[var(--color-primary)] rounded-lg"
                           />
                         </label>
 
                         {!isGlobalItem && (
                           <>
-                            <div className="space-y-3 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Target Branches</label>
+                            <div className="space-y-3 p-5 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)]">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Target Branches</label>
                               <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 no-scrollbar">
                                 {locations.map(loc => (
-                                  <label key={loc._id} className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-900 cursor-pointer hover:border-amber-500/20 transition-all">
+                                  <label key={loc._id} className="flex items-center gap-3 p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)]/20 transition-all">
                                     <input
                                       type="checkbox"
                                       checked={selectedBranches.includes(loc._id)}
@@ -1292,11 +1309,11 @@ export default function MenuManagementPage() {
                                           setSelectedBranches(selectedBranches.filter(id => id !== loc._id));
                                         }
                                       }}
-                                      className="w-4 h-4 accent-amber-600 rounded"
+                                      className="w-4 h-4 accent-[var(--color-primary)] rounded"
                                     />
                                     <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-foreground truncate">{loc.name}</span>
-                                      <span className={`text-[7px] font-black uppercase tracking-tighter ${loc.dietaryType === 'veg' ? 'text-green-500' : loc.dietaryType === 'non-veg' ? 'text-red-500' : 'text-blue-500'}`}>
+                                      <span className="text-[10px] font-bold text-[var(--color-text-primary)] truncate">{loc.name}</span>
+                                      <span className={`text-[7px] font-black uppercase tracking-tighter ${loc.dietaryType === 'veg' ? 'text-[var(--color-success)]' : loc.dietaryType === 'non-veg' ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'}`}>
                                         {loc.dietaryType}
                                       </span>
                                     </div>
@@ -1306,16 +1323,16 @@ export default function MenuManagementPage() {
                             </div>
 
                             {selectedBranches.length > 0 && (
-                              <div className="space-y-4 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Branch Stock Matrix</h4>
+                              <div className="space-y-4 p-5 bg-[var(--color-bg-soft)] rounded-3xl border border-[var(--color-border)]">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2">Branch Stock List</h4>
                                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2 no-scrollbar">
                                   {locations.filter(l => selectedBranches.includes(l._id)).map(loc => {
                                     const bStock = editingItem?.branchStocks?.find(bs => bs.branch === loc._id);
                                     return (
-                                      <div key={loc._id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-900">
+                                      <div key={loc._id} className="flex items-center justify-between p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]">
                                         <div className="flex flex-col">
-                                          <span className="text-[10px] font-black text-foreground">{loc.name}</span>
-                                          <span className="text-[7px] text-zinc-400 uppercase tracking-widest">{loc.city}</span>
+                                          <span className="text-[10px] font-black text-[var(--color-text-primary)]">{loc.name}</span>
+                                          <span className="text-[7px] text-[var(--color-text-muted)] uppercase tracking-widest">{loc.city}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                           <div className="relative w-20">
@@ -1323,7 +1340,7 @@ export default function MenuManagementPage() {
                                               type="number"
                                               name={`stock_${loc._id}`}
                                               defaultValue={bStock ? bStock.stock : (editingItem?.stock || 0)}
-                                              className="w-full pl-3 pr-2 py-2 bg-muted border border-border rounded-lg text-xs font-black outline-none focus:ring-1 focus:ring-amber-500"
+                                              className="w-full pl-3 pr-2 py-2 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-lg text-xs font-black outline-none focus:ring-1 focus:ring-[var(--color-primary)] text-[var(--color-text-primary)]"
                                             />
                                           </div>
                                         </div>
@@ -1339,14 +1356,14 @@ export default function MenuManagementPage() {
                     )}
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Current Stock Level</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Current Stock Level</label>
                       <div className="relative">
-                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                         <input
                           name="stock"
                           type="number"
                           defaultValue={editingItem?.stock || 0}
-                          className="w-full pl-12 pr-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                          className="w-full pl-12 pr-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                         />
                       </div>
                     </div>
@@ -1356,19 +1373,19 @@ export default function MenuManagementPage() {
                 {/* Recipe */}
                 <div
                   onClick={() => setShowRecipeEditor(!showRecipeEditor)}
-                  className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${showRecipeEditor ? 'bg-amber-500/10 border-amber-500/30' : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/20'}`}
+                  className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${showRecipeEditor ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)]/30' : 'bg-[var(--color-bg-soft)] border-[var(--color-border)] hover:border-[var(--color-primary)]/20'}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${showRecipeEditor ? 'bg-amber-500 text-black' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
+                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${showRecipeEditor ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)]' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}>
                         <FileText size={20} />
                       </div>
                       <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${showRecipeEditor ? 'text-amber-600' : 'text-zinc-500'}`}>Recipe</p>
-                        <p className="text-[8px] text-zinc-400 uppercase mt-0.5">Ingredients & Prep</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${showRecipeEditor ? 'text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Recipe</p>
+                        <p className="text-[8px] text-[var(--color-text-muted)] uppercase mt-0.5">Ingredients & Prep</p>
                       </div>
                     </div>
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center border transition-all ${showRecipeEditor ? 'bg-amber-500 border-amber-500 text-black rotate-180' : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'}`}>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center border transition-all ${showRecipeEditor ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-bg-base)] rotate-180' : 'border-[var(--color-border)] text-[var(--color-text-muted)]'}`}>
                       <ChevronDown size={16} />
                     </div>
                   </div>
@@ -1383,20 +1400,20 @@ export default function MenuManagementPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="space-y-10 pt-10 border-t border-zinc-200 dark:border-zinc-800"
+                  className="space-y-10 pt-10 border-t border-[var(--color-border)]"
                 >
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Ingredients */}
                     <div className="space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <List size={18} className="text-amber-500" />
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ingredients</h4>
+                          <List size={18} className="text-[var(--color-primary)]" />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Ingredients</h4>
                         </div>
                         <button
                           type="button"
                           onClick={addIngredient}
-                          className="px-4 py-1.5 rounded-full bg-amber-500/10 text-[9px] font-black uppercase text-amber-600 hover:bg-amber-500 hover:text-black transition-all"
+                          className="px-4 py-1.5 rounded-full bg-[var(--color-primary)]/10 text-[9px] font-black uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] transition-all"
                         >
                           + Add
                         </button>
@@ -1406,14 +1423,14 @@ export default function MenuManagementPage() {
                           <motion.div
                             layout
                             key={idx}
-                            className="flex gap-3 items-center p-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800"
+                            className="flex gap-3 items-center p-2 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)]"
                           >
                             <div className="flex-[3]">
                               <input
                                 placeholder="Name"
                                 value={ing.name}
                                 onChange={(e) => updateIngredient(idx, 'name', e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold outline-none focus:ring-1 focus:ring-amber-500"
+                                className="w-full px-4 py-2.5 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-1 focus:ring-[var(--color-primary)] text-[var(--color-text-primary)]"
                               />
                             </div>
                             <div className="flex-[1.5]">
@@ -1422,7 +1439,7 @@ export default function MenuManagementPage() {
                                 placeholder="Qty"
                                 value={ing.quantity}
                                 onChange={(e) => updateIngredient(idx, 'quantity', e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-black text-center outline-none"
+                                className="w-full px-4 py-2.5 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-xs font-black text-center outline-none text-[var(--color-text-primary)]"
                               />
                             </div>
                             <div className="flex-2">
@@ -1441,7 +1458,7 @@ export default function MenuManagementPage() {
                             <button
                               type="button"
                               onClick={() => removeIngredient(idx)}
-                              className="h-10 w-10 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                              className="h-10 w-10 flex items-center justify-center text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all"
                             >
                               <Minus size={16} />
                             </button>
@@ -1454,13 +1471,13 @@ export default function MenuManagementPage() {
                     <div className="space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Zap size={18} className="text-amber-500" />
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Steps</h4>
+                          <Zap size={18} className="text-[var(--color-primary)]" />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Steps</h4>
                         </div>
                         <button
                           type="button"
                           onClick={addInstruction}
-                          className="px-4 py-1.5 rounded-full bg-amber-500/10 text-[9px] font-black uppercase text-amber-600 hover:bg-amber-500 hover:text-black transition-all"
+                          className="px-4 py-1.5 rounded-full bg-[var(--color-primary)]/10 text-[9px] font-black uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] transition-all"
                         >
                           + Add
                         </button>
@@ -1468,7 +1485,7 @@ export default function MenuManagementPage() {
                       <div className="space-y-4">
                         {recipeData.instructions.map((ins, idx) => (
                           <motion.div layout key={idx} className="flex gap-4 group">
-                            <div className="h-10 w-10 rounded-[1rem] bg-amber-500 flex items-center justify-center text-black text-xs font-black shrink-0 shadow-lg shadow-amber-500/20">
+                            <div className="h-10 w-10 rounded-[1rem] bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-bg-base)] text-xs font-black shrink-0 shadow-lg shadow-[var(--color-primary)]/20">
                               {ins.step}
                             </div>
                             <textarea
@@ -1476,12 +1493,12 @@ export default function MenuManagementPage() {
                               value={ins.text}
                               onChange={(e) => updateInstruction(idx, e.target.value)}
                               rows="2"
-                              className="w-full px-5 py-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold resize-none outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+                              className="w-full px-5 py-3 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] text-xs font-bold resize-none outline-none focus:ring-1 focus:ring-[var(--color-primary)] transition-all text-[var(--color-text-primary)]"
                             />
                             <button
                               type="button"
                               onClick={() => removeInstruction(idx)}
-                              className="h-10 w-10 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all h-fit opacity-0 group-hover:opacity-100"
+                              className="h-10 w-10 flex items-center justify-center text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all h-fit opacity-0 group-hover:opacity-100"
                             >
                               <Minus size={16} />
                             </button>
@@ -1492,12 +1509,12 @@ export default function MenuManagementPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Notes</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Notes</label>
                     <textarea
                       value={recipeData.notes}
                       onChange={(e) => setRecipeData(prev => ({ ...prev, notes: e.target.value }))}
                       rows="2"
-                      className="w-full px-6 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold resize-none"
+                      className="w-full px-6 py-4 bg-[var(--color-bg-soft)] rounded-[2rem] border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold resize-none text-[var(--color-text-primary)]"
                       placeholder="Special instructions..."
                     />
                   </div>
@@ -1506,11 +1523,11 @@ export default function MenuManagementPage() {
             </AnimatePresence>
 
             {/* Global Actions */}
-            <div className="pt-10 flex items-center justify-end gap-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="pt-10 flex items-center justify-end gap-6 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => { setShowItemModal(false); setEditingItem(null); }}
-                className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-rose-500 transition-all"
+                className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
               >
                 Cancel
               </button>
@@ -1518,7 +1535,7 @@ export default function MenuManagementPage() {
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl bg-primary shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em]"
+                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl bg-[var(--color-primary)] shadow-[var(--color-primary)]/30 text-xs font-black uppercase tracking-[0.2em] text-[var(--color-bg-base)]"
               >
                 {editingItem ? 'Save Updates' : 'Add Item'}
               </Button>
@@ -1537,25 +1554,25 @@ export default function MenuManagementPage() {
 
             <section className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                   <Layers size={16} />
                 </div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Category Details</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Category Details</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-6 space-y-2">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2.5 ml-1">Item Name</label>
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">Item Name</label>
                   <input
                     name="name"
                     defaultValue={editingCategory?.name}
                     required
-                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all"
+                    className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all text-[var(--color-text-primary)]"
                     placeholder="e.g. South Indian"
                   />
                 </div>
                 <div className="md:col-span-6 space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Visual Icon & Suggestions</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Visual Icon & Suggestions</label>
                   <div className="flex gap-3">
                     <div className="relative group shrink-0">
                       <input
@@ -1563,17 +1580,17 @@ export default function MenuManagementPage() {
                         value={categoryIcon}
                         onChange={(e) => setCategoryIcon(e.target.value)}
                         required
-                        className="w-20 px-2 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold text-center text-2xl transition-all"
+                        className="w-20 px-2 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold text-center text-2xl transition-all text-[var(--color-text-primary)]"
                       />
                     </div>
-                    <div className="flex-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-2 overflow-hidden">
+                    <div className="flex-1 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] p-2 overflow-hidden">
                       <div className="flex flex-wrap gap-1.5 h-[56px] overflow-y-auto no-scrollbar justify-center items-center">
                         {SUGGESTED_ICONS.map(icon => (
                           <button
                             key={icon}
                             type="button"
                             onClick={() => setCategoryIcon(icon)}
-                            className={`h-8 w-8 flex items-center justify-center rounded-lg hover:bg-amber-500/10 transition-all text-lg ${categoryIcon === icon ? 'bg-amber-500/20 scale-110' : ''}`}
+                            className={`h-8 w-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-primary)]/10 transition-all text-lg ${categoryIcon === icon ? 'bg-[var(--color-primary)]/20 scale-110' : ''}`}
                           >
                             {icon}
                           </button>
@@ -1585,48 +1602,48 @@ export default function MenuManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Categorical Scope (Description)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Categorical Scope (Description)</label>
                 <textarea
                   name="description"
                   defaultValue={editingCategory?.description}
                   rows="3"
-                  className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-bold transition-all resize-none"
+                  className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all resize-none text-[var(--color-text-primary)]"
                   placeholder="Define the scope of culinary nodes within this sector..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Hierarchy Index (Sort Order)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Hierarchy Index (Sort Order)</label>
                   <input
                     name="sortOrder"
                     type="number"
                     defaultValue={editingCategory?.sortOrder || 0}
                     required
-                    className="w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-amber-500/30 font-black transition-all"
+                    className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-black transition-all text-[var(--color-text-primary)]"
                   />
                 </div>
                 <div className="flex flex-col justify-end pb-1">
-                  <label className="flex items-center gap-5 cursor-pointer select-none group p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-amber-500/20 transition-all">
+                  <label className="flex items-center gap-5 cursor-pointer select-none group p-4 bg-[var(--color-bg-soft)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/20 transition-all">
                     <div className="relative">
                       <input type="checkbox" name="isActive" defaultChecked={editingCategory ? editingCategory.isActive : true} className="peer hidden" />
-                      <div className="w-14 h-7 bg-zinc-200 dark:bg-zinc-800 rounded-full peer-checked:bg-amber-500 transition-colors shadow-inner"></div>
-                      <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
+                      <div className="w-14 h-7 bg-[var(--color-bg-soft)] rounded-full peer-checked:bg-[var(--color-primary)] transition-colors shadow-inner"></div>
+                      <div className="absolute left-1 top-1 w-5 h-5 bg-[var(--color-bg-base)] rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-500 transition-colors">Operational Status</span>
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Sector availability in matrix</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">Operational Status</span>
+                      <span className="text-[8px] text-[var(--color-text-muted)] uppercase tracking-tighter">Sector availability in list</span>
                     </div>
                   </label>
                 </div>
               </div>
             </section>
 
-            <div className="pt-8 flex items-center justify-end gap-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="pt-8 flex items-center justify-end gap-6 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}
-                className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-rose-500 transition-all"
+                className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
               >
                 Cancel
               </button>
@@ -1634,7 +1651,7 @@ export default function MenuManagementPage() {
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-amber-600/30 text-xs font-black uppercase tracking-[0.2em] bg-primary"
+                className="!py-5 !px-12 !rounded-[2rem] shadow-2xl shadow-[var(--color-primary)]/30 text-xs font-black uppercase tracking-[0.2em] bg-[var(--color-primary)] text-[var(--color-bg-base)]"
               >
                 {editingCategory ? 'Synchronize Sector' : 'Initialize Sector'}
               </Button>
@@ -1643,30 +1660,30 @@ export default function MenuManagementPage() {
         </Modal>
 
         {(filteredItems.length === 0 && activeTab === 'items' && !loading) || (filteredCategories.length === 0 && activeTab === 'categories' && !loading) ? (
-          <div className="text-center py-32 bg-amber-600/[0.02] rounded-[4rem] border border-dashed border-amber-600/20 col-span-full w-full">
-            <UtensilsCrossed size={64} className="mx-auto text-amber-600/10 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
-            <p className="text-muted-foreground font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
+          <div className="text-center py-32 bg-[var(--color-primary)]/[0.02] rounded-[4rem] border border-dashed border-[var(--color-primary)]/20 col-span-full w-full">
+            <UtensilsCrossed size={64} className="mx-auto text-[var(--color-primary)]/10 mb-6" strokeWidth={1} />
+            <h3 className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
+            <p className="text-[var(--color-text-muted)] font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
             <Button variant="outline" className="mt-8 px-10 rounded-2xl" icon={Plus} onClick={() => activeTab === 'items' ? setShowItemModal(true) : setShowCategoryModal(true)}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
           </div>
         ) : null}
         {activeTab === 'items' && totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-card border border-border rounded-[2.5rem] mt-10 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
               Inventory Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:opacity-80 text-[var(--color-text-primary)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-card"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:opacity-80 text-[var(--color-text-primary)]"
               >
                 Next
               </button>

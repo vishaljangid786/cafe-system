@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { 
-  Bell, Search, Filter, Calendar, 
-  CheckCircle2, Trash2, ChevronLeft, 
-  ChevronRight, Info, AlertTriangle, 
-  MessageSquare, Sparkles, User
+  Bell, Search, Calendar,
+  CheckCircle2, ChevronLeft,
+  ChevronRight, AlertTriangle,
+  MessageSquare, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
@@ -50,15 +50,19 @@ const NotificationsPage = () => {
   };
 
   useEffect(() => {
-    fetchHistory(pagination.page);
+    const timer = setTimeout(() => {
+      fetchHistory(pagination.page);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [filters, pagination.page]);
 
   const getPriorityStyles = (priority) => {
     switch (priority) {
-      case 'high': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      case 'medium': return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-      case 'low': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
+      case 'high': return 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20';
+      case 'medium': return 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20';
+      case 'low': return 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20';
+      default: return 'bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border-[var(--color-text-muted)]/20';
     }
   };
 
@@ -71,7 +75,7 @@ const NotificationsPage = () => {
     <PageTransition>
       <div className="space-y-8 pb-24">
         {/* Cinematic Header */}
-        <div className="relative group overflow-hidden bg-white dark:bg-zinc-900 rounded-[2rem] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-[2rem] p-8 border border-[var(--color-border)] shadow-sm">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
             <Bell size={160} className="text-[var(--color-primary)]" strokeWidth={1} />
           </div>
@@ -83,10 +87,10 @@ const NotificationsPage = () => {
                   <Bell size={28} />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
                     Notifications
                   </h1>
-                  <p className="text-zinc-500 font-medium mt-1 text-sm">
+                  <p className="text-[var(--color-text-muted)] font-medium mt-1 text-sm">
                     Track and manage your system alerts and communications.
                   </p>
                 </div>
@@ -106,7 +110,7 @@ const NotificationsPage = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] shadow-sm">
   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
 
     {/* 🔍 Search */}
@@ -115,7 +119,7 @@ const NotificationsPage = () => {
       <div className="absolute inset-0 rounded-xl bg-[var(--color-primary)]/0 group-focus-within:bg-[var(--color-primary)]/10 blur-lg transition-all" />
 
       <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)] transition"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition"
         size={15}
       />
 
@@ -126,7 +130,7 @@ const NotificationsPage = () => {
         onChange={(e) =>
           setFilters((prev) => ({ ...prev, search: e.target.value }))
         }
-        className="relative w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="relative w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
       />
 
       {/* Clear */}
@@ -135,7 +139,7 @@ const NotificationsPage = () => {
           onClick={() =>
             setFilters((prev) => ({ ...prev, search: '' }))
           }
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-500 transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition"
         >
           ✕
         </button>
@@ -153,13 +157,13 @@ const NotificationsPage = () => {
         { label: 'Unread', value: 'unread' },
         { label: 'Read', value: 'read' }
       ]}
-      className="min-w-[120px] max-w-[140px]"
+      className="min-w-[120px] w-full md:max-w-[140px]"
     />
 
     {/* 📅 Start Date */}
     <div className="relative group">
       <Calendar
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)]"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)]"
         size={15}
       />
 
@@ -172,14 +176,14 @@ const NotificationsPage = () => {
             startDate: e.target.value
           }))
         }
-        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
       />
     </div>
 
     {/* 📅 End Date */}
     <div className="relative group">
       <Calendar
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[var(--color-primary)]"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)]"
         size={15}
       />
 
@@ -192,7 +196,7 @@ const NotificationsPage = () => {
             endDate: e.target.value
           }))
         }
-        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
       />
     </div>
 
@@ -210,7 +214,7 @@ const NotificationsPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   key={notif._id}
-                  className={`group relative bg-white dark:bg-zinc-900 border ${notif.isRead ? 'border-zinc-100 dark:border-zinc-800' : 'border-[var(--color-primary)]/20 shadow-lg shadow-[var(--color-primary)]/5'} rounded-2xl p-6 transition-all hover:shadow-md`}
+                  className={`group relative bg-[var(--color-surface)] border ${notif.isRead ? 'border-[var(--color-border)]' : 'border-[var(--color-primary)]/20 shadow-lg shadow-[var(--color-primary)]/5'} rounded-2xl p-6 transition-all hover:shadow-md`}
                 >
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className={`h-12 w-12 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
@@ -222,16 +226,16 @@ const NotificationsPage = () => {
                     <div className="flex-1 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <h3 className={`font-bold text-lg ${notif.isRead ? 'text-zinc-500' : 'text-zinc-900 dark:text-white'}`}>
+                          <h3 className={`font-bold text-lg ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
                             {notif.title}
                           </h3>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-[var(--color-text-muted)] flex items-center gap-1.5">
                               <Calendar size={12} />
                               {new Date(notif.createdAt).toLocaleDateString()}
                             </span>
-                            <span className="text-xs font-medium text-zinc-400">•</span>
-                            <span className="text-xs font-medium text-zinc-400">
+                            <span className="text-xs font-medium text-[var(--color-text-muted)]">•</span>
+                            <span className="text-xs font-medium text-[var(--color-text-muted)]">
                               {new Date(notif.createdAt).toLocaleTimeString()}
                             </span>
                           </div>
@@ -252,19 +256,19 @@ const NotificationsPage = () => {
                         </div>
                       </div>
 
-                      <p className={`text-sm leading-relaxed max-w-3xl ${notif.isRead ? 'text-zinc-400' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                      <p className={`text-sm leading-relaxed max-w-3xl ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)]'}`}>
                         {notif.message}
                       </p>
 
-                      <div className="pt-2 flex items-center gap-4 border-t border-zinc-100 dark:border-zinc-800">
+                      <div className="pt-2 flex items-center gap-4 border-t border-[var(--color-border)]">
                         <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                            <User size={12} className="text-zinc-400" />
+                          <div className="h-6 w-6 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center">
+                            <User size={12} className="text-[var(--color-text-muted)]" />
                           </div>
-                          <span className="text-xs font-bold text-zinc-500">{notif.sender?.name || 'System'}</span>
+                          <span className="text-xs font-bold text-[var(--color-text-secondary)]">{notif.sender?.name || 'System'}</span>
                         </div>
-                        <span className="h-1 w-1 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
-                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{notif.type}</span>
+                        <span className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
+                        <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{notif.type}</span>
                       </div>
                     </div>
                   </div>
@@ -276,12 +280,12 @@ const NotificationsPage = () => {
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-32 text-center"
               >
-                <div className="h-20 w-20 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center mb-6">
-                  <Bell size={40} className="text-zinc-200 dark:text-zinc-700" />
+                <div className="h-20 w-20 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center mb-6">
+                  <Bell size={40} className="text-[var(--color-text-muted)]/40" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">No notifications found</h3>
-                <p className="text-zinc-500 max-w-sm">
-                  We couldn't find any notifications matching your current filters. Try adjusting your search criteria.
+                <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">No notifications found</h3>
+                <p className="text-[var(--color-text-muted)] max-w-sm">
+                  We couldn&apos;t find any notifications matching your current filters. Try adjusting your search criteria.
                 </p>
               </motion.div>
             )}
@@ -306,8 +310,8 @@ const NotificationsPage = () => {
                     onClick={() => fetchHistory(i + 1)}
                     className={`h-10 w-10 rounded-xl text-sm font-bold transition-all ${
                       pagination.page === i + 1 
-                        ? 'bg-[var(--color-primary)] text-white' 
-                        : 'bg-white dark:bg-zinc-900 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800'
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-border)]'
                     }`}
                   >
                     {i + 1}

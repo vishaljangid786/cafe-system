@@ -2,6 +2,7 @@ const Table = require('../models/Table');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { getIO } = require('../config/socket');
+const { enforceLocationAccess } = require('../utils/accessControl');
 
 const Order = require('../models/Order');
 
@@ -19,11 +20,18 @@ const getTables = asyncHandler(async (req, res) => {
   // Enforce access control
   if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
     query.locationId = req.user.assignedLocation;
-  } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
+  } else if (req.user.role === 'admin') {
+    const allowed = (req.user.accessibleLocations || []).map(loc => loc.toString());
     // If admin is requesting a specific location, check if they have access
-    if (locationId && !req.user.accessibleLocations.includes(locationId)) {
-      res.status(403);
-      throw new Error('Not authorized to access this location');
+    if (locationId && locationId !== 'all') {
+      if (!allowed.includes(locationId)) {
+        res.status(403);
+        throw new Error('Not authorized to access this location');
+      }
+      query.locationId = locationId;
+    } else {
+      // Default to all accessible locations
+      query.locationId = { $in: allowed };
     }
   }
 
@@ -68,6 +76,8 @@ const addTable = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
+  enforceLocationAccess(req, res, finalLocationId, 'Not authorized to add tables for this location');
+
   const tableExists = await Table.findOne({ tableNumber, locationId: finalLocationId });
   if (tableExists) {
     res.status(400);
@@ -111,6 +121,8 @@ const bookTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to book tables from other locations');
+
   if (table.isBooked) {
     res.status(400);
     throw new Error('Table is already occupied');
@@ -152,6 +164,8 @@ const updateOrders = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to update tables from other locations');
+
   table.orders = orders;
   table.totalAmount = orders.reduce((acc, item) => acc + (item.quantity * item.price), 0);
   
@@ -192,10 +206,7 @@ const getTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to view tables from other locations');
-  }
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to view tables from other locations');
 
   res.json({
     success: true,
@@ -215,6 +226,8 @@ const uploadBill = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Table not found');
   }
+
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to upload bills for other locations');
 
   if (!req.file) {
     res.status(400);
@@ -311,10 +324,7 @@ const deleteTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to delete tables from other locations');
-  }
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to delete tables from other locations');
 
   await table.deleteOne();
 
@@ -337,6 +347,8 @@ const completeOrder = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Table not found');
   }
+
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to complete tables from other locations');
 
   table.status = 'available';
   table.isBooked = false;
@@ -366,10 +378,7 @@ const updateTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  if (req.user.role === 'branch_admin' && table.locationId.toString() !== req.user.assignedLocation.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to update tables from other locations');
-  }
+  enforceLocationAccess(req, res, table.locationId, 'Not authorized to update tables from other locations');
 
   const updatedTable = await Table.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

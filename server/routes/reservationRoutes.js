@@ -18,12 +18,12 @@ router.get('/availability', checkAvailability);
 
 // CRUD operations
 router.route('/')
-  .post(createReservation)
-  .get(getReservations);
+  .post(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), createReservation)
+  .get(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservations);
 
 router.route('/:id')
-  .get(getReservationById)
-  .put(updateReservation)
-  .delete(deleteReservation);
+  .get(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservationById)
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), updateReservation)
+  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), deleteReservation);
 
 module.exports = router;

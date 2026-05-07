@@ -44,7 +44,11 @@ export default function WorkHistoryPage() {
   };
 
   useEffect(() => {
-    fetchData(1);
+    const timer = setTimeout(() => {
+      fetchData(1);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [user]);
 
   if (!user) return null;
@@ -162,7 +166,7 @@ export default function WorkHistoryPage() {
                     {attendance.map((att, i) => (
                       <div key={i} className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                         <div className="flex items-center gap-4">
-                          <div className={`h-2 w-2 rounded-full ${att.status === 'present' ? 'bg-emerald-500' : att.status === 'absent' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                          <div className={`h-2 w-2 rounded-full ${att.status === 'present' ? 'bg-emerald-500' : att.status === 'absent' ? 'bg-rose-500' : 'bg-blue-500'}`} />
                           <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{new Date(att.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                         </div>
                         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${att.status === 'present' ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10'}`}>

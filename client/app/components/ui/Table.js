@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export const Table = ({ children, className = '' }) => (
   <div className={`w-full overflow-x-auto custom-scrollbar ${className}`}>
-    <table className="w-full text-left border-separate border-spacing-0">
+    <table className="w-full min-w-[640px] text-left border-separate border-spacing-0">
       {children}
     </table>
   </div>
@@ -22,7 +22,7 @@ export const TBody = ({ children }) => (
 );
 
 export const TH = ({ children, className = '' }) => (
-  <th className={`px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] border-b border-[var(--color-border)] ${className}`}>
+  <th className={`px-3 sm:px-6 py-3 sm:py-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-[var(--color-text-muted)] border-b border-[var(--color-border)] ${className}`}>
     {children}
   </th>
 );
@@ -39,7 +39,7 @@ export const TR = ({ children, className = '', index = 0 }) => (
 );
 
 export const TD = ({ children, className = '' }) => (
-  <td className={`px-6 py-4 text-sm text-[var(--color-text-secondary)] transition-colors ${className}`}>
+  <td className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[var(--color-text-secondary)] transition-colors ${className}`}>
     {children}
   </td>
 );

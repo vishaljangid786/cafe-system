@@ -27,15 +27,15 @@ router.route('/:id')
   .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteTable);
 
 router.route('/:id/book')
-  .put(bookTable);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), bookTable);
 
 router.route('/:id/orders')
-  .put(updateOrders);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), updateOrders);
 
 router.route('/:id/complete')
-  .put(completeOrder);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), completeOrder);
 
 router.route('/:id/bill')
-  .put(upload.single('billImage'), uploadBill);
+  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), upload.single('billImage'), uploadBill);
 
 module.exports = router;

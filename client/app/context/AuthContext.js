@@ -1,101 +1,132 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import api from '../services/api';
 import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = Cookies.get('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = Cookies.get('token');
-        const storedLocation = Cookies.get('selectedLocation');
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data);
+      return res.data.data;
+    } catch (err) {
+      console.error('Failed to load global locations');
+      return [];
+    }
+  };
 
-        if (token) {
-          try {
-            const res = await api.get('/auth/profile');
-            const userData = res.data.data;
-            
-            setUser(userData);
-            
-            // Set initial location
-            if (storedLocation) {
-              try {
-                setSelectedLocation(JSON.parse(storedLocation));
-              } catch (e) {
-                console.error('Invalid stored location');
-              }
-            } else if (userData.assignedLocation) {
-              setSelectedLocation(userData.assignedLocation);
-            } else if (userData.accessibleLocations?.length > 0) {
-              setSelectedLocation(userData.accessibleLocations[0]);
-            }
-
-            initializeSocket(userData);
-          } catch (error) {
-            console.error('Session expired or invalid');
-            Cookies.remove('token');
-            Cookies.remove('user');
-            Cookies.remove('selectedLocation');
-            setUser(null);
-          }
-        }
-      } catch (err) {
-        console.error('Auth check critical failure', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const initializeSocket = (userData) => {
+  const initializeSocket = (userData, locationOverride = null) => {
     if (!userData) return;
+    
+    // Disconnect existing socket if any
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    const newSocket = io(socketUrl);
+    const newSocket = io(socketUrl, { withCredentials: true });
     newSocket.on('connect', () => {
-      const branchId = selectedLocation?._id || selectedLocation || userData.assignedLocation?._id || userData.assignedLocation;
-      newSocket.emit('join_session', { 
-        userId: userData._id, 
-        branchId: branchId,
-        role: userData.role 
-      });
+      const activeLocation = locationOverride || selectedLocation;
+      const branchId = activeLocation?._id || activeLocation || userData.assignedLocation?._id || userData.assignedLocation;
+      newSocket.emit('join_session', { branchId });
     });
+    socketRef.current = newSocket;
     setSocket(newSocket);
   };
+
+  const checkAuth = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/auth/profile');
+      if (res.data.success) {
+        const userData = res.data.data;
+        setUser(userData);
+        Cookies.set('user', JSON.stringify(userData), { expires: 7 });
+
+        // Recover Location & Socket
+        const storedLocation = Cookies.get('selectedLocation');
+        let initialLocation = null;
+        
+        if (storedLocation) {
+          try {
+            initialLocation = JSON.parse(storedLocation);
+            setSelectedLocation(initialLocation);
+          } catch (e) {
+            console.error('Invalid stored location');
+          }
+        } else if (userData.assignedLocation) {
+          initialLocation = userData.assignedLocation;
+          setSelectedLocation(initialLocation);
+        } else if (userData.accessibleLocations?.length > 0) {
+          initialLocation = userData.accessibleLocations[0];
+          setSelectedLocation(initialLocation);
+        }
+
+        initializeSocket(userData, initialLocation);
+      }
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        console.error('Session verification failed:', err.response?.data?.message || err.message);
+      }
+      setUser(null);
+      Cookies.remove('user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkAuth();
+      fetchLocations();
+    }, 0);
+    
+    return () => {
+      clearTimeout(timer);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+      setSocket(null);
+    };
+  }, []);
   
   const switchLocation = (location) => {
     setSelectedLocation(location);
     Cookies.set('selectedLocation', JSON.stringify(location), { expires: 30 });
     
-    if (socket && user) {
-      socket.emit('join_session', {
-        userId: user._id,
-        branchId: location._id || location,
-        role: user.role
-      });
+    if (socketRef.current && user) {
+      socketRef.current.emit('join_session', { branchId: location._id || location });
     }
   };
 
   const login = async (email, password) => {
     try {
+      setLoading(true);
       const res = await api.post('/auth/login', { email, password });
-      const { token, ...userData } = res.data.data;
-
-      Cookies.set('token', token, { expires: 30 });
-      Cookies.set('user', JSON.stringify(userData), { expires: 30 });
-
+      const userData = res.data.data;
+      
       setUser(userData);
+      Cookies.set('user', JSON.stringify(userData), { expires: 7 });
       
       // Set initial location on login
       const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
@@ -104,7 +135,9 @@ export const AuthProvider = ({ children }) => {
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
       }
 
-      initializeSocket(userData);
+      initializeSocket(userData, initialLoc);
+      
+      toast.success(`Welcome back, ${userData.name}`);
 
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
@@ -122,17 +155,19 @@ export const AuthProvider = ({ children }) => {
         success: false, 
         message: error.response?.data?.message || 'Login failed' 
       };
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
-    Cookies.remove('token');
     Cookies.remove('user');
     Cookies.remove('selectedLocation');
     setUser(null);
     setSelectedLocation(null);
-    if (socket) {
-      socket.disconnect();
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
     }
     router.push('/login');
@@ -143,9 +178,7 @@ export const AuthProvider = ({ children }) => {
   const impersonate = async (userId, viewOnly = false) => {
     try {
       const res = await api.post(`/auth/impersonate/${userId}`, { viewOnly });
-      const { token, ...userData } = res.data.data;
-
-      Cookies.set('token', token, { expires: 30 });
+      const userData = res.data.data;
       Cookies.set('user', JSON.stringify(userData), { expires: 30 });
 
       setUser(userData);
@@ -156,10 +189,12 @@ export const AuthProvider = ({ children }) => {
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
       }
 
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
       }
-      initializeSocket(userData);
+      initializeSocket(userData, initialLoc);
 
       if (userData.role === 'super_admin' || userData.role === 'admin') {
         router.push('/dashboard/admin');
@@ -180,9 +215,7 @@ export const AuthProvider = ({ children }) => {
   const exitImpersonation = async () => {
     try {
       const res = await api.post('/auth/exit-impersonation');
-      const { token, ...userData } = res.data.data;
-
-      Cookies.set('token', token, { expires: 30 });
+      const userData = res.data.data;
       Cookies.set('user', JSON.stringify(userData), { expires: 30 });
 
       setUser(userData);
@@ -193,10 +226,12 @@ export const AuthProvider = ({ children }) => {
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
       }
 
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
       }
-      initializeSocket(userData);
+      initializeSocket(userData, initialLoc);
 
       router.push('/dashboard/admin/users');
 
@@ -207,7 +242,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, selectedLocation, switchLocation, globalSearch, setGlobalSearch, loading, login, logout, socket, impersonate, exitImpersonation }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      setUser, 
+      selectedLocation, 
+      switchLocation, 
+      locations, 
+      refreshLocations: fetchLocations,
+      globalSearch, 
+      setGlobalSearch, 
+      loading, 
+      login, 
+      logout, 
+      socket, 
+      impersonate, 
+      exitImpersonation 
+    }}>
       {children}
     </AuthContext.Provider>
   );

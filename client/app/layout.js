@@ -1,14 +1,9 @@
-import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import CinematicBackground from "./components/ui/CinematicBackground";
-import BottomNav from "./components/BottomNav";
-
-const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
-const outfit = Outfit({ subsets: ["latin"], variable: '--font-outfit' });
 
 export const metadata = {
   title: "Cafe Management System | Premium Dashboard",
@@ -29,6 +24,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          id="theme-initializer"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -47,7 +43,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body suppressHydrationWarning className={`${inter.variable} ${outfit.variable} font-sans bg-transparent text-[var(--color-text-primary)] antialiased selection:bg-amber-500/30 selection:text-amber-500 transition-colors duration-300`}>
+      <body suppressHydrationWarning className="font-sans text-[var(--color-text-primary)] antialiased selection:bg-blue-500/30 selection:text-blue-500 transition-colors duration-300">
         <div id="cinematic-root" />
         <div className="scan-line" />
         <ThemeProvider>
@@ -61,9 +57,8 @@ export default function RootLayout({ children }) {
                   duration: 4000,
                 }}
               />
-              <div className="relative z-10 min-h-screen">
+              <div className="relative z-10 min-h-screen app-shell">
                 {children}
-                <BottomNav />
               </div>
             </NotificationProvider>
           </AuthProvider>

@@ -4,9 +4,7 @@ const { getExecutiveSummary, getAuditLogs } = require('../controllers/superAdmin
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
-router.use(authorizeRoles('super_admin'));
-
-router.get('/executive-summary', getExecutiveSummary);
-router.get('/audit-logs', getAuditLogs);
+router.get('/executive-summary', authorizeRoles('super_admin'), getExecutiveSummary);
+router.get('/audit-logs', authorizeRoles('super_admin', 'admin'), getAuditLogs);
 
 module.exports = router;

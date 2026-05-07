@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['REVENUE', 'pos_revenue', 'manual_revenue', 'expense'],
+      enum: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE', 'EXPENSE'],
       default: 'REVENUE',
       required: true,
     },
@@ -18,28 +18,33 @@ const transactionSchema = new mongoose.Schema(
       enum: ['ORDER', 'POS', 'MANUAL'],
       default: 'ORDER'
     },
+    paymentType: {
+      type: String,
+      enum: ['CASH', 'UPI', 'CARD', 'OTHER'],
+      default: 'CASH',
+    },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order'
     },
     title: {
       type: String,
-      required: function() { return this.type !== 'pos_revenue'; }
+      required: function() { return this.type !== 'POS_REVENUE'; }
     },
     description: String,
     category: {
       type: String,
-      required: function() { return this.type !== 'pos_revenue'; }
+      required: function() { return this.type !== 'POS_REVENUE'; }
     },
     tableNumber: {
       type: Number,
-      required: function() { return this.type === 'pos_revenue'; }
+      required: function() { return this.type === 'POS_REVENUE'; }
     },
     customerName: String,
     staffId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: function() { return this.type === 'pos_revenue'; }
+      required: function() { return this.type === 'POS_REVENUE'; }
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

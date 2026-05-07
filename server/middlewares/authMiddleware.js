@@ -9,53 +9,52 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      if (!token) {
-        res.status(401);
-        throw new Error('Not authorized, token missing');
-      }
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      req.user = await User.findById(decoded.id).select('-password');
-      
-      if (!req.user) {
-        res.status(401);
-        throw new Error('Not authorized, user not found');
-      }
-
-      // Security Check: Blocked/Inactive Users
-      if (req.user.isBlocked) {
-        res.status(403);
-        throw new Error('Account suspended. Please contact administrator.');
-      }
-
-      if (req.user.active === false) {
-        res.status(403);
-        throw new Error('Account inactive. Access denied.');
-      }
-
-      if (decoded.impersonatedBy) {
-        req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
-        
-        // Enterprise: View-only restriction
-        if (decoded.isViewOnly && req.method !== 'GET') {
-          res.status(403);
-          throw new Error('Action restricted: View-only impersonation mode is active');
-        }
-      }
-
-      next();
-    } catch (error) {
-      res.status(401);
-      throw new Error('Not authorized, token failed');
-    }
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.token) {
+    token = req.cookies.token;
   }
 
   if (!token) {
     res.status(401);
     throw new Error('Not authorized, no token');
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    req.user = await User.findById(decoded.id).select('-password');
+    
+    if (!req.user) {
+      res.status(401);
+      throw new Error('Not authorized, user not found');
+    }
+
+    // Security Check: Blocked/Inactive Users
+    if (req.user.isBlocked) {
+      res.status(403);
+      throw new Error('Account suspended. Please contact administrator.');
+    }
+
+    if (req.user.active === false) {
+      res.status(403);
+      throw new Error('Account inactive. Access denied.');
+    }
+
+    if (decoded.impersonatedBy) {
+      req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
+      
+      if (decoded.isViewOnly && req.method !== 'GET') {
+        res.status(403);
+        throw new Error('Action restricted: View-only impersonation mode is active');
+      }
+    }
+
+    next();
+  } catch (error) {
+    if (res.statusCode === 200) {
+      res.status(401);
+    }
+    throw new Error(error.message || 'Not authorized, token failed');
   }
 });
 

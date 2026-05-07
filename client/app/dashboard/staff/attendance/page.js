@@ -1,9 +1,10 @@
 "use client"
 import { useState, useEffect } from 'react';
-import api from '../../../../app/services/api';
+import api from '@/app/services/api';
 import { Calendar, Wallet, CheckCircle, XCircle, Clock, Loader2, Search, Filter, TrendingUp, CalendarDays, Activity } from 'lucide-react';
-import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
-import { useAuth } from '../../../../app/context/AuthContext';
+import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
+import { useAuth } from '@/app/context/AuthContext';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
 
 export default function StaffAttendancePage() {
   const { user } = useAuth();
@@ -40,7 +41,7 @@ export default function StaffAttendancePage() {
 
   if (loading && attendance.length === 0) return (
     <div className="flex flex-col items-center justify-center h-96 space-y-4">
-      <Loader2 className="animate-spin text-amber-500" size={40} />
+      <Loader2 className="animate-spin text-blue-500" size={40} />
       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Loading records...</p>
     </div>
   );
@@ -51,19 +52,19 @@ export default function StaffAttendancePage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-zinc-900 dark:text-zinc-100">
-              <CalendarDays className="text-amber-500" size={36} strokeWidth={2.5} />
-              Attendance & <span className="text-amber-500">Salary</span>
+            <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-[var(--color-text-primary)]">
+              <CalendarDays className="text-blue-500" size={36} strokeWidth={2.5} />
+              Attendance & <span className="text-blue-500">Salary</span>
             </h1>
-            <p className="text-zinc-500 font-medium mt-1">Track your daily attendance and monthly salary.</p>
+            <p className="text-[var(--color-text-secondary)] font-medium mt-1">Track your daily attendance and monthly salary.</p>
           </div>
           
-          <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm backdrop-blur-md">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-              <Calendar size={14} className="text-amber-500" />
+          <div className="flex items-center gap-3 bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]">
+              <Calendar size={14} className="text-blue-500" />
               <input
                 type="month"
-                className="bg-transparent outline-none text-[10px] font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200"
+                className="bg-transparent outline-none text-[10px] font-black uppercase tracking-widest text-[var(--color-text-primary)]"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
               />
@@ -73,19 +74,19 @@ export default function StaffAttendancePage() {
 
         {/* Salary High-Yield Card */}
         <SlideIn delay={0.1}>
-          <div className="relative overflow-hidden rounded-[3rem] bg-zinc-900 dark:bg-zinc-950 p-10 lg:p-14 text-white shadow-2xl shadow-zinc-900/30 border border-white/5">
+          <div className="relative overflow-hidden rounded-[3rem] bg-[var(--color-surface-dark)] p-10 lg:p-14 text-white shadow-2xl shadow-black/30 border border-white/5">
             {/* Background Effects */}
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
-            <div className="absolute -right-20 -bottom-20 h-80 w-80 bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/10 to-transparent pointer-events-none" />
+            <div className="absolute -right-20 -bottom-20 h-80 w-80 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
             
             <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-12">
               <div className="flex-1 space-y-8">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-8 w-8 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-                      <Wallet className="text-amber-500" size={16} />
+                    <div className="h-8 w-8 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                      <Wallet className="text-blue-500" size={16} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">Salary for this month</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500/80">Salary for this month</span>
                   </div>
                   <h2 className="text-6xl font-black tracking-tighter mb-2">
                     ₹{Math.round(salaryData?.calculatedSalary || 0).toLocaleString()}
@@ -100,7 +101,7 @@ export default function StaffAttendancePage() {
                   </div>
                   <div className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
                     <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-1">Paid Days</p>
-                    <p className="text-sm font-bold tracking-tight text-amber-500">{salaryData?.payableDays} Days</p>
+                    <p className="text-sm font-bold tracking-tight text-blue-500">{salaryData?.payableDays} Days</p>
                   </div>
                 </div>
               </div>
@@ -108,7 +109,7 @@ export default function StaffAttendancePage() {
               <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
                 {[
                   { label: 'Present', val: salaryData?.totalPresent, color: 'text-emerald-500', icon: CheckCircle },
-                  { label: 'Half Day', val: salaryData?.totalHalfDay, color: 'text-amber-500', icon: Clock },
+                  { label: 'Half Day', val: salaryData?.totalHalfDay, color: 'text-blue-500', icon: Clock },
                   { label: 'Absent', val: salaryData?.totalAbsent, color: 'text-rose-500', icon: XCircle },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-white/5 p-6 rounded-[2rem] border border-white/5 flex flex-col items-center text-center group hover:bg-white/10 transition-all duration-500">
@@ -127,17 +128,17 @@ export default function StaffAttendancePage() {
           <SlideIn delay={0.2} direction="up">
             <div className="flex flex-col md:flex-row gap-4 items-center px-4">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                 <input 
                   type="text" 
                   placeholder="Search by date or status..."
-                  className="w-full pl-12 pr-6 py-4 bg-white/40 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-bold text-sm text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  className="w-full pl-12 pr-6 py-4 bg-[var(--color-surface)]/40 border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400">
+                <div className="h-12 w-12 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)]">
                   <Filter size={18} />
                 </div>
                 <div className="px-5 py-3.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
@@ -148,36 +149,36 @@ export default function StaffAttendancePage() {
           </SlideIn>
 
           <SlideIn delay={0.3} direction="up">
-            <div className="bg-white/40 dark:bg-zinc-950/20 backdrop-blur-md rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-md rounded-[2.5rem] border border-[var(--color-border)] overflow-hidden shadow-sm">
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-separate border-spacing-0">
                   <thead>
-                    <tr className="bg-zinc-50/50 dark:bg-zinc-900/50 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">Date</th>
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-center">Status</th>
-                      <th className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 text-right">Recorded Time</th>
+                    <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
+                      <th className="px-8 py-5 border-b border-[var(--color-border)]">Date</th>
+                      <th className="px-8 py-5 border-b border-[var(--color-border)] text-center">Status</th>
+                      <th className="px-8 py-5 border-b border-[var(--color-border)] text-right">Recorded Time</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-[var(--color-border)]">
                     {filteredAttendance.map((log, idx) => (
-                      <tr key={idx} className="group hover:bg-amber-500/[0.02] transition-colors duration-300">
+                      <tr key={idx} className="group hover:bg-blue-500/[0.02] transition-colors duration-300">
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 border border-zinc-200/50 dark:border-zinc-700/50">
+                            <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] border border-[var(--color-border)]">
                               <Calendar size={18} />
                             </div>
                             <div>
-                              <p className="text-sm font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                              <p className="text-sm font-black text-[var(--color-text-primary)] tracking-tight">
                                 {new Date(log.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
                               </p>
-                              <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mt-0.5">Record Verified</p>
+                              <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-0.5">Record Verified</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-8 py-5 text-center">
                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                             log.status === 'present' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                            log.status === 'half-day' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                            log.status === 'half-day' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 
                             'bg-rose-500/10 text-rose-500 border-rose-500/20'
                           }`}>
                             {log.status}
@@ -185,10 +186,10 @@ export default function StaffAttendancePage() {
                         </td>
                         <td className="px-8 py-5 text-right">
                           <div className="flex flex-col items-end">
-                            <p className="text-xs font-black text-zinc-700 dark:text-zinc-300 tracking-tight">
+                            <p className="text-xs font-black text-[var(--color-text-primary)] tracking-tight">
                               {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
-                            <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-tighter mt-1 flex items-center gap-1.5">
+                            <p className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter mt-1 flex items-center gap-1.5">
                               <Activity size={8} /> Attendance Recorded
                             </p>
                           </div>

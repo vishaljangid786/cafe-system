@@ -19,27 +19,37 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 
 // Initialize Socket.io
 const io = require('./config/socket').init(server);
+const { canAccessLocation, normalizeId } = require('./utils/accessControl');
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  const user = socket.user;
+  console.log('Client connected:', socket.id, user?.email);
+
+  if (user?._id) socket.join(user._id.toString());
+  if (user?.role) socket.join(`role_${user.role}`);
+  if (user?.assignedLocation) {
+    const branchId = normalizeId(user.assignedLocation);
+    socket.join(`branch_${branchId}`);
+    socket.join(`branch_${branchId}_${user.role}`);
+  }
 
   // Advanced session management with branch and role scoping
-  socket.on('join_session', ({ userId, branchId, role }) => {
-    // 1. Personal Room
-    if (userId) socket.join(userId);
-
-    // 2. Branch Room (Everyone in the branch)
-    if (branchId) socket.join(`branch_${branchId}`);
-
-    // 3. Role Room (Global role-based)
-    if (role) socket.join(`role_${role}`);
-
-    // 4. Targeted Intersection (Branch + Role)
-    if (branchId && role) {
-      socket.join(`branch_${branchId}_${role}`);
+  socket.on('join_session', ({ branchId } = {}) => {
+    if (branchId && branchId !== 'global' && branchId !== 'all' && canAccessLocation(user, branchId)) {
+      socket.join(`branch_${branchId}`);
+      socket.join(`branch_${branchId}_${user.role}`);
     }
 
-    console.log(`User ${userId} (${role}) initialized session for branch ${branchId}`);
+    console.log(`User ${user._id} (${user.role}) initialized session for branch ${branchId || normalizeId(user.assignedLocation) || 'global'}`);
+  });
+
+  socket.on('join_room', (room) => {
+    const branchMatch = typeof room === 'string' && room.match(/^branch_([^_]+)(?:_.+)?$/);
+    if (!branchMatch) return;
+    const branchId = branchMatch[1];
+    if (canAccessLocation(user, branchId)) {
+      socket.join(room);
+    }
   });
 
   socket.on('disconnect', () => {

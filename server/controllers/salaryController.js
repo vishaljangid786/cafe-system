@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
+const { scopedLocationId, enforceLocationAccess, clampLimit } = require('../utils/accessControl');
+const mongoose = require('mongoose');
 
 // Helper to get days in a month (format: YYYY-MM)
 const getDaysInMonth = (monthString) => {
@@ -77,7 +79,7 @@ const getLocationSalary = asyncHandler(async (req, res) => {
     throw new Error('Month parameter (YYYY-MM) is required');
   }
 
-  const targetLocationId = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
+  const targetLocationId = scopedLocationId(req, locationId);
   if (!targetLocationId) {
     res.status(400);
     throw new Error('Location ID is required');
@@ -112,6 +114,7 @@ const getAllSalary = asyncHandler(async (req, res) => {
   let userQuery = {};
   
   // Hierarchy Visibility Logic
+  // Hierarchy Visibility Logic
   if (req.user.role === 'admin') {
     userQuery.role = { $in: ['branch_admin', 'staff'] };
   } else if (req.user.role === 'super_admin') {
@@ -119,7 +122,9 @@ const getAllSalary = asyncHandler(async (req, res) => {
   }
 
   if (role) userQuery.role = role;
-  if (locationId && locationId !== 'All') userQuery.assignedLocation = locationId;
+
+  const branchScope = scopedLocationId(req, locationId);
+  if (branchScope) userQuery.assignedLocation = branchScope;
   
   if (search) {
     userQuery.$or = [
@@ -182,11 +187,8 @@ const getUserSalary = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Branch admin can only check their own location staff
-  if (req.user.role === 'branch_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to view this user');
-  }
+  // RBAC: Branch admin / Admin can only check their authorized location staff
+  enforceLocationAccess(req, res, user.assignedLocation, 'Not authorized to view this user salary');
 
   const daysInMonth = getDaysInMonth(month);
   
@@ -271,7 +273,7 @@ const generatePayroll = asyncHandler(async (req, res) => {
     throw new Error('Month (YYYY-MM) is required');
   }
 
-  const targetLocation = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
+  const targetLocation = scopedLocationId(req, locationId);
   if (!targetLocation) {
     res.status(400);
     throw new Error('Location context missing');
@@ -298,6 +300,12 @@ const generatePayroll = asyncHandler(async (req, res) => {
 
     const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus - latePenalties - absentPenalties);
 
+    const existingPayroll = await Payroll.findOne({ user: raw._id, month });
+    if (existingPayroll && !['PENDING_BRANCH_APPROVAL', 'REJECTED'].includes(existingPayroll.status)) {
+      processedPayrolls.push(existingPayroll);
+      continue;
+    }
+
     const payroll = await Payroll.findOneAndUpdate(
       { user: raw._id, month },
       {
@@ -318,11 +326,13 @@ const generatePayroll = asyncHandler(async (req, res) => {
 });
 
 const approvePayroll = asyncHandler(async (req, res) => {
-  const payroll = await Payroll.findById(req.params.id);
+  const payroll = await Payroll.findById(req.params.id).populate('user');
   if (!payroll) {
     res.status(404);
     throw new Error('Payroll record not found');
   }
+
+  enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'Not authorized to approve this payroll');
 
   const role = req.user.role;
 
@@ -349,11 +359,9 @@ const getPayrollHistory = asyncHandler(async (req, res) => {
   const filter = {};
   if (month) filter.month = month;
 
-  if (req.user.role === 'branch_admin') {
-    const users = await User.find({ assignedLocation: req.user.assignedLocation }).select('_id');
-    filter.user = { $in: users.map(u => u._id) };
-  } else if (locationId && locationId !== 'all') {
-    const users = await User.find({ assignedLocation: locationId }).select('_id');
+  const branchScope = scopedLocationId(req, locationId);
+  if (branchScope) {
+    const users = await User.find({ assignedLocation: branchScope }).select('_id');
     filter.user = { $in: users.map(u => u._id) };
   }
 

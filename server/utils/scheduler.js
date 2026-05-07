@@ -55,7 +55,7 @@ const generateDailyReport = async () => {
       { category: 'Financials', metric: 'Total Revenue', value: `₹${totalRevenue[0]?.total || 0}` },
       { category: 'Financials', metric: 'Total Expenses', value: `₹${totalExpenses[0]?.total || 0}` },
       { category: 'Operations', metric: 'New Bookings', value: bookingsCount },
-      { category: 'Personnel', metric: 'System Active Since', value: new Date().toLocaleTimeString() }
+      { category: 'Staff', metric: 'System Active Since', value: new Date().toLocaleTimeString() }
     ]);
 
     // Styling

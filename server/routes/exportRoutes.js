@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
 const { generateCSV, generatePDF, generateExcel } = require('../utils/exportService');
 const asyncHandler = require('../utils/asyncHandler');
 const mongoose = require('mongoose');
+const { userLocationIds, enforceLocationAccess } = require('../utils/accessControl');
 
 // Models
 const Order = require('../models/Order');
@@ -12,11 +13,13 @@ const User = require('../models/User');
 const Payroll = require('../models/Payroll');
 const Coupon = require('../models/Coupon');
 const Attendance = require('../models/Attendance');
+const BranchInventory = require('../models/BranchInventory');
 
 // @desc    Export Advanced Data
 // @route   GET /api/export
-router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admin'), asyncHandler(async (req, res) => {
+router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admin', 'chef', 'staff'), authorizePermissions('exportReports'), asyncHandler(async (req, res) => {
   const { type, format, startDate, endDate, branchId } = req.query;
+  const exportType = type.toLowerCase();
 
   if (!type || !format) {
     res.status(400);
@@ -25,29 +28,53 @@ router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admi
 
   const query = {};
   
-  // Date Filtering
-  if (startDate || endDate) {
-    const dateField = type === 'attendance' ? 'date' : 'createdAt';
-    query[dateField] = {};
-    if (startDate) query[dateField].$gte = new Date(startDate);
-    if (endDate) query[dateField].$lte = new Date(endDate);
+  // 1. Branch Filtering (Determine the correct field name)
+  const branchField = ['revenue', 'attendance'].includes(exportType) ? 'locationId' : exportType === 'staff' ? 'assignedLocation' : 'branch';
+  let finalBranchId = null;
+
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
+    finalBranchId = req.user.assignedLocation;
+  } else if (branchId && branchId !== 'all') {
+    enforceLocationAccess(req, res, branchId);
+    finalBranchId = branchId;
+  } else if (req.user.role === 'admin') {
+    finalBranchId = { $in: userLocationIds(req.user) };
+  }
+  
+  if (finalBranchId) {
+    query[branchField] = finalBranchId;
   }
 
-  // Branch Filtering
-  if (req.user.role === 'branch_admin') {
-    query.branch = req.user.assignedLocation;
-    if (type === 'revenue') query.locationId = req.user.assignedLocation;
-  } else if (branchId && branchId !== 'all') {
-    query.branch = branchId;
-    if (type === 'revenue') query.locationId = branchId;
+  // 2. Date Filtering
+  if (startDate || endDate) {
+    const dateField = exportType === 'attendance' ? 'date' : 'createdAt';
+    query[dateField] = {};
+    
+    if (exportType === 'attendance') {
+      // Attendance uses String YYYY-MM-DD
+      if (startDate) query[dateField].$gte = startDate;
+      if (endDate) query[dateField].$lte = endDate;
+    } else {
+      // Others use Date objects (createdAt)
+      if (startDate) query[dateField].$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query[dateField].$lte = end;
+      }
+    }
   }
 
   let data = [];
-  let exportTitle = `${type.toUpperCase()} REPORT`;
+  let exportTitle = `${exportType.toUpperCase()} REPORT`;
 
-  switch (type.toLowerCase()) {
+  switch (exportType) {
     case 'orders':
-      const orders = await Order.find(query).populate('table', 'name').lean();
+      const orders = await Order.find(query)
+        .populate('table', 'name')
+        .populate('items.menuItem', 'itemName')
+        .lean();
+        
       data = orders.map(o => ({
         ID: o._id.toString().slice(-6),
         Date: o.createdAt,
@@ -55,7 +82,7 @@ router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admi
         Total: o.totalAmount,
         Status: o.status,
         Customer: o.customerName || 'Walk-in',
-        Items: o.items.map(i => `${i.itemName} (x${i.quantity})`).join(', ')
+        Items: o.items.map(i => `${i.menuItem?.itemName || 'Unknown Item'} (x${i.quantity})`).join(', ')
       }));
       break;
 
@@ -73,7 +100,7 @@ router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admi
       break;
 
     case 'staff':
-      const staffQuery = query.branch ? { assignedLocation: query.branch } : {};
+      const staffQuery = query.assignedLocation ? { assignedLocation: query.assignedLocation } : {};
       const users = await User.find(staffQuery).select('-password').populate('assignedLocation', 'name').lean();
       data = users.map(u => ({
         Name: u.name,
@@ -103,9 +130,7 @@ router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admi
       data = attendances.map(a => ({
         Date: a.date,
         Employee: a.user?.name,
-        Status: a.status,
-        CheckIn: a.checkIn,
-        CheckOut: a.checkOut
+        Status: a.status
       }));
       break;
 
@@ -117,8 +142,23 @@ router.get('/', verifyToken, authorizeRoles('admin', 'super_admin', 'branch_admi
         Value: c.discountValue,
         MinOrder: c.minOrderAmount,
         Expiry: c.expiryDate,
-        Used: c.usageCount,
+        Used: c.usedCount,
         Active: c.isActive ? 'YES' : 'NO'
+      }));
+      break;
+      
+    case 'inventory':
+      const invItems = await BranchInventory.find(query)
+        .populate('ingredient', 'name unit category')
+        .populate('branch', 'name')
+        .lean();
+      data = invItems.map(i => ({
+        Ingredient: i.ingredient?.name || 'Unknown',
+        Branch: i.branch?.name || 'All',
+        Stock: `${i.stock} ${i.ingredient?.unit || ''}`,
+        Category: i.ingredient?.category || 'General',
+        'Cost Per Unit': i.costPerUnit,
+        'Min Threshold': i.minThreshold
       }));
       break;
 

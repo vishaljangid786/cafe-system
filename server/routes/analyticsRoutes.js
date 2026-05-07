@@ -10,57 +10,31 @@ const {
   getUnderperformingLocations,
   getProductPerformance,
   getComparisonDetails,
-  getLocationIntelligence,
+  getLocationInfo,
   getStaffReports,
-  getPaymentIntelligence,
+  getPaymentInfo,
   getBranchComparisonSuite,
   getCommandCenterStats,
   getForecastingAnalytics
 } = require('../controllers/analyticsController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
 router.use(verifyToken);
-
-router.route('/location')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getLocationAnalytics);
-
-router.route('/all')
-  .get(authorizeRoles('admin', 'super_admin'), getAllAnalytics);
+router.use(authorizePermissions('viewAnalytics'));
 
 router.route('/advanced')
   .get(authorizeRoles('admin', 'super_admin', 'branch_admin'), getAdvancedAnalytics);
 
-router.route('/compare-locations')
-  .get(authorizeRoles('admin', 'super_admin'), compareLocations);
-
 router.route('/location-comparison')
   .get(authorizeRoles('admin', 'super_admin'), getLocationComparison);
-
-router.route('/top-locations')
-  .get(authorizeRoles('admin', 'super_admin'), getTopLocations);
-
-router.route('/trending-items')
-  .get(authorizeRoles('admin', 'super_admin'), getTrendingItems);
-
-router.route('/underperforming-locations')
-  .get(authorizeRoles('admin', 'super_admin'), getUnderperformingLocations);
-
-router.route('/product-performance/:locationId')
-  .get(authorizeRoles('admin', 'super_admin'), getProductPerformance);
-
-router.route('/comparison-details')
-  .get(authorizeRoles('admin', 'super_admin'), getComparisonDetails);
-
-router.route('/location-intelligence/:id')
-  .get(authorizeRoles('admin', 'super_admin'), getLocationIntelligence);
 
 router.route('/staff-reports')
   .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), getStaffReports);
 
 router.route('/payment-intelligence')
-  .get(authorizeRoles('admin', 'super_admin'), getPaymentIntelligence);
+  .get(authorizeRoles('admin', 'super_admin'), getPaymentInfo);
 
 router.route('/branch-comparison-suite')
   .get(authorizeRoles('admin', 'super_admin'), getBranchComparisonSuite);

@@ -8,6 +8,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+import toast from 'react-hot-toast';
+import ExportActions from '../../../components/ui/ExportActions';
 
 export default function GlobalAttendancePage() {
   const dateInputRef = useRef(null);
@@ -22,6 +24,15 @@ export default function GlobalAttendancePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
+  
+  const columns = [
+    { header: 'Date', key: 'date' },
+    { header: 'Employee', key: 'user.name' },
+    { header: 'Role', key: 'user.role' },
+    { header: 'Location', key: 'locationName' },
+    { header: 'Status', key: 'status' },
+    { header: 'Marked By', key: 'markedBy.name' }
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +48,8 @@ export default function GlobalAttendancePage() {
         setSummary(summaryRes.data.data);
         setLocations(locRes.data.data);
       } catch (err) {
-        console.error('Failed to fetch attendance matrix');
+        console.error('Failed to fetch attendance list:', err.response?.data || err.message);
+        toast.error(err.response?.data?.message || 'Failed to fetch attendance data stream');
       } finally {
         setLoading(false);
       }
@@ -78,8 +90,34 @@ export default function GlobalAttendancePage() {
         </p>
       </div>
 
-      {/* RIGHT: Controls */}
-      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <ExportActions 
+            data={attendance} 
+            columns={columns} 
+            filename={`Attendance_${filters.date}`} 
+            hasCharts={true}
+          />
+
+          {/* Seed Data Button (Development Only) */}
+          <button
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await api.post('/seed/attendance');
+                toast.success('Database seeded with 14 days of logs!');
+                // Re-fetch data
+                window.location.reload();
+              } catch (err) {
+                toast.error('Failed to seed data');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[var(--color-primary)]/20"
+          >
+            <Activity size={14} />
+            Seed Sample Data
+          </button>
 
         {/* Date Picker */}
         <div
@@ -125,21 +163,21 @@ export default function GlobalAttendancePage() {
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 border-l-4 border-l-green-500 transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Present Today</p>
-              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'present').length}</p>
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-success)] transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Present Today</p>
+              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'present').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.2}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 border-l-4 border-l-red-500 transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Absent Today</p>
-              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-danger)] transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Absent Today</p>
+              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.3}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Total Presents (Month)</p>
-              <p className="text-3xl font-black text-green-600 mt-1">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Presents (Month)</p>
+              <p className="text-3xl font-black text-[var(--color-success)] mt-1">
                 {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalPresentDays) || 0), 0)
                   : 0}
@@ -147,9 +185,9 @@ export default function GlobalAttendancePage() {
             </div>
           </SlideIn>
           <SlideIn delay={0.4}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Total Absents (Month)</p>
-              <p className="text-3xl font-black text-red-600 mt-1">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Absents (Month)</p>
+              <p className="text-3xl font-black text-[var(--color-danger)] mt-1">
                 {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalAbsentDays) || 0), 0)
                   : 0}
@@ -162,13 +200,13 @@ export default function GlobalAttendancePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Daily Distribution */}
           <SlideIn delay={0.5}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Daily Distribution</h2>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Real-time status breakdown</p>
+                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">Daily Distribution</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">Real-time status breakdown</p>
                 </div>
-                <PieIcon size={20} className="text-amber-500" />
+                <PieIcon size={20} className="text-[var(--color-primary)]" />
               </div>
               <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -181,16 +219,16 @@ export default function GlobalAttendancePage() {
                       ]}
                       cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={8} dataKey="value"
                     >
-                      <Cell fill="#10b981" />
-                      <Cell fill="#f43f5e" />
-                      <Cell fill="#f59e0b" />
+                      <Cell fill="var(--color-success)" />
+                      <Cell fill="var(--color-danger)" />
+                      <Cell fill="var(--color-primary)" />
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100 italic">{attendance.length}</span>
-                  <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Staff Members</span>
+                  <span className="text-3xl font-black text-[var(--color-text-primary)] italic">{attendance.length}</span>
+                  <span className="text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Staff Members</span>
                 </div>
               </div>
             </div>
@@ -198,13 +236,13 @@ export default function GlobalAttendancePage() {
 
           {/* Monthly Historical Trends */}
           <SlideIn delay={0.6}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Historical Trends</h2>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Monthly presence vs absence</p>
+                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">Historical Trends</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">Monthly presence vs absence</p>
                 </div>
-                <Activity size={20} className="text-blue-500" />
+                <Activity size={20} className="text-[var(--color-secondary)]" />
               </div>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -216,8 +254,8 @@ export default function GlobalAttendancePage() {
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
                     <Tooltip />
-                    <Bar dataKey="present" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                    <Bar dataKey="absent" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+                    <Bar dataKey="present" fill="var(--color-success)" radius={[4, 4, 0, 0]} barSize={20} />
+                    <Bar dataKey="absent" fill="var(--color-danger)" radius={[4, 4, 0, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -227,64 +265,64 @@ export default function GlobalAttendancePage() {
 
         {/* Attendance Table */}
         <SlideIn direction="up" delay={0.5}>
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
-            <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <h2 className="font-bold text-zinc-900 dark:text-zinc-100">Daily Logs</h2>
+          <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-[var(--color-border)] overflow-hidden transition-colors">
+            <div className="px-6 py-4 border-b border-[var(--color-border)]">
+              <h2 className="font-bold text-[var(--color-text-primary)]">Daily Logs</h2>
             </div>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left min-w-[800px]">
                 <thead>
-                  <tr className="bg-zinc-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                  <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
                     <th className="px-6 py-4">Staff Member</th>
                     <th className="px-6 py-4">Location</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Marked By</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {loading ? (
                     [1, 2, 3].map(i => (
                       <tr key={i} className="animate-pulse">
-                        <td colSpan="4" className="px-6 py-8"><div className="h-4 bg-gray-100 dark:bg-zinc-800 rounded w-full"></div></td>
+                        <td colSpan="4" className="px-6 py-8"><div className="h-4 bg-[var(--color-surface-soft)] rounded w-full"></div></td>
                       </tr>
                     ))
                   ) : attendance.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500 dark:text-zinc-500">No attendance records found for this date.</td>
+                      <td colSpan="4" className="px-6 py-12 text-center text-[var(--color-text-muted)] font-medium">No attendance records found for this date.</td>
                     </tr>
                   ) : (
                     attendance.map((record) => (
-                      <tr key={record._id} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <tr key={record._id} className="hover:bg-[var(--color-primary)]/[0.02] transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-zinc-300 mr-3 uppercase">
+                            <div className="h-8 w-8 rounded-lg bg-[var(--color-surface-soft)] flex items-center justify-center text-xs font-bold text-[var(--color-text-muted)] mr-3 uppercase">
                               {record.user?.name?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">{record.user?.name || 'Unknown'}</p>
-                              <p className="text-[10px] font-medium text-gray-500">
+                              <p className="text-sm font-bold text-[var(--color-text-primary)]">{record.user?.name || 'Unknown'}</p>
+                              <p className="text-[10px] font-medium text-[var(--color-text-muted)]">
                                 {record.user?.role === 'location_admin' || record.user?.role === 'branch_admin' ? 'Branch Admin' : record.user?.role?.replace('_', ' ')}
                               </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-600 dark:text-zinc-400">{record.locationName}</span>
+                          <span className="text-sm font-medium text-[var(--color-text-secondary)]">{record.locationName}</span>
                         </td>
                         <td className="px-6 py-4">
                           {record.status === 'present' ? (
-                            <div className="flex items-center text-green-600 font-bold text-xs uppercase tracking-tighter">
+                            <div className="flex items-center text-[var(--color-success)] font-bold text-xs uppercase tracking-tighter">
                               <CheckCircle2 size={14} className="mr-1" /> Present
                             </div>
                           ) : (
-                            <div className="flex items-center text-red-600 font-bold text-xs uppercase tracking-tighter">
+                            <div className="flex items-center text-[var(--color-danger)] font-bold text-xs uppercase tracking-tighter">
                               <XCircle size={14} className="mr-1" /> Absent
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs text-gray-500 dark:text-zinc-500">{record.markedBy?.name || 'Auto'}</p>
-                        </td>
+                         <td className="px-6 py-4">
+                           <p className="text-xs text-[var(--color-text-muted)]">{record.markedBy?.name || 'Auto'}</p>
+                         </td>
                       </tr>
                     ))
                   )}
@@ -296,22 +334,22 @@ export default function GlobalAttendancePage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] mt-10 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-              Matrix Page {currentPage} of {totalPages}
+          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)]/40 backdrop-blur-2xl border border-[var(--color-border)] rounded-[2.5rem] mt-10 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+              List Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
               >
                 Next
               </button>

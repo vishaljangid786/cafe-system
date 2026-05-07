@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
+const { enforceLocationAccess, escapeRegex, clampLimit } = require('../utils/accessControl');
 
 // @desc    Get all transactions (unified ledger with search, filters, pagination, RBAC)
 // @route   GET /api/transactions
@@ -46,7 +48,7 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   // Search by title or customerName
   if (search) {
-    const searchRegex = new RegExp(search, 'i');
+    const searchRegex = new RegExp(escapeRegex(search), 'i');
     query.$or = [
       { title: searchRegex },
       { customerName: searchRegex },
@@ -73,7 +75,7 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const startIndex = (page - 1) * limit;
 
   const total = await Transaction.countDocuments(query);
@@ -120,7 +122,7 @@ const getTransactions = asyncHandler(async (req, res) => {
   let totalExpense = 0;
   
   totalStats.forEach(stat => {
-    if (stat._id && stat._id.toLowerCase() === 'expense') {
+    if (stat._id && stat._id.toUpperCase() === 'EXPENSE') {
       totalExpense += stat.totalAmount;
     } else {
       totalRevenue += stat.totalAmount;
@@ -148,9 +150,9 @@ const getTransactions = asyncHandler(async (req, res) => {
 const createTransaction = asyncHandler(async (req, res) => {
   const { type, amount, title, category, locationId, date, description } = req.body;
 
-  if (!type || !['manual_revenue', 'expense'].includes(type)) {
+  if (!type || !['MANUAL_REVENUE', 'EXPENSE'].includes(type)) {
     res.status(400);
-    throw new Error('Valid transaction type (manual_revenue or expense) is required');
+    throw new Error('Valid transaction type (MANUAL_REVENUE or EXPENSE) is required');
   }
 
   let targetLocation = locationId;
@@ -162,6 +164,8 @@ const createTransaction = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Location ID is required');
   }
+
+  enforceLocationAccess(req, res, targetLocation, 'Not authorized to create transactions for this location');
 
   // Handle billImage if uploaded (assuming multer is used in routes)
   const billImage = req.file ? req.file.path : undefined;
@@ -175,7 +179,7 @@ const createTransaction = asyncHandler(async (req, res) => {
   const transaction = await Transaction.create({
     type,
     totalAmount: amount,
-    totalProfit: type === 'manual_revenue' ? amount : -amount, // Expense reduces total profit
+    totalProfit: type === 'MANUAL_REVENUE' ? amount : -amount, // Expense reduces total profit
     title,
     category,
     locationId: targetLocation,
@@ -224,6 +228,18 @@ const approveTransaction = asyncHandler(async (req, res) => {
     throw new Error('Transaction record not found');
   }
 
+  // IDOR Mitigation: Branch Admin can only approve transactions for their own branch
+  if (req.user.role === 'branch_admin' && transaction.locationId?.toString() !== req.user.assignedLocation?.toString()) {
+    res.status(403);
+    throw new Error('Not authorized to approve transactions for another branch');
+  }
+
+  // Admin: Only if they have access to this location
+  if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
+    res.status(403);
+    throw new Error('Not authorized to approve transactions for this branch');
+  }
+
   if (transaction.status !== 'pending') {
     res.status(400);
     throw new Error('Only pending transactions can be approved');
@@ -266,6 +282,18 @@ const rejectTransaction = asyncHandler(async (req, res) => {
   if (!transaction) {
     res.status(404);
     throw new Error('Transaction record not found');
+  }
+
+  // IDOR Mitigation: Branch Admin can only reject transactions for their own branch
+  if (req.user.role === 'branch_admin' && transaction.locationId?.toString() !== req.user.assignedLocation?.toString()) {
+    res.status(403);
+    throw new Error('Not authorized to reject transactions for another branch');
+  }
+
+  // Admin: Only if they have access to this location
+  if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
+    res.status(403);
+    throw new Error('Not authorized to reject transactions for this branch');
   }
 
   if (transaction.status !== 'pending') {
@@ -311,7 +339,25 @@ const getTransactionStats = asyncHandler(async (req, res) => {
   const { locationId, startDate, endDate } = req.query;
 
   const query = { status: 'approved' }; // ONLY approved transactions in stats
-  if (locationId && locationId !== 'all') query.locationId = locationId;
+  
+  // RBAC Enforcement
+  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
+    if (!req.user.assignedLocation) {
+      return res.status(400).json({ success: false, message: 'User has no assigned location' });
+    }
+    query.locationId = new mongoose.Types.ObjectId(req.user.assignedLocation.toString());
+  } else if (req.user.role === 'admin') {
+    const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
+    if (locationId && locationId !== 'all') {
+      if (!allowed.includes(locationId)) return res.status(403).json({ success: false, message: 'Access denied' });
+      query.locationId = new mongoose.Types.ObjectId(locationId);
+    } else {
+      query.locationId = { $in: allowed.map(id => new mongoose.Types.ObjectId(id)) };
+    }
+  } else if (locationId && locationId !== 'all' && mongoose.Types.ObjectId.isValid(locationId)) {
+    query.locationId = new mongoose.Types.ObjectId(locationId);
+  }
+
   if (startDate || endDate) {
     query.date = {};
     if (startDate) query.date.$gte = new Date(startDate);

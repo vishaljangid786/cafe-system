@@ -53,7 +53,11 @@ export default function BranchRevenuePage() {
   };
 
   useEffect(() => {
-    fetchRevenue();
+    const timer = setTimeout(() => {
+      fetchRevenue();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [timeRange]);
 
   const filteredData = transactions.filter(t => 
@@ -104,7 +108,7 @@ export default function BranchRevenuePage() {
               <Activity size={120} className="text-emerald-500" />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Sales Velocity</h2>
+              <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Sales Speed</h2>
               <div className="flex gap-10">
                 <div className="text-right">
                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total Yield</p>
@@ -189,7 +193,7 @@ export default function BranchRevenuePage() {
                             </span>
                           </div>
                           <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500 mt-2 bg-emerald-500/5 w-fit px-2 py-0.5 rounded">
-                            {t.type === 'pos_revenue' ? 'Terminal POS' : 'Manual Entry'}
+                            {t.type === 'POS_REVENUE' ? 'Terminal POS' : 'Manual Entry'}
                           </p>
                         </div>
                       </div>

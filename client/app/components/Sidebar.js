@@ -1,102 +1,246 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationModal from './NotificationModal';
 import {
   Coffee, LayoutDashboard, Users, MapPin,
-  Receipt, CalendarCheck, Wallet, ChevronLeft,
+  Receipt, CalendarCheck, Wallet,
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
-  ChevronRight, Target, TrendingUp, Crown, Package,
-  Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download
+  Target, TrendingUp, Crown, Package,
+  Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download,
+  Activity, ShieldAlert, ChevronDown, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const [showNotifModal, setShowNotifModal] = useState(false);
+  const [openGroup, setOpenGroup] = useState(null);
+  const [flyoutTop, setFlyoutTop] = useState(0);
 
-  if (!user) return null;
-
-  const getLinks = () => {
+  const groups = useMemo(() => {
+    if (!user) return [];
     const role = user.role;
-    const links = [];
-    if (role === 'super_admin') {
-      links.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
-      links.push({ name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity });
-    }
+    const permissions = user.permissions || {};
+    const isSuper = role === 'super_admin';
+    const hasPermission = (key) => isSuper || permissions[key] === true;
+
+    const groupsList = [];
+
+    // Main Group
+    const mainItems = [];
     if (role === 'super_admin' || role === 'admin') {
+      mainItems.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
       if (role === 'super_admin') {
-        links.push({ name: 'Executive Hub', href: '/dashboard/super-admin', icon: Zap });
-      } else {
-        links.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
+        mainItems.push({ name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap });
       }
-      links.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
-      links.push({ name: 'Staff', href: '/dashboard/admin/staff', icon: Users });
-      links.push({ name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck });
-      links.push({ name: 'Salaries', href: '/dashboard/admin/payroll', icon: Wallet });
-      links.push({ name: 'Revenue', href: '/dashboard/admin/revenue', icon: TrendingUp });
-      links.push({ name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt });
-      links.push({ name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee });
-      links.push({ name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed });
-      links.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
-      links.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
-      links.push({ name: 'Loyalty & CRM', href: '/dashboard/admin/customers', icon: Crown });
-      links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
-      links.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      links.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
-      links.push({ name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp });
-      links.push({ name: 'Payment Intel', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
-      links.push({ name: 'Command Center', href: '/dashboard/admin/command-center', icon: AlertCircle });
-      links.push({ name: 'Smart Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
-      links.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
     } else if (role === 'branch_admin') {
-      links.push({ name: 'Overview', href: '/dashboard/branch-admin', icon: LayoutDashboard });
-      links.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
-      links.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      links.push({ name: 'Staff List', href: '/dashboard/branch-admin/staff', icon: Users });
-      links.push({ name: 'Attendance', href: '/dashboard/branch-admin/attendance', icon: CalendarCheck });
-      links.push({ name: 'Salaries', href: '/dashboard/branch-admin/salary', icon: Wallet });
-      links.push({ name: 'Revenue', href: '/dashboard/branch-admin/revenue', icon: TrendingUp });
-      links.push({ name: 'Expenses', href: '/dashboard/branch-admin/expenses', icon: Receipt });
-      links.push({ name: 'Tables', href: '/dashboard/branch-admin/tables', icon: Coffee });
-      links.push({ name: 'Menu', href: '/dashboard/branch-admin/menu', icon: UtensilsCrossed });
-      links.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
-      links.push({ name: 'Loyalty & CRM', href: '/dashboard/admin/customers', icon: Crown });
-      links.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
-      links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      links.push({ name: 'Staff Reports', href: '/dashboard/branch-admin/staff-reports', icon: TrendingUp });
+      mainItems.push({ name: 'Overview', href: '/dashboard/branch-admin', icon: LayoutDashboard });
     } else if (role === 'chef') {
-      links.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
-      links.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
-      links.push({ name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp });
-      links.push({ name: 'Work History', href: '/dashboard/staff/work-history', icon: History });
-      links.push({ name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar });
-      links.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
+      mainItems.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
     } else {
-      links.push({ name: 'My Dashboard', href: '/dashboard/staff', icon: LayoutDashboard });
-      links.push({ name: 'New Orders', href: '/dashboard/staff/orders', icon: Receipt });
-      links.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
-      links.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
-      links.push({ name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp });
-      links.push({ name: 'Work History', href: '/dashboard/staff/work-history', icon: History });
-      links.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
-      links.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      mainItems.push({ name: 'My Dashboard', href: '/dashboard/staff', icon: LayoutDashboard });
+      mainItems.push({ name: 'New Orders', href: '/dashboard/staff/orders', icon: Receipt });
+    }
+    groupsList.push({ title: 'Main', items: mainItems });
+
+    // Administration Group
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+      const adminItems = [];
+      const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
+      
+      if (role === 'super_admin') {
+        adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
+        adminItems.push({ name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity });
+      }
+      
+      if (role === 'super_admin') {
+        adminItems.push({ name: 'Impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
+      }
+
+      if (role === 'super_admin' || role === 'admin') {
+        adminItems.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
+      }
+
+      if (hasPermission('manageStaff')) {
+        adminItems.push({ name: 'Staff', href: `${prefix}/staff`, icon: Users });
+        adminItems.push({ name: 'Attendance', href: `${prefix}/attendance`, icon: CalendarCheck });
+        adminItems.push({ name: 'Salaries', href: role === 'branch_admin' ? '/dashboard/branch-admin/salary' : '/dashboard/admin/payroll', icon: Wallet });
+      }
+      
+      adminItems.push({ name: 'Authority', href: `${prefix}/permissions`, icon: ShieldCheck });
+      
+      groupsList.push({ title: 'Administration', items: adminItems });
     }
 
+    // Operations Group
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+      const opsItems = [];
+      
+      if (hasPermission('viewOrders')) {
+        opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
+        opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      }
 
-    links.push({ name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadCount });
-    links.push({ name: 'My Profile', href: '/dashboard/profile', icon: Settings });
+      if (hasPermission('manageOrders')) {
+        opsItems.push({ name: 'Tables', href: role === 'branch_admin' ? '/dashboard/branch-admin/tables' : '/dashboard/admin/tables', icon: Coffee });
+        opsItems.push({ name: 'Menu', href: role === 'branch_admin' ? '/dashboard/branch-admin/menu' : '/dashboard/admin/menu', icon: UtensilsCrossed });
+        opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
+      }
 
-    return links;
+      if ((role === 'super_admin' || role === 'admin') && hasPermission('manageCoupons')) {
+        opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
+      }
+      
+      if (opsItems.length > 0) {
+        groupsList.push({ title: 'Operations', items: opsItems });
+      }
+    } else {
+        const opsItems = [];
+        if (role !== 'chef') {
+            opsItems.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
+            opsItems.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
+            opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+        } else {
+            opsItems.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
+        }
+        groupsList.push({ title: 'Operations', items: opsItems });
+    }
+
+    // Analytics Group
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+      const analyticsItems = [];
+      const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
+
+      if (hasPermission('viewRevenue')) {
+        analyticsItems.push({ name: 'Revenue', href: `${prefix}/revenue`, icon: TrendingUp });
+        analyticsItems.push({ name: 'Expenses', href: `${prefix}/expenses`, icon: Receipt });
+      }
+
+      if (hasPermission('viewAnalytics')) {
+        analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+        
+        if (role === 'super_admin' || role === 'admin') {
+          analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
+        }
+        
+        analyticsItems.push({ name: 'Staff Reports', href: `${prefix}/staff-reports`, icon: TrendingUp });
+        
+        if (role === 'super_admin' || role === 'admin') {
+          analyticsItems.push({ name: 'Payment Intel', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+          analyticsItems.push({ name: 'Command Center', href: '/dashboard/admin/command-center', icon: AlertCircle });
+          analyticsItems.push({ name: 'Smart Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+        }
+      }
+      
+      if (hasPermission('exportReports')) {
+        analyticsItems.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
+      }
+
+      if (analyticsItems.length > 0) {
+        groupsList.push({ title: 'Analytics', items: analyticsItems });
+      }
+    } else {
+        const performanceItems = [
+            { name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp },
+            { name: 'Work History', href: '/dashboard/staff/work-history', icon: History },
+            { name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar },
+        ];
+        if (role === 'chef') {
+            performanceItems.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
+        } else {
+             performanceItems.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
+        }
+        groupsList.push({ title: 'Performance', items: performanceItems });
+    }
+
+    // Loyalty Group
+    if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin') && hasPermission('viewAnalytics')) {
+      groupsList.push({ 
+        title: 'Loyalty', 
+        items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }] 
+      });
+    }
+
+    // System Group
+    groupsList.push({
+      title: 'System',
+      items: [
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadCount },
+        { name: 'My Profile', href: '/dashboard/profile', icon: Settings },
+      ]
+    });
+
+    return groupsList;
+  }, [user, unreadCount]);
+
+  // Sync open group with current pathname
+  useEffect(() => {
+    const activeGroup = groups.find(group => 
+      group.items.some(link => {
+        const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
+        return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+      })
+    );
+    if (activeGroup) {
+      const timer = setTimeout(() => {
+        setOpenGroup(activeGroup.title);
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, groups]);
+
+  const leaveTimeout = useRef(null);
+  const [hoveredGroup, setHoveredGroup] = useState(null);
+
+  const currentActiveGroupTitle = useMemo(() => {
+    const active = groups.find(group => 
+      group.items.some(link => {
+        const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
+        return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+      })
+    );
+    return active?.title || null;
+  }, [pathname, groups]);
+
+  const handleGroupInteraction = (e, groupTitle, type = 'hover') => {
+    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+    
+    if (e && e.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setFlyoutTop(rect.top);
+    }
+
+    if (type === 'click' || type === 'toggle') {
+      const group = groups.find(g => g.title === groupTitle);
+      if (openGroup === groupTitle) {
+        setOpenGroup(null);
+      } else {
+        setOpenGroup(groupTitle);
+      }
+      
+      // Navigate to the first submenu item on 'click' type only
+      if (type === 'click' && group && group.items.length > 0) {
+        router.push(group.items[0].href);
+      }
+    } else {
+      setHoveredGroup(groupTitle);
+    }
   };
 
-  const links = getLinks();
+  const handleMouseLeave = () => {
+    leaveTimeout.current = setTimeout(() => {
+      setHoveredGroup(null);
+    }, 150);
+  };
+
   const showLabels = isExpanded || isMobile;
 
   const sidebarVariants = {
@@ -106,8 +250,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     mobileClosed: { width: 280, x: -280 }
   };
 
+  if (!user) return null;
+
   const content = (
-    <div className="h-full flex flex-col bg-transparent border-r border-[var(--color-border)] transition-all duration-300 relative overflow-hidden">
+    <div className={`h-full flex flex-col bg-[var(--color-sidebar-bg)] backdrop-blur-xl border-r border-[var(--color-border)] transition-all duration-300 relative`}>
       <NotificationModal isOpen={showNotifModal} onClose={() => setShowNotifModal(false)} />
       {/* Brand Header */}
       <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0 mb-2`}>
@@ -131,63 +277,116 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       </div>
 
       {/* Navigation */}
-      <div className={`flex-1 py-2 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}>
-        <div className="space-y-1">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders'].includes(link.name);
-            const isActive = isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+      <div 
+        className={`flex-1 py-4 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className="space-y-4">
+          {groups.map((group) => {
+            const FirstIcon = group.items[0]?.icon || Coffee;
+            const isActive = group.items.some(link => {
+              const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
+              return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+            });
 
             return (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => isMobile && setIsMobileOpen(false)}
-                className={`
-                  group flex items-center relative py-2.5 my-2 rounded-xl transition-all duration-200
-                  ${showLabels ? 'px-3' : 'justify-center px-0'}
-                  ${isActive
-                    ? 'bg-primary text-white font-bold'
-                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'}
-                `}
+              <div 
+                key={group.title} 
+                className="relative"
+                onMouseEnter={(e) => handleGroupInteraction(e, group.title, 'hover')}
               >
-                <div className="relative z-10">
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0 transition-transform group-hover:scale-105" />
-                  {link.badge > 0 && !showLabels && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--color-surface)]" />
-                  )}
-                </div>
-
-                {showLabels && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="ml-3 flex-1 flex items-center justify-between z-10"
+                {showLabels ? (
+                  <div 
+                    className={`px-4 py-3 flex items-center justify-between group/header rounded-2xl transition-all duration-300 ${openGroup === group.title ? 'bg-primary/10 shadow-sm' : 'hover:bg-[var(--color-surface-soft)]'}`}
                   >
-                    <span className="text-sm tracking-tight whitespace-nowrap">{link.name}</span>
-                    {link.badge > 0 && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isActive ? 'bg-primary text-white' : 'bg-[var(--color-danger)] text-white'}`}>{link.badge}</span>
-                    )}
-                  </motion.div>
-                )}
-
-                {!showLabels && !isMobile && (
-                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-[var(--color-text-primary)] text-[var(--color-bg)] text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-lg">
-                    {link.name}
+                    <span 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGroupInteraction(e, group.title, 'click');
+                      }}
+                      className={`flex-1 py-1 text-[11px] font-black uppercase tracking-[0.25em] cursor-pointer transition-colors ${openGroup === group.title ? 'text-primary' : 'text-[var(--color-text-muted)] group-hover/header:text-[var(--color-text-primary)]'}`}
+                    >
+                      {group.title}
+                    </span>
+                    <motion.div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGroupInteraction(e, group.title, 'toggle');
+                      }}
+                      animate={{ rotate: openGroup === group.title ? 0 : -90, scale: openGroup === group.title ? 1.1 : 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="p-1 cursor-pointer hover:bg-primary/10 rounded-lg transition-colors"
+                    >
+                      <ChevronDown size={14} className={openGroup === group.title ? 'text-primary' : 'text-[var(--color-text-muted)]'} />
+                    </motion.div>
+                  </div>
+                ) : (
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGroupInteraction(e, group.title, 'click');
+                    }}
+                    className={`h-12 w-12 mx-auto flex items-center justify-center rounded-2xl cursor-pointer transition-all duration-300 ${openGroup === group.title || isActive ? 'bg-primary text-black shadow-xl shadow-primary/20 scale-110' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}`}
+                  >
+                    <FirstIcon size={22} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
                   </div>
                 )}
-              </Link>
+                
+                {/* Inline Dropdown (Determined by openGroup state) */}
+                <AnimatePresence>
+                  {openGroup === group.title && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden space-y-1 mt-1 pl-4 pr-1"
+                    >
+                      {group.items.map((link) => {
+                        const Icon = link.icon;
+                        const isLinkExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
+                        const isLinkActive = isLinkExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isMobile) setIsMobileOpen(false);
+                              setOpenGroup(group.title);
+                            }}
+                            className={`
+                              flex items-center py-3 px-4 rounded-xl transition-all duration-200
+                              ${isLinkActive 
+                                ? 'bg-primary text-black font-bold shadow-sm' 
+                                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
+                            `}
+                          >
+                            <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="mr-3 shrink-0" />
+                            <span className="text-sm tracking-tight">{link.name}</span>
+                            {link.badge > 0 && (
+                              <span className={`ml-auto px-1.5 py-0.5 rounded-lg text-[10px] ${isLinkActive ? 'bg-black/20 text-black' : 'bg-primary/20 text-primary'}`}>
+                                {link.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* Transmission Hub Action */}
+      {/* Update Center Action */}
       <div className="px-3 mb-4">
         <button
           onClick={() => setShowNotifModal(true)}
           className={`
-            w-full flex items-center gap-3 p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg)] transition-all group
+            w-full flex items-center gap-3 p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] transition-all group
             ${showLabels ? 'justify-start px-3' : 'justify-center'}
           `}
         >
@@ -201,7 +400,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       </div>
 
       {/* User Footer */}
-      <div className={`p-4 mt-auto border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]/50`}>
+      <div className={`p-4 mt-auto border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]/70`}>
         <div className={`flex items-center gap-3 ${showLabels ? '' : 'justify-center'}`}>
           <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
             {user.profileImageUrl ? (
@@ -258,6 +457,83 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       >
         {content}
       </motion.aside>
+
+      {/* Flyout Portals (ONLY for Non-Active Groups on Hover) */}
+      {!isMobile && (
+        <AnimatePresence>
+          {hoveredGroup && hoveredGroup !== currentActiveGroupTitle && (
+            <motion.div
+              key={hoveredGroup}
+              initial={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              style={{ 
+                position: 'fixed',
+                top: Math.max(20, Math.min(flyoutTop, typeof window !== 'undefined' ? window.innerHeight - ((groups.find(g => g.title === hoveredGroup)?.items.length || 0) * 52 + 80) : flyoutTop)),
+                left: showLabels ? 250 : 75,
+              }}
+              onMouseEnter={() => {
+                if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+                setHoveredGroup(hoveredGroup);
+              }}
+              onMouseLeave={handleMouseLeave}
+              className="w-72 bg-[var(--color-sidebar-bg)] backdrop-blur-3xl border border-[var(--color-border)] rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] p-4 z-[300] space-y-1.5"
+            >
+              {(() => {
+                const groupData = groups.find(g => g.title === hoveredGroup);
+                if (!groupData) return null;
+                return (
+                  <>
+                    <div className="px-4 py-2 mb-2 border-b border-[var(--color-border)] flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+                        {groupData.title}
+                      </span>
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    </div>
+                    <div className="max-h-[70vh] overflow-y-auto custom-scrollbar pr-1 space-y-1">
+                      {groupData.items.map((link) => {
+                        const Icon = link.icon;
+                        const isLinkExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
+                        const isLinkActive = isLinkExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isMobile) setIsMobileOpen(false);
+                              setHoveredGroup(null);
+                              setOpenGroup(groupData.title);
+                            }}
+                            className={`
+                              group/item flex items-center relative py-3.5 px-4 rounded-2xl transition-all duration-300
+                              ${isLinkActive
+                                ? 'bg-primary text-black font-black shadow-lg shadow-primary/10'
+                                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
+                            `}
+                          >
+                            <div className="relative z-10 flex items-center w-full">
+                              <Icon size={18} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0 transition-transform group-hover/item:scale-110" />
+                              <span className="ml-3 text-sm tracking-tight whitespace-nowrap flex-1">{link.name}</span>
+                              {link.badge > 0 && (
+                                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${isLinkActive ? 'bg-black/20 text-black' : 'bg-primary/20 text-primary'}`}>
+                                  {link.badge}
+                                </span>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </>
   );
 };

@@ -87,7 +87,10 @@ export default function StaffExpensesPage() {
   };
 
   useEffect(() => {
-    fetchExpenses();
+    const timer = setTimeout(() => {
+      fetchExpenses();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [timeRange, currentPage, searchTerm]);
 
   const handleAddExpense = async (e) => {
@@ -109,7 +112,7 @@ export default function StaffExpensesPage() {
       setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toLocaleDateString('en-CA'), description: '' });
       fetchExpenses();
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'Protocol failure';
+      const msg = error.response?.data?.message || error.message || 'System Rule failure';
       toast.error(msg, { id: loadToast });
     }
   };
@@ -143,7 +146,7 @@ export default function StaffExpensesPage() {
                     My <span className="text-rose-500">Expenses</span>
                   </h1>
                   <p className="text-zinc-500 font-bold mt-2 flex items-center gap-2 text-sm">
-                    <Sparkles size={14} className="text-amber-500" />
+                    <Sparkles size={14} className="text-blue-500" />
                     Record and track your personal operational spend.
                   </p>
                 </div>
@@ -228,7 +231,7 @@ export default function StaffExpensesPage() {
                               <h4 className="font-black text-zinc-900 dark:text-white tracking-tight text-base line-clamp-1">
                                 {t.title}
                               </h4>
-                              {t.status === 'pending' && <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />}
+                              {t.status === 'pending' && <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />}
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
@@ -236,7 +239,7 @@ export default function StaffExpensesPage() {
                               </span>
                               <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${t.status === 'approved' ? 'text-rose-500 bg-rose-500/5 border-rose-500/10' :
                                   t.status === 'rejected' ? 'text-zinc-500 bg-zinc-500/5 border-zinc-500/10' :
-                                    'text-amber-500 bg-amber-500/5 border-amber-500/10 animate-pulse'
+                                    'text-blue-500 bg-blue-500/5 border-blue-500/10 animate-pulse'
                                 }`}>
                                 {t.status}
                               </span>
@@ -286,7 +289,7 @@ export default function StaffExpensesPage() {
                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700">
                   <Wallet size={100} strokeWidth={1} />
                 </div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Personal Velocity</h3>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Personal Speed</h3>
                 <div className="space-y-6 relative z-10">
                   <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +322,7 @@ export default function StaffExpensesPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{selectedExpense.title}</h3>
                       {selectedExpense.status === 'pending' && (
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-lg animate-pulse">Pending Review</span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg animate-pulse">Pending Review</span>
                       )}
                       {selectedExpense.status === 'rejected' && (
                         <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-zinc-500/10 text-zinc-600 border border-zinc-500/20 rounded-lg">Revoked</span>
@@ -353,7 +356,7 @@ export default function StaffExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Protocol User'}</p>
+                      <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'System Rule User'}</p>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
@@ -361,7 +364,7 @@ export default function StaffExpensesPage() {
 
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-6 flex items-center gap-2">
-                    <MapPin size={12} className="text-rose-500" /> Station Hub
+                    <MapPin size={12} className="text-rose-500" /> Station Center
                   </p>
                   <div className="space-y-1">
                     <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.locationId?.name || 'Central Command'}</p>
@@ -372,11 +375,11 @@ export default function StaffExpensesPage() {
 
               <div className="space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2 ml-2">
-                  <Info size={12} className="text-rose-500" /> Descriptive Intelligence
+                  <Info size={12} className="text-rose-500" /> Descriptive Information
                 </p>
                 <div className="p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 relative">
                   <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed italic relative z-10">
-                    "{selectedExpense.description || "No descriptive intelligence was archived for this particular resource outflow."}"
+                    &ldquo;{selectedExpense.description || 'No descriptive info was archived for this particular resource outflow.'}&rdquo;
                   </p>
                 </div>
               </div>
@@ -463,7 +466,7 @@ export default function StaffExpensesPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Intelligence Notes</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 ml-2">Information Notes</label>
                 <textarea className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-rose-500/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Provide specific context for this outflow..." />
               </div>
             </div>

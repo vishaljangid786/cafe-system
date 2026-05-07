@@ -174,22 +174,30 @@ export default function UniversalDateFilter({
   };
 
   useEffect(() => {
-    // Reset sub-values when type changes
-    if (filterType !== 'past_week' && filterType !== 'past_month' && filterType !== 'past_year') {
-      setSelectedSubValue('');
-    }
-
-    if (filterType !== 'custom') {
-      const { start, end } = calculateDates(filterType, selectedSubValue);
-      if (filterType === 'all' || start) {
-        onFilterChange({ startDate: start, endDate: end, filterType });
+    const timer = setTimeout(() => {
+      // Reset sub-values when type changes
+      if (filterType !== 'past_week' && filterType !== 'past_month' && filterType !== 'past_year') {
+        setSelectedSubValue('');
       }
-    }
+
+      if (filterType !== 'custom') {
+        const { start, end } = calculateDates(filterType, selectedSubValue);
+        if (filterType === 'all' || start) {
+          onFilterChange({ startDate: start, endDate: end, filterType });
+        }
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [filterType, selectedSubValue]);
 
   useEffect(() => {
     if (filterType === 'custom' && customDates.start && customDates.end) {
-      onFilterChange({ startDate: customDates.start, endDate: customDates.end, filterType });
+      const timer = setTimeout(() => {
+        onFilterChange({ startDate: customDates.start, endDate: customDates.end, filterType });
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [customDates]);
 
@@ -207,7 +215,7 @@ export default function UniversalDateFilter({
 
         {loading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <Loader2 className="animate-spin text-amber-500" size={18} />
+            <Loader2 className="animate-spin text-[var(--color-primary)]" size={18} />
           </div>
         )}
       </div>
@@ -278,7 +286,7 @@ export default function UniversalDateFilter({
               <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
               <input
                 type="date"
-                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
                 value={customDates.start}
                 onChange={e => setCustomDates({ ...customDates, start: e.target.value })}
               />
@@ -287,7 +295,7 @@ export default function UniversalDateFilter({
               <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
               <input
                 type="date"
-                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
                 value={customDates.end}
                 onChange={e => setCustomDates({ ...customDates, end: e.target.value })}
               />

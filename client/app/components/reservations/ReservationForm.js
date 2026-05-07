@@ -56,20 +56,24 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
   useEffect(() => {
     if (editData) {
-      const matchedPreset = EVENT_DESIGNATIONS.find(
-        d => d !== 'Other' && d === editData.eventName
-      );
-      if (matchedPreset) {
-        setSelectedEventType(matchedPreset);
-      } else if (editData.eventName) {
-        setSelectedEventType('Other');
-      }
-      setFormData({
-        ...editData,
-        locationId: editData.locationId?._id || editData.locationId,
-        tableIds: editData.tableIds?.map(t => t._id || t) || [],
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : ''
-      });
+      const timer = setTimeout(() => {
+        const matchedPreset = EVENT_DESIGNATIONS.find(
+          d => d !== 'Other' && d === editData.eventName
+        );
+        if (matchedPreset) {
+          setSelectedEventType(matchedPreset);
+        } else if (editData.eventName) {
+          setSelectedEventType('Other');
+        }
+        setFormData({
+          ...editData,
+          locationId: editData.locationId?._id || editData.locationId,
+          tableIds: editData.tableIds?.map(t => t._id || t) || [],
+          date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : ''
+        });
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [editData]);
 
@@ -82,7 +86,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         console.error('Error fetching locations:', error);
       }
     };
-    fetchLocations();
+    const timer = setTimeout(() => {
+      fetchLocations();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -98,10 +106,18 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
     };
 
     if (formData.locationId) {
-      fetchTables(formData.locationId);
+      const timer = setTimeout(() => {
+        fetchTables(formData.locationId);
+      }, 0);
+
+      return () => clearTimeout(timer);
     } else {
-      setTables([]);
-      setFormData(prev => ({ ...prev, tableIds: [] }));
+      const timer = setTimeout(() => {
+        setTables([]);
+        setFormData(prev => ({ ...prev, tableIds: [] }));
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [formData.locationId]);
 
@@ -131,7 +147,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
     const { locationId, date, startTime, endTime } = formData;
     if (locationId && date && startTime && endTime) {
-      checkAvailability();
+      const timer = setTimeout(() => {
+        checkAvailability();
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [formData.locationId, formData.date, formData.startTime, formData.endTime, formData.reservationType, formData.tableIds, editData?._id]);
 
@@ -181,10 +201,10 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         {/* Step 1: Event Details */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+            <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
               <Info size={16} />
             </div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Event Information</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Event Information</h4>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -213,12 +233,12 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                   type="text"
                   placeholder={selectedEventType === 'Other' ? "Type custom designation..." : "Select category or type 'Other'"}
                   disabled={selectedEventType !== 'Other' && selectedEventType !== ''}
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none transition-all text-zinc-900 dark:text-zinc-100 font-bold placeholder:text-zinc-500 disabled:opacity-60"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none transition-all text-[var(--color-text-primary)] font-bold placeholder:text-[var(--color-text-muted)] disabled:opacity-60"
                   value={formData.eventName}
                   onChange={e => setFormData({ ...formData, eventName: e.target.value })}
                 />
                 {selectedEventType === 'Other' && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Custom</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[var(--color-primary)] uppercase tracking-widest bg-[var(--color-primary)]/10 px-3 py-1 rounded-full border border-[var(--color-primary)]/20">Custom</span>
                 )}
               </div>
             </div>
@@ -228,28 +248,28 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         {/* Step 2: Booking Details */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+            <div className="h-8 w-8 rounded-lg bg-[var(--color-secondary)]/10 flex items-center justify-center text-[var(--color-secondary)]">
               <MapPin size={16} />
             </div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Booking Type & Branch</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Booking Type & Branch</h4>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type Selector</label>
-                <div className="flex bg-zinc-100 dark:bg-zinc-950 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Type Selector</label>
+                <div className="flex bg-[var(--color-bg-soft)] p-1.5 rounded-2xl border border-[var(--color-border)]">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, reservationType: 'table' })}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.reservationType === 'table' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.reservationType === 'table' ? 'bg-[var(--color-primary)] text-black shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     Table
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, reservationType: 'full-location' })}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.reservationType === 'full-location' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.reservationType === 'full-location' ? 'bg-[var(--color-primary)] text-black shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     Full Branch
                   </button>
@@ -273,11 +293,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                   <input
                     required
                     type="date"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
                   />
-                  <Calendar className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Calendar className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                 </div>
               </div>
               <div className="space-y-2">
@@ -286,11 +306,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                   <input
                     required
                     type="time"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
                     value={formData.startTime}
                     onChange={e => setFormData({ ...formData, startTime: e.target.value })}
                   />
-                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                 </div>
               </div>
               <div className="space-y-2">
@@ -299,11 +319,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                   <input
                     required
                     type="time"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
                     value={formData.endTime}
                     onChange={e => setFormData({ ...formData, endTime: e.target.value })}
                   />
-                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                 </div>
               </div>
             </div>
@@ -321,19 +341,19 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
             >
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-zinc-500/10 flex items-center justify-center text-zinc-500">
+                  <div className="h-8 w-8 rounded-lg bg-[var(--color-text-muted)]/10 flex items-center justify-center text-[var(--color-text-muted)]">
                     <LayoutGrid size={16} />
                   </div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Select Tables</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Select Tables</h4>
                 </div>
                 {formData.tableIds.length > 0 && (
-                  <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-4 py-1.5 rounded-full uppercase tracking-widest">
                     {formData.tableIds.length} Tables Selected
                   </span>
                 )}
               </div>
 
-              <div className="p-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
+              <div className="p-6 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-[2.5rem]">
                 {tables.length === 0 ? (
                   <div className="py-10 text-center opacity-50 italic">No tables found for this branch.</div>
                 ) : (
@@ -346,15 +366,15 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                           type="button"
                           onClick={() => handleTableToggle(table._id)}
                           className={`relative group h-24 rounded-[1.5rem] border-2 flex flex-col items-center justify-center gap-1 transition-all duration-300 ${isSelected
-                              ? 'bg-amber-500 border-amber-500 text-black shadow-xl shadow-amber-500/30 -translate-y-1'
-                              : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:border-amber-500/50 hover:bg-amber-500/5'
+                              ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-black shadow-xl shadow-[var(--color-primary)]/30 -translate-y-1'
+                              : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5'
                             }`}
                         >
-                          <Users size={16} className={isSelected ? 'text-black' : 'text-zinc-500'} />
+                          <Users size={16} className={isSelected ? 'text-black' : 'text-[var(--color-text-muted)]'} />
                           <span className={`text-base font-black leading-none ${isSelected ? 'text-black' : ''}`}>T{table.tableNumber}</span>
-                          <span className={`text-[9px] font-black uppercase tracking-tighter ${isSelected ? 'text-black/60' : 'text-zinc-500'}`}>{table.seats || 2} SEATS</span>
+                          <span className={`text-[9px] font-black uppercase tracking-tighter ${isSelected ? 'text-black/60' : 'text-[var(--color-text-muted)]'}`}>{table.seats || 2} SEATS</span>
                           {isSelected && (
-                            <div className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-black rounded-full flex items-center justify-center text-amber-500 shadow-lg ring-4 ring-amber-500">
+                            <div className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-black rounded-full flex items-center justify-center text-[var(--color-primary)] shadow-lg ring-4 ring-[var(--color-primary)]">
                               <CheckCircle2 size={12} strokeWidth={3} />
                             </div>
                           )}
@@ -375,17 +395,17 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`p-6 rounded-[2rem] border-2 flex items-center gap-5 ${checkingAvailability ? 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500' :
-                  availabilityStatus?.available ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                    'bg-rose-500/10 border-rose-500/20 text-rose-500'
+              className={`p-6 rounded-[2rem] border-2 flex items-center gap-5 ${checkingAvailability ? 'bg-[var(--color-bg-soft)] border-[var(--color-border)] text-[var(--color-text-muted)]' :
+                  availabilityStatus?.available ? 'bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]' :
+                    'bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20 text-[var(--color-danger)]'
                 }`}
             >
-              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${checkingAvailability ? 'bg-zinc-200 dark:bg-zinc-800' :
-                  availabilityStatus?.available ? 'bg-emerald-500/20' :
-                    'bg-rose-500/20'
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${checkingAvailability ? 'bg-[var(--color-border)]' :
+                  availabilityStatus?.available ? 'bg-[var(--color-success)]/20' :
+                    'bg-[var(--color-danger)]/20'
                 }`}>
                 {checkingAvailability ? (
-                  <Loader2 className="animate-spin text-zinc-400" size={24} />
+                  <Loader2 className="animate-spin text-[var(--color-text-muted)]" size={24} />
                 ) : availabilityStatus?.available ? (
                   <CheckCircle2 size={24} />
                 ) : (
@@ -403,36 +423,36 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         </AnimatePresence>
 
         {/* Step 3: Customer & Payment */}
-        <section className="pt-10 border-t border-zinc-200 dark:border-zinc-800 grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <section className="pt-10 border-t border-[var(--color-border)] grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <Users className="text-amber-500" size={20} />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Client Details</h4>
+              <Users className="text-[var(--color-primary)]" size={20} />
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Client Details</h4>
             </div>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Client Full Name</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Client Full Name</label>
                 <input
                   required
                   type="text"
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
                   value={formData.customerName}
                   onChange={e => setFormData({ ...formData, customerName: e.target.value })}
                   placeholder="e.g. John Wick"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Phone Number</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Phone Number</label>
                 <div className="relative">
                   <input
                     required
                     type="tel"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-bold"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
                     value={formData.customerPhone}
                     onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
                     placeholder="+91 XXXXX XXXXX"
                   />
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                 </div>
               </div>
             </div>
@@ -440,29 +460,29 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <CreditCard className="text-amber-500" size={20} />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Payment Details</h4>
+              <CreditCard className="text-[var(--color-primary)]" size={20} />
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Payment Details</h4>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Total Amount</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Total Amount</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
                   <input
                     type="number"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-black"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-black"
                     value={formData.totalAmount}
                     onChange={e => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Advance Payment</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Advance Payment</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
                   <input
                     type="number"
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-amber-500/30 outline-none text-zinc-900 dark:text-zinc-100 font-black"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-black"
                     value={formData.advancePayment}
                     onChange={e => setFormData({ ...formData, advancePayment: Number(e.target.value) })}
                   />
@@ -483,18 +503,18 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         </section>
 
         {/* Footer Actions - Fixed-style with backdrop blur */}
-        <div className="pt-8 flex items-center justify-end gap-6 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="pt-8 flex items-center justify-end gap-6 border-t border-[var(--color-border)]">
           <button
             type="button"
             onClick={onClose}
-            className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-rose-500 transition-all"
+            className="px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
           >
             Cancel
           </button>
           <button
             disabled={loading || (availabilityStatus && !availabilityStatus.available)}
             type="submit"
-            className="px-10 py-5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black rounded-2xl transition-all shadow-2xl shadow-amber-500/30 flex items-center gap-3 uppercase tracking-widest text-xs"
+            className="px-10 py-5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black rounded-2xl transition-all shadow-2xl shadow-[var(--color-primary)]/30 flex items-center gap-3 uppercase tracking-widest text-xs"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} strokeWidth={3} />}
             {editData ? 'Update Reservation' : 'Book Reservation'}

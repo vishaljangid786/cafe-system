@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [10, 'Password must be at least 10 characters'],
     },
     phone: {
       type: String,
@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-      required: [true, 'Age is required'],
       min: [18, 'User must be at least 18 years old'],
       max: [99, 'Age cannot be more than 99'],
     },
@@ -51,11 +50,11 @@ const userSchema = new mongoose.Schema(
     },
     state: {
       type: String,
-      required: [true, 'State is required'],
+      default: '',
     },
     country: {
       type: String,
-      required: [true, 'Country is required'],
+      default: 'India',
     },
     pincode: {
       type: String,
@@ -98,17 +97,15 @@ const userSchema = new mongoose.Schema(
     ],
     aadharNumber: {
       type: String,
-      required: [true, 'Aadhar Number is required'],
       match: [/^[0-9]{12}$/, 'Please add a valid 12-digit Aadhar number'],
     },
     aadharImage: {
       type: String, // Cloudinary URL
-      required: [true, 'Aadhar Image is required'],
     },
     highestQualification: {
       type: String,
-      required: [true, 'Highest Qualification is required'],
-      enum: ['12th Pass', 'Diploma', 'Graduate', 'Post Graduate'],
+      enum: ['10th Pass', '12th Pass', 'Diploma', 'Graduate', 'Post Graduate'],
+      default: '12th Pass'
     },
     monthlySalary: {
       type: Number,
@@ -121,6 +118,10 @@ const userSchema = new mongoose.Schema(
     isBlocked: {
       type: Boolean,
       default: false,
+    },
+    active: {
+      type: Boolean,
+      default: true,
     },
   },
   {

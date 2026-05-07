@@ -49,7 +49,6 @@ export default function TablesPage() {
   };
 
   useEffect(() => {
-    fetchTables();
     const fetchResources = async () => {
       try {
         const [menuRes, couponRes] = await Promise.all([
@@ -62,7 +61,12 @@ export default function TablesPage() {
         console.error("Load failed");
       }
     };
-    fetchResources();
+    const timer = setTimeout(() => {
+      fetchTables();
+      fetchResources();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleAddTable = async (e) => {
@@ -272,8 +276,8 @@ export default function TablesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <Globe size={20} className="text-amber-500" />
+              <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Globe size={20} className="text-blue-500" />
               </div>
               {user?.assignedLocation?.name || 'Tables'}
             </h1>
@@ -281,7 +285,7 @@ export default function TablesPage() {
           </div>
           <Button
             variant="primary"
-            className="!rounded-xl !py-2.5 px-5 shadow-lg shadow-amber-500/20 whitespace-nowrap self-start sm:self-auto"
+            className="!rounded-xl !py-2.5 px-5 shadow-lg shadow-blue-500/20 whitespace-nowrap self-start sm:self-auto"
             icon={Plus}
             onClick={() => {
               setIsEditing(false);
@@ -332,7 +336,7 @@ export default function TablesPage() {
                         ${isAvailable
                         ? 'border-zinc-200 dark:border-zinc-700 hover:border-emerald-400/60 hover:shadow-emerald-500/10'
                         : isBooked
-                          ? 'border-amber-400/40 bg-amber-500/5 hover:border-amber-500/70 hover:shadow-amber-500/10'
+                          ? 'border-blue-400/40 bg-blue-500/5 hover:border-blue-500/70 hover:shadow-blue-500/10'
                           : 'border-rose-400/40 bg-rose-500/5 hover:border-rose-500/70 hover:shadow-rose-500/10'
                       } bg-white dark:bg-zinc-900`}
                     onClick={() => isAvailable ? handleBookTable(table) : handleOpenOrder(table)}
@@ -351,7 +355,7 @@ export default function TablesPage() {
 
                       {/* Table Name */}
                       {table.tableName && (
-                        <span className="text-[11px] font-black text-amber-600 uppercase tracking-tight -mt-1">{table.tableName}</span>
+                        <span className="text-[11px] font-black text-blue-600 uppercase tracking-tight -mt-1">{table.tableName}</span>
                       )}
 
                       {/* Capacity */}
@@ -367,14 +371,14 @@ export default function TablesPage() {
 
                       {/* Revenue */}
                       {isBooked && table.totalAmount > 0 && (
-                        <span className="text-sm font-black text-amber-600">₹{Number(table.totalAmount).toLocaleString()}</span>
+                        <span className="text-sm font-black text-blue-600">₹{Number(table.totalAmount).toLocaleString()}</span>
                       )}
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
-                          className="h-8 w-8 rounded-xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-zinc-400 hover:text-amber-500"
+                          className="h-8 w-8 rounded-xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-zinc-400 hover:text-blue-500"
                         >
                           <Edit3 size={14} />
                         </button>
@@ -422,7 +426,7 @@ export default function TablesPage() {
               <input
                 required
                 type="number"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableNumber}
                 onChange={e => setNewTableNumber(e.target.value)}
                 placeholder="e.g. 101"
@@ -432,7 +436,7 @@ export default function TablesPage() {
               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Table Name (Optional)</label>
               <input
                 type="text"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableName}
                 onChange={e => setNewTableName(e.target.value)}
                 placeholder="e.g. Window Corner"
@@ -444,7 +448,7 @@ export default function TablesPage() {
                 required
                 type="number"
                 min="1"
-                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-amber-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
+                className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 focus:ring-2 focus:ring-blue-500 p-5 text-sm font-bold dark:text-zinc-100 outline-none transition-all"
                 value={newTableCapacity}
                 onChange={e => setNewTableCapacity(e.target.value)}
                 placeholder="e.g. 4"
@@ -453,7 +457,7 @@ export default function TablesPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full !rounded-2xl !py-5 shadow-xl shadow-amber-600/20"
+              className="w-full !rounded-2xl !py-5 shadow-xl shadow-blue-600/20"
               icon={isEditing ? Edit3 : Plus}
             >
               {isEditing ? 'Update Table' : 'Add Table'}
@@ -473,7 +477,7 @@ export default function TablesPage() {
               <div className="lg:col-span-5 flex flex-col h-full bg-zinc-50 dark:bg-zinc-950/30 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 overflow-hidden">
                 <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                    <ShoppingBag size={14} className="mr-2 text-amber-600" /> Current Order
+                    <ShoppingBag size={14} className="mr-2 text-blue-600" /> Current Order
                   </h3>
                   <span className="text-[10px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-3 py-1 rounded-full uppercase tracking-widest">
                     {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)} Items
@@ -487,12 +491,12 @@ export default function TablesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={`${order.menuItemId || order.itemName}-${idx}`}
-                      className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 group hover:border-amber-500/20 transition-all"
+                      className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 group hover:border-blue-500/20 transition-all"
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden relative border border-zinc-200 dark:border-zinc-700">
                           {order.image ? (
-                            <img src={order.image} className="h-full w-full object-cover" />
+                            <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-zinc-300">
                               <Coffee size={16} />
@@ -521,7 +525,7 @@ export default function TablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-amber-600 w-16 text-right">
+                        <div className="text-sm font-black text-blue-600 w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -581,13 +585,13 @@ export default function TablesPage() {
               <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
                 {/* Search & Top Filters */}
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
                     placeholder="Search menu..."
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -597,13 +601,13 @@ export default function TablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-amber-500" /> Best Sellers
+                      <Zap size={12} className="mr-2 text-blue-500" /> Best Sellers
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group"
+                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/30 transition-all cursor-pointer group"
                           onClick={() => {
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
                             let newOrders;
@@ -628,7 +632,7 @@ export default function TablesPage() {
                         >
                           <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-zinc-100 dark:bg-zinc-800 relative">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={24} /></div>
                             )}
@@ -640,7 +644,7 @@ export default function TablesPage() {
                             </div>
                           </div>
                           <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-amber-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-blue-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -677,11 +681,11 @@ export default function TablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-white dark:bg-zinc-900/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/20 transition-all cursor-pointer flex items-center gap-3 group"
+                          className="bg-white dark:bg-zinc-900/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/20 transition-all cursor-pointer flex items-center gap-3 group"
                         >
                           <div className="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden relative">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-zinc-300">
                                 <Coffee size={14} />
@@ -693,9 +697,9 @@ export default function TablesPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 leading-tight truncate">{item.name}</div>
-                            <div className="text-[10px] font-bold text-amber-600 mt-0.5">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[10px] font-bold text-blue-600 mt-0.5">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                           </div>
-                          <div className="h-6 w-6 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                          <div className="h-6 w-6 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
                             <Plus size={12} />
                           </div>
                         </div>
@@ -712,7 +716,7 @@ export default function TablesPage() {
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />

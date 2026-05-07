@@ -12,12 +12,12 @@ export const Button = ({
   loading = false
 }) => {
   const variants = {
-    primary: 'bg-[var(--gradient-primary)] text-black shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-premium)]',
-    secondary: 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] border border-[var(--color-border)]',
-    outline: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
-    ghost: 'bg-transparent hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-    danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white shadow-[var(--shadow-soft)]',
-    glass: 'glass-morphism text-[var(--color-text-primary)] hover:bg-white/10 dark:hover:bg-black/10'
+    primary: 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-[var(--shadow-soft)] hover:bg-[var(--color-primary-dark)]',
+    secondary: 'bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] border border-[var(--color-border)]',
+    outline: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+    ghost: 'bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
+    danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-[var(--color-bg-base)] shadow-[var(--shadow-soft)]',
+    glass: 'glass-morphism text-[var(--color-text-primary)] hover:bg-[var(--color-hover)]'
   };
 
   return (

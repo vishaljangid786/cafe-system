@@ -109,7 +109,7 @@ const generatePDF = (data, title = 'Export Report') => {
       for (let i = 0; i < pages.count; i++) {
         doc.switchToPage(i);
         doc.fillColor('#a1a1aa').fontSize(8).text(
-          `Page ${i + 1} of ${pages.count} - CafeOS Generated Intelligence`,
+          `Page ${i + 1} of ${pages.count} - CafeOS Generated Info`,
           0,
           doc.page.height - 20,
           { align: 'center' }

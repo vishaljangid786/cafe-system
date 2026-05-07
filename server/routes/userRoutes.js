@@ -11,7 +11,7 @@ const {
   changePassword,
   updateUserPermissions
 } = require('../controllers/userController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
@@ -20,6 +20,9 @@ router.use(verifyToken);
 
 router.put('/update-profile', upload.single('profileImage'), updateProfile);
 router.put('/change-password', changePassword);
+
+// Staff Management Routes - Require manageStaff permission
+router.use(authorizePermissions('manageStaff'));
 
 router.route('/')
   .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUsers);

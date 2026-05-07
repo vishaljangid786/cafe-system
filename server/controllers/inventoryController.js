@@ -5,11 +5,17 @@ const Recipe = require('../models/Recipe');
 const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
+const { enforceLocationAccess } = require('../utils/accessControl');
 
 // @desc    Get inventory for a specific branch
 // @route   GET /api/inventory/branch/:branchId
 const getBranchInventory = asyncHandler(async (req, res) => {
-  const inventory = await BranchInventory.find({ branch: req.params.branchId })
+  const { branchId } = req.params;
+
+  // Authorization check
+  enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+
+  const inventory = await BranchInventory.find({ branch: branchId })
     .populate('ingredient')
     .lean();
   
@@ -20,6 +26,14 @@ const getBranchInventory = asyncHandler(async (req, res) => {
 // @route   POST /api/inventory/update
 const updateInventory = asyncHandler(async (req, res) => {
   const { branch, ingredient, quantity, costPerUnit, minThreshold } = req.body;
+
+  // Authorization check
+  enforceLocationAccess(req, res, branch, 'You are not authorized to update this branch inventory');
+
+  if (Number(quantity) <= 0) {
+    res.status(400);
+    throw new Error('Quantity must be greater than zero');
+  }
 
   let item = await BranchInventory.findOne({ branch, ingredient });
 
@@ -47,6 +61,14 @@ const updateInventory = asyncHandler(async (req, res) => {
 const logWaste = asyncHandler(async (req, res) => {
   const { branch, ingredient, quantity, reason, notes } = req.body;
 
+  // Authorization check
+  enforceLocationAccess(req, res, branch, 'You are not authorized to log waste for this branch');
+
+  if (Number(quantity) <= 0) {
+    res.status(400);
+    throw new Error('Quantity must be greater than zero');
+  }
+
   const waste = await WasteRecord.create({
     branch,
     ingredient,
@@ -68,7 +90,15 @@ const logWaste = asyncHandler(async (req, res) => {
 // @desc    Get low stock alerts across all branches (Admin) or single branch
 // @route   GET /api/inventory/alerts
 const getInventoryAlerts = asyncHandler(async (req, res) => {
-  const { branchId } = req.query;
+  let { branchId } = req.query;
+  
+  // Authorization check for branch_admin
+  if (req.user.role === 'branch_admin') {
+    branchId = req.user.assignedLocation.toString();
+  } else if (branchId) {
+    enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+  }
+
   const query = {};
   if (branchId) query.branch = branchId;
 
@@ -85,7 +115,15 @@ const getInventoryAlerts = asyncHandler(async (req, res) => {
 // @desc    Get Purchase Suggestions
 // @route   GET /api/inventory/suggestions
 const getPurchaseSuggestions = asyncHandler(async (req, res) => {
-  const { branchId } = req.query;
+  let { branchId } = req.query;
+
+  // Authorization check for branch_admin
+  if (req.user.role === 'branch_admin') {
+    branchId = req.user.assignedLocation.toString();
+  } else if (branchId) {
+    enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+  }
+
   const query = {};
   if (branchId) query.branch = branchId;
 
@@ -117,6 +155,41 @@ const getIngredients = asyncHandler(async (req, res) => {
   res.json({ success: true, data: ingredients });
 });
 
+// @desc    Get all inventory items (across all branches)
+// @route   GET /api/inventory
+const getAllInventory = asyncHandler(async (req, res) => {
+  const { isActive, branchId } = req.query;
+  const query = {};
+
+  // RBAC Enforcement
+  if (req.user.role === 'super_admin') {
+    if (branchId && branchId !== 'all') query.branch = branchId;
+  } else if (req.user.role === 'admin') {
+    const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
+    if (branchId && branchId !== 'all') {
+      if (!allowed.includes(branchId)) return res.status(403).json({ success: false, message: 'Access denied' });
+      query.branch = branchId;
+    } else {
+      query.branch = { $in: allowed };
+    }
+  } else {
+    query.branch = req.user.assignedLocation;
+  }
+  
+  const inventory = await BranchInventory.find(query)
+    .populate({
+      path: 'ingredient',
+      match: isActive !== undefined ? { isActive: isActive === 'true' } : {}
+    })
+    .populate('branch', 'name')
+    .lean();
+
+  // Filter out items where the populated ingredient doesn't match the criteria (if any)
+  const filteredInventory = inventory.filter(item => item.ingredient !== null);
+  
+  res.json({ success: true, data: filteredInventory });
+});
+
 module.exports = {
   getBranchInventory,
   updateInventory,
@@ -124,5 +197,6 @@ module.exports = {
   getInventoryAlerts,
   getPurchaseSuggestions,
   createIngredient,
-  getIngredients
+  getIngredients,
+  getAllInventory
 };

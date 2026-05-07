@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import api from '../../../services/api';
-import { 
-  Crown, Map, TrendingUp, DollarSign, 
-  ArrowUpRight, ArrowDownRight, Users, 
-  ChefHat, Ticket, CreditCard, AlertOctagon, 
-  ChevronRight, Activity, Globe, Zap
+import api from '@/app/services/api';
+import {
+  Crown, Map, TrendingUp, DollarSign,
+  ArrowUpRight, ArrowDownRight, Users,
+  ChefHat, Ticket, CreditCard, AlertOctagon,
+  Radio, Cpu, Terminal, BarChart3, Globe, Zap, ShieldAlert, ChevronRight,
 } from 'lucide-react';
-import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
+import Link from 'next/link';
+import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
@@ -15,31 +16,36 @@ export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    fetchExecutiveSummary();
-  }, []);
-
-  const fetchExecutiveSummary = async () => {
+  const fetchAdminSummary = async () => {
     try {
       setLoading(true);
       const res = await api.get('/super-admin/executive-summary');
       setData(res.data.data);
     } catch (err) {
-      toast.error('Failed to sync executive intelligence');
+      toast.error('Failed to sync executive info');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchAdminSummary();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="text-amber-500 font-black text-2xl tracking-[1em]"
+      <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center overflow-hidden relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--color-primary)/0.1,transparent_70%)]" />
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 1, 0.3] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          className="relative z-10 flex flex-col items-center gap-6"
         >
-          SYNCING...
+          <div className="h-20 w-20 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
+          <p className="text-[var(--color-primary)] font-black text-xs tracking-[1em] uppercase animate-pulse">Loading Data</p>
         </motion.div>
       </div>
     );
@@ -47,174 +53,209 @@ export default function SuperAdminDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#050505] text-zinc-100 p-6 lg:p-12 space-y-12 overflow-hidden relative">
-        
-        {/* Cinematic Background Elements */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[120px] rounded-full -mr-64 -mt-64" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -ml-64 -mb-64" />
+      <div className="min-h-screen text-[var(--color-text-primary)] p-6 lg:p-12 space-y-16 overflow-hidden relative selection:bg-blue-500 selection:text-black">
+
+        {/* Atmospheric Smart Network */}
+        {/* <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-blue-600/5 blur-[150px] rounded-full -ml-64 -mb-64 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" /> */}
 
         {/* Global Control Header */}
         <SlideIn>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 relative z-10">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="px-3 py-1 bg-amber-600/20 text-amber-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-600/30">
-                  Executive Suite
-                </span>
-                <span className="h-1 w-1 bg-zinc-700 rounded-full" />
-                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Global Network Control</span>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 relative z-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-blue-600/30 shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                  <Cpu size={12} className="animate-pulse" /> Admin Dashboard
+                </div>
+                <div className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
+                <div className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.3em]">Network Version 4.2.0</div>
               </div>
-              <h1 className="text-6xl font-black tracking-tighter text-white flex items-center gap-4 italic">
-                <Crown className="text-amber-500 h-14 w-14" />
-                ORACLE <span className="text-zinc-500">OS</span>
+              <h1 className="text-8xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-6 italic leading-none">
+                <Crown className="text-blue-500 h-20 w-20 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" />
+                COMMAND <span className="text-[var(--color-text-muted)]">CENTER</span>
               </h1>
+              <div className="flex items-center gap-4 text-[var(--color-text-secondary)] font-bold italic text-sm">
+                <Radio size={16} className="text-emerald-500 animate-ping" />
+                System Activity: <span className="text-[var(--color-text-primary)] uppercase tracking-widest">{data?.totalBranches} Branches Active</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-8 bg-zinc-900/40 backdrop-blur-3xl p-6 rounded-[2rem] border border-zinc-800/50 shadow-2xl">
-              <div className="text-right">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Nodes</p>
-                <p className="text-3xl font-black text-white">{data?.totalBranches}</p>
+            <div className="grid grid-cols-2 gap-8 bg-[var(--color-surface)]/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-[var(--color-border)] shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <div className="relative z-10">
+                <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <Globe size={10} /> Active Branches
+                </p>
+                <p className="text-5xl font-black text-[var(--color-text-primary)] tracking-tighter italic">{data?.totalBranches}</p>
               </div>
-              <div className="h-10 w-[1px] bg-zinc-800" />
-              <div className="text-right">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Network Health</p>
-                <p className="text-3xl font-black text-emerald-500 uppercase">99.8%</p>
+              <div className="relative z-10 text-right">
+                <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-2 flex items-center justify-end gap-2">
+                  <Zap size={10} /> System Health
+                </p>
+                <p className="text-5xl font-black text-emerald-500 tracking-tighter italic">99.8%</p>
               </div>
             </div>
           </div>
         </SlideIn>
 
-        {/* Primary Metrics Grid */}
+        {/* Smart Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-          <MetricCard 
-            title="Lifetime Revenue" 
-            value={`₹${(data?.totalRevenue / 100000).toFixed(1)}L`} 
-            icon={<Globe className="text-blue-500" />}
+          <MetricCard
+            title="Total Revenue"
+            value={`₹${(data?.totalRevenue / 100000).toFixed(1)}L`}
+            icon={<DollarSign className="text-blue-500" />}
             trend="+12.4%"
-            sub="Total aggregated capital"
+            sub="Total money collected"
           />
-          <MetricCard 
-            title="Today's Velocity" 
-            value={`₹${data?.todayRevenue?.toLocaleString()}`} 
-            icon={<Zap className="text-amber-500" />}
+          <MetricCard
+            title="Today's Sales"
+            value={`₹${data?.todayRevenue?.toLocaleString()}`}
+            icon={<Zap className="text-blue-500" />}
             trend="+8.2%"
-            sub="Live transactional stream"
+            sub="Current sales stream"
             highlight
           />
-          <MetricCard 
-            title="Net Profit Hub" 
-            value={`₹${(data?.netProfit / 100000).toFixed(1)}L`} 
-            icon={<TrendingUp className="text-emerald-500" />}
+          <MetricCard
+            title="Total Profit"
+            value={`₹${(data?.netProfit / 100000).toFixed(1)}L`}
+            icon={<BarChart3 className="text-emerald-500" />}
             trend="+5.1%"
-            sub="Estimated earnings after COGS"
+            sub="Final earnings"
           />
-          <MetricCard 
-            title="Risk Alerts" 
-            value={data?.alerts?.lowStockItems + data?.alerts?.recentCancellations} 
+          <MetricCard
+            title="System Alerts"
+            value={data?.alerts?.lowStockItems + data?.alerts?.recentCancellations}
             icon={<AlertOctagon className="text-rose-500" />}
-            trend="Attention"
-            sub="Items requiring intervention"
+            trend="NEEDS ATTENTION"
+            sub="Problems found"
             isRisk={true}
           />
         </div>
 
-        {/* Performance Hub */}
+        {/* Global Operations Console */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-          
+
           {/* Branch Leaderboard */}
-          <div className="lg:col-span-2 bg-zinc-900/20 backdrop-blur-2xl rounded-[3rem] border border-zinc-800/50 overflow-hidden shadow-2xl">
-            <div className="p-10 flex items-center justify-between border-b border-zinc-800/50">
-              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 italic">
-                <Map className="text-amber-500" /> Branch Rankings
-              </h2>
-              <button className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
-                View All Nodes
-              </button>
+          <div className="lg:col-span-2 bg-[var(--color-surface)]/40 backdrop-blur-2xl rounded-[4rem] border border-[var(--color-border)] overflow-hidden shadow-2xl relative">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none">
+              <Terminal size={300} strokeWidth={1} />
             </div>
-            <div className="p-4 overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="p-12 flex items-center justify-between border-b border-[var(--color-border)]">
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-4 italic text-[var(--color-text-primary)]">
+                  <Map className="text-[var(--color-primary)]" /> Branch Performance
+                </h2>
+                <p className="text-[var(--color-text-muted)] text-xs font-bold mt-2 italic">Ranking branches by sales and performance.</p>
+              </div>
+              <Link href="/dashboard/admin/locations">
+                <button className="px-6 py-3 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-2xl text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+                  View All
+                </button>
+              </Link>
+            </div>
+            <div className="p-8 overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-separate border-spacing-y-4">
                 <thead>
-                  <tr className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    <th className="p-6">Branch</th>
-                    <th className="p-6">Performance</th>
-                    <th className="p-6">Contribution</th>
-                    <th className="p-6 text-right">Revenue</th>
+                  <tr className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 px-6">
+                    <th className="pb-6 px-6">Branch Name</th>
+                    <th className="pb-6 px-6">Sales Level</th>
+                    <th className="pb-6 px-6 text-center">Sales Share</th>
+                    <th className="pb-6 px-6 text-right">Revenue (₹)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/30">
+                <tbody className="space-y-4">
                   {data?.branchRanking?.map((branch, idx) => (
-                    <tr key={idx} className="group hover:bg-zinc-800/20 transition-all">
-                      <td className="p-6 flex items-center gap-4">
-                        <span className={`h-10 w-10 rounded-2xl flex items-center justify-center font-black italic ${idx === 0 ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
-                          {idx + 1}
-                        </span>
-                        <p className="font-bold text-white">{branch.name}</p>
+                    <motion.tr
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="group bg-[var(--color-surface-soft)]/50 hover:bg-[var(--color-surface-soft)] transition-all cursor-pointer rounded-3xl"
+                    >
+                      <td className="p-8 rounded-l-[2rem] border-l border-t border-b border-[var(--color-border)]/50">
+                        <div className="flex items-center gap-6">
+                          <span className={`h-14 w-14 rounded-2xl flex items-center justify-center font-black italic text-xl shadow-2xl transition-transform group-hover:scale-110 ${idx === 0 ? 'bg-[var(--color-primary)] text-black shadow-[var(--color-primary)]/20 rotate-3' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                            }`}>
+                            0{idx + 1}
+                          </span>
+                          <p className="font-black text-lg text-[var(--color-text-primary)] italic tracking-tight">{branch.name}</p>
+                        </div>
                       </td>
-                      <td className="p-6">
-                        <div className="w-32 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                          <motion.div 
+                      <td className="p-8 border-t border-b border-[var(--color-border)]/50">
+                        <div className="w-40 h-1.5 bg-[var(--color-bg-soft)] rounded-full overflow-hidden shadow-inner">
+                          <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${(branch.revenue / data.totalRevenue) * 100}%` }}
-                            className={`h-full ${idx === 0 ? 'bg-amber-500' : 'bg-zinc-500'}`}
+                            className={`h-full shadow-[0_0_10px_rgba(245,158,11,0.5)] ${idx === 0 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-text-muted)]'}`}
                           />
                         </div>
                       </td>
-                      <td className="p-6">
-                        <span className="text-xs font-bold text-zinc-500 italic">
+                      <td className="p-8 text-center border-t border-b border-[var(--color-border)]/50">
+                        <span className="text-sm font-black text-[var(--color-text-muted)] italic tracking-widest">
                           {((branch.revenue / data.totalRevenue) * 100).toFixed(1)}%
                         </span>
                       </td>
-                      <td className="p-6 text-right">
-                        <p className="font-black text-white italic">₹{branch.revenue?.toLocaleString()}</p>
+                      <td className="p-8 text-right rounded-r-[2rem] border-r border-t border-b border-[var(--color-border)]/50">
+                        <p className="text-xl font-black text-[var(--color-text-primary)] italic tracking-tighter">₹{branch.revenue?.toLocaleString()}</p>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Right Column: Special Widgets */}
+          {/* Special Information Widgets */}
           <div className="space-y-8">
-            {/* Top Entities */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-8 rounded-[3rem] border border-zinc-800/50 shadow-2xl space-y-8">
-              <h2 className="text-sm font-black uppercase tracking-widest text-zinc-500">Global Elite</h2>
-              
-              <EntityLink 
-                icon={<ChefHat className="text-amber-500" />} 
-                label="Lead Chef" 
-                name={data?.topChefs?.[0]?.name || 'N/A'} 
-                stat={`${data?.topChefs?.[0]?.orderCount || 0} Orders`}
+            {/* Elite Entities */}
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-xl p-10 rounded-[4rem] border border-[var(--color-border)] shadow-2xl space-y-10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-40 w-40 bg-[var(--color-secondary)]/5 blur-3xl rounded-full -mr-20 -mt-20" />
+              <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-[var(--color-text-muted)] flex items-center gap-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] shadow-[0_0_10px_var(--color-primary)]" />
+                Top Performers
+              </h2>
+
+              <EntityItem
+                icon={<ChefHat className="text-blue-500" />}
+                label="Top Chef"
+                name={data?.topChefs?.[0]?.name || 'N/A'}
+                stat={`${data?.topChefs?.[0]?.orderCount || 0} Orders Done`}
               />
-              <EntityLink 
-                icon={<Users className="text-blue-500" />} 
-                label="Lead Staff" 
-                name={data?.topStaff?.[0]?.name || 'N/A'} 
-                stat={`${data?.topStaff?.[0]?.orderCount || 0} Sales`}
+              <EntityItem
+                icon={<Users className="text-blue-500" />}
+                label="Top Staff"
+                name={data?.topStaff?.[0]?.name || 'N/A'}
+                stat={`${data?.topStaff?.[0]?.orderCount || 0} Orders Served`}
               />
-              <div className="h-[1px] bg-zinc-800" />
-              <EntityLink 
-                icon={<CreditCard className="text-emerald-500" />} 
-                label="UPI Leader" 
-                name={data?.upiLeader?.branchName || 'N/A'} 
+              <div className="h-[1px] bg-[var(--color-border)] mx-2" />
+              <EntityItem
+                icon={<CreditCard className="text-emerald-500" />}
+                label="Top UPI Branch"
+                name={data?.upiLeader?.branchName || 'N/A'}
                 stat={`₹${data?.upiLeader?.total?.toLocaleString()}`}
               />
-              <EntityLink 
-                icon={<Ticket className="text-purple-500" />} 
-                label="Offer Usage" 
-                name={data?.highestCouponBranch?.name || 'N/A'} 
-                stat={`${data?.highestCouponBranch?.count || 0} Coupons`}
+              <EntityItem
+                icon={<Ticket className="text-purple-500" />}
+                label="Coupon Usage"
+                name={data?.highestCouponBranch?.name || 'N/A'}
+                stat={`${data?.highestCouponBranch?.count || 0} Times Used`}
               />
             </div>
 
-            {/* Cinematic Summary Card */}
-            <div className="relative group cursor-pointer overflow-hidden rounded-[3rem]">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-orange-600 opacity-90 group-hover:scale-110 transition-transform duration-700" />
-              <div className="relative p-8 text-white space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Executive Summary</p>
-                <h3 className="text-2xl font-black italic">Network performance is exceeding Q2 projections by 18%.</h3>
-                <div className="flex items-center gap-2 text-xs font-bold bg-white/20 w-fit px-4 py-2 rounded-full backdrop-blur-md">
-                  View Full Report <ChevronRight size={14} />
+            {/* Smart Update Card */}
+            <div className="relative group cursor-pointer overflow-hidden rounded-[4rem] shadow-2xl">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 10 }}
+                className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700 opacity-90 group-hover:opacity-100 transition-opacity duration-700"
+              />
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/60-lines.png')] opacity-20" />
+              <div className="relative p-12 text-white space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">System Update</p>
+                <h3 className="text-3xl font-black italic tracking-tighter leading-tight">Total sales is 18% more than last week.</h3>
+                <div className="flex items-center gap-3 text-xs font-black bg-[var(--color-bg-base)]/50 w-fit px-6 py-3 rounded-2xl backdrop-blur-xl border border-[var(--color-border)] group-hover:bg-black/20 transition-all uppercase tracking-widest italic">
+                  View Details <ChevronRight size={16} />
                 </div>
               </div>
             </div>
@@ -227,43 +268,44 @@ export default function SuperAdminDashboard() {
 
 function MetricCard({ title, value, icon, trend, sub, highlight, isRisk }) {
   return (
-    <div className={`p-8 rounded-[3rem] border transition-all duration-500 hover:scale-[1.02] ${
-      highlight 
-        ? 'bg-amber-600 border-amber-500 shadow-[0_20px_50px_rgba(217,119,6,0.2)] text-white' 
-        : 'bg-zinc-900/30 backdrop-blur-2xl border-zinc-800/50 text-zinc-100 shadow-2xl'
-    }`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className={`p-4 rounded-2xl ${highlight ? 'bg-white/20' : 'bg-zinc-800'}`}>
+    <div className={`p-10 rounded-[4rem] border transition-all duration-700 hover:scale-[1.03] relative overflow-hidden group ${highlight
+        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] shadow-[0_30px_60px_rgba(217,119,6,0.3)] text-black'
+        : 'bg-[var(--color-surface)]/40 backdrop-blur-2xl border-[var(--color-border)] text-[var(--color-text-primary)] shadow-2xl hover:border-[var(--color-primary)]/30'
+      }`}>
+      {highlight && (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(255,255,255,0.2),transparent_50%)]" />
+      )}
+      <div className="flex items-center justify-between mb-10 relative z-10">
+        <div className={`p-5 rounded-2xl transition-transform duration-700 group-hover:rotate-12 ${highlight ? 'bg-white/20' : 'bg-zinc-800 border border-zinc-700'}`}>
           {icon}
         </div>
-        <div className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-lg ${
-          isRisk ? 'bg-rose-500/20 text-rose-500' : (highlight ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-500')
-        }`}>
-          {isRisk ? <AlertOctagon size={10} /> : <ArrowUpRight size={10} />}
+        <div className={`flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-full backdrop-blur-md border ${isRisk ? 'bg-rose-500/20 text-rose-500 border-rose-500/30' : (highlight ? 'bg-white/20 border-white/30 text-white' : 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30')
+          }`}>
+          {isRisk ? <ShieldAlert size={12} /> : <ArrowUpRight size={12} />}
           {trend}
         </div>
       </div>
-      <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${highlight ? 'opacity-80' : 'text-zinc-500'}`}>{title}</p>
-      <h3 className="text-4xl font-black italic tracking-tighter mb-4">{value}</h3>
-      <p className={`text-[10px] font-bold ${highlight ? 'opacity-70' : 'text-zinc-500 italic'}`}>{sub}</p>
+      <p className={`text-[10px] font-black uppercase tracking-[0.4em] mb-3 relative z-10 ${highlight ? 'text-black/70' : 'text-[var(--color-text-muted)]'}`}>{title}</p>
+      <h3 className="text-5xl font-black italic tracking-tighter mb-4 relative z-10 leading-none">{value}</h3>
+      <p className={`text-[10px] font-bold italic relative z-10 ${highlight ? 'text-black/60' : 'text-[var(--color-text-muted)]'}`}>{sub}</p>
     </div>
   );
 }
 
-function EntityLink({ icon, label, name, stat }) {
+function EntityItem({ icon, label, name, stat }) {
   return (
     <div className="flex items-center justify-between group cursor-pointer">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-zinc-800/50 rounded-2xl group-hover:bg-zinc-700 transition-colors">
+      <div className="flex items-center gap-6">
+        <div className="p-4 bg-[var(--color-surface-soft)] rounded-2xl group-hover:bg-[var(--color-surface)] transition-all border border-[var(--color-border)] group-hover:border-blue-500/30 group-hover:scale-110">
           {icon}
         </div>
         <div>
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{label}</p>
-          <p className="text-sm font-bold text-white group-hover:text-amber-500 transition-colors">{name}</p>
+          <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.3em] mb-1">{label}</p>
+          <p className="text-lg font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors italic tracking-tight">{name}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-xs font-black text-white italic">{stat}</p>
+        <p className="text-sm font-black text-zinc-400 group-hover:text-white transition-colors italic">{stat}</p>
       </div>
     </div>
   );

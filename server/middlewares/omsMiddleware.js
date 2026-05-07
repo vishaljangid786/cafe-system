@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const { enforceLocationAccess } = require('../utils/accessControl');
 
 /**
  * STRICT OMS LIFECYCLE:
@@ -51,6 +52,8 @@ const validateOrderTransition = async (req, res, next) => {
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
+
+    enforceLocationAccess(req, res, order.branch, 'Access denied to this order');
 
     const currentStatus = order.status;
 

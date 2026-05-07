@@ -7,13 +7,13 @@ const {
   createNotification,
   getTargetOptions
 } = require('../controllers/notificationController');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizePermissions } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
 router.get('/', getNotifications);
-router.get('/targets', getTargetOptions);
-router.post('/', createNotification);
+router.get('/targets', authorizePermissions('manageNotifications'), getTargetOptions);
+router.post('/', authorizePermissions('manageNotifications'), createNotification);
 router.patch('/read-all', markAllAsRead);
 router.patch('/:id/read', markAsRead);
 

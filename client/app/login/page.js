@@ -31,24 +31,7 @@ export default function LoginPage() {
     mode: 'onChange',
   });
 
-  useEffect(() => {
-    const checkInitialSetup = async () => {
-      try {
-        const res = await api.get('/auth/initial-setup-check');
-        if (res.data.success && res.data.data.isInitialSetup) {
-          router.push('/setup');
-          toast('System not set up yet. Taking you to setup...', { icon: '🛡️' });
-        }
-      } catch (error) {
-        if (error.message === 'Network Error') {
-          console.error('Setup check failed: Backend server is unreachable. Ensure the API is running at', api.defaults.baseURL);
-        } else {
-          console.error('Setup check failed:', error.message || error);
-        }
-      }
-    };
-    if (!loading && !user) checkInitialSetup();
-  }, [user, loading, router]);
+
 
   useEffect(() => {
     if (!loading && user) {
@@ -72,17 +55,17 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/50 animate-pulse">Loading System</p>
+          <div className="h-16 w-16 border-4 border-[var(--color-primary)]/10 border-t-[var(--color-primary)] rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)]/50 animate-pulse">Loading System</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#050505] flex flex-col lg:flex-row transition-colors duration-500">
+    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-500">
       {/* Cinematic Visual Panel (Desktop Only) */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-zinc-900">
         <motion.div
@@ -96,7 +79,7 @@ export default function LoginPage() {
             alt="Cinematic Background"
             className="w-full h-full object-cover opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-1000"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-900/20 to-zinc-900 dark:to-[#050505]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-900/20 to-zinc-900 dark:to-[var(--color-bg-base)]" />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-80" />
         </motion.div>
 
@@ -108,14 +91,14 @@ export default function LoginPage() {
             transition={{ delay: 0.5, duration: 1 }}
           >
             <div className="flex items-center gap-4 mb-8">
-              <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-black shadow-2xl shadow-amber-500/30">
+              <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-black shadow-2xl shadow-[var(--color-primary)]/30">
                 <Coffee size={28} strokeWidth={2.5} />
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-white leading-none">
-                  Cafe<span className="text-amber-500">OS</span>
+                  Cafe<span className="text-[var(--color-primary)]">OS</span>
                 </h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">Smart Cafe Management</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)]/60 mt-1 italic">Smart Cafe Management</p>
               </div>
             </div>
           </motion.div>
@@ -129,9 +112,9 @@ export default function LoginPage() {
             >
               <h2 className="text-6xl font-black text-white tracking-tighter leading-[0.9]">
                 Modern <br />
-                <span className="text-amber-500 italic">Cafe Management</span>
+                <span className="text-[var(--color-primary)] italic">Cafe Management</span>
               </h2>
-              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">
+              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-[var(--color-primary)]/30 pl-6">
                 Manage your cafe branches, staff, and orders all in one place. Please login to your account to continue.
               </p>
             </motion.div>
@@ -148,7 +131,7 @@ export default function LoginPage() {
                 { icon: Globe, label: "Network", value: "Connected" }
               ].map((item, i) => (
                 <div key={i} className="space-y-1">
-                  <div className="flex items-center gap-2 text-amber-500/50">
+                  <div className="flex items-center gap-2 text-[var(--color-primary)]/50">
                     <item.icon size={12} />
                     <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
                   </div>
@@ -161,7 +144,7 @@ export default function LoginPage() {
       </div>
 
       {/* Control Center Form Panel */}
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 relative bg-zinc-50 dark:bg-[#050505]">
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 relative bg-[var(--color-bg)]">
         <div className="absolute inset-0 lg:hidden opacity-20 pointer-events-none">
           <img
             src="/images/login_bg.png"
@@ -177,15 +160,15 @@ export default function LoginPage() {
           className="w-full max-w-md relative z-10"
         >
           <div className="lg:hidden flex flex-col items-center mb-12">
-            <div className="h-16 w-16 rounded-2xl bg-amber-500 flex items-center justify-center text-black shadow-2xl shadow-amber-500/20 mb-4">
+            <div className="h-16 w-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-black shadow-2xl shadow-[var(--color-primary)]/20 mb-4">
               <Coffee size={32} strokeWidth={2.5} />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-white">Cafe<span className="text-amber-500">OS</span></h1>
+            <h1 className="text-3xl font-black tracking-tight text-[var(--color-text-primary)]">Cafe<span className="text-[var(--color-primary)]">OS</span></h1>
           </div>
 
           <div className="space-y-1 text-center lg:text-left mb-10">
-            <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">Login</h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Please enter your details to access your account</p>
+            <h2 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter uppercase italic">Login</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Please enter your details to access your account</p>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -204,13 +187,13 @@ export default function LoginPage() {
             </AnimatePresence>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Email Address</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Email Address</label>
               <div className="relative group">
                 <input
                   {...register('email')}
-                  className={`block w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all duration-300 outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${errors.email
-                      ? 'border-rose-500 ring-4 ring-rose-500/10'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'
+                  className={`block w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all duration-300 outline-none text-sm font-bold text-[var(--color-text-primary)] ${errors.email
+                    ? 'border-[var(--color-danger)] ring-4 ring-[var(--color-danger)]/10'
+                    : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10'
                     }`}
                   placeholder="admin@cafeos.com"
                 />
@@ -219,33 +202,33 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Password</label>
               <div className="relative group">
                 <input
                   type={showPassword ? "text" : "password"}
                   {...register('password')}
-                  className={`block w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all duration-300 outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${errors.password
-                      ? 'border-rose-500 ring-4 ring-rose-500/10'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'
+                  className={`block w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all duration-300 outline-none text-sm font-bold text-[var(--color-text-primary)] ${errors.password
+                    ? 'border-[var(--color-danger)] ring-4 ring-[var(--color-danger)]/10'
+                    : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10'
                     }`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-500 transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.password.message}</p>}
+              {errors.password && <p className="text-[9px] text-[var(--color-danger)] font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.password.message}</p>}
             </div>
 
             <Button
               type="submit"
               loading={isSubmitting}
               disabled={!isValid || isSubmitting}
-              className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl shadow-xl shadow-amber-500/20 bg-amber-500 text-black hover:bg-amber-600 border-none transition-all duration-500"
+              className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl shadow-xl shadow-[var(--color-primary)]/20 bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-dark)] border-none transition-all duration-500"
               icon={Zap}
             >
               Login to Account
@@ -255,29 +238,29 @@ export default function LoginPage() {
           {/* Quick Access Grid */}
           <div className="mt-12 space-y-8">
             <div className="flex items-center gap-4">
-              <div className="h-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Quick Login (Testing Only)</p>
-              <div className="h-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-[1px] flex-1 bg-[var(--color-border)]" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Quick Login (Testing Only)</p>
+              <div className="h-[1px] flex-1 bg-[var(--color-border)]" />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
               {[
-                { label: 'Super', email: 'super@cafeos.com', color: 'amber' },
-                { label: 'Admin', email: 'admin@admin.com', color: 'zinc' },
-                { label: 'Branch', email: 'vaishali@cafeos.com', color: 'zinc' },
-                { label: 'Chef', email: 'chef@vaishali.com', color: 'zinc' },
-                { label: 'Staff', email: 'staff@vaishali.com', color: 'zinc' },
+                { label: 'Super', email: 'super@cafeos.com' },
+                { label: 'Admin', email: 'admin@cafeos.com' },
+                { label: 'Branch', email: 'branch1@cafeos.com' },
+                { label: 'Chef', email: 'chef1@cafeos.com' },
+                { label: 'Staff', email: 'staff1@cafeos.com' },
               ].map((testUser) => (
                 <button
                   key={testUser.label}
                   type="button"
                   onClick={() => login(testUser.email, 'password123')}
-                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-amber-500/50 hover:bg-amber-500/[0.02] transition-all group"
+                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/[0.02] transition-all group"
                 >
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-amber-500 transition-colors">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">
                     {testUser.label}
                   </span>
-                  <span className="text-[7px] font-bold text-zinc-400 dark:text-zinc-600 mt-1 truncate max-w-full italic">
+                  <span className="text-[7px] font-bold text-[var(--color-text-muted)] mt-1 truncate max-w-full italic">
                     TEST-LOGIN
                   </span>
                 </button>
@@ -285,16 +268,11 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col items-center gap-6 pt-4">
-              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full">
-                <Lock size={10} className="text-amber-500" />
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">Secure Connection Active</span>
+              <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-full">
+                <Lock size={10} className="text-[var(--color-primary)]" />
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Secure Connection Active</span>
               </div>
-              <button
-                onClick={() => router.push('/signup')}
-                className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-amber-500 transition-colors flex items-center gap-2 group"
-              >
-                New here? <span className="text-amber-500 underline underline-offset-4 decoration-2">Create Account</span>
-              </button>
+
             </div>
           </div>
         </motion.div>

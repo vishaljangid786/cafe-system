@@ -27,7 +27,11 @@ export const NotificationProvider = ({ children }) => {
   }, [user]);
 
   useEffect(() => {
-    fetchNotifications();
+    const timer = setTimeout(() => {
+      fetchNotifications();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [fetchNotifications]);
 
   useEffect(() => {
@@ -45,7 +49,7 @@ export const NotificationProvider = ({ children }) => {
         if (notification.priority === 'high') {
           toast.error(
             <div className="flex flex-col gap-1">
-              <span className="font-black text-[10px] uppercase tracking-widest text-rose-500">Urgent Transmission</span>
+              <span className="font-black text-[10px] uppercase tracking-widest text-rose-500">Urgent Update</span>
               <span className="font-bold text-sm">{notification.title}</span>
             </div>,
             toastOptions

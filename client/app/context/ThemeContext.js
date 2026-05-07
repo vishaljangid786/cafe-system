@@ -12,7 +12,9 @@ export function ThemeProvider({ children }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const mountedTimer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
     
     const initializeTheme = () => {
       const savedTheme = localStorage.getItem('theme');
@@ -36,7 +38,7 @@ export function ThemeProvider({ children }) {
 
     mediaQuery.addEventListener('change', handleChange);
 
-    // Global Number Input Validation Protocols
+    // Global Number Input Validation System Rules
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
         const forbiddenKeys = {
@@ -73,6 +75,7 @@ export function ThemeProvider({ children }) {
     window.addEventListener('paste', handlePaste);
 
     return () => {
+      clearTimeout(mountedTimer);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('paste', handlePaste);
       mediaQuery.removeEventListener('change', handleChange);

@@ -25,7 +25,7 @@ export default function AttendancePage() {
           api.get('/users'),
           api.get(`/attendance/location?date=${date}`)
         ]);
-        setStaff(staffRes.data.data.filter(u => u.role === 'staff'));
+        setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         setAttendance(attRes.data.data);
       } catch (error) {
         toast.error('Failed to sync roster');
@@ -49,7 +49,7 @@ export default function AttendancePage() {
       setAttendance(attRes.data.data);
       toast.success('Roster synchronized', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Protocol failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
     }
   };
 
@@ -65,7 +65,7 @@ export default function AttendancePage() {
           <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <CalendarCheck className="mr-4 text-amber-600" size={36} /> Daily <span className="ml-3 text-amber-600">Roster</span>
+                <CalendarCheck className="mr-4 text-blue-600" size={36} /> Daily <span className="ml-3 text-blue-600">Roster</span>
               </h1>
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Synchronize staff presence and operational availability.</p>
             </div>
@@ -76,7 +76,7 @@ export default function AttendancePage() {
                 <input
                   type="text"
                   placeholder="Filter Roster..."
-                  className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 text-xs font-bold dark:text-zinc-100 outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 text-xs font-bold dark:text-zinc-100 outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -86,7 +86,7 @@ export default function AttendancePage() {
                 onClick={() => dateInputRef.current?.showPicker()}
                 className="flex items-center space-x-3 bg-zinc-900 dark:bg-zinc-800 p-4 rounded-2xl border border-white/5 cursor-pointer hover:bg-black transition-all w-full sm:w-auto"
               >
-                <Calendar className="text-amber-500" size={20} />
+                <Calendar className="text-blue-500" size={20} />
                 <input
                   ref={dateInputRef}
                   type="date"
@@ -105,8 +105,8 @@ export default function AttendancePage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Personnel Identity</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Matrix</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff Identity</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status List</th>
                   <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action Command</th>
                 </tr>
               </thead>
@@ -122,7 +122,7 @@ export default function AttendancePage() {
                     <td colSpan="3" className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <UserX size={48} className="mb-4" />
-                        <p className="font-black text-xs uppercase tracking-widest">No personnel matching search</p>
+                        <p className="font-black text-xs uppercase tracking-widest">No staff matching search</p>
                       </div>
                     </td>
                   </tr>
@@ -137,7 +137,7 @@ export default function AttendancePage() {
                       >
                         <td className="px-8 py-6">
                           <div className="flex items-center">
-                            <div className="h-12 w-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center font-black text-amber-600 border border-amber-200/20">
+                            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center font-black text-blue-600 border border-blue-200/20">
                               {user.name.charAt(0)}
                             </div>
                             <div className="ml-4">
@@ -155,7 +155,7 @@ export default function AttendancePage() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 className={`px-5 py-2 inline-flex text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border shadow-sm ${status === 'present' ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:border-green-500/20' :
                                   status === 'absent' ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:border-red-500/20' :
-                                    status === 'half-day' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20' :
+                                    status === 'half-day' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20' :
                                       'bg-gray-100 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'
                                   }`}
                               >
@@ -168,7 +168,7 @@ export default function AttendancePage() {
                           <div className="flex justify-end space-x-3">
                             {[
                               { id: 'present', icon: CheckCircle2, label: 'Present', active: 'bg-green-600 text-white border-green-600', inactive: 'text-green-600 bg-green-50 dark:bg-green-500/5 hover:bg-green-600 hover:text-white' },
-                              { id: 'half-day', icon: Clock, label: 'Half', active: 'bg-amber-500 text-white border-amber-500', inactive: 'text-amber-600 bg-amber-50 dark:bg-amber-500/5 hover:bg-amber-500 hover:text-white' },
+                              { id: 'half-day', icon: Clock, label: 'Half', active: 'bg-blue-500 text-white border-blue-500', inactive: 'text-blue-600 bg-blue-50 dark:bg-blue-500/5 hover:bg-blue-500 hover:text-white' },
                               { id: 'absent', icon: XCircle, label: 'Absent', active: 'bg-red-600 text-white border-red-600', inactive: 'text-red-600 bg-red-50 dark:bg-red-500/5 hover:bg-red-600 hover:text-white' },
                             ].map(btn => (
                               <motion.button
@@ -194,18 +194,18 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* Detailed Personnel Details Modal */}
+      {/* Detailed Staff Details Modal */}
       <Modal
         isOpen={!!viewingStaff}
         onClose={() => setViewingStaff(null)}
-        title="Personnel Details"
+        title="Staff Details"
         maxWidth="max-w-3xl"
       >
         {viewingStaff && (
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-zinc-100 dark:border-zinc-800">
               <div className="relative group">
-                <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-blue-500/20 group-hover:scale-105 transition-transform">
                   {viewingStaff.name.charAt(0)}
                 </div>
                 <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-zinc-950 rounded-full flex items-center justify-center text-white">
@@ -216,10 +216,10 @@ export default function AttendancePage() {
               <div className="text-center md:text-left flex-1">
                 <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{viewingStaff.name}</h2>
                 <p className="text-sm font-bold text-zinc-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                  <Mail size={14} className="text-amber-600" /> {viewingStaff.email}
+                  <Mail size={14} className="text-blue-600" /> {viewingStaff.email}
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-500/20">
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-500/20">
                     {viewingStaff.role}
                   </span>
                   <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest rounded-full">
@@ -241,25 +241,25 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <CreditCard size={14} className="text-amber-600" /> Identity Credentials
+                    <CreditCard size={14} className="text-blue-600" /> Identity Credentials
                   </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Hash className="text-amber-600" size={20} />
+                      <Hash className="text-blue-600" size={20} />
                       <div>
                         <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Index</p>
                         <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Phone className="text-amber-600" size={20} />
+                      <Phone className="text-blue-600" size={20} />
                       <div>
                         <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Primary Contact</p>
                         <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.phone}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Award className="text-amber-600" size={20} />
+                      <Award className="text-blue-600" size={20} />
                       <div>
                         <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Academic Standing</p>
                         <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
@@ -270,7 +270,7 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Globe size={14} className="text-amber-600" /> Demographic Intelligence
+                    <Globe size={14} className="text-blue-600" /> Demographic Information
                   </h3>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -278,7 +278,7 @@ export default function AttendancePage() {
                       <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Solar Years</p>
                     </div>
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender Node</p>
+                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
                       <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
                     </div>
                   </div>
@@ -288,7 +288,7 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <MapPin size={14} className="text-amber-600" /> Operational Base
+                    <MapPin size={14} className="text-blue-600" /> Operational Base
                   </h3>
                   <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                     <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
@@ -301,7 +301,7 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Info size={14} className="text-amber-600" /> Identity Proof (Aadhar)
+                    <Info size={14} className="text-blue-600" /> Identity Proof (Aadhar)
                   </h3>
                   {viewingStaff.aadharImage ? (
                     <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
@@ -316,7 +316,7 @@ export default function AttendancePage() {
                         rel="noreferrer"
                         className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
                       >
-                        <Globe size={24} className="text-amber-500" />
+                        <Globe size={24} className="text-blue-500" />
                         <span className="font-black text-[10px] uppercase tracking-widest">Verify Original Scan</span>
                       </a>
                     </div>

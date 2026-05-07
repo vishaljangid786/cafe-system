@@ -84,7 +84,11 @@ export default function StaffMenuPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [selectedLocation, currentPage]);
 
   const filteredItems = menuItems.filter(item => {
@@ -102,7 +106,7 @@ export default function StaffMenuPage() {
 
   if (loading && menuItems.length === 0) return (
     <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
   );
 
@@ -113,8 +117,8 @@ export default function StaffMenuPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4">
-              <UtensilsCrossed className="text-amber-600" size={36} strokeWidth={2.5} />
-              Menu <span className="text-amber-600">Items</span>
+              <UtensilsCrossed className="text-blue-600" size={36} strokeWidth={2.5} />
+              Menu <span className="text-blue-600">Items</span>
             </h1>
             <p className="text-muted-foreground font-medium mt-1">Check and manage food availability and stock.</p>
           </div>
@@ -128,7 +132,7 @@ export default function StaffMenuPage() {
                 <input
                   type="text"
                   placeholder="Search for food items..."
-                  className="w-full pl-14 pr-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-bold text-sm shadow-inner"
+                  className="w-full pl-14 pr-6 py-4 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-sm shadow-inner"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -200,7 +204,7 @@ export default function StaffMenuPage() {
               <SlideIn key={item._id} delay={i * 0.05}>
                 <CardHover>
                   <div className={`group bg-card rounded-[2.5rem] overflow-hidden border border-border relative flex flex-col h-full transition-all duration-300 ${!item.isAvailable && 'opacity-60 grayscale'}`}>
-                    {/* Image Hub */}
+                    {/* Image Center */}
                     <div className="h-52 relative overflow-hidden bg-muted">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -226,7 +230,7 @@ export default function StaffMenuPage() {
 
                       {item.discountedPrice && (
                         <div className="absolute bottom-4 left-4">
-                          <span className="px-3 py-1 bg-amber-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-600/30">
+                          <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/30">
                             Special Offer
                           </span>
                         </div>
@@ -255,7 +259,7 @@ export default function StaffMenuPage() {
 
                       <div className="mt-auto flex items-center justify-between border-t border-border pt-5">
                         <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                          <Package size={14} className="text-amber-600" />
+                          <Package size={14} className="text-blue-600" />
                           Stock: {item.stock || 0}
                         </div>
                         <div className="flex gap-2">
@@ -372,7 +376,7 @@ export default function StaffMenuPage() {
                 variant="primary"
                 onClick={handleStockUpdate}
                 icon={Save}
-                className="flex-1 !py-4 rounded-2xl shadow-xl shadow-amber-500/20"
+                className="flex-1 !py-4 rounded-2xl shadow-xl shadow-blue-500/20"
               >
                 Update Stock
               </Button>

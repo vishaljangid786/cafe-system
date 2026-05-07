@@ -10,7 +10,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
   const getPriorityStyles = (priority) => {
     switch (priority) {
       case 'high': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      case 'medium': return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      case 'medium': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
       case 'low': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
       default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
     }
@@ -39,7 +39,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-bg-soft)]">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center relative shadow-inner">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center relative shadow-inner">
                   <Bell size={20} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 h-5 w-5 bg-rose-500 rounded-full border-2 border-[var(--color-surface)] text-[10px] font-black text-white flex items-center justify-center animate-pulse">
@@ -50,14 +50,14 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                 <div>
                   <h2 className="text-sm font-black text-[var(--color-text-primary)] uppercase tracking-widest leading-none">Notifications</h2>
                   <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
-                    <span className="h-1 w-1 bg-amber-500 rounded-full" /> Recent Updates
+                    <span className="h-1 w-1 bg-blue-500 rounded-full" /> Recent Updates
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={refresh}
-                  className="p-2 hover:bg-amber-500/10 hover:text-amber-500 rounded-xl transition-all text-[var(--color-text-muted)]"
+                  className="p-2 hover:bg-blue-500/10 hover:text-blue-500 rounded-xl transition-all text-[var(--color-text-muted)]"
                   title="Refresh"
                 >
                   <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
@@ -76,7 +76,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
               <div className="flex items-center justify-between px-2 mb-2">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Recent Activity</h3>
                 {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-[9px] font-black text-amber-500 hover:text-amber-600 uppercase tracking-widest transition-colors">
+                  <button onClick={markAllAsRead} className="text-[9px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-widest transition-colors">
                     Mark all read
                   </button>
                 )}
@@ -89,7 +89,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={notif._id}
-                    className={`relative p-4 rounded-2xl border transition-all duration-300 group ${notif.isRead ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800/50 opacity-60' : 'bg-white dark:bg-zinc-900 border-amber-500/20 shadow-sm hover:border-amber-500/40 hover:shadow-md'}`}
+                    className={`relative p-4 rounded-2xl border transition-all duration-300 group ${notif.isRead ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800/50 opacity-60' : 'bg-white dark:bg-zinc-900 border-blue-500/20 shadow-sm hover:border-blue-500/40 hover:shadow-md'}`}
                   >
                     <div className="flex gap-4">
                       <div className={`h-9 w-9 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)} shadow-sm`}>
@@ -117,7 +117,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                           {!notif.isRead && (
                             <button 
                               onClick={() => markAsRead(notif._id)}
-                              className="text-[9px] font-black text-amber-500 uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               Acknowledge
                             </button>

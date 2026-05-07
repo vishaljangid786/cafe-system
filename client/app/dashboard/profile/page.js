@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('identity'); // identity, stats, history, security
 
-  // Personnel Data
+  // Staff Data
   const [chefStats, setChefStats] = useState(null);
   const [salaryHistory, setSalaryHistory] = useState([]);
   const [attendance, setAttendance] = useState([]);
@@ -67,19 +67,23 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || '',
-        phone: user.phone || '',
-        age: user.age || '',
-        gender: user.gender || 'Male',
-        address1: user.address1 || '',
-        address2: user.address2 || '',
-        city: user.city || '',
-        state: user.state || '',
-        country: user.country || '',
-        pincode: user.pincode || ''
-      });
-      fetchData();
+      const timer = setTimeout(() => {
+        setFormData({
+          name: user.name || '',
+          phone: user.phone || '',
+          age: user.age || '',
+          gender: user.gender || 'Male',
+          address1: user.address1 || '',
+          address2: user.address2 || '',
+          city: user.city || '',
+          state: user.state || '',
+          country: user.country || '',
+          pincode: user.pincode || ''
+        });
+        fetchData();
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -140,15 +144,15 @@ export default function ProfilePage() {
         {/* Cinematic Hero Section */}
         {activeTab === 'identity' &&
           <SlideIn direction="down">
-            <div className="relative overflow-hidden rounded-[3.5rem] bg-white dark:bg-zinc-900 p-12 lg:p-20 text-zinc-900 dark:text-white shadow-2xl shadow-black/5 border border-zinc-100 dark:border-zinc-800">
+            <div className="relative overflow-hidden rounded-[3.5rem] bg-[var(--color-surface)] p-12 lg:p-20 text-[var(--color-text-primary)] shadow-2xl shadow-black/5 border border-[var(--color-border)]">
               <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-10">
                 <div className="flex flex-col md:flex-row items-center gap-8">
                   <div className="relative h-40 w-40 rounded-[3rem] bg-white/5 p-2 backdrop-blur-xl border border-white/10 overflow-hidden group">
-                    <div className="h-full w-full rounded-[2.5rem] overflow-hidden bg-gray-100 shadow-2xl dark:bg-zinc-800 flex items-center justify-center">
+                    <div className="h-full w-full rounded-[2.5rem] overflow-hidden bg-[var(--color-bg-soft)] shadow-2xl flex items-center justify-center">
                       {(previewImage || user.profileImageUrl) ? (
-                        <img src={previewImage || user.profileImageUrl} className="h-full w-full object-cover" />
+                        <img src={previewImage || user.profileImageUrl} alt={user.name || 'Profile'} className="h-full w-full object-cover" />
                       ) : (
-                        <UserIcon size={64} className="text-amber-500 opacity-20 dark:opacity-20" />
+                        <UserIcon size={64} className="text-[var(--color-primary)] opacity-20" />
                       )}
                     </div>
                     {isEditing && (
@@ -159,11 +163,11 @@ export default function ProfilePage() {
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
                   </div>
                   <div className="text-center md:text-left">
-                    <span className="px-4 py-1.5 bg-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-[0.4em] rounded-full border border-amber-500/30">
+                    <span className="px-4 py-1.5 bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[9px] font-black uppercase tracking-[0.4em] rounded-full border border-[var(--color-primary)]/30">
                       {user.role.replace('_', ' ')} Command
                     </span>
                     <h1 className="text-5xl lg:text-7xl font-black tracking-tighter mt-4 leading-none">{user.name}</h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 font-bold mt-4 tracking-tight flex items-center justify-center md:justify-start gap-2">
+                    <p className="text-[var(--color-text-muted)] font-bold mt-4 tracking-tight flex items-center justify-center md:justify-start gap-2">
                       <Mail size={16} /> {user.email}
                     </p>
                   </div>
@@ -172,7 +176,7 @@ export default function ProfilePage() {
                 <div className="flex gap-4">
                   {isEditing ? (
                     <>
-                      <Button onClick={handleSubmit} disabled={loading} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-amber-500 text-black">
+                      <Button onClick={handleSubmit} disabled={loading} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-[var(--color-primary)] text-white">
                         {loading ? <Loader2 className="animate-spin" /> : 'Save Changes'}
                       </Button>
                       <Button onClick={() => setIsEditing(false)} variant="outline" className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest border-primary text-primary  border-2 hover:bg-primary border-primary ">
@@ -188,19 +192,19 @@ export default function ProfilePage() {
               </div>
 
               {/* Decoration */}
-              <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-amber-500/10 to-transparent" />
-              <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px]" />
+              <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[var(--color-primary)]/10 to-transparent" />
+              <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[var(--color-primary)]/10 rounded-full blur-[100px]" />
             </div>
           </SlideIn>
         }
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 p-1.5 bg-muted rounded-[2rem] w-fit mx-auto border border-border shadow-sm">
+        <div className="flex items-center gap-2 p-1.5 bg-[var(--color-surface)] rounded-[2rem] w-fit mx-auto border border-[var(--color-border)] shadow-sm">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-card text-accent shadow-xl shadow-accent/10' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--color-primary)] text-black shadow-xl shadow-[var(--color-primary)]/10' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
             >
               <tab.icon size={16} /> {tab.label}
             </button>
@@ -212,9 +216,9 @@ export default function ProfilePage() {
           {activeTab === 'identity' && (
             <motion.div key="identity" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
               <div className="lg:col-span-8 space-y-8">
-                <div className="bg-card rounded-[3rem] p-10 lg:p-14 border border-border shadow-sm">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400 mb-10 flex items-center gap-3">
-                    <Shield size={16} className="text-amber-500" /> Personal Details
+                <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
+                    <Shield size={16} className="text-[var(--color-primary)]" /> Personal Details
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <IdentityField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
@@ -236,22 +240,22 @@ export default function ProfilePage() {
 
               <div className="lg:col-span-4 space-y-8">
                 <CardHover>
-                  <div className="bg-muted rounded-[3rem] p-10 text-foreground shadow-xl border border-border relative overflow-hidden group">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-8 flex items-center gap-2">
+                  <div className="bg-[var(--color-surface-soft)] rounded-[3rem] p-10 text-[var(--color-text-primary)] shadow-xl border border-[var(--color-border)] relative overflow-hidden group">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-primary)] mb-8 flex items-center gap-2">
                       <Briefcase size={14} /> Work Details
                     </h3>
                     <div className="space-y-6 relative z-10">
                       <div>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Designation</p>
+                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Designation</p>
                         <p className="text-2xl font-black text-foreground mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Base Compensation</p>
+                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Base Compensation</p>
                         <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Primary Sector</p>
-                        <p className="text-xl font-black text-zinc-700 dark:text-zinc-300 mt-1 tracking-tight">{user.assignedLocation?.name || 'Global HQ'}</p>
+                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Primary Sector</p>
+                        <p className="text-xl font-black text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Global HQ'}</p>
                       </div>
                     </div>
                     <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -266,9 +270,9 @@ export default function ProfilePage() {
 
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-2xl mx-auto">
-              <div className="bg-card rounded-[3rem] p-10 lg:p-14 border border-border shadow-sm">
-                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-10 flex items-center gap-3">
-                  <Shield size={16} className="text-amber-500" /> Change Password
+              <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
+                  <Shield size={16} className="text-[var(--color-primary)]" /> Change Password
                 </h3>
 
                 <form className="space-y-8" onSubmit={async (e) => {
@@ -290,13 +294,13 @@ export default function ProfilePage() {
                 }}>
                   <div className="space-y-6">
                     <IdentityField label="Current Password" name="currentPassword" icon={Shield} isEditing={true} type="password" />
-                    <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-4" />
+                    <div className="h-px bg-[var(--color-border)] my-4" />
                     <IdentityField label="New Password" name="newPassword" icon={Zap} isEditing={true} type="password" />
                     <IdentityField label="Verify New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
                   </div>
 
                   <div className="pt-6">
-                    <Button type="submit" className="w-full h-16 !text-xs font-black uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black shadow-xl">
+                    <Button type="submit" className="w-full h-16 !text-xs font-black uppercase tracking-widest bg-[var(--color-primary)] text-white shadow-xl">
                       Confirm Change
                     </Button>
                   </div>
@@ -315,7 +319,7 @@ function IdentityField({ label, name, value, icon: Icon, isEditing, onChange, ty
     <div className="space-y-3">
       <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-4">{label}</label>
       <div className={`relative group transition-all duration-300 ${!isEditing ? 'opacity-70' : ''}`}>
-        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors" size={18} />
+        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
         <input
           name={name}
           type={type}
@@ -323,7 +327,7 @@ function IdentityField({ label, name, value, icon: Icon, isEditing, onChange, ty
           value={value}
           onChange={onChange}
           maxLength={maxLength}
-          className="w-full pl-16 pr-6 py-5 rounded-[2rem] bg-zinc-50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-amber-500/30 focus:bg-white dark:focus:bg-zinc-800 outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30"
+          className="w-full pl-16 pr-6 py-5 rounded-[2rem] bg-[var(--color-bg-soft)] border-2 border-transparent focus:border-[var(--color-primary)]/30 focus:bg-[var(--color-surface)] outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-[var(--color-text-primary)]"
           placeholder={`Input ${label}...`}
         />
       </div>
@@ -333,7 +337,7 @@ function IdentityField({ label, name, value, icon: Icon, isEditing, onChange, ty
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colors = {
-    amber: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    amber: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20'
@@ -341,13 +345,13 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
 
   return (
     <CardHover>
-      <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col items-center text-center group">
+      <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm flex flex-col items-center text-center group">
         <div className={`h-14 w-14 rounded-2xl ${colors[color]} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500`}>
           <Icon size={24} />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">{label}</p>
-        <h4 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter mb-2">{value || '0'}</h4>
-        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{sub}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2">{label}</p>
+        <h4 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter mb-2">{value || '0'}</h4>
+        <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{sub}</p>
       </div>
     </CardHover>
   );

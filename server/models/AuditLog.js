@@ -9,21 +9,26 @@ const auditLogSchema = new mongoose.Schema({
   performedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
   },
   role: String,
   details: mongoose.Schema.Types.Mixed,
-  ip: String,
-  userAgent: String,
-  targetId: mongoose.Schema.Types.ObjectId,
-  targetModel: String,
+  metadata: mongoose.Schema.Types.Mixed,
+  locationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location',
+    required: false,
+    index: true
+  },
   timestamp: {
     type: Date,
     default: Date.now,
     index: true
   }
 }, {
-  timestamps: false
+  timestamps: true
 });
+
+auditLogSchema.index({ action: 1, timestamp: -1 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

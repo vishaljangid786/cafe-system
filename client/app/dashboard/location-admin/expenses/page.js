@@ -66,7 +66,11 @@ export default function LocationExpensesPage() {
   };
 
   useEffect(() => {
-    fetchExpenses();
+    const timer = setTimeout(() => {
+      fetchExpenses();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [timeRange]);
 
   const handleAddExpense = async (e) => {

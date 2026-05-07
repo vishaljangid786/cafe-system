@@ -17,15 +17,13 @@ export default function MonthlySummaryPage() {
 
   const isDark = theme === 'dark';
 
-  const COLORS = isDark 
-    ? ['#fbbf24', '#34d399', '#60a5fa', '#f87171', '#a78bfa'] // Amber 400, Emerald 400, Blue 400, Red 400, Violet 400
-    : ['#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6']; // Amber 500, Emerald 500, Blue 500, Red 500, Violet 500
+  const COLORS = ['var(--color-primary)', 'var(--color-accent)', '#ea580c', '#f43f5e', '#8b5cf6'];
 
   const chartColors = {
-    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    text: isDark ? '#71717a' : '#71717a', // zinc-500
-    tooltipBg: isDark ? '#18181b' : '#ffffff', // zinc-900 or white
-    tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
+    grid: 'var(--color-border)',
+    text: 'var(--color-text-muted)',
+    tooltipBg: 'var(--color-surface)',
+    tooltipBorder: 'var(--color-border)',
   };
 
   const fetchSummary = async () => {
@@ -41,7 +39,11 @@ export default function MonthlySummaryPage() {
   };
 
   useEffect(() => {
-    fetchSummary();
+    const timer = setTimeout(() => {
+      fetchSummary();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [month]);
 
   return (
@@ -75,8 +77,8 @@ export default function MonthlySummaryPage() {
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 h-96 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-[2.5rem]"></div>
-            <div className="h-96 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-[2.5rem]"></div>
+            <div className="md:col-span-2 h-96 bg-[var(--color-surface-soft)] animate-pulse rounded-[2.5rem]"></div>
+            <div className="h-96 bg-[var(--color-surface-soft)] animate-pulse rounded-[2.5rem]"></div>
           </div>
         ) : (
           <>
@@ -101,8 +103,8 @@ export default function MonthlySummaryPage() {
                           itemStyle={{ fontWeight: 900, fontSize: '12px' }}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: chartColors.text }} />
-                        <Bar dataKey="totalPresentDays" fill="#10B981" name="Present" radius={[6, 6, 0, 0]} barSize={32} />
-                        <Bar dataKey="totalAbsentDays" fill="#EF4444" name="Absent" radius={[6, 6, 0, 0]} barSize={32} />
+                        <Bar dataKey="totalPresentDays" fill="var(--color-success)" name="Present" radius={[6, 6, 0, 0]} barSize={32} />
+                        <Bar dataKey="totalAbsentDays" fill="var(--color-danger)" name="Absent" radius={[6, 6, 0, 0]} barSize={32} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -156,48 +158,63 @@ export default function MonthlySummaryPage() {
             </div>
 
             <SlideIn direction="up" delay={0.3}>
-              <div className="glass-card rounded-[2.5rem] premium-shadow overflow-hidden border border-[var(--color-border)]">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left border-collapse min-w-[800px]">
-                    <thead>
-                      <tr className="bg-[var(--color-bg-soft)] border-b border-[var(--color-border)]">
-                        <th className="px-8 py-6 text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Branch Name</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Total Staff</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Presents</th>
-                        <th className="px-8 py-6 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Absents</th>
-                        <th className="px-8 py-6 text-right text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Performance</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--color-border)]">
-                      {summary.map((loc, idx) => {
-                        const totalDays = loc.totalPresentDays + loc.totalAbsentDays;
-                        const percentage = totalDays > 0 ? (loc.totalPresentDays / totalDays) * 100 : 0;
-                        return (
-                          <tr key={idx} className="hover:bg-[var(--color-bg-soft)]/50 transition-colors group">
-                            <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-[var(--color-text-primary)] tracking-tight group-hover:text-[var(--color-primary)] transition-colors">{loc.locationName}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-bold text-[var(--color-text-muted)]">{loc.totalStaff}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-green-500">{loc.totalPresentDays}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-center text-sm font-black text-red-500">{loc.totalAbsentDays}</td>
-                            <td className="px-8 py-6 whitespace-nowrap text-right">
-                              <div className="flex items-center justify-end">
-                                <span className={`text-xs font-black mr-3 tracking-tighter ${percentage > 90 ? 'text-green-500' : percentage > 75 ? 'text-amber-500' : 'text-red-500'}`}>
-                                  {percentage.toFixed(1)}%
-                                </span>
-                                <div className="w-20 bg-[var(--color-bg-soft)] rounded-full h-1.5 overflow-hidden">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percentage}%` }}
-                                    className={`h-full rounded-full ${percentage > 90 ? 'bg-green-500' : percentage > 75 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {summary.map((loc, idx) => {
+                  const totalDays = loc.totalPresentDays + loc.totalAbsentDays;
+                  const percentage = totalDays > 0 ? (loc.totalPresentDays / totalDays) * 100 : 0;
+                  return (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + idx * 0.1 }}
+                      className="glass-card p-6 rounded-[2rem] border border-[var(--color-border)] hover:border-[var(--color-primary)]/40 transition-colors group"
+                    >
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight group-hover:text-[var(--color-primary)] transition-colors">
+                            {loc.locationName}
+                          </h3>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mt-1">
+                            {loc.totalStaff} Staff Members
+                          </p>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tighter shadow-sm border ${
+                          percentage > 90 
+                            ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
+                            : percentage > 75 
+                            ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20' 
+                            : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20'
+                        }`}>
+                          {percentage.toFixed(1)}% PERF
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-[var(--color-surface-soft)] p-4 rounded-2xl border border-[var(--color-border)]">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Presents</p>
+                          <p className="text-2xl font-black text-[var(--color-success)]">{loc.totalPresentDays}</p>
+                        </div>
+                        <div className="bg-[var(--color-surface-soft)] p-4 rounded-2xl border border-[var(--color-border)]">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Absents</p>
+                          <p className="text-2xl font-black text-[var(--color-danger)]">{loc.totalAbsentDays}</p>
+                        </div>
+                      </div>
+
+                      <div className="w-full bg-[var(--color-bg-soft)] rounded-full h-2 overflow-hidden shadow-inner">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          className={`h-full rounded-full ${
+                            percentage > 90 ? 'bg-[var(--color-success)] shadow-[0_0_10px_rgba(var(--color-success-rgb),0.4)]' 
+                            : percentage > 75 ? 'bg-[var(--color-primary)] shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.4)]' 
+                            : 'bg-[var(--color-danger)] shadow-[0_0_10px_rgba(var(--color-danger-rgb),0.4)]'
+                          }`}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </SlideIn>
           </>

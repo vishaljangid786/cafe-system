@@ -7,16 +7,15 @@ import { useTheme } from '../../context/ThemeContext';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, Wallet, Users,
   Coffee, Calendar, Zap, Activity, Clock,
   ArrowUpRight, Target, Flame, Layers, Filter,
   ChefHat, Utensils, Receipt, ShoppingBag,
-  ChevronDown,
-  MapPin,
-  User
+  ChevronDown, MapPin, User, DollarSign,
+  CreditCard, BarChart3, PieChart as PieChartIcon
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import { StatWidget } from '../../components/ui/StatWidget';
@@ -51,15 +50,19 @@ export default function AdminDashboard() {
   const isDark = theme === 'dark';
 
   const chartColors = {
-    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    text: isDark ? '#71717a' : '#71717a', // zinc-500
-    tooltipBg: isDark ? '#18181b' : '#ffffff', // zinc-900 or white
-    tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
+    grid: 'var(--color-border)',
+    text: 'var(--color-text-muted)',
+    tooltipBg: 'var(--color-surface)',
+    tooltipBorder: 'var(--color-border)',
   };
 
-  const COLORS = isDark
-    ? ['#fbbf24', '#60a5fa', '#34d399', '#f87171', '#a78bfa', '#f472b6']
-    : ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+  const COLORS = [
+    'var(--color-primary)',
+    'var(--color-secondary)',
+    'var(--color-success)',
+    'var(--color-danger)',
+    'var(--color-text-muted)'
+  ];
 
   const fetchLocations = async () => {
     try {
@@ -110,19 +113,31 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchLocations();
+    const timer = setTimeout(() => {
+      fetchLocations();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     // Only auto-filter if user is not a super_admin or admin (who usually want global view)
     // Or if they explicitly have a selectedLocation that isn't 'all'
     if (authLocation && user?.role !== 'super_admin' && user?.role !== 'admin') {
-      setFilterLocation(authLocation._id || authLocation);
+      const timer = setTimeout(() => {
+        setFilterLocation(authLocation._id || authLocation);
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [authLocation, user]);
 
   useEffect(() => {
-    fetchAnalytics();
+    const timer = setTimeout(() => {
+      fetchAnalytics();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [filterLocation, timeFilter, customDates]);
 
   if (loading) return (
@@ -138,7 +153,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10 pb-20">
-      {/* Cinematic System Intelligence Header */}
+      {/* Cinematic System Information Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[95]">
         <div className="space-y-2">
           <motion.div
@@ -146,24 +161,24 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
-            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-              <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/80">System: Online</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-full">
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.8)]" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary)]/80">System: Online</span>
             </div>
-            <div className="h-px w-8 bg-zinc-200 dark:bg-zinc-800" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">{filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}</span>
+            <div className="h-px w-8 bg-[var(--color-border)]" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}</span>
           </motion.div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-[var(--color-text-primary)] flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
             {filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
-            <span className="text-amber-500 not-italic">Overview</span>
+            <span className="text-[var(--color-primary)] not-italic">Overview</span>
           </h1>
-          <p className="text-sm text-zinc-400 font-medium max-w-lg leading-relaxed border-l-2 border-amber-500/30 pl-4">
+          <p className="text-sm text-[var(--color-text-muted)] font-medium max-w-lg leading-relaxed border-l-2 border-[var(--color-primary)]/30 pl-4">
             Real-time data for {filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-4">
+        <div className="flex flex-wrap items-center justify-start md:justify-end gap-4 w-full md:w-auto">
           <ExportActions
             data={analytics?.timeSeries || []}
             columns={[
@@ -178,22 +193,21 @@ export default function AdminDashboard() {
           />
           <PremiumSelect
             icon={MapPin}
-            label="Select Branch"
             value={filterLocation}
             onChange={(val) => setFilterLocation(val)}
             options={[
               { label: 'All Branches', value: 'all' },
               ...locations.map(loc => ({ label: loc.name, value: loc._id }))
             ]}
-            className="min-w-[200px]"
+            className="w-full sm:w-[220px]"
           />
 
-          <div className="flex items-center gap-3 bg-white/40 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
+          <div className="flex items-center gap-2 sm:gap-3 bg-[var(--color-surface)]/40 p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
             {['today', '7d', '30d', 'all', 'custom'].map(t => (
               <button
                 key={t}
                 onClick={() => setTimeFilter(t)}
-                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeFilter === t ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800'}`}
+                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]'}`}
               >
                 {t}
               </button>
@@ -206,7 +220,7 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-4 p-6 glass-card border border-[var(--color-border)] rounded-3xl premium-shadow"
+          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-[var(--color-border)] rounded-3xl premium-shadow"
         >
           <div className="flex-1">
             <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
@@ -220,14 +234,21 @@ export default function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        <StatWidget label="Total Orders" value={analytics.summary.totalOrders || '0'} icon={<ShoppingBag size={20} />} color="blue" delay={0.3} />
+        <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
         <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
         <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
-        <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.2} />
-        {(user?.role === 'admin' || user?.role === 'super_admin') && (
-          <StatWidget label="Total Payroll" value={`₹${analytics?.personnelStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.4} />
-        )}
+        <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
+        <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
       </div>
+
+      {(user?.role === 'admin' || user?.role === 'super_admin') && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.5} />
+          <StatWidget label="Monthly Payroll" value={`₹${analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.6} />
+          <StatWidget label="Avg Staff Salary" value={`₹${Math.round(analytics?.staffStats?.avgSalary || 0).toLocaleString()}`} icon={DollarSign} color="amber" delay={0.7} />
+          <StatWidget label="Staff Count" value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0) || '0'} icon={Activity} color="indigo" delay={0.8} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 !p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
@@ -240,12 +261,12 @@ export default function AdminDashboard() {
               <AreaChart data={analytics.timeSeries}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
@@ -259,9 +280,9 @@ export default function AdminDashboard() {
                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                   }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
-                <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                <Area type="monotone" dataKey="revenue" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="profit" stroke="var(--color-success)" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
+                <Line type="monotone" dataKey="expenses" stroke="var(--color-danger)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -274,7 +295,7 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Daily Orders</CardTitle>
               <CardDescription>Total orders per day.</CardDescription>
             </div>
-            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+            <div className="p-3 bg-[var(--color-primary)]/10 rounded-2xl text-[var(--color-primary)]">
               <Layers size={20} />
             </div>
           </div>
@@ -293,7 +314,7 @@ export default function AdminDashboard() {
                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                   }}
                 />
-                <Bar dataKey="orders" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="orders" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -303,13 +324,13 @@ export default function AdminDashboard() {
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Expenditures */}
-        <Card className="!p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+        <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Expenses</CardTitle>
               <CardDescription>Latest expenses from all branches.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+            <div className="h-10 w-10 rounded-2xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
               <TrendingDown size={20} />
             </div>
           </div>
@@ -321,44 +342,44 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-rose-500/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-danger)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                      <Receipt size={18} className="text-rose-500" />
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <Receipt size={18} className="text-[var(--color-danger)]" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{exp.title}</h5>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{exp.locationId?.name || 'Main Office'}</p>
+                      <h5 className="text-sm font-bold text-[var(--color-text-primary)]">{exp.title}</h5>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{exp.locationId?.name || 'Main Office'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-rose-500">-₹{exp.totalAmount.toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase">{new Date(exp.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-black text-[var(--color-danger)]">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
+                    <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(exp.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent expenses found.</div>
+              <div className="text-center py-10 text-[var(--color-text-muted)] font-medium italic text-sm">No recent expenses found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push('/dashboard/admin/expenses')}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Expenses
           </Button>
         </Card>
 
         {/* Recent Revenues */}
-        <Card className="!p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+        <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Sales</CardTitle>
               <CardDescription>Latest completed orders.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+            <div className="h-10 w-10 rounded-2xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
               <TrendingUp size={20} />
             </div>
           </div>
@@ -370,76 +391,228 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:border-emerald-500/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-success)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                      <ShoppingBag size={18} className="text-emerald-500" />
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <ShoppingBag size={18} className="text-[var(--color-success)]" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate w-32 sm:w-auto">
+                      <h5 className="text-sm font-bold text-[var(--color-text-primary)] truncate w-32 sm:w-auto">
                         Order #{rev._id.substring(rev._id.length - 6).toUpperCase()}
                       </h5>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Marked by {rev.staffId?.name || 'Staff'}</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Marked by {rev.staffId?.name || 'Staff'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-emerald-500">+₹{rev.totalAmount.toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase">{new Date(rev.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-black text-[var(--color-success)]">+₹{rev.totalAmount.toLocaleString()}</div>
+                    <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(rev.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-zinc-500 font-medium italic text-sm">No recent sales found.</div>
+              <div className="text-center py-10 text-[var(--color-text-muted)] font-medium italic text-sm">No recent sales found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push('/dashboard/admin/revenue')}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Sales
           </Button>
         </Card>
       </div>
 
-      {/* Personnel & Payroll Section */}
-      {(user?.role === 'admin' || user?.role === 'super_admin') && analytics?.personnelStats && (
+      {/* Advanced Intelligence Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Smart Forecasting Chart */}
+        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <CardTitle className="text-xl">Smart Forecasting</CardTitle>
+              <CardDescription>Predicted sales trends based on history.</CardDescription>
+            </div>
+            <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] animate-pulse">
+              <Zap size={20} />
+            </div>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics?.forecast?.nextMonthSalesTrend}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: chartColors.tooltipBg, borderColor: chartColors.tooltipBorder, borderRadius: '12px' }}
+                />
+                <Bar dataKey="projected" fill="var(--color-primary)" radius={[6, 6, 0, 0]} opacity={0.8} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-6 p-4 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="text-[var(--color-primary)]" size={18} />
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Expected Today:</span>
+            </div>
+            <span className="text-lg font-black text-[var(--color-primary)]">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
+          </div>
+        </Card>
+
+        {/* Attendance Trend */}
+        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <CardTitle className="text-xl">Workforce Attendance</CardTitle>
+              <CardDescription>Daily presence and absence trends.</CardDescription>
+            </div>
+            <Activity size={20} className="text-[var(--color-secondary)]" />
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={analytics?.attendanceStats}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <Tooltip contentStyle={{ backgroundColor: chartColors.tooltipBg, borderColor: chartColors.tooltipBorder, borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="present" stroke="var(--color-secondary)" fill="var(--color-secondary)" fillOpacity={0.1} strokeWidth={2} />
+                <Area type="monotone" dataKey="absent" stroke="var(--color-danger)" fill="var(--color-danger)" fillOpacity={0.05} strokeWidth={2} strokeDasharray="5 5" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {/* Distribution Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Category Sales Distribution */}
+        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+          <CardTitle className="text-lg mb-6">Category Distribution</CardTitle>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analytics?.categorySales}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {analytics?.categorySales?.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'][index % 5]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Payment Methods */}
+        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+          <CardTitle className="text-lg mb-6">Payment Intelligence</CardTitle>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'UPI', value: analytics?.paymentStats?.methods?.upiCount || 0 },
+                    { name: 'CASH', value: analytics?.paymentStats?.methods?.cashCount || 0 },
+                    { name: 'OTHER', value: analytics?.paymentStats?.methods?.otherCount || 0 }
+                  ]}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  <Cell fill="var(--color-primary)" />
+                  <Cell fill="var(--color-secondary)" />
+                  <Cell fill="var(--color-amber)" />
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="p-2 bg-[var(--color-primary)]/5 rounded-xl text-center">
+              <p className="text-[8px] font-black uppercase text-[var(--color-primary)]">UPI</p>
+              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.upiCount}</p>
+            </div>
+            <div className="p-2 bg-[var(--color-secondary)]/5 rounded-xl text-center">
+              <p className="text-[8px] font-black uppercase text-[var(--color-secondary)]">Cash</p>
+              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.cashCount}</p>
+            </div>
+            <div className="p-2 bg-[var(--color-amber)]/5 rounded-xl text-center">
+              <p className="text-[8px] font-black uppercase text-[var(--color-amber)]">Other</p>
+              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Staff Performance Leaderboard */}
+        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow lg:col-span-1" hover={false}>
+          <div className="flex items-center justify-between mb-6">
+            <CardTitle className="text-lg">Staff Leaderboard</CardTitle>
+            <Target size={18} className="text-[var(--color-amber)]" />
+          </div>
+          <div className="space-y-3">
+            {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)]">
+                <div className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[10px] font-black text-[var(--color-primary)]">
+                    {i + 1}
+                  </div>
+                  <span className="text-xs font-bold truncate w-24">{staff.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-[var(--color-success)]">₹{staff.revenue.toLocaleString()}</p>
+                  <p className="text-[8px] font-bold text-[var(--color-text-muted)]">{staff.totalOrders} Orders</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* Staff & Payroll Section */}
+      {(user?.role === 'admin' || user?.role === 'super_admin') && analytics?.staffStats && (
         <SlideIn delay={0.4}>
-          <Card className="!p-8 bg-white dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-800/50" hover={false}>
+          <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-500">
+                  <div className="p-2.5 bg-[var(--color-secondary)]/10 rounded-xl text-[var(--color-secondary)]">
                     <Users size={24} />
                   </div>
-                  <CardTitle className="text-2xl">Personnel & Payroll</CardTitle>
+                  <CardTitle className="text-2xl">Staff & Payroll</CardTitle>
                 </div>
                 <CardDescription>Breakdown of branch staff, chefs and monthly salary obligations.</CardDescription>
               </div>
-              <div className="px-6 py-3 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl">
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Monthly Payroll Total</p>
-                <p className="text-3xl font-black text-indigo-600 tracking-tighter">₹{analytics.personnelStats.totalMonthlySalary.toLocaleString()}</p>
+              <div className="px-6 py-3 bg-[var(--color-secondary)]/5 border border-[var(--color-secondary)]/10 rounded-2xl">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-secondary)] mb-1">Monthly Payroll Total</p>
+                <p className="text-3xl font-black text-[var(--color-secondary)] tracking-tighter">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { label: 'Total Staff', count: analytics.personnelStats.staffCount, icon: Users, color: 'blue' },
-                { label: 'Total Chefs', count: analytics.personnelStats.chefCount, icon: ChefHat, color: 'amber' },
-                { label: 'Branch Admins', count: analytics.personnelStats.adminCount, icon: User, color: 'indigo' }
+                { label: 'Total Staff', count: analytics?.staffStats?.staffCount || 0, icon: Users, color: 'amber' },
+                { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, color: 'orange' },
+                { label: 'Branch Admins', count: analytics?.staffStats?.adminCount || 0, icon: User, color: 'indigo' }
               ].map((item, i) => (
-                <div key={i} className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between group hover:border-indigo-500/20 transition-all">
+                <div key={i} className="p-6 rounded-3xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-primary)]/20 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className={`h-12 w-12 rounded-2xl bg-${item.color === 'blue' ? 'blue' : item.color === 'amber' ? 'amber' : 'indigo'}-500/10 flex items-center justify-center text-${item.color === 'blue' ? 'blue' : item.color === 'amber' ? 'amber' : 'indigo'}-500 group-hover:scale-110 transition-transform`}>
+                    <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
                       <item.icon size={22} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{item.label}</p>
-                      <p className="text-2xl font-black text-zinc-900 dark:text-white">{item.count}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">{item.label}</p>
+                      <p className="text-2xl font-black text-[var(--color-text-primary)]">{item.count}</p>
                     </div>
                   </div>
-                  <ChevronDown className="text-zinc-300 -rotate-90" size={18} />
+                  <ChevronDown className="text-[var(--color-text-muted)] opacity-30 -rotate-90" size={18} />
                 </div>
               ))}
             </div>

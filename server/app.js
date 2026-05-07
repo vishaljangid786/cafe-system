@@ -4,7 +4,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
 const hpp = require('hpp');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
@@ -30,23 +29,28 @@ const orderRoutes = require('./routes/orderRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
+const seedRoutes = require('./routes/seedRoutes');
+const cookieParser = require('cookie-parser');
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
 
-// Security Middlewares
+// 3. Security & Optimization Middlewares
 app.use(helmet());
 app.use(mongoSanitize());
-app.use(xss());
 app.use(hpp());
+app.use(cookieParser());
 
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 500, // limit each IP to 500 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
@@ -54,7 +58,7 @@ app.use('/api/', limiter);
 // Specific Rate Limiter for Login
 const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // limit each IP to 10 login attempts per hour
+  max: 20, // limit each IP to 20 login attempts per hour
   message: 'Too many login attempts, please try again in an hour.'
 });
 app.use('/api/auth/login', loginLimiter);
@@ -66,12 +70,12 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/expenses', expenseRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/locations', locationRoutes); // Renamed
+app.use('/api/locations', locationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/expenses', expenseRoutes);
 app.use('/api/salary', salaryRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/menu', menuRoutes);
@@ -85,6 +89,15 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+
+if (process.env.NODE_ENV === 'development') {
+  app.use('/api/seed', seedRoutes);
+  app.get('/test-query', (req, res) => {
+    console.log('Query:', req.query);
+    res.json({ success: true, query: req.query });
+  });
+}
+
 // Base route
 app.get('/', (req, res) => {
   res.send('Cafe Management API is running...');

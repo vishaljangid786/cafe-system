@@ -7,17 +7,19 @@ const asyncHandler = require('../utils/asyncHandler');
 const getCustomers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = '', sort = '-totalSpend' } = req.query;
 
+  const { escapeRegex, clampLimit } = require('../utils/accessControl');
+  const pageNum = parseInt(page);
+  const limitNum = clampLimit(limit, 50);
+  const skip = (pageNum - 1) * limitNum;
+
   const query = {};
   if (search) {
+    const cleanSearch = escapeRegex(search);
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } }
+      { name: { $regex: cleanSearch, $options: 'i' } },
+      { phone: { $regex: cleanSearch, $options: 'i' } }
     ];
   }
-
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
-  const skip = (pageNum - 1) * limitNum;
 
   const total = await Customer.countDocuments(query);
   const customers = await Customer.find(query)

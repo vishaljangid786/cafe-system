@@ -23,8 +23,12 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   const [modifierKey, setModifierKey] = useState('');
   
   useEffect(() => {
-    const isMac = typeof window !== 'undefined' && navigator?.platform?.toUpperCase().indexOf('MAC') >= 0;
-    setModifierKey(isMac ? '⌘' : 'Ctrl');
+    const timer = setTimeout(() => {
+      const isMac = typeof window !== 'undefined' && navigator?.platform?.toUpperCase().indexOf('MAC') >= 0;
+      setModifierKey(isMac ? '⌘' : 'Ctrl');
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const locationRef = useRef(null);
@@ -105,7 +109,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
 
           <div className="flex flex-col items-start leading-none pr-1">
             <span className="hidden sm:inline text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-1">
-              Active Node
+              Active Branch
             </span>
 
             <span className="text-[10px] md:text-xs font-black text-[var(--color-text-primary)] max-w-[120px] truncate">
@@ -134,7 +138,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-[var(--color-bg)] animate-pulse" />
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--color-bg)] animate-pulse" />
             )}
           </button>
 
@@ -151,7 +155,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           </div>
           <Link
             href="/dashboard/profile"
-            className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-[1.5px] group cursor-pointer shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95 overflow-hidden"
+            className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-[1.5px] group cursor-pointer shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95 overflow-hidden"
           >
             <div className="h-full w-full rounded-[0.9rem] bg-[var(--color-bg)] flex items-center justify-center text-primary overflow-hidden">
               {user.profileImageUrl ? (

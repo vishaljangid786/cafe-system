@@ -26,7 +26,11 @@ const loginSchema = [
 const signupSchema = [
   body('name').trim().notEmpty().withMessage('Name is required').isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').isLength({ min: 10 }).withMessage('Password must be at least 10 characters'),
+  body('phone').notEmpty().withMessage('Phone number is required').matches(/^[0-9]{10}$/).withMessage('Please provide a valid 10-digit phone number'),
+  body('gender').notEmpty().withMessage('Gender is required').isIn(['Male', 'Female', 'Other']).withMessage('Invalid gender selection'),
+  body('address1').trim().notEmpty().withMessage('Primary address is required'),
+  body('city').trim().notEmpty().withMessage('City is required'),
 ];
 
 const menuItemSchema = [

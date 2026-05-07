@@ -21,7 +21,7 @@ export default function RootPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <div className="h-12 w-12 rounded-xl border-2 border-amber-500/20 border-t-amber-500 animate-spin" />
+      <div className="h-12 w-12 rounded-xl border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
     </div>
   );
 }

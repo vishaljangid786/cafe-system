@@ -89,7 +89,10 @@ export default function BranchExpensesPage() {
   };
 
   useEffect(() => {
-    fetchExpenses();
+    const timer = setTimeout(() => {
+      fetchExpenses();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [timeRange, activeTab]);
 
   const handleAddExpense = async (e) => {
@@ -184,7 +187,7 @@ export default function BranchExpensesPage() {
                     Branch <span className="text-rose-500">Expenses</span>
                   </h1>
                   <p className="text-zinc-500 font-bold mt-2 flex items-center gap-2 text-sm">
-                    <Sparkles size={14} className="text-amber-500" />
+                    <Sparkles size={14} className="text-blue-500" />
                     Track your daily expenses and costs.
                   </p>
                 </div>
@@ -351,7 +354,7 @@ export default function BranchExpensesPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{selectedExpense.title}</h3>
                       {selectedExpense.status === 'pending' && (
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-lg animate-pulse">Pending Review</span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg animate-pulse">Pending Review</span>
                       )}
                       {selectedExpense.status === 'rejected' && (
                         <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-zinc-500/10 text-zinc-600 border border-zinc-500/20 rounded-lg">Revoked</span>
@@ -386,13 +389,13 @@ export default function BranchExpensesPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-base font-black text-zinc-900 dark:text-white leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Protocol'}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mt-1 bg-rose-500/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'System Rule'}</p>
                     </div>
                   </div>
                   {selectedExpense.approvedBy && (
                     <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                       <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                        <Sparkles size={10} className="text-amber-500" /> Approved By {selectedExpense.approvedBy.name}
+                        <Sparkles size={10} className="text-blue-500" /> Approved By {selectedExpense.approvedBy.name}
                       </p>
                     </div>
                   )}
@@ -415,7 +418,7 @@ export default function BranchExpensesPage() {
                 </p>
                 <div className="p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 relative">
                   <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed italic relative z-10">
-                    "{selectedExpense.description || "No description provided."}"
+                    &ldquo;{selectedExpense.description || 'No description provided.'}&rdquo;
                   </p>
                 </div>
               </div>

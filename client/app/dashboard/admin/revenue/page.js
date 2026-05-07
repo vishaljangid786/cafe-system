@@ -26,8 +26,12 @@ import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 export default function RevenuePage() {
   const { theme } = useTheme();
   const { user, selectedLocation, switchLocation, globalSearch } = useAuth();
+  
+  const hasAccess = user?.role === 'super_admin' || user?.permissions?.viewRevenue === true;
+
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [timeRange, setTimeRange] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [startDate, setStartDate] = useState('');
@@ -48,10 +52,10 @@ export default function RevenuePage() {
   const isDark = theme === 'dark';
 
   const chartColors = {
-    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    text: isDark ? '#71717a' : '#71717a', // zinc-500
-    tooltipBg: isDark ? '#18181b' : '#ffffff', // zinc-900 or white
-    tooltipBorder: isDark ? '#27272a' : '#e4e4e7', // zinc-800 or zinc-200
+    grid: 'var(--color-border)',
+    text: 'var(--color-text-muted)',
+    tooltipBg: 'var(--color-surface)',
+    tooltipBorder: 'var(--color-border)',
   };
 
   const fetchLocations = async () => {
@@ -110,11 +114,27 @@ export default function RevenuePage() {
   };
 
   useEffect(() => {
-    fetchRevenue();
-    if (user?.role === 'super_admin' || user?.role === 'admin') {
-      fetchLocations();
-    }
+    if (!user || !hasAccess) return;
+
+    const timer = setTimeout(() => {
+      fetchRevenue();
+      if (user?.role === 'super_admin' || user?.role === 'admin') {
+        fetchLocations();
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [selectedLocation, startDate, endDate, currentPage, searchQuery, amountRange]);
+
+  if (!hasAccess && user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <TrendingUp size={60} className="text-rose-500 opacity-20" />
+        <h2 className="text-2xl font-black text-[var(--color-text-primary)] italic uppercase">Access Restricted</h2>
+        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-widest uppercase">Unauthorized Protocol: REVENUE_VIEW_DENIED</p>
+      </div>
+    );
+  }
 
   // With server-side filtering, transactions is already paginated
   const paginatedData = transactions || [];
@@ -134,8 +154,8 @@ export default function RevenuePage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-[var(--color-text-primary)]">
-              <TrendingUp className="text-emerald-500" size={36} strokeWidth={2.5} />
-              Revenue <span className="text-emerald-500">Dashboard</span>
+              <TrendingUp className="text-[var(--color-success)]" size={36} strokeWidth={2.5} />
+              Revenue <span className="text-[var(--color-success)]">Dashboard</span>
             </h1>
             <p className="text-[var(--color-text-muted)] font-medium mt-1">Track your earnings and sales data.</p>
           </div>
@@ -170,14 +190,14 @@ export default function RevenuePage() {
         <SlideIn delay={0.1}>
           <div className="glass-card p-8 rounded-[2.5rem] premium-shadow relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
-              <Activity size={120} className="text-emerald-500" />
+              <Activity size={120} className="text-[var(--color-success)]" />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
               <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">Revenue Trends</h2>
               <div className="flex gap-10">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Revenue</p>
-                  <p className="text-2xl font-black text-emerald-500 tracking-tighter">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-2xl font-black text-[var(--color-success)] tracking-tighter">₹{totalRevenue.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Average Order</p>
@@ -190,8 +210,8 @@ export default function RevenuePage() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
@@ -205,10 +225,10 @@ export default function RevenuePage() {
                       border: '1px solid',
                       boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                     }}
-                    itemStyle={{ color: '#10b981', fontWeight: '900', fontSize: '14px' }}
+                    itemStyle={{ color: 'var(--color-success)', fontWeight: '900', fontSize: '14px' }}
                     labelStyle={{ color: chartColors.text, fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px' }}
                   />
-                  <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
+                  <Area type="monotone" dataKey="amount" stroke="var(--color-success)" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -222,7 +242,7 @@ export default function RevenuePage() {
             <input
               type="text"
               placeholder="Search by invoice or customer..."
-              className="w-full pl-12 pr-4 py-4 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
+              className="w-full pl-12 pr-4 py-4 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-[var(--color-success)]/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -234,7 +254,7 @@ export default function RevenuePage() {
             <Button
               variant="secondary"
               onClick={() => setShowFilters(!showFilters)}
-              className={`!py-4 px-6 rounded-2xl border-none transition-all shadow-sm ${showFilters ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}
+              className={`!py-4 px-6 rounded-2xl border-none transition-all shadow-sm ${showFilters ? 'bg-[var(--color-success)] text-[var(--color-bg-base)]' : 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-bg-base)]'}`}
             >
               <Filter size={18} className="mr-2" /> Filters
             </Button>
@@ -261,7 +281,7 @@ export default function RevenuePage() {
               <input
                 type="number"
                 placeholder="0"
-                className="w-32 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-32 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-success)]"
                 value={amountRange.min}
                 onChange={e => { setAmountRange(prev => ({ ...prev, min: e.target.value })); setCurrentPage(1); }}
               />
@@ -271,7 +291,7 @@ export default function RevenuePage() {
               <input
                 type="number"
                 placeholder="50000"
-                className="w-32 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-32 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-success)]"
                 value={amountRange.max}
                 onChange={e => { setAmountRange(prev => ({ ...prev, max: e.target.value })); setCurrentPage(1); }}
               />
@@ -304,10 +324,10 @@ export default function RevenuePage() {
                   <CardHover>
                     <div
                       onClick={() => setSelectedTransaction(t)}
-                      className="glass-card p-5 rounded-2xl premium-shadow flex items-center justify-between group hover:border-emerald-500/30 transition-all cursor-pointer"
+                      className="glass-card p-5 rounded-2xl premium-shadow flex items-center justify-between group hover:border-[var(--color-success)]/30 transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-5">
-                        <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 shadow-sm">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)] shadow-sm">
                           <ArrowUpRight size={20} />
                         </div>
                         <div>
@@ -320,8 +340,8 @@ export default function RevenuePage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/5 px-2 py-0.5 rounded-md">
-                              {t.type === 'pos_revenue' ? 'POS Billing' : 'Manual Entry'}
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--color-success)] bg-[var(--color-success)]/5 px-2 py-0.5 rounded-md">
+                              {t.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                             </span>
                             <span className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-1">
                               <MapPin size={8} /> {t.locationId?.name || 'Main Branch'}
@@ -331,7 +351,7 @@ export default function RevenuePage() {
                       </div>
                       <div className="flex items-center gap-8">
                         <div className="text-right">
-                          <p className="text-xl font-black text-emerald-500 tracking-tighter">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-xl font-black text-[var(--color-success)] tracking-tighter">+₹{t.totalAmount.toLocaleString()}</p>
                           <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-[var(--color-text-muted)] group-hover:translate-x-1 transition-transform" />
@@ -350,18 +370,18 @@ export default function RevenuePage() {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
-              className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 disabled:opacity-30 transition-all hover:border-emerald-500/30"
+              className="h-10 w-10 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-30 transition-all hover:border-[var(--color-success)]/30"
             >
               <ChevronRight size={18} className="rotate-180" />
             </button>
-            <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
-              <span className="text-xs font-black text-zinc-900 dark:text-white">{currentPage}</span>
-              <span className="text-[10px] font-bold text-zinc-500">/ {totalPages}</span>
+            <div className="flex items-center gap-1 bg-[var(--color-surface)] px-3 py-1.5 rounded-xl border border-[var(--color-border)]">
+              <span className="text-xs font-black text-[var(--color-text-primary)]">{currentPage}</span>
+              <span className="text-[10px] font-bold text-[var(--color-text-muted)]">/ {totalPages}</span>
             </div>
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => prev + 1)}
-              className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 disabled:opacity-30 transition-all hover:border-emerald-500/30"
+              className="h-10 w-10 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-30 transition-all hover:border-[var(--color-success)]/30"
             >
               <ChevronRight size={18} />
             </button>
@@ -379,26 +399,26 @@ export default function RevenuePage() {
               {/* Header Info */}
               <div className="flex justify-between items-start">
                 <div className="flex gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 shadow-sm">
+                  <div className="h-14 w-14 rounded-2xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)] shadow-sm">
                     <Receipt size={28} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">
+                    <h3 className="text-2xl font-black text-[var(--color-text-primary)] tracking-tighter">
                       {selectedTransaction.title || `Order #${selectedTransaction._id.substring(selectedTransaction._id.length - 6).toUpperCase()}`}
                     </h3>
-                    <p className="text-zinc-500 font-bold text-xs flex items-center gap-2 mt-1">
+                    <p className="text-[var(--color-text-muted)] font-bold text-xs flex items-center gap-2 mt-1">
                       <Hash size={12} /> ID: {selectedTransaction._id}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Date & Time</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Date & Time</div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-emerald-500" />
+                    <span className="text-sm font-black text-[var(--color-text-primary)] flex items-center gap-1.5">
+                      <Calendar size={14} className="text-[var(--color-success)]" />
                       {new Date(selectedTransaction.date).toLocaleDateString()}
                     </span>
-                    <span className="text-xs font-bold text-zinc-500 flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[var(--color-text-muted)] flex items-center gap-1.5">
                       <Clock size={14} />
                       {new Date(selectedTransaction.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -408,29 +428,29 @@ export default function RevenuePage() {
 
               {/* Status & Location Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-2">Payment Source</p>
+                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Payment Source</p>
                   <div className="flex items-center gap-2">
-                    <CreditCard size={16} className="text-emerald-500" />
-                    <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs">
-                      {selectedTransaction.type === 'pos_revenue' ? 'POS Billing' : 'Manual Entry'}
+                    <CreditCard size={16} className="text-[var(--color-success)]" />
+                    <span className="font-black text-[var(--color-text-primary)] text-xs">
+                      {selectedTransaction.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                     </span>
                   </div>
                 </div>
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-2">Branch</p>
+                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Branch</p>
                   <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-emerald-500" />
-                    <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs">
+                    <MapPin size={16} className="text-[var(--color-success)]" />
+                    <span className="font-black text-[var(--color-text-primary)] text-xs">
                       {selectedTransaction.locationId?.name || 'Main Branch'}
                     </span>
                   </div>
                 </div>
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 col-span-2 md:col-span-1">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-2">Status</p>
+                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] col-span-2 md:col-span-1">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Status</p>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-500" />
-                    <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider">Payment Received</span>
+                    <CheckCircle2 size={16} className="text-[var(--color-success)]" />
+                    <span className="font-black text-[var(--color-text-primary)] text-xs uppercase tracking-wider">Payment Received</span>
                   </div>
                 </div>
               </div>
@@ -439,23 +459,23 @@ export default function RevenuePage() {
               {(selectedTransaction.customerName || selectedTransaction.staffId) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedTransaction.customerName && (
-                    <div className="p-4 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
+                    <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
                         <User size={10} /> Customer Name
                       </p>
-                      <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{selectedTransaction.customerName}</p>
+                      <p className="text-sm font-black text-[var(--color-text-primary)]">{selectedTransaction.customerName}</p>
                       {selectedTransaction.tableNumber && (
-                        <p className="text-xs font-bold text-zinc-500 mt-1">Table Assignment: {selectedTransaction.tableNumber}</p>
+                        <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Table Assignment: {selectedTransaction.tableNumber}</p>
                       )}
                     </div>
                   )}
                   {selectedTransaction.staffId && (
-                    <div className="p-4 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
+                    <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
                         <User size={10} /> Staff Member
                       </p>
-                      <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{selectedTransaction.staffId.name || 'Staff'}</p>
-                      <p className="text-xs font-bold text-zinc-500 mt-1">Service Execution</p>
+                      <p className="text-sm font-black text-[var(--color-text-primary)]">{selectedTransaction.staffId.name || 'Staff'}</p>
+                      <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Service Execution</p>
                     </div>
                   )}
                 </div>
@@ -464,24 +484,24 @@ export default function RevenuePage() {
               {/* Order Details */}
               {selectedTransaction.orders && selectedTransaction.orders.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Order Details</p>
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Order Details</p>
+                  <div className="rounded-2xl border border-[var(--color-border)] overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-zinc-50 dark:bg-zinc-900/50">
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-400">Item</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-400 text-center">Qty</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-400 text-right">Price</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-400 text-right">Total</th>
+                        <tr className="bg-[var(--color-surface-soft)]/50">
+                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Item</th>
+                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-center">Qty</th>
+                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Price</th>
+                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Total</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      <tbody className="divide-y divide-[var(--color-border)]">
                         {selectedTransaction.orders.map((item, i) => (
-                          <tr key={i} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                            <td className="px-4 py-3 text-xs font-black text-zinc-900 dark:text-zinc-100">{item.itemName}</td>
-                            <td className="px-4 py-3 text-xs font-bold text-zinc-500 text-center">{item.quantity}</td>
-                            <td className="px-4 py-3 text-xs font-bold text-zinc-500 text-right">₹{item.price}</td>
-                            <td className="px-4 py-3 text-xs font-black text-zinc-900 dark:text-zinc-100 text-right">₹{item.price * item.quantity}</td>
+                          <tr key={i} className="hover:bg-[var(--color-surface-soft)] transition-colors">
+                            <td className="px-4 py-3 text-xs font-black text-[var(--color-text-primary)]">{item.itemName}</td>
+                            <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-muted)] text-center">{item.quantity}</td>
+                            <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-muted)] text-right">₹{item.price}</td>
+                            <td className="px-4 py-3 text-xs font-black text-[var(--color-text-primary)] text-right">₹{item.price * item.quantity}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -492,32 +512,32 @@ export default function RevenuePage() {
 
               {/* Description */}
               {selectedTransaction.description && (
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
+                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 flex items-center gap-2">
                     <Info size={10} /> Context / Notes
                   </p>
-                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 italic">
-                    "{selectedTransaction.description}"
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)] italic">
+                    &ldquo;{selectedTransaction.description}&rdquo;
                   </p>
                 </div>
               )}
 
               {/* Financial Summary */}
-              <div className="pt-4 border-t border-dashed border-zinc-200 dark:border-zinc-800">
+              <div className="pt-4 border-t border-dashed border-[var(--color-border)]">
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-between items-end">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                      <div className="h-10 w-10 rounded-xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
                         <TrendingUp size={20} />
                       </div>
                       <div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Profit</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Profit</p>
+                        <p className="text-lg font-black text-[var(--color-text-primary)] tracking-tighter">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Total Amount</p>
-                      <p className="text-3xl font-black text-emerald-500 tracking-tighter">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Total Amount</p>
+                      <p className="text-3xl font-black text-[var(--color-success)] tracking-tighter">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -527,7 +547,7 @@ export default function RevenuePage() {
               <div className="pt-4">
                 <Button
                   onClick={() => setSelectedTransaction(null)}
-                  className="w-full !py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase tracking-widest text-[10px]"
+                  className="w-full !py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-black uppercase tracking-widest text-[10px]"
                 >
                   Close
                 </Button>

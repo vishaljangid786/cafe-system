@@ -52,12 +52,11 @@ export default function StaffTablesPage() {
 
   // Handle Progressive Rendering for smooth modal transitions
   useEffect(() => {
-    if (showOrderModal) {
-      const timer = setTimeout(() => setIsModalReady(true), 300);
-      return () => clearTimeout(timer);
-    } else {
-      setIsModalReady(false);
-    }
+    const timer = setTimeout(() => {
+      setIsModalReady(showOrderModal);
+    }, showOrderModal ? 300 : 0);
+
+    return () => clearTimeout(timer);
   }, [showOrderModal]);
 
   const fetchTables = async (silent = false) => {
@@ -101,8 +100,12 @@ export default function StaffTablesPage() {
   };
 
   useEffect(() => {
-    fetchTables();
-    fetchMenu();
+    const timer = setTimeout(() => {
+      fetchTables();
+      fetchMenu();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [user]);
 
   useEffect(() => {
@@ -269,9 +272,9 @@ export default function StaffTablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Transmission Successful', { id: loadToast });
+      toast.success('Update Successful', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Transmission failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Update failure', { id: loadToast });
     }
   };
 
@@ -337,12 +340,12 @@ export default function StaffTablesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <Globe size={20} className="text-amber-500" />
+              <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Globe size={20} className="text-blue-500" />
               </div>
               Floor Command Deck
             </h1>
-            <p className="text-xs text-zinc-500 mt-1 font-medium">Real-time table synchronization & management</p>
+            <p className="text-xs text-zinc-500 mt-1 font-medium">Real-time table sync & management</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -352,8 +355,8 @@ export default function StaffTablesPage() {
                   onClick={() => setStatusFilter(f)}
                   className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                     statusFilter === f 
-                      ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' 
-                      : 'text-zinc-500 hover:text-amber-500'
+                      ? 'bg-blue-500 text-black shadow-lg shadow-blue-500/20' 
+                      : 'text-zinc-500 hover:text-blue-500'
                   }`}
                 >
                   {f}
@@ -364,13 +367,13 @@ export default function StaffTablesPage() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 transition-all disabled:opacity-50"
+              className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/10 transition-all disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
             <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-               <MapPin size={14} className="text-amber-500" />
+               <MapPin size={14} className="text-blue-500" />
                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{user?.assignedLocation?.name || 'Sector Unknown'}</span>
             </div>
           </div>
@@ -424,7 +427,7 @@ export default function StaffTablesPage() {
         <Modal
           isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          title={`Session Matrix: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
+          title={`Session List: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
@@ -434,8 +437,8 @@ export default function StaffTablesPage() {
                 <div className="p-8 border-b border-border bg-gradient-to-br from-muted/50 to-card dark:from-zinc-950/50 dark:to-zinc-900/50 space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center mb-1">
-                        <ShoppingBag size={14} className="mr-2" /> Session Core
+                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center mb-1">
+                        <ShoppingBag size={14} className="mr-2" /> Session Details
                       </h3>
                       <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Order Registry</p>
                     </div>
@@ -487,7 +490,7 @@ export default function StaffTablesPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                          {order.image ? <img src={order.image} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-zinc-400" />}
+                          {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-zinc-400" />}
                         </div>
                         <div>
                           <div className="text-xs font-black text-foreground line-clamp-1">{order.itemName}</div>
@@ -511,7 +514,7 @@ export default function StaffTablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-amber-600 w-16 text-right">
+                        <div className="text-sm font-black text-blue-600 w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -534,7 +537,7 @@ export default function StaffTablesPage() {
                   {/* System Orders Section (OMS) */}
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
-                      <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                         <Zap size={14} /> Production Queue (OMS)
                       </h3>
                       <div className="space-y-3">
@@ -542,7 +545,7 @@ export default function StaffTablesPage() {
                           systemOrders.map((order) => (
                             <div key={order._id} className="bg-card p-4 rounded-2xl border border-border flex items-center justify-between group shadow-sm">
                               <div className="flex items-center gap-3">
-                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`} />
+                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-blue-500 animate-pulse'}`} />
                                 <div>
                                   <div className="text-[11px] font-black text-foreground uppercase tracking-tight">#{order._id.slice(-6)}</div>
                                   <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{order.status}</div>
@@ -551,9 +554,9 @@ export default function StaffTablesPage() {
                               
                               {/* Chef Note Display */}
                               {order.chefNote && (
-                                <div className="flex-1 mx-4 px-3 py-2 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 group/note relative">
-                                  <MessageSquare size={12} className="text-amber-500 flex-shrink-0" />
-                                  <p className="text-[9px] font-bold text-amber-700 dark:text-amber-400 leading-tight line-clamp-1">{order.chefNote}</p>
+                                <div className="flex-1 mx-4 px-3 py-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2 group/note relative">
+                                  <MessageSquare size={12} className="text-blue-500 flex-shrink-0" />
+                                  <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 leading-tight line-clamp-1">{order.chefNote}</p>
                                   
                                   {/* Hover expansion */}
                                   <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-zinc-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
@@ -577,7 +580,7 @@ export default function StaffTablesPage() {
                                         toast.error('Billing Failure', { id: loadToast });
                                       }
                                     }}
-                                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-amber-500/20"
+                                    className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-500/20"
                                   >
                                     Generate Bill
                                   </button>
@@ -623,7 +626,7 @@ export default function StaffTablesPage() {
                   <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                     <Button
                       variant="primary"
-                      className="w-full !rounded-2xl !py-4 shadow-xl shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-widest"
+                      className="w-full !rounded-2xl !py-4 shadow-xl shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest"
                       icon={Zap}
                       onClick={handleSendToKitchen}
                       disabled={pendingOrders.length === 0}
@@ -637,7 +640,7 @@ export default function StaffTablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('Culinary Protocol: All orders must be SERVED before finalization');
+                          if (!allReady) return toast.error('Culinary System Rule: All orders must be SERVED before finalization');
                           setIsBillPreviewOpen(true);
                         }}
                       >
@@ -651,13 +654,13 @@ export default function StaffTablesPage() {
               <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
                 {/* Search & Top Filters */}
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-amber-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu matrix..."
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                    placeholder="Search the menu list..."
+                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -675,7 +678,7 @@ export default function StaffTablesPage() {
                         onClick={() => setDietaryFilter(f.id)}
                         className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                           dietaryFilter === f.id 
-                            ? 'bg-amber-500 text-black shadow-sm' 
+                            ? 'bg-blue-500 text-black shadow-sm' 
                             : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
                         } ${f.color || ''}`}
                       >
@@ -689,13 +692,13 @@ export default function StaffTablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-amber-500" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-blue-500" /> Top Performing Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group"
+                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/30 transition-all cursor-pointer group"
                           onClick={() => {
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
@@ -721,7 +724,7 @@ export default function StaffTablesPage() {
                         >
                           <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-zinc-100 dark:bg-zinc-800 relative">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={24} /></div>
                             )}
@@ -730,7 +733,7 @@ export default function StaffTablesPage() {
                             </div>
                           </div>
                           <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-amber-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-blue-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -771,7 +774,7 @@ export default function StaffTablesPage() {
                         >
                           <div className="h-24 w-full rounded-2xl bg-muted overflow-hidden relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                                 <Coffee size={20} />
@@ -830,7 +833,7 @@ export default function StaffTablesPage() {
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500/20 transition-all dark:text-white"
+                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />

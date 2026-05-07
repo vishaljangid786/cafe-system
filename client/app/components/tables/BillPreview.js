@@ -197,7 +197,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
     >
       <div className="space-y-8 ">
         {/* Receipt Preview */}
-        <div className="bg-[#f4f4f5] dark:bg-[#09090b] p-6 rounded-3xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+        <div className="bg-[var(--color-bg-base)] p-6 rounded-3xl border border-[var(--color-border)] overflow-hidden">
           <div
             ref={billRef}
             className="bg-white text-black p-8 shadow-sm mx-auto"
@@ -205,7 +205,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           >
             <div className="text-center space-y-1">
               <h2 className="text-xl font-bold uppercase tracking-tighter">{cafeName}</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
                 {table.locationId?.name || table.locationName || 'Main Branch'}
               </p>
               <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
@@ -290,7 +290,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           </Button>
           <Button
             variant="primary"
-            className="flex-1 !rounded-2xl shadow-lg bg-primary shadow-amber-500/20"
+            className="flex-1 !rounded-2xl shadow-lg bg-primary shadow-blue-500/20"
             icon={isGenerating ? Loader2 : Check}
             onClick={handleFinalize}
             disabled={isGenerating}

@@ -31,7 +31,11 @@ export default function SalaryPage() {
   };
 
   useEffect(() => {
-    fetchSalaries();
+    const timer = setTimeout(() => {
+      fetchSalaries();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [month]);
 
   const filteredSalaries = salaries.filter(s =>
@@ -46,17 +50,17 @@ export default function SalaryPage() {
         {/* Top Branding & Filter Section */}
         <SlideIn direction="down">
           <div className="relative overflow-hidden bg-white dark:bg-zinc-900 p-10 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-zinc-800">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>
 
             <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
               <div>
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="px-3 py-1 bg-amber-100 dark:bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-amber-200 dark:border-amber-500/20">
+                  <div className="px-3 py-1 bg-blue-100 dark:bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-blue-200 dark:border-blue-500/20">
                     Accounts
                   </div>
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-black text-gray-900 dark:text-zinc-100 tracking-tighter leading-tight">
-                  Staff <span className="text-amber-600">Salary</span>
+                  Staff <span className="text-blue-600">Salary</span>
                 </h1>
                 <p className="text-gray-500 dark:text-zinc-500 text-sm mt-4 font-medium max-w-md">
                   Monthly salary calculation based on staff attendance.
@@ -66,9 +70,9 @@ export default function SalaryPage() {
               <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                 <div
                   onClick={() => monthInputRef.current?.showPicker()}
-                  className="bg-gray-50 dark:bg-zinc-800 p-2 rounded-2xl border border-gray-200 dark:border-zinc-700 flex items-center px-4 cursor-pointer hover:border-amber-500/50 transition-colors"
+                  className="bg-gray-50 dark:bg-zinc-800 p-2 rounded-2xl border border-gray-200 dark:border-zinc-700 flex items-center px-4 cursor-pointer hover:border-blue-500/50 transition-colors"
                 >
-                  <Calendar size={18} className="text-amber-600 mr-3" />
+                  <Calendar size={18} className="text-blue-600 mr-3" />
                   <input
                     ref={monthInputRef}
                     type="month"
@@ -88,7 +92,7 @@ export default function SalaryPage() {
         {/* Analytics Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-amber-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-amber-600/30 relative overflow-hidden group">
+            <div className="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-600/30 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                 <DollarSign size={120} />
               </div>
@@ -123,7 +127,7 @@ export default function SalaryPage() {
                 ₹{salaries.length > 0 ? Math.round(totalPayout / salaries.length).toLocaleString() : 0}
               </div>
               <p className="mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center">
-                <Info size={14} className="mr-2 text-amber-600" /> Per regular employee
+                <Info size={14} className="mr-2 text-blue-600" /> Per regular employee
               </p>
             </div>
           </SlideIn>
@@ -134,14 +138,14 @@ export default function SalaryPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-[3rem] shadow-xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
             <div className="p-8 border-b border-gray-50 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
               <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 tracking-tight flex items-center">
-                <FileText className="mr-3 text-amber-600" size={24} /> Salary <span className="ml-2 text-amber-600">List</span>
+                <FileText className="mr-3 text-blue-600" size={24} /> Salary <span className="ml-2 text-blue-600">List</span>
               </h2>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
                   placeholder="Search Staff..."
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 outline-none text-xs font-bold dark:text-zinc-200"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold dark:text-zinc-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -185,13 +189,13 @@ export default function SalaryPage() {
                       <td className="px-10 py-8">
                         <div className="flex items-center">
                           <div className="relative">
-                            <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-amber-500/10 to-amber-600/20 flex items-center justify-center text-amber-600 dark:text-amber-400 font-black text-2xl border border-amber-200 dark:border-amber-500/20 shadow-lg">
+                            <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-blue-500/10 to-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-2xl border border-blue-200 dark:border-blue-500/20 shadow-lg">
                               {item.name.charAt(0)}
                             </div>
                             <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 border-4 border-white dark:border-zinc-900 rounded-full"></div>
                           </div>
                           <div className="ml-6">
-                            <div className="text-lg font-black text-gray-900 dark:text-zinc-100 tracking-tight group-hover:text-amber-600 transition-colors">{item.name}</div>
+                            <div className="text-lg font-black text-gray-900 dark:text-zinc-100 tracking-tight group-hover:text-blue-600 transition-colors">{item.name}</div>
                             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{item.email}</div>
                           </div>
                         </div>
@@ -203,7 +207,7 @@ export default function SalaryPage() {
                               <span className="text-xs font-black leading-none">{item.totalPresent}</span>
                               <span className="text-[6px] font-black uppercase">Pres</span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex flex-col items-center justify-center border-2 border-white dark:border-zinc-900 shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex flex-col items-center justify-center border-2 border-white dark:border-zinc-900 shadow-md">
                               <span className="text-xs font-black leading-none">{item.totalHalfDay}</span>
                               <span className="text-[6px] font-black uppercase">Half</span>
                             </div>
@@ -220,7 +224,7 @@ export default function SalaryPage() {
                       <td className="px-10 py-8 text-right">
                         <button 
                           onClick={() => setViewingUser(item)}
-                          className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
+                          className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-sm"
                         >
                           View Salary
                         </button>
@@ -244,7 +248,7 @@ export default function SalaryPage() {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-zinc-100 dark:border-zinc-800 pb-8">
                 <div className="flex items-center gap-6">
-                  <div className="h-20 w-20 rounded-3xl bg-amber-500 text-white flex items-center justify-center text-3xl font-black shadow-xl shadow-amber-500/20">
+                  <div className="h-20 w-20 rounded-3xl bg-blue-500 text-white flex items-center justify-center text-3xl font-black shadow-xl shadow-blue-500/20">
                     {viewingUser.name.charAt(0)}
                   </div>
                   <div>
@@ -265,7 +269,7 @@ export default function SalaryPage() {
                   <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">
                     ₹{viewingUser.monthlySalary.toLocaleString()}
                   </p>
-                  <p className="text-[10px] font-black text-amber-600 uppercase mt-1">Per Month</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase mt-1">Per Month</p>
                 </div>
               </div>
 
@@ -278,9 +282,9 @@ export default function SalaryPage() {
                         <p className="text-[10px] font-black uppercase text-green-600 mb-1">Present</p>
                         <p className="text-2xl font-black text-green-700 dark:text-green-400">{viewingUser.totalPresent} Days</p>
                       </div>
-                      <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/10">
-                        <p className="text-[10px] font-black uppercase text-amber-600 mb-1">Half Days</p>
-                        <p className="text-2xl font-black text-amber-700 dark:text-amber-400">{viewingUser.totalHalfDay} Days</p>
+                      <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/10">
+                        <p className="text-[10px] font-black uppercase text-blue-600 mb-1">Half Days</p>
+                        <p className="text-2xl font-black text-blue-700 dark:text-blue-400">{viewingUser.totalHalfDay} Days</p>
                       </div>
                       <div className="bg-rose-500/10 p-4 rounded-2xl border border-rose-500/10">
                         <p className="text-[10px] font-black uppercase text-rose-600 mb-1">Absent</p>
@@ -306,9 +310,9 @@ export default function SalaryPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/10 flex items-start gap-3">
-                    <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-[10px] font-bold text-amber-900/60 dark:text-amber-200/60 leading-relaxed uppercase tracking-widest">
+                  <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/5 border border-blue-200/50 dark:border-blue-500/10 flex items-start gap-3">
+                    <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                    <p className="text-[10px] font-bold text-blue-900/60 dark:text-blue-200/60 leading-relaxed uppercase tracking-widest">
                       Salary calculated based on total working days and attendance.
                     </p>
                   </div>

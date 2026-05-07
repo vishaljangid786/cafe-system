@@ -118,7 +118,7 @@ export default function BookingPage() {
         <SlideIn direction="down">
           <div className="mb-10 text-center">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
-              Reserve Your <span className="text-amber-600">Table</span>
+              Reserve Your <span className="text-blue-600">Table</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Select a location, pick a time, and secure your spot in seconds.
@@ -130,7 +130,7 @@ export default function BookingPage() {
           {/* Booking Form */}
           <SlideIn direction="up" delay={0.1} className="lg:col-span-2">
             <div className="bg-white/5 dark:bg-zinc-900/50 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 text-amber-600/10 pointer-events-none">
+              <div className="absolute top-0 right-0 p-8 text-blue-600/10 pointer-events-none">
                 <CalendarIcon size={200} />
               </div>
 
@@ -157,7 +157,7 @@ export default function BookingPage() {
                       min={new Date().toISOString().split('T')[0]}
                       value={date}
                       onChange={(e) => { setDate(e.target.value); setAvailability(null); }}
-                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
+                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                       required
                     />
                   </div>
@@ -171,7 +171,7 @@ export default function BookingPage() {
                       max="20"
                       value={guests}
                       onChange={(e) => { setGuests(e.target.value); setAvailability(null); }}
-                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all"
+                      className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                       required
                     />
                   </div>
@@ -209,7 +209,7 @@ export default function BookingPage() {
                     value={specialRequests}
                     onChange={(e) => setSpecialRequests(e.target.value)}
                     placeholder="E.g., Window seat, anniversary celebration..."
-                    className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-amber-500 outline-none transition-all resize-none h-24"
+                    className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-24"
                   />
                 </div>
 
@@ -253,7 +253,7 @@ export default function BookingPage() {
                             whileTap={{ scale: 0.95 }}
                             onClick={handleBook}
                             disabled={bookingInProgress}
-                            className="mt-4 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-amber-600/20 transition-all flex items-center"
+                            className="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 transition-all flex items-center"
                           >
                             {bookingInProgress && <Loader2 className="animate-spin mr-2" size={14} />}
                             Confirm Booking
@@ -271,7 +271,7 @@ export default function BookingPage() {
           <SlideIn direction="left" delay={0.2}>
             <div className="bg-white/5 dark:bg-zinc-900/50 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl h-full flex flex-col">
               <h2 className="text-xl font-black mb-6 uppercase tracking-widest flex items-center">
-                <CalendarIcon className="mr-2 text-amber-600" size={20} /> My Schedule
+                <CalendarIcon className="mr-2 text-blue-600" size={20} /> My Schedule
               </h2>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
@@ -282,10 +282,10 @@ export default function BookingPage() {
                   </div>
                 ) : (
                   myBookings.map(booking => (
-                    <div key={booking._id} className="p-4 rounded-2xl bg-background border border-border hover:border-amber-500/30 transition-colors">
+                    <div key={booking._id} className="p-4 rounded-2xl bg-background border border-border hover:border-blue-500/30 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
-                          booking.status === 'pending' ? 'bg-amber-500/20 text-amber-500' :
+                          booking.status === 'pending' ? 'bg-blue-500/20 text-blue-500' :
                             'bg-red-500/20 text-red-500'
                           }`}>
                           {booking.status}

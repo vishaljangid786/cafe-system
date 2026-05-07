@@ -116,23 +116,23 @@ export default function StaffOrdersPage() {
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
-      fetchStats();
-      fetchCategories();
-      if (showCreateModal) fetchDataForCreation();
+      const timer = setTimeout(() => {
+        fetchOrders();
+        fetchStats();
+        fetchCategories();
+        if (showCreateModal) fetchDataForCreation();
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
   }, [user, filterType, showCreateModal, startDate, endDate, currentPage]);
 
   useEffect(() => {
     if (!user) return;
-    const socket = io(SOCKET_URL);
+    const socket = io(SOCKET_URL, { withCredentials: true });
     
     socket.on('connect', () => {
-      socket.emit('join_session', { 
-        userId: user._id, 
-        branchId: user.assignedLocation?._id || user.assignedLocation,
-        role: 'staff'
-      });
+      socket.emit('join_session', { branchId: user.assignedLocation?._id || user.assignedLocation });
     });
 
     socket.on('order:ready', (data) => {
@@ -299,12 +299,12 @@ export default function StaffOrdersPage() {
           </div>
         </div>
 
-        {/* Performance Matrix */}
+        {/* Performance List */}
         {stats && (
           <SlideIn delay={0.1}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { label: 'Total Handled', value: stats.totalOrders, icon: ShoppingBag, color: 'text-amber-500', bg: 'bg-amber-500/5' },
+                { label: 'Total Handled', value: stats.totalOrders, icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-500/5' },
                 { label: 'Placed by Me', value: stats.createdCount, icon: Plus, color: 'text-blue-500', bg: 'bg-blue-500/5' },
                 { label: 'Served by Me', value: stats.servedCount, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
                 { label: 'Live Active', value: orders.filter(o => !['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(o.status)).length, icon: Clock, color: 'text-indigo-500', bg: 'bg-indigo-500/5' }
@@ -387,7 +387,7 @@ export default function StaffOrdersPage() {
                     <button
                       key={table._id}
                       onClick={() => setSelectedTable(table)}
-                      className={`h-12 rounded-xl border-2 font-black text-xs transition-all ${selectedTable?._id === table._id ? 'border-amber-500 bg-amber-500/10 text-amber-600' : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-300'}`}
+                      className={`h-12 rounded-xl border-2 font-black text-xs transition-all ${selectedTable?._id === table._id ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-300'}`}
                     >
                       T{table.tableNumber}
                     </button>
@@ -449,7 +449,7 @@ export default function StaffOrdersPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <input 
                   type="text"
-                  placeholder="Search the menu matrix..."
+                  placeholder="Search the menu list..."
                   className="w-full pl-14 pr-6 py-4 bg-muted border border-border focus:ring-2 focus:ring-accent/20 rounded-2xl text-xs font-bold outline-none transition-all text-foreground"
                   value={menuSearch}
                   onChange={(e) => setMenuSearch(e.target.value)}
@@ -466,7 +466,7 @@ export default function StaffOrdersPage() {
                     >
                       <div className="h-24 w-full rounded-2xl bg-muted mb-3 overflow-hidden">
                         {item.image ? (
-                          <img src={item.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={20} /></div>
                         )}
@@ -477,7 +477,7 @@ export default function StaffOrdersPage() {
                       <h4 className="text-[11px] font-black text-foreground truncate">{item.name}</h4>
                       <p className="text-[10px] font-bold text-accent mt-0.5">₹{item.discountedPrice || item.price}</p>
                       
-                      <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-amber-500 text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 shadow-lg shadow-amber-500/20">
+                      <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-blue-500 text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 shadow-lg shadow-blue-500/20">
                         <Plus size={16} strokeWidth={3} />
                       </div>
                     </div>
@@ -500,7 +500,7 @@ function StaffOrderCard({ order, onRefresh }) {
     'PREPARING': { color: 'indigo', icon: Utensils, label: 'In Preparation' },
     'READY': { color: 'emerald', icon: CheckCircle2, label: 'Ready for Service' },
     'SERVED': { color: 'zinc', icon: CheckCircle2, label: 'Fulfilled' },
-    'CANCELLED': { color: 'rose', icon: XCircle, label: 'Aborted' },
+    'CANCELLED': { color: 'rose', icon: XCircle, label: 'Canceled' },
     'REJECTED': { color: 'rose', icon: XCircle, label: 'Rejected by Chef' }
   };
 
@@ -552,10 +552,10 @@ function StaffOrderCard({ order, onRefresh }) {
 
         {/* Chef Note Display */}
         {order.chefNote && (
-          <div className="mb-6 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-start gap-3">
-            <MessageSquare className="text-amber-500 shrink-0 mt-0.5" size={14} />
-            <p className="text-[10px] font-bold text-amber-600/80 leading-relaxed italic">
-              Chef: "{order.chefNote}"
+          <div className="mb-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-start gap-3">
+            <MessageSquare className="text-blue-500 shrink-0 mt-0.5" size={14} />
+            <p className="text-[10px] font-bold text-blue-600/80 leading-relaxed italic">
+              Chef: &quot;{order.chefNote}&quot;
             </p>
           </div>
         )}

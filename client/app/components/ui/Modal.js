@@ -29,7 +29,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-[var(--color-bg-deep)]/60 backdrop-blur-sm z-[9998]"
           />
 
           <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4 z-[9999] pointer-events-none overflow-hidden">
@@ -38,16 +38,16 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 50 }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className={`glass-card w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-2xl rounded-t-[2.5rem] pointer-events-auto shadow-2xl border border-zinc-200 dark:border-zinc-800/50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-2xl relative flex flex-col mt-auto sm:mt-0`}
+              className={`glass-card w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-2xl rounded-t-[2.5rem] pointer-events-auto shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-2xl relative flex flex-col mt-auto sm:mt-0`}
             >
-              <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between shrink-0">
+              <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
                 <div className="space-y-1">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">Details</h3>
-                  <p className="text-base sm:text-lg font-bold text-zinc-700 dark:text-slate-200 tracking-tight line-clamp-1">{title}</p>
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)]">Details</h3>
+                  <p className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] tracking-tight line-clamp-1">{title}</p>
                 </div>
                 <button
                   onClick={onClose}
-                  className="h-9 w-9 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer"
+                  className="h-9 w-9 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-all hover:border-[var(--color-primary)]/30 cursor-pointer"
                 >
                   <X size={18} />
                 </button>

@@ -2,18 +2,37 @@ const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
 const Notification = require('../models/Notification');
 const Expense = require('../models/Expense');
-const User = require('../models/User');
 const { getIO } = require('../config/socket');
+const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
+
+const getReservationLocationId = (reservation) => reservation.locationId?._id || reservation.locationId;
+
+const resolveReservationLocation = (req, res, requestedLocationId) => {
+  if (req.user.role === 'super_admin') return requestedLocationId;
+  if (req.user.role === 'admin') {
+    enforceLocationAccess(req, res, requestedLocationId);
+    return requestedLocationId;
+  }
+  return req.user.assignedLocation;
+};
+
+const overlapQuery = (startTime, endTime) => ([
+  { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
+]);
 
 // @desc    Check availability for a date/time
 // @route   GET /api/reservations/availability
 // @access  Private
 exports.checkAvailability = async (req, res) => {
   try {
-    const { locationId, date, startTime, endTime, reservationType, tableIds, excludeId } = req.query;
+    let { locationId, date, startTime, endTime, reservationType, tableIds, excludeId } = req.query;
 
     if (!locationId || !date || !startTime || !endTime || !reservationType) {
       return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    if (req.user.role !== 'super_admin') {
+      enforceLocationAccess(req, res, locationId);
     }
 
     const queryDate = new Date(date);
@@ -33,26 +52,7 @@ exports.checkAvailability = async (req, res) => {
     const fullLocationBooking = await Reservation.findOne({
       ...baseConflictQuery,
       reservationType: 'full-location',
-      $or: [
-        {
-          $and: [
-            { startTime: { $lte: startTime } },
-            { endTime: { $gt: startTime } }
-          ]
-        },
-        {
-          $and: [
-            { startTime: { $lt: endTime } },
-            { endTime: { $gte: endTime } }
-          ]
-        },
-        {
-          $and: [
-            { startTime: { $gte: startTime } },
-            { endTime: { $lte: endTime } }
-          ]
-        }
-      ]
+      $or: overlapQuery(startTime, endTime)
     });
 
     if (fullLocationBooking) {
@@ -72,20 +72,7 @@ exports.checkAvailability = async (req, res) => {
         date: queryDate,
         status: { $ne: 'cancelled' },
         tableIds: { $in: selectedTableIds },
-        $or: [
-          {
-            $and: [
-              { startTime: { $lte: startTime } },
-              { endTime: { $gt: startTime } }
-            ]
-          },
-          {
-            $and: [
-              { startTime: { $lt: endTime } },
-              { endTime: { $gte: endTime } }
-            ]
-          }
-        ]
+        $or: overlapQuery(startTime, endTime)
       });
 
       if (overlappingTableBookings.length > 0) {
@@ -103,20 +90,7 @@ exports.checkAvailability = async (req, res) => {
             locationId,
             date: queryDate,
             status: { $ne: 'cancelled' },
-            $or: [
-                {
-                    $and: [
-                        { startTime: { $lte: startTime } },
-                        { endTime: { $gt: startTime } }
-                    ]
-                },
-                {
-                    $and: [
-                        { startTime: { $lt: endTime } },
-                        { endTime: { $gte: endTime } }
-                    ]
-                }
-            ]
+            $or: overlapQuery(startTime, endTime)
         });
 
         if (anyTableBooking) {
@@ -130,7 +104,7 @@ exports.checkAvailability = async (req, res) => {
 
     res.status(200).json({ available: true, message: 'Time slot is available' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };
 
@@ -142,7 +116,7 @@ exports.createReservation = async (req, res) => {
     const {
       eventName,
       reservationType,
-      locationId,
+      locationId: requestedLocationId,
       tableIds,
       date,
       startTime,
@@ -157,7 +131,20 @@ exports.createReservation = async (req, res) => {
     } = req.body;
 
     // 1. Validate availability again on backend
+    const locationId = resolveReservationLocation(req, res, requestedLocationId);
     const queryDate = new Date(date);
+
+    if (!locationId) {
+      return res.status(400).json({ message: 'Location is required' });
+    }
+
+    if (reservationType === 'table' && tableIds?.length) {
+      const selectedTableIds = Array.isArray(tableIds) ? tableIds : [tableIds];
+      const tables = await Table.find({ _id: { $in: selectedTableIds }, locationId }).select('_id');
+      if (tables.length !== selectedTableIds.length) {
+        return res.status(403).json({ message: 'One or more tables are outside the selected location' });
+      }
+    }
     
     // (Overlap logic similar to checkAvailability but for saving)
     // Check if full location is booked
@@ -166,10 +153,7 @@ exports.createReservation = async (req, res) => {
         date: queryDate,
         reservationType: 'full-location',
         status: { $ne: 'cancelled' },
-        $or: [
-            { startTime: { $lte: startTime }, endTime: { $gt: startTime } },
-            { startTime: { $lt: endTime }, endTime: { $gte: endTime } }
-        ]
+        $or: overlapQuery(startTime, endTime)
     });
 
     if (fullLocCheck) return res.status(400).json({ message: 'Location is already booked for this time' });
@@ -180,10 +164,7 @@ exports.createReservation = async (req, res) => {
             date: queryDate,
             status: { $ne: 'cancelled' },
             tableIds: { $in: tableIds },
-            $or: [
-                { startTime: { $lte: startTime }, endTime: { $gt: startTime } },
-                { startTime: { $lt: endTime }, endTime: { $gte: endTime } }
-            ]
+            $or: overlapQuery(startTime, endTime)
         });
         if (tableCheck) return res.status(400).json({ message: 'Some tables are already booked for this time' });
     }
@@ -214,11 +195,11 @@ exports.createReservation = async (req, res) => {
         title: `Reservation Income - ${eventName}`,
         description: `Booking income for ${customerName} (${reservationType})`,
         amount: amount,
-        type: 'income',
+        type: 'INCOME',
         date: queryDate,
         locationId,
         createdBy: req.user._id,
-        proofImage: 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg' // Placeholder as required
+        proofImage: req.body.proofImage || 'reservation-payment'
       });
     }
 
@@ -238,7 +219,7 @@ exports.createReservation = async (req, res) => {
 
     res.status(201).json(reservation);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };
 
@@ -252,35 +233,22 @@ exports.getReservations = async (req, res) => {
 
     if (date) query.date = new Date(date);
     if (status) query.status = status;
-    if (eventName) query.eventName = { $regex: eventName, $options: 'i' };
+    if (eventName) query.eventName = { $regex: escapeRegex(eventName), $options: 'i' };
 
-    // STRICT RBAC
-    if (req.user.role === 'super_admin') {
-      if (locationId && locationId !== 'all') query.locationId = locationId;
-    } else if (req.user.role === 'admin') {
-      if (locationId && locationId !== 'all') {
-        const isAccessible = req.user.accessibleLocations?.some(loc => loc.toString() === locationId);
-        if (!isAccessible) return res.status(403).json({ message: 'Access denied to this location' });
-        query.locationId = locationId;
-      } else {
-        query.locationId = { $in: req.user.accessibleLocations || [] };
-      }
-    } else {
-      // Branch Admin, Chef, Staff
-      query.locationId = req.user.assignedLocation;
-    }
+    const branchScope = scopedLocationId(req, locationId);
+    if (branchScope) query.locationId = branchScope;
 
     if (search) {
       query.$or = [
-        { eventName: { $regex: search, $options: 'i' } },
-        { customerName: { $regex: search, $options: 'i' } },
-        { customerPhone: { $regex: search, $options: 'i' } }
+        { eventName: { $regex: escapeRegex(search), $options: 'i' } },
+        { customerName: { $regex: escapeRegex(search), $options: 'i' } },
+        { customerPhone: { $regex: escapeRegex(search), $options: 'i' } }
       ];
     }
 
     // Pagination
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
+    const limit = clampLimit(req.query.limit, 20);
     const skip = (page - 1) * limit;
 
     const total = await Reservation.countDocuments(query);
@@ -304,7 +272,7 @@ exports.getReservations = async (req, res) => {
       data: reservations 
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };
 
@@ -322,9 +290,11 @@ exports.getReservationById = async (req, res) => {
       return res.status(404).json({ message: 'Reservation not found' });
     }
 
+    enforceLocationAccess(req, res, getReservationLocationId(reservation));
+
     res.status(200).json(reservation);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };
 
@@ -333,19 +303,27 @@ exports.getReservationById = async (req, res) => {
 // @access  Private
 exports.updateReservation = async (req, res) => {
   try {
-    const reservation = await Reservation.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!reservation) {
+    const existing = await Reservation.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ message: 'Reservation not found' });
     }
 
+    enforceLocationAccess(req, res, getReservationLocationId(existing));
+
+    const updateData = { ...req.body };
+    if (updateData.locationId) {
+      updateData.locationId = resolveReservationLocation(req, res, updateData.locationId);
+    }
+
+    const reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
     res.status(200).json(reservation);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };
 
@@ -360,9 +338,11 @@ exports.deleteReservation = async (req, res) => {
       return res.status(404).json({ message: 'Reservation not found' });
     }
 
+    enforceLocationAccess(req, res, getReservationLocationId(reservation));
+
     await reservation.deleteOne();
     res.status(200).json({ message: 'Reservation removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
   }
 };

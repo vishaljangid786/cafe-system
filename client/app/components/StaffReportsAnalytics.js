@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import PremiumSelect from './ui/PremiumSelect';
 
-const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function StaffReportsAnalytics({ user }) {
   const [data, setData] = useState([]);
@@ -51,11 +52,19 @@ export default function StaffReportsAnalytics({ user }) {
   };
 
   useEffect(() => {
-    fetchBranches();
+    const timer = setTimeout(() => {
+      fetchBranches();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    fetchReports();
+    const timer = setTimeout(() => {
+      fetchReports();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [filters]);
 
   const handleFilterChange = (key, value) => {
@@ -101,8 +110,8 @@ export default function StaffReportsAnalytics({ user }) {
     window.print();
   };
 
-  // Aggregate Category Sales over ALL staff for the Pie Chart
-  const getAggregatedCategorySales = () => {
+  // Total Category Sales over ALL staff for the Pie Chart
+  const getTotaldCategorySales = () => {
     const catTotals = {};
     data.forEach(staff => {
       Object.entries(staff.foodCategorySales || {}).forEach(([cat, val]) => {
@@ -112,32 +121,32 @@ export default function StaffReportsAnalytics({ user }) {
     return Object.entries(catTotals).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
   };
 
-  const catSalesData = getAggregatedCategorySales();
+  const catSalesData = getTotaldCategorySales();
 
   return (
     <div className="max-w-[1600px] mx-auto pb-20 space-y-10 print:p-0 print:bg-white print:text-black">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <TrendingUp size={24} className="text-white" />
+          <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
+              <TrendingUp size={24} className="text-black" />
             </div>
             Staff Reports & Analytics
           </h1>
-          <p className="text-xs text-zinc-500 mt-1 font-medium ml-13">Evaluate team efficiency, sales contributions, and service delivery.</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">Evaluate team efficiency, sales contributions, and service delivery.</p>
         </div>
 
         <div className="flex gap-4">
           <button
             onClick={exportCSV}
-            className="px-5 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50"
+            className="px-5 py-3 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)] rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm border border-[var(--color-border)]"
           >
             <Download size={16} /> Export CSV
           </button>
           <button
             onClick={exportPDF}
-            className="px-5 py-3 bg-zinc-900 dark:bg-zinc-800 hover:bg-zinc-800 dark:hover:bg-zinc-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg"
+            className="px-5 py-3 bg-[var(--color-primary)] text-black rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg"
           >
             <Printer size={16} /> Print/PDF
           </button>
@@ -151,16 +160,16 @@ export default function StaffReportsAnalytics({ user }) {
       </div>
 
       {/* Filters */}
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-8 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm space-y-6 print:hidden">
-        <div className="flex items-center gap-2 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-          <Filter size={16} className="text-amber-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Filter Reports</span>
+      <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-6 print:hidden">
+        <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
+          <Filter size={16} className="text-[var(--color-primary)]" />
+          <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Filter Reports</span>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
           {/* Staff Name */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <User size={12} /> Staff Name
             </label>
             <input
@@ -168,74 +177,76 @@ export default function StaffReportsAnalytics({ user }) {
               placeholder="Search staff..."
               value={filters.staffName}
               onChange={(e) => handleFilterChange('staffName', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-amber-500 focus:outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all text-[var(--color-text-primary)]"
             />
           </div>
 
           {/* Branch (Hidden for Branch Admin) */}
           {user?.role !== 'branch_admin' && (
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+              <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
                 <Building size={12} /> Branch
               </label>
-              <select
+              <PremiumSelect
                 value={filters.branch}
-                onChange={(e) => handleFilterChange('branch', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-amber-500 focus:outline-none transition-all"
-              >
-                <option value="">All Branches</option>
-                {branches.map(loc => <option key={loc._id} value={loc._id}>{loc.name}</option>)}
-              </select>
+                onChange={(val) => handleFilterChange('branch', val)}
+                options={[
+                  { label: 'All Branches', value: '' },
+                  ...branches.map(loc => ({ label: loc.name, value: loc._id }))
+                ]}
+                className="w-full"
+              />
             </div>
           )}
 
           {/* Exact Date */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Specific Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-amber-500 focus:outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all text-[var(--color-text-primary)]"
             />
           </div>
 
           {/* Month */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Month
             </label>
             <input
               type="month"
               value={filters.month}
               onChange={(e) => handleFilterChange('month', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-amber-500 focus:outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all text-[var(--color-text-primary)]"
             />
           </div>
 
           {/* Financial Year */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
               <Bookmark size={12} /> Financial Year
             </label>
-            <select
+            <PremiumSelect
               value={filters.financialYear}
-              onChange={(e) => handleFilterChange('financialYear', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs font-bold focus:border-amber-500 focus:outline-none transition-all"
-            >
-              <option value="">Select Year</option>
-              <option value="2024">FY 2024-25</option>
-              <option value="2025">FY 2025-26</option>
-              <option value="2026">FY 2026-27</option>
-            </select>
+              onChange={(val) => handleFilterChange('financialYear', val)}
+              options={[
+                { label: 'Select Year', value: '' },
+                { label: 'FY 2024-25', value: '2024' },
+                { label: 'FY 2025-26', value: '2025' },
+                { label: 'FY 2026-27', value: '2026' }
+              ]}
+              className="w-full"
+            />
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="h-64 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl rounded-3xl animate-pulse flex items-center justify-center font-bold text-zinc-400">
+        <div className="h-64 bg-[var(--color-surface)]/50 backdrop-blur-xl rounded-3xl animate-pulse flex items-center justify-center font-bold text-[var(--color-text-muted)]">
           Compiling aggregate reporting metrics...
         </div>
       ) : (
@@ -243,9 +254,9 @@ export default function StaffReportsAnalytics({ user }) {
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:hidden">
             {/* Sales leaderboard */}
-            <div className="lg:col-span-7 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-amber-500" /> Sales Leaderboard (₹)
+            <div className="lg:col-span-7 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Sales Leaderboard (₹)
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -261,9 +272,9 @@ export default function StaffReportsAnalytics({ user }) {
             </div>
 
             {/* Category Sales Share */}
-            <div className="lg:col-span-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 p-8 flex flex-col">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 mb-6 flex items-center gap-3">
-                <Bookmark size={16} className="text-blue-500" /> Category Distribution
+            <div className="lg:col-span-5 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8 flex flex-col">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+                <Bookmark size={16} className="text-[var(--color-primary)]" /> Category Distribution
               </h3>
               <div className="flex-1 min-h-[250px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
@@ -297,31 +308,31 @@ export default function StaffReportsAnalytics({ user }) {
           </div>
 
           {/* Detailed Performance Table */}
-          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 p-8 print:p-0 print:border-0 print:shadow-none">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-400 mb-6 flex items-center gap-3 print:hidden">
-              <Award size={16} className="text-amber-500" /> Performance Analysis Matrix
+          <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8 print:p-0 print:border-0 print:shadow-none">
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3 print:hidden">
+              <Award size={16} className="text-[var(--color-primary)]" /> Performance Analysis List
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Rank</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Name</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Role</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Branch</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Sales</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Orders</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Coupons Used</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Coupon Disc.</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Est. Profit</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Cancelled %</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Avg Ticket</th>
+                  <tr className="border-b border-[var(--color-border)]">
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Rank</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Name</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Role</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Branch</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Sales</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Orders</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupons Used</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupon Disc.</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Est. Profit</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Cancelled %</th>
+                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Avg Ticket</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.map((staff) => (
-                    <tr key={staff._id} className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-all group">
-                      <td className="py-4 text-xs font-black text-amber-500">#{staff.ranking}</td>
+                    <tr key={staff._id} className="border-b border-[var(--color-border)]/50 hover:bg-[var(--color-surface-soft)]/30 transition-all group">
+                      <td className="py-4 text-xs font-black text-[var(--color-primary)]">#{staff.ranking}</td>
                       <td className="py-4 text-xs font-black text-zinc-800 dark:text-zinc-100">{staff.name}</td>
                       <td className="py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{staff.role}</td>
                       <td className="py-4 text-xs font-bold text-zinc-500">{staff.branchName}</td>
@@ -336,7 +347,7 @@ export default function StaffReportsAnalytics({ user }) {
                   ))}
                   {data.length === 0 && (
                     <tr>
-                      <td colSpan="11" className="py-10 text-center italic text-xs font-bold text-zinc-400 opacity-40">No personnel interactions tracked for this sector.</td>
+                      <td colSpan="11" className="py-10 text-center italic text-xs font-bold text-[var(--color-text-muted)] opacity-40">No staff interactions tracked for this sector.</td>
                     </tr>
                   )}
                 </tbody>

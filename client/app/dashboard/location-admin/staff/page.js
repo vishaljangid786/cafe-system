@@ -35,7 +35,11 @@ export default function LocationStaffPage() {
   };
 
   useEffect(() => {
-    fetchStaff();
+    const timer = setTimeout(() => {
+      fetchStaff();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleEdit = (member) => {
@@ -95,7 +99,7 @@ export default function LocationStaffPage() {
           <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-amber-600" size={36} /> Branch <span className="ml-3 text-amber-600">Staff</span>
+                <Users className="mr-4 text-blue-600" size={36} /> Branch <span className="ml-3 text-blue-600">Staff</span>
               </h1>
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Manage your branch staff and their details.</p>
             </div>
@@ -105,7 +109,7 @@ export default function LocationStaffPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-zinc-900 dark:bg-amber-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/10 flex items-center"
+                  className="bg-zinc-900 dark:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/10 flex items-center"
                 >
                   <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
                 </motion.button>
@@ -127,20 +131,20 @@ export default function LocationStaffPage() {
                   </div>
 
                   <div className="flex items-center space-x-5 relative z-10">
-                    <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200/20 shadow-inner">
+                    <div className="h-16 w-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-200/20 shadow-inner">
                       <span className="text-2xl font-black uppercase">{member.name.charAt(0)}</span>
                     </div>
                     <div>
                       <h3 className="font-black text-gray-900 dark:text-zinc-100 text-xl tracking-tight leading-tight">{member.name}</h3>
                       <div className="flex items-center mt-1">
-                        <UserCheck size={12} className="text-amber-600 mr-2" />
-                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">{member.role}</span>
+                        <UserCheck size={12} className="text-blue-600 mr-2" />
+                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-widest">{member.role}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-8 space-y-4 relative z-10 flex-grow">
-                    <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 group-hover:text-amber-600 transition-colors">
+                    <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400 group-hover:text-blue-600 transition-colors">
                       <Mail size={16} className="mr-4 opacity-40" /> {member.email}
                     </div>
                     <div className="flex items-center text-xs font-bold text-gray-500 dark:text-zinc-400">
@@ -155,7 +159,7 @@ export default function LocationStaffPage() {
                     <div className="flex space-x-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                        className="p-3 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-2xl transition-all"
+                        className="p-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-2xl transition-all"
                         title="Edit Profile"
                       >
                         <Edit3 size={20} />
@@ -190,22 +194,22 @@ export default function LocationStaffPage() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Phone</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
                 <PremiumSelect 
                   label="Gender"
@@ -221,32 +225,32 @@ export default function LocationStaffPage() {
 
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Address</label>
-              <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
+              <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
             <div className="grid grid-cols-4 gap-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">City</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
+                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">State</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
+                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pincode</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Salary (₹)</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-5 bg-zinc-900 dark:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-amber-600/20 mt-4"
+              className="w-full py-5 bg-zinc-900 dark:bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/20 mt-4"
             >
               Update Staff Records
             </motion.button>
@@ -261,7 +265,7 @@ export default function LocationStaffPage() {
           message="This staff member will be permanently removed from the system."
         />
 
-        {/* Detailed Personnel Details Modal */}
+        {/* Detailed Staff Details Modal */}
         <Modal
           isOpen={!!viewingStaff}
           onClose={() => setViewingStaff(null)}
@@ -273,7 +277,7 @@ export default function LocationStaffPage() {
               {/* Header Profile */}
               <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                  <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-blue-500/20 group-hover:scale-105 transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-zinc-950 rounded-full flex items-center justify-center text-white">
@@ -284,10 +288,10 @@ export default function LocationStaffPage() {
                 <div className="text-center md:text-left flex-1">
                   <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{viewingStaff.name}</h2>
                   <p className="text-sm font-bold text-zinc-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                    <Mail size={14} className="text-amber-600" /> {viewingStaff.email}
+                    <Mail size={14} className="text-blue-600" /> {viewingStaff.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                    <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-500/20">
+                    <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-500/20">
                       {viewingStaff.role}
                     </span>
                     <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest rounded-full">
@@ -311,25 +315,25 @@ export default function LocationStaffPage() {
                   {/* Identity Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <CreditCard size={14} className="text-amber-600" /> Identity Details
+                      <CreditCard size={14} className="text-blue-600" /> Identity Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Hash className="text-amber-600" size={20} />
+                        <Hash className="text-blue-600" size={20} />
                         <div>
                           <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Number</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Phone className="text-amber-600" size={20} />
+                        <Phone className="text-blue-600" size={20} />
                         <div>
                           <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Phone Number</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.phone}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Award className="text-amber-600" size={20} />
+                        <Award className="text-blue-600" size={20} />
                         <div>
                           <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Qualification</p>
                           <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
@@ -341,7 +345,7 @@ export default function LocationStaffPage() {
                   {/* Demographic Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Globe size={14} className="text-amber-600" /> Personal Details
+                      <Globe size={14} className="text-blue-600" /> Personal Details
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -360,7 +364,7 @@ export default function LocationStaffPage() {
                   {/* Address Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <MapPin size={14} className="text-amber-600" /> Address
+                      <MapPin size={14} className="text-blue-600" /> Address
                     </h3>
                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                       <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
@@ -374,7 +378,7 @@ export default function LocationStaffPage() {
                   {/* Document Proof Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Info size={14} className="text-amber-600" /> Aadhar Card
+                      <Info size={14} className="text-blue-600" /> Aadhar Card
                     </h3>
                     {viewingStaff.aadharImage ? (
                       <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
@@ -389,7 +393,7 @@ export default function LocationStaffPage() {
                           rel="noreferrer"
                           className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
                         >
-                          <Globe size={24} className="text-amber-500" />
+                          <Globe size={24} className="text-blue-500" />
                           <span className="font-black text-[10px] uppercase tracking-widest">View Original Image</span>
                         </a>
                       </div>

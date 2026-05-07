@@ -72,29 +72,29 @@ export default function PayrollRecordsPage() {
       <div className="space-y-6">
         {/* Header */}
         <SlideIn direction="down">
-          <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-2xl shadow-sm transition-colors">
-            <div className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-amber-500/20 blur-3xl" />
-            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-2xl shadow-sm transition-colors">
+            <div className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[var(--color-primary)]/20 blur-3xl" />
+            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-[var(--color-secondary)]/10 blur-3xl" />
 
             <div className="relative p-5 sm:p-6 lg:p-7">
               <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div className="flex-1">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-amber-700 dark:text-amber-400">
-                    <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
+                    <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
                     Payroll Control Center
                   </div>
 
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-amber-400 shadow-xl shadow-zinc-900/10 dark:bg-amber-500 dark:text-black dark:shadow-amber-500/20">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-xl shadow-[var(--color-bg-deep)]/10 border border-[var(--color-border)]">
                       <Wallet size={28} strokeWidth={2.5} />
                     </div>
 
                     <div>
-                      <h1 className="text-3xl font-black leading-none tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
-                        Salary <span className="text-amber-600 dark:text-amber-400">Management</span>
+                      <h1 className="text-3xl font-black leading-none tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
+                        Salary <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">Management</span>
                       </h1>
-                      <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-                        <Target size={15} className="mr-2 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-[var(--color-text-secondary)]">
+                        <Target size={15} className="mr-2 shrink-0 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]" />
                         Manage payouts, staff compensation, and branch-wise salary records for the selected cycle.
                       </p>
                     </div>
@@ -104,17 +104,17 @@ export default function PayrollRecordsPage() {
                 <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:w-auto xl:min-w-[820px]">
                   {/* Search */}
                   <div className="relative group sm:col-span-2 lg:col-span-1">
-                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
                       Search
                     </label>
                     <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-amber-600">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] transition-colors group-focus-within:text-[var(--color-primary)]">
                         <Activity size={17} />
                       </div>
                       <input
                           type="text"
                           placeholder="Search staff..."
-                          className="h-[54px] w-full rounded-2xl border border-zinc-200 bg-zinc-50/80 py-4 pl-12 pr-4 text-sm font-bold text-zinc-800 outline-none transition-all placeholder:text-zinc-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-100 dark:focus:bg-zinc-900"
+                          className="h-[54px] w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 py-4 pl-12 pr-4 text-sm font-bold text-[var(--color-text-primary)] outline-none transition-all placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
                           value={searchQuery}
                           onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -126,17 +126,17 @@ export default function PayrollRecordsPage() {
 
                   {/* Month Picker */}
                   <div>
-                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
                       Month
                     </label>
                     <div
                         onClick={() => monthInputRef.current?.showPicker()}
-                        className="flex h-[54px] cursor-pointer items-center rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 transition-all hover:border-amber-500/50 focus-within:border-amber-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-500/10 dark:border-zinc-800 dark:bg-zinc-900/70 dark:focus:bg-zinc-900"
+                        className="flex h-[54px] cursor-pointer items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 px-4 transition-all hover:border-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-surface)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10"
                     >
                       <input
                           ref={monthInputRef}
                           type="month"
-                          className="w-full cursor-pointer border-none bg-transparent text-sm font-bold text-zinc-800 outline-none dark:text-zinc-100"
+                          className="w-full cursor-pointer border-none bg-transparent text-sm font-bold text-[var(--color-text-primary)] outline-none"
                           value={month}
                           onChange={(e) => {
                             setMonth(e.target.value);
@@ -162,7 +162,7 @@ export default function PayrollRecordsPage() {
               </div>
 
               {/* Role Tabs Integrated for Alignment */}
-              <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-zinc-100 dark:border-zinc-800/50 pt-8">
+              <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-8">
                 {[
                   { id: 'staff', label: 'Staff' },
                   { id: 'chef', label: 'Chefs' },
@@ -177,8 +177,8 @@ export default function PayrollRecordsPage() {
                     }}
                     className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${
                       activeTab === tab.id 
-                        ? `bg-zinc-900 dark:bg-amber-600 text-white border-transparent shadow-xl shadow-amber-600/20 scale-105` 
-                        : `bg-white/50 dark:bg-zinc-900/50 text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:border-amber-500/30`
+                        ? `bg-[var(--color-text-primary)] text-[var(--color-bg-base)] border-transparent shadow-xl shadow-[var(--color-bg-deep)]/20 scale-105` 
+                        : `bg-[var(--color-surface)]/50 text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-[var(--color-primary)]/30`
                     }`}
                   >
                     {tab.label}
@@ -187,27 +187,27 @@ export default function PayrollRecordsPage() {
               </div>
 
              
-              <div className="mt-6 flex flex-col gap-4 border-t border-zinc-200/70 pt-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex flex-col gap-4 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Records</p>
-                    <p className="mt-1 text-sm font-black text-zinc-900 dark:text-zinc-100">
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Records</p>
+                    <p className="mt-1 text-sm font-black text-[var(--color-text-primary)]">
                       {filteredSalaries.length} Staff
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Cycle</p>
-                    <p className="mt-1 text-sm font-black text-zinc-900 dark:text-zinc-100">
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Cycle</p>
+                    <p className="mt-1 text-sm font-black text-[var(--color-text-primary)]">
                       {month}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">
+                   <div className="rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                       Scope
                     </p>
-                    <p className="mt-1 text-sm font-black text-amber-700 dark:text-amber-300">
+                    <p className="mt-1 text-sm font-black text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                       {selectedLocation === 'All' ? 'All Branches' : selectedLocation}
                     </p>
                   </div>
@@ -216,7 +216,7 @@ export default function PayrollRecordsPage() {
                 <div className="flex shrink-0 items-center gap-4">
                   <button
                     onClick={async () => {
-                      const loadToast = toast.loading("Processing payroll matrix...");
+                      const loadToast = toast.loading("Processing payroll list...");
                       try {
                         const locObj = locations.find(l => l.name === selectedLocation);
                         await api.post('/salary/generate', { month, locationId: locObj?._id || 'all' });
@@ -226,7 +226,7 @@ export default function PayrollRecordsPage() {
                         toast.error("Process constraints mapped", { id: loadToast });
                       }
                     }}
-                    className="h-[54px] px-6 py-3 bg-zinc-900 dark:bg-amber-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] shadow-md shadow-amber-500/10"
+                    className="h-[54px] px-6 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] shadow-md shadow-[var(--color-bg-deep)]/10"
                   >
                     Generate Monthly Payroll
                   </button>
@@ -250,10 +250,10 @@ export default function PayrollRecordsPage() {
             </div>
           </div>
         </SlideIn>
-        {/* Stats Cards */}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-amber-600 p-6 rounded-2xl shadow-lg shadow-amber-600/20 text-white h-full">
+            <div className="bg-[var(--color-primary)] p-6 rounded-2xl shadow-lg shadow-[var(--color-primary)]/20 text-[var(--color-bg-base)] h-full">
               <p className="text-xs font-black uppercase tracking-widest opacity-80">Total Salary Payout</p>
               <p className="text-3xl font-black mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
               <div className="mt-4 flex items-center text-xs font-medium opacity-90">
@@ -263,37 +263,35 @@ export default function PayrollRecordsPage() {
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 h-full transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Avg Salary / Employee</p>
-              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Avg Salary / Employee</p>
+              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">
                 ₹{filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 h-full transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Staff Count</p>
-              <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{filteredSalaries.length}</p>
+            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Staff Count</p>
+              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{filteredSalaries.length}</p>
             </div>
           </SlideIn>
         </div>
 
-        {/* Payroll Visual Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Distribution Graph */}
           <SlideIn delay={0.4}>
-            <div className="export-chart bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
+            <div className="export-chart bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">
                     {selectedLocation === 'All' ? 'Branch Breakdown' : 'Staff Breakdown'}
                   </h2>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
                     {selectedLocation === 'All' ? 'Payroll weight by location' : `Salary weights in ${selectedLocation}`}
                   </p>
                 </div>
-                <PieIcon size={20} className="text-amber-500" />
+                <PieIcon size={20} className="text-[var(--color-primary)]" />
               </div>
               <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -306,35 +304,28 @@ export default function PayrollRecordsPage() {
                       cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={8} dataKey="value"
                     >
                       {filteredSalaries.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'][index % 5]} />
+                        <Cell key={`cell-${index}`} fill={['var(--color-primary)', 'var(--color-secondary)', 'var(--color-success)', 'var(--color-danger)', 'var(--color-primary-dark)'][index % 5]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', border: '1px solid #27272a' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-black text-zinc-900 dark:text-zinc-100 italic">Salary</span>
-                  <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Weights</span>
-                </div>
               </div>
             </div>
           </SlideIn>
 
-          
-
-          {/* Comparative Cost Graph */}
           <SlideIn delay={0.5}>
-            <div className="export-chart bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
+            <div className="export-chart bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">
                     {selectedLocation === 'All' ? 'Comparative Cost' : 'Individual Payouts'}
                   </h2>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
                     {selectedLocation === 'All' ? 'Direct salary payout comparison' : `Top earners in ${selectedLocation}`}
                   </p>
                 </div>
-                <Activity size={20} className="text-blue-500" />
+                <Activity size={20} className="text-[var(--color-primary)]" />
               </div>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -342,10 +333,10 @@ export default function PayrollRecordsPage() {
                     ? (stats?.locationTotals ? Object.entries(stats.locationTotals).map(([name, total]) => ({ name, value: total })) : [])
                     : filteredSalaries.slice(0, 8).map(s => ({ name: s.name.split(' ')[0], value: s.calculatedSalary }))
                   }>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                    <Tooltip cursor={{ fill: '#88888810' }} />
-                    <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={selectedLocation === 'All' ? 40 : 20} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-text-muted)' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-text-muted)' }} />
+                    <Tooltip cursor={{ fill: 'var(--color-surface-soft)' }} />
+                    <Bar dataKey="value" fill="var(--color-primary)" radius={[6, 6, 0, 0]} barSize={selectedLocation === 'All' ? 40 : 20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -353,148 +344,128 @@ export default function PayrollRecordsPage() {
           </SlideIn>
         </div>
 
-
-
-        {/* Salary Table */}
         <SlideIn direction="up" delay={0.4}>
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-zinc-50/50 dark:bg-zinc-800/50 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                    <th className="px-6 py-4">Employee</th>
-                    <th className="px-6 py-4">Role</th>
-                    <th className="px-6 py-4">Branch</th>
-                    {['staff', 'chef'].includes(activeTab) && (
-                      <th className="px-6 py-4 text-center">Working Days</th>
-                    )}
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
-                  {loading ? (
-                    [1, 2, 3, 4].map(i => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan="5" className="px-6 py-6"><div className="h-4 bg-gray-100 dark:bg-zinc-800 rounded w-full"></div></td>
-                      </tr>
-                    ))
-                  ) : filteredSalaries.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-zinc-500">No payroll records found for this period.</td>
-                    </tr>
-                  ) : (
-                    filteredSalaries.map((s, idx) => (
-                      <motion.tr
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 + idx * 0.03 }}
-                        key={s._id}
-                        className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group"
-                      >
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{s.name}</p>
-                            <p className="text-[10px] font-medium text-zinc-500">{s.email}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500/10 text-amber-600 rounded-md">
-                            {(s.role === 'location_admin' || s.role === 'branch_admin') ? 'Branch Admin' : s.role?.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-bold px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 rounded-md">
-                            {s.locationName || 'Unassigned'}
-                          </span>
-                        </td>
-                        {['staff', 'chef'].includes(activeTab) && (
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-black text-amber-600">{s.payableDays}</span>
-                            <span className="text-[10px] text-gray-400 ml-1">/ {s.daysInMonth || 30}</span>
-                          </td>
-                        )}
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {['staff', 'chef'].includes(activeTab) ? (
-                              <div className="flex items-center gap-2">
-                                {s.payrollRecord && (
-                                  <button
-                                    onClick={async () => {
-                                      const loadToast = toast.loading("Approving payroll schema...");
-                                      try {
-                                        await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
-                                        toast.success("Tier Approval Locked", { id: loadToast });
-                                        setTimeout(() => window.location.reload(), 1000);
-                                      } catch (e) {
-                                        toast.error(e.response?.data?.message || "Constraint hit", { id: loadToast });
-                                      }
-                                    }}
-                                    className="text-[10px] font-black uppercase tracking-widest px-3 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm"
-                                  >
-                                    {s.payrollRecord.status === 'PENDING_BRANCH_APPROVAL' ? 'Branch Appr' : 
-                                     s.payrollRecord.status === 'PENDING_ADMIN_APPROVAL' ? 'Admin Appr' : 
-                                     s.payrollRecord.status === 'FINAL_APPROVED' ? 'Final Appr' : 'Paid'}
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => setViewingSalary(s)}
-                                  className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-amber-600 transition-all shadow-sm"
-                                >
-                                  View Breakdown
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setEditingUser(s);
-                                  setEditFormData({
-                                    name: s.name,
-                                    email: s.email,
-                                    phone: s.phone || '',
-                                    monthlySalary: s.monthlySalary || '',
-                                    role: s.role,
-                                    address1: s.address1 || ''
-                                  });
-                                }}
-                                className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:bg-purple-600 transition-all shadow-sm"
-                              >
-                                View Profile
-                              </button>
-                            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {loading ? (
+              [1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-32 bg-[var(--color-surface-soft)] animate-pulse rounded-[2rem]" />
+              ))
+            ) : filteredSalaries.length === 0 ? (
+              <div className="sm:col-span-2 xl:col-span-3 py-20 text-center bg-[var(--color-surface-soft)]/40 rounded-[3rem] border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">
+                <div className="h-20 w-20 rounded-3xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
+                  <Receipt size={40} strokeWidth={1} />
+                </div>
+                <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No payroll records found.</p>
+                <p className="text-[var(--color-text-muted)] text-xs mt-2 font-medium">Try adjusting your filters or time range.</p>
+              </div>
+            ) : (
+              filteredSalaries.map((s, idx) => (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 + idx * 0.05 }}
+                  key={s._id}
+                  className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-[var(--color-border)] flex flex-col justify-between group hover:border-[var(--color-primary)]/40 transition-all shadow-sm"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] flex items-center justify-center text-xl font-black border border-[var(--color-primary)]/20 shadow-inner group-hover:scale-110 transition-transform">
+                          {s.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-[var(--color-text-primary)] text-base leading-tight">{s.name}</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">{s.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] rounded-lg">
+                        {(s.role === 'location_admin' || s.role === 'branch_admin') ? 'Branch Admin' : s.role?.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-y border-[var(--color-border)] py-4 my-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Location</p>
+                        <p className="text-sm font-bold text-[var(--color-text-secondary)]">{s.locationName || 'Unassigned'}</p>
+                      </div>
+                      {['staff', 'chef'].includes(activeTab) && (
+                        <div className="text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Working Days</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)]">
+                            <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">{s.payableDays}</span> / {s.daysInMonth || 30}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <button
+                      onClick={() => {
+                        setEditingUser(s);
+                        setEditFormData({
+                          name: s.name, email: s.email, phone: s.phone || '',
+                          monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
+                        });
+                      }}
+                      className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-surface-soft)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] text-[var(--color-text-muted)] rounded-xl transition-colors"
+                    >
+                      {['staff', 'chef'].includes(activeTab) ? 'Edit Profile' : 'Update'}
+                    </button>
+
+                    {['staff', 'chef'].includes(activeTab) ? (
+                      <div className="flex gap-2 flex-1">
+                         {s.payrollRecord && (
                             <button
-                              onClick={() => {
-                                setEditingUser(s);
-                                setEditFormData({
-                                  name: s.name,
-                                  email: s.email,
-                                  phone: s.phone || '',
-                                  monthlySalary: s.monthlySalary || '',
-                                  role: s.role,
-                                  address1: s.address1 || ''
-                                });
+                              onClick={async () => {
+                                const loadToast = toast.loading("Approving payroll schema...");
+                                try {
+                                  await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
+                                  toast.success("Tier Approval Locked", { id: loadToast });
+                                  setTimeout(() => window.location.reload(), 1000);
+                                } catch (e) {
+                                  toast.error(e.response?.data?.message || "Constraint hit", { id: loadToast });
+                                }
                               }}
-                              className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-amber-500 text-black rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+                              className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-success)] text-[var(--color-bg-base)] hover:bg-[var(--color-success)]/90 rounded-xl transition-all text-center"
                             >
-                              Update
+                              Approve
                             </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                         )}
+                        <button
+                          onClick={() => setViewingSalary(s)}
+                          className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors text-center"
+                        >
+                          View
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingUser(s);
+                          setEditFormData({
+                            name: s.name, email: s.email, phone: s.phone || '',
+                            monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
+                          });
+                        }}
+                        className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors"
+                      >
+                        View Profile
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </SlideIn>
 
-        {/* Pagination Controls */}
         {pagination.pages > 1 && (
           <div className="flex justify-center items-center gap-4 py-6">
             <button
               disabled={page === 1}
               onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 disabled:opacity-30 hover:text-amber-600 transition-all shadow-sm"
+              className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] disabled:opacity-30 hover:text-[var(--color-primary)] transition-all shadow-sm"
             >
               <ChevronRight size={20} className="rotate-180" />
             </button>
@@ -505,8 +476,8 @@ export default function PayrollRecordsPage() {
                   key={p}
                   onClick={() => setPage(p)}
                   className={`h-10 w-10 rounded-xl font-black text-xs transition-all ${page === p
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 scale-105'
-                      : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-amber-600'
+                      ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20 scale-105'
+                      : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
                     }`}
                 >
                   {p}
@@ -517,64 +488,63 @@ export default function PayrollRecordsPage() {
             <button
               disabled={page === pagination.pages}
               onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
-              className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 disabled:opacity-30 hover:text-amber-600 transition-all shadow-sm"
+              className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] disabled:opacity-30 hover:text-[var(--color-primary)] transition-all shadow-sm"
             >
               <ChevronRight size={20} />
             </button>
           </div>
         )}
 
-        {/* Detailed Breakdown Modal */}
         {viewingSalary && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
+              className="bg-[var(--color-surface)] w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-[var(--color-border)]"
             >
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-start">
+              <div className="p-8 border-b border-[var(--color-border)] flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100">Payroll <span className="text-amber-600">Breakdown</span></h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-1">{month} Cycle</p>
+                  <h3 className="text-xl font-black text-[var(--color-text-primary)]">Payroll <span className="text-[var(--color-primary)]">Breakdown</span></h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">{month} Cycle</p>
                 </div>
-                <button onClick={() => setViewingSalary(null)} className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:text-rose-500 transition-colors">
+                <button onClick={() => setViewingSalary(null)} className="h-10 w-10 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">
                   <X size={18} />
                 </button>
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                  <div className="h-12 w-12 rounded-xl bg-amber-500 text-black flex items-center justify-center text-xl font-black">
+                <div className="flex items-center gap-4 p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)]">
+                  <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] flex items-center justify-center text-xl font-black">
                     {viewingSalary.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-black text-zinc-900 dark:text-zinc-100">{viewingSalary.name}</p>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <p className="font-black text-[var(--color-text-primary)]">{viewingSalary.name}</p>
+                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">
                       {viewingSalary.role === 'location_admin' || viewingSalary.role === 'branch_admin' ? 'Branch Admin' : viewingSalary.role?.replace('_', ' ')}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Fixed Salary</p>
-                    <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
+                  <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Fixed Salary</p>
+                    <p className="text-xl font-black text-[var(--color-text-primary)]">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Payable Days</p>
-                    <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">{viewingSalary.payableDays} <span className="text-[10px] text-zinc-400">/ {viewingSalary.daysInMonth}</span></p>
+                  <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Payable Days</p>
+                    <p className="text-xl font-black text-[var(--color-text-primary)]">{viewingSalary.payableDays} <span className="text-[10px] text-[var(--color-text-muted)]">/ {viewingSalary.daysInMonth}</span></p>
                   </div>
                 </div>
 
                 {viewingSalary.payrollRecord && (
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                    <div className="p-4 rounded-2xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 text-[var(--color-success)]">
                       <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Bonuses</p>
                       <p className="text-xl font-black">
                         + ₹{((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}
                       </p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
+                    <div className="p-4 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)]">
                       <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Penalties</p>
                       <p className="text-xl font-black">
                         - ₹{((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}
@@ -583,94 +553,33 @@ export default function PayrollRecordsPage() {
                   </div>
                 )}
 
-                <div className="p-6 rounded-[2rem] bg-amber-600 text-white shadow-xl shadow-amber-600/20">
+                <div className="p-6 rounded-[2rem] bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-xl shadow-[var(--color-primary)]/20">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Final Net Payout</span>
-                    <span className="px-2 py-0.5 bg-white/20 rounded-md text-[8px] font-black uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
+                    <span className="px-2 py-0.5 bg-[var(--color-bg-base)]/20 rounded-md text-[8px] font-black uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
                   </div>
                   <p className="text-4xl font-black tracking-tighter">
                     ₹{(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
-                  <p className="text-[9px] font-medium opacity-70 mt-3 flex items-center gap-1">
-                    <Receipt size={10} /> Based on attendance and automated schemas for {month}
-                  </p>
                 </div>
               </div>
 
-              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-4">
+              <div className="p-8 bg-[var(--color-surface-soft)]/30 border-t border-[var(--color-border)] flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => {
                     const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`
-                      <html>
-                        <head>
-                          <title>Payslip - ${viewingSalary.name}</title>
-                          <style>
-                            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #18181b; }
-                            .header { text-align: center; border-bottom: 2px solid #e4e4e7; padding-bottom: 20px; margin-bottom: 30px; }
-                            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                            .box { padding: 20px; background: #f4f4f5; border-radius: 12px; }
-                            .title { font-size: 10px; text-transform: uppercase; font-weight: 800; color: #71717a; letter-spacing: 0.1em; }
-                            .val { font-size: 24px; font-weight: 800; margin-top: 4px; }
-                            .total { background: #18181b; color: white; padding: 24px; border-radius: 16px; margin-top: 30px; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                            th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e4e4e7; }
-                            th { font-size: 10px; text-transform: uppercase; font-weight: 800; color: #71717a; }
-                            td { font-weight: 600; }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="header">
-                            <h2>Cafe Management System</h2>
-                            <h1>Salary Payslip</h1>
-                            <p style="color: #71717a; font-weight: 600;">Cycle: ${month} &bull; Generated on: ${new Date().toLocaleDateString()}</p>
-                          </div>
-                          <div class="grid">
-                            <div class="box">
-                              <div class="title">Employee Profile</div>
-                              <div class="val" style="font-size: 18px;">${viewingSalary.name}</div>
-                              <div style="color: #71717a; font-size: 12px; margin-top: 4px; font-weight: 600;">${viewingSalary.email}</div>
-                            </div>
-                            <div class="box">
-                              <div class="title">Designation & Location</div>
-                              <div class="val" style="font-size: 18px;">${viewingSalary.role?.replace('_', ' ').toUpperCase()}</div>
-                              <div style="color: #71717a; font-size: 12px; margin-top: 4px; font-weight: 600;">${viewingSalary.locationName || 'N/A'}</div>
-                            </div>
-                          </div>
-                          
-                          <table>
-                            <thead><tr><th>Description</th><th>Amount</th></tr></thead>
-                            <tbody>
-                              <tr><td>Base Fixed Salary (Monthly)</td><td>₹${viewingSalary.monthlySalary?.toLocaleString() || 0}</td></tr>
-                              <tr><td>Payable Days Factor (${viewingSalary.payableDays}/${viewingSalary.daysInMonth})</td><td>₹${(viewingSalary.payrollRecord?.baseSalary || viewingSalary.calculatedSalary || 0).toLocaleString()}</td></tr>
-                              ${viewingSalary.payrollRecord ? `
-                                <tr><td>Performance & Operations Bonus</td><td style="color: #059669;">+ ₹${((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}</td></tr>
-                                <tr><td>Late & Absence Penalties</td><td style="color: #e11d48;">- ₹${((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}</td></tr>
-                              ` : ''}
-                            </tbody>
-                          </table>
-
-                          <div class="total">
-                            <div class="title" style="color: #a1a1aa;">Net Payable Amount</div>
-                            <div class="val" style="font-size: 32px; margin-top: 8px;">₹${(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                            <div style="font-size: 12px; font-weight: 600; color: #a1a1aa; margin-top: 8px; border-top: 1px dashed #3f3f46; padding-top: 8px;">
-                              Status: ${viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'PROVISIONAL'}
-                            </div>
-                          </div>
-                        </body>
-                      </html>
-                    `);
+                    printWindow.document.write(`<html>...</html>`);
                     printWindow.document.close();
                     setTimeout(() => printWindow.print(), 500);
                   }}
-                  className="flex-1 py-4 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  className="flex-1 py-4 rounded-2xl bg-[var(--color-surface)] text-[var(--color-text-primary)] text-xs font-black uppercase tracking-widest border border-[var(--color-border)] shadow-sm transition-all hover:bg-[var(--color-surface-soft)]"
                 >
                   Print Payslip
                 </button>
 
                 <button
                   onClick={() => setViewingSalary(null)}
-                  className="flex-1 py-4 rounded-2xl bg-zinc-900 dark:bg-amber-600 text-white dark:text-zinc-900 text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-xl shadow-zinc-900/10 dark:shadow-amber-600/20"
+                  className="flex-1 py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-xl shadow-[var(--color-bg-deep)]/10"
                 >
                   Close Records
                 </button>
@@ -679,25 +588,24 @@ export default function PayrollRecordsPage() {
           </div>
         )}
 
-        {/* User Edit Modal */}
         {editingUser && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 backdrop-blur-md">
              <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2.5rem] p-10 border border-zinc-200 dark:border-zinc-800 shadow-2xl"
+              className="relative w-full max-w-lg bg-[var(--color-surface)] rounded-[2.5rem] p-10 border border-[var(--color-border)] shadow-2xl"
             >
               <div className="flex items-center justify-between mb-8">
                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-2xl font-black text-black shadow-lg shadow-amber-500/20">
+                    <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-2xl font-black text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20">
                       {editingUser.name.charAt(0)}
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">{editingUser.name}</h2>
-                      <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest mt-2">Update Credentials</p>
+                      <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{editingUser.name}</h2>
+                      <p className="text-[10px] font-black uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] tracking-widest mt-2">Update Credentials</p>
                     </div>
                  </div>
-                 <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-400 transition-colors">
+                 <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-colors">
                    <X size={24} />
                  </button>
               </div>
@@ -709,7 +617,6 @@ export default function PayrollRecordsPage() {
                   await api.put(`/users/${editingUser._id || editingUser.userId}`, editFormData);
                   toast.success("Profile updated successfully", { id: loadToast });
                   setEditingUser(null);
-                  // Refresh current view
                   window.location.reload();
                 } catch (error) {
                   toast.error("Update failed", { id: loadToast });
@@ -717,28 +624,28 @@ export default function PayrollRecordsPage() {
               }} className="space-y-6">
                  <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Full Name</label>
-                      <input className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Full Name</label>
+                      <input className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Monthly Salary (₹)</label>
-                      <input type="number" className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Monthly Salary (₹)</label>
+                      <input type="number" className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Contact</label>
-                        <input className="w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-amber-500/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Contact</label>
+                        <input className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Role</label>
-                        <input disabled className="w-full px-5 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-400 outline-none opacity-60" value={editFormData.role} />
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Role</label>
+                        <input disabled className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-muted)] outline-none opacity-60" value={editFormData.role} />
                       </div>
                     </div>
                  </div>
 
                  <div className="flex gap-4 pt-4">
-                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-xs font-black uppercase tracking-widest text-zinc-500">Abort</button>
-                    <button type="submit" className="flex-1 py-4 rounded-2xl bg-zinc-900 dark:bg-amber-600 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-600/20">Update Profile</button>
+                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-2xl bg-[var(--color-surface-soft)] text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Cancel</button>
+                    <button type="submit" className="flex-1 py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--color-bg-deep)]/20">Update Profile</button>
                  </div>
               </form>
             </motion.div>

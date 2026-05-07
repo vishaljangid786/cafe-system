@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const User = require('../models/User');
@@ -6,6 +7,11 @@ const BranchStock = require('../models/BranchStock');
 const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
+const { enforceLocationAccess, clampLimit, scopedLocationId } = require('../utils/accessControl');
+
+const ensureOrderAccess = (req, res, order, message = 'Access denied to this order') => {
+  enforceLocationAccess(req, res, order.branch, message);
+};
 
 // @desc    Create a new order
 const createOrder = asyncHandler(async (req, res) => {
@@ -14,7 +20,23 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Only staff can create orders');
   }
 
-  const { branch, table: tableId, items, totalAmount, customerPhone, customerName } = req.body;
+  const { branch: requestedBranch, table: tableId, items, totalAmount, customerPhone, customerName } = req.body;
+  const branch = ['staff', 'chef', 'branch_admin'].includes(req.user.role)
+    ? req.user.assignedLocation
+    : requestedBranch;
+
+  if (!branch) {
+    res.status(400);
+    throw new Error('Branch is required');
+  }
+
+  enforceLocationAccess(req, res, branch, 'Not authorized to create orders for this branch');
+
+  const table = await Table.findOne({ _id: tableId, locationId: branch });
+  if (!table) {
+    res.status(403);
+    throw new Error('Selected table does not belong to this branch');
+  }
 
   // Anti-Spam Check: Prevent duplicate orders within 10 seconds
   const recentOrder = await Order.findOne({
@@ -28,35 +50,59 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Please wait 10 seconds before placing another order for this table.');
   }
 
-  // Stock Check and Deduction
+  // 1. Validation Stage: Check all items first
   for (const item of items) {
     const branchStock = await BranchStock.findOne({ menuItem: item.menuItem, branch });
-    if (branchStock) {
-      if (branchStock.stock < item.quantity) {
-        res.status(400);
-        throw new Error(`Insufficient stock for item. Only ${branchStock.stock} remaining.`);
-      }
-      if (!branchStock.isAvailable) {
-        res.status(400);
-        throw new Error(`Item is currently unavailable at this branch.`);
-      }
+    if (!branchStock) {
+      res.status(400);
+      throw new Error(`Item not found in branch stock.`);
+    }
+    if (branchStock.stock < item.quantity) {
+      res.status(400);
+      throw new Error(`Insufficient stock for ${item.name || 'item'}. Only ${branchStock.stock} remaining.`);
+    }
+    if (!branchStock.isAvailable) {
+      res.status(400);
+      throw new Error(`Item ${item.name || ''} is currently unavailable at this branch.`);
     }
   }
 
-  // Atomically decrease stock
-  for (const item of items) {
-    await BranchStock.findOneAndUpdate(
-      { menuItem: item.menuItem, branch },
-      {
-        $inc: { stock: -item.quantity },
-      },
-      { new: true }
-    ).then(async (updatedStock) => {
-      if (updatedStock && updatedStock.stock <= 0) {
-        updatedStock.isAvailable = false;
-        await updatedStock.save();
+  // 2. Deduction Stage: Atomically decrease stock with safety check
+  const deductionResults = [];
+  try {
+    for (const item of items) {
+      const updatedStock = await BranchStock.findOneAndUpdate(
+        { 
+          menuItem: item.menuItem, 
+          branch, 
+          stock: { $gte: item.quantity } // Ensure stock is still enough during update
+        },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+
+      if (!updatedStock) {
+        // This means stock was depleted between our validation and this update
+        throw new Error(`Stock depleted for ${item.name || 'item'} during processing. Please try again.`);
       }
-    });
+
+      // Auto-deactivate if stock hits zero
+      if (updatedStock.stock <= 0 && updatedStock.isAvailable) {
+        await BranchStock.findByIdAndUpdate(updatedStock._id, { isAvailable: false });
+      }
+      
+      deductionResults.push({ id: updatedStock._id, quantity: item.quantity });
+    }
+  } catch (error) {
+    // 3. Rollback Stage (Simple Manual Rollback for deduncted items)
+    for (const rolledBackItem of deductionResults) {
+      await BranchStock.findByIdAndUpdate(rolledBackItem.id, { 
+        $inc: { stock: rolledBackItem.quantity },
+        $set: { isAvailable: true }
+      });
+    }
+    res.status(400);
+    throw new Error(error.message || 'Order processing failed due to stock sync issues.');
   }
 
   const order = await Order.create({
@@ -102,25 +148,12 @@ const getOrders = asyncHandler(async (req, res) => {
     filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
   }
 
-  // STRICT RBAC
-  if (req.user.role === 'super_admin') {
-    if (branchId && branchId !== 'all') filter.branch = branchId;
-  } else if (req.user.role === 'admin') {
-    if (branchId && branchId !== 'all') {
-      const isAccessible = req.user.accessibleLocations?.some(loc => loc.toString() === branchId);
-      if (!isAccessible) return res.status(403).json({ message: 'Access denied to this location' });
-      filter.branch = branchId;
-    } else {
-      filter.branch = { $in: req.user.accessibleLocations || [] };
-    }
-  } else {
-    // Branch Admin, Chef, Staff
-    filter.branch = req.user.assignedLocation;
-  }
+  const branch = scopedLocationId(req, branchId);
+  if (branch) filter.branch = branch;
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await Order.countDocuments(filter);
@@ -158,6 +191,8 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+
+  ensureOrderAccess(req, res, order);
 
   // Auto-assign chef if transitioning to ACCEPTED
   if (status === 'ACCEPTED' && req.user.role === 'chef') {
@@ -213,7 +248,11 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
       type: 'REVENUE',
       source: 'ORDER',
       orderId: order._id,
+      staffId: req.user._id,
       createdBy: req.user._id,
+      paymentType: order.paymentType || 'CASH',
+      title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
+      category: 'Sales',
       totalAmount: order.totalAmount,
       totalProfit: totalProfit,
       date: new Date(),
@@ -343,6 +382,8 @@ const updateOrderItems = asyncHandler(async (req, res) => {
     throw new Error('Order not found');
   }
 
+  ensureOrderAccess(req, res, order);
+
   const lockedStatuses = ['PREPARING', 'READY', 'SERVED', 'CANCELLED', 'REJECTED'];
   if (lockedStatuses.includes(order.status)) {
     res.status(400);
@@ -403,6 +444,14 @@ const updateOrderItems = asyncHandler(async (req, res) => {
   order.totalAmount = totalAmount;
   await order.save();
 
+  await logActivity(
+    req.user,
+    'ORDER_UPDATE_ITEMS',
+    `Updated items for Order #${order._id.toString().slice(-6).toUpperCase()}`,
+    req,
+    { orderId: order._id, locationId: order.branch, totalAmount }
+  );
+
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
 
@@ -422,6 +471,7 @@ const rejectOrder = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+  ensureOrderAccess(req, res, order);
   order.status = 'REJECTED';
   order.rejectReason = rejectReason;
   order.assignedChef = req.user._id;
@@ -463,6 +513,7 @@ const cancelOrder = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+  ensureOrderAccess(req, res, order);
   if (!['admin', 'super_admin', 'branch_admin'].includes(req.user.role)) {
     res.status(403);
     throw new Error('Unauthorized to cancel orders');
@@ -509,6 +560,8 @@ const addChefNote = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+
+  ensureOrderAccess(req, res, order);
 
   order.chefNote = req.body.chefNote;
   await order.save();
@@ -623,6 +676,8 @@ const generateOrderBill = asyncHandler(async (req, res) => {
     throw new Error('Order not found');
   }
 
+  ensureOrderAccess(req, res, order);
+
   if (order.status !== 'COMPLETED') {
     res.status(400);
     throw new Error(`Cannot generate bill for ${order.status} order. Must be COMPLETED.`);
@@ -670,16 +725,17 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
     query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
   }
 
-  // Fetch all orders for the timeframe to build the global context
+  const branch = scopedLocationId(req, branchId);
+  if (branch) query.branch = branch;
+
+  // Fetch all orders within the authorized scope
   const allOrders = await Order.find(query)
     .populate('assignedChef', 'name')
     .populate('table', 'tableNumber')
     .populate('branch', 'name city');
 
   // Filter orders for specific branch if requested (for main metrics and other charts)
-  const filteredOrders = (branchId && branchId !== 'all')
-    ? allOrders.filter(o => o.branch?._id?.toString() === branchId || o.branch?.toString() === branchId)
-    : allOrders;
+  const filteredOrders = allOrders;
 
   let totalPrepTime = 0;
   let prepCount = 0;
@@ -804,6 +860,7 @@ const getOrder = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+  ensureOrderAccess(req, res, order);
   res.json({ success: true, data: order });
 });
 
@@ -811,7 +868,7 @@ const getMyChefStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { startDate, endDate, category, foodItem, branch, paymentType, coupon } = req.query;
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   let query = { assignedChef: userId };
@@ -826,7 +883,10 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     }
   }
 
-  if (branch) query.branch = branch;
+  if (branch) {
+    enforceLocationAccess(req, res, branch, 'Access denied to this branch');
+    query.branch = branch;
+  }
   if (paymentType) query.paymentType = paymentType;
   if (coupon) query.coupon = coupon;
 
@@ -975,7 +1035,7 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { startDate, endDate, category, foodItem, branch, paymentType, coupon } = req.query;
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   let query = {
@@ -1000,7 +1060,10 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
     query.$and.push({ createdAt: dateQ });
   }
 
-  if (branch) query.$and.push({ branch });
+  if (branch) {
+    enforceLocationAccess(req, res, branch, 'Access denied to this branch');
+    query.$and.push({ branch });
+  }
   if (paymentType) query.$and.push({ paymentType });
   if (coupon) query.$and.push({ coupon });
 
@@ -1159,6 +1222,7 @@ module.exports = {
       res.status(404);
       throw new Error('Order not found');
     }
+    ensureOrderAccess(req, res, order);
     order.servedBy = req.user._id;
     await order.save();
     req.omsOrder = order; // Pass to updateOrderStatus if needed, but we can just call it

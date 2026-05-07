@@ -24,7 +24,11 @@ const NotificationModal = ({ isOpen, onClose }) => {
   });
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -44,7 +48,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const loadToast = toast.loading('Dispatching transmission...');
+    const loadToast = toast.loading('Dispatching update...');
     try {
       await api.post('/notifications', formData);
       toast.success('Notification dispatched successfully', { id: loadToast });
@@ -59,7 +63,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
       });
       refresh();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Transmission failed', { id: loadToast });
+      toast.error(err.response?.data?.message || 'Update failed', { id: loadToast });
     } finally {
       setLoading(false);
     }
@@ -88,7 +92,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
             <div className="p-2 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
               <Send size={18} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-[var(--color-text-primary)]">New Transmission</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-[var(--color-text-primary)]">New Update</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[var(--color-bg-soft)] rounded-full transition-colors">
             <X size={20} className="text-[var(--color-text-muted)]" />
@@ -101,7 +105,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
               value={formData.targetType}
               onChange={val => setFormData({ ...formData, targetType: val, targetId: '' })}
               options={[
-                { label: 'Individual Node', value: 'individual' },
+                { label: 'Individual Branch', value: 'individual' },
                 ...(targets.roles.length > 0 ? [{ label: 'Role Broadcast', value: 'role' }] : []),
                 ...(targets.branches.length > 0 ? [{ label: 'Branch Direct', value: 'branch' }] : []),
                 ...(targets.roles.includes('all') ? [{ label: 'Global System', value: 'system' }] : [])
@@ -134,7 +138,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
           />
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Transmission Title</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Update Title</label>
             <input
               required
               className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
@@ -145,7 +149,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Message Intelligence</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Message Information</label>
             <textarea
               required
               rows={4}
@@ -164,7 +168,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
               icon={Send}
               loading={loading}
             >
-              Dispatch Transmission
+              Dispatch Update
             </Button>
           </div>
         </form>

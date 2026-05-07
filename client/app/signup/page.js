@@ -149,11 +149,11 @@ function SignupContent() {
 
   const InputField = ({ label, name, type = "text", placeholder, error, ...props }) => (
     <div className="space-y-2">
-      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">{label}</label>
+      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">{label}</label>
       <input
         {...register(name)}
         type={type}
-        className={`w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${error ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'}`}
+        className={`w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all outline-none text-sm font-bold text-[var(--color-text-primary)] ${error ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-[var(--color-border)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
         placeholder={placeholder}
         {...props}
       />
@@ -162,32 +162,32 @@ function SignupContent() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#050505] flex flex-col lg:flex-row transition-colors duration-500">
+    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-500">
       {/* Cinematic Panel */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-zinc-900">
         <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} className="absolute inset-0 z-0">
           <img src="/images/signup_bg.png" className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale" alt="" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#050505]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[var(--color-bg-deep)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-deep)] via-transparent to-transparent opacity-80" />
         </motion.div>
 
         <div className="relative z-10 w-full p-20 flex flex-col justify-between">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
             <div className="flex items-center gap-4 mb-8">
-              <div className="h-14 w-14 rounded-2xl bg-amber-500 flex items-center justify-center text-black shadow-2xl shadow-amber-500/30">
+              <div className="h-14 w-14 rounded-2xl bg-blue-500 flex items-center justify-center text-black shadow-2xl shadow-blue-500/30">
                 <UserPlus size={28} strokeWidth={2.5} />
               </div>
               <div>
-                <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-amber-500">OS</span></h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60 mt-1 italic">New Account</p>
+                <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-blue-500">OS</span></h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500/60 mt-1 italic">New Account</p>
               </div>
             </div>
           </motion.div>
 
           <div className="space-y-12">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
-              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Create <br /><span className="text-amber-500 italic">Account</span></h2>
-              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-amber-500/30 pl-6">Create your account to manage your cafe. Follow the simple steps below to get started.</p>
+              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Create <br /><span className="text-blue-500 italic">Account</span></h2>
+              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-blue-500/30 pl-6">Create your account to manage your cafe. Follow the simple steps below to get started.</p>
             </motion.div>
 
             <div className="space-y-4">
@@ -198,7 +198,7 @@ function SignupContent() {
                 { step: 4, label: "Documents" }
               ].map((s) => (
                 <div key={s.step} className={`flex items-center gap-4 transition-all duration-500 ${activeStep >= s.step ? 'opacity-100 translate-x-2' : 'opacity-30'}`}>
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black border ${activeStep >= s.step ? 'bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/20' : 'border-zinc-700 text-zinc-500'}`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black border ${activeStep >= s.step ? 'bg-blue-500 border-blue-500 text-black shadow-lg shadow-blue-500/20' : 'border-zinc-700 text-zinc-500'}`}>
                     {activeStep > s.step ? <CheckCircle2 size={14} /> : s.step}
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">{s.label}</span>
@@ -209,7 +209,7 @@ function SignupContent() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 bg-zinc-50 dark:bg-[#050505] relative overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 bg-[var(--color-bg)] relative overflow-y-auto custom-scrollbar">
         <div className="absolute inset-0 lg:hidden opacity-10 pointer-events-none">
           <img
             src="/images/signup_bg.png"
@@ -220,14 +220,14 @@ function SignupContent() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl relative z-10">
           {!isSetup && (
-            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-10 flex items-center gap-2 text-zinc-400 hover:text-amber-500 transition-colors text-[10px] font-black uppercase tracking-widest group">
+            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-10 flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors text-[10px] font-black uppercase tracking-widest group">
               <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {activeStep > 1 ? 'Go Back' : 'Cancel'}
             </button>
           )}
 
           <div className="mb-12">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 mb-2 block">Step {activeStep}/4</span>
-            <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase italic">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2 block">Step {activeStep}/4</span>
+            <h2 className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter uppercase italic">
               {activeStep === 1 ? 'Basic Details' : activeStep === 2 ? 'Address' : activeStep === 3 ? 'Job Details' : 'Documents'}
             </h2>
           </div>
@@ -236,14 +236,14 @@ function SignupContent() {
             <AnimatePresence mode="wait">
               {activeStep === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <div className="flex flex-col items-center mb-8 p-8 bg-amber-500/5 rounded-3xl border border-amber-500/10 group relative overflow-hidden">
+                  <div className="flex flex-col items-center mb-8 p-8 bg-blue-500/5 rounded-3xl border border-blue-500/10 group relative overflow-hidden">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Profile Picture</label>
                     <div className="relative">
-                      <div className="h-32 w-32 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden transition-all group-hover:border-amber-500 shadow-xl">
+                      <div className="h-32 w-32 rounded-3xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 shadow-xl">
                         {profileImage ? <img src={URL.createObjectURL(profileImage)} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
                       </div>
-                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-amber-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
+                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-blue-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
                     </div>
                   </div>
                   <InputField label="Full Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
@@ -252,7 +252,7 @@ function SignupContent() {
                     <InputField label="Age" name="age" type="number" placeholder="24" error={errors.age?.message} onInput={(e) => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} />
                     <Controller name="gender" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Gender</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Gender</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
                       </div>
                     )} />
@@ -263,10 +263,10 @@ function SignupContent() {
                       <input
                         type={showPassword ? "text" : "password"}
                         {...register('password')}
-                        className={`w-full px-5 py-4 rounded-2xl bg-white dark:bg-zinc-900 border transition-all outline-none text-sm font-bold text-zinc-900 dark:text-zinc-100 ${errors.password ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'}`}
+                        className={`w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all outline-none text-sm font-bold text-[var(--color-text-primary)] ${errors.password ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-[var(--color-border)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
                         placeholder="••••••••"
                       />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-500 transition-colors">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-blue-500 transition-colors">
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
@@ -300,7 +300,7 @@ function SignupContent() {
                   {!isSetup && (['staff', 'branch_admin', 'chef'].includes(selectedRole)) && (
                     <Controller name="assignedLocation" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Select Branch</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Select Branch</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} placeholder="Select Branch" />
                         {errors.assignedLocation && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.assignedLocation.message}</p>}
                       </div>
@@ -309,7 +309,7 @@ function SignupContent() {
                   {!isSetup && selectedRole === 'admin' && (
                     <Controller name="accessibleLocations" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Accessible Locations (Multi-Control)</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Accessible Locations (Multi-Control)</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
                       </div>
                     )} />
@@ -329,9 +329,9 @@ function SignupContent() {
                   <InputField label="Aadhar Number (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} onInput={(e) => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} />
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Upload Aadhar Image</label>
-                    <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl hover:border-amber-500 transition-all cursor-pointer overflow-hidden shadow-xl">
+                    <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-3xl hover:border-blue-500 transition-all cursor-pointer overflow-hidden shadow-xl">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
-                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-amber-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
+                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-blue-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
                 </motion.div>
@@ -340,14 +340,14 @@ function SignupContent() {
 
             <div className="flex gap-4 pt-6">
               {activeStep < 4 ? (
-                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={ArrowRight}>Next Step</Button>
+                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-blue-500 text-black hover:bg-blue-600 border-none transition-all shadow-xl shadow-blue-500/20" icon={ArrowRight}>Next Step</Button>
               ) : (
-                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-amber-500 text-black hover:bg-amber-600 border-none transition-all shadow-xl shadow-amber-500/20" icon={Zap}>Create Account</Button>
+                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-blue-500 text-black hover:bg-blue-600 border-none transition-all shadow-xl shadow-blue-500/20" icon={Zap}>Create Account</Button>
               )}
             </div>
           </form>
 
-          <p className="mt-12 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">Cafe Management System &copy; 2026 CafeOS</p>
+          <p className="mt-12 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.5em]">Cafe Management System &copy; 2026 CafeOS</p>
         </motion.div>
       </div>
     </div>
@@ -356,7 +356,7 @@ function SignupContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="h-16 w-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center"><div className="h-16 w-16 border-4 border-blue-500/10 border-t-blue-500 rounded-full animate-spin" /></div>}>
       <SignupContent />
     </Suspense>
   );
