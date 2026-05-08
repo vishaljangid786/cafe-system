@@ -3,6 +3,7 @@ const Location = require('../models/Location');
 const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { logAction } = require('../utils/auditLogger');
+const { clampLimit } = require('../utils/accessControl');
 
 // @desc    Get all menu items with filters
 // @route   GET /api/menu
@@ -35,7 +36,7 @@ const getMenuItems = asyncHandler(async (req, res) => {
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await MenuItem.countDocuments(filter);

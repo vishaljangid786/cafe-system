@@ -2,6 +2,7 @@ const Coupon = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
+const { clampLimit } = require('../utils/accessControl');
 
 // @desc    Get all coupons (admin view)
 // @route   GET /api/coupons
@@ -16,7 +17,7 @@ const getCoupons = asyncHandler(async (req, res) => {
   }
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 20;
+  const limit = clampLimit(req.query.limit, 20);
   const skip = (page - 1) * limit;
 
   const total = await Coupon.countDocuments(filter);

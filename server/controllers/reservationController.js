@@ -213,9 +213,12 @@ exports.createReservation = async (req, res) => {
       locationId
     });
 
-    // Real-time notification via Socket.io
+    // Real-time notification via Socket.io — scoped to the affected branch + global admins
     const io = getIO();
-    io.emit('new_notification', notification);
+    io.to(`branch_${locationId}`)
+      .to('role_admin')
+      .to('role_super_admin')
+      .emit('new_notification', notification);
 
     res.status(201).json(reservation);
   } catch (error) {

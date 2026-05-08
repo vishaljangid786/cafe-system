@@ -5,9 +5,15 @@ const notFound = (req, res, next) => {
 };
 
 const errorHandler = (err, req, res, next) => {
-  console.error('SERVER_ERROR:', err);
   let statusCode = err.statusCode || (res.statusCode === 200 ? 500 : res.statusCode);
   let message = err.message;
+
+  if (process.env.NODE_ENV === 'production') {
+    // Operational summary only — keep stack out of stdout
+    console.error(`[${statusCode}] ${req.method} ${req.originalUrl} — ${message}`);
+  } else {
+    console.error('SERVER_ERROR:', err);
+  }
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError' && err.kind === 'ObjectId') {

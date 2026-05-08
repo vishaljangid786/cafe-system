@@ -8,6 +8,7 @@ const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, clampLimit, scopedLocationId } = require('../utils/accessControl');
+const { logActivity } = require('../utils/auditLogger');
 
 const ensureOrderAccess = (req, res, order, message = 'Access denied to this order') => {
   enforceLocationAccess(req, res, order.branch, message);

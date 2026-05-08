@@ -155,11 +155,9 @@ const registerUser = asyncHandler(async (req, res, next) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log('Login attempt:', email);
   const cleanEmail = email.trim().toLowerCase();
 
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
-  console.log('User found:', user ? user.email : 'No');
 
   if (user && (await user.matchPassword(password))) {
     sendTokenResponse(user, 200, res);
