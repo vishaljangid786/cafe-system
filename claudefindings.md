@@ -97,16 +97,15 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 #### 1.9 — Audit-trail console.log for impersonation events
 - **File:** [server/controllers/authController.js:213](server/controllers/authController.js#L213) and [243](server/controllers/authController.js#L243)
 - **Impact:** Already redundant — `AuditLog.create({...})` is called right next to it. The `console.log` is duplicated work that lands sensitive identifiers in stdout.
-- **Fix:** Remove the `console.log` lines (the `AuditLog` collection is the source of truth).
-- **Status:** 🟡 Backlog (cosmetic; deliberate "operator visibility" choice in some shops).
+- **Fix:** Removed both `console.log` calls. Folded the `viewOnly` mode marker (which was only present in the console line) into the `AuditLog.details` string so impersonation mode is still queryable via the audit log.
+- **Status:** ✅ Fixed (Wave 2).
 
 #### 1.10 — Dev seed endpoint wipes data
-- **File:** [server/routes/seedRoutes.js:59-60](server/routes/seedRoutes.js#L59-L60)
+- **File:** [server/routes/seedRoutes.js](server/routes/seedRoutes.js)
 - **Code:** `await Attendance.deleteMany({}); await AuditLog.deleteMany({});`
-- **Mitigations in place:** Only mounted under `if (process.env.NODE_ENV === 'development')` in `app.js`, and gated by `authorizeRoles('admin', 'super_admin')`.
-- **Risk:** If `NODE_ENV` ever leaks into production (Heroku-style "review apps", QA environments), this becomes a one-call attendance/audit-log wipe.
-- **Fix proposal:** Add a second guard (`if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') return 403`) and require an explicit env flag.
-- **Status:** 🟡 Backlog.
+- **Mitigations in place:** Only mounted under `if (process.env.NODE_ENV === 'development')` in `app.js`, gated by `authorizeRoles('admin', 'super_admin')`, and now requires `ALLOW_DESTRUCTIVE_SEED=true` in `.env`.
+- **Fix:** Added an early-return 403 at the top of the route handler if `process.env.ALLOW_DESTRUCTIVE_SEED !== 'true'`. Misconfigured QA / preview environments where `NODE_ENV=development` leaks through can no longer have their attendance and audit history wiped by an authenticated admin without an explicit opt-in flag.
+- **Status:** ✅ Fixed (Wave 2).
 
 ---
 
@@ -150,7 +149,8 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 #### 2.5 — `selection:text-black` in dark surface
 - **File:** [client/app/dashboard/super-admin/page.js:56](client/app/dashboard/super-admin/page.js#L56)
 - **Impact:** Black-on-blue is legible but suboptimal vs. white-on-blue. Pure polish.
-- **Status:** 🟡 Backlog.
+- **Fix:** Changed `selection:text-black` → `selection:text-white`.
+- **Status:** ✅ Fixed (Wave 2).
 
 #### 2.6 — Global keydown blocks `.`, `-`, `e`/`E` on **every** `<input type="number">`
 - **File:** [client/app/context/ThemeContext.js:42-72](client/app/context/ThemeContext.js#L42-L72)
@@ -200,10 +200,10 @@ All seven changes pass `node --check` and the server still boots cleanly.
 
 The remaining 🟡 Backlog items, grouped by risk vs. value:
 
-**Wave 2 — quick safe wins (~30 min):**
-- 1.9 Drop console.log in impersonation paths (AuditLog already covers it).
-- 1.10 Add a second env flag (`ALLOW_DESTRUCTIVE_SEED`) before the seed wipe.
-- 2.5 `selection:text-black` → `selection:text-white` on super-admin page.
+**Wave 2 — quick safe wins (~30 min): ✅ DONE**
+- 1.9 ✅ Removed impersonation console.log calls (AuditLog covers it; folded viewOnly marker into AuditLog.details).
+- 1.10 ✅ Added `ALLOW_DESTRUCTIVE_SEED` env-flag guard to the seed wipe endpoint.
+- 2.5 ✅ `selection:text-black` → `selection:text-white` on super-admin page.
 
 **Wave 3 — theme cleanup (~2h, needs visual review):**
 - 2.1 Replace hardcoded `text-white`/`bg-white`/`text-black` with CSS variables in `bookings`, `signup`, `super-admin`, `BottomNav` pages.

@@ -208,14 +208,11 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
 
   const { viewOnly } = req.body;
 
-  console.log(`[AUDIT] Super Admin ${req.user._id} (${req.user.email}) initiated impersonation of User ${targetUser._id} (${targetUser.email}) [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-ACCESS'}]`);
-
-  // Record Audit Log
   await AuditLog.create({
     action: 'IMPERSONATION_START',
     performedBy: req.user._id,
     targetUser: targetUser._id,
-    details: `Admin ${req.user.name} impersonating ${targetUser.name}`,
+    details: `Admin ${req.user.name} impersonating ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-ACCESS'}]`,
     role: req.user.role
   });
 
@@ -238,9 +235,6 @@ const exitImpersonation = asyncHandler(async (req, res, next) => {
     throw new Error('Original admin user not found');
   }
 
-  console.log(`[AUDIT] Super Admin ${originalUser._id} (${originalUser.email}) exited impersonation`);
-
-  // Record Audit Log
   await AuditLog.create({
     action: 'IMPERSONATION_EXIT',
     performedBy: req.user._id,

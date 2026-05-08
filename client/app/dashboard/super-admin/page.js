@@ -53,7 +53,7 @@ export default function SuperAdminDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen text-[var(--color-text-primary)] p-6 lg:p-12 space-y-16 overflow-hidden relative selection:bg-blue-500 selection:text-black">
+      <div className="min-h-screen text-[var(--color-text-primary)] p-6 lg:p-12 space-y-16 overflow-hidden relative selection:bg-blue-500 selection:text-white">
 
         {/* Atmospheric Smart Network */}
         {/* <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none" />

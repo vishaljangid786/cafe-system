@@ -8,6 +8,18 @@ const asyncHandler = require('../utils/asyncHandler');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
 router.post('/attendance', verifyToken, authorizeRoles('admin', 'super_admin'), asyncHandler(async (req, res) => {
+  // Defense-in-depth: this endpoint wipes Attendance and AuditLog collections.
+  // The route is already only mounted under NODE_ENV === 'development', but
+  // require an explicit ALLOW_DESTRUCTIVE_SEED flag so misconfigured QA/preview
+  // environments can't have their attendance and audit history wiped by an
+  // authenticated admin.
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    return res.status(403).json({
+      success: false,
+      message: 'Destructive seed disabled. Set ALLOW_DESTRUCTIVE_SEED=true in .env to enable.'
+    });
+  }
+
   const users = await User.find({ role: { $in: ['staff', 'chef', 'branch_admin', 'admin', 'super_admin'] } });
   const locations = await Location.find({});
   const admins = users.filter(u => ['admin', 'super_admin', 'branch_admin'].includes(u.role));
