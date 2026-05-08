@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import api from '../services/api';
+import logger from '../services/logger';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       setLocations(res.data.data);
       return res.data.data;
     } catch (err) {
-      console.error('Failed to load global locations');
+      logger.error('Failed to load global locations');
       return [];
     }
   };
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }) => {
             initialLocation = JSON.parse(storedLocation);
             setSelectedLocation(initialLocation);
           } catch (e) {
-            console.error('Invalid stored location');
+            logger.error('Invalid stored location');
           }
         } else if (userData.assignedLocation) {
           initialLocation = userData.assignedLocation;
@@ -86,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       if (err.response?.status !== 401) {
-        console.error('Session verification failed:', err.response?.data?.message || err.message);
+        logger.error('Session verification failed:', err.response?.data?.message || err.message);
       }
       setUser(null);
       Cookies.remove('user');

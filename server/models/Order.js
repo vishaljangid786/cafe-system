@@ -129,6 +129,11 @@ orderSchema.index({ assignedChef: 1 });
 orderSchema.index({ servedBy: 1 });
 orderSchema.index({ paymentType: 1 });
 
+// Hot path: list/analytics queries filter on (branch, status) and sort by createdAt desc
+orderSchema.index({ branch: 1, status: 1, createdAt: -1 });
+// Hot path: per-table order lookups (anti-spam check, table billing)
+orderSchema.index({ table: 1, branch: 1, createdAt: -1 });
+
 orderSchema.query.byBranch = function(branchId) {
   return this.where({ branch: branchId });
 };

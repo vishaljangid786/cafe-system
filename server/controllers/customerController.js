@@ -1,5 +1,14 @@
 const Customer = require('../models/Customer');
 const asyncHandler = require('../utils/asyncHandler');
+const { scopedLocationId } = require('../utils/accessControl');
+
+// Build a Customer query filter scoped to the current user's accessible branches.
+// Customers are tied to a `branch` field; super_admin sees all, admin sees their
+// accessibleLocations, branch_admin/staff see only their assignedLocation.
+const buildBranchFilter = (req) => {
+  const branch = scopedLocationId(req, req.query.locationId);
+  return branch ? { branch } : {};
+};
 
 // @desc    Get all customers with pagination & search
 // @route   GET /api/customers
@@ -7,15 +16,12 @@ const asyncHandler = require('../utils/asyncHandler');
 const getCustomers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = '', sort = '-totalSpend' } = req.query;
 
-  const { escapeRegex, clampLimit, scopedLocationId } = require('../utils/accessControl');
+  const { escapeRegex, clampLimit } = require('../utils/accessControl');
   const pageNum = parseInt(page);
   const limitNum = clampLimit(limit, 50);
   const skip = (pageNum - 1) * limitNum;
 
-  const query = {};
-  
-  const branch = scopedLocationId(req, req.query.locationId);
-  if (branch) query.branch = branch;
+  const query = buildBranchFilter(req);
 
   if (search) {
     const cleanSearch = escapeRegex(search);
@@ -46,7 +52,7 @@ const getCustomers = asyncHandler(async (req, res) => {
 // @route   GET /api/customers/top
 // @access  Private/Admin
 const getTopCustomers = asyncHandler(async (req, res) => {
-  const customers = await Customer.find()
+  const customers = await Customer.find(buildBranchFilter(req))
     .sort({ totalSpend: -1 })
     .limit(10)
     .lean();
@@ -59,8 +65,11 @@ const getTopCustomers = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const getInactiveCustomers = asyncHandler(async (req, res) => {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  
-  const customers = await Customer.find({ lastVisit: { $lt: thirtyDaysAgo } })
+
+  const customers = await Customer.find({
+    ...buildBranchFilter(req),
+    lastVisit: { $lt: thirtyDaysAgo }
+  })
     .sort({ lastVisit: -1 })
     .limit(20)
     .lean();
@@ -72,18 +81,24 @@ const getInactiveCustomers = asyncHandler(async (req, res) => {
 // @route   GET /api/customers/analytics
 // @access  Private/Admin
 const getCustomerAnalytics = asyncHandler(async (req, res) => {
-  const totalCustomers = await Customer.countDocuments();
-  
-  const repeatCustomers = await Customer.countDocuments({ visits: { $gt: 1 } });
-  
+  const branchFilter = buildBranchFilter(req);
+
+  const totalCustomers = await Customer.countDocuments(branchFilter);
+
+  const repeatCustomers = await Customer.countDocuments({ ...branchFilter, visits: { $gt: 1 } });
+
   const repeatRate = totalCustomers > 0 ? ((repeatCustomers / totalCustomers) * 100).toFixed(1) : 0;
-  
+
   const totalLoyaltyPoints = await Customer.aggregate([
+    ...(Object.keys(branchFilter).length ? [{ $match: branchFilter }] : []),
     { $group: { _id: null, total: { $sum: '$loyaltyPoints' } } }
   ]);
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const inactiveCustomersCount = await Customer.countDocuments({ lastVisit: { $lt: thirtyDaysAgo } });
+  const inactiveCustomersCount = await Customer.countDocuments({
+    ...branchFilter,
+    lastVisit: { $lt: thirtyDaysAgo }
+  });
 
   res.json({
     success: true,

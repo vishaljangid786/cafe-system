@@ -146,6 +146,10 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 userSchema.index({ role: 1 });
 userSchema.index({ assignedLocation: 1 });
 userSchema.index({ isBlocked: 1 });
+// Hot path: notification recipient resolution joins role + branch
+userSchema.index({ role: 1, assignedLocation: 1 });
+// Hot path: admin lookups by accessibleLocations array
+userSchema.index({ accessibleLocations: 1 });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

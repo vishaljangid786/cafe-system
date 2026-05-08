@@ -33,7 +33,8 @@ const getNotifications = asyncHandler(async (req, res) => {
     .populate('sender', 'name role profileImageUrl')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit));
+    .limit(parseInt(limit))
+    .lean();
 
   const total = await Notification.countDocuments(query);
   const unreadCount = await Notification.countDocuments({

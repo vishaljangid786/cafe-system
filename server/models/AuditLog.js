@@ -30,5 +30,8 @@ const auditLogSchema = new mongoose.Schema({
 });
 
 auditLogSchema.index({ action: 1, timestamp: -1 });
+// Hot path: super-admin "activity by user" lookups
+auditLogSchema.index({ performedBy: 1, timestamp: -1 });
+auditLogSchema.index({ locationId: 1, timestamp: -1 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

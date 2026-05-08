@@ -94,7 +94,8 @@ const getUsers = asyncHandler(async (req, res) => {
     .populate('accessibleLocations', 'name city')
     .sort({ createdAt: -1 })
     .skip(startIndex)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   res.json({
     success: true,

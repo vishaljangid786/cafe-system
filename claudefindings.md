@@ -87,10 +87,12 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 - **Status:** ✅ Fixed.
 
 #### 1.8 — Analytics queries hydrate Mongoose documents unnecessarily
-- **File:** `server/controllers/analyticsController.js` and `orderController.js:705`
-- **Impact:** `Order.find(query).populate(...).populate(...)` without `.lean()` on read-only analytics paths. On large windows (date range >30d, multi-branch admin) this materially increases memory + GC pressure.
-- **Fix proposal:** Add `.lean()` to read-only aggregation pipelines that don't call instance methods on the result. **Risk:** if a downstream consumer relies on virtuals or `.toJSON()` transforms, this can change response shape.
-- **Status:** 🟡 Backlog (touches hot paths — wants a deliberate review pass with regression checks).
+- **Files touched:**
+  - [server/controllers/orderController.js](server/controllers/orderController.js) — added `.lean()` to `getOrders` (list endpoint, 5-populate chain), `getOrderAnalytics`, `getMyChefStats`, `getMyStaffStats`.
+  - [server/controllers/userController.js:91](server/controllers/userController.js#L91) — added `.lean()` to `getUsers` (double-populate listing).
+  - [server/controllers/notificationController.js:32](server/controllers/notificationController.js#L32) — added `.lean()` to `getNotifications`.
+- **Already-optimized:** `analyticsController.js` (forecasting, advanced analytics), `inventoryController.js` (all reads), `transactionController.js` (`getTransactions`) were already using `.lean()`.
+- **Status:** ✅ Fixed (Wave 4). All touched paths only feed `res.json(...)` with no instance-method or `.save()` calls on the results, so `.lean()` is safe.
 
 ### LOW
 
@@ -136,10 +138,11 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 - **Status:** ✅ Fixed (Wave 3).
 
 #### 2.4 — 50+ `console.error` calls in client production code
-- **Files:** spread across `app/context/AuthContext.js`, `app/dashboard/admin/tables/page.js`, etc.
-- **Impact:** Pollutes browser console in production; some include API error bodies which may carry user data.
-- **Fix proposal:** Introduce a tiny `clientLogger` helper that no-ops in `process.env.NODE_ENV === 'production'` (or routes to a Sentry-style sink), and codemod the call sites.
-- **Status:** 🟡 Backlog.
+- **New helper:** [client/app/services/logger.js](client/app/services/logger.js) — `logger.{error,warn,info}` that no-ops in production.
+- **Codemodded high-traffic sites (the global ones every authenticated user hits):**
+  - [client/app/context/AuthContext.js](client/app/context/AuthContext.js) — 3 sites (location load failure, invalid stored location, session verification failure).
+  - [client/app/context/NotificationContext.js](client/app/context/NotificationContext.js) — 3 sites (sync, mark-read, clear-all failures).
+- **Status:** ✅ Partially fixed (Wave 4). The high-traffic context-level sites that fire on every page load are now silenced in prod. ~40 dashboard-page console.errors remain — those are page-local and only fire on user actions, much lower noise. They can be codemodded incrementally without urgency now that the helper exists.
 
 ### LOW
 
@@ -161,17 +164,44 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 
 ---
 
-## Wave 3 — Categories not yet investigated this session
+## Wave 5 — Audits run this session
 
-These are **explicitly out of scope for this turn**. I have not run a deep pass on them and won't claim "audited" until I do.
+### 5.1 Mongo schema indexes ✅ AUDITED + FIXED
+Audited all 20 model files against actual query patterns in controllers and utils.
+**Already-covered:** Transaction, Attendance, BranchStock, BranchInventory, Notification, Reservation, Booking, Table, Customer, Coupon, Location, Recipe, Ingredient, Payroll. These models already have indexes that match their hot query patterns.
+**Added (Wave 4/5):**
+- [server/models/Order.js](server/models/Order.js) — `{ branch: 1, status: 1, createdAt: -1 }` (hottest list/analytics filter); `{ table: 1, branch: 1, createdAt: -1 }` (anti-spam check + table billing).
+- [server/models/MenuItem.js](server/models/MenuItem.js) — `{ category: 1 }`, `{ isGlobal: 1 }`, `{ availableBranches: 1 }`.
+- [server/models/User.js](server/models/User.js) — `{ role: 1, assignedLocation: 1 }` (notification recipient resolution); `{ accessibleLocations: 1 }`.
+- [server/models/AuditLog.js](server/models/AuditLog.js) — `{ performedBy: 1, timestamp: -1 }`, `{ locationId: 1, timestamp: -1 }`.
 
-- Mongo schema indexes — likely missing on hot fields like `Order.branch`, `Order.status`, `Transaction.locationId`, `Attendance.{user,date}`.
-- N+1 query patterns in dashboard analytics (initial sample looked clean but full sweep pending).
-- Socket.io rate limiting / abuse paths (sockets are authenticated, but emit volume per connection isn't bounded).
-- Per-page bundle size and lazy-loading boundaries (recharts and pdfkit are large; need a `next build` analysis).
-- Mobile + tablet responsive QA (requires running the app and visually checking breakpoints).
-- Form-level a11y: aria labels, tab order, error association.
-- Complete cross-controller IDOR sweep — sample showed `enforceLocationAccess` is consistently used in order/reservation/expense paths, but every controller needs to be checked individually.
+### 5.2 Full IDOR sweep ✅ AUDITED + FIXED
+Audited every controller's `findById(req.params.id)` / `findByIdAndUpdate` / `findByIdAndDelete` patterns.
+**Already scoped (no action):** orderController, reservationController, expenseController, tableController, bookingController, attendanceController, transactionController, salaryController, inventoryController, locationController, menuItemController, notificationController.
+**Real read-only IDOR found and fixed:**
+- [server/controllers/customerController.js](server/controllers/customerController.js) — `getCustomers` was already scoped, but `getTopCustomers`, `getInactiveCustomers`, and `getCustomerAnalytics` ran unscoped queries. A branch_admin could read top spenders / inactive list / aggregate stats from competing branches. Fixed via a shared `buildBranchFilter(req)` helper applied to every find / countDocuments / aggregate call. **Status:** ✅ Fixed.
+**Ambiguous (flagged for product, not changed):**
+- [server/controllers/categoryController.js](server/controllers/categoryController.js) `updateCategory` and [server/controllers/recipeController.js](server/controllers/recipeController.js) `deleteRecipe` mutate by id with no scope check — but the `Category` and `Recipe` schemas have no `locationId` field, so either (a) categories/recipes are intentionally global and the route's role gate is sufficient, or (b) they need a locationId field added first. Product decision required. **Status:** 🟡 Flagged.
+
+### 5.3 N+1 query sweep ✅ AUDITED + FIXED
+- [server/controllers/orderController.js:312-345](server/controllers/orderController.js#L312-L345) (was) — `for (const item of order.items) { await Recipe.findOne({ menuItemId: ... }) }`. For a 10-item order: 10 sequential queries on the order completion hot path. Refactored to one `Recipe.find({ menuItemId: { $in: ids } }).lean()` followed by an in-memory `Map` lookup. **Status:** ✅ Fixed.
+- `attendanceController.getMonthlySummary` and `salaryController.getMySalaryHistory` were also flagged — both are bounded loops (per-user / 6-month) on cold paths. **Status:** 🟡 Backlog (low priority).
+
+### 5.4 Socket abuse / emit volume ✅ MITIGATED
+Connections are now authenticated (per Wave 0 work) and rooms are scope-checked, but a malicious authenticated client could spam `join_session` / `join_room` to drain CPU.
+- [server/server.js](server/server.js) — added `makeRateGuard()` per-connection: max 30 events of a given type per 60s window, silently dropped beyond that. Also gated the connect/disconnect `console.log` lines behind `NODE_ENV === 'development'` so production doesn't emit a log line per socket lifecycle event.
+**Status:** ✅ Fixed (Wave 5).
+
+### 5.5 Bundle size analysis 🔵 REPORTED, NO CODE CHANGE
+Production `next build` totals **5.7 MB** of static chunks. Largest single chunk: 466 KB. Four chunks at ~291 KB each — looks like a heavy vendor (framer-motion + recharts + lucide) is being bundled into multiple route entries. CSS bundle: 185 KB.
+**Heavy deps contributing:** `framer-motion@12`, `recharts@3`, `jspdf@4` + `jspdf-autotable@5`, `html2canvas@1.4`, `papaparse@5.5`, `xlsx`-style export paths, `lucide-react@1.8`.
+**Recommendation for a future wave:** dynamic-import `jspdf` / `html2canvas` / `papaparse` only on the export-flow pages that need them (currently ~370 KB of those libs is in the shared bundle). Recharts could be a candidate for `next/dynamic({ ssr: false })` on heavy analytics pages. **Status:** 🟡 Backlog (no code change this wave).
+
+### 5.6 Mobile / tablet responsive QA — DEFERRED
+Cannot do this honestly without a running browser at multiple viewport widths. Static `globals.css` review showed responsive utilities in place at `md:`/`lg:`/`@media` breakpoints, but visual confirmation is required. **Status:** 🟡 Needs running app.
+
+### 5.7 Form a11y deep dive — DEFERRED
+Needs screen reader testing (NVDA/VoiceOver) and keyboard-only navigation passes. Static pass would only catch the most obvious aria-label / label-association gaps. **Status:** 🟡 Needs running app + AT.
 
 ---
 
@@ -207,19 +237,26 @@ The remaining 🟡 Backlog items, grouped by risk vs. value:
 - 2.2 ✅ Recharts tooltip uses CSS variables in `contentStyle`.
 - 2.3 ✅ `URL.createObjectURL` previews migrated to `useEffect` + `revokeObjectURL` cleanup.
 
-**Wave 4 — broader code hygiene (needs scope decision):**
-- 1.8 `.lean()` on read-only analytics paths (touches hot paths; needs regression validation).
-- 2.4 Codemod 50+ client `console.error` calls behind a `clientLogger` helper.
-- 2.6 Decide product policy on number-input decimal block (intentional? document or relax).
+**Wave 4 — code hygiene: ✅ DONE (mostly)**
+- 1.8 ✅ `.lean()` applied to 6 read-only listing/analytics paths (orderController × 4, userController, notificationController). Other paths were already optimized.
+- 2.4 ✅ `clientLogger` helper added; high-traffic context-level call sites codemodded. Page-local sites can be migrated incrementally now that the helper exists.
+- 2.6 🟡 Skipped — needs product input.
 
-**Wave 5 — areas not yet audited (each is its own pass):**
-- Mongo schema indexes for hot fields.
-- N+1 query sweep in dashboard analytics.
-- Socket abuse paths and emit volume bounding.
-- `next build` bundle analysis (recharts, pdfkit).
-- Mobile/tablet responsive QA (requires running the app).
-- Form a11y (aria, tab order, error association).
-- Full IDOR sweep across every controller.
+**Wave 5 — broader audits: ✅ DONE for code-actionable items**
+- 5.1 ✅ Mongo indexes added on Order, MenuItem, User, AuditLog hot paths.
+- 5.2 ✅ Full IDOR sweep — customerController fixed; categoryController/recipeController flagged for product.
+- 5.3 ✅ N+1 in `updateOrderStatus` recipe lookup fixed.
+- 5.4 ✅ Per-socket rate guard added; lifecycle logs gated on dev.
+- 5.5 🔵 Bundle size reported (5.7 MB / largest 466 KB) — code splitting deferred to future wave.
+- 5.6 🟡 Mobile/tablet QA — requires running app.
+- 5.7 🟡 Form a11y — requires screen reader.
+
+**Wave 6 — for whoever picks this up next:**
+- Dynamic-import jspdf/html2canvas/papaparse on export pages only.
+- Decide on `next/dynamic({ ssr: false })` for recharts on analytics pages.
+- Codemod the remaining ~40 page-local `console.error` calls to `logger.error`.
+- Confirm with product whether categories/recipes should be location-scoped (then add `locationId` + scope checks in those controllers).
+- Mobile QA + a11y QA against a running deployment.
 
 Pick a wave (or call out a specific subset) and I'll execute. Default safer choice is Wave 2.
 

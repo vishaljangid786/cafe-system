@@ -21,9 +21,32 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 const io = require('./config/socket').init(server);
 const { canAccessLocation, normalizeId } = require('./utils/accessControl');
 
+// Per-socket rate guard for client-driven events. Prevents an authenticated
+// client from spamming join_session / join_room and exhausting CPU even though
+// the membership checks themselves are cheap.
+const SOCKET_EVENT_LIMIT = 30; // max events per window
+const SOCKET_EVENT_WINDOW_MS = 60 * 1000;
+
+const makeRateGuard = () => {
+  const counters = new Map(); // event -> { count, windowStart }
+  return (event) => {
+    const now = Date.now();
+    const entry = counters.get(event);
+    if (!entry || now - entry.windowStart > SOCKET_EVENT_WINDOW_MS) {
+      counters.set(event, { count: 1, windowStart: now });
+      return true;
+    }
+    entry.count += 1;
+    return entry.count <= SOCKET_EVENT_LIMIT;
+  };
+};
+
 io.on('connection', (socket) => {
   const user = socket.user;
-  console.log('Client connected:', socket.id, user?.email);
+  const allow = makeRateGuard();
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Client connected:', socket.id, user?.email);
+  }
 
   if (user?._id) socket.join(user._id.toString());
   if (user?.role) socket.join(`role_${user.role}`);
@@ -35,15 +58,15 @@ io.on('connection', (socket) => {
 
   // Advanced session management with branch and role scoping
   socket.on('join_session', ({ branchId } = {}) => {
+    if (!allow('join_session')) return;
     if (branchId && branchId !== 'global' && branchId !== 'all' && canAccessLocation(user, branchId)) {
       socket.join(`branch_${branchId}`);
       socket.join(`branch_${branchId}_${user.role}`);
     }
-
-    console.log(`User ${user._id} (${user.role}) initialized session for branch ${branchId || normalizeId(user.assignedLocation) || 'global'}`);
   });
 
   socket.on('join_room', (room) => {
+    if (!allow('join_room')) return;
     const branchMatch = typeof room === 'string' && room.match(/^branch_([^_]+)(?:_.+)?$/);
     if (!branchMatch) return;
     const branchId = branchMatch[1];
@@ -53,7 +76,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Client disconnected:', socket.id);
+    }
   });
 });
 

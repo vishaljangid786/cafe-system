@@ -85,6 +85,11 @@ const menuItemSchema = new mongoose.Schema(
   }
 );
 
+// Hot path: menu listing filters on category, isGlobal, and availableBranches
+menuItemSchema.index({ category: 1 });
+menuItemSchema.index({ isGlobal: 1 });
+menuItemSchema.index({ availableBranches: 1 });
+
 // Validate price is number (done by type)
 // Validate discountedPrice < originalPrice
 menuItemSchema.pre('save', async function () {

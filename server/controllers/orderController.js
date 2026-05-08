@@ -178,7 +178,8 @@ const getOrders = asyncHandler(async (req, res) => {
     .populate('items.menuItem', 'name price dietaryType category')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   res.json({ 
     success: true, 
@@ -304,13 +305,20 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
       await customer.save();
     }
 
-    // Inventory Auto-Deduction Logic
+    // Inventory Auto-Deduction Logic — bulk-fetch recipes in one query to avoid N+1
     const Recipe = require('../models/Recipe');
     const BranchInventory = require('../models/BranchInventory');
     const BranchStock = require('../models/BranchStock');
 
+    const menuItemIds = order.items
+      .map(i => i.menuItem?._id || i.menuItem)
+      .filter(Boolean);
+    const recipes = await Recipe.find({ menuItemId: { $in: menuItemIds } }).lean();
+    const recipesByMenuItem = new Map(recipes.map(r => [r.menuItemId.toString(), r]));
+
     for (const item of order.items) {
-      const recipe = await Recipe.findOne({ menuItemId: item.menuItem?._id || item.menuItem });
+      const menuItemId = (item.menuItem?._id || item.menuItem)?.toString();
+      const recipe = menuItemId ? recipesByMenuItem.get(menuItemId) : null;
       if (recipe) {
         for (const ing of recipe.ingredients) {
           if (ing.ingredient) {
@@ -706,7 +714,8 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
   const allOrders = await Order.find(query)
     .populate('assignedChef', 'name')
     .populate('table', 'tableNumber')
-    .populate('branch', 'name city');
+    .populate('branch', 'name city')
+    .lean();
 
   // Filter orders for specific branch if requested (for main metrics and other charts)
   const filteredOrders = allOrders;
@@ -876,7 +885,8 @@ const getMyChefStats = asyncHandler(async (req, res) => {
   }
 
   const allOrders = await Order.find(query)
-    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } });
+    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } })
+    .lean();
 
   let totalPrepTime = 0;
   let prepCount = 0;
@@ -1053,7 +1063,8 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
   }
 
   const allOrders = await Order.find(query)
-    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } });
+    .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } })
+    .lean();
 
   const createdCount = allOrders.filter(o => o.createdBy.toString() === userId.toString()).length;
   const servedCount = allOrders.filter(o => o.servedBy?.toString() === userId.toString()).length;
