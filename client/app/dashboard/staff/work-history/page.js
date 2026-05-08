@@ -148,7 +148,7 @@ export default function WorkHistoryPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#27272a30" />
                       <XAxis dataKey="month" stroke="#71717a" fontSize={10} tickLine={false} />
                       <YAxis stroke="#71717a" fontSize={10} tickLine={false} />
-                      <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '12px' }} />
+                      <Tooltip contentStyle={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '1rem', color: 'var(--color-text-primary)', fontSize: '12px' }} />
                       <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSalary)" />
                     </AreaChart>
                   </ResponsiveContainer>

@@ -269,14 +269,14 @@ export default function SuperAdminDashboard() {
 function MetricCard({ title, value, icon, trend, sub, highlight, isRisk }) {
   return (
     <div className={`p-10 rounded-[4rem] border transition-all duration-700 hover:scale-[1.03] relative overflow-hidden group ${highlight
-        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] shadow-[0_30px_60px_rgba(217,119,6,0.3)] text-black'
+        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] shadow-[0_30px_60px_rgba(var(--color-primary-rgb),0.3)] text-black'
         : 'bg-[var(--color-surface)]/40 backdrop-blur-2xl border-[var(--color-border)] text-[var(--color-text-primary)] shadow-2xl hover:border-[var(--color-primary)]/30'
       }`}>
       {highlight && (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(255,255,255,0.2),transparent_50%)]" />
       )}
       <div className="flex items-center justify-between mb-10 relative z-10">
-        <div className={`p-5 rounded-2xl transition-transform duration-700 group-hover:rotate-12 ${highlight ? 'bg-white/20' : 'bg-zinc-800 border border-zinc-700'}`}>
+        <div className={`p-5 rounded-2xl transition-transform duration-700 group-hover:rotate-12 ${highlight ? 'bg-white/20' : 'bg-[var(--color-surface-soft)] border border-[var(--color-border)]'}`}>
           {icon}
         </div>
         <div className={`flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-full backdrop-blur-md border ${isRisk ? 'bg-rose-500/20 text-rose-500 border-rose-500/30' : (highlight ? 'bg-white/20 border-white/30 text-white' : 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30')
@@ -305,7 +305,7 @@ function EntityItem({ icon, label, name, stat }) {
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-black text-zinc-400 group-hover:text-white transition-colors italic">{stat}</p>
+        <p className="text-sm font-black text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)] transition-colors italic">{stat}</p>
       </div>
     </div>
   );

@@ -129,7 +129,7 @@ export default function BookingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Booking Form */}
           <SlideIn direction="up" delay={0.1} className="lg:col-span-2">
-            <div className="bg-white/5 dark:bg-zinc-900/50 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl relative overflow-hidden">
+            <div className="glass-card p-8 rounded-3xl shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 text-blue-600/10 pointer-events-none">
                 <CalendarIcon size={200} />
               </div>
@@ -269,7 +269,7 @@ export default function BookingPage() {
 
           {/* User's Bookings */}
           <SlideIn direction="left" delay={0.2}>
-            <div className="bg-white/5 dark:bg-zinc-900/50 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl h-full flex flex-col">
+            <div className="glass-card p-8 rounded-3xl shadow-xl h-full flex flex-col">
               <h2 className="text-xl font-black mb-6 uppercase tracking-widest flex items-center">
                 <CalendarIcon className="mr-2 text-blue-600" size={20} /> My Schedule
               </h2>

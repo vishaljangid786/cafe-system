@@ -48,7 +48,7 @@ export default function BottomNav() {
             >
               <div className={`p-2 rounded-2xl transition-all duration-300 ${
                 isActive 
-                  ? 'bg-[var(--color-primary)] text-black shadow-lg shadow-[var(--color-primary)]/30 -translate-y-1' 
+                  ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 -translate-y-1'
                   : 'text-[var(--color-text-muted)]'
               }`}>
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />

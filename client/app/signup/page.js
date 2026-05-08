@@ -55,8 +55,31 @@ function SignupContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [image, setImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [aadharImagePreview, setAadharImagePreview] = useState(null);
   const [locations, setLocations] = useState([]);
   const [activeStep, setActiveStep] = useState(1);
+
+  // Manage object URLs for image previews so blobs are revoked on change/unmount
+  useEffect(() => {
+    if (!profileImage) {
+      setProfileImagePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(profileImage);
+    setProfileImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profileImage]);
+
+  useEffect(() => {
+    if (!image) {
+      setAadharImagePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(image);
+    setAadharImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
 
   const {
     register,
@@ -240,7 +263,7 @@ function SignupContent() {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Profile Picture</label>
                     <div className="relative">
                       <div className="h-32 w-32 rounded-3xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 shadow-xl">
-                        {profileImage ? <img src={URL.createObjectURL(profileImage)} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
+                        {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
                       </div>
                       <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-blue-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
@@ -331,7 +354,7 @@ function SignupContent() {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Upload Aadhar Image</label>
                     <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-3xl hover:border-blue-500 transition-all cursor-pointer overflow-hidden shadow-xl">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
-                      {image ? <img src={URL.createObjectURL(image)} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-blue-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
+                      {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-blue-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
                 </motion.div>

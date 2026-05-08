@@ -114,29 +114,26 @@ This document is **not** a replacement for the existing `COMPREHENSIVE_AUDIT_REP
 ### HIGH (theming / consistency)
 
 #### 2.1 — Hardcoded `text-white` / `bg-white` / `text-black` in production pages
-- **Files:**
-  - [client/app/bookings/page.js:222, 132, 272, 256](client/app/bookings/page.js)
-  - [client/app/signup/page.js:177, 181, 189, 201, 204](client/app/signup/page.js)
-  - [client/app/dashboard/super-admin/page.js:254-290, 279, 282](client/app/dashboard/super-admin/page.js)
-  - [client/app/components/BottomNav.js:51](client/app/components/BottomNav.js)
-- **Impact:** [KNOWLEDGE.md:128](KNOWLEDGE.md#L128) explicitly says "Never use hardcoded colors. Use CSS variables like `var(--color-primary)`." These violate that and create theme glitches in light mode.
-- **Status:** 🟡 Backlog. Each fix is small but there are many; needs a deliberate sweep with both themes side-by-side.
+- **Re-audit (Wave 3):** Several "findings" were false positives. The signup left panel (lines 167–209) sits inside an always-dark `bg-zinc-900` cinematic showcase — `text-white` inside it is intentional and correct. The bookings "Check Availability" button uses `bg-zinc-800 text-white` which renders correctly in both themes (zinc-800 is a fixed neutral, not light-mode-only). Skipped these.
+- **Real fixes applied:**
+  - [client/app/bookings/page.js:132,272](client/app/bookings/page.js) — `bg-white/5 dark:bg-zinc-900/50 backdrop-blur-xl border border-border` → existing `glass-card` utility class (already theme-aware, defined in globals.css).
+  - [client/app/dashboard/super-admin/page.js:272](client/app/dashboard/super-admin/page.js#L272) — left-over **amber** shadow `rgba(217,119,6,0.3)` (from the pre-blue migration) → `rgba(var(--color-primary-rgb), 0.3)`.
+  - [client/app/dashboard/super-admin/page.js:279](client/app/dashboard/super-admin/page.js#L279) — non-highlight icon container `bg-zinc-800 border border-zinc-700` → `bg-[var(--color-surface-soft)] border border-[var(--color-border)]`. The dark zinc box looked heavy on a light card.
+  - [client/app/dashboard/super-admin/page.js:308](client/app/dashboard/super-admin/page.js#L308) — `text-zinc-400 group-hover:text-white` → CSS-variable equivalents. The hover `text-white` was invisible against the white surface in light mode.
+  - [client/app/components/BottomNav.js:51](client/app/components/BottomNav.js#L51) — active icon `text-black` → `text-white`. White-on-primary-blue is the universally readable pattern.
+- **Status:** ✅ Fixed (Wave 3).
 
 #### 2.2 — Recharts tooltip hardcodes dark palette
 - **File:** [client/app/dashboard/staff/work-history/page.js:151](client/app/dashboard/staff/work-history/page.js#L151)
-- **Code:** `<Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', color: '#fff' }} />`
-- **Impact:** Tooltip is white-on-near-black always; in light theme it's an out-of-place dark popover.
-- **Fix proposal:** Read theme from `useTheme()` and switch tooltip palette accordingly, or use CSS variables in `contentStyle` (`var(--color-surface)` etc.).
-- **Status:** 🟡 Backlog.
+- **Fix:** Replaced the hex literals in `contentStyle` with CSS variables (`var(--color-surface)`, `var(--color-border)`, `var(--color-text-primary)`). Browsers resolve CSS variables in inline styles, so the tooltip now follows the active theme without needing to import `useTheme()`.
+- **Status:** ✅ Fixed (Wave 3).
 
 ### MEDIUM
 
 #### 2.3 — `URL.createObjectURL` without `revokeObjectURL` in signup preview
-- **File:** [client/app/signup/page.js:243, 334](client/app/signup/page.js)
-- **Code:** `<img src={URL.createObjectURL(profileImage)} />`
-- **Impact:** Each render creates a new blob URL that is never revoked → memory leak proportional to user re-edits the form.
-- **Fix proposal:** Compute the preview URL inside `useEffect` keyed on the file, and `URL.revokeObjectURL` in the cleanup.
-- **Status:** 🟡 Backlog (low practical impact unless a user re-uploads many times in one session).
+- **File:** [client/app/signup/page.js](client/app/signup/page.js) (was lines 243, 334)
+- **Fix:** Added two new state slots (`profileImagePreview`, `aadharImagePreview`) and `useEffect`s keyed on each `File`. Each effect creates a blob URL on mount and `URL.revokeObjectURL`s it on cleanup. The JSX now reads from the state instead of re-creating a URL on every render.
+- **Status:** ✅ Fixed (Wave 3).
 
 #### 2.4 — 50+ `console.error` calls in client production code
 - **Files:** spread across `app/context/AuthContext.js`, `app/dashboard/admin/tables/page.js`, etc.
@@ -205,10 +202,10 @@ The remaining 🟡 Backlog items, grouped by risk vs. value:
 - 1.10 ✅ Added `ALLOW_DESTRUCTIVE_SEED` env-flag guard to the seed wipe endpoint.
 - 2.5 ✅ `selection:text-black` → `selection:text-white` on super-admin page.
 
-**Wave 3 — theme cleanup (~2h, needs visual review):**
-- 2.1 Replace hardcoded `text-white`/`bg-white`/`text-black` with CSS variables in `bookings`, `signup`, `super-admin`, `BottomNav` pages.
-- 2.2 Make Recharts tooltip theme-aware in `staff/work-history`.
-- 2.3 Revoke object URLs in signup preview.
+**Wave 3 — theme cleanup: ✅ DONE**
+- 2.1 ✅ Real theme bugs fixed (super-admin amber-shadow leftover, dark zinc box on light card, hover text-white invisible in light mode, BottomNav active icon contrast). Several flagged lines were correct as-is and skipped — see entry 2.1 above.
+- 2.2 ✅ Recharts tooltip uses CSS variables in `contentStyle`.
+- 2.3 ✅ `URL.createObjectURL` previews migrated to `useEffect` + `revokeObjectURL` cleanup.
 
 **Wave 4 — broader code hygiene (needs scope decision):**
 - 1.8 `.lean()` on read-only analytics paths (touches hot paths; needs regression validation).
