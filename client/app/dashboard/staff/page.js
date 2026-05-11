@@ -1,76 +1,422 @@
 "use client"
 
-import { Coffee, Clock, ArrowRight, UserCircle } from 'lucide-react';
+import { 
+  Coffee, Clock, ArrowRight, UserCircle, 
+  TrendingUp, ShoppingBag, Zap, Wallet, 
+  Calendar, CheckCircle2, XCircle, Activity,
+  ArrowUpRight, IndianRupee, History, Filter
+} from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import api from '@/app/services/api';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, BarChart, Bar,
+  Cell
+} from 'recharts';
+import toast from 'react-hot-toast';
+
+function Skeleton({ className }) {
+  return (
+    <div className={`animate-pulse bg-[var(--color-surface-soft)] rounded-2xl ${className}`} />
+  );
+}
+
+function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
+  if (loading) {
+    return (
+      <div className="bg-[var(--color-surface)] p-6 rounded-3xl border border-[var(--color-border)] h-full space-y-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-32" />
+      </div>
+    );
+  }
+
+  const colors = {
+    blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+    violet: 'bg-violet-500/10 text-violet-500 border-violet-500/20'
+  };
+
+  return (
+    <CardHover>
+      <div className="bg-[var(--color-surface)] p-6 rounded-3xl border border-[var(--color-border)] shadow-sm h-full flex flex-col group">
+        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border mb-4 transition-transform group-hover:scale-110 duration-500 ${colors[color]}`}>
+          <Icon size={20} />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">{label}</p>
+        <p className="text-2xl font-black text-[var(--color-text-primary)] tracking-tighter">{value}</p>
+        {sub && <p className="text-[9px] font-bold text-[var(--color-text-secondary)] mt-2">{sub}</p>}
+      </div>
+    </CardHover>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-10 pb-20">
+      {/* Header Skeleton */}
+      <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 border border-[var(--color-border)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="flex items-center gap-8">
+          <Skeleton className="h-12 w-48 rounded-xl" />
+          <div className="flex gap-6">
+            <Skeleton className="h-12 w-24 rounded-lg" />
+            <Skeleton className="h-12 w-24 rounded-lg" />
+          </div>
+        </div>
+      </div>
+
+      {/* Metrics Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map(i => <MetricCard key={i} loading={true} />)}
+      </div>
+
+      {/* Charts & Content Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-10">
+          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[400px]">
+             <Skeleton className="h-6 w-48 mb-8" />
+             <Skeleton className="h-[280px] w-full" />
+          </div>
+          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[300px]">
+             <Skeleton className="h-6 w-48 mb-8" />
+             <Skeleton className="h-[180px] w-full" />
+          </div>
+        </div>
+        <div className="lg:col-span-4 space-y-10">
+          <div className="space-y-4">
+            <Skeleton className="h-28 w-full rounded-3xl" />
+            <Skeleton className="h-28 w-full rounded-3xl" />
+          </div>
+          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[400px]">
+            <Skeleton className="h-6 w-40 mb-6" />
+            <div className="space-y-5">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex justify-between items-center">
+                  <div className="flex gap-3">
+                    <Skeleton className="h-10 w-10 rounded-xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-32" />
+                      <Skeleton className="h-2 w-20" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function StaffDashboard() {
   const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [expenses, setExpenses] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [timeframe, setTimeframe] = useState('month');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getTimeframeDates = useCallback((tf) => {
+    const end = new Date();
+    const start = new Date();
+    if (tf === '7d') {
+      start.setDate(end.getDate() - 7);
+    } else if (tf === 'month') {
+      start.setDate(1);
+    } else if (tf === 'year') {
+      start.setMonth(0, 1);
+    } else if (tf === 'all') {
+      start.setFullYear(2020, 0, 1); // Practically all time for a new system
+    }
+    return { 
+      startDate: start.toISOString().split('T')[0], 
+      endDate: end.toISOString().split('T')[0] 
+    };
+  }, []);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      const role = user?.role;
+      const statsEndpoint = role === 'chef' ? '/orders/my-stats-chef' : '/orders/my-stats-staff';
+      const { startDate, endDate } = getTimeframeDates(timeframe);
+      
+      const [statsRes, expenseRes, attendanceRes] = await Promise.all([
+        api.get(statsEndpoint, { params: { startDate, endDate } }),
+        api.get('/transactions', { params: { limit: 5, type: 'EXPENSE', startDate, endDate } }),
+        api.get('/attendance/my', { params: { limit: timeframe === 'all' ? 1000 : timeframe === 'year' ? 365 : 31 } })
+      ]);
+
+      setStats(statsRes.data.data);
+      setExpenses(expenseRes.data.data || []);
+      setAttendance(attendanceRes.data.data || []);
+    } catch (error) {
+      console.error('Dashboard data fetch error:', error);
+      toast.error('Failed to sync dashboard metrics');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, timeframe, getTimeframeDates]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const attendanceChartData = attendance.slice(0, timeframe === 'all' ? 30 : 14).reverse().map(a => ({
+    date: new Date(a.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    status: a.status === 'present' ? 1 : a.status === 'half-day' ? 0.5 : 0,
+    statusLabel: a.status
+  }));
+
+  const orderTrendData = stats?.ordersByDate || [];
+
+  if (!mounted || (loading && !stats)) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <PageTransition>
-      <div className="space-y-10">
-        {/* Welcome Header */}
-        <SlideIn direction="down">
-          <div className="bg-[var(--color-surface)] rounded-[2.5rem] shadow-sm p-10 border border-[var(--color-border)] text-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <UserCircle size={120} />
-            </div>
-
-            <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] mb-6 border border-[var(--color-primary)]/20 shadow-inner">
-              <Coffee size={40} strokeWidth={2.5} />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black text-[var(--color-text-primary)] tracking-tighter leading-none mb-4">
-              Welcome back, <span className="text-[var(--color-primary)]">{user?.name?.split(' ')[0]}</span>!
-            </h1>
-            <p className="text-[var(--color-text-muted)] font-medium tracking-tight">
-              Staff dashboard for the <span className="text-[var(--color-text-primary)] font-black">{user?.assignedLocation?.city}</span> branch.
-            </p>
+      <div className="space-y-10 pb-20">
+        {/* Cinematic Header */}
+        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-[3rem] p-10 border border-[var(--color-border)] shadow-xl shadow-blue-500/5">
+          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
+            <Activity size={200} className="text-blue-500" strokeWidth={1} />
           </div>
-        </SlideIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SlideIn delay={0.1}>
-            <CardHover>
-              <Link href="/dashboard/staff/tables">
-                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-sm p-8 border border-gray-100 dark:border-zinc-800 h-full flex flex-col group">
-                  <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-500 border border-blue-100 dark:border-blue-500/20">
-                    <Coffee size={28} />
-                  </div>
-                  <h2 className="text-xl font-black text-[var(--color-text-primary)] mb-3 tracking-tight flex items-center">
-                    Tables & Orders
-                  </h2>
-                  <p className="text-sm text-[var(--color-text-muted)] font-medium leading-relaxed mb-8 flex-grow">
-                    Manage active tables, take orders, and generate real-time bills for your assigned customers.
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/10">
+                  <Coffee size={32} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-[var(--color-text-primary)] leading-none">
+                    Hi, <span className="text-blue-500">{mounted ? user?.name?.split(' ')[0] : ''}</span>
+                  </h1>
+                  <p className="text-[var(--color-text-muted)] font-bold mt-2 flex items-center gap-2">
+                    <Zap size={14} className="text-amber-500" />
+                    {mounted ? user?.role?.replace('_', ' ').toUpperCase() : ''} @ {mounted ? user?.assignedLocation?.name : ''} Branch
                   </p>
-                  <div className="flex items-center text-[var(--color-primary)] font-black text-xs uppercase tracking-widest group-hover:translate-x-2 transition-transform">
-                    Open Tables <ArrowRight size={14} className="ml-2" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
+              {/* Timeframe Filter */}
+              <div className="bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] flex items-center gap-1">
+                {[
+                  { id: '7d', label: '7D' },
+                  { id: 'month', label: 'Month' },
+                  { id: 'year', label: 'Year' },
+                  { id: 'all', label: 'All' }
+                ].map((tf) => (
+                  <button
+                    key={tf.id}
+                    onClick={() => setTimeframe(tf.id)}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      timeframe === tf.id 
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Payout ({timeframe})</p>
+                  <p className="text-2xl font-black text-emerald-500 tracking-tighter">₹{stats?.dailyPayout || 0}</p>
+                </div>
+                <div className="h-12 w-px bg-[var(--color-border)]" />
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Success Rate</p>
+                  <p className="text-2xl font-black text-blue-500 tracking-tighter">{stats?.successRate || 0}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard 
+            label="Total Orders" 
+            value={stats?.totalOrders || 0} 
+            icon={ShoppingBag} 
+            color="blue" 
+            sub={`Lifetime activity`} 
+          />
+          <MetricCard 
+            label="Direct Yield" 
+            value={`₹${stats?.totalSales || 0}`} 
+            icon={IndianRupee} 
+            color="emerald" 
+            sub="Revenue contribution" 
+          />
+          <MetricCard 
+            label="Presence" 
+            value={attendance.filter(a => a.status === 'present').length} 
+            icon={CheckCircle2} 
+            color="amber" 
+            sub={`Days active overall`} 
+          />
+          <MetricCard 
+            label="Expenses" 
+            value={expenses.length} 
+            icon={Wallet} 
+            color="violet" 
+            sub="Logged transactions" 
+          />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-10">
+            {/* Order Trend Chart */}
+            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] flex items-center gap-3">
+                    <TrendingUp size={16} className="text-blue-500" /> Order Lifecycle Trend
+                  </h3>
+                </div>
+                <div className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                  {timeframe === 'all' ? 'LIFETIME' : timeframe.toUpperCase()} VIEW
+                </div>
+              </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={orderTrendData}>
+                    <defs>
+                      <linearGradient id="colorOrder" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" vertical={false} />
+                    <XAxis dataKey="date" stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} />
+                    <Tooltip 
+                      contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }}
+                      itemStyle={{ color: '#3b82f6' }}
+                    />
+                    <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} fill="url(#colorOrder)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Attendance Visualization */}
+            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-8 flex items-center gap-3">
+                <Calendar size={16} className="text-amber-500" /> Attendance History ({timeframe})
+              </h3>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={attendanceChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" vertical={false} />
+                    <XAxis dataKey="date" stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} hide />
+                    <Tooltip 
+                      cursor={{fill: '#27272a10'}}
+                      contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }}
+                    />
+                    <Bar dataKey="status" radius={[6, 6, 6, 6]}>
+                      {attendanceChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.status === 1 ? '#10b981' : entry.status === 0.5 ? '#f59e0b' : '#f43f5e'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-10">
+            {/* Quick Actions */}
+            <div className="space-y-4">
+              <Link href="/dashboard/staff/tables" className="block">
+                <div className="bg-blue-600 hover:bg-blue-700 p-6 rounded-3xl text-white shadow-lg shadow-blue-600/20 transition-all active:scale-95 group">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Terminal</p>
+                      <h4 className="text-xl font-black tracking-tight">Active Orders</h4>
+                    </div>
+                    <ArrowRight className="group-hover:translate-x-2 transition-transform" />
                   </div>
                 </div>
               </Link>
-            </CardHover>
-          </SlideIn>
+              <Link href="/dashboard/staff/expenses" className="block">
+                <div className="bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] p-6 rounded-3xl border border-[var(--color-border)] shadow-sm transition-all active:scale-95 group text-left">
+                  <div className="flex justify-between items-center text-left">
+                    <div className="text-left">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Accounting</p>
+                      <h4 className="text-xl font-black tracking-tight text-[var(--color-text-primary)]">Log Expense</h4>
+                    </div>
+                    <ArrowUpRight className="text-blue-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </Link>
+            </div>
 
-          <SlideIn delay={0.2}>
-            <CardHover>
-              <div className="bg-[var(--color-surface)] rounded-[2rem] shadow-sm p-8 border border-[var(--color-border)] h-full flex flex-col group">
-                <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-500 border border-blue-100 dark:border-blue-500/20">
-                  <Clock size={28} />
-                </div>
-                <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100 mb-3 tracking-tight">
-                  Time Logs
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-zinc-500 font-medium leading-relaxed flex-grow">
-                  Attendance is recorded by your Branch Admin. Review your monthly presence and salary disbursements through notifications.
-                </p>
-                <div className="mt-8 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] w-fit">
-                  Active
-                </div>
+            {/* Recent Expenses List */}
+            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] flex items-center gap-3">
+                  <History size={16} className="text-violet-500" /> Recent Expenses
+                </h3>
               </div>
-            </CardHover>
-          </SlideIn>
+              <div className="space-y-5">
+                {expenses.length === 0 ? (
+                  <div className="text-center py-6 border-2 border-dashed border-[var(--color-border)] rounded-2xl">
+                    <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">No recent logs</p>
+                  </div>
+                ) : (
+                  expenses.map((ex) => (
+                    <div key={ex._id} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500 border border-violet-500/20">
+                          <IndianRupee size={16} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-black text-[var(--color-text-primary)] tracking-tight line-clamp-1">{ex.title}</p>
+                          <p className="text-[9px] font-bold text-[var(--color-text-muted)]">{new Date(ex.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-black text-[var(--color-text-primary)]">₹{ex.totalAmount}</p>
+                    </div>
+                  ))
+                )}
+                <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline">
+                  View All Activity
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </PageTransition>

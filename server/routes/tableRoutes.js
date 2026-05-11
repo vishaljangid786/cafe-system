@@ -10,7 +10,7 @@ const {
   completeOrder,
   updateTable
 } = require('../controllers/tableController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
@@ -19,23 +19,23 @@ router.use(verifyToken);
 
 router.route('/')
   .get(getTables)
-  .post(authorizeRoles('super_admin', 'admin', 'branch_admin'), addTable);
+  .post(checkRoles('super_admin', 'admin', 'branch_admin'), addTable);
 
 router.route('/:id')
   .get(getTable)
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateTable)
-  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteTable);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateTable)
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteTable);
 
 router.route('/:id/book')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), bookTable);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), bookTable);
 
 router.route('/:id/orders')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), updateOrders);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), updateOrders);
 
 router.route('/:id/complete')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), completeOrder);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), completeOrder);
 
 router.route('/:id/bill')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), upload.single('billImage'), uploadBill);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'staff', 'chef'), upload.single('billImage'), uploadBill);
 
 module.exports = router;

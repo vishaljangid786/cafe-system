@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 CafeOS Backend Synchronized`);
   console.log(`📡 Control Center: http://localhost:${PORT}`);
-  console.log(`🌐 Global Access: http://127.0.0.1:${PORT}`);
+  console.log(`🌐 Server Live: http://127.0.0.1:${PORT}`);
   console.log(`🛠️  Mode: ${process.env.NODE_ENV || 'development'}\n`);
 });
 
@@ -27,23 +27,23 @@ const { canAccessLocation, normalizeId } = require('./utils/accessControl');
 const SOCKET_EVENT_LIMIT = 30; // max events per window
 const SOCKET_EVENT_WINDOW_MS = 60 * 1000;
 
-const makeRateGuard = () => {
-  const counters = new Map(); // event -> { count, windowStart }
-  return (event) => {
+io.on('connection', (socket) => {
+  const user = socket.user;
+  
+  // Per-socket rate guard: Scoped to this connection to avoid global memory leak.
+  // Counters are automatically garbage collected when this socket disconnects.
+  const socketCounters = new Map();
+  const allow = (event) => {
     const now = Date.now();
-    const entry = counters.get(event);
+    const entry = socketCounters.get(event);
     if (!entry || now - entry.windowStart > SOCKET_EVENT_WINDOW_MS) {
-      counters.set(event, { count: 1, windowStart: now });
+      socketCounters.set(event, { count: 1, windowStart: now });
       return true;
     }
     entry.count += 1;
     return entry.count <= SOCKET_EVENT_LIMIT;
   };
-};
 
-io.on('connection', (socket) => {
-  const user = socket.user;
-  const allow = makeRateGuard();
   if (process.env.NODE_ENV === 'development') {
     console.log('Client connected:', socket.id, user?.email);
   }
@@ -59,9 +59,12 @@ io.on('connection', (socket) => {
   // Advanced session management with branch and role scoping
   socket.on('join_session', ({ branchId } = {}) => {
     if (!allow('join_session')) return;
-    if (branchId && branchId !== 'global' && branchId !== 'all' && canAccessLocation(user, branchId)) {
+    const targetRole = user.role;
+    const isGlobalOrAll = branchId === 'global' || branchId === 'all';
+    
+    if (branchId && !isGlobalOrAll && canAccessLocation(user, branchId)) {
       socket.join(`branch_${branchId}`);
-      socket.join(`branch_${branchId}_${user.role}`);
+      socket.join(`branch_${branchId}_${targetRole}`);
     }
   });
 
@@ -71,11 +74,25 @@ io.on('connection', (socket) => {
     if (!branchMatch) return;
     const branchId = branchMatch[1];
     if (canAccessLocation(user, branchId)) {
-      socket.join(room);
+      // Role-Suffix Security Check: Prevent staff from joining _admin or _chef rooms
+      const isRoleSpecific = room.includes('_admin') || room.includes('_chef') || room.includes('_staff');
+      const roomSuffix = room.split('_').pop();
+      
+      const isAuthorizedRole = 
+        ['super_admin', 'admin'].includes(user.role) || 
+        user.role === roomSuffix || 
+        !isRoleSpecific;
+
+      if (isAuthorizedRole) {
+        socket.join(room);
+      } else {
+        console.warn(`[SOCKET_AUTH_VIOLATION] User ${user.email} (${user.role}) attempted to join unauthorized room: ${room}`);
+      }
     }
   });
 
   socket.on('disconnect', () => {
+    socketCounters.clear(); // Explicitly assist GC
     if (process.env.NODE_ENV === 'development') {
       console.log('Client disconnected:', socket.id);
     }

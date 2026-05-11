@@ -188,7 +188,7 @@ const getUserSalary = asyncHandler(async (req, res) => {
   }
 
   // RBAC: Branch admin / Admin can only check their authorized location staff
-  enforceLocationAccess(req, res, user.assignedLocation, 'Not authorized to view this user salary');
+  enforceLocationAccess(req, res, user.assignedLocation, 'You do not have permission to view this user salary');
 
   const daysInMonth = getDaysInMonth(month);
   
@@ -291,12 +291,12 @@ const generatePayroll = asyncHandler(async (req, res) => {
     const payableDays = raw.payableDays || 0;
     const baseSalary = dailyRate * payableDays;
 
-    const lateMarksCount = Math.floor(Math.random() * 3); 
-    const latePenalties = lateMarksCount * 50;
+    // Deterministic Calculation Stage (Replaces enterprise-risk randomness)
+    const latePenalties = 0; // Should be pulled from late-clock-in logs in future Phase
     const absentPenalties = (raw.totalAbsent || 0) * dailyRate;
 
-    const topSellerBonus = Math.random() > 0.7 ? 1000 : 0;
-    const performanceBonus = Math.random() > 0.5 ? 1500 : 0;
+    const topSellerBonus = 0; // Should be pulled from sales volume in future Phase
+    const performanceBonus = 0;
 
     const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus - latePenalties - absentPenalties);
 
@@ -332,7 +332,7 @@ const approvePayroll = asyncHandler(async (req, res) => {
     throw new Error('Payroll record not found');
   }
 
-  enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'Not authorized to approve this payroll');
+  enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'You do not have permission to approve this payroll');
 
   const role = req.user.role;
 
@@ -347,7 +347,7 @@ const approvePayroll = asyncHandler(async (req, res) => {
     payroll.approvedBySuperAdminAt = new Date();
   } else {
     res.status(403);
-    throw new Error('Approval workflow level unauthorized or out of sequence');
+    throw new Error('Approval workflow level not allowed or out of sequence');
   }
 
   await payroll.save();

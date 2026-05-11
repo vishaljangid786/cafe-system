@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -7,7 +8,7 @@ import NotificationPanel from './NotificationPanel';
 import {
   Bell, User as UserIcon, Sun, Moon,
   Menu, MapPin, Zap, Search,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../services/api';
@@ -15,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
+  const router = useRouter();
   const { user, selectedLocation, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -133,6 +135,14 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           </button>
           <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
           <button
+            onClick={() => window.location.reload()}
+            className="p-2.5 text-[var(--color-text-muted)] hover:text-primary transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm group"
+            title="Refresh Page"
+          >
+            <RefreshCw size={18} className="group-active:rotate-180 transition-transform duration-500" />
+          </button>
+          <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+          <button
             onClick={() => setShowNotifications(!showNotifications)}
             className={`p-2.5 relative transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm ${showNotifications ? 'text-primary bg-[var(--color-bg)] shadow-sm' : 'text-[var(--color-text-muted)]'}`}
           >
@@ -150,7 +160,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
           <div className="hidden sm:flex flex-col items-end leading-none">
             <span className="text-xs font-black text-[var(--color-text-primary)]">{user.name}</span>
             <span className="text-[9px] font-black text-[var(--color-success)] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
-              <span className="h-1 w-1 bg-[var(--color-success)] rounded-full animate-ping" /> Authorized
+              <span className="h-1 w-1 bg-[var(--color-success)] rounded-full animate-ping" /> Active Staff
             </span>
           </div>
           <Link

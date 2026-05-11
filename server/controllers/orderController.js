@@ -9,19 +9,20 @@ const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, clampLimit, scopedLocationId } = require('../utils/accessControl');
 const { logActivity } = require('../utils/auditLogger');
+const OrderService = require('../services/orderService');
 
-const ensureOrderAccess = (req, res, order, message = 'Access denied to this order') => {
+const ensureOrderAccess = (req, res, order, message = 'Permission denied to this order') => {
   enforceLocationAccess(req, res, order.branch, message);
 };
 
 // @desc    Create a new order
 const createOrder = asyncHandler(async (req, res) => {
-  if (req.user.role == 'chef') {
+  if (req.user.role === 'chef') {
     res.status(403);
     throw new Error('Only staff can create orders');
   }
 
-  const { branch: requestedBranch, table: tableId, items, totalAmount, customerPhone, customerName } = req.body;
+  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount } = req.body;
   const branch = ['staff', 'chef', 'branch_admin'].includes(req.user.role)
     ? req.user.assignedLocation
     : requestedBranch;
@@ -31,7 +32,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Branch is required');
   }
 
-  enforceLocationAccess(req, res, branch, 'Not authorized to create orders for this branch');
+  enforceLocationAccess(req, res, branch, 'You do not have permission to create orders for this branch');
 
   const table = await Table.findOne({ _id: tableId, locationId: branch });
   if (!table) {
@@ -39,109 +40,15 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Selected table does not belong to this branch');
   }
 
-  // Anti-Spam Check: Prevent duplicate orders within 10 seconds
-  const recentOrder = await Order.findOne({
-    table: tableId,
+  const order = await OrderService.createOrder({
     branch,
-    createdAt: { $gte: new Date(Date.now() - 10000) }
-  });
-
-  if (recentOrder) {
-    res.status(429);
-    throw new Error('Please wait 10 seconds before placing another order for this table.');
-  }
-
-  // 1. Validation Stage: Check all items first
-  for (const item of items) {
-    const branchStock = await BranchStock.findOne({ menuItem: item.menuItem, branch });
-    if (!branchStock) {
-      res.status(400);
-      throw new Error(`Item not found in branch stock.`);
-    }
-    if (branchStock.stock < item.quantity) {
-      res.status(400);
-      throw new Error(`Insufficient stock for ${item.name || 'item'}. Only ${branchStock.stock} remaining.`);
-    }
-    if (!branchStock.isAvailable) {
-      res.status(400);
-      throw new Error(`Item ${item.name || ''} is currently unavailable at this branch.`);
-    }
-  }
-
-  // 2. Deduction Stage: Atomically decrease stock and prepare snapshots
-  const deductionResults = [];
-  const itemsWithSnapshots = [];
-  try {
-    for (const item of items) {
-      const menuItem = await MenuItem.findById(item.menuItem);
-      if (!menuItem) throw new Error('Menu item not found');
-
-      const updatedStock = await BranchStock.findOneAndUpdate(
-        { 
-          menuItem: item.menuItem, 
-          branch, 
-          stock: { $gte: item.quantity }
-        },
-        { $inc: { stock: -item.quantity } },
-        { new: true }
-      );
-
-      if (!updatedStock) {
-        throw new Error(`Stock depleted for ${menuItem.name} during processing.`);
-      }
-
-      if (updatedStock.stock <= 0 && updatedStock.isAvailable) {
-        await BranchStock.findByIdAndUpdate(updatedStock._id, { isAvailable: false });
-      }
-      
-      deductionResults.push({ id: updatedStock._id, quantity: item.quantity });
-      
-      itemsWithSnapshots.push({
-        menuItem: menuItem._id,
-        itemName: menuItem.name,
-        price: menuItem.price,
-        costPrice: menuItem.costPrice || 0,
-        quantity: item.quantity,
-        notes: item.notes
-      });
-    }
-  } catch (error) {
-    // 3. Rollback Stage
-    for (const rolledBackItem of deductionResults) {
-      await BranchStock.findByIdAndUpdate(rolledBackItem.id, { 
-        $inc: { stock: rolledBackItem.quantity },
-        $set: { isAvailable: true }
-      });
-    }
-    res.status(400);
-    throw new Error(error.message || 'Order processing failed.');
-  }
-
-  const order = await Order.create({
-    branch,
-    table: tableId,
+    tableId,
+    items,
     customerPhone,
     customerName,
-    items: itemsWithSnapshots,
-    totalAmount,
-    createdBy: req.user._id,
-    status: 'PLACED',
-    statusHistory: [{
-      status: 'PLACED',
-      timestamp: new Date(),
-      updatedBy: req.user._id
-    }]
+    discountAmount: Number(discountAmount) || 0,
+    userId: req.user._id
   });
-
-  // Increment active orders count and update table status
-  await Table.findByIdAndUpdate(tableId, {
-    status: 'ongoing',
-    $inc: { activeOrdersCount: 1 }
-  });
-
-  const io = getIO();
-  io.to(`branch_${branch}_chef`).emit('order:new', { orderId: order._id });
-  io.to('role_admin').to('role_super_admin').emit('order:new', { orderId: order._id, branchId: branch });
 
   res.status(201).json({ success: true, data: order });
 });
@@ -198,166 +105,26 @@ const getOrders = asyncHandler(async (req, res) => {
 const updateOrderStatus = asyncHandler(async (req, res) => {
   req.body = req.body || {};
   const { status } = req.body;
-  const order = req.omsOrder || await Order.findById(req.params.id);
-
-  if (!order) {
+  const orderId = req.params.id;
+  
+  // Preliminary check for existence and access
+  const existingOrder = req.omsOrder || await Order.findById(orderId);
+  if (!existingOrder) {
     res.status(404);
     throw new Error('Order not found');
   }
+  ensureOrderAccess(req, res, existingOrder);
 
-  ensureOrderAccess(req, res, order);
+  const updatedOrder = await OrderService.updateStatus(orderId, status, req.user._id, req.user.role);
 
-  // Auto-assign chef if transitioning to ACCEPTED
-  if (status === 'ACCEPTED' && req.user.role === 'chef') {
-    order.assignedChef = req.user._id;
-  }
-
-  order.status = status;
-  order.statusHistory.push({
-    status,
-    timestamp: new Date(),
-    updatedBy: req.user._id
-  });
-
-  if (status === 'COMPLETED') {
-    order.completedAt = new Date();
-  }
-
-  await order.save();
-
-  const io = getIO();
-  const branchId = order.branch.toString();
-
-  // Real-time notifications
-  io.to(`branch_${branchId}`).emit('order:update', { orderId: order._id, status: order.status });
-
-  if (status === 'READY') {
-    io.to(`branch_${branchId}_staff`).emit('order:ready', { orderId: order._id, message: 'Order Ready!' });
-  }
-
-  if (status === 'COMPLETED') {
-    const { finalizeOrder } = require('../utils/orderFinalizer');
-    await finalizeOrder(order, req.user);
-    return res.json({ success: true, data: order });
-  }
-
-
-    // Decrement active orders count
-    await Table.findByIdAndUpdate(order.table, {
-      $inc: { activeOrdersCount: -1 }
-    });
-
-    // Check if table can be cleared
-    const table = await Table.findById(order.table);
-    if (table && table.activeOrdersCount <= 0) {
-      await Table.findByIdAndUpdate(order.table, { status: 'available' });
-    }
-
-    // Customer CRM Lifecycle Hooks
-    if (order.customerPhone) {
-      const Customer = require('../models/Customer');
-      const Coupon = require('../models/Coupon');
-      
-      let customer = await Customer.findOne({ phone: order.customerPhone });
-      if (!customer) {
-        customer = new Customer({
-          phone: order.customerPhone,
-          name: order.customerName || 'Valued Customer',
-          branch: order.branch
-        });
-      }
-
-      customer.visits += 1;
-      customer.totalSpend += order.totalAmount;
-      customer.lastVisit = new Date();
-      
-      const pointsEarned = Math.floor(order.totalAmount / 100);
-      customer.loyaltyPoints += pointsEarned;
-
-      order.items.forEach(item => {
-        const itemId = item.menuItem?._id?.toString() || item.menuItem?.toString();
-        if (itemId) {
-          const currentCount = customer.favoriteItems.get(itemId) || 0;
-          customer.favoriteItems.set(itemId, currentCount + item.quantity);
-        }
-      });
-
-      if (customer.loyaltyPoints >= 100) {
-        customer.loyaltyPoints -= 100;
-        const couponCode = `REWARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 30);
-
-        await Coupon.create({
-          code: couponCode,
-          discountType: 'fixed',
-          discountValue: 100,
-          minOrderAmount: 300,
-          expiryDate: expiry,
-          usageLimit: 1,
-          createdBy: req.user._id,
-          isActive: true
-        });
-        
-        io.to(`branch_${branchId}`).emit('customer:reward_unlocked', { phone: customer.phone, couponCode });
-      }
-
-      await customer.save();
-    }
-
-    // Inventory Auto-Deduction Logic — bulk-fetch recipes in one query to avoid N+1
-    const Recipe = require('../models/Recipe');
-    const BranchInventory = require('../models/BranchInventory');
-    const BranchStock = require('../models/BranchStock');
-
-    const menuItemIds = order.items
-      .map(i => i.menuItem?._id || i.menuItem)
-      .filter(Boolean);
-    const recipes = await Recipe.find({ menuItemId: { $in: menuItemIds } }).lean();
-    const recipesByMenuItem = new Map(recipes.map(r => [r.menuItemId.toString(), r]));
-
-    for (const item of order.items) {
-      const menuItemId = (item.menuItem?._id || item.menuItem)?.toString();
-      const recipe = menuItemId ? recipesByMenuItem.get(menuItemId) : null;
-      if (recipe) {
-        for (const ing of recipe.ingredients) {
-          if (ing.ingredient) {
-            const deduction = Number(ing.quantity || 0) * Number(item.quantity || 1);
-            const updatedInv = await BranchInventory.findOneAndUpdate(
-              { branch: order.branch, ingredient: ing.ingredient },
-              { $inc: { stock: -deduction } },
-              { new: true }
-            ).populate('ingredient');
-
-            // Trigger Socket alert if low stock
-            if (updatedInv && updatedInv.stock <= updatedInv.minThreshold) {
-              const io = require('../config/socket').getIO();
-              io.to(`branch_${order.branch}_admin`).emit('inventory:low_stock', {
-                ingredient: updatedInv.ingredient.name,
-                stock: updatedInv.stock,
-                unit: updatedInv.ingredient.unit
-              });
-            }
-
-            // If stock hits 0, disable MenuItem availability
-            if (updatedInv && updatedInv.stock <= 0) {
-              await BranchStock.findOneAndUpdate(
-                { branch: order.branch, menuItem: item.menuItem?._id || item.menuItem },
-                { isAvailable: false }
-              );
-            }
-          }
-        }
-      }
-    }
-
-  res.json({ success: true, data: order });
+  res.json({ success: true, data: updatedOrder });
 });
 
 // @desc    Modify order items
 const updateOrderItems = asyncHandler(async (req, res) => {
   const { items, totalAmount } = req.body;
-  const order = await Order.findById(req.params.id);
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
 
   if (!order) {
     res.status(404);
@@ -366,65 +133,7 @@ const updateOrderItems = asyncHandler(async (req, res) => {
 
   ensureOrderAccess(req, res, order);
 
-  const lockedStatuses = ['PREPARING', 'READY', 'SERVED', 'CANCELLED', 'REJECTED'];
-  if (lockedStatuses.includes(order.status)) {
-    res.status(400);
-    throw new Error(`Cannot modify order in ${order.status} status`);
-  }
-
-  // Stock Adjustment Logic
-  const oldItems = order.items;
-  const newItems = items;
-
-  // Calculate delta for each item
-  const itemMap = {}; // { menuItemId: delta }
-
-  // Decrease for old items (we will restore them conceptually then subtract new ones)
-  oldItems.forEach(item => {
-    const id = item.menuItem.toString();
-    itemMap[id] = (itemMap[id] || 0) + item.quantity;
-  });
-
-  // Subtract new items
-  newItems.forEach(item => {
-    const id = item.menuItem.toString();
-    itemMap[id] = (itemMap[id] || 0) - item.quantity;
-  });
-
-  // itemMap now contains positive numbers for stock restoration, negative for depletion
-  for (const [menuItemId, delta] of Object.entries(itemMap)) {
-    if (delta < 0) {
-      // Depletion: check stock
-      const needed = Math.abs(delta);
-      const branchStock = await BranchStock.findOne({ menuItem: menuItemId, branch: order.branch });
-      if (branchStock && branchStock.stock < needed) {
-        res.status(400);
-        throw new Error(`Insufficient stock for one or more items. Adjustment failed.`);
-      }
-    }
-  }
-
-  // Atomically update stock
-  for (const [menuItemId, delta] of Object.entries(itemMap)) {
-    if (delta !== 0) {
-      const updatedStock = await BranchStock.findOneAndUpdate(
-        { menuItem: menuItemId, branch: order.branch },
-        {
-          $inc: { stock: delta },
-        },
-        { new: true, upsert: true }
-      );
-
-      if (updatedStock) {
-        updatedStock.isAvailable = updatedStock.stock > 0;
-        await updatedStock.save();
-      }
-    }
-  }
-
-  order.items = items;
-  order.totalAmount = totalAmount;
-  await order.save();
+  const updatedOrder = await OrderService.updateItems(orderId, items, req.user._id);
 
   await logActivity(
     req.user,
@@ -434,99 +143,66 @@ const updateOrderItems = asyncHandler(async (req, res) => {
     { orderId: order._id, locationId: order.branch, totalAmount }
   );
 
-  const io = getIO();
-  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
-
-  res.json({ success: true, data: order });
+  res.json({ success: true, data: updatedOrder });
 });
 
 // @desc    Reject order with reason
 const rejectOrder = asyncHandler(async (req, res) => {
-  req.body = req.body || {};
-  const { rejectReason } = req.body;
   if (req.user.role !== 'chef') {
     res.status(403);
     throw new Error('Only chefs can reject orders');
   }
-  const order = await Order.findById(req.params.id);
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
   if (!order) {
     res.status(404);
     throw new Error('Order not found');
   }
   ensureOrderAccess(req, res, order);
-  order.status = 'REJECTED';
-  order.rejectReason = rejectReason;
-  order.assignedChef = req.user._id;
 
-  // Restore Stock
-  for (const item of order.items) {
-    await BranchStock.findOneAndUpdate(
-      { menuItem: item.menuItem, branch: order.branch },
-      {
-        $inc: { stock: item.quantity },
-        isAvailable: true
-      }
-    );
-  }
+  const { rejectReason } = req.body || {};
+  const updatedOrder = await OrderService.rejectOrder(orderId, rejectReason, req.user._id);
 
-  order.statusHistory.push({
-    status: 'REJECTED',
-    timestamp: new Date(),
-    updatedBy: req.user._id
-  });
-
-  // Decrement active orders count on rejection
-  await Table.findByIdAndUpdate(order.table, {
-    $inc: { activeOrdersCount: -1 }
-  });
-
-  await order.save();
-
-  const io = getIO();
-  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: 'REJECTED' });
-
-  res.json({ success: true, data: order });
+  res.json({ success: true, data: updatedOrder });
 });
 
 // @desc    Cancel order
 const cancelOrder = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
   if (!order) {
     res.status(404);
     throw new Error('Order not found');
   }
   ensureOrderAccess(req, res, order);
+  
   if (!['admin', 'super_admin', 'branch_admin'].includes(req.user.role)) {
     res.status(403);
-    throw new Error('Unauthorized to cancel orders');
+    throw new Error('No permission to cancel orders');
   }
-  order.status = 'CANCELLED';
 
-  // Restore Stock
-  for (const item of order.items) {
-    await BranchStock.findOneAndUpdate(
-      { menuItem: item.menuItem, branch: order.branch },
-      {
-        $inc: { stock: item.quantity },
-        isAvailable: true
-      }
-    );
+  const updatedOrder = await OrderService.cancelOrder(orderId, req.user._id);
+  res.json({ success: true, data: updatedOrder });
+});
+
+// @desc    Delete order
+const deleteOrder = asyncHandler(async (req, res) => {
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
   }
-  order.statusHistory.push({
-    status: 'CANCELLED',
-    timestamp: new Date(),
-    updatedBy: req.user._id
-  });
+  ensureOrderAccess(req, res, order);
+  
+  if (!['admin', 'super_admin'].includes(req.user.role)) {
+    res.status(403);
+    throw new Error('No permission to delete orders');
+  }
 
-  // Decrement active orders count on cancellation
-  await Table.findByIdAndUpdate(order.table, {
-    $inc: { activeOrdersCount: -1 }
-  });
-
-  await order.save();
-  const io = getIO();
-  io.to(`branch_${order.branch}`).emit('order:cancel', { orderId: order._id });
-  res.json({ success: true, data: order });
+  await OrderService.deleteOrder(orderId, req.user.role);
+  
+  res.json({ success: true, message: 'Order deleted from system' });
 });
 
 // @desc    Add chef note
@@ -535,88 +211,19 @@ const addChefNote = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('Only chefs can add notes');
   }
-  req.body = req.body || {};
   
-  const order = await Order.findById(req.params.id);
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
   if (!order) {
     res.status(404);
     throw new Error('Order not found');
   }
-
   ensureOrderAccess(req, res, order);
 
-  order.chefNote = req.body.chefNote;
-  await order.save();
+  const { chefNote } = req.body || {};
+  const updatedOrder = await OrderService.addChefNote(orderId, chefNote, req.user);
 
-  // Duplicate Prevention Check (60 seconds)
-  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-  const duplicate = await Notification.findOne({
-    title: 'New Chef Note',
-    message: `Chef left a note on Order #${order._id.toString().slice(-6)}: "${req.body.chefNote}"`,
-    sender: req.user._id,
-    createdAt: { $gte: oneMinuteAgo }
-  });
-
-  if (!duplicate) {
-    const recipients = [];
-    
-    if (order.createdBy) {
-      recipients.push({ user: order.createdBy, isRead: false });
-    }
-    
-    const branchAdmins = await User.find({ role: 'branch_admin', assignedLocation: order.branch });
-    branchAdmins.forEach(u => recipients.push({ user: u._id, isRead: false }));
-    
-    const admins = await User.find({ role: 'admin', accessibleLocations: order.branch });
-    admins.forEach(u => recipients.push({ user: u._id, isRead: false }));
-    
-    const supers = await User.find({ role: 'super_admin' });
-    supers.forEach(u => recipients.push({ user: u._id, isRead: false }));
-
-    const uniqueRecipients = [];
-    const seen = new Set();
-    recipients.forEach(r => {
-      const idStr = r.user.toString();
-      if (!seen.has(idStr) && idStr !== req.user._id.toString()) {
-        seen.add(idStr);
-        uniqueRecipients.push(r);
-      }
-    });
-
-    if (uniqueRecipients.length > 0) {
-      const notification = await Notification.create({
-        title: 'New Chef Note',
-        message: `Chef left a note on Order #${order._id.toString().slice(-6)}: "${req.body.chefNote}"`,
-        type: 'message',
-        priority: 'medium',
-        sender: req.user._id,
-        recipients: uniqueRecipients
-      });
-
-      const io = getIO();
-      uniqueRecipients.forEach(r => {
-        io.to(r.user.toString()).emit('new_notification', {
-          _id: notification._id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          priority: notification.priority,
-          createdAt: notification.createdAt,
-          sender: {
-            name: req.user.name,
-            role: req.user.role,
-            profileImageUrl: req.user.profileImageUrl
-          }
-        });
-      });
-    }
-  }
-
-  const io = getIO();
-  io.to(`branch_${order.branch}`).emit('order:note', { orderId: order._id, chefNote: req.body.chefNote });
-  io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
-
-  res.json({ success: true, data: order });
+  res.json({ success: true, data: updatedOrder });
 });
 
 // Specialized Status Wrappers
@@ -667,8 +274,8 @@ const generateOrderBill = asyncHandler(async (req, res) => {
 
   const subtotal = order.totalAmount;
   const taxes = Number((subtotal * 0.05).toFixed(2)); // 5% GST
-  const discount = 0; // Future: handle applied coupons if needed
-  const finalAmount = subtotal + taxes - discount;
+  const discount = order.discountAmount || 0; 
+  const finalAmount = subtotal + taxes; // Assuming totalAmount is already net of discount
 
   // Record billing in history
   order.statusHistory.push({
@@ -867,7 +474,7 @@ const getMyChefStats = asyncHandler(async (req, res) => {
   }
 
   if (branch) {
-    enforceLocationAccess(req, res, branch, 'Access denied to this branch');
+    enforceLocationAccess(req, res, branch, 'Permission denied to this branch');
     query.branch = branch;
   }
   if (paymentType) query.paymentType = paymentType;
@@ -1045,7 +652,7 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
   }
 
   if (branch) {
-    enforceLocationAccess(req, res, branch, 'Access denied to this branch');
+    enforceLocationAccess(req, res, branch, 'Permission denied to this branch');
     query.$and.push({ branch });
   }
   if (paymentType) query.$and.push({ paymentType });
@@ -1202,7 +809,8 @@ module.exports = {
   markReady,
   markServed: asyncHandler(async (req, res) => {
     req.body.status = 'SERVED';
-    const order = await Order.findById(req.params.id);
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
     if (!order) {
       res.status(404);
       throw new Error('Order not found');
@@ -1210,13 +818,15 @@ module.exports = {
     ensureOrderAccess(req, res, order);
     order.servedBy = req.user._id;
     await order.save();
-    req.omsOrder = order; // Pass to updateOrderStatus if needed, but we can just call it
-    await updateOrderStatus(req, res);
+    
+    const updatedOrder = await OrderService.updateStatus(orderId, 'SERVED', req.user._id, req.user.role);
+    res.json({ success: true, data: updatedOrder });
   }),
   completeOrder,
   forceCompleteOrder,
   generateOrderBill,
   getOrderAnalytics,
   getMyChefStats,
-  getMyStaffStats
+  getMyStaffStats,
+  deleteOrder
 };

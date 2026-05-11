@@ -17,6 +17,9 @@ const parseCookies = (header = '') => header.split(';').reduce((acc, part) => {
 module.exports = {
   init: (httpServer) => {
     const { Server } = require('socket.io');
+    const { createAdapter } = require('@socket.io/redis-adapter');
+    const Redis = require('ioredis');
+
     io = new Server(httpServer, {
       cors: {
         origin: allowedOrigins,
@@ -24,6 +27,14 @@ module.exports = {
         credentials: true,
       },
     });
+
+    // Redis Adapter for scaling
+    if (process.env.REDIS_URL || process.env.NODE_ENV === 'production') {
+      const pubClient = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
+      const subClient = pubClient.duplicate();
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('Socket.io Redis Adapter initialized');
+    }
 
     io.use(async (socket, next) => {
       try {

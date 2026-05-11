@@ -11,7 +11,7 @@ const {
   changePassword,
   updateUserPermissions
 } = require('../controllers/userController');
-const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
@@ -22,28 +22,28 @@ router.put('/update-profile', upload.single('profileImage'), updateProfile);
 router.put('/change-password', changePassword);
 
 // Staff Management Routes - Require manageStaff permission
-router.use(authorizePermissions('manageStaff'));
+router.use(checkPermissions('manageStaff'));
 
 router.route('/')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUsers);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin'), getUsers);
 
 router.route('/:id')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getUser)
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateUser)
-  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteUser);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin'), getUser)
+  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateUser)
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteUser);
 
 router.route('/:id/permissions')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateUserPermissions);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateUserPermissions);
 
 router.route('/:id/promote')
-  .patch(authorizeRoles('super_admin', 'admin'), promoteUser);
+  .patch(checkRoles('super_admin', 'admin'), promoteUser);
 
 router.route('/:id/demote')
-  .patch(authorizeRoles('super_admin', 'admin'), demoteUser);
+  .patch(checkRoles('super_admin', 'admin'), demoteUser);
 
-router.patch('/:id/toggle-block', authorizeRoles('super_admin', 'admin'), toggleBlocklist);
+router.patch('/:id/toggle-block', checkRoles('super_admin', 'admin'), toggleBlocklist);
 
 router.route('/:id/block')
-  .put(authorizeRoles('super_admin', 'admin'), toggleBlocklist);
+  .put(checkRoles('super_admin', 'admin'), toggleBlocklist);
 
 module.exports = router;

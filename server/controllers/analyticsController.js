@@ -9,37 +9,12 @@ const Order = require('../models/Order');
 const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
 const { scopedLocationId, normalizeId } = require('../utils/accessControl');
-
-// Helper to get match criteria based on time filters
-const getDateMatchCriteria = (startDate, endDate, period, field = 'createdAt') => {
-  const match = {};
-  if (period && period !== 'all') {
-    if (period === 'today') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      match[field] = { $gte: today };
-    } else {
-      let days;
-      if (period === 'week' || period === '7d') days = 7;
-      else if (period === 'month' || period === '30d') days = 30;
-      else if (period === 'year') days = 365;
-      else days = parseInt(period);
-
-      if (!isNaN(days)) {
-        match[field] = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
-      }
-    }
-  } else if (startDate || endDate) {
-    match[field] = {};
-    if (startDate) match[field].$gte = new Date(startDate);
-    if (endDate) match[field].$lte = new Date(endDate);
-  }
-  return match;
-};
+const AnalyticsService = require('../services/analyticsService');
 
 // @desc    Get analytics for a specific location
 // @route   GET /api/analytics/location
 // @access  Private
+// @desc    Get analytics for a specific location
 const getLocationAnalytics = asyncHandler(async (req, res) => {
   const { startDate, endDate, locationId } = req.query;
   const targetLocation = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
@@ -49,762 +24,108 @@ const getLocationAnalytics = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
-  const dateMatch = getDateMatchCriteria(startDate, endDate);
-
-  // Revenue Aggregation
-  const revenueAgg = await Table.aggregate([
-    { $match: { locationId: new mongoose.Types.ObjectId(targetLocation), status: 'completed', ...dateMatch } },
-    { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
-  ]);
-
-  // Expense Aggregation (from Expense model)
-  const expenseAgg = await Expense.aggregate([
-    { $match: { locationId: new mongoose.Types.ObjectId(targetLocation), status: { $in: ['approved', 'completed'] }, ...dateMatch } },
-    { $group: { _id: null, totalExpense: { $sum: '$amount' } } }
-  ]);
-
-  // Transaction Expense Aggregation (from Transaction model)
-  const transactionExpenseAgg = await Transaction.aggregate([
-    { $match: { locationId: new mongoose.Types.ObjectId(targetLocation), type: 'EXPENSE', ...dateMatch } },
-    { $group: { _id: null, totalExpense: { $sum: '$totalAmount' } } }
-  ]);
-
-  // Payroll Aggregation
-  const payrollAgg = await Payroll.aggregate([
-    { $match: { status: 'PAID' } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'staff'
-      }
-    },
-    { $unwind: '$staff' },
-    { $match: { 'staff.assignedLocation': new mongoose.Types.ObjectId(targetLocation) } },
-    { $group: { _id: null, totalPayroll: { $sum: '$netSalary' } } }
-  ]);
-
-  const totalRevenue = revenueAgg[0]?.totalRevenue || 0;
-  const totalExpense = (expenseAgg[0]?.totalExpense || 0) +
-    (transactionExpenseAgg[0]?.totalExpense || 0) +
-    (payrollAgg[0]?.totalPayroll || 0);
-  const profit = totalRevenue - totalExpense;
-
-  res.json({
-    success: true,
-    data: {
-      locationId: targetLocation,
-      totalRevenue,
-      totalExpense,
-      profit,
-    }
-  });
+  const metrics = await AnalyticsService.getLocationMetrics(targetLocation, startDate, endDate);
+  res.json({ success: true, data: metrics });
 });
 
 // @desc    Get global analytics
 // @route   GET /api/analytics/all
+// @desc    Get global analytics
 const getAllAnalytics = asyncHandler(async (req, res) => {
-  const { startDate, endDate } = req.query;
-  const dateMatch = getDateMatchCriteria(startDate, endDate);
+  const { startDate, endDate, locationId, period } = req.query;
+  const matchScope = {};
+  const branch = scopedLocationId(req, locationId);
+  if (branch) matchScope.locationId = branch;
 
-  let match = { ...dateMatch };
-
-  // Security Layer
-  const branch = scopedLocationId(req, req.query.locationId);
-  if (branch) match.locationId = branch;
-
-  const revenueAgg = await Table.aggregate([
-    { $match: { status: 'completed', ...match } },
-    { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
-  ]);
-
-  const expenseAgg = await Expense.aggregate([
-    { $match: { status: { $in: ['approved', 'completed'] }, ...match } },
-    { $group: { _id: null, totalExpense: { $sum: '$amount' } } }
-  ]);
-
-  const transactionExpenseAgg = await Transaction.aggregate([
-    { $match: { type: 'EXPENSE', ...match } },
-    { $group: { _id: null, totalExpense: { $sum: '$totalAmount' } } }
-  ]);
-
-  const payrollAgg = await Payroll.aggregate([
-    { $match: { status: 'PAID' } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'staff'
-      }
-    },
-    { $unwind: '$staff' },
-    { $match: (match.locationId ? { 'staff.assignedLocation': match.locationId } : {}) },
-    { $group: { _id: null, totalPayroll: { $sum: '$netSalary' } } }
-  ]);
-
-  const totalRevenue = revenueAgg[0]?.totalRevenue || 0;
-  const totalExpense = (expenseAgg[0]?.totalExpense || 0) +
-    (transactionExpenseAgg[0]?.totalExpense || 0) +
-    (payrollAgg[0]?.totalPayroll || 0);
-
-  res.json({
-    success: true,
-    data: { totalRevenue, totalExpense, profit: totalRevenue - totalExpense }
-  });
+  const metrics = await AnalyticsService.getGlobalMetrics(matchScope, startDate, endDate, period);
+  res.json({ success: true, data: metrics });
 });
 
 // @desc    Compare all locations
-// @route   GET /api/analytics/compare-locations
 const compareLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, status, sort } = req.query;
-  const dateMatch = getDateMatchCriteria(startDate, endDate);
-  let match = { status: 'completed', ...dateMatch };
-  let expenseMatch = { ...(startDate || endDate ? { date: dateMatch.createdAt } : {}) };
+  const ids = await Location.find({ isPermanentlyDeleted: false }).select('_id');
+  const metrics = await AnalyticsService.getLocationOutliers(ids.map(l => l._id), startDate, endDate, null);
 
-  // Security Layer
-  const branch = scopedLocationId(req, req.query.locationId);
-  if (branch) {
-    match.locationId = branch;
-    expenseMatch.locationId = branch;
-  }
-
-  const revenueByLoc = await Table.aggregate([
-    { $match: match },
-    { $group: { _id: '$locationId', revenue: { $sum: '$totalAmount' } } }
-  ]);
-
-  const expenseByLoc = await Expense.aggregate([
-    { $match: expenseMatch },
-    { $group: { _id: '$locationId', expenses: { $sum: '$amount' } } }
-  ]);
-
-  const locQuery = { isPermanentlyDeleted: false };
-  if (status) locQuery.status = status;
-
-  const locations = await Location.find(locQuery);
-
-  let comparisonData = locations.map((loc) => {
-    const revObj = revenueByLoc.find((r) => r._id.toString() === loc._id.toString());
-    const expObj = expenseByLoc.find((e) => e._id.toString() === loc._id.toString());
-
-    const revenue = revObj ? revObj.revenue : 0;
-    const expenses = expObj ? expObj.expenses : 0;
-
-    return {
-      locationId: loc._id,
-      locationName: loc.name,
-      city: loc.city,
-      status: loc.status,
-      revenue,
-      expenses,
-      profit: revenue - expenses,
-    };
-  });
+  let comparisonData = metrics.map(m => ({
+    locationId: m.locationId,
+    locationName: m.name,
+    city: m.city,
+    revenue: m.revenue,
+    expenses: m.expenses,
+    profit: m.netProfit
+  }));
 
   if (sort === 'highest profit') comparisonData.sort((a, b) => b.profit - a.profit);
-
   res.json({ success: true, data: comparisonData });
 });
 
 // @desc    Get advanced analytics for charts
 // @route   GET /api/analytics/advanced
 // @desc    Get advanced analytics for charts
+// @desc    Get advanced analytics for charts
 const getAdvancedAnalytics = asyncHandler(async (req, res) => {
   const { startDate, endDate, locationId, adminId } = req.query;
-  let match = {};
-
-  // Security Layer: Role-based Location Restriction
+  const matchScope = {};
+  
   const branch = scopedLocationId(req, locationId);
   if (branch) {
     if (typeof branch === 'object' && branch.$in) {
-      match.locationId = { $in: branch.$in.map(id => new mongoose.Types.ObjectId(id.toString())) };
+      matchScope.locationId = { $in: branch.$in.map(id => new mongoose.Types.ObjectId(id.toString())) };
     } else {
-      match.locationId = new mongoose.Types.ObjectId(branch.toString());
+      matchScope.locationId = new mongoose.Types.ObjectId(branch.toString());
     }
   }
 
-  // Staff Filtering: Admin/Super Admin can filter by who created/managed the records
-  if (adminId && adminId !== 'undefined' && (req.user.role === 'super_admin' || req.user.role === 'admin')) {
-    try {
-      match.createdBy = new mongoose.Types.ObjectId(adminId.toString());
-    } catch (err) {
-      console.warn(`Analytics Warning: Invalid adminId in query: ${adminId}`);
-    }
-  }
-
-  const dateMatch = getDateMatchCriteria(startDate, endDate, null, 'date');
-  const transactionMatch = { ...match, ...dateMatch };
-  const expenseMatch = { ...match, ...dateMatch, type: 'EXPENSE', status: 'approved' };
-
-    let transactionAgg = [];
-    try {
-      transactionAgg = await Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-            revenue: { $sum: "$totalAmount" },
-            profit: { $sum: "$totalProfit" },
-            orders: { $sum: { $cond: [{ $ne: ["$type", "EXPENSE"] }, 1, 0] } }
-          }
-        },
-        { $sort: { "_id": 1 } }
-      ]);
-    } catch (err) {
-      console.error('Analytics: Transaction aggregation failed:', err);
-    }
-
-  // 2. Expense Aggregation (Operational Costs)
-  const expenseAgg = await Transaction.aggregate([
-    { $match: { ...transactionMatch, type: 'EXPENSE' } },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-        expenses: { $sum: "$totalAmount" }
-      }
-    }
-  ]);
-
-  const manualExpenseAgg = await Expense.aggregate([
-    { $match: { ...match, status: { $in: ['approved', 'completed'] }, ...dateMatch } },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-        expenses: { $sum: "$amount" }
-      }
-    }
-  ]);
-
-  // 2.5 Payroll Aggregation
-  let payrollAgg = [];
-  if (req.user.role === 'admin' || req.user.role === 'super_admin') {
-    const payrollMatch = { status: 'PAID' };
-
-    // Convert dateMatch for month-based Payroll
-    // If we have startDate/endDate, we should filter by month string YYYY-MM
-    // For simplicity, we'll fetch all PAID payrolls within the locations scope
-
-    const payrollPipeline = [
-      { $match: payrollMatch },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as: 'staff'
-        }
-      },
-      { $unwind: '$staff' }
-    ];
-
-    if (match.locationId) {
-      payrollPipeline.push({ $match: { 'staff.assignedLocation': match.locationId } });
-    }
-
-    payrollPipeline.push({
-      $group: {
-        _id: "$month",
-        expenses: { $sum: "$netSalary" }
-      }
-    });
-
-    payrollAgg = await Payroll.aggregate(payrollPipeline);
-  }
-
-  // 3. Merge Time Series
-  const allExpenseDates = [
-    ...expenseAgg.map(e => e._id),
-    ...manualExpenseAgg.map(m => m._id),
-    ...payrollAgg.map(p => `${p._id}-01`) // Map month YYYY-MM to YYYY-MM-01 for series
-  ];
-
-  const dates = Array.from(new Set([...transactionAgg.map(t => t._id), ...allExpenseDates]))
-    .filter(d => d && typeof d === 'string')
-    .sort();
-
-  const timeSeries = dates.map(date => {
-    const t = transactionAgg.find(item => item._id === date) || { revenue: 0, profit: 0, orders: 0 };
-
-    const e1 = expenseAgg.find(item => item._id === date)?.expenses || 0;
-    const e2 = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
-
-    // Payroll is monthly, so we'll show it on the 1st of the month in the daily chart
-    const monthStr = date.substring(0, 7);
-    const p = date.endsWith('-01') ? (payrollAgg.find(item => item._id === monthStr)?.expenses || 0) : 0;
-
-    return {
-      date,
-      revenue: t.revenue,
-      profit: t.profit,
-      expenses: e1 + e2 + p,
-      orders: t.orders
-    };
-  });
-
-  // 3.5 Staff & Salary Data (Role-based)
-  let personnelStats = null;
-  if (req.user.role === 'admin' || req.user.role === 'super_admin') {
-    const userMatch = { role: { $in: ['branch_admin', 'staff', 'chef'] } };
-    if (match.locationId) {
-      userMatch.assignedLocation = match.locationId;
-    }
-
-    const personnelAgg = await User.aggregate([
-      { $match: userMatch },
-      {
-        $group: {
-          _id: null,
-          totalMonthlySalary: { $sum: "$monthlySalary" },
-          staffCount: { $sum: { $cond: [{ $eq: ["$role", "staff"] }, 1, 0] } },
-          chefCount: { $sum: { $cond: [{ $eq: ["$role", "chef"] }, 1, 0] } },
-          adminCount: { $sum: { $cond: [{ $eq: ["$role", "branch_admin"] }, 1, 0] } }
-        }
-      }
-    ]);
-    personnelStats = personnelAgg[0] || { totalMonthlySalary: 0, staffCount: 0, chefCount: 0, adminCount: 0 };
-    personnelStats.avgSalary = personnelStats.staffCount + personnelStats.chefCount + personnelStats.adminCount > 0
-      ? personnelStats.totalMonthlySalary / (personnelStats.staffCount + personnelStats.chefCount + personnelStats.adminCount)
-      : 0;
-  }
-
-  // 3.6 Attendance Stats
-  const attendanceAgg = await Attendance.aggregate([
-    { $match: { ...match, ...(dateMatch.date ? { date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } : {}) } },
-    {
-      $group: {
-        _id: "$date",
-        present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
-        absent: { $sum: { $cond: [{ $eq: ["$status", "absent"] }, 1, 0] } },
-        halfDay: { $sum: { $cond: [{ $eq: ["$status", "half-day"] }, 1, 0] } }
-      }
-    },
-    { $sort: { "_id": 1 } },
-    { $limit: 30 }
-  ]);
-
-  // 3.7 Payment Intelligence
-  const paymentAgg = await Transaction.aggregate([
-    { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
-    {
-      $group: {
-        _id: "$source",
-        count: { $sum: 1 },
-        revenue: { $sum: "$totalAmount" }
-      }
-    }
-  ]);
-
-  const upiStats = await Transaction.aggregate([
-    { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
-    {
-      $group: {
-        _id: null,
-        upiCount: {
-          $sum: {
-            $cond: [
-              {
-                $or: [
-                  { $eq: ["$paymentType", "UPI"] },
-                  { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "UPI", options: "i" } }
-                ]
-              }, 1, 0
-            ]
-          }
-        },
-        cashCount: {
-          $sum: {
-            $cond: [
-              {
-                $or: [
-                  { $eq: ["$paymentType", "CASH"] },
-                  { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "CASH", options: "i" } }
-                ]
-              }, 1, 0
-            ]
-          }
-        },
-        total: { $sum: 1 }
-      }
-    },
-    {
-      $addFields: {
-        otherCount: { $max: [0, { $subtract: ["$total", { $add: ["$upiCount", "$cashCount"] }] }] }
-      }
-    },
-    {
-      $project: {
-        upiCount: { $ifNull: ["$upiCount", 0] },
-        cashCount: { $ifNull: ["$cashCount", 0] },
-        otherCount: { $ifNull: ["$otherCount", 0] }
-      }
-    }
-  ]);
-
-  // 3.8 Order & Status Breakdown
-  const orderStatusAgg = await Order.aggregate([
-    {
-      $match: {
-        ...(match.locationId ? { branch: match.locationId } : {}),
-        createdAt: { $gte: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000) }
-      }
-    },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-        revenue: { $sum: "$totalAmount" }
-      }
-    }
-  ]);
-
-  // 3.9 Smart Forecasting
-  const dayOfWeekSales = Array(7).fill(0);
-  const dayOfWeekCounts = Array(7).fill(0);
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-  // Look back 90 days for forecasting
-  const forecastStartDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  const forecastOrders = await Order.find({
-    ...(match.locationId ? { branch: match.locationId } : {}),
-    status: { $in: ['SERVED', 'COMPLETED'] },
-    createdAt: { $gte: forecastStartDate }
-  }).select('totalAmount createdAt').lean();
-
-  forecastOrders.forEach(order => {
-    const d = new Date(order.createdAt);
-    dayOfWeekSales[d.getDay()] += order.totalAmount || 0;
-    dayOfWeekCounts[d.getDay()] += 1;
-  });
-
-  const nextMonthSalesTrend = dayNames.map((name, i) => ({
-    day: name,
-    projected: Math.round((dayOfWeekSales[i] / Math.max(dayOfWeekCounts[i] || 1, 1)) * 1.05)
-  }));
-
-  const expectedTodayRevenue = Math.round(dayOfWeekSales[new Date().getDay()] / Math.max(dayOfWeekCounts[new Date().getDay()] || 1, 1));
-
-  // 4. Summary Stats (Calculate directly from aggregation results for precision)
-  const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
-  const totalProfit = transactionAgg.reduce((acc, curr) => acc + curr.profit, 0);
-  const totalOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
-
-  const tExpenses = expenseAgg.reduce((acc, curr) => acc + curr.expenses, 0);
-  const mExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0);
-  const pExpenses = payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
-  const totalExpenses = tExpenses + mExpenses + pExpenses;
-
-  // 5. Staff Performance (from Transactions)
-  const staffAgg = await Transaction.aggregate([
-    { $match: transactionMatch },
-    {
-      $lookup: {
-        from: "users",
-        localField: "staffId",
-        foreignField: "_id",
-        as: "staff"
-      }
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "createdBy",
-        foreignField: "_id",
-        as: "creator"
-      }
-    },
-    { $addFields: { effectiveStaff: { $ifNull: [{ $arrayElemAt: ["$staff", 0] }, { $arrayElemAt: ["$creator", 0] }] } } },
-    {
-      $group: {
-        _id: { $ifNull: ["$effectiveStaff.name", "Standard Staff"] },
-        revenue: { $sum: "$totalAmount" },
-        totalOrders: { $sum: 1 }
-      }
-    },
-    { $sort: { revenue: -1 } }
-  ]);
-
-  // 6. Category Sales (from Transactions)
-  const categoryAgg = await Transaction.aggregate([
-    { $match: transactionMatch },
-    {
-      $facet: {
-        byItems: [
-          { $unwind: "$orders" },
-          {
-            $lookup: {
-              from: "menuitems",
-              localField: "orders.menuItemId",
-              foreignField: "_id",
-              as: "menuItem"
-            }
-          },
-          { $addFields: { item: { $arrayElemAt: ["$menuItem", 0] } } },
-          {
-            $lookup: {
-              from: "categories",
-              localField: "item.category",
-              foreignField: "_id",
-              as: "categoryData"
-            }
-          },
-          { $addFields: { cat: { $arrayElemAt: ["$categoryData", 0] } } },
-          {
-            $group: {
-              _id: { $ifNull: ["$cat.name", "General"] },
-              value: { $sum: { $multiply: ["$orders.price", "$orders.quantity"] } },
-              count: { $sum: "$orders.quantity" }
-            }
-          }
-        ],
-        byTransaction: [
-          {
-            $group: {
-              _id: { $ifNull: ["$category", "Other"] },
-              value: { $sum: "$totalAmount" },
-              count: { $sum: 1 }
-            }
-          }
-        ]
-      }
-    },
-    { $project: { combined: { $concatArrays: ["$byItems", "$byTransaction"] } } },
-    { $unwind: "$combined" },
-    {
-      $group: {
-        _id: "$combined._id",
-        value: { $sum: "$combined.value" },
-        count: { $sum: "$combined.count" }
-      }
-    },
-    { $sort: { value: -1 } },
-    { $limit: 10 }
-  ]);
-
-  // 7. Recent Expenditures (Combined from Transactions and Expenses)
-  const recentTransactions = await Transaction.find({ ...transactionMatch, type: 'EXPENSE' })
-    .sort({ date: -1, createdAt: -1 })
-    .limit(5)
-    .populate('locationId', 'name city')
-    .populate('createdBy', 'name')
-    .lean();
-
-  const recentManualExpenses = await Expense.find({ ...match, status: { $in: ['approved', 'completed'] }, ...dateMatch })
-    .sort({ date: -1, createdAt: -1 })
-    .limit(5)
-    .populate('locationId', 'name city')
-    .populate('createdBy', 'name')
-    .lean();
-
-  const combinedExpenses = [
-    ...recentTransactions,
-    ...recentManualExpenses.map(exp => ({ ...exp, totalAmount: exp.amount }))
-  ]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5);
-
-  // 8. Recent Revenues
-  const recentRevenues = await Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } })
-    .sort({ date: -1, createdAt: -1 })
-    .limit(5)
-    .populate('locationId', 'name city')
-    .populate('staffId', 'name')
-    .populate('createdBy', 'name');
-
-  res.json({
-    success: true,
-    data: {
-      timeSeries,
-      categorySales: categoryAgg.map(c => ({ name: c._id, value: c.value, count: c.count })),
-      staffPerformance: staffAgg.map(s => ({ name: s._id, revenue: s.revenue, totalOrders: s.totalOrders })),
-      recentExpenses: combinedExpenses,
-      recentRevenues,
-      staffStats: personnelStats,
-      attendanceStats: attendanceAgg,
-      paymentStats: {
-        methods: upiStats[0] || { upiCount: 0, cashCount: 0 },
-        sources: paymentAgg
-      },
-      orderStats: orderStatusAgg,
-      forecast: {
-        expectedTodayRevenue,
-        nextMonthSalesTrend
-      },
-      summary: {
-        totalRevenue,
-        totalExpenses,
-        totalOrders,
-        avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
-        netProfit: totalRevenue - totalExpenses,
-        cancellationRate: orderStatusAgg.find(o => o._id === 'CANCELLED')?.count || 0
-      }
-    }
-  });
+  const analytics = await AnalyticsService.getAdvancedAnalytics(matchScope, startDate, endDate, adminId, req.user.role);
+  res.json({ success: true, data: analytics });
 });
 
 
 
 // @desc    Compare multiple locations across key metrics
 // @route   GET /api/analytics/location-comparison
+// @desc    Compare multiple locations across key metrics
 const getLocationComparison = asyncHandler(async (req, res) => {
   const { locationIds, startDate, endDate, period } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
 
-  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
-
-  let match = { locationId: { $in: ids }, ...dateMatch };
-
-  const branch = scopedLocationId(req, locationIds);
-  if (branch) match.locationId = branch;
-
-  const transactionAgg = await Transaction.aggregate([
-    { $match: match },
-    {
-      $group: {
-        _id: "$locationId",
-        revenue: { $sum: "$totalAmount" },
-        orders: { $sum: 1 },
-        profit: { $sum: "$totalProfit" },
-        avgOrderValue: { $avg: "$totalAmount" }
-      }
-    }
-  ]);
-
-  const expenseAgg = await Expense.aggregate([
-    { $match: { locationId: { $in: ids }, type: 'EXPENSE', ...(dateMatch.date ? { date: dateMatch.date } : {}) } },
-    { $group: { _id: "$locationId", totalExpense: { $sum: "$amount" } } }
-  ]);
-
-  const locations = await Location.find({ _id: { $in: ids } }, 'name city');
-
-  const comparisonData = locations.map(loc => {
-    const trans = transactionAgg.find(t => t._id.toString() === loc._id.toString()) || { revenue: 0, orders: 0, profit: 0, avgOrderValue: 0 };
-    const exp = expenseAgg.find(e => e._id.toString() === loc._id.toString()) || { totalExpense: 0 };
-
-    // Net Profit = (Transaction Profit) - (Operational Expenses)
-    // Transaction Profit is (Price - CostPrice) of items. 
-    // Operational Expenses are things like rent, electricity added via Expense model.
-    return {
-      locationId: loc._id,
-      name: loc.name,
-      city: loc.city,
-      revenue: trans.revenue,
-      orders: trans.orders,
-      expenses: exp.totalExpense,
-      netProfit: trans.profit - exp.totalExpense,
-      avgOrderValue: trans.avgOrderValue
-    };
-  });
-
-  res.json({ success: true, data: comparisonData });
+  const metrics = await AnalyticsService.getLocationOutliers(ids, startDate, endDate, period);
+  res.json({ success: true, data: metrics });
 });
 
 // @desc    Identify most profitable location
-// @route   GET /api/analytics/top-locations
 const getTopLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, period, locationIds } = req.query;
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
-
-  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
-  let match = { ...dateMatch };
-
-  const branch = scopedLocationId(req, locationIds);
-  if (branch) match.locationId = branch;
-
-  const transactionAgg = await Transaction.aggregate([
-    { $match: match },
-    { $group: { _id: "$locationId", revenue: { $sum: "$totalAmount" }, profit: { $sum: "$totalProfit" } } },
-    { $sort: { profit: -1 } },
-    { $limit: 5 }
-  ]);
-
-  const locations = await Location.find({ _id: { $in: transactionAgg.map(t => t._id) } }, 'name city');
-
-  const topLocations = transactionAgg.map(t => {
-    const loc = locations.find(l => l._id.toString() === t._id.toString());
-    return {
-      name: loc?.name || 'Unknown',
-      city: loc?.city || 'Unknown',
-      revenue: t.revenue,
-      profit: t.profit
-    };
-  });
+  
+  const metrics = await AnalyticsService.getLocationOutliers(ids, startDate, endDate, period);
+  const topLocations = metrics
+    .sort((a, b) => b.netProfit - a.netProfit)
+    .slice(0, 5)
+    .map(m => ({
+      name: m.name,
+      city: m.city,
+      revenue: m.revenue,
+      profit: m.netProfit
+    }));
 
   res.json({ success: true, data: topLocations });
 });
 
 // @desc    Track trending and most sold items
 // @route   GET /api/analytics/trending-items
+// @desc    Track trending and most sold items
 const getTrendingItems = asyncHandler(async (req, res) => {
   const { locationId, locationIds, period = 7, startDate, endDate } = req.query;
-
-  let currentPeriodStart, currentPeriodEnd, previousPeriodStart;
-
-  if (startDate || endDate) {
-    currentPeriodEnd = endDate ? new Date(endDate) : new Date();
-    currentPeriodStart = startDate ? new Date(startDate) : new Date(currentPeriodEnd);
-    if (!startDate) currentPeriodStart.setDate(currentPeriodEnd.getDate() - 7);
-
-    const duration = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
-    previousPeriodStart = new Date(currentPeriodStart.getTime() - duration);
-  } else {
-    const days = period === 'week' ? 7 : (period === 'month' ? 30 : (period === 'year' ? 365 : parseInt(period)));
-    currentPeriodEnd = new Date();
-    currentPeriodStart = new Date();
-    currentPeriodStart.setDate(currentPeriodEnd.getDate() - days);
-    previousPeriodStart = new Date();
-    previousPeriodStart.setDate(currentPeriodStart.getDate() - days);
-  }
-
   const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : (locationId ? [new mongoose.Types.ObjectId(locationId)] : []);
-  let matchCriteria = ids.length > 0 ? { locationId: { $in: ids } } : {};
+  const matchScope = ids.length > 0 ? { locationId: { $in: ids } } : {};
 
   // Security Layer
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
-    matchCriteria.locationId = new mongoose.Types.ObjectId(req.user.assignedLocation);
-  } else if (req.user.role === 'admin') {
-    const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
-    const filteredIds = ids.filter(id => allowed.includes(id.toString()));
-    matchCriteria.locationId = { $in: filteredIds.length > 0 ? filteredIds.map(id => new mongoose.Types.ObjectId(id.toString())) : allowed.map(id => new mongoose.Types.ObjectId(id.toString())) };
-  }
+  const branch = scopedLocationId(req, locationIds || locationId);
+  if (branch) matchScope.locationId = branch;
 
-  // Current Period Sales
-  const currentSales = await Transaction.aggregate([
-    { $match: { ...matchCriteria, date: { $gte: currentPeriodStart, $lte: currentPeriodEnd } } },
-    { $unwind: "$orders" },
-    {
-      $group: {
-        _id: "$orders.menuItemId",
-        name: { $first: "$orders.itemName" },
-        currentQty: { $sum: "$orders.quantity" },
-        revenue: { $sum: { $multiply: ["$orders.price", "$orders.quantity"] } },
-        profit: { $sum: { $multiply: [{ $subtract: ["$orders.price", "$orders.costPrice"] }, "$orders.quantity"] } }
-      }
-    }
-  ]);
-
-  // Previous Period Sales
-  const previousSales = await Transaction.aggregate([
-    { $match: { ...matchCriteria, date: { $gte: previousPeriodStart, $lt: currentPeriodStart } } },
-    { $unwind: "$orders" },
-    { $group: { _id: "$orders.menuItemId", previousQty: { $sum: "$orders.quantity" } } }
-  ]);
-
-  const trends = currentSales.map(curr => {
-    const prev = previousSales.find(p => p._id.toString() === curr._id.toString()) || { previousQty: 0 };
-    const growth = prev.previousQty === 0 ? 100 : ((curr.currentQty - prev.previousQty) / prev.previousQty) * 100;
-
-    return {
-      itemId: curr._id,
-      name: curr.name,
-      totalSold: curr.currentQty,
-      revenue: curr.revenue,
-      profit: curr.profit,
-      growth: Math.round(growth)
-    };
-  }).sort((a, b) => b.totalSold - a.totalSold);
-
+  const trends = await AnalyticsService.getTrendingItems(matchScope, period, startDate, endDate);
   res.json({ success: true, data: trends });
 });
 
@@ -1503,62 +824,9 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
 
 const getCommandCenterStats = asyncHandler(async (req, res) => {
   const { branchId } = req.query;
-
-  const orderFilter = {};
-  const tableFilter = {};
-
   const branchScope = scopedLocationId(req, branchId);
-  if (branchScope) {
-    orderFilter.branch = branchScope;
-    tableFilter.locationId = branchScope;
-  }
-
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-
-  const [
-    ordersIncomingNow,
-    kitchenBusyLevel,
-    tablesOccupied,
-    activeStaffOnline,
-    revenueTodayLive,
-    pendingOrdersOver10Min
-  ] = await Promise.all([
-    Order.countDocuments({ ...orderFilter, status: 'PLACED' }),
-    Order.countDocuments({ ...orderFilter, status: 'PREPARING' }),
-    Table.countDocuments({ ...tableFilter, status: { $in: ['occupied', 'ongoing'] } }),
-    User.countDocuments({
-      ...(orderFilter.branch ? { assignedLocation: orderFilter.branch } : {}),
-      role: { $in: ['staff', 'chef'] },
-      isBlocked: false
-    }),
-    Order.aggregate([
-      { $match: { ...orderFilter, status: { $in: ['SERVED', 'COMPLETED'] }, createdAt: { $gte: todayStart } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]),
-    Order.countDocuments({ ...orderFilter, status: 'PLACED', createdAt: { $lt: tenMinutesAgo } })
-  ]);
-
-  const liveRevenue = revenueTodayLive[0]?.total || 0;
-
-  let healthScore = 100 - (pendingOrdersOver10Min * 5);
-  if (kitchenBusyLevel > 15) healthScore -= 15;
-  if (healthScore < 0) healthScore = 0;
-
-  res.json({
-    success: true,
-    data: {
-      ordersIncomingNow,
-      kitchenBusyLevel,
-      tablesOccupied,
-      activeStaffOnline,
-      revenueTodayLive: liveRevenue,
-      pendingOrdersOver10Min,
-      branchHealthScore: Math.min(healthScore, 100),
-      timestamp: new Date()
-    }
-  });
+  const stats = await AnalyticsService.getLiveStats(branchScope);
+  res.json({ success: true, data: stats });
 });
 
 const getForecastingAnalytics = asyncHandler(async (req, res) => {

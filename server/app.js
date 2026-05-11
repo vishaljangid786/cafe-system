@@ -29,7 +29,6 @@ const orderRoutes = require('./routes/orderRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
-const seedRoutes = require('./routes/seedRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -90,13 +89,6 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 
-if (process.env.NODE_ENV === 'development') {
-  app.use('/api/seed', seedRoutes);
-  app.get('/test-query', (req, res) => {
-    console.log('Query:', req.query);
-    res.json({ success: true, query: req.query });
-  });
-}
 
 // Base route
 app.get('/', (req, res) => {

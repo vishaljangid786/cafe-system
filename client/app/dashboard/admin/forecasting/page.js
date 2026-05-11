@@ -68,7 +68,7 @@ export default function ForecastingDashboard() {
                 <TrendingUp className="text-[var(--color-primary)]" size={36} /> 
                 Smart <span className="text-[var(--color-primary)]">Forecasting</span>
               </h1>
-              <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-widest">Statistical projections based on historical schemas</p>
+              <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-widest">Predictions based on past data</p>
             </div>
 
             <div className="flex items-center gap-4">

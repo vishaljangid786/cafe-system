@@ -119,7 +119,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                               onClick={() => markAsRead(notif._id)}
                               className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              Acknowledge
+                              Mark Read
                             </button>
                           )}
                         </div>

@@ -60,14 +60,16 @@ const getMenuItems = asyncHandler(async (req, res) => {
     mergedItems = items.map(item => {
       const itemObj = item.toObject();
       const branchStock = stockMap[item._id.toString()];
+      
       if (branchStock) {
         itemObj.stock = branchStock.stock;
         itemObj.isAvailable = item.isAvailable && branchStock.isAvailable;
         itemObj.branchSpecificStock = branchStock.stock;
-      } else if (!item.isGlobal) {
-        // If not global and no stock record for this branch, it shouldn't be available
-        itemObj.isAvailable = false;
-        itemObj.stock = 0;
+      } else {
+        // Fallback: If no branch-specific record, use global item settings
+        // This prevents items from "disappearing" if a stock record hasn't been created yet.
+        itemObj.stock = item.isGlobal ? item.stock : 0;
+        itemObj.isAvailable = item.isAvailable; 
       }
       return itemObj;
     });

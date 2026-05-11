@@ -26,7 +26,7 @@ const getTables = asyncHandler(async (req, res) => {
     if (locationId && locationId !== 'all') {
       if (!allowed.includes(locationId)) {
         res.status(403);
-        throw new Error('Not authorized to access this location');
+        throw new Error('You do not have permission to use this location');
       }
       query.locationId = locationId;
     } else {
@@ -76,7 +76,7 @@ const addTable = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
-  enforceLocationAccess(req, res, finalLocationId, 'Not authorized to add tables for this location');
+  enforceLocationAccess(req, res, finalLocationId, 'You do not have permission to add tables for this location');
 
   const tableExists = await Table.findOne({ tableNumber, locationId: finalLocationId });
   if (tableExists) {
@@ -121,7 +121,7 @@ const bookTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to book tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to book tables from other locations');
 
   if (table.isBooked) {
     res.status(400);
@@ -164,7 +164,7 @@ const updateOrders = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to update tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to update tables from other locations');
 
   table.orders = orders;
   table.totalAmount = orders.reduce((acc, item) => acc + (item.quantity * item.price), 0);
@@ -206,7 +206,7 @@ const getTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to view tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to view tables from other locations');
 
   res.json({
     success: true,
@@ -227,7 +227,7 @@ const uploadBill = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to upload bills for other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to upload bills for other locations');
 
   if (!req.file) {
     res.status(400);
@@ -265,8 +265,8 @@ const uploadBill = asyncHandler(async (req, res) => {
   await table.save();
 
   await sendNotification({
-    title: 'Session Archived',
-    message: `Table ${table.tableNumber} session closed. Revenue recorded.`,
+    title: 'Session Saved',
+    message: `Table ${table.tableNumber} session closed. Bill saved to history.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -292,7 +292,7 @@ const deleteTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to delete tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to delete tables from other locations');
 
   await table.deleteOne();
 
@@ -316,7 +316,7 @@ const completeOrder = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to complete tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to complete tables from other locations');
 
   table.status = 'available';
   table.isBooked = false;
@@ -346,7 +346,7 @@ const updateTable = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  enforceLocationAccess(req, res, table.locationId, 'Not authorized to update tables from other locations');
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to update tables from other locations');
 
   const updatedTable = await Table.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

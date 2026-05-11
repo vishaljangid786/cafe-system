@@ -13,37 +13,35 @@ const { getIO } = require('../config/socket');
  */
 const sendNotification = async ({ title, message, type, performedByUser, locationId }) => {
   try {
-    const roleTarget = [];
-
     // Determine target roles hierarchically
-    if (performedByUser.role === 'staff' || performedByUser.role === 'chef') {
-      roleTarget.push('branch_admin', 'admin', 'super_admin');
+    let roleTarget = [];
+    if (['staff', 'chef'].includes(performedByUser.role)) {
+      roleTarget = ['branch_admin', 'admin', 'super_admin'];
     } else if (performedByUser.role === 'branch_admin') {
-      roleTarget.push('admin', 'super_admin');
+      roleTarget = ['admin', 'super_admin'];
     } else if (performedByUser.role === 'admin') {
-      roleTarget.push('super_admin');
+      roleTarget = ['super_admin'];
     } else {
       return; 
     }
 
-    const query = { role: { $in: roleTarget }, _id: { $ne: performedByUser._id } };
-
-    const users = await User.find(query);
-
-    const recipientsList = [];
     const targetLocationId = locationId || performedByUser.assignedLocation;
 
-    users.forEach((u) => {
-      if (u.role === 'branch_admin') {
-        if (u.assignedLocation?.toString() === targetLocationId?.toString()) {
-          recipientsList.push({ user: u._id, isRead: false });
-        }
-      } else {
-        recipientsList.push({ user: u._id, isRead: false });
-      }
-    });
+    // Optimized Query: Filter by role and branch in MongoDB, not in memory
+    const query = {
+      _id: { $ne: performedByUser._id },
+      $or: [
+        { role: { $in: roleTarget.filter(r => r !== 'branch_admin') } },
+        ...(roleTarget.includes('branch_admin') ? [{ role: 'branch_admin', assignedLocation: targetLocationId }] : [])
+      ]
+    };
 
-    if (recipientsList.length === 0) return;
+    // Only fetch IDs and roles to minimize memory footprint
+    const users = await User.find(query).select('_id role');
+    
+    if (users.length === 0) return;
+
+    const recipientsList = users.map(u => ({ user: u._id, isRead: false }));
 
     const notification = await Notification.create({
       title,
@@ -56,11 +54,20 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
     // Populate sender for the real-time payload
     await notification.populate('sender', 'name email role');
 
-    // Emit via Socket.io
+    // Emit via Socket.io efficiently using pre-defined rooms
     const io = getIO();
-    recipientsList.forEach((recipient) => {
-      io.to(recipient.user.toString()).emit('new_notification', notification);
+    
+    // 1. Emit to Global Admins and Super Admins
+    roleTarget.forEach(role => {
+      if (role !== 'branch_admin') {
+        io.to(`role_${role}`).emit('new_notification', notification);
+      }
     });
+
+    // 2. Emit to Branch Admins of specific location
+    if (roleTarget.includes('branch_admin') && targetLocationId) {
+      io.to(`branch_${targetLocationId}_branch_admin`).emit('new_notification', notification);
+    }
 
   } catch (error) {
     console.error('Error sending notification:', error);

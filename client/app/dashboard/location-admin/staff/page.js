@@ -315,7 +315,7 @@ export default function LocationStaffPage() {
                   {/* Identity Section */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <CreditCard size={14} className="text-blue-600" /> Identity Details
+                      <CreditCard size={14} className="text-blue-600" /> Staff Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -384,7 +384,7 @@ export default function LocationStaffPage() {
                       <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
                         <img
                           src={viewingStaff.aadharImage}
-                          alt="Identity Proof"
+                          alt="Aadhar Card"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                         <a

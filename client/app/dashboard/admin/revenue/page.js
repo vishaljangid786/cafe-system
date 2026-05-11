@@ -130,8 +130,8 @@ export default function RevenuePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <TrendingUp size={60} className="text-rose-500 opacity-20" />
-        <h2 className="text-2xl font-black text-[var(--color-text-primary)] italic uppercase">Access Restricted</h2>
-        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-widest uppercase">Unauthorized Protocol: REVENUE_VIEW_DENIED</p>
+        <h2 className="text-2xl font-black text-[var(--color-text-primary)] italic uppercase">Entry Restricted</h2>
+        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-widest uppercase">Permission Denied: REVENUE_VIEW_RESTRICTED</p>
       </div>
     );
   }

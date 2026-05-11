@@ -81,7 +81,7 @@ export default function PayrollRecordsPage() {
                 <div className="flex-1">
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                     <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
-                    Payroll Control Center
+                    Salary Control Center
                   </div>
 
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -91,11 +91,11 @@ export default function PayrollRecordsPage() {
 
                     <div>
                       <h1 className="text-3xl font-black leading-none tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
-                        Salary <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">Management</span>
+                        Salary <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">History</span>
                       </h1>
                       <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-[var(--color-text-secondary)]">
                         <Target size={15} className="mr-2 shrink-0 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]" />
-                        Manage payouts, staff compensation, and branch-wise salary records for the selected cycle.
+                        Manage payouts, staff compensation, and branch-wise salary history for the selected cycle.
                       </p>
                     </div>
                   </div>
@@ -190,7 +190,7 @@ export default function PayrollRecordsPage() {
               <div className="mt-6 flex flex-col gap-4 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Records</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Salary History</p>
                     <p className="mt-1 text-sm font-black text-[var(--color-text-primary)]">
                       {filteredSalaries.length} Staff
                     </p>
@@ -220,7 +220,7 @@ export default function PayrollRecordsPage() {
                       try {
                         const locObj = locations.find(l => l.name === selectedLocation);
                         await api.post('/salary/generate', { month, locationId: locObj?._id || 'all' });
-                        toast.success("Payroll schemas synchronized confidently", { id: loadToast });
+                        toast.success("Salary details saved successfully", { id: loadToast });
                         setTimeout(() => window.location.reload(), 1000);
                       } catch (e) {
                         toast.error("Process constraints mapped", { id: loadToast });
@@ -228,7 +228,7 @@ export default function PayrollRecordsPage() {
                     }}
                     className="h-[54px] px-6 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] shadow-md shadow-[var(--color-bg-deep)]/10"
                   >
-                    Generate Monthly Payroll
+                    Calculate Monthly Salary
                   </button>
 
                   <ExportActions
@@ -355,7 +355,7 @@ export default function PayrollRecordsPage() {
                 <div className="h-20 w-20 rounded-3xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
                   <Receipt size={40} strokeWidth={1} />
                 </div>
-                <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No payroll records found.</p>
+                <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No salary history found.</p>
                 <p className="text-[var(--color-text-muted)] text-xs mt-2 font-medium">Try adjusting your filters or time range.</p>
               </div>
             ) : (
@@ -418,7 +418,7 @@ export default function PayrollRecordsPage() {
                          {s.payrollRecord && (
                             <button
                               onClick={async () => {
-                                const loadToast = toast.loading("Approving payroll schema...");
+                                const loadToast = toast.loading("Approving salary details...");
                                 try {
                                   await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
                                   toast.success("Tier Approval Locked", { id: loadToast });
@@ -581,7 +581,7 @@ export default function PayrollRecordsPage() {
                   onClick={() => setViewingSalary(null)}
                   className="flex-1 py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-xl shadow-[var(--color-bg-deep)]/10"
                 >
-                  Close Records
+                  Close
                 </button>
               </div>
             </motion.div>

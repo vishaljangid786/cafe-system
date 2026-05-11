@@ -127,18 +127,18 @@ export default function PermissionManager({ className = "" }) {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-[var(--color-primary)]/20 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.1)]">
-              Protocol: AUTHORITY_MGMT
+              System: STAFF_PERMISSIONS
             </span>
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-            <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Operational Access Control</span>
+            <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Operational Permission Control</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
             <ShieldCheck className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]" />
-            Authority <span className="text-[var(--color-text-muted)] not-italic">Gates</span>
+            Staff <span className="text-[var(--color-text-muted)] not-italic">Permissions</span>
           </h1>
           <p className="max-w-2xl text-sm font-medium text-[var(--color-text-muted)] leading-relaxed">
             Assign specific operational permissions to your subordinates. 
-            {currentUser?.role === 'branch_admin' && <span className="text-primary font-bold ml-1 italic">Authorized for branch personnel only.</span>}
+            {currentUser?.role === 'branch_admin' && <span className="text-primary font-bold ml-1 italic">Allowed for branch staff only.</span>}
           </p>
         </div>
 
@@ -165,9 +165,9 @@ export default function PermissionManager({ className = "" }) {
             <table className="w-full min-w-[800px] text-left border-separate border-spacing-0">
               <thead>
                 <tr className="bg-[var(--color-surface-soft)] text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
-                  <th className="px-10 py-6">Identity</th>
-                  <th className="px-10 py-6">Security Rank</th>
-                  <th className="px-10 py-6 text-center">Active Gates</th>
+                  <th className="px-10 py-6">Staff Member</th>
+                  <th className="px-10 py-6">Staff Level</th>
+                  <th className="px-10 py-6 text-center">Active Permissions</th>
                   <th className="px-10 py-6 text-right">Operation</th>
                 </tr>
               </thead>
@@ -202,7 +202,7 @@ export default function PermissionManager({ className = "" }) {
                         <div className="flex items-center justify-center gap-3">
                           <div className={`h-2.5 w-2.5 rounded-full ${activeCount > 0 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-[var(--color-text-muted)]"}`} />
                           <span className="text-sm font-black text-[var(--color-text-primary)]">
-                            {activeCount} <span className="text-[var(--color-text-muted)] text-[10px] uppercase font-bold tracking-widest">/ {permissionList.length} Gates Open</span>
+                            {activeCount} <span className="text-[var(--color-text-muted)] text-[10px] uppercase font-bold tracking-widest">/ {permissionList.length} Permissions Set</span>
                           </span>
                         </div>
                       </td>
@@ -211,7 +211,7 @@ export default function PermissionManager({ className = "" }) {
                           onClick={() => handleEditClick(sub)}
                           className="px-6 py-3 bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all cursor-pointer shadow-sm hover:shadow-xl hover:shadow-[var(--color-primary)]/20"
                         >
-                          Modify Access
+                          Change Permissions
                         </button>
                       </td>
                     </motion.tr>
@@ -226,7 +226,7 @@ export default function PermissionManager({ className = "" }) {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Access Modification: ${selectedUser?.name}`}
+        title={`Permission Settings: ${selectedUser?.name}`}
       >
         <div className="space-y-8">
           {error && (
@@ -254,7 +254,7 @@ export default function PermissionManager({ className = "" }) {
                     <span className="text-sm font-black text-[var(--color-text-primary)] italic uppercase tracking-tight">{label}</span>
                     {!superiorHasPermission && (
                       <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest italic flex items-center gap-1">
-                        <X size={8} /> Unauthorized Protocol
+                        <X size={8} /> Permission Denied
                       </span>
                     )}
                   </div>
@@ -285,7 +285,7 @@ export default function PermissionManager({ className = "" }) {
               {saving ? <Loader2 className="animate-spin" size={16} /> : (
                 <>
                   <ShieldCheck size={16} />
-                  Update Access
+                  Save Permissions
                 </>
               )}
             </button>

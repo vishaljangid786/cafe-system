@@ -106,7 +106,7 @@ const getCustomerAnalytics = asyncHandler(async (req, res) => {
       totalCustomers,
       repeatCustomers,
       repeatRate: parseFloat(repeatRate),
-      totalLoyaltyPoints: totalLoyaltyPoints.length > 0 ? totalLoyaltyPoints[0].total : 0,
+      totalRewardPoints: totalLoyaltyPoints.length > 0 ? totalLoyaltyPoints[0].total : 0,
       inactiveCustomersCount
     }
   });

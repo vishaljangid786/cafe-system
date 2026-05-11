@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('identity'); // identity, stats, history, security
+  const [activeTab, setActiveTab] = useState('details'); // details, stats, history, security
 
   // Staff Data
   const [chefStats, setChefStats] = useState(null);
@@ -134,7 +134,7 @@ export default function ProfilePage() {
   if (!user) return null;
 
   const tabs = [
-    { id: 'identity', label: 'My Details', icon: UserIcon },
+    { id: 'details', label: 'My Details', icon: UserIcon },
     { id: 'security', label: 'Change Password', icon: Shield }
   ];
 
@@ -142,7 +142,7 @@ export default function ProfilePage() {
     <PageTransition>
       <div className="max-w-[1500px] mx-auto pb-20 space-y-10">
         {/* Cinematic Hero Section */}
-        {activeTab === 'identity' &&
+        {activeTab === 'details' &&
           <SlideIn direction="down">
             <div className="relative overflow-hidden rounded-[3.5rem] bg-[var(--color-surface)] p-12 lg:p-20 text-[var(--color-text-primary)] shadow-2xl shadow-black/5 border border-[var(--color-border)]">
               <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-10">
@@ -213,26 +213,26 @@ export default function ProfilePage() {
 
         {/* Profile Details */}
         <AnimatePresence mode="wait">
-          {activeTab === 'identity' && (
-            <motion.div key="identity" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {activeTab === 'details' && (
+            <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
               <div className="lg:col-span-8 space-y-8">
                 <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
                   <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
                     <Shield size={16} className="text-[var(--color-primary)]" /> Personal Details
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <IdentityField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
-                    <IdentityField label="Mobile Number" name="phone" value={formData.phone} icon={Phone} isEditing={isEditing} onChange={handleChange} />
-                    <IdentityField label="Age" name="age" value={formData.age} icon={Calendar} isEditing={isEditing} onChange={handleChange} type="number" />
-                    <IdentityField label="City" name="city" value={formData.city} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
-                    <IdentityField label="State" name="state" value={formData.state} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
-                    <IdentityField label="Country" name="country" value={formData.country} icon={Globe} isEditing={isEditing} onChange={handleChange} />
-                    <IdentityField label="Pincode" name="pincode" value={formData.pincode} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="Mobile Number" name="phone" value={formData.phone} icon={Phone} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="Age" name="age" value={formData.age} icon={Calendar} isEditing={isEditing} onChange={handleChange} type="number" />
+                    <DetailsField label="City" name="city" value={formData.city} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="State" name="state" value={formData.state} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="Country" name="country" value={formData.country} icon={Globe} isEditing={isEditing} onChange={handleChange} />
+                    <DetailsField label="Pincode" name="pincode" value={formData.pincode} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
                     <div className="md:col-span-2">
-                      <IdentityField label="Address Line 1" name="address1" value={formData.address1} icon={Globe} isEditing={isEditing} onChange={handleChange} />
+                      <DetailsField label="Address Line 1" name="address1" value={formData.address1} icon={Globe} isEditing={isEditing} onChange={handleChange} />
                     </div>
                     <div className="md:col-span-2">
-                      <IdentityField label="Address Line 2" name="address2" value={formData.address2} icon={Globe} isEditing={isEditing} onChange={handleChange} />
+                      <DetailsField label="Address Line 2" name="address2" value={formData.address2} icon={Globe} isEditing={isEditing} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -293,10 +293,10 @@ export default function ProfilePage() {
                   }
                 }}>
                   <div className="space-y-6">
-                    <IdentityField label="Current Password" name="currentPassword" icon={Shield} isEditing={true} type="password" />
+                    <DetailsField label="Current Password" name="currentPassword" icon={Shield} isEditing={true} type="password" />
                     <div className="h-px bg-[var(--color-border)] my-4" />
-                    <IdentityField label="New Password" name="newPassword" icon={Zap} isEditing={true} type="password" />
-                    <IdentityField label="Verify New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
+                    <DetailsField label="New Password" name="newPassword" icon={Zap} isEditing={true} type="password" />
+                    <DetailsField label="Verify New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
                   </div>
 
                   <div className="pt-6">
@@ -314,7 +314,7 @@ export default function ProfilePage() {
   );
 }
 
-function IdentityField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength }) {
+function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength }) {
   return (
     <div className="space-y-3">
       <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-4">{label}</label>

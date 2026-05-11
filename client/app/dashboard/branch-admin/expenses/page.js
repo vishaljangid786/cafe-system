@@ -8,7 +8,8 @@ import {
   ChevronRight, Calendar, MapPin, 
   ArrowDownRight, Activity, Receipt,
   Plus, User, Info, ChevronDown, 
-  Sparkles, Download, Layers, Wallet, ArrowUpRight
+  Sparkles, Download, Layers, Wallet, ArrowUpRight,
+  RefreshCw
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { 
@@ -61,7 +62,7 @@ export default function BranchExpensesPage() {
     try {
       setLoading(true);
       const query = new URLSearchParams();
-      query.append('type', 'expense');
+      query.append('type', 'EXPENSE');
       
       if (activeTab === 'mine') {
         query.append('myExpenses', 'true');
@@ -105,11 +106,11 @@ export default function BranchExpensesPage() {
       const data = { 
         ...formData, 
         title: finalTitle,
-        type: 'expense' 
+        type: 'EXPENSE' 
       };
       
       await api.post('/transactions', data);
-      toast.success('Expense archived', { id: loadToast });
+      toast.success('Expense saved', { id: loadToast });
       setShowAddModal(false);
       setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
       fetchExpenses();
@@ -266,6 +267,13 @@ export default function BranchExpensesPage() {
                     { header: 'Amount', key: 'totalAmount' }
                   ]} 
                   filename="branch_expense_vault" 
+                />
+                <Button
+                  variant="secondary"
+                  icon={RefreshCw}
+                  onClick={fetchExpenses}
+                  isLoading={loading}
+                  className="!rounded-2xl !py-4 px-4 bg-zinc-100 dark:bg-zinc-800 border-none hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 />
               </div>
             </div>

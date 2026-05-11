@@ -406,13 +406,13 @@ export default function CouponsManagementPage() {
               {/* Left Column: Configuration List */}
               <div className="lg:col-span-7 space-y-10">
 
-                {/* 1. Identity & Magnitude */}
+                {/* 1. Details & Amount */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                       <Ticket size={18} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Identity & Magnitude</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Details & Amount</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -546,7 +546,7 @@ export default function CouponsManagementPage() {
 
                 {/* Live Identity Card */}
                  <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Live Preview Identity</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Live Preview</h4>
                   <div className="relative h-64 rounded-[3rem] bg-gradient-to-br from-[var(--color-bg-deep)] to-[var(--color-bg-base)] p-8 flex flex-col justify-between overflow-hidden shadow-2xl border border-[var(--color-bg-base)]/10 group">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_70%)]" />
                     <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">

@@ -8,7 +8,7 @@ const {
   approvePayroll,
   getPayrollHistory
 } = require('../controllers/salaryController');
-const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 const express = require('express')
 
 const router = express.Router();
@@ -19,21 +19,21 @@ router.route('/my').get(getMySalary);
 router.route('/my-history').get(getMySalaryHistory);
 
 router.route('/location')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), getLocationSalary);
+  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getLocationSalary);
 
 router.route('/all')
-  .get(authorizeRoles('admin', 'super_admin'), authorizePermissions('manageStaff'), getAllSalary);
+  .get(checkRoles('admin', 'super_admin'), checkPermissions('manageStaff'), getAllSalary);
 
 router.route('/user/:id')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), getUserSalary);
+  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getUserSalary);
 
 router.route('/generate')
-  .post(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), generatePayroll);
+  .post(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), generatePayroll);
 
 router.route('/payroll/history')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), getPayrollHistory);
+  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getPayrollHistory);
 
 router.route('/payroll/:id/approve')
-  .patch(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), approvePayroll);
+  .patch(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), approvePayroll);
 
 module.exports = router;

@@ -28,7 +28,7 @@ export default function AttendancePage() {
         setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         setAttendance(attRes.data.data);
       } catch (error) {
-        toast.error('Failed to sync roster');
+        toast.error('Failed to load list');
       } finally {
         setLoading(false);
       }
@@ -47,7 +47,7 @@ export default function AttendancePage() {
       await api.post('/attendance/mark', { userId, date, status });
       const attRes = await api.get(`/attendance/location?date=${date}`);
       setAttendance(attRes.data.data);
-      toast.success('Roster synchronized', { id: loadToast });
+      toast.success('Attendance updated', { id: loadToast });
     } catch (error) {
       toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
     }
@@ -65,7 +65,7 @@ export default function AttendancePage() {
           <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <CalendarCheck className="mr-4 text-blue-600" size={36} /> Daily <span className="ml-3 text-blue-600">Roster</span>
+                <CalendarCheck className="mr-4 text-blue-600" size={36} /> Daily <span className="ml-3 text-blue-600">Attendance</span>
               </h1>
               <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Synchronize staff presence and operational availability.</p>
             </div>
@@ -75,7 +75,7 @@ export default function AttendancePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Filter Roster..."
+                  placeholder="Filter Staff..."
                   className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 text-xs font-bold dark:text-zinc-100 outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -105,7 +105,7 @@ export default function AttendancePage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff Identity</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff Member</th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status List</th>
                   <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action Command</th>
                 </tr>
@@ -241,7 +241,7 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <CreditCard size={14} className="text-blue-600" /> Identity Credentials
+                    <CreditCard size={14} className="text-blue-600" /> Staff Details
                   </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -301,13 +301,13 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Info size={14} className="text-blue-600" /> Identity Proof (Aadhar)
+                    <Info size={14} className="text-blue-600" /> Aadhar Card
                   </h3>
                   {viewingStaff.aadharImage ? (
                     <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
                       <img
                         src={viewingStaff.aadharImage}
-                        alt="Identity Proof"
+                        alt="Aadhar Card"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <a
@@ -323,7 +323,7 @@ export default function AttendancePage() {
                   ) : (
                     <div className="rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center justify-center text-zinc-400 aspect-video">
                       <ShieldAlert size={32} className="mb-2 opacity-20" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Identity Scan Missing</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Aadhar Scan Missing</p>
                     </div>
                   )}
                 </div>
@@ -336,7 +336,7 @@ export default function AttendancePage() {
                 className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
                 onClick={() => setViewingStaff(null)}
               >
-                Return to Roster
+                Return to Attendance
               </Button>
             </div>
           </div>

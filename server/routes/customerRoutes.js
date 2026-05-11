@@ -6,10 +6,10 @@ const {
   getInactiveCustomers,
   getCustomerAnalytics
 } = require('../controllers/customerController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
-router.use(authorizeRoles('admin', 'super_admin'));
+router.use(checkRoles('admin', 'super_admin', 'branch_admin'));
 
 router.route('/analytics').get(getCustomerAnalytics);
 router.route('/top').get(getTopCustomers);

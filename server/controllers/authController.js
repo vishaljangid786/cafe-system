@@ -6,8 +6,8 @@ const { logActivity } = require('../utils/auditLogger');
 const AuditLog = require('../models/AuditLog');
 
 // Generate JWT
-const generateToken = (id, impersonatedBy = null, isViewOnly = false) => {
-  const payload = { id };
+const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false) => {
+  const payload = { id, sessionVersion };
   if (impersonatedBy) {
     payload.impersonatedBy = impersonatedBy;
     payload.isViewOnly = isViewOnly;
@@ -19,7 +19,7 @@ const generateToken = (id, impersonatedBy = null, isViewOnly = false) => {
 
 // Helper to set token in cookie and send response
 const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false) => {
-  const token = generateToken(user._id, impersonatedBy, isViewOnly);
+  const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly);
 
   const cookieOptions = {
     expires: new Date(
@@ -69,7 +69,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     
     if (!creator) {
       res.status(401);
-      throw new Error('Not authorized to register new personnel');
+      throw new Error('You do not have permission to add new staff');
     }
 
     if (creator.role === 'branch_admin') {
@@ -88,10 +88,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
         res.status(403);
         throw new Error('Admins can only register Branch Admins and Staff');
       }
-      // Admin can only assign locations they have access to
+      // Admin can only assign locations they have permission for
       if (assignedLocation && !creator.accessibleLocations?.some(loc => loc.toString() === assignedLocation)) {
         res.status(403);
-        throw new Error('You cannot assign a location you do not have access to');
+        throw new Error('You cannot assign a location you do not have permission for');
       }
       if (accessibleLocations?.length) {
         const hasUnauthorized = accessibleLocations.some(
@@ -99,7 +99,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
         );
         if (hasUnauthorized) {
           res.status(403);
-          throw new Error('You cannot grant access to locations you do not manage');
+          throw new Error('You cannot grant permission for locations you do not manage');
         }
       }
     }
@@ -138,7 +138,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     await logActivity(
       req.user,
       'USER_REGISTER',
-      `Registered new user: ${user.name} (${user.role})`,
+      `Added new staff: ${user.name} (${user.role})`,
       req,
       { targetUserId: user._id, role: user.role, locationId: user.assignedLocation }
     );
@@ -173,12 +173,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
 const impersonateUser = asyncHandler(async (req, res, next) => {
   if (req.impersonator) {
     res.status(403);
-    throw new Error('Cannot impersonate while already impersonating');
+    throw new Error('Already logged in as another user');
   }
 
   if (req.user.role === 'chef' || req.user.role === 'staff') {
     res.status(403);
-    throw new Error('This role does not have authorization for identity management');
+    throw new Error('You do not have permission to login as others');
   }
 
   const targetUser = await User.findById(req.params.userId).populate('assignedLocation accessibleLocations');
@@ -189,9 +189,22 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
   }
   
   // Hierarchical Security Check
-  if (req.user.role === 'admin' && targetUser.role === 'super_admin') {
-    res.status(403);
-    throw new Error('Admins cannot assume the identity of a Super Admin');
+  if (req.user.role === 'admin') {
+    if (targetUser.role === 'super_admin') {
+      res.status(403);
+      throw new Error('Admins cannot assume the identity of a Super Admin');
+    }
+    
+    // Cross-Branch Impersonation Prevention
+    if (targetUser.assignedLocation) {
+      const targetLocId = targetUser.assignedLocation._id?.toString() || targetUser.assignedLocation.toString();
+      const hasAccess = req.user.accessibleLocations?.some(loc => loc.toString() === targetLocId);
+      
+      if (!hasAccess) {
+        res.status(403);
+        throw new Error('You can only assume identities within your managed branches');
+      }
+    }
   }
   
   if (req.user.role === 'branch_admin') {
@@ -202,7 +215,7 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     
     if (targetUser.assignedLocation.toString() !== req.user.assignedLocation.toString()) {
       res.status(403);
-      throw new Error('You can only assume identities within your own branch');
+        throw new Error('You can only login as staff in your own branch');
     }
   }
 
@@ -212,7 +225,7 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     action: 'IMPERSONATION_START',
     performedBy: req.user._id,
     targetUser: targetUser._id,
-    details: `Admin ${req.user.name} impersonating ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-ACCESS'}]`,
+    details: `Admin ${req.user.name} logged in as ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-CONTROL'}]`,
     role: req.user.role
   });
 

@@ -9,7 +9,7 @@ import {
   ArrowDownRight, Activity, Receipt,
   Plus, User, Info, ChevronDown,
   AlertCircle, Sparkles, Download,
-  Layers, Wallet, ArrowUpRight
+  Layers, Wallet, ArrowUpRight, RefreshCw
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import {
@@ -82,7 +82,7 @@ export default function ExpensesPage() {
     try {
       setLoading(true);
       const query = new URLSearchParams();
-      query.append('type', 'expense');
+      query.append('type', 'EXPENSE');
 
       if (activeTab === 'mine') {
         query.append('myExpenses', 'true');
@@ -171,7 +171,7 @@ export default function ExpensesPage() {
         ...formData,
         title: finalTitle,
         locationId: finalLocationId,
-        type: 'expense'
+        type: 'EXPENSE'
       };
 
       await api.post('/transactions', data);
@@ -353,6 +353,13 @@ export default function ExpensesPage() {
                     { header: 'Created By', key: item => item.createdBy?.name }
                   ]}
                   filename="Expenses_Report"
+                />
+                <Button
+                  variant="secondary"
+                  icon={RefreshCw}
+                  onClick={fetchExpenses}
+                  isLoading={loading}
+                  className="!rounded-2xl !py-4 px-4 bg-[var(--color-surface-soft)] border-none hover:bg-[var(--color-surface-hover)]"
                 />
               </div>
             </div>

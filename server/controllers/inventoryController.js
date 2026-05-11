@@ -6,6 +6,8 @@ const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess } = require('../utils/accessControl');
+// Re-export from service layer — single source of truth, no duplicate logic
+const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 
 // @desc    Get inventory for a specific branch
 // @route   GET /api/inventory/branch/:branchId
@@ -13,7 +15,7 @@ const getBranchInventory = asyncHandler(async (req, res) => {
   const { branchId } = req.params;
 
   // Authorization check
-  enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+  enforceLocationAccess(req, res, branchId, 'You do not have permission to view this branch inventory');
 
   const inventory = await BranchInventory.find({ branch: branchId })
     .populate('ingredient')
@@ -28,7 +30,7 @@ const updateInventory = asyncHandler(async (req, res) => {
   const { branch, ingredient, quantity, costPerUnit, minThreshold } = req.body;
 
   // Authorization check
-  enforceLocationAccess(req, res, branch, 'You are not authorized to update this branch inventory');
+  enforceLocationAccess(req, res, branch, 'You do not have permission to update this branch inventory');
 
   if (Number(quantity) <= 0) {
     res.status(400);
@@ -62,7 +64,7 @@ const logWaste = asyncHandler(async (req, res) => {
   const { branch, ingredient, quantity, reason, notes } = req.body;
 
   // Authorization check
-  enforceLocationAccess(req, res, branch, 'You are not authorized to log waste for this branch');
+  enforceLocationAccess(req, res, branch, 'You do not have permission to log waste for this branch');
 
   if (Number(quantity) <= 0) {
     res.status(400);
@@ -96,7 +98,7 @@ const getInventoryAlerts = asyncHandler(async (req, res) => {
   if (req.user.role === 'branch_admin') {
     branchId = req.user.assignedLocation.toString();
   } else if (branchId) {
-    enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+    enforceLocationAccess(req, res, branchId, 'You do not have permission to view this branch inventory');
   }
 
   const query = { $expr: { $lte: ['$stock', '$minThreshold'] } };
@@ -119,7 +121,7 @@ const getPurchaseSuggestions = asyncHandler(async (req, res) => {
   if (req.user.role === 'branch_admin') {
     branchId = req.user.assignedLocation.toString();
   } else if (branchId) {
-    enforceLocationAccess(req, res, branchId, 'You are not authorized to view this branch inventory');
+    enforceLocationAccess(req, res, branchId, 'You do not have permission to view this branch inventory');
   }
 
   const query = {};
@@ -178,29 +180,6 @@ const getAllInventory = asyncHandler(async (req, res) => {
   res.json({ success: true, data: filteredInventory });
 });
 
-// @desc    Internal helper to deduct ingredients when an order is completed
-const deductIngredientsFromRecipe = async (order, branchId) => {
-  try {
-    for (const item of order.items) {
-      const recipe = await Recipe.findOne({ menuItemId: item.menuItem });
-      if (!recipe) continue;
-
-      for (const ingredientInfo of recipe.ingredients) {
-        const deductionQuantity = ingredientInfo.quantity * item.quantity;
-        
-        await BranchInventory.findOneAndUpdate(
-          { branch: branchId, ingredient: ingredientInfo.ingredient },
-          { $inc: { stock: -deductionQuantity } }
-        );
-      }
-    }
-    return true;
-  } catch (error) {
-    console.error('Ingredient deduction failed:', error);
-    return false;
-  }
-};
-
 module.exports = {
   getBranchInventory,
   updateInventory,
@@ -210,5 +189,7 @@ module.exports = {
   createIngredient,
   getIngredients,
   getAllInventory,
+  // Re-exported from inventoryService — single source of truth
   deductIngredientsFromRecipe
 };
+

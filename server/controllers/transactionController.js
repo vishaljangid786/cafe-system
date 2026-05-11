@@ -15,7 +15,12 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   if (type) query.type = type;
   if (category) query.category = category;
-  if (status) query.status = status;
+  if (status) {
+    query.status = status;
+  } else if (['super_admin', 'admin', 'branch_admin'].includes(req.user.role)) {
+    // Default to approved for admins to hide pending entries from "All" view
+    query.status = 'approved';
+  }
 
   // STRICT RBAC
   if (req.user.role === 'super_admin') {
@@ -28,7 +33,7 @@ const getTransactions = asyncHandler(async (req, res) => {
         loc => loc.toString() === locationId
       );
       if (!isAccessible) {
-        return res.status(403).json({ success: false, message: 'Access denied to this location' });
+        return res.status(403).json({ success: false, message: 'Permission denied to this location' });
       }
       query.locationId = locationId;
     } else {
@@ -165,15 +170,15 @@ const createTransaction = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
-  enforceLocationAccess(req, res, targetLocation, 'Not authorized to create transactions for this location');
+  enforceLocationAccess(req, res, targetLocation, 'You do not have permission to create transactions for this location');
 
   // Handle billImage if uploaded (assuming multer is used in routes)
   const billImage = req.file ? req.file.path : undefined;
 
-  // Determine initial status - explicitly check role string
-  let status = 'approved';
-  if (['staff', 'chef'].includes(req.user.role) && type === 'expense') {
-    status = 'pending';
+  // Determine initial status - Only Super Admin auto-approves their own manual entries
+  let status = 'pending';
+  if (req.user.role === 'super_admin') {
+    status = 'approved';
   }
 
   const transaction = await Transaction.create({
@@ -228,16 +233,17 @@ const approveTransaction = asyncHandler(async (req, res) => {
     throw new Error('Transaction record not found');
   }
 
-  // IDOR Mitigation: Branch Admin can only approve transactions for their own branch
-  if (req.user.role === 'branch_admin' && transaction.locationId?.toString() !== req.user.assignedLocation?.toString()) {
+  // IDOR Mitigation: Branch/Location Admin can only approve transactions for their own branch
+  const transactionLocationId = transaction.locationId?._id || transaction.locationId;
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && transactionLocationId?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to approve transactions for another branch');
+    throw new Error('You do not have permission to approve transactions for another branch');
   }
 
-  // Admin: Only if they have access to this location
+  // Admin: Only if they have permission for this location
   if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
     res.status(403);
-    throw new Error('Not authorized to approve transactions for this branch');
+    throw new Error('You do not have permission to approve transactions for this branch');
   }
 
   if (transaction.status !== 'pending') {
@@ -284,16 +290,17 @@ const rejectTransaction = asyncHandler(async (req, res) => {
     throw new Error('Transaction record not found');
   }
 
-  // IDOR Mitigation: Branch Admin can only reject transactions for their own branch
-  if (req.user.role === 'branch_admin' && transaction.locationId?.toString() !== req.user.assignedLocation?.toString()) {
+  // IDOR Mitigation: Branch/Location Admin can only reject transactions for their own branch
+  const transactionLocationId = transaction.locationId?._id || transaction.locationId;
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && transactionLocationId?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to reject transactions for another branch');
+    throw new Error('You do not have permission to reject transactions for another branch');
   }
 
-  // Admin: Only if they have access to this location
+  // Admin: Only if they have permission for this location
   if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
     res.status(403);
-    throw new Error('Not authorized to reject transactions for this branch');
+    throw new Error('You do not have permission to reject transactions for this branch');
   }
 
   if (transaction.status !== 'pending') {
@@ -349,7 +356,7 @@ const getTransactionStats = asyncHandler(async (req, res) => {
   } else if (req.user.role === 'admin') {
     const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
     if (locationId && locationId !== 'all') {
-      if (!allowed.includes(locationId)) return res.status(403).json({ success: false, message: 'Access denied' });
+      if (!allowed.includes(locationId)) return res.status(403).json({ success: false, message: 'Permission denied' });
       query.locationId = new mongoose.Types.ObjectId(locationId);
     } else {
       query.locationId = { $in: allowed.map(id => new mongoose.Types.ObjectId(id)) };

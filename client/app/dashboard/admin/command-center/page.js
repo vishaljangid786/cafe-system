@@ -214,7 +214,7 @@ export default function CommandCenterPage() {
             </AnimatePresence>
 
             {alerts.length === 0 && (
-              <div className="text-xs italic font-bold text-[var(--color-text-muted)] opacity-50 text-center py-6">No emergency operational interrupts recorded.</div>
+              <div className="text-xs italic font-bold text-[var(--color-text-muted)] opacity-50 text-center py-6">No emergency stops recorded.</div>
             )}
           </div>
         </div>

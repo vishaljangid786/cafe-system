@@ -234,19 +234,37 @@ export default function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
-        <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
-        <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
-        <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
-        <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
+        <Link href="/dashboard/admin/orders" className="contents">
+          <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
+        </Link>
+        <Link href="/dashboard/admin/revenue" className="contents">
+          <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
+        </Link>
+        <Link href="/dashboard/admin/revenue" className="contents">
+          <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
+        </Link>
+        <Link href="/dashboard/admin/orders/analytics" className="contents">
+          <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
+        </Link>
+        <Link href="/dashboard/admin/orders/analytics" className="contents">
+          <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
+        </Link>
       </div>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.5} />
-          <StatWidget label="Monthly Payroll" value={`₹${analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.6} />
-          <StatWidget label="Avg Staff Salary" value={`₹${Math.round(analytics?.staffStats?.avgSalary || 0).toLocaleString()}`} icon={DollarSign} color="amber" delay={0.7} />
-          <StatWidget label="Staff Count" value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0) || '0'} icon={Activity} color="indigo" delay={0.8} />
+          <Link href="/dashboard/admin/expenses" className="contents">
+            <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.5} />
+          </Link>
+          <Link href="/dashboard/admin/payroll" className="contents">
+            <StatWidget label="Monthly Payroll" value={`₹${analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.6} />
+          </Link>
+          <Link href="/dashboard/admin/payroll" className="contents">
+            <StatWidget label="Avg Staff Salary" value={`₹${Math.round(analytics?.staffStats?.avgSalary || 0).toLocaleString()}`} icon={DollarSign} color="amber" delay={0.7} />
+          </Link>
+          <Link href="/dashboard/admin/staff" className="contents">
+            <StatWidget label="Staff Count" value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0) || '0'} icon={Activity} color="indigo" delay={0.8} />
+          </Link>
         </div>
       )}
 

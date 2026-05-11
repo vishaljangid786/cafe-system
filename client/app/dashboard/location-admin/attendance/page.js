@@ -241,7 +241,7 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <CreditCard size={14} className="text-blue-600" /> Identity Credentials
+                    <CreditCard size={14} className="text-blue-600" /> Staff Details
                   </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -301,13 +301,13 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Info size={14} className="text-blue-600" /> Identity Proof (Aadhar)
+                    <Info size={14} className="text-blue-600" /> Aadhar Card
                   </h3>
                   {viewingStaff.aadharImage ? (
                     <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
                       <img
                         src={viewingStaff.aadharImage}
-                        alt="Identity Proof"
+                        alt="Aadhar Card"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <a
@@ -323,7 +323,7 @@ export default function AttendancePage() {
                   ) : (
                     <div className="rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center justify-center text-zinc-400 aspect-video">
                       <ShieldAlert size={32} className="mb-2 opacity-20" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Identity Scan Missing</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Aadhar Scan Missing</p>
                     </div>
                   )}
                 </div>

@@ -30,10 +30,10 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('Cannot mark attendance for future dates');
   }
 
-  // Branch Admins can only mark for today
+  // Branch Admins can ONLY mark for today (Strict Lockdown)
   if (req.user.role === 'branch_admin' && date !== today) {
     res.status(403);
-    throw new Error('Branch Admins can only mark or edit attendance for the current day. Contact Admin for past corrections.');
+    throw new Error('Attendance Lockdown: Branch Admins can only mark or edit records for the CURRENT DAY. Contact Super Admin for retroactive corrections.');
   }
 
   // Validate user
@@ -46,7 +46,7 @@ const markAttendance = asyncHandler(async (req, res) => {
   // Ensure branch admin is marking for their own location
   if (req.user.role === 'branch_admin' && staff.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to mark attendance for personnel of another location');
+    throw new Error('You do not have permission to mark attendance for personnel of another location');
   }
 
   const targetLocationId = staff.assignedLocation;
@@ -55,7 +55,7 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('Target personnel has no assigned location');
   }
 
-  enforceLocationAccess(req, res, targetLocationId, 'Not authorized to mark attendance for this location');
+  enforceLocationAccess(req, res, targetLocationId, 'You do not have permission to mark attendance for this location');
 
   // Upsert attendance
   const attendance = await Attendance.findOneAndUpdate(
@@ -96,7 +96,7 @@ const getLocationAttendance = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
-  enforceLocationAccess(req, res, targetLocationId, 'Not authorized to view attendance for this location');
+  enforceLocationAccess(req, res, targetLocationId, 'You do not have permission to view attendance for this location');
 
   let query = { locationId: targetLocationId };
 
@@ -140,7 +140,7 @@ const getAllAttendance = asyncHandler(async (req, res) => {
 
   if (userId) query.user = userId;
   if (locationId && locationId !== 'All') {
-    enforceLocationAccess(req, res, locationId, 'Not authorized to view attendance for this location');
+    enforceLocationAccess(req, res, locationId, 'You do not have permission to view attendance for this location');
     query.locationId = locationId;
   } else if (req.user.role === 'admin') {
     query.locationId = { $in: req.user.accessibleLocations || [] };
@@ -194,7 +194,7 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
 
   if (locationId && locationId !== 'All') {
     if (mongoose.Types.ObjectId.isValid(locationId)) {
-      enforceLocationAccess(req, res, locationId, 'Not authorized to view this summary');
+      enforceLocationAccess(req, res, locationId, 'You do not have permission to view this summary');
       userMatch.assignedLocation = new mongoose.Types.ObjectId(locationId);
       attendanceMatch.locationId = new mongoose.Types.ObjectId(locationId);
     } else {

@@ -76,24 +76,24 @@ export default function AuditLogsPage() {
                   Level 5 Access
                 </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
-                <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Activity Log Stream</span>
+                <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Activity History Stream</span>
               </div>
               <h1 className="text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-4 italic">
                 <ShieldAlert className="text-[var(--color-primary)] h-16 w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]" />
-                ACTIVITY <span className="text-[var(--color-text-muted)]">LOG</span>
+                ACTIVITY <span className="text-[var(--color-text-muted)]">HISTORY</span>
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] max-w-md">Permanent record of every action across all branches.</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)] max-w-md">Full history of every action across all branches.</p>
             </div>
 
             <div className="flex items-center gap-6 bg-[var(--color-surface)]/40 backdrop-blur-3xl p-6 rounded-[2.5rem] border border-[var(--color-border)] shadow-2xl">
               <div className="text-right">
-                <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-1">Total Records</p>
+                <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-1">Total Actions</p>
                 <p className="text-2xl font-black text-[var(--color-text-primary)]">{totalLogs}</p>
               </div>
               <div className="h-12 w-[1px] bg-[var(--color-border)]" />
               <div className="text-right">
                 <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-1">Status</p>
-                <p className="text-2xl font-black text-[var(--color-success)]">NOMINAL</p>
+                <p className="text-2xl font-black text-[var(--color-success)]">ACTIVE</p>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function AuditLogsPage() {
                       <td colSpan="4" className="px-10 py-32 text-center">
                         <div className="flex flex-col items-center opacity-20">
                           <ShieldAlert size={60} />
-                          <p className="text-xs font-black uppercase tracking-widest mt-4">No actions recorded</p>
+                          <p className="text-xs font-black uppercase tracking-widest mt-4">No actions found</p>
                         </div>
                       </td>
                     </tr>

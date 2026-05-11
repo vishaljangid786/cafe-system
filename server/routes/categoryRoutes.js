@@ -6,7 +6,7 @@ const {
   updateCategory,
   deleteCategory,
 } = require('../controllers/categoryController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -14,13 +14,13 @@ router.use(verifyToken);
 
 router.route('/')
   .get(getCategories)
-  .post(authorizeRoles('super_admin', 'admin', 'branch_admin'), createCategory);
+  .post(checkRoles('super_admin', 'admin', 'branch_admin'), createCategory);
 
 router.route('/all')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin'), getAllCategories);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin'), getAllCategories);
 
 router.route('/:id')
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin'), updateCategory)
-  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin'), deleteCategory);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateCategory)
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteCategory);
 
 module.exports = router;

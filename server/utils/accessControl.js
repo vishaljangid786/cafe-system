@@ -23,7 +23,7 @@ const canAccessLocation = (user, locationId) => {
   return userLocationIds(user).includes(target);
 };
 
-const enforceLocationAccess = (req, res, locationId, message = 'Access denied to this location') => {
+const enforceLocationAccess = (req, res, locationId, message = 'Permission denied to this location') => {
   if (!canAccessLocation(req.user, locationId)) {
     res.status(403);
     throw new Error(message);
@@ -38,7 +38,7 @@ const scopedLocationId = (req, requestedLocationId) => {
   if (req.user.role === 'admin') {
     if (requestedLocationId && requestedLocationId !== 'all') {
       if (!canAccessLocation(req.user, requestedLocationId)) {
-        const error = new Error('Access denied to this location');
+        const error = new Error('Permission denied to this location');
         error.statusCode = 403;
         throw error;
       }

@@ -168,7 +168,7 @@ export default function LoginPage() {
 
           <div className="space-y-1 text-center lg:text-left mb-10">
             <h2 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter uppercase italic">Login</h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Please enter your details to access your account</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Please enter your details to log in to your account</p>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -235,7 +235,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick Access Grid */}
+          {/* Quick Links Grid */}
           <div className="mt-12 space-y-8">
             <div className="flex items-center gap-4">
               <div className="h-[1px] flex-1 bg-[var(--color-border)]" />

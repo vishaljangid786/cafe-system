@@ -21,7 +21,7 @@ const getUsers = asyncHandler(async (req, res) => {
       { 
         $or: [
           { assignedLocation: { $in: allowedLocs } },
-          { accessibleLocations: { $in: allowedLocs } } // If an admin has access to another admin's location
+          { accessibleLocations: { $in: allowedLocs } } // If an admin has permission for another admin's location
         ]
       }
     ];
@@ -51,7 +51,7 @@ const getUsers = asyncHandler(async (req, res) => {
   }
 
   if (req.query.locationId) {
-    // Only apply location filter if user has access to it
+    // Only apply location filter if user has permission for it
     if (req.user.role === 'super_admin') {
       query.assignedLocation = req.query.locationId;
     } else if (req.user.role === 'admin') {
@@ -122,13 +122,13 @@ const promoteUser = asyncHandler(async (req, res) => {
   }
 
   if (req.user.role !== 'super_admin' && user.assignedLocation) {
-    enforceLocationAccess(req, res, user.assignedLocation, 'Not authorized to promote this user');
+    enforceLocationAccess(req, res, user.assignedLocation, 'You do not have permission to promote this user');
   }
 
   // Hierarchy logic
   if (req.user.role === 'admin' && (user.role === 'admin' || user.role === 'super_admin')) {
     res.status(403);
-    throw new Error('Not authorized to promote this user');
+    throw new Error('You do not have permission to promote this user');
   }
 
   const oldRole = user.role;
@@ -166,12 +166,12 @@ const demoteUser = asyncHandler(async (req, res) => {
   }
 
   if (req.user.role !== 'super_admin' && user.assignedLocation) {
-    enforceLocationAccess(req, res, user.assignedLocation, 'Not authorized to demote this user');
+    enforceLocationAccess(req, res, user.assignedLocation, 'You do not have permission to demote this user');
   }
 
   if (req.user.role === 'admin' && (user.role === 'admin' || user.role === 'super_admin')) {
     res.status(403);
-    throw new Error('Not authorized to demote this user');
+    throw new Error('You do not have permission to demote this user');
   }
 
   const oldRole = user.role;
@@ -210,12 +210,12 @@ const updateUser = asyncHandler(async (req, res) => {
   // Location Admin can only update staff from their location
   if (req.user.role === 'branch_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
     res.status(403);
-    throw new Error('Not authorized to update users from other locations');
+    throw new Error('You do not have permission to update users from other locations');
   }
 
   if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
     res.status(403);
-    throw new Error('Not authorized to update users from other locations');
+    throw new Error('You do not have permission to update users from other locations');
   }
 
   // Fields allowed to be updated by admins via this route
@@ -242,7 +242,21 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   if (updateData.assignedLocation && req.user.role !== 'super_admin') {
-    enforceLocationAccess(req, res, updateData.assignedLocation, 'Not authorized to assign this location');
+    enforceLocationAccess(req, res, updateData.assignedLocation, 'You do not have permission to assign this location');
+  }
+
+  // Branch Transfer Guard: Prevent transfer if active orders exist
+  if (updateData.assignedLocation && updateData.assignedLocation.toString() !== user.assignedLocation?.toString()) {
+    const Order = require('../models/Order');
+    const activeOrders = await Order.findOne({
+      $or: [{ assignedChef: user._id }, { createdBy: user._id }],
+      status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] }
+    });
+
+    if (activeOrders) {
+      res.status(400);
+      throw new Error(`Cannot transfer user "${user.name}" while they have active orders assigned to them.`);
+    }
   }
 
   const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: updateData }, {
@@ -274,7 +288,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (req.user.role === 'branch_admin') {
     if (user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
       res.status(403);
-      throw new Error('Not authorized to delete users from other locations');
+      throw new Error('You do not have permission to delete users from other locations');
     }
     if (!['staff', 'chef'].includes(user.role)) {
       res.status(403);
@@ -284,7 +298,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
     res.status(403);
-    throw new Error('Not authorized to delete users from other locations');
+    throw new Error('You do not have permission to delete users from other locations');
   }
 
   if (user.role === 'super_admin') {
@@ -292,9 +306,16 @@ const deleteUser = asyncHandler(async (req, res) => {
     throw new Error('Super Admin cannot be deleted');
   }
 
-  if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('Not authorized to block users from other locations');
+  // Active Order Guard for Deletion
+  const Order = require('../models/Order');
+  const activeOrders = await Order.findOne({
+    $or: [{ assignedChef: user._id }, { createdBy: user._id }],
+    status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] }
+  });
+
+  if (activeOrders) {
+    res.status(400);
+    throw new Error(`Cannot delete user "${user.name}" with active pending orders.`);
   }
 
   const userId = user._id;
@@ -360,7 +381,7 @@ const getUser = asyncHandler(async (req, res) => {
   // Location restriction
   if (req.user.role !== 'super_admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
     res.status(403);
-    throw new Error('Not authorized to view users from other locations');
+    throw new Error('You do not have permission to view users from other locations');
   }
 
   res.json({
@@ -485,7 +506,7 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
 
   if (actorRole !== 'super_admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
     res.status(403);
-    throw new Error('Not authorized to modify permissions outside your locations');
+    throw new Error('You do not have permission to modify permissions outside your locations');
   }
 
   let isAuthorized = false;

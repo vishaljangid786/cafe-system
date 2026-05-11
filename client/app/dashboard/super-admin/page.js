@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import {
   Crown, Map, TrendingUp, DollarSign,
@@ -13,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 export default function SuperAdminDashboard() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
@@ -101,36 +103,44 @@ export default function SuperAdminDashboard() {
 
         {/* Smart Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-          <MetricCard
-            title="Total Revenue"
-            value={`₹${(data?.totalRevenue / 100000).toFixed(1)}L`}
-            icon={<DollarSign className="text-blue-500" />}
-            trend="+12.4%"
-            sub="Total money collected"
-          />
-          <MetricCard
-            title="Today's Sales"
-            value={`₹${data?.todayRevenue?.toLocaleString()}`}
-            icon={<Zap className="text-blue-500" />}
-            trend="+8.2%"
-            sub="Current sales stream"
-            highlight
-          />
-          <MetricCard
-            title="Total Profit"
-            value={`₹${(data?.netProfit / 100000).toFixed(1)}L`}
-            icon={<BarChart3 className="text-emerald-500" />}
-            trend="+5.1%"
-            sub="Final earnings"
-          />
-          <MetricCard
-            title="System Alerts"
-            value={data?.alerts?.lowStockItems + data?.alerts?.recentCancellations}
-            icon={<AlertOctagon className="text-rose-500" />}
-            trend="NEEDS ATTENTION"
-            sub="Problems found"
-            isRisk={true}
-          />
+          <Link href="/dashboard/admin/revenue" className="contents">
+            <MetricCard
+              title="Total Revenue"
+              value={`₹${(data?.totalRevenue / 100000).toFixed(1)}L`}
+              icon={<DollarSign className="text-blue-500" />}
+              trend="+12.4%"
+              sub="Total money collected"
+            />
+          </Link>
+          <Link href="/dashboard/admin/orders" className="contents">
+            <MetricCard
+              title="Today's Sales"
+              value={`₹${data?.todayRevenue?.toLocaleString()}`}
+              icon={<Zap className="text-blue-500" />}
+              trend="+8.2%"
+              sub="Current sales stream"
+              highlight
+            />
+          </Link>
+          <Link href="/dashboard/admin/revenue" className="contents">
+            <MetricCard
+              title="Total Profit"
+              value={`₹${(data?.netProfit / 100000).toFixed(1)}L`}
+              icon={<BarChart3 className="text-emerald-500" />}
+              trend="+5.1%"
+              sub="Final earnings"
+            />
+          </Link>
+          <Link href="/dashboard/admin/audit-logs" className="contents">
+            <MetricCard
+              title="System Alerts"
+              value={data?.alerts?.lowStockItems + data?.alerts?.recentCancellations}
+              icon={<AlertOctagon className="text-rose-500" />}
+              trend="NEEDS ATTENTION"
+              sub="Problems found"
+              isRisk={true}
+            />
+          </Link>
         </div>
 
         {/* Global Operations Console */}
@@ -171,6 +181,7 @@ export default function SuperAdminDashboard() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.1 }}
+                      onClick={() => router.push('/dashboard/admin/locations')}
                       className="group bg-[var(--color-surface-soft)]/50 hover:bg-[var(--color-surface-soft)] transition-all cursor-pointer rounded-3xl"
                     >
                       <td className="p-8 rounded-l-[2rem] border-l border-t border-b border-[var(--color-border)]/50">
@@ -216,35 +227,43 @@ export default function SuperAdminDashboard() {
                 Top Performers
               </h2>
 
-              <EntityItem
-                icon={<ChefHat className="text-blue-500" />}
-                label="Top Chef"
-                name={data?.topChefs?.[0]?.name || 'N/A'}
-                stat={`${data?.topChefs?.[0]?.orderCount || 0} Orders Done`}
-              />
-              <EntityItem
-                icon={<Users className="text-blue-500" />}
-                label="Top Staff"
-                name={data?.topStaff?.[0]?.name || 'N/A'}
-                stat={`${data?.topStaff?.[0]?.orderCount || 0} Orders Served`}
-              />
+              <Link href="/dashboard/admin/staff" className="contents">
+                <EntityItem
+                  icon={<ChefHat className="text-blue-500" />}
+                  label="Top Chef"
+                  name={data?.topChefs?.[0]?.name || 'N/A'}
+                  stat={`${data?.topChefs?.[0]?.orderCount || 0} Orders Done`}
+                />
+              </Link>
+              <Link href="/dashboard/admin/staff" className="contents">
+                <EntityItem
+                  icon={<Users className="text-blue-500" />}
+                  label="Top Staff"
+                  name={data?.topStaff?.[0]?.name || 'N/A'}
+                  stat={`${data?.topStaff?.[0]?.orderCount || 0} Orders Served`}
+                />
+              </Link>
               <div className="h-[1px] bg-[var(--color-border)] mx-2" />
-              <EntityItem
-                icon={<CreditCard className="text-emerald-500" />}
-                label="Top UPI Branch"
-                name={data?.upiLeader?.branchName || 'N/A'}
-                stat={`₹${data?.upiLeader?.total?.toLocaleString()}`}
-              />
-              <EntityItem
-                icon={<Ticket className="text-purple-500" />}
-                label="Coupon Usage"
-                name={data?.highestCouponBranch?.name || 'N/A'}
-                stat={`${data?.highestCouponBranch?.count || 0} Times Used`}
-              />
+              <Link href="/dashboard/admin/locations" className="contents">
+                <EntityItem
+                  icon={<CreditCard className="text-emerald-500" />}
+                  label="Top UPI Branch"
+                  name={data?.upiLeader?.branchName || 'N/A'}
+                  stat={`₹${data?.upiLeader?.total?.toLocaleString()}`}
+                />
+              </Link>
+              <Link href="/dashboard/admin/coupons" className="contents">
+                <EntityItem
+                  icon={<Ticket className="text-purple-500" />}
+                  label="Coupon Usage"
+                  name={data?.highestCouponBranch?.name || 'N/A'}
+                  stat={`${data?.highestCouponBranch?.count || 0} Times Used`}
+                />
+              </Link>
             </div>
 
             {/* Smart Update Card */}
-            <div className="relative group cursor-pointer overflow-hidden rounded-[4rem] shadow-2xl">
+            <Link href="/dashboard/admin/revenue" className="relative group cursor-pointer overflow-hidden rounded-[4rem] shadow-2xl block">
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ repeat: Infinity, duration: 10 }}
@@ -254,11 +273,11 @@ export default function SuperAdminDashboard() {
               <div className="relative p-12 text-white space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">System Update</p>
                 <h3 className="text-3xl font-black italic tracking-tighter leading-tight">Total sales is 18% more than last week.</h3>
-                <div className="flex items-center gap-3 text-xs font-black bg-[var(--color-bg-base)]/50 w-fit px-6 py-3 rounded-2xl backdrop-blur-xl border border-[var(--color-border)] group-hover:bg-black/20 transition-all uppercase tracking-widest italic">
+                <div className="flex items-center gap-3 text-xs font-black bg-[var(--color-bg-base)]/50 w-fit px-6 py-3 rounded-2xl backdrop-blur-xl border border-white/10 group-hover:bg-black/20 transition-all uppercase tracking-widest italic">
                   View Details <ChevronRight size={16} />
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </div>

@@ -7,17 +7,17 @@ const {
   approveTransaction,
   rejectTransaction
 } = require('../controllers/transactionController');
-const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 router.use(verifyToken);
 
-router.get('/', authorizePermissions('viewRevenue'), getTransactions);
-router.get('/stats', authorizePermissions('viewRevenue'), getTransactionStats);
-router.post('/', authorizePermissions('editRevenue'), upload.single('image'), createTransaction);
+router.get('/', getTransactions);
+router.get('/stats', checkPermissions('viewRevenue'), getTransactionStats);
+router.post('/', upload.single('image'), createTransaction);
 
 // Approval Workflow
-router.patch('/:id/approve', authorizeRoles('super_admin', 'admin', 'branch_admin'), authorizePermissions('editRevenue'), approveTransaction);
-router.patch('/:id/reject', authorizeRoles('super_admin', 'admin', 'branch_admin'), authorizePermissions('editRevenue'), rejectTransaction);
+router.patch('/:id/approve', checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), approveTransaction);
+router.patch('/:id/reject', checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), rejectTransaction);
 
 module.exports = router;

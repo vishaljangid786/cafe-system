@@ -48,6 +48,7 @@ const orderSchema = new mongoose.Schema(
         price: {
           type: Number,
           required: true,
+          default: 0,
         },
         costPrice: {
           type: Number,
@@ -98,8 +99,13 @@ const orderSchema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
-      enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
+      enum: ['CASH', 'CARD', 'UPI', 'ONLINE', 'OTHER'],
       default: 'CASH',
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Discount cannot be negative'],
     },
     coupon: {
       type: mongoose.Schema.Types.ObjectId,
@@ -133,6 +139,10 @@ orderSchema.index({ paymentType: 1 });
 orderSchema.index({ branch: 1, status: 1, createdAt: -1 });
 // Hot path: per-table order lookups (anti-spam check, table billing)
 orderSchema.index({ table: 1, branch: 1, createdAt: -1 });
+// Hot path: status history tracking for kitchen efficiency reports
+orderSchema.index({ 'statusHistory.status': 1 });
+// Hot path: customer-centric CRM lookups
+orderSchema.index({ customerPhone: 1, branch: 1 });
 
 orderSchema.query.byBranch = function(branchId) {
   return this.where({ branch: branchId });

@@ -6,7 +6,7 @@ const {
   getMonthlySummary,
   getMyAttendance,
 } = require('../controllers/attendanceController');
-const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -16,15 +16,15 @@ router.route('/my')
   .get(getMyAttendance);
 
 router.route('/mark')
-  .post(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), markAttendance);
+  .post(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), markAttendance);
 
 router.route('/location')
-  .get(authorizeRoles('branch_admin', 'admin', 'super_admin'), authorizePermissions('manageStaff'), getLocationAttendance);
+  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getLocationAttendance);
 
 router.route('/all')
-  .get(authorizeRoles('admin', 'super_admin'), authorizePermissions('manageStaff'), getAllAttendance);
+  .get(checkRoles('admin', 'super_admin'), checkPermissions('manageStaff'), getAllAttendance);
 
 router.route('/monthly-summary')
-  .get(authorizeRoles('admin', 'super_admin'), authorizePermissions('manageStaff'), getMonthlySummary);
+  .get(checkRoles('admin', 'super_admin'), checkPermissions('manageStaff'), getMonthlySummary);
 
 module.exports = router;

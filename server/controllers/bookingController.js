@@ -40,7 +40,7 @@ const checkAvailability = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
 
-  enforceLocationAccess(req, res, locationId, 'Not authorized to check this location');
+  enforceLocationAccess(req, res, locationId, 'You do not have permission to check this location');
 
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
@@ -68,7 +68,7 @@ const createBooking = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
 
-  enforceLocationAccess(req, res, locationId, 'Not authorized to book this location');
+  enforceLocationAccess(req, res, locationId, 'You do not have permission to book this location');
 
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
@@ -124,7 +124,7 @@ const getBookings = asyncHandler(async (req, res) => {
   const query = {};
 
   if (locationId) {
-    enforceLocationAccess(req, res, locationId, 'Not authorized to view this location');
+    enforceLocationAccess(req, res, locationId, 'You do not have permission to view this location');
     query.locationId = locationId;
   }
   if (date) query.date = new Date(date);
@@ -177,7 +177,7 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Booking not found' });
   }
 
-  enforceLocationAccess(req, res, booking.locationId._id, 'Not authorized to update this booking');
+  enforceLocationAccess(req, res, booking.locationId._id, 'You do not have permission to update this booking');
 
   // If changing to confirmed, check capacity again just in case
   if (status === 'confirmed' && booking.status !== 'confirmed') {

@@ -332,7 +332,7 @@ function SignupContent() {
                   {!isSetup && selectedRole === 'admin' && (
                     <Controller name="accessibleLocations" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Accessible Locations (Multi-Control)</label>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Linked Branches (Multi-Control)</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
                       </div>
                     )} />

@@ -8,7 +8,7 @@ const {
   updateReservation,
   deleteReservation,
 } = require('../controllers/reservationController');
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -18,12 +18,12 @@ router.get('/availability', checkAvailability);
 
 // CRUD operations
 router.route('/')
-  .post(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), createReservation)
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservations);
+  .post(checkRoles('super_admin', 'admin', 'branch_admin', 'staff'), createReservation)
+  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservations);
 
 router.route('/:id')
-  .get(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservationById)
-  .put(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), updateReservation)
-  .delete(authorizeRoles('super_admin', 'admin', 'branch_admin', 'staff'), deleteReservation);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'staff'), getReservationById)
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'staff'), updateReservation)
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'staff'), deleteReservation);
 
 module.exports = router;

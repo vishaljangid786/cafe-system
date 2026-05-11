@@ -303,3 +303,36 @@
     radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
   pointer-events: none;
 }
+
+/* Skeleton Loading Animation */
+.animate-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-soft) 25%,
+    color-mix(in srgb, var(--color-surface-soft) 80%, var(--color-border)) 50%,
+    var(--color-surface-soft) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite linear;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* SLA Pulsing Alert */
+.animate-pulse-danger {
+  animation: pulse-danger 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { 
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 0px rgba(239, 68, 68, 0);
+  }
+  50% { 
+    border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+}

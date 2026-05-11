@@ -1,6 +1,6 @@
 const Transaction = require('../models/Transaction');
 const Table = require('../models/Table');
-const { deductIngredientsFromRecipe } = require('../controllers/inventoryController');
+const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 
 /**
  * Finalizes an order, records revenue, and deducts ingredients.
@@ -22,12 +22,16 @@ const finalizeOrder = async (order, user) => {
     updatedBy: user._id
   });
 
-  // Calculate total profit
-  const totalProfit = order.items.reduce((acc, item) => {
+  // Calculate gross profit from items
+  const grossProfit = order.items.reduce((acc, item) => {
     const price = Number(item.price || 0);
     const costPrice = Number(item.costPrice || 0);
-    return acc + ((price - costPrice) * item.quantity);
+    const qty = Number(item.quantity || 0);
+    return acc + ((price - costPrice) * qty);
   }, 0);
+
+  // Net Profit = Gross Profit - Discount
+  const totalProfit = grossProfit - (Number(order.discountAmount) || 0);
 
   // Create Transaction
   const transaction = await Transaction.create({
@@ -40,16 +44,16 @@ const finalizeOrder = async (order, user) => {
     paymentType: order.paymentType || 'CASH',
     title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
     category: 'Sales',
-    totalAmount: order.totalAmount,
-    totalProfit: totalProfit,
+    totalAmount: Number(order.totalAmount || 0),
+    totalProfit: isNaN(totalProfit) ? 0 : totalProfit,
     date: new Date(),
     status: 'approved',
     orders: order.items.map(i => ({
       menuItemId: i.menuItem?._id || i.menuItem,
       itemName: i.itemName || 'Item',
-      quantity: i.quantity,
-      price: i.price,
-      costPrice: i.costPrice || 0
+      quantity: Number(i.quantity || 0),
+      price: Number(i.price || 0),
+      costPrice: Number(i.costPrice || 0)
     }))
   });
 
@@ -57,9 +61,18 @@ const finalizeOrder = async (order, user) => {
   await deductIngredientsFromRecipe(order, order.branch);
 
   // Decrement active orders count on table
-  await Table.findByIdAndUpdate(order.table, {
-    $inc: { activeOrdersCount: -1 }
-  });
+  const updatedTable = await Table.findByIdAndUpdate(
+    order.table,
+    { $inc: { activeOrdersCount: -1 } },
+    { new: true, runValidators: false }
+  );
+
+  // Auto-clear table if no more active orders
+  if (updatedTable && updatedTable.activeOrdersCount <= 0) {
+    updatedTable.status = 'available';
+    updatedTable.activeOrdersCount = 0; // Guard against negative numbers
+    await updatedTable.save();
+  }
 
   await order.save();
   return order;

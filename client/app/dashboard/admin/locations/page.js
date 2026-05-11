@@ -118,7 +118,7 @@ export default function BranchesPage() {
 
   const handleStaffUpdate = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading("Updating staff details...");
+    const loadToast = toast.loading("Saving staff details...");
     try {
       await api.put(`/users/${selectedStaff._id}`, staffFormData);
       toast.success("Staff detials updated", { id: loadToast });
@@ -147,8 +147,8 @@ export default function BranchesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const action = editingId ? 'Updating' : 'Initializing';
-    const loadToast = toast.loading(`${action} location branch...`);
+    const action = editingId ? 'Updating' : 'Creating';
+    const loadToast = toast.loading(`${action} branch...`);
 
     try {
       const payload = {
@@ -175,7 +175,7 @@ export default function BranchesPage() {
       setEditingId(null);
       setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both' });
       fetchLocations();
-      toast.success(`Branch ${editingId ? 'updated' : 'synchronized'} successfully!`, { id: loadToast });
+      toast.success(`Branch ${editingId ? 'updated' : 'created'} successfully!`, { id: loadToast });
     } catch (error) {
       toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
     }
@@ -184,10 +184,10 @@ export default function BranchesPage() {
   const handleStatusChange = async (id, status) => {
     try {
       await api.patch(`/locations/${id}`, { status });
-      toast.success(`Branch state updated to ${status}`);
+      toast.success(`Branch status updated to ${status}`);
       fetchLocations();
     } catch (error) {
-      toast.error('Failed to update branch state');
+      toast.error('Failed to update branch status');
     }
   };
 
@@ -544,7 +544,7 @@ export default function BranchesPage() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex flex-col">
                           <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-2">
-                            <Users size={14} className={staffTab === 'staff' ? "text-[var(--color-primary-dark)]" : "text-[var(--color-primary)]"} /> Staff Force
+                            <Users size={14} className={staffTab === 'staff' ? "text-[var(--color-primary-dark)]" : "text-[var(--color-primary)]"} /> Staff Members
                           </h3>
                         </div>
                         <div className="flex bg-[var(--color-surface-soft)] p-1 rounded-xl border border-[var(--color-border)]">
@@ -558,7 +558,7 @@ export default function BranchesPage() {
                             onClick={() => setStaffTab('chef')}
                             className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${staffTab === 'chef' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                           >
-                            Chef ({staff.filter(p => p.role === 'chef').length})
+                            Chefs ({staff.filter(p => p.role === 'chef').length})
                           </button>
                         </div>
                       </div>
@@ -685,7 +685,7 @@ export default function BranchesPage() {
                         ]}
                       />
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Monthly Yield (Salary)</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Monthly Salary</label>
                         <div className="relative">
                           <input 
                             type="number"
@@ -698,7 +698,7 @@ export default function BranchesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Contact System Rule</label>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Phone Number</label>
                           <input 
                             className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
                             value={staffFormData.phone}
@@ -707,7 +707,7 @@ export default function BranchesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Identity Stamp (Email)</label>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Email Address</label>
                           <input 
                             disabled
                             className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-xs font-bold outline-none opacity-50 cursor-not-allowed text-[var(--color-text-muted)]"
@@ -716,7 +716,7 @@ export default function BranchesPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Residential Sector</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Full Address</label>
                         <input 
                           className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
                           value={staffFormData.address1}
@@ -738,7 +738,7 @@ export default function BranchesPage() {
                         type="submit"
                         className="flex-1 py-4 rounded-2xl bg-[var(--color-primary)] text-black dark:text-black text-xs font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20 hover:opacity-90 transition-all"
                       >
-                        Commit Changes
+                        Save Changes
                       </button>
                    </div>
                 </form>

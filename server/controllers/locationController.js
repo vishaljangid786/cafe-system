@@ -16,15 +16,16 @@ const getLocations = asyncHandler(async (req, res) => {
   if (city) query.city = city;
 
   // Filter based on user access
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
-    if (req.user.assignedLocation) {
-      query._id = req.user.assignedLocation;
-    } else {
-      // If no assigned location, they shouldn't see any locations
-      query._id = new mongoose.Types.ObjectId(); // Non-existent ID
+  if (req.user) {
+    if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
+      if (req.user.assignedLocation) {
+        query._id = req.user.assignedLocation;
+      } else {
+        query._id = new mongoose.Types.ObjectId();
+      }
+    } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
+      query._id = { $in: req.user.accessibleLocations };
     }
-  } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
-    query._id = { $in: req.user.accessibleLocations };
   }
 
   // 1. Fetch Locations
@@ -121,7 +122,7 @@ const updateLocation = asyncHandler(async (req, res) => {
     throw new Error('Location not found');
   }
 
-  // RBAC Enforcement: Admin can only update locations they have access to
+  // RBAC Enforcement: Admin can only update locations they have permission for
   if (req.user.role === 'admin') {
     const isAccessible = req.user.accessibleLocations?.some(
       loc => loc.toString() === location._id.toString()
@@ -179,7 +180,7 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     throw new Error('Location not found');
   }
 
-  // RBAC Enforcement: Admin can only delete locations they have access to
+  // RBAC Enforcement: Admin can only delete locations they have permission for
   if (req.user.role === 'admin') {
     const isAccessible = req.user.accessibleLocations?.some(
       loc => loc.toString() === location._id.toString()

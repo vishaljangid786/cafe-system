@@ -35,13 +35,21 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
 
     // Main Group
     const mainItems = [];
-    if (role === 'super_admin' || role === 'admin') {
-      mainItems.push({ name: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard });
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
+      const isGlobal = role === 'super_admin' || role === 'admin';
+      mainItems.push({ 
+        name: 'Overview', 
+        href: isGlobal ? '/dashboard/admin' : '/dashboard/branch-admin', 
+        icon: LayoutDashboard 
+      });
+      mainItems.push({ 
+        name: 'Branch Presence', 
+        href: '/dashboard/admin/branch-presence', 
+        icon: ShieldCheck 
+      });
       if (role === 'super_admin') {
         mainItems.push({ name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap });
       }
-    } else if (role === 'branch_admin') {
-      mainItems.push({ name: 'Overview', href: '/dashboard/branch-admin', icon: LayoutDashboard });
     } else if (role === 'chef') {
       mainItems.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
     } else {
@@ -54,12 +62,12 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
       const adminItems = [];
       const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
-      
+
       if (role === 'super_admin') {
         adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
         adminItems.push({ name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity });
       }
-      
+
       if (role === 'super_admin') {
         adminItems.push({ name: 'Impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
       }
@@ -73,16 +81,16 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         adminItems.push({ name: 'Attendance', href: `${prefix}/attendance`, icon: CalendarCheck });
         adminItems.push({ name: 'Salaries', href: role === 'branch_admin' ? '/dashboard/branch-admin/salary' : '/dashboard/admin/payroll', icon: Wallet });
       }
-      
-      adminItems.push({ name: 'Authority', href: `${prefix}/permissions`, icon: ShieldCheck });
-      
+
+      adminItems.push({ name: 'Permissions', href: `${prefix}/permissions`, icon: ShieldCheck });
+
       groupsList.push({ title: 'Administration', items: adminItems });
     }
 
     // Operations Group
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
       const opsItems = [];
-      
+
       if (hasPermission('viewOrders')) {
         opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
         opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
@@ -97,20 +105,20 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       if ((role === 'super_admin' || role === 'admin') && hasPermission('manageCoupons')) {
         opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
       }
-      
+
       if (opsItems.length > 0) {
         groupsList.push({ title: 'Operations', items: opsItems });
       }
     } else {
-        const opsItems = [];
-        if (role !== 'chef') {
-            opsItems.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
-            opsItems.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
-            opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-        } else {
-            opsItems.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
-        }
-        groupsList.push({ title: 'Operations', items: opsItems });
+      const opsItems = [];
+      if (role !== 'chef') {
+        opsItems.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
+        opsItems.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
+        opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      } else {
+        opsItems.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
+      }
+      groupsList.push({ title: 'Operations', items: opsItems });
     }
 
     // Analytics Group
@@ -125,20 +133,20 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
 
       if (hasPermission('viewAnalytics')) {
         analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-        
+
         if (role === 'super_admin' || role === 'admin') {
           analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
         }
-        
+
         analyticsItems.push({ name: 'Staff Reports', href: `${prefix}/staff-reports`, icon: TrendingUp });
-        
+
         if (role === 'super_admin' || role === 'admin') {
           analyticsItems.push({ name: 'Payment Intel', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
           analyticsItems.push({ name: 'Command Center', href: '/dashboard/admin/command-center', icon: AlertCircle });
           analyticsItems.push({ name: 'Smart Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
         }
       }
-      
+
       if (hasPermission('exportReports')) {
         analyticsItems.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
       }
@@ -147,24 +155,24 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         groupsList.push({ title: 'Analytics', items: analyticsItems });
       }
     } else {
-        const performanceItems = [
-            { name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp },
-            { name: 'Work History', href: '/dashboard/staff/work-history', icon: History },
-            { name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar },
-        ];
-        if (role === 'chef') {
-            performanceItems.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
-        } else {
-             performanceItems.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
-        }
-        groupsList.push({ title: 'Performance', items: performanceItems });
+      const performanceItems = [
+        { name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp },
+        { name: 'Work History', href: '/dashboard/staff/work-history', icon: History },
+        { name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar },
+      ];
+      if (role === 'chef') {
+        performanceItems.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
+      } else {
+        performanceItems.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
+      }
+      groupsList.push({ title: 'Performance', items: performanceItems });
     }
 
     // Loyalty Group
     if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin') && hasPermission('viewAnalytics')) {
-      groupsList.push({ 
-        title: 'Loyalty', 
-        items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }] 
+      groupsList.push({
+        title: 'Rewards',
+        items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }]
       });
     }
 
@@ -180,13 +188,32 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     return groupsList;
   }, [user, unreadCount]);
 
+  const allLinks = useMemo(() => groups.flatMap(g => g.items), [groups]);
+
+  const activeHref = useMemo(() => {
+    const matches = allLinks
+      .filter(link => {
+        // Special case for root-ish dashboards to avoid matching everything
+        if (link.href === '/dashboard/admin' || link.href === '/dashboard/branch-admin' || link.href === '/dashboard/staff') {
+          return pathname === link.href;
+        }
+        return pathname === link.href || pathname.startsWith(link.href + '/');
+      })
+      .sort((a, b) => b.href.length - a.href.length);
+    
+    // If no specific match, check for exact matches on those root-ish ones again
+    if (matches.length === 0) {
+      const exactMatch = allLinks.find(link => pathname === link.href);
+      if (exactMatch) return exactMatch.href;
+    }
+
+    return matches[0]?.href;
+  }, [pathname, allLinks]);
+
   // Sync open group with current pathname
   useEffect(() => {
     const activeGroup = groups.find(group => 
-      group.items.some(link => {
-        const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
-        return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
-      })
+      group.items.some(link => link.href === activeHref)
     );
     if (activeGroup) {
       const timer = setTimeout(() => {
@@ -195,24 +222,21 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
 
       return () => clearTimeout(timer);
     }
-  }, [pathname, groups]);
+  }, [activeHref, groups]);
 
   const leaveTimeout = useRef(null);
   const [hoveredGroup, setHoveredGroup] = useState(null);
 
   const currentActiveGroupTitle = useMemo(() => {
     const active = groups.find(group => 
-      group.items.some(link => {
-        const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
-        return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
-      })
+      group.items.some(link => link.href === activeHref)
     );
     return active?.title || null;
-  }, [pathname, groups]);
+  }, [activeHref, groups]);
 
   const handleGroupInteraction = (e, groupTitle, type = 'hover') => {
     if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
-    
+
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       setFlyoutTop(rect.top);
@@ -225,7 +249,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       } else {
         setOpenGroup(groupTitle);
       }
-      
+
       // Navigate to the first submenu item on 'click' type only
       if (type === 'click' && group && group.items.length > 0) {
         router.push(group.items[0].href);
@@ -277,29 +301,26 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       </div>
 
       {/* Navigation */}
-      <div 
+      <div
         className={`flex-1 py-4 custom-scrollbar ${showLabels ? 'px-3 overflow-y-auto' : 'px-2 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'}`}
         onMouseLeave={handleMouseLeave}
       >
         <div className="space-y-4">
           {groups.map((group) => {
             const FirstIcon = group.items[0]?.icon || Coffee;
-            const isActive = group.items.some(link => {
-              const isExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
-              return isExactMatch ? pathname === link.href : pathname.startsWith(link.href);
-            });
+            const isActive = group.items.some(link => link.href === activeHref);
 
             return (
-              <div 
-                key={group.title} 
+              <div
+                key={group.title}
                 className="relative"
                 onMouseEnter={(e) => handleGroupInteraction(e, group.title, 'hover')}
               >
                 {showLabels ? (
-                  <div 
+                  <div
                     className={`px-4 py-3 flex items-center justify-between group/header rounded-2xl transition-all duration-300 ${openGroup === group.title ? 'bg-primary/10 shadow-sm' : 'hover:bg-[var(--color-surface-soft)]'}`}
                   >
-                    <span 
+                    <span
                       onClick={(e) => {
                         e.stopPropagation();
                         handleGroupInteraction(e, group.title, 'click');
@@ -321,7 +342,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                     </motion.div>
                   </div>
                 ) : (
-                  <div 
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                       handleGroupInteraction(e, group.title, 'click');
@@ -331,7 +352,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                     <FirstIcon size={22} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
                   </div>
                 )}
-                
+
                 {/* Inline Dropdown (Determined by openGroup state) */}
                 <AnimatePresence>
                   {openGroup === group.title && (
@@ -344,8 +365,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                     >
                       {group.items.map((link) => {
                         const Icon = link.icon;
-                        const isLinkExactMatch = ['Overview', 'My Dashboard', 'All Orders', 'New Orders', 'Kitchen'].includes(link.name);
-                        const isLinkActive = isLinkExactMatch ? pathname === link.href : pathname.startsWith(link.href);
+                        const isLinkActive = link.href === activeHref;
                         return (
                           <Link
                             key={link.name}
@@ -357,8 +377,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                             }}
                             className={`
                               flex items-center py-3 px-4 rounded-xl transition-all duration-200
-                              ${isLinkActive 
-                                ? 'bg-primary text-black font-bold shadow-sm' 
+                              ${isLinkActive
+                                ? 'bg-primary text-black font-bold shadow-sm'
                                 : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
                             `}
                           >
@@ -468,7 +488,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
               animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
               exit={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              style={{ 
+              style={{
                 position: 'fixed',
                 top: Math.max(20, Math.min(flyoutTop, typeof window !== 'undefined' ? window.innerHeight - ((groups.find(g => g.title === hoveredGroup)?.items.length || 0) * 52 + 80) : flyoutTop)),
                 left: showLabels ? 250 : 75,

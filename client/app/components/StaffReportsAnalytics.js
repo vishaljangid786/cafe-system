@@ -78,6 +78,17 @@ export default function StaffReportsAnalytics({ user }) {
     });
   };
 
+  const resetFilters = () => {
+    setFilters({
+      staffName: '',
+      branch: '',
+      date: '',
+      month: '',
+      financialYear: ''
+    });
+    toast.success('Filters reset to default');
+  };
+
   const exportCSV = () => {
     const headers = ['Ranking', 'Name', 'Role', 'Branch', 'Total Sales (₹)', 'Orders Handled', 'Coupon Usage', 'Profit Contribution (₹)', 'Cancelled Ratio', 'Avg Order Value (₹)'];
     const rows = data.map(s => [
@@ -161,9 +172,17 @@ export default function StaffReportsAnalytics({ user }) {
 
       {/* Filters */}
       <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-6 print:hidden">
-        <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
-          <Filter size={16} className="text-[var(--color-primary)]" />
-          <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Filter Reports</span>
+        <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-[var(--color-primary)]" />
+            <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Filter Reports</span>
+          </div>
+          <button 
+            onClick={resetFilters}
+            className="px-4 py-2 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-rose-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-[var(--color-border)] active:scale-95 flex items-center gap-2 group"
+          >
+            <CheckCircle2 size={12} className="group-hover:rotate-12 transition-transform" /> Reset Terminal
+          </button>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
@@ -247,7 +266,7 @@ export default function StaffReportsAnalytics({ user }) {
 
       {loading ? (
         <div className="h-64 bg-[var(--color-surface)]/50 backdrop-blur-xl rounded-3xl animate-pulse flex items-center justify-center font-bold text-[var(--color-text-muted)]">
-          Compiling aggregate reporting metrics...
+          Preparing staff reports...
         </div>
       ) : (
         <>

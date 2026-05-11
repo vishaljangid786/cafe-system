@@ -288,7 +288,7 @@ export default function BookingsManagementPage() {
                             onClick={() => updateStatus(booking._id, 'confirmed')}
                             className="flex-1 py-3 rounded-xl bg-[var(--color-success)]/10 hover:bg-[var(--color-success)] text-[var(--color-success)] hover:text-black dark:hover:text-black text-[10px] font-black uppercase tracking-widest transition-all border border-[var(--color-success)]/20"
                           >
-                            Authorize
+                            Approve
                           </button>
                           <button
                             onClick={() => updateStatus(booking._id, 'cancelled')}

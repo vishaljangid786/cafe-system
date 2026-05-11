@@ -259,7 +259,7 @@ export default function SalaryPage() {
                         {viewingUser.role?.replace('_', ' ')}
                       </span>
                       <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                        Verified Identity
+                        Verified Details
                       </span>
                     </div>
                   </div>

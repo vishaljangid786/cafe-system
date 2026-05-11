@@ -18,38 +18,44 @@ const {
   startPreparing,
   markReady,
   markServed,
-  generateOrderBill
+  generateOrderBill,
+  deleteOrder
 } = require('../controllers/orderController');
-const { verifyToken, authorizeRoles, authorizePermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 
 const { validateOrderTransition } = require('../middlewares/omsMiddleware');
+const validate = require('../middlewares/validatorMiddleware');
+const { createOrderValidator, updateOrderStatusValidator } = require('../validators/orderValidator');
 
 router.use(verifyToken);
 
-router.route('/my-stats-chef').get(authorizeRoles('chef'), getMyChefStats);
-router.route('/my-stats-staff').get(authorizeRoles('staff', 'branch_admin'), getMyStaffStats);
+router.route('/my-stats-chef').get(checkRoles('chef'), getMyChefStats);
+router.route('/my-stats-staff').get(checkRoles('staff', 'branch_admin'), getMyStaffStats);
 
 router
   .route('/')
-  .get(authorizePermissions('viewOrders'), getOrders)
-  .post(authorizePermissions('manageOrders'), createOrder);
+  .get(checkPermissions('viewOrders'), getOrders)
+  .post(checkPermissions('manageOrders'), createOrderValidator, validate, createOrder);
 
-router.get('/analytics', authorizeRoles('super_admin', 'admin', 'branch_admin'), authorizePermissions('viewAnalytics'), getOrderAnalytics);
+router.get('/analytics', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('viewAnalytics'), getOrderAnalytics);
 
-router.get('/:id', authorizePermissions('viewOrders'), getOrder);
+router
+  .route('/:id')
+  .get(checkPermissions('viewOrders'), getOrder)
+  .delete(checkRoles('super_admin', 'admin'), deleteOrder);
 
 // Specialized updates with strict OMS validation
-router.patch('/:id/status', authorizePermissions('manageOrders'), validateOrderTransition, updateOrderStatus);
-router.patch('/:id/items', authorizePermissions('manageOrders'), updateOrderItems);
-router.patch('/:id/reject', authorizePermissions('manageOrders'), validateOrderTransition, rejectOrder);
-router.patch('/:id/cancel', authorizePermissions('manageOrders'), validateOrderTransition, cancelOrder);
-router.patch('/:id/note', authorizePermissions('manageOrders'), addChefNote);
-router.patch('/:id/accept', authorizePermissions('manageOrders'), validateOrderTransition, acceptOrder);
-router.patch('/:id/start', authorizePermissions('manageOrders'), validateOrderTransition, startPreparing);
-router.patch('/:id/ready', authorizePermissions('manageOrders'), validateOrderTransition, markReady);
-router.patch('/:id/serve', authorizePermissions('manageOrders'), validateOrderTransition, markServed);
-router.patch('/:id/complete', authorizePermissions('manageOrders'), validateOrderTransition, completeOrder);
-router.patch('/:id/force-complete', authorizeRoles('super_admin', 'admin', 'branch_admin'), authorizePermissions('forceComplete'), validateOrderTransition, forceCompleteOrder);
-router.post('/:id/generate-bill', authorizePermissions('manageOrders'), generateOrderBill);
+router.patch('/:id/status', checkPermissions('manageOrders'), updateOrderStatusValidator, validate, validateOrderTransition, updateOrderStatus);
+router.patch('/:id/items', checkPermissions('manageOrders'), updateOrderItems);
+router.patch('/:id/reject', checkPermissions('manageOrders'), validateOrderTransition, rejectOrder);
+router.patch('/:id/cancel', checkPermissions('manageOrders'), validateOrderTransition, cancelOrder);
+router.patch('/:id/note', checkPermissions('manageOrders'), addChefNote);
+router.patch('/:id/accept', checkPermissions('manageOrders'), validateOrderTransition, acceptOrder);
+router.patch('/:id/start', checkPermissions('manageOrders'), validateOrderTransition, startPreparing);
+router.patch('/:id/ready', checkPermissions('manageOrders'), validateOrderTransition, markReady);
+router.patch('/:id/serve', checkPermissions('manageOrders'), validateOrderTransition, markServed);
+router.patch('/:id/complete', checkPermissions('manageOrders'), validateOrderTransition, completeOrder);
+router.patch('/:id/force-complete', checkRoles('super_admin', 'admin'), checkPermissions('forceComplete'), validateOrderTransition, forceCompleteOrder);
+router.post('/:id/generate-bill', checkPermissions('manageOrders'), generateOrderBill);
 
 module.exports = router;

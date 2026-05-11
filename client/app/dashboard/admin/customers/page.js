@@ -71,9 +71,9 @@ export default function CustomersDashboard() {
             <div>
               <h1 className="text-4xl font-black tracking-tight text-[var(--color-text-primary)] flex items-center gap-3">
                 <Crown className="text-[var(--color-primary)] h-10 w-10" />
-                Loyalty & CRM
+                Customer Rewards
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Manage customer relationships and auto-reward pipelines.</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Manage customer relationships and reward points.</p>
             </div>
             <button 
               onClick={fetchCRMData}
@@ -119,9 +119,9 @@ export default function CustomersDashboard() {
                   <Award size={120} />
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Outstanding Points</p>
-                <p className="text-4xl font-black mt-2">{analytics.totalLoyaltyPoints?.toLocaleString()}</p>
+                <p className="text-4xl font-black mt-2">{analytics.totalRewardPoints?.toLocaleString()}</p>
                 <p className="text-xs font-bold opacity-90 mt-2 flex items-center gap-1">
-                  Unclaimed loyalty capital
+                  Total reward points
                 </p>
               </div>
             </SlideIn>
@@ -143,7 +143,7 @@ export default function CustomersDashboard() {
           <div className="lg:col-span-2 space-y-6">
             <SlideIn delay={0.5}>
               <h2 className="text-lg font-black uppercase tracking-widest text-[var(--color-text-primary)] flex items-center gap-2">
-                <Star className="text-[var(--color-primary)]" /> Top Loyalists
+                <Star className="text-[var(--color-primary)]" /> Top Reward Earners
               </h2>
             </SlideIn>
             <div className="bg-[var(--color-surface)] rounded-[2.5rem] border border-[var(--color-border)] shadow-sm overflow-hidden">
@@ -265,8 +265,8 @@ export default function CustomersDashboard() {
                   <p className="text-2xl font-black text-[var(--color-success)]">₹{viewingCustomer.totalSpend?.toLocaleString()}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mb-1 flex items-center gap-1"><Ticket size={12}/> Active Points</p>
-                  <p className="text-2xl font-black text-[var(--color-primary)]">{viewingCustomer.loyaltyPoints}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mb-1 flex items-center gap-1"><Award size={12}/> Reward Points</p>
+                  <p className="text-2xl font-black text-[var(--color-primary)]">{viewingCustomer.loyaltyPoints} pts</p>
                 </div>
               </div>
             </div>

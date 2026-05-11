@@ -278,7 +278,7 @@ export default function TablesPage() {
 
   const handleSendToKitchen = async () => {
     if (pendingOrders.length === 0) return toast.error('No items staged for production');
-    if (!selectedTable.customerName) return toast.error('Guest identity required');
+    if (!selectedTable.customerName) return toast.error('Guest name required');
 
     const loadToast = toast.loading('Transmitting to kitchen...');
     try {
@@ -315,9 +315,9 @@ export default function TablesPage() {
       setSelectedTable(res.data.data);
       setPendingOrders([...newOrders]);
       fetchTables();
-      toast.success('Item purged', { id: loadToast });
+      toast.success('Item removed', { id: loadToast });
     } catch (error) {
-      toast.error('Purge failed', { id: loadToast });
+      toast.error('Remove failed', { id: loadToast });
     }
   };
 
@@ -333,7 +333,7 @@ export default function TablesPage() {
       setShowOrderModal(false);
       setSelectedTable(null);
       fetchTables();
-      toast.success('Session archived to ledger', { id: loadToast });
+      toast.success('Bill saved to history', { id: loadToast });
     } catch (error) {
       toast.error('Archival rule failed', { id: loadToast });
     }
@@ -352,7 +352,7 @@ export default function TablesPage() {
     try {
       await api.delete(`/tables/${showDeleteConfirm}`);
       fetchTables();
-      toast.success('Table liquidated', { id: loadToast });
+      toast.success('Table finished', { id: loadToast });
     } catch (error) {
       toast.error('System Rule error', { id: loadToast });
     }
@@ -651,7 +651,7 @@ export default function TablesPage() {
                   <div className="grid grid-cols-2 gap-6 p-5 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm">
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        Guest Identity <span className="text-rose-500 font-bold">*</span>
+                        Guest Name <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <input 
                         type="text"

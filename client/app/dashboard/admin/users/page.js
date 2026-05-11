@@ -23,7 +23,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (user && !['super_admin', 'admin'].includes(user.role)) {
-      toast.error('Access Denied: Administrative clearance required');
+      toast.error('Access Denied: Admin permission required');
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -98,7 +98,7 @@ export default function UsersPage() {
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       await api.patch(`/users/${userId}/toggle-block`);
-      toast.success(`User rule modification established`);
+      toast.success(`User settings saved`);
       fetchUsers();
     } catch (err) {
       toast.error('System Rule modification failed');
@@ -173,14 +173,14 @@ export default function UsersPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <span className="px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-[var(--color-primary)]/20 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.1)]">
-              Access Level: ADMIN
+              Role: ADMIN
             </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
               <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Staff Management List</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
               <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]" />
-              Users <span className="text-[var(--color-text-muted)] not-italic">Archive</span>
+              Users <span className="text-[var(--color-text-muted)] not-italic">List</span>
             </h1>
           </div>
 
@@ -190,7 +190,7 @@ export default function UsersPage() {
             icon={UserPlus}
             onClick={() => router.push('/signup')}
           >
-            Authorize New User
+            Add New Staff
           </Button>
         </div>
 
@@ -476,7 +476,7 @@ export default function UsersPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Access Role</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Staff Role</label>
                   <select name="role" defaultValue={editingUser.role} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
                     <option value="staff">Field Operator (Staff)</option>
                     <option value="chef">Culinary Specialist (Chef)</option>

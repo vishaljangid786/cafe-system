@@ -76,7 +76,7 @@ const seedData = async () => {
         name: `Branch Admin ${i+1}`, email: `branch${i+1}@cafeos.com`, password: 'password123', phone: `999999991${i}`, gender: 'Male',
         age: 35, address1: 'Branch', city: loc.city, state: loc.state, country: 'India', pincode: loc.pincode, role: 'branch_admin', assignedLocation: loc._id,
         aadharNumber: `11112222334${i}`, aadharImage: 'http://example.com/aadhar', highestQualification: 'Graduate',
-        permissions: { viewOrders: true, manageOrders: true, manageStaff: true }
+        permissions: { viewOrders: true, manageOrders: true, manageStaff: true, viewAnalytics: true }
       },
       {
         name: `Chef ${i+1}`, email: `chef${i+1}@cafeos.com`, password: 'password123', phone: `999999992${i}`, gender: 'Male',
@@ -180,7 +180,8 @@ const seedData = async () => {
       loyaltyPoints: Math.floor(Math.random() * 1000),
       totalSpend: Math.floor(Math.random() * 10000),
       visits: Math.floor(Math.random() * 20) + 1,
-      lastVisit: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      lastVisit: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+      branch: locations[Math.floor(Math.random() * locations.length)]._id
     }));
     const customers = await Customer.insertMany(customerData);
 

@@ -16,7 +16,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
 
   if (!token) {
     res.status(401);
-    throw new Error('Not authorized, no token');
+    throw new Error('Please login to continue');
   }
 
   try {
@@ -26,7 +26,16 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     
     if (!req.user) {
       res.status(401);
-      throw new Error('Not authorized, user not found');
+      throw new Error('User not found. Please login again.');
+    }
+
+    // Enterprise Session Revocation Check
+    const tokenVersion = decoded.sessionVersion || 1; // Graceful migration for legacy tokens
+    const userVersion = req.user.sessionVersion || 1;
+
+    if (tokenVersion !== userVersion) {
+      res.status(401);
+      throw new Error('Session expired due to security update. Please log in again.');
     }
 
     // Security Check: Blocked/Inactive Users
@@ -37,7 +46,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
 
     if (req.user.active === false) {
       res.status(403);
-      throw new Error('Account inactive. Access denied.');
+      throw new Error('Account inactive. Permission denied.');
     }
 
     if (decoded.impersonatedBy) {
@@ -54,23 +63,23 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     if (res.statusCode === 200) {
       res.status(401);
     }
-    throw new Error(error.message || 'Not authorized, token failed');
+    throw new Error(error.message || 'Login failed. Please try again.');
   }
 });
 
-const authorizeRoles = (...roles) => {
+const checkRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       res.status(403);
       throw new Error(
-        `User role '${req.user.role}' is not authorized to access this route`
+        `You do not have permission to open this area`
       );
     }
     next();
   };
 };
 
-const authorizePermissions = (...permissions) => {
+const checkPermissions = (...permissions) => {
   return (req, res, next) => {
     if (req.user.role === 'super_admin') {
       return next();
@@ -80,11 +89,12 @@ const authorizePermissions = (...permissions) => {
     const hasPermission = permissions.every(p => userPermissions[p]);
 
     if (!hasPermission) {
+      console.error(`[AUTH_FAILURE] User: ${req.user.name} (${req.user.role}) - Missing Permissions: ${permissions.join(', ')}`);
       res.status(403);
-      throw new Error('User does not have the required permissions');
+      throw new Error('You do not have permission to do this');
     }
     next();
   };
 };
 
-module.exports = { verifyToken, authorizeRoles, authorizePermissions };
+module.exports = { verifyToken, checkRoles, checkPermissions };

@@ -53,7 +53,7 @@ export default function ImpersonatePage() {
 
   useEffect(() => {
     if (user && !['super_admin', 'admin', 'branch_admin'].includes(user.role) && !user?.impersonatedBy) {
-      toast.error('Access Denied: Insufficient clearance for identity management');
+      toast.error('Access Denied: Insufficient permission for staff login');
       router.push('/dashboard');
       return;
     }
@@ -68,15 +68,15 @@ export default function ImpersonatePage() {
   const handleImpersonate = async (userId, userName) => {
     try {
       setImpersonating(true);
-      toast.loading(`Establishing session as ${userName}...`, { id: 'impersonate' });
+      toast.loading(`Logging in as ${userName}...`, { id: 'impersonate' });
       const res = await impersonate(userId);
       if (res.success) {
-        toast.success(`Identity assumed: ${userName}`, { id: 'impersonate' });
+        toast.success(`Logged in as: ${userName}`, { id: 'impersonate' });
       } else {
         toast.error(res.message || 'Impersonation sequence failed', { id: 'impersonate' });
       }
     } catch (err) {
-      toast.error('Critical failure in identity swap', { id: 'impersonate' });
+      toast.error('Failed to switch user', { id: 'impersonate' });
     } finally {
       setImpersonating(false);
     }
@@ -85,15 +85,15 @@ export default function ImpersonatePage() {
   const handleExitImpersonation = async () => {
     try {
       setImpersonating(true);
-      toast.loading('Restoring original identity...', { id: 'exit-impersonate' });
+      toast.loading('Switching back to your account...', { id: 'exit-impersonate' });
       const res = await exitImpersonation();
       if (res.success) {
-        toast.success('Original identity restored', { id: 'exit-impersonate' });
+        toast.success('Successfully switched back', { id: 'exit-impersonate' });
       } else {
-        toast.error(res.message || 'Failed to restore identity', { id: 'exit-impersonate' });
+        toast.error(res.message || 'Failed to switch back', { id: 'exit-impersonate' });
       }
     } catch (err) {
-      toast.error('Critical failure in identity restoration', { id: 'exit-impersonate' });
+      toast.error('Critical failure in account switching', { id: 'exit-impersonate' });
     } finally {
       setImpersonating(false);
     }
@@ -106,7 +106,7 @@ export default function ImpersonatePage() {
   );
 
   const getSecurityLabel = () => {
-    if (user?.isImpersonating) return 'ACTIVE SESSION: IMPERSONATING';
+    if (user?.isImpersonating) return 'ACTIVE SESSION: LOGGED IN AS STAFF';
     if (user?.role === 'super_admin') return 'Security Level: SUPER ADMIN';
     if (user?.role === 'admin') return 'Security Level: ADMIN';
     if (user?.role === 'branch_admin') return 'Security Level: BRANCH MANAGER';
@@ -118,7 +118,7 @@ export default function ImpersonatePage() {
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)] animate-pulse">Syncing Identities</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)] animate-pulse">Loading Staff</p>
         </div>
       </div>
     );
@@ -136,15 +136,15 @@ export default function ImpersonatePage() {
                 {getSecurityLabel()}
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-              <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Identity Management</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Staff Login Control</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
               <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]`} />
-              Impersonate <span className="text-[var(--color-text-muted)] not-italic">Center</span>
+              Login As <span className="text-[var(--color-text-muted)] not-italic">Member</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-[var(--color-text-muted)] leading-relaxed">
-              Assume the identity of staff members to debug issues or assist with operations. 
-              {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">Limited to your current branch personnel.</span>}
+              Login as any staff member to help them or check issues. 
+              {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">Limited to your current branch staff.</span>}
               <span className="text-[var(--color-danger)] font-bold ml-1 italic">Exercise caution: all actions are logged.</span>
             </p>
           </div>
@@ -157,7 +157,7 @@ export default function ImpersonatePage() {
               onClick={handleExitImpersonation}
               disabled={impersonating}
             >
-              Exit Impersonation
+              Logout from Member
             </Button>
           )}
         </div>
@@ -232,7 +232,7 @@ export default function ImpersonatePage() {
                   onClick={() => handleImpersonate(u._id, u.name)}
                   disabled={impersonating || u.isBlocked}
                 >
-                  Assume Identity
+                  Login As
                 </Button>
               </div>
 

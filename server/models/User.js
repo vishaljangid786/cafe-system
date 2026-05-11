@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 const userSchema = new mongoose.Schema(
   {
@@ -98,6 +99,8 @@ const userSchema = new mongoose.Schema(
     aadharNumber: {
       type: String,
       match: [/^[0-9]{12}$/, 'Please add a valid 12-digit Aadhar number'],
+      set: (val) => encrypt(val),
+      get: (val) => decrypt(val),
     },
     aadharImage: {
       type: String, // Cloudinary URL
@@ -123,9 +126,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    sessionVersion: {
+      type: Number,
+      default: 1,
+    },
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

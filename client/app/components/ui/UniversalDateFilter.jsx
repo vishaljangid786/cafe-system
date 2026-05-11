@@ -202,15 +202,15 @@ export default function UniversalDateFilter({
   }, [customDates]);
 
   return (
-    <div className={`flex flex-col gap-4 ${className}`}>
-      <div className="flex flex-wrap items-center gap-3 bg-[var(--color-bg-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm relative">
+    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
+      <div className="relative">
         <PremiumSelect
           icon={Calendar}
-          label="Date Range"
           value={filterType}
           onChange={(val) => setFilterType(val)}
           options={filterOptions}
-          className="min-w-[200px] !py-2"
+          className="w-full"
+          placeholder="Select Range"
         />
 
         {loading && (
@@ -223,79 +223,77 @@ export default function UniversalDateFilter({
       <AnimatePresence>
         {filterType === 'past_week' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-xs"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="flex-1"
           >
             <PremiumSelect
               icon={Clock}
-              label="Select Week"
               value={selectedSubValue}
               onChange={(val) => setSelectedSubValue(val)}
               options={getPastWeeks()}
-              placeholder="Choose a past week"
+              placeholder="Choose Week"
             />
           </motion.div>
         )}
 
         {filterType === 'past_month' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-xs"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="flex-1"
           >
             <PremiumSelect
               icon={Clock}
-              label="Select Month"
               value={selectedSubValue}
               onChange={(val) => setSelectedSubValue(val)}
               options={getPastMonths()}
-              placeholder="Choose a past month"
+              placeholder="Choose Month"
             />
           </motion.div>
         )}
 
         {filterType === 'past_year' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-xs"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="flex-1"
           >
             <PremiumSelect
               icon={Clock}
-              label="Select Year"
               value={selectedSubValue}
               onChange={(val) => setSelectedSubValue(val)}
               options={getPastYears()}
-              placeholder="Choose a past year"
+              placeholder="Choose Year"
             />
           </motion.div>
         )}
 
         {filterType === 'custom' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex gap-4 p-4 glass-card border border-[var(--color-border)] rounded-2xl shadow-sm"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="flex gap-2 p-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl items-center shrink-0"
           >
-            <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
+            <div className="flex items-center gap-2 pl-3">
+              <span className="text-[9px] font-black uppercase text-[var(--color-text-muted)] whitespace-nowrap">From</span>
               <input
                 type="date"
-                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                className="bg-transparent text-[10px] font-black uppercase outline-none text-[var(--color-text-primary)] w-24"
                 value={customDates.start}
                 onChange={e => setCustomDates({ ...customDates, start: e.target.value })}
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
+            <div className="w-px h-4 bg-[var(--color-border)]" />
+            <div className="flex items-center gap-2 pr-3">
+              <span className="text-[9px] font-black uppercase text-[var(--color-text-muted)] whitespace-nowrap">To</span>
               <input
                 type="date"
-                className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                className="bg-transparent text-[10px] font-black uppercase outline-none text-[var(--color-text-primary)] w-24"
                 value={customDates.end}
                 onChange={e => setCustomDates({ ...customDates, end: e.target.value })}
               />

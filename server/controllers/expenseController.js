@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
 const { enforceLocationAccess, escapeRegex, clampLimit } = require('../utils/accessControl');
+const TransactionService = require('../services/transactionService');
 
 // @desc    Add an expense
 // @route   POST /api/expenses
@@ -20,7 +21,7 @@ const addExpense = asyncHandler(async (req, res) => {
     throw new Error('Location ID is required');
   }
 
-  enforceLocationAccess(req, res, locationId, 'Not authorized to create expenses for this location');
+  enforceLocationAccess(req, res, locationId, 'You do not have permission to create expenses for this location');
 
   // Map category to description if description is empty
   if (!description && category) {
@@ -45,7 +46,11 @@ const addExpense = asyncHandler(async (req, res) => {
     locationId,
     createdBy: req.user._id,
     proofImage,
+    status: req.user.role === 'super_admin' ? 'approved' : 'pending'
   });
+
+  // Sync to Transaction Ledger
+  await TransactionService.syncExpenseToTransaction(expense);
 
   await sendNotification({
     title: 'New Expense Added',
@@ -74,20 +79,28 @@ const updateExpense = asyncHandler(async (req, res) => {
     throw new Error('Expense not found');
   }
 
-  enforceLocationAccess(req, res, expense.locationId, 'Not authorized to update this expense');
+  enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to update this expense');
 
-  if (req.body.locationId) {
-    enforceLocationAccess(req, res, req.body.locationId, 'Not authorized to move expenses to this location');
-  }
+  const allowedUpdates = ['title', 'description', 'amount', 'date', 'category'];
+  const updateData = {};
+  
+  allowedUpdates.forEach(field => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
 
   if (req.file) {
-    req.body.proofImage = req.file.path;
+    updateData.proofImage = req.file.path;
   }
 
-  expense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+  expense = await Expense.findByIdAndUpdate(req.params.id, { $set: updateData }, {
     new: true,
     runValidators: true,
   });
+
+  // Sync to Transaction Ledger
+  await TransactionService.syncExpenseToTransaction(expense);
 
   await sendNotification({
     title: 'Expense Updated',
@@ -116,7 +129,7 @@ const deleteExpense = asyncHandler(async (req, res) => {
     throw new Error('Expense not found');
   }
 
-  enforceLocationAccess(req, res, expense.locationId, 'Not authorized to delete this expense');
+  enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to delete this expense');
 
   await expense.deleteOne();
 
@@ -156,7 +169,7 @@ const getExpenses = asyncHandler(async (req, res) => {
         loc => loc.toString() === req.query.locationId
       );
       if (!isAccessible) {
-        return res.status(403).json({ success: false, message: 'Access denied to this location' });
+        return res.status(403).json({ success: false, message: 'Permission denied to this location' });
       }
       query.locationId = req.query.locationId;
     } else {
@@ -235,9 +248,52 @@ const getExpenses = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update expense status (approve/reject)
+// @route   PATCH /api/expenses/:id/status
+// @access  Private (Admin/Branch Admin)
+const updateExpenseStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  
+  if (!['approved', 'rejected', 'completed'].includes(status)) {
+    res.status(400);
+    throw new Error('Invalid status');
+  }
+
+  let expense = await Expense.findById(req.params.id);
+
+  if (!expense) {
+    res.status(404);
+    throw new Error('Expense not found');
+  }
+
+  enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to update this expense');
+
+  expense.status = status;
+  await expense.save();
+
+  // Sync to Transaction Ledger
+  await TransactionService.syncExpenseToTransaction(expense);
+
+  await sendNotification({
+    title: `Expense ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    message: `Expense "${expense.title}" was ${status} by ${req.user.name}.`,
+    type: 'expense',
+    performedByUser: req.user,
+    locationId: expense.locationId,
+  });
+
+  await logAction(req, 'EXPENSE_STATUS_UPDATE', `Updated expense status to ${status}: ${expense.title}`);
+
+  res.json({
+    success: true,
+    data: expense,
+  });
+});
+
 module.exports = {
   addExpense,
   updateExpense,
   deleteExpense,
   getExpenses,
+  updateExpenseStatus,
 };

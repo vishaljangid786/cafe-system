@@ -7,7 +7,7 @@ import {
   TrendingDown, IndianRupee, Search, Filter, 
   ChevronRight, Calendar, MapPin, Target, 
   ArrowDownRight, Activity, Wallet, Receipt,
-  Plus
+  Plus, RefreshCw
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { 
@@ -55,8 +55,9 @@ export default function LocationExpensesPage() {
       }
       if (start) query.append('startDate', start);
 
+      query.append('type', 'EXPENSE');
       const res = await api.get(`/transactions?${query.toString()}`);
-      const expensesOnly = res.data.data.filter(t => t.type === 'expense');
+      const expensesOnly = res.data.data.filter(t => t.type === 'EXPENSE');
       setTransactions(expensesOnly);
     } catch (err) {
       console.error('Expenses load failed');
@@ -77,7 +78,7 @@ export default function LocationExpensesPage() {
     e.preventDefault();
     const loadToast = toast.loading('Saving expense...');
     try {
-      const data = { ...formData, type: 'expense' };
+      const data = { ...formData, type: 'EXPENSE' };
       await api.post('/transactions', data);
       toast.success('Expense saved', { id: loadToast });
       setShowAddModal(false);
@@ -194,6 +195,13 @@ export default function LocationExpensesPage() {
                 { header: 'Amount', key: 'totalAmount' }
               ]} 
               filename="branch_expenses" 
+            />
+            <Button
+              variant="secondary"
+              icon={RefreshCw}
+              onClick={fetchExpenses}
+              isLoading={loading}
+              className="!rounded-2xl !py-4 px-4 bg-zinc-100 dark:bg-zinc-800 border-none hover:bg-zinc-200 dark:hover:bg-zinc-700"
             />
           </div>
         </div>

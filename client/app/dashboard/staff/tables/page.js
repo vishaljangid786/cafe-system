@@ -14,7 +14,7 @@ import BillPreview from '../../../components/tables/BillPreview';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function StaffTablesPage() {
-  const { user, socket } = useAuth();
+  const { user, socket, selectedLocation } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,10 +60,11 @@ export default function StaffTablesPage() {
   }, [showOrderModal]);
 
   const fetchTables = async (silent = false) => {
-    if (!user?.assignedLocation) return;
+    const locId = selectedLocation?._id || selectedLocation || user?.assignedLocation?._id || user?.assignedLocation;
+    if (!locId) return;
     if (!silent) setLoading(true);
     try {
-      const res = await api.get(`/tables?locationId=${user.assignedLocation._id || user.assignedLocation}`);
+      const res = await api.get(`/tables?locationId=${locId}`);
       setTables(res.data.data);
     } catch (error) {
       toast.error('Failed to sync floor plan');
@@ -89,9 +90,9 @@ export default function StaffTablesPage() {
   };
 
   const fetchMenu = async () => {
-    if (!user?.assignedLocation) return;
+    const locId = selectedLocation?._id || selectedLocation || user?.assignedLocation?._id || user?.assignedLocation;
+    if (!locId) return;
     try {
-      const locId = user.assignedLocation?._id || user.assignedLocation;
       const res = await api.get(`/menu?locationId=${locId}`);
       setMenuItems(res.data.data);
     } catch (error) {
@@ -106,10 +107,11 @@ export default function StaffTablesPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, selectedLocation]);
 
   useEffect(() => {
-    if (socket && user?.assignedLocation) {
+    const locId = selectedLocation?._id || selectedLocation || user?.assignedLocation?._id || user?.assignedLocation;
+    if (socket && locId) {
       // Listeners are now attached to rooms joined in AuthContext
       socket.on('table:update', () => fetchTables(true));
       socket.on('order:new', () => fetchTables(true));
@@ -222,7 +224,7 @@ export default function StaffTablesPage() {
   const handleFinalizeSession = async (file, finalTotal) => {
     const loadToast = toast.loading('Archiving session...');
     if (!selectedTable.customerName) {
-      toast.error('Customer identity required for archival', { id: loadToast });
+      toast.error('Customer name required for archival', { id: loadToast });
       return;
     }
 
@@ -239,7 +241,7 @@ export default function StaffTablesPage() {
       setDiscountAmount(0);
       setCouponCode('');
       fetchTables();
-      toast.success('Session archived', { id: loadToast });
+      toast.success('Session saved', { id: loadToast });
     } catch (error) {
       toast.error('Archival failure', { id: loadToast });
     }
@@ -247,7 +249,7 @@ export default function StaffTablesPage() {
 
   const handleSendToKitchen = async () => {
     if (pendingOrders.length === 0) return toast.error('No items staged for production');
-    if (!selectedTable.customerName) return toast.error('Guest identity required');
+    if (!selectedTable.customerName) return toast.error('Guest name required');
 
     const loadToast = toast.loading('Transmitting to kitchen...');
     try {
@@ -261,7 +263,8 @@ export default function StaffTablesPage() {
           price: item.price,
           costPrice: item.costPrice || 0
         })),
-        totalAmount: pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity)), 0)
+        totalAmount: pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity)), 0),
+        discountAmount: Number(discountAmount || 0)
       };
 
       await api.post('/orders', payload);
@@ -353,7 +356,7 @@ export default function StaffTablesPage() {
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
-                  className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
                     statusFilter === f 
                       ? 'bg-blue-500 text-black shadow-lg shadow-blue-500/20' 
                       : 'text-zinc-500 hover:text-blue-500'
@@ -453,7 +456,7 @@ export default function StaffTablesPage() {
                   <div className="grid grid-cols-2 gap-6 p-5 bg-card rounded-[2rem] border border-border shadow-sm">
                     <div className="space-y-2">
                       <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        Guest Identity <span className="text-rose-500 font-bold">*</span>
+                        Guest Name <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <input 
                         type="text"

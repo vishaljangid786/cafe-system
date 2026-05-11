@@ -42,7 +42,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
     endDate: '',
     category: '',
     foodItem: '',
-    branch: '',
+    branch: (['staff', 'chef'].includes(role) && user.assignedLocation) ? (user.assignedLocation._id || user.assignedLocation) : '',
     paymentType: '',
     coupon: ''
   });
@@ -65,7 +65,14 @@ export default function StaffPerformanceDashboard({ user, role }) {
       ]);
       setCategories(catRes.data.data || []);
       setMenuItems(menuRes.data.data || []);
-      setBranches(locRes.data.data || []);
+      
+      let locData = locRes.data.data || [];
+      if (['staff', 'chef'].includes(role) && user.assignedLocation) {
+        const myLocId = user.assignedLocation._id || user.assignedLocation;
+        locData = locData.filter(loc => loc._id === myLocId);
+      }
+      setBranches(locData);
+      
       setCoupons(coupRes.data.data || []);
     } catch (error) {
       console.error('Failed to load filter options');
@@ -203,10 +210,14 @@ export default function StaffPerformanceDashboard({ user, role }) {
             <PremiumSelect
               value={filters.branch}
               onChange={(val) => handleFilterChange('branch', val)}
-              options={[
-                { label: 'All Branches', value: '' },
-                ...branches.map(loc => ({ label: loc.name, value: loc._id }))
-              ]}
+              disabled={['staff', 'chef'].includes(role)}
+              options={['staff', 'chef'].includes(role) ? 
+                branches.map(loc => ({ label: loc.name, value: loc._id })) :
+                [
+                  { label: 'All Branches', value: '' },
+                  ...branches.map(loc => ({ label: loc.name, value: loc._id }))
+                ]
+              }
               className="w-full"
             />
           </div>

@@ -207,9 +207,6 @@ const applyCoupon = asyncHandler(async (req, res) => {
 
   const finalAmount = Math.max(0, orderAmount - discount);
 
-  // Increment usage atomically
-  await Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: 1 } });
-
   res.json({
     success: true,
     data: { discount, finalAmount, couponId: coupon._id, code: coupon.code },

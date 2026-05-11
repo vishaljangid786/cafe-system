@@ -10,14 +10,7 @@ import toast from 'react-hot-toast';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = Cookies.get('user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +48,18 @@ export const AuthProvider = ({ children }) => {
     setSocket(newSocket);
   };
 
+  // Single source of truth for role-based dashboard routing
+  const getRoleDashboard = (role) => {
+    const map = {
+      super_admin: '/dashboard/admin',
+      admin: '/dashboard/admin',
+      branch_admin: '/dashboard/branch-admin',
+      chef: '/dashboard/chef',
+      staff: '/dashboard/staff',
+    };
+    return map[role] || '/dashboard/staff';
+  };
+
   const checkAuth = async () => {
     try {
       setLoading(true);
@@ -62,12 +67,13 @@ export const AuthProvider = ({ children }) => {
       if (res.data.success) {
         const userData = res.data.data;
         setUser(userData);
-        Cookies.set('user', JSON.stringify(userData), { expires: 7 });
+        // Do NOT persist full user object in a readable cookie — use in-memory state only.
+        // The server-side httpOnly JWT cookie is the actual auth token.
 
-        // Recover Location & Socket
+        // Recover Location & Socket — only runs when session is confirmed.
         const storedLocation = Cookies.get('selectedLocation');
         let initialLocation = null;
-        
+
         if (storedLocation) {
           try {
             initialLocation = JSON.parse(storedLocation);
@@ -84,6 +90,8 @@ export const AuthProvider = ({ children }) => {
         }
 
         initializeSocket(userData, initialLocation);
+        // Fetch locations only after session is confirmed to avoid unauthenticated API calls.
+        await fetchLocations();
       }
     } catch (err) {
       if (err.response?.status !== 401) {
@@ -97,11 +105,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      checkAuth();
-      fetchLocations();
-    }, 0);
-    
+    // fetchLocations is called inside checkAuth after session is confirmed.
+    // Calling it here unconditionally caused "Failed to load global locations"
+    // errors for unauthenticated users (e.g., on the login page).
+    const timer = setTimeout(() => checkAuth(), 0);
+
     return () => {
       clearTimeout(timer);
       if (socketRef.current) {
@@ -125,11 +133,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const res = await api.post('/auth/login', { email, password });
       const userData = res.data.data;
-      
+
       setUser(userData);
-      Cookies.set('user', JSON.stringify(userData), { expires: 7 });
-      
-      // Set initial location on login
+      // Do NOT store full user object in readable cookie (XSS risk).
+      // In-memory state + server httpOnly JWT cookie is sufficient.
+
       const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
@@ -137,33 +145,32 @@ export const AuthProvider = ({ children }) => {
       }
 
       initializeSocket(userData, initialLoc);
-      
+      await fetchLocations();
       toast.success(`Welcome back, ${userData.name}`);
-
-      if (userData.role === 'super_admin' || userData.role === 'admin') {
-        router.push('/dashboard/admin');
-      } else if (userData.role === 'branch_admin') {
-        router.push('/dashboard/branch-admin');
-      } else if (userData.role === 'chef') {
-        router.push('/dashboard/chef');
-      } else {
-        router.push('/dashboard/staff');
-      }
+      router.push(getRoleDashboard(userData.role));
 
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
-      };
-    } finally {
       setLoading(false);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await api.get('/auth/logout');
+    } catch (err) {
+      logger.error('Backend logout failed');
+    }
+    
     Cookies.remove('user');
     Cookies.remove('selectedLocation');
+    Cookies.remove('token'); // In case it was not httpOnly
+    
     setUser(null);
     setSelectedLocation(null);
     if (socketRef.current) {
@@ -171,6 +178,7 @@ export const AuthProvider = ({ children }) => {
       socketRef.current = null;
       setSocket(null);
     }
+    setLoading(false);
     router.push('/login');
   };
 
@@ -178,12 +186,11 @@ export const AuthProvider = ({ children }) => {
 
   const impersonate = async (userId, viewOnly = false) => {
     try {
+      setLoading(true);
       const res = await api.post(`/auth/impersonate/${userId}`, { viewOnly });
       const userData = res.data.data;
-      Cookies.set('user', JSON.stringify(userData), { expires: 30 });
-
       setUser(userData);
-      
+
       const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
@@ -196,31 +203,22 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
-
-      if (userData.role === 'super_admin' || userData.role === 'admin') {
-        router.push('/dashboard/admin');
-      } else if (userData.role === 'branch_admin') {
-        router.push('/dashboard/branch-admin');
-      } else if (userData.role === 'chef') {
-        router.push('/dashboard/chef');
-      } else {
-        router.push('/dashboard/staff');
-      }
+      router.push(getRoleDashboard(userData.role));
 
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Impersonation failed' };
+      setLoading(false);
+      return { success: false, message: error.response?.data?.message || 'Failed to login as staff' };
     }
   };
 
   const exitImpersonation = async () => {
     try {
+      setLoading(true);
       const res = await api.post('/auth/exit-impersonation');
       const userData = res.data.data;
-      Cookies.set('user', JSON.stringify(userData), { expires: 30 });
-
       setUser(userData);
-      
+
       const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
@@ -233,12 +231,12 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
-
       router.push('/dashboard/admin/users');
 
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Failed to exit impersonation' };
+      setLoading(false);
+      return { success: false, message: error.response?.data?.message || 'Failed to logout from member' };
     }
   };
 

@@ -23,6 +23,9 @@ export default function GlobalAttendancePage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [staff, setStaff] = useState([]);
+  const [markingLoading, setMarkingLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 20;
   
   const columns = [
@@ -47,6 +50,14 @@ export default function GlobalAttendancePage() {
         setTotalPages(attRes.data.pagination?.pages || 1);
         setSummary(summaryRes.data.data);
         setLocations(locRes.data.data);
+
+        // Fetch staff if a specific location is selected
+        if (filters.locationId !== 'All') {
+          const staffRes = await api.get(`/users?assignedLocation=${filters.locationId}`);
+          setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
+        } else {
+          setStaff([]);
+        }
       } catch (err) {
         console.error('Failed to fetch attendance list:', err.response?.data || err.message);
         toast.error(err.response?.data?.message || 'Failed to fetch attendance data stream');
@@ -56,6 +67,39 @@ export default function GlobalAttendancePage() {
     };
     fetchData();
   }, [filters, currentPage]);
+
+  const handleMarkAttendance = async (userId, status) => {
+    const loadToast = toast.loading(`Marking ${status}...`);
+    try {
+      setMarkingLoading(true);
+      await api.post('/attendance/mark', { 
+        userId, 
+        date: filters.date, 
+        status,
+        locationId: filters.locationId === 'All' ? undefined : filters.locationId 
+      });
+      
+      // Re-fetch attendance logs for the table
+      const attRes = await api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`);
+      setAttendance(attRes.data.data);
+      
+      toast.success('Attendance updated', { id: loadToast });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to mark attendance', { id: loadToast });
+    } finally {
+      setMarkingLoading(false);
+    }
+  };
+
+  const getAttendanceStatus = (userId) => {
+    const record = attendance.find(a => (a.user?._id || a.user) === userId);
+    return record ? record.status : 'unmarked';
+  };
+
+  const filteredStaff = staff.filter(u =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <PageTransition>
@@ -98,26 +142,6 @@ export default function GlobalAttendancePage() {
             hasCharts={true}
           />
 
-          {/* Seed Data Button (Development Only) */}
-          <button
-            onClick={async () => {
-              try {
-                setLoading(true);
-                await api.post('/seed/attendance');
-                toast.success('Database seeded with 14 days of logs!');
-                // Re-fetch data
-                window.location.reload();
-              } catch (err) {
-                toast.error('Failed to seed data');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[var(--color-primary)]/20"
-          >
-            <Activity size={14} />
-            Seed Sample Data
-          </button>
 
         {/* Date Picker */}
         <div
@@ -262,6 +286,108 @@ export default function GlobalAttendancePage() {
             </div>
           </SlideIn>
         </div>
+
+        {/* Attendance Marking Section (Only when location is selected) */}
+        {filters.locationId !== 'All' && (
+          <SlideIn direction="up">
+            <div className="bg-[var(--color-surface)]/60 backdrop-blur-2xl rounded-3xl border border-[var(--color-border)] overflow-hidden shadow-[var(--shadow-premium)]">
+              <div className="px-8 py-6 border-b border-[var(--color-border)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">Mark Attendance</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
+                    Manage presence for {locations.find(l => l._id === filters.locationId)?.name}
+                  </p>
+                </div>
+                
+                <div className="relative w-full md:w-64">
+                  <Filter size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                  <input 
+                    type="text"
+                    placeholder="Search staff..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs font-bold transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)]">
+                      <th className="px-8 py-5">Staff Member</th>
+                      <th className="px-8 py-5 text-center">Status</th>
+                      <th className="px-8 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)]">
+                    {filteredStaff.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="px-8 py-10 text-center text-[var(--color-text-muted)] text-sm font-medium italic">
+                          No staff members found for this branch.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredStaff.map((user) => {
+                        const status = getAttendanceStatus(user._id);
+                        return (
+                          <tr key={user._id} className="hover:bg-[var(--color-primary)]/[0.02] transition-colors group">
+                            <td className="px-8 py-5">
+                              <div className="flex items-center">
+                                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center font-black text-[var(--color-primary)] border border-[var(--color-border)] group-hover:scale-105 transition-transform">
+                                  {user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="ml-4">
+                                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{user.name}</p>
+                                  <p className="text-[10px] font-medium text-[var(--color-text-muted)] tracking-wider uppercase">{user.role}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex justify-center">
+                                <span className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border shadow-sm ${
+                                  status === 'present' ? 'bg-green-50 text-green-600 border-green-200' :
+                                  status === 'absent' ? 'bg-red-50 text-red-600 border-red-200' :
+                                  status === 'half-day' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                  'bg-gray-50 text-gray-400 border-gray-200'
+                                }`}>
+                                  {status}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex justify-end gap-2">
+                                {[
+                                  { id: 'present', icon: CheckCircle2, label: 'Present', color: 'green' },
+                                  { id: 'half-day', icon: Activity, label: 'Half', color: 'blue' },
+                                  { id: 'absent', icon: XCircle, label: 'Absent', color: 'red' }
+                                ].map(btn => (
+                                  <button
+                                    key={btn.id}
+                                    disabled={markingLoading}
+                                    onClick={() => handleMarkAttendance(user._id, btn.id)}
+                                    className={`p-2.5 rounded-xl border transition-all ${
+                                      status === btn.id 
+                                        ? `bg-${btn.color}-600 text-white border-${btn.color}-600 shadow-lg shadow-${btn.color}-600/20` 
+                                        : `text-${btn.color}-600 bg-${btn.color}-50 hover:bg-${btn.color}-600 hover:text-white border-${btn.color}-100`
+                                    }`}
+                                    title={btn.label}
+                                  >
+                                    <btn.icon size={14} />
+                                  </button>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </SlideIn>
+        )}
 
         {/* Attendance Table */}
         <SlideIn direction="up" delay={0.5}>

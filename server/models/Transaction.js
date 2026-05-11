@@ -20,12 +20,16 @@ const transactionSchema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
-      enum: ['CASH', 'UPI', 'CARD', 'OTHER'],
+      enum: ['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'],
       default: 'CASH',
     },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order'
+    },
+    expenseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Expense'
     },
     title: {
       type: String,
@@ -103,6 +107,13 @@ transactionSchema.index({ createdBy: 1, date: -1 });
 transactionSchema.index({ status: 1 });
 transactionSchema.index({ category: 1 });
 transactionSchema.index({ createdAt: -1 });
+
+// Traceability lookups
+transactionSchema.index({ orderId: 1 });
+transactionSchema.index({ expenseId: 1 });
+
+// Optimized analytics filtering
+transactionSchema.index({ locationId: 1, status: 1, date: -1 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 module.exports = Transaction;
