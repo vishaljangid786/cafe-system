@@ -81,6 +81,16 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  const markAsUnread = async (id) => {
+    try {
+      await api.patch(`/notifications/${id}/unread`);
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
+      setUnreadCount(prev => prev + 1);
+    } catch (err) {
+      logger.error('Failed to mark as unread:', err.response?.data || err.message);
+    }
+  };
+
   const markAllAsRead = async () => {
     try {
       await api.patch('/notifications/read-all');
@@ -98,6 +108,7 @@ export const NotificationProvider = ({ children }) => {
       unreadCount, 
       loading, 
       markAsRead, 
+      markAsUnread,
       markAllAsRead, 
       refresh: fetchNotifications 
     }}>

@@ -53,7 +53,7 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <NotificationProvider>
               <Toaster
-                position="top-right"
+                position="bottom-right"
                 toastOptions={{
                   className: '!bg-[var(--color-surface)] !text-[var(--color-text-primary)] !border !border-[var(--color-border)] !rounded-[var(--radius-lg)] !p-4 !text-sm !font-bold !shadow-[var(--shadow-premium)]',
                   duration: 4000,

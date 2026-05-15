@@ -42,14 +42,18 @@ const getNotifications = asyncHandler(async (req, res) => {
     recipients: { $elemMatch: { user: req.user._id, isRead: false } }
   });
 
-  if (notifications.length === 0 && page > 1) {
-    // If user requested a page that doesn't exist, we could handle it here
-    // but usually it's better to just return empty array
-  }
+  // Map notifications to include isRead status for the current user
+  const processedNotifications = notifications.map(notif => {
+    const recipient = notif.recipients.find(r => r.user.toString() === req.user._id.toString());
+    return {
+      ...notif,
+      isRead: recipient ? recipient.isRead : false
+    };
+  });
 
   res.json({
     success: true,
-    data: notifications || [],
+    data: processedNotifications || [],
     pagination: {
       total: total || 0,
       page: parseInt(page),
@@ -70,6 +74,29 @@ const markAsRead = asyncHandler(async (req, res) => {
     },
     { 
       $set: { 'recipients.$.isRead': true } 
+    },
+    { new: true }
+  );
+
+  if (!notification) {
+    res.status(404);
+    throw new Error('Notification not found');
+  }
+
+  res.json({ success: true });
+});
+
+// @desc    Mark notification as unread
+// @route   PATCH /api/notifications/:id/unread
+// @access  Private
+const markAsUnread = asyncHandler(async (req, res) => {
+  const notification = await Notification.findOneAndUpdate(
+    { 
+      _id: req.params.id, 
+      'recipients.user': req.user._id 
+    },
+    { 
+      $set: { 'recipients.$.isRead': false } 
     },
     { new: true }
   );
@@ -294,6 +321,7 @@ const getTargetOptions = asyncHandler(async (req, res) => {
 module.exports = {
   getNotifications,
   markAsRead,
+  markAsUnread,
   markAllAsRead,
   createNotification,
   getTargetOptions

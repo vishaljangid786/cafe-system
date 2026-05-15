@@ -4,7 +4,7 @@ import {
   Bell, Search, Calendar,
   CheckCircle2, ChevronLeft,
   ChevronRight, AlertTriangle,
-  MessageSquare, User
+  MessageSquare, User, Reply, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
@@ -12,10 +12,11 @@ import { useNotifications } from '../../context/NotificationContext';
 import PageTransition from '../../components/ui/PageTransition';
 import { Button } from '../../components/ui/Button';
 import PremiumSelect from '../../components/ui/PremiumSelect';
+import Modal from '../../components/ui/Modal';
 import toast from 'react-hot-toast';
 
 const NotificationsPage = () => {
-  const { markAsRead, markAllAsRead, refresh } = useNotifications();
+  const { markAsRead, markAsUnread, markAllAsRead, refresh } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
@@ -24,8 +25,12 @@ const NotificationsPage = () => {
     type: '',
     startDate: '',
     endDate: '',
-    search: ''
+    search: '',
+    activeTab: 'all'
   });
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
 
   const fetchHistory = async (page = 1) => {
     try {
@@ -49,6 +54,45 @@ const NotificationsPage = () => {
     }
   };
 
+  const handleMarkAsRead = async (id) => {
+    await markAsRead(id);
+    setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+  };
+
+  const handleMarkAsUnread = async (id) => {
+    await markAsUnread(id);
+    setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const handleSendReply = async () => {
+    if (!replyMessage.trim()) return toast.error('Please enter a message');
+    
+    try {
+      setSendingReply(true);
+      await api.post('/notifications', {
+        title: `Reply to: ${replyingTo.title}`,
+        message: replyMessage,
+        type: 'message',
+        priority: 'medium',
+        targetType: 'individual',
+        targetId: replyingTo.sender._id
+      });
+      
+      toast.success('Reply sent successfully');
+      setReplyingTo(null);
+      setReplyMessage('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send reply');
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchHistory(pagination.page);
@@ -66,10 +110,29 @@ const NotificationsPage = () => {
     }
   };
 
-  const filteredNotifications = notifications.filter(n => 
-    n.title.toLowerCase().includes(filters.search.toLowerCase()) || 
-    n.message.toLowerCase().includes(filters.search.toLowerCase())
-  );
+  const filteredNotifications = notifications.filter(notif => {
+    const searchLower = (filters.search || '').toLowerCase();
+    const matchesSearch = !searchLower || 
+                         (notif.title || '').toLowerCase().includes(searchLower) || 
+                         (notif.message || '').toLowerCase().includes(searchLower);
+    
+    if (!matchesSearch) return false;
+
+    // If a specific type is chosen via dropdown, we prioritize that and ignore tabs
+    if (filters.type) return true;
+
+    if (filters.activeTab === 'all') return true;
+
+    const systemTypes = ['user_action', 'table_action', 'expense'];
+    const isSystem = systemTypes.includes(notif.type);
+    
+    if (filters.activeTab === 'system') {
+      return isSystem;
+    } else {
+      // General tab shows everything else
+      return !isSystem;
+    }
+  });
 
   return (
     <PageTransition>
@@ -101,7 +164,7 @@ const NotificationsPage = () => {
               <Button 
                 variant="secondary" 
                 icon={CheckCircle2}
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="!rounded-xl !py-3 px-6"
               >
                 Mark all as read
@@ -110,8 +173,51 @@ const NotificationsPage = () => {
           </div>
         </div>
 
+        {/* Tab Selection */}
+        <div className="flex items-center gap-6 border-b border-[var(--color-border)] mb-2">
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, activeTab: 'all' }))}
+            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+              filters.activeTab === 'all' 
+                ? 'text-[var(--color-primary)]' 
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            All
+            {filters.activeTab === 'all' && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, activeTab: 'general' }))}
+            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+              filters.activeTab === 'general' 
+                ? 'text-[var(--color-primary)]' 
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            General Alerts
+            {filters.activeTab === 'general' && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, activeTab: 'system' }))}
+            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+              filters.activeTab === 'system' 
+                ? 'text-[var(--color-primary)]' 
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            System Logs
+            {filters.activeTab === 'system' && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+            )}
+          </button>
+        </div>
+
         <div className="bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] shadow-sm">
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-center">
 
     {/* 🔍 Search */}
     <div className="relative group md:col-span-1">
@@ -146,18 +252,35 @@ const NotificationsPage = () => {
       )}
     </div>
 
-    {/* 🎯 Status */}
     <PremiumSelect
       value={filters.status}
       onChange={(val) =>
         setFilters((prev) => ({ ...prev, status: val }))
       }
       options={[
-        { label: 'All', value: 'all' },
+        { label: 'All Status', value: 'all' },
         { label: 'Unread', value: 'unread' },
         { label: 'Read', value: 'read' }
       ]}
-      className="min-w-[120px] w-full md:max-w-[140px]"
+      className="w-full"
+    />
+
+    {/* 📂 Category */}
+    <PremiumSelect
+      value={filters.type}
+      onChange={(val) =>
+        setFilters((prev) => ({ ...prev, type: val }))
+      }
+      options={[
+        { label: 'All Types', value: '' },
+        { label: 'Expenses', value: 'expense' },
+        { label: 'User Actions', value: 'user_action' },
+        { label: 'Table Actions', value: 'table_action' },
+        { label: 'Announcements', value: 'announcement' },
+        { label: 'Alerts', value: 'alert' },
+        { label: 'Messages', value: 'message' }
+      ]}
+      className="w-full"
     />
 
     {/* 📅 Start Date */}
@@ -240,17 +363,38 @@ const NotificationsPage = () => {
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getPriorityStyles(notif.priority)}`}>
                             {notif.priority} Priority
                           </span>
-                          {!notif.isRead && (
+                          
+                          <div className="h-8 w-[1px] bg-[var(--color-border)] mx-1" />
+
+                          {notif.sender && (
                             <button 
-                              onClick={() => markAsRead(notif._id)}
-                              className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-lg transition-colors"
-                              title="Mark as read"
+                              onClick={() => setReplyingTo(notif)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-soft)] text-[var(--color-primary)] text-xs font-bold rounded-xl hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-primary)]/20"
                             >
-                              <CheckCircle2 size={18} />
+                              <Reply size={14} />
+                              Reply
+                            </button>
+                          )}
+
+                          {!notif.isRead ? (
+                            <button 
+                              onClick={() => handleMarkAsRead(notif._id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl hover:bg-[var(--color-primary-dark)] transition-all shadow-sm shadow-[var(--color-primary)]/20"
+                            >
+                              <CheckCircle2 size={14} />
+                              Mark as Read
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleMarkAsUnread(notif._id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] text-xs font-bold rounded-xl hover:bg-[var(--color-border)] transition-all border border-[var(--color-border)]"
+                            >
+                              <Bell size={14} />
+                              Mark as Unread
                             </button>
                           )}
                         </div>
@@ -331,6 +475,54 @@ const NotificationsPage = () => {
             </div>
           )}
         </div>
+
+        {/* Reply Modal */}
+        <Modal
+          isOpen={!!replyingTo}
+          onClose={() => {
+            setReplyingTo(null);
+            setReplyMessage('');
+          }}
+          title={replyingTo ? `Replying to ${replyingTo.sender?.name || 'System'}` : 'Reply'}
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
+              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2">Original Message</p>
+              <p className="text-sm italic text-[var(--color-text-secondary)]">"{replyingTo?.message}"</p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase text-[var(--color-text-muted)] ml-1">Your Reply</label>
+              <textarea
+                value={replyMessage}
+                onChange={(e) => setReplyMessage(e.target.value)}
+                placeholder="Type your response here..."
+                className="w-full min-h-[150px] p-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setReplyingTo(null);
+                  setReplyMessage('');
+                }}
+                disabled={sendingReply}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                icon={Send}
+                loading={sendingReply}
+                onClick={handleSendReply}
+              >
+                Send Reply
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </PageTransition>
   );

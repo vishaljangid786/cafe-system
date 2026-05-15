@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import ExportActions from '../../components/ui/ExportActions';
 import PremiumSelect from '../../components/ui/PremiumSelect';
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
