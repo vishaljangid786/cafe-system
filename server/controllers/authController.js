@@ -17,22 +17,22 @@ const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = f
   });
 };
 
+const getAuthCookieOptions = () => ({
+  expires: new Date(
+    Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+  ),
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+});
+
 // Helper to set token in cookie and send response
 const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false) => {
   const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly);
 
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  };
-
   res
     .status(statusCode)
-    .cookie('token', token, cookieOptions)
+    .cookie('token', token, getAuthCookieOptions())
     .json({
       success: true,
       data: {
@@ -265,7 +265,7 @@ const logoutUser = asyncHandler(async (req, res, next) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.status(200).json({
