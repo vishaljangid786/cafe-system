@@ -37,10 +37,19 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000,http://
   .map(origin => origin.trim())
   .filter(Boolean);
 
+const isAllowedVercelPreview = (origin) => {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return protocol === 'https:' && hostname.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+};
+
 const corsOptions = {
   origin(origin, callback) {
     // Allow server-to-server tools and same-origin requests that do not send an Origin header.
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || isAllowedVercelPreview(origin)) {
       return callback(null, true);
     }
 

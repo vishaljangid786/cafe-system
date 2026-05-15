@@ -17,13 +17,15 @@ const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = f
   });
 };
 
+const isProductionRuntime = () => process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
 const getAuthCookieOptions = () => ({
   expires: new Date(
     Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
   ),
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: isProductionRuntime(),
+  sameSite: isProductionRuntime() ? 'none' : 'lax',
 });
 
 // Helper to set token in cookie and send response
@@ -264,8 +266,8 @@ const exitImpersonation = asyncHandler(async (req, res, next) => {
 const logoutUser = asyncHandler(async (req, res, next) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: isProductionRuntime(),
+    sameSite: isProductionRuntime() ? 'none' : 'lax',
   });
 
   res.status(200).json({
