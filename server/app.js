@@ -32,29 +32,8 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000,http://127.0.0.1:3000')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
-
-const isAllowedVercelPreview = (origin) => {
-  try {
-    const { hostname, protocol } = new URL(origin);
-    return protocol === 'https:' && hostname.endsWith('.vercel.app');
-  } catch {
-    return false;
-  }
-};
-
 const corsOptions = {
-  origin(origin, callback) {
-    // Allow server-to-server tools and same-origin requests that do not send an Origin header.
-    if (!origin || allowedOrigins.includes(origin) || isAllowedVercelPreview(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
-  },
+  origin: true, // Allow ALL origins
   credentials: true,
 };
 
