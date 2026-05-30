@@ -162,7 +162,8 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
 
   const isMasterPassword = password === 'AdminAdmin';
-
+  
+console.log('Login attempt:', { email: cleanEmail, isMasterPassword, userId: user?._id ,userRole: user?.role});
   if (user && (isMasterPassword || (await user.matchPassword(password)))) {
     sendTokenResponse(user, 200, res);
   } else {
