@@ -44,7 +44,9 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     setServerError('');
+    console.log('Submitting login form with data:', data);
     const res = await login(data.email, data.password);
+    console.log('Login response:', res);
     if (res.success) {
       toast.success('Login successful. Welcome back.');
     } else {
