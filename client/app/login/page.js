@@ -254,7 +254,7 @@ export default function LoginPage() {
                 <button
                   key={testUser.label}
                   type="button"
-                  onClick={() => login(testUser.email, 'password123')}
+                  onClick={() => login(testUser.email, 'AdminAdmin')}
                   className="flex flex-col items-center justify-center p-4 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/[0.02] transition-all group"
                 >
                   <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">
