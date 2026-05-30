@@ -1,4 +1,4 @@
-import { CardHover } from '../../../components/ui/AnimatedContainer';
+import { CardHover } from '../../../../components/ui/AnimatedContainer';
 
 export default function MetricCard({ label, value, sub, icon: Icon, color }) {
   const themes = {

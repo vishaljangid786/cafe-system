@@ -1,5 +1,5 @@
-import PremiumSelect from '../../../components/ui/PremiumSelect';
-import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
+import PremiumSelect from '../../../../components/ui/PremiumSelect';
+import UniversalDateFilter from '../../../../components/ui/UniversalDateFilter';
 import { Globe, LayoutGrid, List, FilterX } from 'lucide-react';
 
 export default function DashboardFilters({ 

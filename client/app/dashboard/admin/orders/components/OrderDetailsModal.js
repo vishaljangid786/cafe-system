@@ -1,4 +1,4 @@
-import Modal from '../../../components/ui/Modal';
+import Modal from '../../../../components/ui/Modal';
 import { Zap, Printer } from 'lucide-react';
 
 export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, userRole }) {

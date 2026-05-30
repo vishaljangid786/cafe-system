@@ -1,4 +1,4 @@
-import Modal from '../../../components/ui/Modal';
+import Modal from '../../../../components/ui/Modal';
 import { Eye } from 'lucide-react';
 
 export default function WatchlistModal({ isOpen, onClose, delayedOrders, handleOrderSignalProbe }) {
