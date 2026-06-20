@@ -32,7 +32,8 @@ import Link from 'next/link';
 export default function AdminDashboard() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { user, selectedLocation: authLocation } = useAuth();
+  const { user, selectedLocation: authLocation, selectedLocationIds } = useAuth();
+  const dashPrefix = ['admin', 'super_admin'].includes(user?.role) ? '/dashboard/admin' : '/dashboard/branch-admin';
   const [locations, setLocations] = useState([]);
   const [filterLocation, setFilterLocation] = useState('all');
   const [analytics, setAnalytics] = useState({
@@ -78,7 +79,12 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filterLocation !== 'all') params.append('locationId', filterLocation);
+      // Multi-branch subset takes priority over single location filter
+      if (selectedLocationIds.length > 0) {
+        params.append('locationIds', selectedLocationIds.join(','));
+      } else if (filterLocation !== 'all') {
+        params.append('locationId', filterLocation);
+      }
 
       const now = new Date();
       let start = '';
@@ -121,17 +127,16 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Sync page filter whenever the Navbar branch selector changes (all roles)
   useEffect(() => {
-    // Only auto-filter if user is not a super_admin or admin (who usually want global view)
-    // Or if they explicitly have a selectedLocation that isn't 'all'
-    if (authLocation && user?.role !== 'super_admin' && user?.role !== 'admin') {
-      const timer = setTimeout(() => {
-        setFilterLocation(authLocation._id || authLocation);
-      }, 0);
-
-      return () => clearTimeout(timer);
+    if (selectedLocationIds.length > 0) {
+      // Multi-branch selection — keep filterLocation as 'all' visually; fetchAnalytics uses locationIds
+      setFilterLocation('all');
+    } else {
+      const id = authLocation?._id || authLocation;
+      setFilterLocation(id || 'all');
     }
-  }, [authLocation, user]);
+  }, [authLocation, selectedLocationIds]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -139,7 +144,7 @@ export default function AdminDashboard() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filterLocation, timeFilter, customDates]);
+  }, [filterLocation, timeFilter, customDates, selectedLocationIds]);
 
   if (loading) return (
     <div className="space-y-8">
@@ -167,15 +172,17 @@ export default function AdminDashboard() {
               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary)]/80">System: Online</span>
             </div>
             <div className="h-px w-8 bg-[var(--color-border)]" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+              {selectedLocationIds.length > 1 ? `View: ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}
+            </span>
           </motion.div>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-[var(--color-text-primary)] flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
-            {filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
+            {selectedLocationIds.length > 1 ? 'Multi-Branch' : filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
             <span className="text-[var(--color-primary)] not-italic">Overview</span>
           </h1>
           <p className="text-sm text-[var(--color-text-muted)] font-medium max-w-lg leading-relaxed border-l-2 border-[var(--color-primary)]/30 pl-4">
-            Real-time data for {filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
+            Real-time data for {selectedLocationIds.length > 1 ? `${selectedLocationIds.length} selected branches` : filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
           </p>
         </div>
 
@@ -235,35 +242,35 @@ export default function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        <Link href="/dashboard/admin/orders" className="contents">
+        <Link href={`${dashPrefix}/orders`} className="contents">
           <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
         </Link>
-        <Link href="/dashboard/admin/revenue" className="contents">
+        <Link href={`${dashPrefix}/revenue`} className="contents">
           <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
         </Link>
-        <Link href="/dashboard/admin/revenue" className="contents">
+        <Link href={`${dashPrefix}/revenue`} className="contents">
           <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
         </Link>
-        <Link href="/dashboard/admin/orders/analytics" className="contents">
+        <Link href={`${dashPrefix}/orders/analytics`} className="contents">
           <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
         </Link>
-        <Link href="/dashboard/admin/orders/analytics" className="contents">
+        <Link href={`${dashPrefix}/orders/analytics`} className="contents">
           <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
         </Link>
       </div>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link href="/dashboard/admin/expenses" className="contents">
+          <Link href={`${dashPrefix}/expenses`} className="contents">
             <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.5} />
           </Link>
-          <Link href="/dashboard/admin/payroll" className="contents">
+          <Link href={`${dashPrefix}/payroll`} className="contents">
             <StatWidget label="Monthly Payroll" value={`₹${analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.6} />
           </Link>
-          <Link href="/dashboard/admin/payroll" className="contents">
+          <Link href={`${dashPrefix}/payroll`} className="contents">
             <StatWidget label="Avg Staff Salary" value={`₹${Math.round(analytics?.staffStats?.avgSalary || 0).toLocaleString()}`} icon={DollarSign} color="amber" delay={0.7} />
           </Link>
-          <Link href="/dashboard/admin/staff" className="contents">
+          <Link href={`${dashPrefix}/staff`} className="contents">
             <StatWidget label="Staff Count" value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0) || '0'} icon={Activity} color="indigo" delay={0.8} />
           </Link>
         </div>
@@ -384,7 +391,7 @@ export default function AdminDashboard() {
           </div>
           <Button
             variant="ghost"
-            onClick={() => router.push('/dashboard/admin/expenses')}
+            onClick={() => router.push(`${dashPrefix}/expenses`)}
             className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Expenses
@@ -435,7 +442,7 @@ export default function AdminDashboard() {
           </div>
           <Button
             variant="ghost"
-            onClick={() => router.push('/dashboard/admin/revenue')}
+            onClick={() => router.push(`${dashPrefix}/revenue`)}
             className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Sales

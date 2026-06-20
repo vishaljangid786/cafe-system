@@ -14,7 +14,7 @@ router.use(verifyToken);
 
 router.get('/', getNotifications);
 router.get('/targets', checkPermissions('manageNotifications'), getTargetOptions);
-router.post('/', createNotification);
+router.post('/', checkPermissions('manageNotifications'), createNotification);
 router.patch('/read-all', markAllAsRead);
 router.patch('/:id/read', markAsRead);
 router.patch('/:id/unread', markAsUnread);

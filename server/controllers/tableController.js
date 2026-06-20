@@ -18,7 +18,7 @@ const getTables = asyncHandler(async (req, res) => {
   }
 
   // Enforce access control
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
+  if (['branch_admin', 'staff', 'chef'].includes(req.user.role)) {
     query.locationId = req.user.assignedLocation;
   } else if (req.user.role === 'admin') {
     const allowed = (req.user.accessibleLocations || []).map(loc => loc.toString());
@@ -348,7 +348,8 @@ const updateTable = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, table.locationId, 'You do not have permission to update tables from other locations');
 
-  const updatedTable = await Table.findByIdAndUpdate(req.params.id, req.body, {
+  const { locationId: _stripped, ...safeBody } = req.body;
+  const updatedTable = await Table.findByIdAndUpdate(req.params.id, safeBody, {
     new: true,
     runValidators: true,
   });

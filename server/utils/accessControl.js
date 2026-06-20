@@ -1,5 +1,11 @@
 const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const endOfDay = (dateStr) => {
+  const d = new Date(dateStr);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
 const normalizeId = (value) => {
   if (!value) return '';
   if (value._id) return value._id.toString();
@@ -50,6 +56,28 @@ const scopedLocationId = (req, requestedLocationId) => {
   return req.user.assignedLocation;
 };
 
+/**
+ * Handles multi-branch scoping from a comma-separated `locationIds` query param.
+ * Validates every ID against the user's access, then returns a Mongoose { $in: [...] } filter.
+ * Returns null when all accessible branches should be included (no explicit subset).
+ */
+const scopedLocationIds = (req, rawLocationIds) => {
+  if (!rawLocationIds) return null;
+
+  const ids = rawLocationIds.split(',').map(s => s.trim()).filter(Boolean);
+  if (ids.length === 0) return null;
+
+  // Validate access for every requested ID
+  const unauthorized = ids.filter(id => !canAccessLocation(req.user, id));
+  if (unauthorized.length > 0) {
+    const error = new Error('Permission denied to one or more requested locations');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return { $in: ids };
+};
+
 const clampLimit = (value, fallback = 20, max = 100) => {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -58,10 +86,12 @@ const clampLimit = (value, fallback = 20, max = 100) => {
 
 module.exports = {
   escapeRegex,
+  endOfDay,
   normalizeId,
   userLocationIds,
   canAccessLocation,
   enforceLocationAccess,
   scopedLocationId,
+  scopedLocationIds,
   clampLimit,
 };

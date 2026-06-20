@@ -50,10 +50,15 @@ io.on('connection', (socket) => {
 
   if (user?._id) socket.join(user._id.toString());
   if (user?.role) socket.join(`role_${user.role}`);
+
+  // Track the currently active branch room so we can leave it on switch
+  socket.activeBranchId = null;
+
   if (user?.assignedLocation) {
     const branchId = normalizeId(user.assignedLocation);
     socket.join(`branch_${branchId}`);
     socket.join(`branch_${branchId}_${user.role}`);
+    socket.activeBranchId = branchId;
   }
 
   // Advanced session management with branch and role scoping
@@ -61,10 +66,18 @@ io.on('connection', (socket) => {
     if (!allow('join_session')) return;
     const targetRole = user.role;
     const isGlobalOrAll = branchId === 'global' || branchId === 'all';
-    
+
+    // Leave old branch rooms before joining a new one
+    if (socket.activeBranchId && socket.activeBranchId !== branchId) {
+      socket.leave(`branch_${socket.activeBranchId}`);
+      socket.leave(`branch_${socket.activeBranchId}_${targetRole}`);
+      socket.activeBranchId = null;
+    }
+
     if (branchId && !isGlobalOrAll && canAccessLocation(user, branchId)) {
       socket.join(`branch_${branchId}`);
       socket.join(`branch_${branchId}_${targetRole}`);
+      socket.activeBranchId = branchId;
     }
   });
 

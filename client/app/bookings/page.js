@@ -17,6 +17,9 @@ export default function BookingPage() {
   const [endTime, setEndTime] = useState('');
   const [guests, setGuests] = useState(1);
   const [specialRequests, setSpecialRequests] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
 
   const [availability, setAvailability] = useState(null);
   const [checking, setChecking] = useState(false);
@@ -25,7 +28,8 @@ export default function BookingPage() {
 
   const fetchLocations = async () => {
     try {
-      const res = await api.get('/locations');
+      // Public endpoint — no auth required
+      const res = await api.get('/locations/public');
       setLocations(res.data.data.filter(loc => loc.status === 'active'));
     } catch (error) {
       toast.error('Failed to load locations');
@@ -33,6 +37,7 @@ export default function BookingPage() {
   };
 
   const fetchMyBookings = async () => {
+    if (!user) return; // only fetch when authenticated
     try {
       const res = await api.get('/bookings/my');
       setMyBookings(res.data.data);
@@ -42,12 +47,9 @@ export default function BookingPage() {
   };
 
   useEffect(() => {
-    const init = async () => {
-      await fetchLocations();
-      await fetchMyBookings();
-    };
-    init();
-  }, []);
+    fetchLocations();
+    fetchMyBookings();
+  }, [user]);
 
   const handleCheckAvailability = async (e) => {
     e.preventDefault();
@@ -85,7 +87,8 @@ export default function BookingPage() {
         startTime,
         endTime,
         numberOfGuests: guests,
-        specialRequests
+        specialRequests,
+        ...(!user && { guestName, guestEmail, guestPhone })
       });
       toast.success('Booking confirmed successfully!', { id: toastId });
 
@@ -96,6 +99,7 @@ export default function BookingPage() {
       setEndTime('');
       setGuests(1);
       setSpecialRequests('');
+      setGuestName(''); setGuestEmail(''); setGuestPhone('');
       setAvailability(null);
 
       fetchMyBookings();
@@ -199,6 +203,25 @@ export default function BookingPage() {
                     ]}
                   />
                 </div>
+
+                {/* Guest contact fields — shown only for unauthenticated visitors */}
+                {!user && (
+                  <div className="space-y-4 p-5 bg-blue-50 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs font-black uppercase tracking-widest text-blue-600">Guest Details (Required)</p>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Your Name</label>
+                      <input required={!user} value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Full name" className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email</label>
+                      <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="your@email.com" className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Phone</label>
+                      <input type="tel" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} placeholder="Contact number" className="w-full bg-background border border-border rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                    </div>
+                  </div>
+                )}
 
                 {/* Special Requests */}
                 <div className="space-y-2">

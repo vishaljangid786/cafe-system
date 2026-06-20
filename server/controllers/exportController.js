@@ -6,9 +6,12 @@ const Payroll = require('../models/Payroll');
 const Coupon = require('../models/Coupon');
 const Attendance = require('../models/Attendance');
 const BranchInventory = require('../models/BranchInventory');
+const Reservation = require('../models/Reservation');
+const Booking = require('../models/Booking');
+const Expense = require('../models/Expense');
 const asyncHandler = require('../utils/asyncHandler');
 const { generateCSV, generatePDF, generateExcel } = require('../utils/exportService');
-const { userLocationIds, enforceLocationAccess } = require('../utils/accessControl');
+const { userLocationIds, enforceLocationAccess, scopedLocationIds } = require('../utils/accessControl');
 
 /**
  * @desc    Export Advanced Data
@@ -16,7 +19,7 @@ const { userLocationIds, enforceLocationAccess } = require('../utils/accessContr
  * @access  Private
  */
 const exportData = asyncHandler(async (req, res) => {
-  const { type, format, startDate, endDate, branchId } = req.query;
+  const { type, format, startDate, endDate, branchId, locationIds } = req.query;
 
   if (!type || !format) {
     res.status(400);
@@ -32,6 +35,10 @@ const exportData = asyncHandler(async (req, res) => {
 
   if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
     finalBranchId = req.user.assignedLocation;
+  } else if (locationIds) {
+    // Multi-branch subset export
+    const multi = scopedLocationIds(req, locationIds);
+    if (multi) finalBranchId = multi;
   } else if (branchId && branchId !== 'all') {
     enforceLocationAccess(req, res, branchId);
     finalBranchId = branchId;
@@ -67,18 +74,17 @@ const exportData = asyncHandler(async (req, res) => {
   switch (exportType) {
     case 'orders':
       const orders = await Order.find(query)
-        .populate('table', 'name')
-        .populate('items.menuItem', 'itemName')
+        .populate('table', 'tableNumber tableName')
         .lean();
-        
+
       data = orders.map(o => ({
         ID: o._id.toString().slice(-6),
         Date: o.createdAt,
-        Table: o.table?.name || 'N/A',
+        Table: o.table?.tableName || o.table?.tableNumber || 'N/A',
         Total: o.totalAmount,
         Status: o.status,
         Customer: o.customerName || 'Walk-in',
-        Items: o.items.map(i => `${i.menuItem?.itemName || 'Unknown Item'} (x${i.quantity})`).join(', ')
+        Items: o.items.map(i => `${i.itemName || 'Unknown Item'} (x${i.quantity})`).join(', ')
       }));
       break;
 
@@ -88,7 +94,7 @@ const exportData = asyncHandler(async (req, res) => {
         Date: t.date,
         Branch: t.locationId?.name || 'Main',
         Type: t.type,
-        Method: t.paymentMethod,
+        Method: t.paymentType,
         Amount: t.totalAmount,
         Profit: t.totalProfit,
         Status: t.status
@@ -108,18 +114,29 @@ const exportData = asyncHandler(async (req, res) => {
       }));
       break;
 
-    case 'payroll':
-      const payrolls = await Payroll.find(query).populate('user', 'name').populate('branch', 'name').lean();
+    case 'payroll': {
+      const payrollUserQuery = finalBranchId ? { assignedLocation: finalBranchId } : {};
+      const payrollUsers = await User.find(payrollUserQuery).select('_id').lean();
+      const payrollUserIds = payrollUsers.map(u => u._id);
+      const payrollFilter = { user: { $in: payrollUserIds } };
+      if (req.query.startDate) payrollFilter.month = { $gte: req.query.startDate.slice(0, 7) };
+      if (req.query.endDate) {
+        payrollFilter.month = { ...(payrollFilter.month || {}), $lte: req.query.endDate.slice(0, 7) };
+      }
+      const payrolls = await Payroll.find(payrollFilter)
+        .populate('user', 'name assignedLocation')
+        .lean();
       data = payrolls.map(p => ({
         Employee: p.user?.name,
         Month: p.month,
         Base: p.baseSalary,
-        Bonuses: p.bonuses,
-        Penalties: p.penalties,
+        Bonuses: (p.bonuses?.topSeller || 0) + (p.bonuses?.performance || 0) + (p.bonuses?.extraShifts || 0),
+        Penalties: (p.penalties?.lateMark || 0) + (p.penalties?.absent || 0) + (p.penalties?.leave || 0),
         Net: p.netSalary,
         Status: p.status
       }));
       break;
+    }
 
     case 'attendance':
       const attendances = await Attendance.find(query).populate('user', 'name').lean();
@@ -131,7 +148,7 @@ const exportData = asyncHandler(async (req, res) => {
       break;
 
     case 'coupons':
-      const coupons = await Coupon.find(query).lean();
+      const coupons = await Coupon.find({}).lean();
       data = coupons.map(c => ({
         Code: c.code,
         Type: c.discountType,
@@ -157,6 +174,67 @@ const exportData = asyncHandler(async (req, res) => {
         'Min Threshold': i.minThreshold
       }));
       break;
+
+    case 'reservations': {
+      // Reservations use `locationId` not `branch`
+      const resQuery = {};
+      if (finalBranchId) resQuery.locationId = finalBranchId;
+      if (query.createdAt) resQuery.date = query.createdAt; // map date range to `date` field
+      const reservations = await Reservation.find(resQuery)
+        .populate('locationId', 'name')
+        .lean();
+      data = reservations.map(r => ({
+        ID: r._id.toString().slice(-6),
+        Event: r.eventName,
+        Type: r.reservationType,
+        Location: r.locationId?.name,
+        Date: r.date,
+        Start: r.startTime,
+        End: r.endTime,
+        Customer: r.customerName,
+        Phone: r.customerPhone,
+        Amount: r.totalAmount,
+        Status: r.status
+      }));
+      break;
+    }
+
+    case 'bookings': {
+      // Bookings use `locationId`
+      const bookQuery = {};
+      if (finalBranchId) bookQuery.locationId = finalBranchId;
+      if (query.createdAt) bookQuery.createdAt = query.createdAt;
+      const bookings = await Booking.find(bookQuery).lean();
+      data = bookings.map(b => ({
+        ID: b._id.toString().slice(-6),
+        Guest: b.guestName || b.userId?.toString(),
+        Email: b.guestEmail,
+        Phone: b.guestPhone,
+        Date: b.date,
+        Start: b.startTime,
+        End: b.endTime,
+        Guests: b.numberOfGuests,
+        Status: b.status
+      }));
+      break;
+    }
+
+    case 'expenses': {
+      // Expenses use `locationId`, not `branch`
+      const expQuery = {};
+      if (finalBranchId) expQuery.locationId = finalBranchId;
+      if (query.createdAt) expQuery.createdAt = query.createdAt;
+      const expenses = await Expense.find(expQuery).lean();
+      data = expenses.map(e => ({
+        ID: e._id.toString().slice(-6),
+        Date: e.createdAt,
+        Category: e.category,
+        Amount: e.amount,
+        Description: e.description,
+        Status: e.status
+      }));
+      break;
+    }
 
     default:
       res.status(400);

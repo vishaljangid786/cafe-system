@@ -45,10 +45,14 @@ const allowedOrigins = parseOrigins(
 );
 
 const allowAnyOrigin = process.env.CORS_ORIGIN === '*';
+if (allowAnyOrigin && process.env.NODE_ENV === 'production') {
+  throw new Error('CORS_ORIGIN="*" is not allowed in production when credentials are enabled');
+}
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowAnyOrigin || allowedOrigins.includes(origin)) {
+    // In production wildcard is blocked above; in dev it is allowed only for non-credentialed testing
+    if (!origin || (allowAnyOrigin && process.env.NODE_ENV !== 'production') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 

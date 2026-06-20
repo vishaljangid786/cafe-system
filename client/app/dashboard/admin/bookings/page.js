@@ -41,6 +41,7 @@ export default function BookingsManagementPage() {
         locationId: selectedLocation?._id || selectedLocation
       };
       if (statusFilter !== 'All') params.status = statusFilter.toLowerCase();
+      if (globalSearch) params.search = globalSearch;
 
       const res = await api.get(`/bookings?page=${currentPage}&limit=${itemsPerPage}`, { params });
       setBookings(res.data.data);
@@ -58,7 +59,7 @@ export default function BookingsManagementPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [selectedLocation, dateFilter, statusFilter, currentPage]);
+  }, [selectedLocation, dateFilter, statusFilter, currentPage, globalSearch]);
 
   const updateStatus = async (id, status) => {
     const loadToast = toast.loading(`Updating status to ${status}...`);
@@ -72,12 +73,7 @@ export default function BookingsManagementPage() {
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (!globalSearch) return true;
-    const searchLower = globalSearch.toLowerCase();
-    return booking.userId?.name?.toLowerCase().includes(searchLower) ||
-      booking.userId?.email?.toLowerCase().includes(searchLower);
-  });
+  const filteredBookings = bookings;
 
   const getStatusColor = (status) => {
     switch (status) {

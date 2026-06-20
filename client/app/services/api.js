@@ -7,24 +7,16 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // httpOnly cookie is automatically sent with every request — no manual token needed
   withCredentials: true,
 });
-
-api.interceptors.request.use(
-  (config) => {
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response Interceptor: Handle Global Errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If unauthorized, redirect to login
     if (error.response?.status === 401) {
-      Cookies.remove('token');
-      Cookies.remove('user');
+      Cookies.remove('selectedLocation');
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

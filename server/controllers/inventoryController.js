@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Ingredient = require('../models/Ingredient');
 const BranchInventory = require('../models/BranchInventory');
 const WasteRecord = require('../models/WasteRecord');
@@ -5,7 +6,7 @@ const Recipe = require('../models/Recipe');
 const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
-const { enforceLocationAccess } = require('../utils/accessControl');
+const { enforceLocationAccess, scopedLocationId, userLocationIds } = require('../utils/accessControl');
 // Re-export from service layer — single source of truth, no duplicate logic
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 
@@ -71,6 +72,17 @@ const logWaste = asyncHandler(async (req, res) => {
     throw new Error('Quantity must be greater than zero');
   }
 
+  const updated = await BranchInventory.findOneAndUpdate(
+    { branch, ingredient, stock: { $gte: Number(quantity) } },
+    { $inc: { stock: -Number(quantity) } },
+    { new: true }
+  );
+
+  if (!updated) {
+    res.status(400);
+    throw new Error('Insufficient inventory stock to log this waste quantity');
+  }
+
   const waste = await WasteRecord.create({
     branch,
     ingredient,
@@ -80,29 +92,21 @@ const logWaste = asyncHandler(async (req, res) => {
     recordedBy: req.user._id,
   });
 
-  // Deduct from inventory
-  await BranchInventory.findOneAndUpdate(
-    { branch, ingredient },
-    { $inc: { stock: -Number(quantity) } }
-  );
-
   res.json({ success: true, data: waste });
 });
 
 // @desc    Get low stock alerts across all branches (Admin) or single branch
 // @route   GET /api/inventory/alerts
 const getInventoryAlerts = asyncHandler(async (req, res) => {
-  let { branchId } = req.query;
-  
-  // Authorization check for branch_admin
-  if (req.user.role === 'branch_admin') {
-    branchId = req.user.assignedLocation.toString();
-  } else if (branchId) {
-    enforceLocationAccess(req, res, branchId, 'You do not have permission to view this branch inventory');
-  }
+  const { branchId } = req.query;
+  const scopedBranch = scopedLocationId(req, branchId);
 
   const query = { $expr: { $lte: ['$stock', '$minThreshold'] } };
-  if (branchId) query.branch = new mongoose.Types.ObjectId(branchId);
+  if (scopedBranch) {
+    query.branch = typeof scopedBranch === 'object'
+      ? scopedBranch
+      : new mongoose.Types.ObjectId(scopedBranch);
+  }
 
   const alerts = await BranchInventory.find(query)
     .populate('ingredient')
@@ -115,17 +119,11 @@ const getInventoryAlerts = asyncHandler(async (req, res) => {
 // @desc    Get Purchase Suggestions
 // @route   GET /api/inventory/suggestions
 const getPurchaseSuggestions = asyncHandler(async (req, res) => {
-  let { branchId } = req.query;
-
-  // Authorization check for branch_admin
-  if (req.user.role === 'branch_admin') {
-    branchId = req.user.assignedLocation.toString();
-  } else if (branchId) {
-    enforceLocationAccess(req, res, branchId, 'You do not have permission to view this branch inventory');
-  }
+  const { branchId } = req.query;
+  const scopedBranch = scopedLocationId(req, branchId);
 
   const query = {};
-  if (branchId) query.branch = branchId;
+  if (scopedBranch) query.branch = scopedBranch;
 
   const suggestions = await BranchInventory.find(query)
     .populate('ingredient')

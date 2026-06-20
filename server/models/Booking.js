@@ -5,8 +5,11 @@ const bookingSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
     },
+    guestName: { type: String, default: null },
+    guestEmail: { type: String, default: null },
+    guestPhone: { type: String, default: null },
     locationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',

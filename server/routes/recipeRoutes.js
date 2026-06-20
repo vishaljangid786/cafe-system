@@ -11,12 +11,12 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.route('/')
-  .post(checkRoles('super_admin', 'admin', 'branch_admin'), upsertRecipe);
+  .post(checkRoles('super_admin', 'admin'), upsertRecipe);
 
 router.route('/:menuItemId')
   .get(getRecipe);
 
 router.route('/:id')
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteRecipe);
+  .delete(checkRoles('super_admin', 'admin'), deleteRecipe);
 
 module.exports = router;

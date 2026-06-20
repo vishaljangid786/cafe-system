@@ -6,11 +6,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from '../components/ui/PageTransition';
 import { useAuth } from '../context/AuthContext';
 import CommandPalette from '../components/ui/CommandPalette';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+
+const ROLE_PREFIX = {
+  super_admin: '/dashboard/admin',
+  admin: '/dashboard/admin',
+  branch_admin: '/dashboard/branch-admin',
+  chef: '/dashboard/chef',
+  staff: '/dashboard/staff',
+  location_admin: '/dashboard/branch-admin',
+};
+
+const SHARED_PREFIXES = [
+  '/dashboard/notifications',
+  '/dashboard/reservations',
+  '/dashboard/bookings',
+  '/dashboard/profile',
+];
 
 export default function DashboardLayout({ children }) {
   const { user, loading, exitImpersonation } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -37,8 +54,16 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
+      return;
     }
-  }, [loading, user, router]);
+    if (!loading && user) {
+      const allowed = ROLE_PREFIX[user.role];
+      const isShared = SHARED_PREFIXES.some(p => pathname.startsWith(p));
+      if (allowed && !pathname.startsWith(allowed) && !isShared) {
+        router.replace(allowed);
+      }
+    }
+  }, [loading, user, router, pathname]);
 
   const handleToggleSidebar = (val) => {
     setIsSidebarExpanded(val);

@@ -13,6 +13,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocationIds, setSelectedLocationIds] = useState([]); // [] = all, [id1, id2] = subset
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
@@ -57,6 +58,7 @@ export const AuthProvider = ({ children }) => {
       super_admin: '/dashboard/admin',
       admin: '/dashboard/admin',
       branch_admin: '/dashboard/branch-admin',
+      location_admin: '/dashboard/branch-admin',
       chef: '/dashboard/chef',
       staff: '/dashboard/staff',
     };
@@ -80,10 +82,13 @@ export const AuthProvider = ({ children }) => {
         if (storedLocation) {
           try {
             initialLocation = JSON.parse(storedLocation);
-            setSelectedLocation(initialLocation);
+            setSelectedLocation(initialLocation === 'all' ? null : initialLocation);
           } catch (e) {
             logger.error('Invalid stored location');
           }
+        } else if (['admin', 'super_admin'].includes(userData.role)) {
+          initialLocation = null;
+          setSelectedLocation(null);
         } else if (userData.assignedLocation) {
           initialLocation = userData.assignedLocation;
           setSelectedLocation(initialLocation);
@@ -123,11 +128,38 @@ export const AuthProvider = ({ children }) => {
   }, []);
   
   const switchLocation = (location) => {
-    setSelectedLocation(location);
-    Cookies.set('selectedLocation', JSON.stringify(location), { expires: 30 });
-    
+    const nextLocation = location === 'all' ? null : location;
+    setSelectedLocation(nextLocation);
+    setSelectedLocationIds([]); // single-select clears multi-select
+
+    if (nextLocation) {
+      Cookies.set('selectedLocation', JSON.stringify(nextLocation), { expires: 30 });
+    } else {
+      Cookies.remove('selectedLocation');
+    }
+
     if (socketRef.current && user) {
-      socketRef.current.emit('join_session', { branchId: location._id || location });
+      socketRef.current.emit('join_session', { branchId: nextLocation?._id || nextLocation || 'all' });
+    }
+  };
+
+  // Set a subset of branch IDs to filter by (multi-branch mode)
+  const switchLocationIds = (ids) => {
+    if (!ids || ids.length === 0) {
+      setSelectedLocationIds([]);
+      setSelectedLocation(null);
+      Cookies.remove('selectedLocation');
+      if (socketRef.current && user) {
+        socketRef.current.emit('join_session', { branchId: 'all' });
+      }
+    } else if (ids.length === 1) {
+      // Single selection — fall through to normal single-location mode
+      const loc = locations.find(l => (l._id || l) === ids[0]) || ids[0];
+      switchLocation(loc);
+    } else {
+      setSelectedLocationIds(ids);
+      setSelectedLocation(null); // null = custom subset (not "all")
+      Cookies.remove('selectedLocation');
     }
   };
 
@@ -136,15 +168,19 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const res = await api.post('/auth/login', { email, password });
       const userData = res.data.data;
-
       setUser(userData);
       // Do NOT store full user object in readable cookie (XSS risk).
       // In-memory state + server httpOnly JWT cookie is sufficient.
 
-      const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+        ? null
+        : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
+      } else {
+        setSelectedLocation(null);
+        Cookies.remove('selectedLocation');
       }
 
       initializeSocket(userData, initialLoc);
@@ -170,9 +206,7 @@ export const AuthProvider = ({ children }) => {
       logger.error('Backend logout failed');
     }
     
-    Cookies.remove('user');
     Cookies.remove('selectedLocation');
-    Cookies.remove('token'); // In case it was not httpOnly
     
     setUser(null);
     setSelectedLocation(null);
@@ -194,10 +228,15 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data.data;
       setUser(userData);
 
-      const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+        ? null
+        : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
+      } else {
+        setSelectedLocation(null);
+        Cookies.remove('selectedLocation');
       }
 
       if (socketRef.current) {
@@ -223,10 +262,15 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data.data;
       setUser(userData);
 
-      const initialLoc = userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+        ? null
+        : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
         setSelectedLocation(initialLoc);
         Cookies.set('selectedLocation', JSON.stringify(initialLoc), { expires: 30 });
+      } else {
+        setSelectedLocation(null);
+        Cookies.remove('selectedLocation');
       }
 
       if (socketRef.current) {
@@ -249,9 +293,11 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ 
       user, 
       setUser, 
-      selectedLocation, 
-      switchLocation, 
-      locations, 
+      selectedLocation,
+      selectedLocationIds,
+      switchLocation,
+      switchLocationIds,
+      locations,
       refreshLocations: fetchLocations,
       globalSearch, 
       setGlobalSearch, 

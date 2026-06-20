@@ -59,6 +59,13 @@ module.exports = {
           return next(new Error('Socket authentication failed'));
         }
 
+        // Mirror HTTP sessionVersion revocation check
+        const tokenVersion = decoded.sessionVersion || 1;
+        const userVersion = user.sessionVersion || 1;
+        if (tokenVersion !== userVersion) {
+          return next(new Error('Session revoked. Please log in again.'));
+        }
+
         socket.user = user;
         next();
       } catch (error) {

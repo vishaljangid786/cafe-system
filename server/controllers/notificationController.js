@@ -162,9 +162,11 @@ const createNotification = asyncHandler(async (req, res) => {
     recipients = users.map(u => ({ user: u._id }));
   } 
   else if (targetType === 'branch') {
-    if (senderRole !== 'super_admin' && senderBranch?.toString() !== targetId) {
+    const { canAccessLocation } = require('../utils/accessControl');
+    const isAllowed = senderRole === 'super_admin' || canAccessLocation(req.user, targetId);
+    if (!isAllowed) {
       res.status(403);
-      throw new Error('You can only broadcast to your own branch');
+      throw new Error('You do not have access to broadcast to this branch');
     }
     const users = await User.find({ assignedLocation: targetId });
     recipients = users.map(u => ({ user: u._id }));
@@ -313,7 +315,8 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     data: {
       users,
       roles: role === 'super_admin' ? roles : [],
-      branches: role === 'super_admin' ? branches : []
+      // Admins get their accessible branches; super_admin gets all; others get none
+      branches: role === 'super_admin' ? branches : (role === 'admin' ? branches : [])
     }
   });
 });

@@ -198,8 +198,11 @@ const createTransaction = asyncHandler(async (req, res) => {
   // Notify Admins about new pending expense
   if (status === 'pending') {
     const admins = await User.find({
-      role: { $in: ['super_admin', 'admin', 'branch_admin'] },
-      assignedLocation: targetLocation
+      $or: [
+        { role: 'super_admin' },
+        { role: 'admin', accessibleLocations: targetLocation },
+        { role: 'branch_admin', assignedLocation: targetLocation }
+      ]
     });
 
     if (admins.length > 0) {
@@ -256,10 +259,14 @@ const approveTransaction = asyncHandler(async (req, res) => {
   await transaction.save();
 
   // NOTIFICATION LOGIC
-  // Notify other admins about the approval as requested
+  const approvalLocationId = transactionLocationId;
   const admins = await User.find({
-    role: { $in: ['super_admin', 'admin', 'branch_admin'] },
-    _id: { $ne: req.user._id } // Don't notify the approver themselves
+    _id: { $ne: req.user._id },
+    $or: [
+      { role: 'super_admin' },
+      { role: 'admin', accessibleLocations: approvalLocationId },
+      { role: 'branch_admin', assignedLocation: approvalLocationId }
+    ]
   });
 
   if (admins.length > 0) {
@@ -312,9 +319,14 @@ const rejectTransaction = asyncHandler(async (req, res) => {
   await transaction.save();
 
   // NOTIFICATION LOGIC
+  const rejectionLocationId = transaction.locationId?._id || transaction.locationId;
   const admins = await User.find({
-    role: { $in: ['super_admin', 'admin', 'branch_admin'] },
-    _id: { $ne: req.user._id }
+    _id: { $ne: req.user._id },
+    $or: [
+      { role: 'super_admin' },
+      { role: 'admin', accessibleLocations: rejectionLocationId },
+      { role: 'branch_admin', assignedLocation: rejectionLocationId }
+    ]
   });
 
   if (admins.length > 0) {

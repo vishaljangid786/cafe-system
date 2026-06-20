@@ -45,4 +45,10 @@ router.route('/command-center')
 router.route('/forecasting')
   .get(checkRoles('admin', 'super_admin'), getForecastingAnalytics);
 
+router.route('/location-intelligence/:id')
+  .get(checkRoles('admin', 'super_admin'), getLocationInfo);
+
+router.route('/comparison-details')
+  .get(checkRoles('admin', 'super_admin'), getComparisonDetails);
+
 module.exports = router;

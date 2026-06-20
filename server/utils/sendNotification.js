@@ -27,11 +27,12 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
 
     const targetLocationId = locationId || performedByUser.assignedLocation;
 
-    // Optimized Query: Filter by role and branch in MongoDB, not in memory
+    // Filter by role and branch — admins only receive events for their accessible branches
     const query = {
       _id: { $ne: performedByUser._id },
       $or: [
-        { role: { $in: roleTarget.filter(r => r !== 'branch_admin') } },
+        ...(roleTarget.includes('super_admin') ? [{ role: 'super_admin' }] : []),
+        ...(roleTarget.includes('admin') && targetLocationId ? [{ role: 'admin', accessibleLocations: targetLocationId }] : []),
         ...(roleTarget.includes('branch_admin') ? [{ role: 'branch_admin', assignedLocation: targetLocationId }] : [])
       ]
     };

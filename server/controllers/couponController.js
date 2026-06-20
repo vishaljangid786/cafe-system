@@ -2,19 +2,17 @@ const Coupon = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
-const { clampLimit } = require('../utils/accessControl');
+const { clampLimit, escapeRegex } = require('../utils/accessControl');
 
 // @desc    Get all coupons (admin view)
 // @route   GET /api/coupons
 // @access  Private (Admin)
 const getCoupons = asyncHandler(async (req, res) => {
-  const { active } = req.query;
+  const { active, search } = req.query;
   const filter = {};
-  if (active === 'true') {
-    filter.isActive = true;
-  } else if (active === 'false') {
-    filter.isActive = false;
-  }
+  if (active === 'true') filter.isActive = true;
+  else if (active === 'false') filter.isActive = false;
+  if (search) filter.code = new RegExp(escapeRegex(search), 'i');
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = clampLimit(req.query.limit, 20);
@@ -176,10 +174,13 @@ const applyCoupon = asyncHandler(async (req, res) => {
       }
     });
   } else if ((coupon.appliesTo?.categories?.length || 0) > 0) {
-    // For category‑level discounts we need MenuItem data – simplify by assuming orderItems already contain categoryId
+    const MenuItem = require('../models/MenuItem');
     const catIds = coupon.appliesTo.categories.map(id => id.toString());
+    const menuItemIds = orderItems.map(i => i.menuItemId).filter(Boolean);
+    const menuItems = await MenuItem.find({ _id: { $in: menuItemIds } }).select('_id category').lean();
+    const itemCategoryMap = new Map(menuItems.map(m => [m._id.toString(), m.category?.toString()]));
     orderItems.forEach(i => {
-      if (catIds.includes(i.categoryId?.toString())) {
+      if (catIds.includes(itemCategoryMap.get(i.menuItemId?.toString()))) {
         applicableSubtotal += i.price * i.quantity;
       }
     });

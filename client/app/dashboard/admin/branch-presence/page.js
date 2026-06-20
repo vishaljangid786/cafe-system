@@ -21,16 +21,6 @@ export default function BranchPresencePage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const dateInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  useEffect(() => {
-    if (selectedLocation) {
-      fetchBranchData();
-    }
-  }, [selectedLocation, date]);
-
   const fetchLocations = async () => {
     try {
       const res = await api.get('/locations');
@@ -56,6 +46,16 @@ export default function BranchPresencePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      fetchBranchData();
+    }
+  }, [selectedLocation, date]);
 
   const handleMarkAttendance = async (userId, status) => {
     const loadToast = toast.loading(`Recording ${status}...`);

@@ -17,15 +17,14 @@ const getLocations = asyncHandler(async (req, res) => {
 
   // Filter based on user access
   if (req.user) {
-    if (req.user.role === 'branch_admin' || req.user.role === 'staff') {
-      if (req.user.assignedLocation) {
-        query._id = req.user.assignedLocation;
-      } else {
-        query._id = new mongoose.Types.ObjectId();
-      }
-    } else if (req.user.role === 'admin' && req.user.accessibleLocations?.length > 0) {
-      query._id = { $in: req.user.accessibleLocations };
+    const role = req.user.role;
+    if (['branch_admin', 'staff', 'chef', 'location_admin'].includes(role)) {
+      query._id = req.user.assignedLocation || new mongoose.Types.ObjectId();
+    } else if (role === 'admin') {
+      // Always scope to accessible locations; empty array yields nothing
+      query._id = { $in: req.user.accessibleLocations?.length > 0 ? req.user.accessibleLocations : [new mongoose.Types.ObjectId()] };
     }
+    // super_admin: no filter — can see all
   }
 
   // 1. Fetch Locations

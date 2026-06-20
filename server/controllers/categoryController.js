@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const asyncHandler = require('../utils/asyncHandler');
+const { escapeRegex } = require('../utils/accessControl');
 
 // @desc    Get all active categories
 // @route   GET /api/categories
@@ -39,7 +40,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description, icon, sortOrder } = req.body;
 
-  const exists = await Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+  const exists = await Category.findOne({ name: { $regex: new RegExp(`^${escapeRegex(name)}$`, 'i') } });
   if (exists) {
     res.status(400);
     throw new Error('Category with this name already exists');
@@ -74,7 +75,7 @@ const updateCategory = asyncHandler(async (req, res) => {
   // Check name uniqueness if being changed
   if (name && name !== category.name) {
     const exists = await Category.findOne({
-      name: { $regex: new RegExp(`^${name}$`, 'i') },
+      name: { $regex: new RegExp(`^${escapeRegex(name)}$`, 'i') },
       _id: { $ne: req.params.id },
     });
     if (exists) {

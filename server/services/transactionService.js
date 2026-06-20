@@ -57,6 +57,10 @@ class TransactionService {
    * @param {Object} expense - Expense model instance
    * @returns {Promise<Object>} Created/Updated transaction
    */
+  async deleteExpenseTransaction(expenseId) {
+    await Transaction.deleteOne({ expenseId });
+  }
+
   async syncExpenseToTransaction(expense) {
     // Use expenseId for precise matching
     const existing = await Transaction.findOne({ expenseId: expense._id });

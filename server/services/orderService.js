@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Table = require('../models/Table');
 const MenuItem = require('../models/MenuItem');
 const BranchStock = require('../models/BranchStock');
+const Coupon = require('../models/Coupon');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { getIO } = require('../config/socket');
@@ -15,7 +16,7 @@ class OrderService {
   /**
    * Create a new order with stock deduction and table update
    */
-  async createOrder({ branch, tableId, items, customerPhone, customerName, userId }) {
+  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, userId }) {
     const Reservation = require('../models/Reservation');
 
     // 1. Pre-checks (Rate limiting, Reservations)
@@ -75,22 +76,27 @@ class OrderService {
         // It will be deducted from ingredients on completion.
         // If it's a Stocked Item (no recipe), we deduct from BranchStock now.
         if (!recipe) {
-          if (!branchStock) {
+          if (branchStock) {
+            if (branchStock.stock < item.quantity) {
+              throw new Error(`Insufficient stock for ${menuItem.name}.`);
+            }
+            if (!branchStock.isAvailable) {
+              throw new Error(`Item ${menuItem.name} is currently unavailable.`);
+            }
+            branchStock.stock -= item.quantity;
+            if (branchStock.stock <= 0) branchStock.isAvailable = false;
+            await branchStock.save({ session });
+          } else if (menuItem.isGlobal) {
+            if (menuItem.stock < item.quantity) {
+              throw new Error(`Insufficient global stock for ${menuItem.name}.`);
+            }
+            if (!menuItem.isAvailable) {
+              throw new Error(`Item ${menuItem.name} is currently unavailable.`);
+            }
+            await MenuItem.findByIdAndUpdate(menuItem._id, { $inc: { stock: -item.quantity } }, { session });
+          } else {
             throw new Error(`Item ${menuItem.name} has no stock record in this branch.`);
           }
-          if (branchStock.stock < item.quantity) {
-            throw new Error(`Insufficient stock for ${menuItem.name}.`);
-          }
-          if (!branchStock.isAvailable) {
-            throw new Error(`Item ${menuItem.name} is currently unavailable.`);
-          }
-
-          // Update Stock Atomically for stocked items
-          branchStock.stock -= item.quantity;
-          if (branchStock.stock <= 0) {
-            branchStock.isAvailable = false;
-          }
-          await branchStock.save({ session });
         } else {
           // For recipe items, we just verify MenuItem is marked available
           if (!menuItem.isAvailable) {
@@ -108,17 +114,76 @@ class OrderService {
         });
       }
 
-      const calculatedTotal = itemsWithSnapshots.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      const subtotal = itemsWithSnapshots.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-      // 3. Order Creation
+      // 3. Coupon finalization (atomic within transaction)
+      // Server recomputes discount — never trust client-provided discountAmount
+      let finalDiscount = 0;
+      let appliedCoupon = couponId || null;
+      if (couponId) {
+        const coupon = await Coupon.findOneAndUpdate(
+          {
+            _id: couponId,
+            isActive: true,
+            expiryDate: { $gte: new Date() },
+            $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }]
+          },
+          { $inc: { usedCount: 1 } },
+          { new: true, session }
+        );
+        if (!coupon) throw new Error('Coupon is no longer valid or usage limit reached');
+        appliedCoupon = coupon._id;
+
+        // Enforce min order amount
+        if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
+          throw new Error(`Order minimum of ${coupon.minOrderAmount} not met for this coupon`);
+        }
+
+        // Enforce item/category applicability
+        if (coupon.appliesTo?.items?.length > 0) {
+          const applicableItemIds = new Set(coupon.appliesTo.items.map(id => id.toString()));
+          const eligibleSubtotal = itemsWithSnapshots
+            .filter(i => applicableItemIds.has(i.menuItem.toString()))
+            .reduce((acc, i) => acc + i.price * i.quantity, 0);
+          finalDiscount = coupon.discountType === 'percentage'
+            ? (eligibleSubtotal * coupon.discountValue) / 100
+            : Math.min(coupon.discountValue, eligibleSubtotal);
+        } else if (coupon.appliesTo?.categories?.length > 0) {
+          const catIds = new Set(coupon.appliesTo.categories.map(id => id.toString()));
+          const itemIds = itemsWithSnapshots.map(i => i.menuItem.toString());
+          const itemDocs = await MenuItem.find({ _id: { $in: itemIds } }).select('_id category').lean();
+          const catMap = new Map(itemDocs.map(d => [d._id.toString(), d.category?.toString()]));
+          const eligibleSubtotal = itemsWithSnapshots
+            .filter(i => catIds.has(catMap.get(i.menuItem.toString())))
+            .reduce((acc, i) => acc + i.price * i.quantity, 0);
+          finalDiscount = coupon.discountType === 'percentage'
+            ? (eligibleSubtotal * coupon.discountValue) / 100
+            : Math.min(coupon.discountValue, eligibleSubtotal);
+        } else {
+          // Applies to full order
+          finalDiscount = coupon.discountType === 'percentage'
+            ? (subtotal * coupon.discountValue) / 100
+            : Math.min(coupon.discountValue, subtotal);
+        }
+
+        // Cap at maxDiscount if set
+        if (coupon.maxDiscount && finalDiscount > coupon.maxDiscount) {
+          finalDiscount = coupon.maxDiscount;
+        }
+        finalDiscount = Math.min(finalDiscount, subtotal); // cannot exceed subtotal
+        finalDiscount = Number(finalDiscount.toFixed(2));
+      }
+
+      // 4. Order Creation
       const order = await Order.create([{
         branch,
         table: tableId,
         customerPhone,
         customerName,
         items: itemsWithSnapshots,
-        totalAmount: calculatedTotal,
-        discountAmount: Number(discountAmount) || 0,
+        totalAmount: subtotal,
+        discountAmount: finalDiscount,
+        coupon: appliedCoupon,
         createdBy: userId,
         status: 'PLACED',
         statusHistory: [{
@@ -128,7 +193,7 @@ class OrderService {
         }]
       }], { session });
 
-      // 4. Table Update
+      // 5. Table Update
       await Table.findByIdAndUpdate(tableId, {
         status: 'ongoing',
         $inc: { activeOrdersCount: 1 }

@@ -14,13 +14,13 @@ router.use(verifyToken);
 
 router.route('/')
   .get(getCategories)
-  .post(checkRoles('super_admin', 'admin', 'branch_admin'), createCategory);
+  .post(checkRoles('super_admin', 'admin'), createCategory);
 
 router.route('/all')
   .get(checkRoles('super_admin', 'admin', 'branch_admin'), getAllCategories);
 
 router.route('/:id')
-  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateCategory)
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteCategory);
+  .put(checkRoles('super_admin', 'admin'), updateCategory)
+  .delete(checkRoles('super_admin', 'admin'), deleteCategory);
 
 module.exports = router;

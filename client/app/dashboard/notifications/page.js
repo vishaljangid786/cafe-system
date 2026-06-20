@@ -488,7 +488,7 @@ const NotificationsPage = () => {
           <div className="space-y-6">
             <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
               <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2">Original Message</p>
-              <p className="text-sm italic text-[var(--color-text-secondary)]">"{replyingTo?.message}"</p>
+              <p className="text-sm italic text-[var(--color-text-secondary)]">&ldquo;{replyingTo?.message}&rdquo;</p>
             </div>
 
             <div className="space-y-3">

@@ -25,15 +25,15 @@ router.put('/change-password', changePassword);
 router.use(checkPermissions('manageStaff'));
 
 router.route('/')
-  .get(checkRoles('super_admin', 'admin', 'branch_admin'), getUsers);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getUsers);
 
 router.route('/:id')
-  .get(checkRoles('super_admin', 'admin', 'branch_admin'), getUser)
-  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateUser)
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteUser);
+  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getUser)
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUser)
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteUser);
 
 router.route('/:id/permissions')
-  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateUserPermissions);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUserPermissions);
 
 router.route('/:id/promote')
   .patch(checkRoles('super_admin', 'admin'), promoteUser);

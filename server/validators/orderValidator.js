@@ -29,7 +29,7 @@ const updateOrderStatusValidator = [
   body('status')
     .notEmpty()
     .withMessage('Status is required')
-    .isIn(['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'CANCELLED', 'REJECTED'])
+    .isIn(['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'])
     .withMessage('Invalid status')
 ];
 

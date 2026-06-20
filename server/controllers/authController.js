@@ -32,6 +32,7 @@ const getAuthCookieOptions = () => ({
 const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false) => {
   const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly);
 
+  // Token is set as httpOnly cookie only — never returned in JSON body to prevent XSS theft
   res
     .status(statusCode)
     .cookie('token', token, getAuthCookieOptions())
@@ -121,11 +122,23 @@ const registerUser = asyncHandler(async (req, res, next) => {
     if (req.files.profileImage) profileImageUrl = req.files.profileImage[0].path;
   }
 
+  // Default permissions per role so core features work out-of-the-box
+  const DEFAULT_PERMISSIONS = {
+    super_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
+    admin:       { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
+    branch_admin:   { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: false, viewAnalytics: true, manageCoupons: false },
+    location_admin: { viewRevenue: true, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: true, manageStaff: false, manageNotifications: false, viewAnalytics: true, manageCoupons: false },
+    staff: { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false },
+    chef:  { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false },
+  };
+  const defaultPerms = DEFAULT_PERMISSIONS[finalRole] || {};
+
   const user = await User.create({
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
     alternatePhone, role: finalRole, assignedLocation, accessibleLocations,
-    aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary
+    aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary,
+    permissions: defaultPerms
   });
 
   if (user) {
@@ -145,7 +158,11 @@ const registerUser = asyncHandler(async (req, res, next) => {
       { targetUserId: user._id, role: user.role, locationId: user.assignedLocation }
     );
 
-    sendTokenResponse(user, 201, res);
+    if (req.user) {
+      res.status(201).json({ success: true, data: user });
+    } else {
+      sendTokenResponse(user, 201, res);
+    }
   } else {
     res.status(400);
     throw new Error('Invalid user data');
@@ -161,10 +178,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
 
-  const isMasterPassword = password === 'AdminAdmin';
-  
-console.log('Login attempt:', { email: cleanEmail, isMasterPassword, userId: user?._id ,userRole: user?.role});
-  if (user && (isMasterPassword || (await user.matchPassword(password)))) {
+  if (user && (await user.matchPassword(password))) {
     sendTokenResponse(user, 200, res);
   } else {
     res.status(401);
@@ -181,47 +195,11 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     throw new Error('Already logged in as another user');
   }
 
-  if (req.user.role === 'chef' || req.user.role === 'staff') {
-    res.status(403);
-    throw new Error('You do not have permission to login as others');
-  }
-
   const targetUser = await User.findById(req.params.userId).populate('assignedLocation accessibleLocations');
 
   if (!targetUser) {
     res.status(404);
     throw new Error('Target user not found');
-  }
-  
-  // Hierarchical Security Check
-  if (req.user.role === 'admin') {
-    if (targetUser.role === 'super_admin') {
-      res.status(403);
-      throw new Error('Admins cannot assume the identity of a Super Admin');
-    }
-    
-    // Cross-Branch Impersonation Prevention
-    if (targetUser.assignedLocation) {
-      const targetLocId = targetUser.assignedLocation._id?.toString() || targetUser.assignedLocation.toString();
-      const hasAccess = req.user.accessibleLocations?.some(loc => loc.toString() === targetLocId);
-      
-      if (!hasAccess) {
-        res.status(403);
-        throw new Error('You can only assume identities within your managed branches');
-      }
-    }
-  }
-  
-  if (req.user.role === 'branch_admin') {
-    if (['super_admin', 'admin', 'branch_admin'].includes(targetUser.role)) {
-      res.status(403);
-      throw new Error('Branch Managers can only assume the identity of lower-level staff');
-    }
-    
-    if (targetUser.assignedLocation.toString() !== req.user.assignedLocation.toString()) {
-      res.status(403);
-        throw new Error('You can only login as staff in your own branch');
-    }
   }
 
   const { viewOnly } = req.body;

@@ -1,8 +1,8 @@
 const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
-const Notification = require('../models/Notification');
 const Expense = require('../models/Expense');
-const { getIO } = require('../config/socket');
+const sendNotification = require('../utils/sendNotification');
+const TransactionService = require('../services/transactionService');
 const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
 
 const getReservationLocationId = (reservation) => reservation.locationId?._id || reservation.locationId;
@@ -188,37 +188,32 @@ exports.createReservation = async (req, res) => {
       notes
     });
 
-    // 2. Create Expense if payment received (advance or full)
+    // 2. Create Expense + sync to Transaction ledger if payment received
     if (advancePayment > 0 || paymentStatus === 'paid') {
       const amount = paymentStatus === 'paid' ? totalAmount : advancePayment;
-      await Expense.create({
+      const expense = await Expense.create({
         title: `Reservation Income - ${eventName}`,
         description: `Booking income for ${customerName} (${reservationType})`,
-        amount: amount,
+        amount,
+        category: 'reservation',
         type: 'INCOME',
         date: queryDate,
         locationId,
         createdBy: req.user._id,
-        proofImage: req.body.proofImage || 'reservation-payment'
+        proofImage: req.body.proofImage || 'reservation-payment',
+        status: 'approved'
       });
+      await TransactionService.syncExpenseToTransaction(expense);
     }
 
-    // 3. Notify Admins & Staff
-    const notification = await Notification.create({
+    // 3. Notify branch admins via sendNotification (persists to history + scoped socket emit)
+    await sendNotification({
       title: 'New Reservation Created',
       message: `${eventName} (${reservationType}) by ${customerName} at ${startTime}`,
       type: 'user_action',
-      createdBy: req.user._id,
-      roleTarget: ['super_admin', 'admin', 'branch_admin', 'staff'],
+      performedByUser: req.user,
       locationId
     });
-
-    // Real-time notification via Socket.io — scoped to the affected branch + global admins
-    const io = getIO();
-    io.to(`branch_${locationId}`)
-      .to('role_admin')
-      .to('role_super_admin')
-      .emit('new_notification', notification);
 
     res.status(201).json(reservation);
   } catch (error) {
@@ -314,8 +309,46 @@ exports.updateReservation = async (req, res) => {
     enforceLocationAccess(req, res, getReservationLocationId(existing));
 
     const updateData = { ...req.body };
-    if (updateData.locationId) {
-      updateData.locationId = resolveReservationLocation(req, res, updateData.locationId);
+    const locationId = updateData.locationId
+      ? resolveReservationLocation(req, res, updateData.locationId)
+      : getReservationLocationId(existing);
+    updateData.locationId = locationId;
+
+    // Re-check availability if any scheduling field changed
+    const timeChanged = updateData.startTime || updateData.endTime || updateData.date || updateData.tableIds || updateData.reservationType;
+    if (timeChanged) {
+      const queryDate = new Date(updateData.date || existing.date);
+      const startTime = updateData.startTime || existing.startTime;
+      const endTime = updateData.endTime || existing.endTime;
+      const reservationType = updateData.reservationType || existing.reservationType;
+      const tableIds = updateData.tableIds || existing.tableIds;
+
+      if (reservationType === 'table' && tableIds?.length) {
+        const selectedTableIds = Array.isArray(tableIds) ? tableIds : [tableIds];
+        const tables = await Table.find({ _id: { $in: selectedTableIds }, locationId }).select('_id');
+        if (tables.length !== selectedTableIds.length) {
+          return res.status(403).json({ message: 'One or more tables are outside the selected location' });
+        }
+        const tableCheck = await Reservation.findOne({
+          locationId,
+          date: queryDate,
+          status: { $ne: 'cancelled' },
+          tableIds: { $in: selectedTableIds },
+          _id: { $ne: existing._id },
+          $or: overlapQuery(startTime, endTime)
+        });
+        if (tableCheck) return res.status(400).json({ message: 'Some tables are already booked for this time' });
+      }
+
+      const fullLocCheck = await Reservation.findOne({
+        locationId,
+        date: queryDate,
+        reservationType: 'full-location',
+        status: { $ne: 'cancelled' },
+        _id: { $ne: existing._id },
+        $or: overlapQuery(startTime, endTime)
+      });
+      if (fullLocCheck) return res.status(400).json({ message: 'Location is already fully booked for this time' });
     }
 
     const reservation = await Reservation.findByIdAndUpdate(

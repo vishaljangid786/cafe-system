@@ -8,7 +8,7 @@ const { exportData } = require('../controllers/exportController');
 router.get(
   '/', 
   verifyToken, 
-  checkRoles('admin', 'super_admin', 'branch_admin', 'chef', 'staff'), 
+  checkRoles('admin', 'super_admin', 'branch_admin'),
   checkPermissions('exportReports'), 
   exportData
 );

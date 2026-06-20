@@ -19,7 +19,7 @@ router.use(verifyToken);
 router.route('/')
   .get(getMenuItems)
   .post(
-    checkRoles('super_admin', 'admin', 'branch_admin'),
+    checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'),
     upload.single('image'),
     ...menuItemSchema,
     validate,
@@ -29,18 +29,18 @@ router.route('/')
 router.route('/:id')
   .get(getMenuItem)
   .put(
-    checkRoles('super_admin', 'admin', 'branch_admin'),
+    checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'),
     upload.single('image'),
     ...menuItemSchema,
     validate,
     updateMenuItem
   )
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin'), deleteMenuItem);
+  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteMenuItem);
 
 router.route('/:id/availability')
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'chef', 'staff'), toggleAvailability);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'chef', 'staff'), toggleAvailability);
 
 router.route('/:id/stock')
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'chef', 'staff'), updateStock);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'chef', 'staff'), updateStock);
 
 module.exports = router;

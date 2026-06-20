@@ -37,8 +37,10 @@ export default function CouponsManagementPage() {
   const [editingCoupon, setEditingCoupon] = useState(null);
 
   // Form state for complex fields
-  const [appliesToType, setAppliesToType] = useState('full_order'); // 'full_order', 'items'
+  const [appliesToType, setAppliesToType] = useState('full_order'); // 'full_order', 'items', 'categories'
   const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   // Live preview state
   const [previewData, setPreviewData] = useState({
@@ -56,7 +58,11 @@ export default function CouponsManagementPage() {
   const fetchCoupons = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/coupons?page=${currentPage}&limit=${itemsPerPage}`);
+      const params = new URLSearchParams({ page: currentPage, limit: itemsPerPage });
+      if (searchTerm) params.append('search', searchTerm);
+      if (statusFilter === 'Active') params.append('active', 'true');
+      else if (statusFilter === 'Inactive') params.append('active', 'false');
+      const res = await api.get(`/coupons?${params.toString()}`);
       setCoupons(res.data.data);
       setTotalPages(res.data.pagination.pages);
     } catch (error) {
@@ -72,10 +78,12 @@ export default function CouponsManagementPage() {
       const params = {};
       if (selectedLocation) params.locationId = selectedLocation._id || selectedLocation;
 
-      const res = await api.get('/menu', { params });
-      if (res.data.success) {
-        setMenuItems(res.data.data);
-      }
+      const [itemsRes, catsRes] = await Promise.all([
+        api.get('/menu', { params }),
+        api.get('/categories')
+      ]);
+      if (itemsRes.data.success) setMenuItems(itemsRes.data.data);
+      if (catsRes.data.success) setCategories(catsRes.data.data);
     } catch (error) {
       console.error('Failed to fetch menu items:', error);
       toast.error('Failed to sync menu inventory');
@@ -104,7 +112,7 @@ export default function CouponsManagementPage() {
     e.preventDefault();
     const formData = new FormData(e.target);
     const couponData = {
-      code: formData.get('code'),
+      code: (formData.get('code') || '').toUpperCase(),
       discountType: formData.get('discountType'),
       discountValue: Number(formData.get('discountValue')),
       minOrderAmount: Number(formData.get('minOrderAmount')),
@@ -113,7 +121,7 @@ export default function CouponsManagementPage() {
       expiryDate: formData.get('expiryDate'),
       appliesTo: {
         items: appliesToType === 'items' ? selectedItems : [],
-        categories: []
+        categories: appliesToType === 'categories' ? selectedCategories : []
       },
       isActive: formData.get('isActive') === 'on'
     };
@@ -146,13 +154,7 @@ export default function CouponsManagementPage() {
     }
   };
 
-  const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = coupon.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' ||
-      (statusFilter === 'Active' && coupon.isActive) ||
-      (statusFilter === 'Inactive' && !coupon.isActive);
-    return matchesSearch && matchesStatus;
-  });
+  const filteredCoupons = coupons;
 
   const openEditModal = (coupon) => {
     setEditingCoupon(coupon);
@@ -165,9 +167,15 @@ export default function CouponsManagementPage() {
     if (coupon.appliesTo?.items?.length > 0) {
       setAppliesToType('items');
       setSelectedItems(coupon.appliesTo.items.map(i => i._id || i));
+      setSelectedCategories([]);
+    } else if (coupon.appliesTo?.categories?.length > 0) {
+      setAppliesToType('categories');
+      setSelectedCategories(coupon.appliesTo.categories.map(c => c._id || c));
+      setSelectedItems([]);
     } else {
       setAppliesToType('full_order');
       setSelectedItems([]);
+      setSelectedCategories([]);
     }
     setShowCouponModal(true);
   };
@@ -593,7 +601,8 @@ export default function CouponsManagementPage() {
                   <div className="flex p-1.5 bg-[var(--color-surface-soft)] rounded-2xl border border-[var(--color-border)]">
                     {[
                       { id: 'full_order', label: 'Entire Order', icon: Layers },
-                      { id: 'items', label: 'Specific Items', icon: Package }
+                      { id: 'items', label: 'Specific Items', icon: Package },
+                      { id: 'categories', label: 'Categories', icon: Tag }
                     ].map(type => (
                       <button
                          key={type.id}
@@ -636,6 +645,41 @@ export default function CouponsManagementPage() {
                               <span key={itemId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-black flex items-center gap-2 border border-[var(--color-primary)]/20">
                                 {item?.name}
                                 <button type="button" onClick={() => setSelectedItems(selectedItems.filter(id => id !== itemId))}>
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                    {appliesToType === 'categories' && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-4 overflow-hidden"
+                      >
+                        <PremiumSelect
+                          label="Category Selection"
+                          value=""
+                          onChange={val => {
+                            if (val && !selectedCategories.includes(val)) {
+                              setSelectedCategories([...selectedCategories, val]);
+                            }
+                          }}
+                          options={[
+                            { label: 'Search & Select Categories...', value: '' },
+                            ...categories.map(c => ({ label: c.name, value: c._id }))
+                          ]}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {selectedCategories.map(catId => {
+                            const cat = categories.find(c => c._id === catId);
+                            return (
+                              <span key={catId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-black flex items-center gap-2 border border-[var(--color-primary)]/20">
+                                {cat?.name || catId}
+                                <button type="button" onClick={() => setSelectedCategories(selectedCategories.filter(id => id !== catId))}>
                                   <X size={12} />
                                 </button>
                               </span>

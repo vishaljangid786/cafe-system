@@ -187,11 +187,16 @@ export default function MenuManagementPage() {
     try {
       setLoading(true);
       const params = {};
-      
-      // Prioritize explicit filterLocation from the dropdown, fallback to context selectedLocation
+
       const targetLoc = filterLocation !== 'all' ? filterLocation : (selectedLocation?._id || selectedLocation);
       if (targetLoc && targetLoc !== 'all') params.locationId = targetLoc;
-
+      if (searchTerm) params.search = searchTerm;
+      if (selectedCategory !== 'All') params.category = selectedCategory;
+      if (minPrice !== '') params.minPrice = minPrice;
+      if (maxPrice !== '') params.maxPrice = maxPrice;
+      if (availabilityFilter === 'Available') params.isAvailable = true;
+      if (availabilityFilter === 'Unavailable') params.isAvailable = false;
+      if (dietaryFilter !== 'All') params.dietary = dietaryFilter;
       params.page = currentPage;
       params.limit = itemsPerPage;
 
@@ -213,9 +218,9 @@ export default function MenuManagementPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchData();
-    }, 0);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [selectedLocation, filterLocation, currentPage]);
+  }, [selectedLocation, filterLocation, currentPage, searchTerm, selectedCategory, minPrice, maxPrice, availabilityFilter, dietaryFilter]);
 
   const fetchRecipe = async (menuItemId) => {
     try {
@@ -865,6 +870,7 @@ export default function MenuManagementPage() {
                           setMinPrice('');
                           setMaxPrice('');
                           setDietaryFilter('All');
+                          setCurrentPage(1);
                         }}
                         className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] hover:opacity-80 transition-colors py-2 px-4 bg-[var(--color-primary)]/10 rounded-xl"
                       >

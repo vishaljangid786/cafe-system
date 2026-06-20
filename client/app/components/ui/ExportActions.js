@@ -7,6 +7,21 @@ import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 
+const escapeHtml = (str) => {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+const sanitizeCsvCell = (val) => {
+  const str = val == null ? '' : String(val);
+  return /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+};
+
 export default function ExportActions({ data = [], columns = [], filename = 'export', hasCharts = false }) {
   const [showOptions, setShowOptions] = useState(false);
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
@@ -42,15 +57,15 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         return;
       }
       
-      const exportData = filteredData.map(item => {
+      const sanitizedData = filteredData.map(item => {
         const row = {};
         columns.forEach(col => {
-          row[col.header] = typeof col.key === 'function' ? col.key(item) : getNestedValue(item, col.key);
+          const val = typeof col.key === 'function' ? col.key(item) : getNestedValue(item, col.key);
+          row[col.header] = sanitizeCsvCell(val);
         });
         return row;
       });
-
-      const csv = Papa.unparse(exportData);
+      const csv = Papa.unparse(sanitizedData);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -253,11 +268,11 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
       }
 
       const printWindow = window.open('', '_blank');
-      const tableHeaders = columns.map(col => `<th>${col.header}</th>`).join('');
+      const tableHeaders = columns.map(col => `<th>${escapeHtml(col.header)}</th>`).join('');
       const tableRows = filteredData.map(item => {
         const rowData = columns.map(col => {
           const val = typeof col.key === 'function' ? col.key(item) : getNestedValue(item, col.key);
-          return `<td>${val != null ? String(val) : ''}</td>`;
+          return `<td>${escapeHtml(val)}</td>`;
         }).join('');
         return `<tr>${rowData}</tr>`;
       }).join('');

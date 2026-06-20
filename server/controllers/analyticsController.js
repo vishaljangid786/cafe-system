@@ -8,7 +8,14 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId, normalizeId } = require('../utils/accessControl');
+const { scopedLocationId, scopedLocationIds, normalizeId, canAccessLocation, userLocationIds } = require('../utils/accessControl');
+
+// Returns a Mongoose $in array for the current user's accessible locations, or null for super_admin (no filter)
+const allowedLocationFilter = (user) => {
+  if (user.role === 'super_admin') return null;
+  const ids = userLocationIds(user);
+  return ids.map(id => new mongoose.Types.ObjectId(id));
+};
 const AnalyticsService = require('../services/analyticsService');
 
 // @desc    Get analytics for a specific location
@@ -32,10 +39,16 @@ const getLocationAnalytics = asyncHandler(async (req, res) => {
 // @route   GET /api/analytics/all
 // @desc    Get global analytics
 const getAllAnalytics = asyncHandler(async (req, res) => {
-  const { startDate, endDate, locationId, period } = req.query;
+  const { startDate, endDate, locationId, locationIds, period } = req.query;
   const matchScope = {};
-  const branch = scopedLocationId(req, locationId);
-  if (branch) matchScope.locationId = branch;
+
+  if (locationIds) {
+    const multi = scopedLocationIds(req, locationIds);
+    if (multi) matchScope.locationId = multi;
+  } else {
+    const branch = scopedLocationId(req, locationId);
+    if (branch) matchScope.locationId = branch;
+  }
 
   const metrics = await AnalyticsService.getGlobalMetrics(matchScope, startDate, endDate, period);
   res.json({ success: true, data: metrics });
@@ -65,15 +78,21 @@ const compareLocations = asyncHandler(async (req, res) => {
 // @desc    Get advanced analytics for charts
 // @desc    Get advanced analytics for charts
 const getAdvancedAnalytics = asyncHandler(async (req, res) => {
-  const { startDate, endDate, locationId, adminId } = req.query;
+  const { startDate, endDate, locationId, locationIds, adminId } = req.query;
   const matchScope = {};
-  
-  const branch = scopedLocationId(req, locationId);
-  if (branch) {
-    if (typeof branch === 'object' && branch.$in) {
-      matchScope.locationId = { $in: branch.$in.map(id => new mongoose.Types.ObjectId(id.toString())) };
-    } else {
-      matchScope.locationId = new mongoose.Types.ObjectId(branch.toString());
+
+  // Multi-branch subset takes priority over single locationId
+  if (locationIds) {
+    const multi = scopedLocationIds(req, locationIds);
+    if (multi) matchScope.locationId = { $in: multi.$in.map(id => new mongoose.Types.ObjectId(id)) };
+  } else {
+    const branch = scopedLocationId(req, locationId);
+    if (branch) {
+      if (typeof branch === 'object' && branch.$in) {
+        matchScope.locationId = { $in: branch.$in.map(id => new mongoose.Types.ObjectId(id.toString())) };
+      } else {
+        matchScope.locationId = new mongoose.Types.ObjectId(branch.toString());
+      }
     }
   }
 
@@ -88,7 +107,19 @@ const getAdvancedAnalytics = asyncHandler(async (req, res) => {
 // @desc    Compare multiple locations across key metrics
 const getLocationComparison = asyncHandler(async (req, res) => {
   const { locationIds, startDate, endDate, period } = req.query;
-  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
+  const rawIds = locationIds ? locationIds.split(',') : [];
+
+  if (req.user.role !== 'super_admin' && rawIds.length > 0) {
+    const unauthorized = rawIds.some(id => !canAccessLocation(req.user, id));
+    if (unauthorized) {
+      res.status(403);
+      throw new Error('You do not have permission to compare one or more of these branches');
+    }
+  }
+
+  const ids = rawIds.length > 0
+    ? rawIds.map(id => new mongoose.Types.ObjectId(id))
+    : userLocationIds(req.user).map(id => new mongoose.Types.ObjectId(id));
 
   const metrics = await AnalyticsService.getLocationOutliers(ids, startDate, endDate, period);
   res.json({ success: true, data: metrics });
@@ -228,7 +259,13 @@ const getComparisonDetails = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "Location IDs are required" });
   }
 
-  const ids = locationIds.split(',').map(id => new mongoose.Types.ObjectId(id));
+  const rawIds = locationIds.split(',');
+  const unauthorized = rawIds.filter(id => !canAccessLocation(req.user, id));
+  if (unauthorized.length > 0) {
+    res.status(403);
+    throw new Error('Access denied to one or more requested locations');
+  }
+  const ids = rawIds.map(id => new mongoose.Types.ObjectId(id));
   const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
 
   // 1. Staff-Item Breakdown for each location
@@ -316,6 +353,12 @@ const getComparisonDetails = asyncHandler(async (req, res) => {
 // @access  Private (Admin, Super Admin)
 const getLocationInfo = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  if (!canAccessLocation(req.user, id)) {
+    res.status(403);
+    throw new Error('You do not have access to this location');
+  }
+
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
@@ -418,8 +461,10 @@ const getStaffReports = asyncHandler(async (req, res) => {
   if (staffName) {
     userQuery.name = { $regex: staffName, $options: 'i' };
   }
-  if (req.user.role === 'branch_admin') {
-    userQuery.assignedLocation = req.user.assignedLocation;
+  // Scope to accessible locations for all non-super_admin roles
+  if (req.user.role !== 'super_admin') {
+    const allowedIds = allowedLocationFilter(req.user);
+    userQuery.assignedLocation = { $in: allowedIds };
   }
   const users = await User.find(userQuery).populate('assignedLocation', 'name');
   const userIds = users.map(u => u._id.toString());
@@ -581,7 +626,10 @@ const getPaymentInfo = asyncHandler(async (req, res) => {
   const branchUPIStats = {};
   const trendMap = {};
 
-  const locations = await Location.find({ isPermanentlyDeleted: false });
+  const locFilter = { isPermanentlyDeleted: false };
+  const paymentAllowed = allowedLocationFilter(req.user);
+  if (paymentAllowed) locFilter._id = { $in: paymentAllowed };
+  const locations = await Location.find(locFilter);
   locations.forEach(loc => {
     branchUPIStats[loc._id.toString()] = {
       branchId: loc._id,
@@ -679,8 +727,15 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
     previousStart = new Date(currentStart.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
 
-  const locations = await Location.find({ isPermanentlyDeleted: false });
-  const users = await User.find({ role: { $in: ['staff', 'chef', 'branch_admin'] } });
+  const compAllowed = allowedLocationFilter(req.user);
+  const locQuery = { isPermanentlyDeleted: false };
+  const staffQuery = { role: { $in: ['staff', 'chef', 'branch_admin'] } };
+  if (compAllowed) {
+    locQuery._id = { $in: compAllowed };
+    staffQuery.assignedLocation = { $in: compAllowed };
+  }
+  const locations = await Location.find(locQuery);
+  const users = await User.find(staffQuery);
 
   const branchScope = scopedLocationId(req, null);
   const orderFilter = {

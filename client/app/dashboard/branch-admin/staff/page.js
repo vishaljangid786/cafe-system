@@ -8,7 +8,6 @@ import { Button } from '../../../components/ui/Button';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function BranchStaffPage() {
@@ -16,12 +15,14 @@ export default function BranchStaffPage() {
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [viewingStaff, setViewingStaff] = useState(null);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', age: '', gender: 'Male',
     address1: '', city: '', state: '', pincode: '', monthlySalary: ''
   });
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phone: '', monthlySalary: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 12;
@@ -77,6 +78,20 @@ export default function BranchStaffPage() {
     }
   };
 
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    const loadToast = toast.loading('Creating staff account...');
+    try {
+      await api.post('/auth/register', { ...createForm, role: 'staff' });
+      toast.success('Staff account created', { id: loadToast });
+      setShowCreateModal(false);
+      setCreateForm({ name: '', email: '', password: '', phone: '', monthlySalary: '' });
+      fetchStaff();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Creation failed', { id: loadToast });
+    }
+  };
+
   const handleDelete = async () => {
     if (!showDeleteConfirm) return;
     const loadToast = toast.loading('Deleting staff...');
@@ -110,15 +125,14 @@ export default function BranchStaffPage() {
             </div>
             <div className="flex items-center space-x-6">
 
-              <Link href="/signup">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-zinc-900 dark:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/10 flex items-center"
-                >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
-                </motion.button>
-              </Link>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowCreateModal(true)}
+                className="bg-zinc-900 dark:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/10 flex items-center"
+              >
+                <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
+              </motion.button>
             </div>
           </div>
         </SlideIn>
@@ -480,6 +494,36 @@ export default function BranchStaffPage() {
               </div>
             </div>
           )}
+        </Modal>
+
+        {/* Create Staff Modal */}
+        <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Add New Staff">
+          <form onSubmit={handleCreate} className="space-y-5 p-2">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Full Name</label>
+              <input required className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.name} onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))} placeholder="Staff member's name" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Email</label>
+              <input required type="email" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} placeholder="email@cafe.com" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Password</label>
+              <input required type="password" minLength={6} className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Phone</label>
+              <input type="tel" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value }))} placeholder="Contact number" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Monthly Salary</label>
+              <input type="number" min="0" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
+            </div>
+            <div className="flex gap-4 pt-2">
+              <Button type="submit" className="flex-1">Create Staff</Button>
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            </div>
+          </form>
         </Modal>
       </div>
     </PageTransition>

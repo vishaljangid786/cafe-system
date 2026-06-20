@@ -53,7 +53,7 @@ export default function GlobalAttendancePage() {
 
         // Fetch staff if a specific location is selected
         if (filters.locationId !== 'All') {
-          const staffRes = await api.get(`/users?assignedLocation=${filters.locationId}`);
+          const staffRes = await api.get(`/users?locationId=${filters.locationId}`);
           setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         } else {
           setStaff([]);

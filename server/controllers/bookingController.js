@@ -3,7 +3,7 @@ const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
-const { enforceLocationAccess, clampLimit } = require('../utils/accessControl');
+const { enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
 
 // Helper to calculate total guests booked for a specific time range
 const getBookedGuests = async (locationId, date, startTime, endTime, excludeBookingId = null) => {
@@ -40,8 +40,6 @@ const checkAvailability = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
 
-  enforceLocationAccess(req, res, locationId, 'You do not have permission to check this location');
-
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
   const requestedGuests = parseInt(numberOfGuests, 10);
@@ -61,27 +59,33 @@ const checkAvailability = asyncHandler(async (req, res) => {
 // @route   POST /api/bookings
 // @access  Private
 const createBooking = asyncHandler(async (req, res) => {
-  const { locationId, date, startTime, endTime, numberOfGuests, specialRequests } = req.body;
+  const { locationId, date, startTime, endTime, numberOfGuests, specialRequests, guestName, guestEmail, guestPhone } = req.body;
 
   const location = await Location.findById(locationId);
   if (!location) {
     return res.status(404).json({ success: false, message: 'Location not found' });
   }
 
-  enforceLocationAccess(req, res, locationId, 'You do not have permission to book this location');
-
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
 
   if (bookedGuests + numberOfGuests > maxCapacity) {
-    return res.status(400).json({ 
-      success: false, 
+    return res.status(400).json({
+      success: false,
       message: `Cannot book. Only ${Math.max(0, maxCapacity - bookedGuests)} slots available.`
     });
   }
 
+  const isAuthenticated = !!req.user;
+  if (!isAuthenticated && !guestName) {
+    return res.status(400).json({ success: false, message: 'Guest name is required for unauthenticated bookings' });
+  }
+
   const booking = await Booking.create({
-    userId: req.user._id,
+    userId: isAuthenticated ? req.user._id : null,
+    guestName: isAuthenticated ? null : guestName,
+    guestEmail: isAuthenticated ? null : (guestEmail || null),
+    guestPhone: isAuthenticated ? null : (guestPhone || null),
     locationId,
     date: new Date(date),
     startTime,
@@ -90,17 +94,19 @@ const createBooking = asyncHandler(async (req, res) => {
     specialRequests
   });
 
-  await booking.populate('userId', 'name email');
   await booking.populate('locationId', 'name');
+  if (isAuthenticated) await booking.populate('userId', 'name email');
 
-  // Notify admins
-  await sendNotification({
-    title: 'New Booking Request',
-    message: `${req.user.name} requested a booking for ${numberOfGuests} guests at ${location.name} on ${date} (${startTime} - ${endTime}).`,
-    type: 'user_action',
-    performedByUser: req.user,
-    locationId
-  });
+  const bookerName = isAuthenticated ? req.user.name : guestName;
+  if (isAuthenticated) {
+    await sendNotification({
+      title: 'New Booking Request',
+      message: `${bookerName} requested a booking for ${numberOfGuests} guests at ${location.name} on ${date} (${startTime} - ${endTime}).`,
+      type: 'user_action',
+      performedByUser: req.user,
+      locationId
+    });
+  }
 
   res.status(201).json({ success: true, data: booking });
 });
@@ -120,7 +126,7 @@ const getUserBookings = asyncHandler(async (req, res) => {
 // @route   GET /api/bookings
 // @access  Private/Admin
 const getBookings = asyncHandler(async (req, res) => {
-  const { locationId, date, status } = req.query;
+  const { locationId, date, status, search } = req.query;
   const query = {};
 
   if (locationId) {
@@ -129,6 +135,10 @@ const getBookings = asyncHandler(async (req, res) => {
   }
   if (date) query.date = new Date(date);
   if (status) query.status = status;
+  if (search) {
+    const re = new RegExp(escapeRegex(search), 'i');
+    query.$or = [{ guestName: re }, { guestEmail: re }, { guestPhone: re }];
+  }
 
   // For branch admins, restrict to their assigned location
   if (req.user.role === 'branch_admin') {
@@ -196,13 +206,16 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
   booking.status = status;
   await booking.save();
 
-  // Notify the user via socket
-  const io = getIO();
-  io.to(booking.userId._id.toString()).emit('booking_status_updated', {
-    bookingId: booking._id,
-    status: booking.status,
-    message: `Your booking at ${booking.locationId.name} on ${new Date(booking.date).toLocaleDateString()} has been ${status}.`
-  });
+  // Notify the user via socket (only if an authenticated user made the booking)
+  if (booking.userId) {
+    const io = getIO();
+    const userId = booking.userId._id?.toString() || booking.userId.toString();
+    io.to(userId).emit('booking_status_updated', {
+      bookingId: booking._id,
+      status: booking.status,
+      message: `Your booking at ${booking.locationId?.name} on ${new Date(booking.date).toLocaleDateString()} has been ${status}.`
+    });
+  }
 
   res.status(200).json({ success: true, data: booking });
 });

@@ -3,7 +3,7 @@ const Location = require('../models/Location');
 const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const { logAction } = require('../utils/auditLogger');
-const { clampLimit } = require('../utils/accessControl');
+const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds } = require('../utils/accessControl');
 
 // @desc    Get all menu items with filters
 // @route   GET /api/menu
@@ -29,9 +29,20 @@ const getMenuItems = asyncHandler(async (req, res) => {
     filter.dietaryType = dietaryType;
   }
 
-  // Location filter: global items (isGlobal: true) + branch-specific
-  if (locationId && locationId !== 'all' && locationId !== 'undefined' && locationId !== 'null') {
+  // Location scoping — non-super users always scoped to accessible branches
+  const role = req.user.role;
+  const isSuper = role === 'super_admin';
+  const validLocationId = locationId && locationId !== 'all' && locationId !== 'undefined' && locationId !== 'null';
+
+  if (validLocationId) {
+    enforceLocationAccess(req, res, locationId, 'You do not have permission to view menu for this branch');
     filter.$or = [{ isGlobal: true }, { availableBranches: locationId }];
+  } else if (!isSuper) {
+    // Default scope to accessible/assigned branches when no locationId provided
+    const ids = userLocationIds(req.user);
+    if (ids.length > 0) {
+      filter.$or = [{ isGlobal: true }, { availableBranches: { $in: ids } }];
+    }
   }
 
   // Pagination
@@ -101,7 +112,12 @@ const getMenuItem = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
-  const branchStocks = await BranchStock.find({ menuItem: item._id });
+  const stockQuery = { menuItem: item._id };
+  if (req.user.role !== 'super_admin') {
+    const ids = userLocationIds(req.user);
+    if (ids.length > 0) stockQuery.branch = { $in: ids };
+  }
+  const branchStocks = await BranchStock.find(stockQuery);
 
   res.json({
     success: true,
@@ -132,9 +148,10 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     throw new Error('Discounted price must be less than original price');
   }
 
-  const isGlobalItem = isGlobal === 'on' || isGlobal === 'true' || isGlobal === true;
+  // Only super_admin can create global menu items
+  const isGlobalItem = (isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) && req.user.role === 'super_admin';
   let branchIds = [];
-  
+
   if (!isGlobalItem) {
     if (Array.isArray(availableBranches)) {
       branchIds = availableBranches;
@@ -142,6 +159,14 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
       branchIds = availableBranches.split(',');
     } else if (locationId) {
       branchIds = [locationId];
+    }
+  }
+
+  if (req.user.role !== 'super_admin' && branchIds.length > 0) {
+    const unauthorized = branchIds.some(id => !canAccessLocation(req.user, id));
+    if (unauthorized) {
+      res.status(403);
+      throw new Error('You do not have permission to assign menu items to one or more of these branches');
     }
   }
 
@@ -250,7 +275,11 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
   }
   if (preparationTime !== undefined) updates.preparationTime = Number(preparationTime);
   
-  const isGlobalItem = isGlobal !== undefined ? (isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) : item.isGlobal;
+  // Non-super_admin cannot make items global (or keep them global)
+  const canBeGlobal = req.user.role === 'super_admin';
+  const isGlobalItem = isGlobal !== undefined
+    ? ((isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) && canBeGlobal)
+    : (item.isGlobal && canBeGlobal);
   let branchIds = item.availableBranches;
 
   if (isGlobal !== undefined || availableBranches !== undefined || locationId !== undefined) {
@@ -264,6 +293,14 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
       } else if (locationId) {
         branchIds = [locationId];
       }
+    }
+  }
+
+  if (req.user.role !== 'super_admin' && branchIds.length > 0) {
+    const unauthorized = branchIds.some(id => !canAccessLocation(req.user, id));
+    if (unauthorized) {
+      res.status(403);
+      throw new Error('You do not have permission to assign menu items to one or more of these branches');
     }
   }
 
@@ -350,6 +387,20 @@ const deleteMenuItem = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
+  // Non-super_admin can only delete items assigned to their accessible branches
+  if (req.user.role !== 'super_admin') {
+    if (item.isGlobal) {
+      res.status(403);
+      throw new Error('Only Super Admins can delete global menu items');
+    }
+    const ids = userLocationIds(req.user);
+    const hasAccess = item.availableBranches?.some(b => ids.includes(b.toString()));
+    if (!hasAccess) {
+      res.status(403);
+      throw new Error('You do not have permission to delete this menu item');
+    }
+  }
+
   await item.deleteOne();
 
   await logAction(req, 'MENU_ITEM_DELETE', `Deleted menu item: ${item.name}`);
@@ -370,6 +421,32 @@ const toggleAvailability = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
+  const role = req.user.role;
+  // staff/chef toggle branch-stock availability only — never the global item flag
+  if (role === 'staff' || role === 'chef') {
+    const branchId = req.user.assignedLocation?.toString();
+    if (!branchId) {
+      res.status(400);
+      throw new Error('No assigned branch found for this user');
+    }
+    const branchStock = await BranchStock.findOneAndUpdate(
+      { menuItem: item._id, branch: branchId },
+      [{ $set: { isAvailable: { $not: '$isAvailable' } } }],
+      { new: true, upsert: true }
+    );
+    return res.json({
+      success: true,
+      data: branchStock,
+      message: `Item marked as ${branchStock.isAvailable ? 'available' : 'unavailable'} for your branch`,
+    });
+  }
+
+  // Admins toggle the global flag (but should have branch ownership already)
+  if (req.user.role !== 'super_admin' && item.isGlobal) {
+    res.status(403);
+    throw new Error('Only Super Admins can toggle availability of global menu items');
+  }
+
   item.isAvailable = !item.isAvailable;
   await item.save();
 
@@ -384,7 +461,12 @@ const toggleAvailability = asyncHandler(async (req, res) => {
 // @route   PUT /api/menu/:id/stock
 // @access  Private
 const updateStock = asyncHandler(async (req, res) => {
-  const { stock, branchId } = req.body;
+  const { stock } = req.body;
+  const branchId = req.body.branchId ||
+    (['staff', 'branch_admin', 'chef'].includes(req.user.role)
+      ? req.user.assignedLocation?.toString()
+      : null);
+
   const item = await MenuItem.findById(req.params.id);
 
   if (!item) {
@@ -393,6 +475,7 @@ const updateStock = asyncHandler(async (req, res) => {
   }
 
   if (branchId) {
+    enforceLocationAccess(req, res, branchId, 'You do not have permission to update stock for this branch');
     const branchStock = await BranchStock.findOneAndUpdate(
       { menuItem: item._id, branch: branchId },
       { stock: Number(stock), isAvailable: Number(stock) > 0 },

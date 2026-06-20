@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -8,21 +8,25 @@ import NotificationPanel from './NotificationPanel';
 import {
   Bell, User as UserIcon, Sun, Moon,
   Menu, MapPin, Zap, Search,
-  ChevronLeft, ChevronRight, RefreshCw
+  ChevronLeft, ChevronRight, RefreshCw, Check, ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import PremiumSelect from './ui/PremiumSelect';
 
 const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   const router = useRouter();
-  const { user, selectedLocation, logout } = useAuth();
+  const { user, selectedLocation, selectedLocationIds, switchLocation, switchLocationIds, locations, refreshLocations, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [modifierKey, setModifierKey] = useState('');
+  const [showBranchPanel, setShowBranchPanel] = useState(false);
+  const [pendingIds, setPendingIds] = useState([]); // draft selection inside the panel
+  const branchPanelRef = useRef(null);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,7 +37,6 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const locationRef = useRef(null);
   const notificationRef = useRef(null);
 
   useEffect(() => {
@@ -41,11 +44,11 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     window.addEventListener('scroll', handleScroll);
 
     const handleClickOutside = (event) => {
-      if (locationRef.current && !locationRef.current.contains(event.target)) {
-        setShowLocationSelector(false);
-      }
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
+      }
+      if (branchPanelRef.current && !branchPanelRef.current.contains(event.target)) {
+        setShowBranchPanel(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -56,11 +59,53 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     };
   }, []);
 
-  if (!user) return null;
+  const canViewAllBranches = ['admin', 'super_admin'].includes(user?.role);
 
-  const currentLocationLabel = selectedLocation
-    ? `${selectedLocation.city} - ${selectedLocation.name}`
-    : (['admin', 'super_admin'].includes(user.role) ? 'Select Branch' : 'Assigned Branch');
+  const availableBranches = useMemo(() => {
+    if (canViewAllBranches) return locations || [];
+
+    const branches = [];
+    const addBranch = (branch) => {
+      if (!branch) return;
+      const branchId = branch._id || branch;
+      if (!branchId || branches.some((item) => (item._id || item) === branchId)) return;
+      branches.push(branch);
+    };
+
+    if (Array.isArray(user?.accessibleLocations)) {
+      user.accessibleLocations.forEach(addBranch);
+    }
+    addBranch(user?.assignedLocation);
+
+    return branches;
+  }, [canViewAllBranches, locations, user]);
+
+  useEffect(() => {
+    if (canViewAllBranches && locations.length === 0) {
+      refreshLocations();
+    }
+  }, [canViewAllBranches, locations.length, refreshLocations]);
+
+  const selectedLocationId = selectedLocation === 'all'
+    ? 'all'
+    : selectedLocation?._id || selectedLocation || (canViewAllBranches ? 'all' : '');
+
+  // Label shown on the multi-select button for admin/super_admin
+  const multiBranchLabel = selectedLocationIds.length === 0
+    ? 'All Branches'
+    : selectedLocationIds.length === 1
+      ? (availableBranches.find(b => (b._id || b) === selectedLocationIds[0])?.name || '1 Branch')
+      : `${selectedLocationIds.length} Branches`;
+
+  const branchOptions = [
+    ...(canViewAllBranches ? [{ label: 'All Branches', value: 'all' }] : []),
+    ...availableBranches.map((branch) => ({
+      label: branch.city && branch.name ? `${branch.city} - ${branch.name}` : branch.name || branch.city || 'Assigned Branch',
+      value: branch._id || branch,
+    })),
+  ];
+
+  if (!user) return null;
 
   return (
     <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[200] sticky top-0 transition-all duration-300 ${isScrolled
@@ -102,27 +147,95 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Location Selector Dropdown */}
-        {!isMobile && <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-2xl border bg-[var(--color-bg-soft)]/50 border-[var(--color-border)] backdrop-blur-sm">
+        {/* Location Selector */}
+        {!isMobile && (
+          <div className="relative" ref={branchPanelRef}>
+            {canViewAllBranches ? (
+              /* Multi-select panel for admin / super_admin */
+              <>
+                <button
+                  onClick={() => {
+                    setPendingIds(selectedLocationIds);
+                    setShowBranchPanel(v => !v);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:border-primary/50 transition-all text-sm font-bold text-[var(--color-text-primary)] min-w-[200px] shadow-sm backdrop-blur-sm"
+                >
+                  <MapPin size={15} className="text-[var(--color-primary)] shrink-0" />
+                  <span className="flex-1 text-left truncate text-[11px] font-black uppercase tracking-wider">{multiBranchLabel}</span>
+                  <ChevronDown size={14} className={`text-[var(--color-text-muted)] transition-transform ${showBranchPanel ? 'rotate-180' : ''}`} />
+                </button>
 
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <MapPin size={14} />
+                <AnimatePresence>
+                  {showBranchPanel && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-[300] overflow-hidden"
+                    >
+                      <div className="p-2 border-b border-[var(--color-border)]">
+                        <button
+                          onClick={() => setPendingIds([])}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${pendingIds.length === 0 ? 'bg-[var(--color-primary)] text-white' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
+                        >
+                          <Check size={13} className={pendingIds.length === 0 ? 'opacity-100' : 'opacity-0'} />
+                          All Branches
+                        </button>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+                        {availableBranches.map(branch => {
+                          const id = branch._id || branch;
+                          const checked = pendingIds.includes(id);
+                          return (
+                            <button
+                              key={id}
+                              onClick={() => setPendingIds(prev =>
+                                checked ? prev.filter(x => x !== id) : [...prev, id]
+                              )}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all ${checked ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
+                            >
+                              <span className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-[var(--color-border)]'}`}>
+                                {checked && <Check size={10} className="text-white" strokeWidth={3} />}
+                              </span>
+                              <span className="truncate">{branch.city && branch.name ? `${branch.city} — ${branch.name}` : branch.name || branch.city}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="p-2 border-t border-[var(--color-border)]">
+                        <button
+                          onClick={() => {
+                            switchLocationIds(pendingIds);
+                            setShowBranchPanel(false);
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              /* Single-select for branch_admin / location_admin */
+              <div className="w-[220px]">
+                <PremiumSelect
+                  icon={MapPin}
+                  label="Active Branch"
+                  value={selectedLocationId}
+                  onChange={(value) => {
+                    const nextLocation = availableBranches.find((branch) => (branch._id || branch) === value);
+                    switchLocation(nextLocation || value);
+                  }}
+                  options={branchOptions}
+                  placeholder="Assigned Branch"
+                />
+              </div>
+            )}
           </div>
-
-          <div className="flex flex-col items-start leading-none pr-1">
-            <span className="hidden sm:inline text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-1">
-              Active Branch
-            </span>
-
-            <span className="text-[10px] md:text-xs font-black text-[var(--color-text-primary)] max-w-[120px] truncate">
-              {selectedLocation
-                ? `${selectedLocation.city} - ${selectedLocation.name}`
-                : (['admin', 'super_admin'].includes(user.role)
-                  ? 'Global Cafe'
-                  : 'Assigned Branch')}
-            </span>
-          </div>
-        </div>}
+        )}
 
         {/* Action Controls */}
         <div className="relative flex items-center gap-2 bg-[var(--color-bg-soft)]/50 p-1.5 rounded-2xl border border-[var(--color-border)] shadow-inner backdrop-blur-sm">

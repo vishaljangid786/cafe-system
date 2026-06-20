@@ -137,6 +137,11 @@ const promoteUser = asyncHandler(async (req, res) => {
   else if (user.role === 'branch_admin') nextRole = 'admin';
   else if (user.role === 'admin') nextRole = 'super_admin';
 
+  if (req.user.role === 'admin' && ['admin', 'super_admin'].includes(nextRole)) {
+    res.status(403);
+    throw new Error('Only Super Admin can promote to admin or super_admin');
+  }
+
   user.role = nextRole;
   await user.save();
 
@@ -243,6 +248,20 @@ const updateUser = asyncHandler(async (req, res) => {
 
   if (updateData.assignedLocation && req.user.role !== 'super_admin') {
     enforceLocationAccess(req, res, updateData.assignedLocation, 'You do not have permission to assign this location');
+  }
+
+  if (updateData.accessibleLocations !== undefined && req.user.role !== 'super_admin') {
+    if (req.user.role === 'branch_admin') {
+      delete updateData.accessibleLocations;
+    } else if (req.user.role === 'admin') {
+      const unauthorized = updateData.accessibleLocations.some(
+        loc => !canAccessLocation(req.user, loc)
+      );
+      if (unauthorized) {
+        res.status(403);
+        throw new Error('You cannot grant access to locations you do not manage');
+      }
+    }
   }
 
   // Branch Transfer Guard: Prevent transfer if active orders exist
@@ -355,6 +374,11 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
   if (user.role === 'super_admin') {
     res.status(403);
     throw new Error('Cannot block Super Admin');
+  }
+
+  if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
+    res.status(403);
+    throw new Error('You do not have permission to block users from other branches');
   }
 
   user.isBlocked = !user.isBlocked;

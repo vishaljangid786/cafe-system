@@ -264,7 +264,8 @@ export default function StaffTablesPage() {
           costPrice: item.costPrice || 0
         })),
         totalAmount: pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity)), 0),
-        discountAmount: Number(discountAmount || 0)
+        discountAmount: Number(discountAmount || 0),
+        couponId: appliedCoupon?.couponId || null
       };
 
       await api.post('/orders', payload);
@@ -288,7 +289,7 @@ export default function StaffTablesPage() {
     try {
       const subtotal = pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
       const res = await api.post('/coupons/apply', { 
-        code: couponCode, 
+        code: couponCode.toUpperCase(),
         orderAmount: subtotal,
         orderItems: pendingOrders.map(item => ({
           menuItemId: item.menuItemId?._id || item.menuItemId,

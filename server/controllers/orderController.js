@@ -7,7 +7,7 @@ const BranchStock = require('../models/BranchStock');
 const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
-const { enforceLocationAccess, clampLimit, scopedLocationId } = require('../utils/accessControl');
+const { enforceLocationAccess, clampLimit, scopedLocationId, endOfDay, escapeRegex } = require('../utils/accessControl');
 const { logActivity } = require('../utils/auditLogger');
 const OrderService = require('../services/orderService');
 
@@ -22,7 +22,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Only staff can create orders');
   }
 
-  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount } = req.body;
+  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount, couponId } = req.body;
   const branch = ['staff', 'chef', 'branch_admin'].includes(req.user.role)
     ? req.user.assignedLocation
     : requestedBranch;
@@ -47,6 +47,7 @@ const createOrder = asyncHandler(async (req, res) => {
     customerPhone,
     customerName,
     discountAmount: Number(discountAmount) || 0,
+    couponId: couponId || null,
     userId: req.user._id
   });
 
@@ -55,16 +56,22 @@ const createOrder = asyncHandler(async (req, res) => {
 
 // @desc    Get orders
 const getOrders = asyncHandler(async (req, res) => {
-  const { status, branchId, tableId, isBilled, createdBy, startDate, endDate } = req.query;
+  const { status, branchId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
   const filter = {};
 
   if (status) filter.status = status;
+  if (search) {
+    const re = new RegExp(escapeRegex(search), 'i');
+    filter.$or = [{ customerName: re }, { customerPhone: re }];
+  }
   if (tableId) filter.table = tableId;
   if (isBilled !== undefined) filter.isBilled = isBilled === 'true';
   if (createdBy) filter.createdBy = createdBy;
 
-  if (startDate && endDate) {
-    filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) filter.createdAt.$gte = new Date(startDate);
+    if (endDate) filter.createdAt.$lte = endOfDay(endDate);
   }
 
   const branch = scopedLocationId(req, branchId);
@@ -273,9 +280,10 @@ const generateOrderBill = asyncHandler(async (req, res) => {
   }
 
   const subtotal = order.totalAmount;
-  const taxes = Number((subtotal * 0.05).toFixed(2)); // 5% GST
-  const discount = order.discountAmount || 0; 
-  const finalAmount = subtotal + taxes; // Assuming totalAmount is already net of discount
+  const discount = order.discountAmount || 0;
+  const taxableAmount = Math.max(0, subtotal - discount);
+  const taxes = Number((taxableAmount * 0.05).toFixed(2)); // 5% GST
+  const finalAmount = taxableAmount + taxes;
 
   // Record billing in history
   order.statusHistory.push({

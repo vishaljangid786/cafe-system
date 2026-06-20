@@ -57,6 +57,7 @@ export default function AdminOrdersDashboard() {
       if (statusFilter) params.append('status', statusFilter);
       if (dateRange.start) params.append('startDate', dateRange.start);
       if (dateRange.end) params.append('endDate', dateRange.end);
+      if (searchTerm) params.append('search', searchTerm);
 
       const [orderRes, analyticsRes, locRes] = await Promise.all([
         api.get(`/orders?${params.toString()}`),
@@ -170,32 +171,28 @@ export default function AdminOrdersDashboard() {
     }
   };
 
-  const exportOrdersCSV = () => {
-    if (orders.length === 0) return toast.error('No data to export');
-
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Table,Branch,Status,Total Amount,Items,Timestamp\n";
-
-    orders.forEach(o => {
-      const items = o.items.map(i => `${i.quantity}x ${i.menuItem?.name}`).join(' | ');
-      csvContent += `${o._id},${o.table?.tableNumber},${o.branch?.name},${o.status},${o.totalAmount},"${items}",${new Date(o.createdAt).toLocaleString()}\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Orders_Export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Orders dataset exported');
+  const exportOrdersCSV = async () => {
+    try {
+      const params = new URLSearchParams({ type: 'orders', format: 'csv' });
+      if (branchFilter !== 'all') params.append('branchId', branchFilter);
+      if (dateRange.start) params.append('startDate', dateRange.start);
+      if (dateRange.end) params.append('endDate', dateRange.end);
+      const res = await api.get(`/export?${params.toString()}`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Orders_Export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Orders dataset exported');
+    } catch {
+      toast.error('Export failed');
+    }
   };
 
-  const filteredOrders = useMemo(() => orders.filter(o =>
-    o.table?.tableNumber?.toString().includes(searchTerm) ||
-    o.branch?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o._id.includes(searchTerm)
-  ), [orders, searchTerm]);
+  const filteredOrders = orders;
 
   if (loading && !analytics) return (
     <div className="flex items-center justify-center h-[70vh] flex-col gap-6">

@@ -42,6 +42,7 @@ const addExpense = asyncHandler(async (req, res) => {
     title,
     description,
     amount,
+    category: category || 'misc',
     date: date || Date.now(),
     locationId,
     createdBy: req.user._id,
@@ -132,6 +133,7 @@ const deleteExpense = asyncHandler(async (req, res) => {
   enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to delete this expense');
 
   await expense.deleteOne();
+  await TransactionService.deleteExpenseTransaction(expense._id);
 
   await sendNotification({
     title: 'Expense Deleted',

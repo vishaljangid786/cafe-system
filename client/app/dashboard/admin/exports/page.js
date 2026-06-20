@@ -13,7 +13,7 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { useAuth } from '@/app/context/AuthContext';
 
 export default function ExportCenter() {
-  const { user } = useAuth();
+  const { user, selectedLocationIds } = useAuth();
   const hasAccess = user?.role === 'super_admin' || user?.permissions?.exportReports === true;
 
   const [loading, setLoading] = useState(false);
@@ -63,7 +63,13 @@ export default function ExportCenter() {
   const handleExport = async () => {
     try {
       setLoading(true);
-      const query = new URLSearchParams(filters).toString();
+      const exportFilters = { ...filters };
+      // Multi-branch subset from Navbar overrides single branchId
+      if (selectedLocationIds.length > 1) {
+        delete exportFilters.branchId;
+        exportFilters.locationIds = selectedLocationIds.join(',');
+      }
+      const query = new URLSearchParams(exportFilters).toString();
       const response = await api.get(`/export?${query}`, {
         responseType: 'blob'
       });
@@ -172,15 +178,21 @@ export default function ExportCenter() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-2">
                   <MapPin size={12} /> Target Branch
                 </label>
-                <PremiumSelect 
-                  value={filters.branchId}
-                  onChange={(val) => setFilters({ ...filters, branchId: val })}
-                  options={[
-                    { label: 'Global Network', value: 'all' },
-                    ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                  ]}
-                  className="w-full"
-                />
+                {selectedLocationIds.length > 1 ? (
+                  <div className="w-full p-3 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl text-xs font-black text-[var(--color-primary)] uppercase tracking-widest">
+                    {selectedLocationIds.length} branches selected via Navbar
+                  </div>
+                ) : (
+                  <PremiumSelect
+                    value={filters.branchId}
+                    onChange={(val) => setFilters({ ...filters, branchId: val })}
+                    options={[
+                      { label: 'Global Network', value: 'all' },
+                      ...locations.map(loc => ({ label: loc.name, value: loc._id }))
+                    ]}
+                    className="w-full"
+                  />
+                )}
               </div>
             </div>
           </div>

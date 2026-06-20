@@ -10,11 +10,9 @@ const {
 const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 const { bookingSchema, validate } = require('../middlewares/validateMiddleware');
 
-// Check availability (can be accessed by any logged-in user)
-router.get('/check-availability', verifyToken, checkAvailability);
-
-// Create a booking (any logged-in user)
-router.post('/', verifyToken, ...bookingSchema, validate, createBooking);
+// Public endpoints — no auth required for guests
+router.get('/check-availability', checkAvailability);
+router.post('/', ...bookingSchema, validate, createBooking);
 
 // Get user's own bookings
 router.get('/my', verifyToken, getUserBookings);

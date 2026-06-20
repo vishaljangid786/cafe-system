@@ -37,7 +37,11 @@ class AnalyticsService {
     } else if (startDate || endDate) {
       match[field] = {};
       if (startDate) match[field].$gte = new Date(startDate);
-      if (endDate) match[field].$lte = new Date(endDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        match[field].$lte = end;
+      }
     }
     return match;
   }

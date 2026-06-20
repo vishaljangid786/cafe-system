@@ -12,9 +12,9 @@ const upload = require('../middlewares/uploadMiddleware');
 
 router.use(verifyToken);
 
-router.get('/', getTransactions);
+router.get('/', checkPermissions('viewRevenue'), getTransactions);
 router.get('/stats', checkPermissions('viewRevenue'), getTransactionStats);
-router.post('/', upload.single('image'), createTransaction);
+router.post('/', checkPermissions('editRevenue'), upload.single('image'), createTransaction);
 
 // Approval Workflow
 router.patch('/:id/approve', checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), approveTransaction);
