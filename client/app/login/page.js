@@ -6,6 +6,7 @@ import { Coffee, Eye, EyeOff, ShieldCheck, Zap, AlertCircle, Terminal, Activity,
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
+import LoadingScreen from '../components/ui/LoadingScreen';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -68,14 +69,7 @@ export default function LoginPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 border-4 border-[var(--color-primary)]/10 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)]/50 animate-pulse">Loading System</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading System" />;
   }
 
   return (

@@ -7,6 +7,7 @@ import {
   ArrowRight, Users, Zap,
   Target
 } from 'lucide-react';
+import { LoaderBlock } from '@/app/components/ui/Spinner';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -189,9 +190,7 @@ export default function CouponsManagementPage() {
   }).length;
 
   if (loading && coupons.length === 0) return (
-    <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
-    </div>
+    <LoaderBlock label="Loading Coupons" minHeight="24rem" />
   );
 
   return (

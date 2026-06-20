@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
+import LoadingScreen from './components/ui/LoadingScreen';
 
 export default function RootPage() {
   const { user, loading } = useAuth();
@@ -19,9 +20,5 @@ export default function RootPage() {
     }
   }, [user, loading, router]);
 
-  return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <div className="h-12 w-12 rounded-xl border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
-    </div>
-  );
+  return <LoadingScreen message="Starting CafeOS" />;
 }

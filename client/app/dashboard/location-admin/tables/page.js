@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert } from 'lucide-react';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Search, Globe, ShieldAlert } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
@@ -12,6 +12,7 @@ import TableCard from '../../../components/tables/TableCard';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { Button } from '@/app/components/ui/Button';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 
 export default function TablesPage() {
   const { user } = useAuth();
@@ -258,12 +259,12 @@ export default function TablesPage() {
 
   if (loading) return (
     <div className="space-y-6 p-4">
-      <div className="h-16 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+      <Skeleton className="h-16 rounded-2xl" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />)}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <div key={i} className="h-36 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />)}
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <Skeleton key={i} className="h-36 rounded-2xl" />)}
       </div>
     </div>
   );

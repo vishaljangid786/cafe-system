@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, MapPin, Plus, Zap, Loader2, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw } from 'lucide-react';
+import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw } from 'lucide-react';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -326,12 +327,12 @@ export default function StaffTablesPage() {
 
   if (loading) return (
     <div className="space-y-6 p-4">
-      <div className="h-16 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+      <Skeleton className="h-16 rounded-2xl" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />)}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-36 bg-zinc-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />)}
+        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-36 rounded-2xl" />)}
       </div>
     </div>
   );
@@ -822,7 +823,7 @@ export default function StaffTablesPage() {
                         </div>
                       )) : (
                         [1,2,3,4,5,6].map(i => (
-                          <div key={i} className="h-40 rounded-3xl bg-muted/20 animate-pulse border border-border" />
+                          <Skeleton key={i} className="h-40 rounded-3xl" />
                         ))
                       )}
                   </div>

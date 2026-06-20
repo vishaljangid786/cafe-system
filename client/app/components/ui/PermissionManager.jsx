@@ -5,6 +5,7 @@ import { Shield, Check, X, Loader2, Search, UserCheck, ShieldCheck } from 'lucid
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Modal from './Modal';
+import { Spinner } from './Spinner';
 import { motion } from 'framer-motion';
 
 const permissionList = [
@@ -114,9 +115,8 @@ export default function PermissionManager({ className = "" }) {
 
   if (loading && subordinates.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-20 space-y-4">
-        <Loader2 className="animate-spin text-[var(--color-primary)]" size={40} />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)] animate-pulse">Establishing Secure Link</p>
+      <div className="flex items-center justify-center p-20">
+        <Spinner size="lg" label="Establishing Secure Link" />
       </div>
     );
   }

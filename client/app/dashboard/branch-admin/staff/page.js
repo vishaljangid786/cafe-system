@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Mail, MapPin, Phone, Users, Trash2, Plus, Loader2, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
+import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -108,7 +109,7 @@ export default function BranchStaffPage() {
 
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-[2.5rem]"></div>)}
+      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)}
     </div>
   );
 

@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
+import LoadingScreen from '../components/ui/LoadingScreen';
 import { useForm, Controller } from 'react-hook-form';
 import PremiumSelect from '../components/ui/PremiumSelect';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -379,7 +380,7 @@ function SignupContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center"><div className="h-16 w-16 border-4 border-blue-500/10 border-t-blue-500 rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<LoadingScreen message="Preparing signup" />}>
       <SignupContent />
     </Suspense>
   );

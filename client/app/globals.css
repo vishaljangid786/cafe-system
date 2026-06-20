@@ -327,12 +327,87 @@
 }
 
 @keyframes pulse-danger {
-  0%, 100% { 
+  0%, 100% {
     border-color: var(--color-danger);
     box-shadow: 0 0 0 0px rgba(239, 68, 68, 0);
   }
-  50% { 
+  50% {
     border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* =================================================================
+   UNIFIED LOADING SYSTEM
+   Centralised keyframes + helpers powering every loading state.
+   ================================================================= */
+
+/* Skeleton shine sweep — referenced everywhere via animate-[shimmer_...]
+   but was previously NEVER defined, so skeletons sat completely static. */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Slow ambient breathing for dashboard glow orbs (was undefined). */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.05); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 7s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Top route/progress bar — moving highlight "peg" on the leading edge. */
+@keyframes progress-peg {
+  0% { opacity: 0.45; }
+  50% { opacity: 1; }
+  100% { opacity: 0.45; }
+}
+
+/* Indeterminate sliding fill — used when no real percentage is available. */
+@keyframes indeterminate {
+  0% { left: -45%; width: 45%; }
+  60% { left: 60%; width: 55%; }
+  100% { left: 110%; width: 45%; }
+}
+.animate-indeterminate {
+  animation: indeterminate 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* Bouncing dots loader. */
+@keyframes loader-dot {
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.animate-loader-dot {
+  animation: loader-dot 1.2s ease-in-out infinite;
+}
+
+/* Soft sweeping conic ring used around the branded loader logo. */
+@keyframes loader-orbit {
+  to { transform: rotate(360deg); }
+}
+.animate-loader-orbit {
+  animation: loader-orbit 1.1s linear infinite;
+}
+
+/* Gentle glow throb for the branded loader logo. */
+@keyframes loader-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 35%, transparent); }
+  50% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-primary) 0%, transparent); }
+}
+.animate-loader-glow {
+  animation: loader-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-indeterminate,
+  .animate-loader-dot,
+  .animate-loader-orbit,
+  .animate-loader-glow,
+  .animate-pulse-slow {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

@@ -7,6 +7,7 @@ import logger from '../services/logger';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import getSocketUrl from '../services/socketUrl';
+import { progress } from '../components/ui/TopProgressBar';
 
 const AuthContext = createContext();
 
@@ -111,6 +112,13 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // Mirror every auth transition (initial load, login, logout, impersonation)
+  // onto the global top progress bar for instant visual feedback.
+  useEffect(() => {
+    if (loading) progress.start();
+    else progress.done(true);
+  }, [loading]);
 
   useEffect(() => {
     // fetchLocations is called inside checkAuth after session is confirmed.

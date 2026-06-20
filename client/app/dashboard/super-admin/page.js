@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
+import { DashboardSkeleton } from '@/app/components/ui/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
@@ -39,17 +40,11 @@ export default function SuperAdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--color-primary)/0.1,transparent_70%)]" />
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 1, 0.3] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          className="relative z-10 flex flex-col items-center gap-6"
-        >
-          <div className="h-20 w-20 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="text-[var(--color-primary)] font-black text-xs tracking-[1em] uppercase animate-pulse">Loading Data</p>
-        </motion.div>
-      </div>
+      <PageTransition>
+        <div className="p-6 lg:p-12">
+          <DashboardSkeleton />
+        </div>
+      </PageTransition>
     );
   }
 

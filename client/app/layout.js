@@ -5,6 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import CinematicBackground from "./components/ui/CinematicBackground";
+import TopProgressBar, { RouteProgress } from "./components/ui/TopProgressBar";
 
 export const metadata = {
   title: "Cafe Management System | Premium Dashboard",
@@ -50,7 +51,9 @@ export default function RootLayout({ children }) {
         <div className="scan-line" />
         <ThemeProvider>
           <CinematicBackground />
+          <TopProgressBar />
           <AuthProvider>
+            <RouteProgress />
             <NotificationProvider>
               <Toaster
                 position="bottom-right"
