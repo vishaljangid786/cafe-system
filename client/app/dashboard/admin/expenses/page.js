@@ -222,8 +222,8 @@ export default function ExpensesPage() {
   return (
     <PageTransition>
       <div className="space-y-8 pb-24">
-        {/* Cinematic Header */}
-        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-[3rem] p-10 border border-[var(--color-border)] shadow-xl shadow-[var(--color-danger)]/5">
+        {/* Header */}
+        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] shadow-sm ">
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
             <Layers size={200} className="text-[var(--color-danger)]" strokeWidth={1} />
           </div>
@@ -231,11 +231,11 @@ export default function ExpensesPage() {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-lg shadow-[var(--color-danger)]/10">
+                <div className="h-16 w-16 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-lg ">
                   <TrendingDown size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-[var(--color-text-primary)] leading-none">
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none">
                     Expenses
                   </h1>
                   <p className="text-[var(--color-text-secondary)] font-bold mt-2 flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function ExpensesPage() {
                   <button
                     key={t}
                     onClick={() => setTimeRange(t)}
-                    className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-500 ${timeRange === t ? 'bg-[var(--color-danger)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-danger)]/30 scale-105' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all duration-500 ${timeRange === t ? 'bg-[var(--color-danger)] text-[var(--color-bg-base)] shadow-lg  scale-105' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     {t}
                   </button>
@@ -282,7 +282,7 @@ export default function ExpensesPage() {
                 variant="primary"
                 icon={Plus}
                 onClick={() => setShowAddModal(true)}
-                className="!rounded-2xl !py-4 px-8 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 shadow-xl shadow-[var(--color-danger)]/20 scale-105 hover:scale-110 active:scale-95 transition-all text-[var(--color-bg-base)]"
+                className="!rounded-xl !py-4 px-8 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 shadow-sm  scale-105  active:scale-95 transition-all text-[var(--color-bg-base)]"
               >
                 New Entry
               </Button>
@@ -293,31 +293,31 @@ export default function ExpensesPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex gap-4 mt-10 p-8 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-[2.5rem] relative z-20"
+              className="flex gap-4 mt-10 p-8 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl relative z-20"
             >
                <div className="flex-1">
-                <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-2">Start Date</label>
-                <input type="date" className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+                <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-2">Start Date</label>
+                <input type="date" className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
               </div>
               <div className="flex-1">
-                <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-2">End Date</label>
-                <input type="date" className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+                <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-2">End Date</label>
+                <input type="date" className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
               </div>
             </motion.div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 pt-12 border-t border-[var(--color-border)]">
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Expenses</p>
-              <p className="text-3xl font-black text-[var(--color-danger)] tracking-tighter">₹{totalExpenditure.toLocaleString()}</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Expenses</p>
+              <p className="text-3xl font-bold text-[var(--color-danger)] tracking-tight">₹{totalExpenditure.toLocaleString()}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Average Expense</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter">₹{avgExpense.toFixed(0)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Average Expense</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight">₹{avgExpense.toFixed(0)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Entries (View)</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter">{paginatedData.length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Entries (View)</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight">{paginatedData.length}</p>
             </div>
           </div>
         </div>
@@ -327,7 +327,7 @@ export default function ExpensesPage() {
                 <input
                   type="text"
                   placeholder="Search list..."
-                  className="w-full pl-14 pr-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl focus:ring-4 focus:ring-[var(--color-danger)]/10 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
+                  className="w-full pl-14 pr-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl focus:ring-4 focus:ring-[var(--color-danger)]/10 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -339,7 +339,7 @@ export default function ExpensesPage() {
                 <Button
                   variant="secondary"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`!py-4 px-6 rounded-2xl border-none transition-all shadow-sm font-black uppercase text-[9px] tracking-widest shrink-0 ${showFilters ? 'bg-[var(--color-danger)] text-[var(--color-bg-base)]' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}
+                  className={`!py-4 px-6 rounded-xl border-none transition-all shadow-sm font-bold uppercase text-[9px] tracking-normal shrink-0 ${showFilters ? 'bg-[var(--color-danger)] text-[var(--color-bg-base)]' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}
                 >
                   <Filter size={16} className="mr-2" /> Refine
                 </Button>
@@ -359,7 +359,7 @@ export default function ExpensesPage() {
                   icon={RefreshCw}
                   onClick={fetchExpenses}
                   isLoading={loading}
-                  className="!rounded-2xl !py-4 px-4 bg-[var(--color-surface-soft)] border-none hover:bg-[var(--color-surface-hover)]"
+                  className="!rounded-xl !py-4 px-4 bg-[var(--color-surface-soft)] border-none hover:bg-[var(--color-surface-hover)]"
                 />
               </div>
             </div>
@@ -368,10 +368,10 @@ export default function ExpensesPage() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-[var(--color-surface)] p-6 rounded-[2rem] border border-[var(--color-border)] flex flex-wrap gap-6 items-end"
+                className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] flex flex-wrap gap-6 items-end"
               >
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Min Amount (₹)</label>
+                  <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Min Amount (₹)</label>
                   <input
                     type="number"
                     placeholder="0"
@@ -381,7 +381,7 @@ export default function ExpensesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Max Amount (₹)</label>
+                  <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Max Amount (₹)</label>
                   <input
                     type="number"
                     placeholder="50000"
@@ -403,21 +403,21 @@ export default function ExpensesPage() {
         <div className="flex items-center gap-10 border-b border-[var(--color-border)] px-10">
           <button
             onClick={() => setActiveTab('all')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'all' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+            className={`pb-5 text-xs font-bold uppercase tracking-normal transition-all relative ${activeTab === 'all' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
           >
             All Expenses
             {activeTab === 'all' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-[var(--color-danger)] rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
           </button>
           <button
             onClick={() => setActiveTab('mine')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'mine' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+            className={`pb-5 text-xs font-bold uppercase tracking-normal transition-all relative ${activeTab === 'mine' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
           >
             My Expenses
             {activeTab === 'mine' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-[var(--color-danger)] rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === 'pending' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+            className={`pb-5 text-xs font-bold uppercase tracking-normal transition-all relative ${activeTab === 'pending' ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
           >
             Pending Review
             {activeTab === 'pending' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-[var(--color-danger)] rounded-full" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
@@ -432,10 +432,10 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {loading ? (
-                [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] animate-pulse rounded-[2rem]" />)
+                [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] animate-pulse rounded-xl" />)
               ) : paginatedData.length === 0 ? (
-                <div className="sm:col-span-2 py-32 text-center bg-[var(--color-surface-soft)]/40 rounded-[3rem] border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">
-                  <div className="h-20 w-20 rounded-3xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
+                <div className="sm:col-span-2 py-32 text-center bg-[var(--color-surface-soft)]/40 rounded-xl border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">
+                  <div className="h-20 w-20 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
                     <Receipt size={40} strokeWidth={1} />
                   </div>
                   <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No expenses found here.</p>
@@ -448,29 +448,29 @@ export default function ExpensesPage() {
                       <CardHover>
                         <div
                           onClick={() => setSelectedExpense(t)}
-                          className="bg-[var(--color-surface)] p-6 rounded-[2rem] border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-danger)]/40 transition-all cursor-pointer relative overflow-hidden h-full shadow-sm"
+                          className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-danger)]/40 transition-all cursor-pointer relative overflow-hidden h-full shadow-sm"
                         >
                           <div className="flex items-center gap-5 relative z-10">
-                            <div className="h-14 w-14 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner group-hover:scale-110 transition-transform duration-500">
+                            <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner group- transition-transform duration-500">
                               <ArrowDownRight size={24} strokeWidth={2.5} />
                             </div>
                             <div className="space-y-1.5">
-                               <h4 className="font-black text-[var(--color-text-primary)] tracking-tight text-base line-clamp-1">
+                               <h4 className="font-bold text-[var(--color-text-primary)] tracking-tight text-base line-clamp-1">
                                  {t.title}
                                </h4>
                                <div className="flex flex-wrap items-center gap-2">
-                                 <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] group-hover:bg-[var(--color-danger)] group-hover:text-black transition-colors">
+                                 <span className="text-[9px] font-bold uppercase px-2.5 py-1 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] group-hover:bg-[var(--color-danger)] group-hover:text-[var(--color-on-primary)] transition-colors">
                                    {new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                                  </span>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-danger)] bg-[var(--color-danger)]/5 px-2.5 py-1 rounded-lg border border-[var(--color-danger)]/10">
+                                <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-danger)] bg-[var(--color-danger)]/5 px-2.5 py-1 rounded-lg border border-[var(--color-danger)]/10">
                                   {t.category}
                                 </span>
                               </div>
                             </div>
                           </div>
                           <div className="text-right relative z-10 shrink-0">
-                            <p className="text-xl font-black text-[var(--color-danger)] tracking-tighter leading-none group-hover:scale-105 transition-transform">-₹{t.totalAmount.toLocaleString()}</p>
-                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mt-2">Verified</p>
+                            <p className="text-xl font-bold text-[var(--color-danger)] tracking-tight leading-none group- transition-transform">-₹{t.totalAmount.toLocaleString()}</p>
+                            <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Verified</p>
                           </div>
                         </div>
                       </CardHover>
@@ -486,18 +486,18 @@ export default function ExpensesPage() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => prev - 1)}
-                  className="h-12 w-12 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-20 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] transition-all shadow-sm"
+                  className="h-12 w-12 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-20 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] transition-all shadow-sm"
                 >
                   <ChevronRight size={20} className="rotate-180" />
                 </button>
-                <div className="flex items-center gap-2 bg-[var(--color-surface)] px-6 py-2.5 rounded-2xl border border-[var(--color-border)] shadow-sm font-black tracking-widest text-[10px]">
+                <div className="flex items-center gap-2 bg-[var(--color-surface)] px-6 py-2.5 rounded-xl border border-[var(--color-border)] shadow-sm font-bold tracking-normal text-[10px]">
                   <span className="text-[var(--color-text-primary)]">{currentPage}</span>
                   <span className="text-[var(--color-text-muted)]">/ {totalPages}</span>
                 </div>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => prev + 1)}
-                  className="h-12 w-12 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-20 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] transition-all shadow-sm"
+                  className="h-12 w-12 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] disabled:opacity-20 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] transition-all shadow-sm"
                 >
                   <ChevronRight size={20} />
                 </button>
@@ -508,11 +508,11 @@ export default function ExpensesPage() {
           {/* Analytics Sidebar */}
           <div className="space-y-8">
             <SlideIn direction="right" delay={0.2}>
-              <div className="bg-gradient-to-br from-[var(--color-danger)] to-[var(--color-danger)]/80 rounded-[2.5rem] p-8 text-[var(--color-bg-base)] shadow-2xl shadow-[var(--color-danger)]/20 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">
+              <div className="bg-gradient-to-br from-[var(--color-danger)] to-[var(--color-danger)]/80 rounded-xl p-8 text-[var(--color-bg-base)] shadow-sm  relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-20 group- transition-transform duration-700">
                   <Wallet size={100} strokeWidth={1} />
                 </div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-80 mb-6">Expense Trend</h3>
+                <h3 className="text-sm font-bold uppercase tracking-normal opacity-80 mb-6">Expense Trend</h3>
                 <div className="space-y-6 relative z-10">
                   <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -529,10 +529,10 @@ export default function ExpensesPage() {
                   </div>
                   <div className="flex justify-between items-end border-t border-[var(--color-bg-base)]/20 pt-6">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Today&apos;s Total</p>
-                      <p className="text-2xl font-black tracking-tighter mt-1">₹{totalExpenditure.toLocaleString()}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal opacity-60">Today&apos;s Total</p>
+                      <p className="text-2xl font-bold tracking-tight mt-1">₹{totalExpenditure.toLocaleString()}</p>
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-bg-base)]/10 flex items-center justify-center backdrop-blur-md border border-[var(--color-bg-base)]/10">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-bg-base)]/10 flex items-center justify-center  border border-[var(--color-bg-base)]/10">
                       <ArrowUpRight size={20} />
                     </div>
                   </div>
@@ -541,8 +541,8 @@ export default function ExpensesPage() {
             </SlideIn>
 
             <SlideIn direction="right" delay={0.3}>
-              <div className="bg-[var(--color-surface)] rounded-[2.5rem] p-8 border border-[var(--color-border)] shadow-sm space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-primary)] flex items-center gap-2">
+              <div className="bg-[var(--color-surface)] rounded-xl p-8 border border-[var(--color-border)] shadow-sm space-y-6">
+                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-primary)] flex items-center gap-2">
                   <Layers size={14} className="text-[var(--color-danger)]" /> Category Wise
                 </h3>
                 <div className="space-y-4">
@@ -551,7 +551,7 @@ export default function ExpensesPage() {
                     const percentage = totalExpenditure > 0 ? (amount / totalExpenditure) * 100 : 0;
                     return (
                       <div key={cat} className="space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-normal">
                           <span className="text-[var(--color-text-muted)]">{cat}</span>
                           <span className="text-[var(--color-text-primary)]">{percentage.toFixed(0)}%</span>
                         </div>
@@ -560,7 +560,7 @@ export default function ExpensesPage() {
                             initial={{ width: 0 }}
                             animate={{ width: `${percentage}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
-                            className="h-full bg-[var(--color-danger)] rounded-full shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+                            className="h-full bg-[var(--color-danger)] rounded-full "
                           />
                         </div>
                       </div>
@@ -578,82 +578,82 @@ export default function ExpensesPage() {
             <div className="space-y-10">
               <div className="flex flex-col md:flex-row justify-between items-start gap-6">
                 <div className="space-y-4">
-                  <div className="h-14 w-14 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner">
+                  <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner">
                     <Receipt size={28} />
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter leading-none">{selectedExpense.title}</h3>
+                      <h3 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{selectedExpense.title}</h3>
                       {selectedExpense.status === 'pending' && (
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-lg animate-pulse">Pending Review</span>
+                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-lg animate-pulse">Pending Review</span>
                       )}
                       {selectedExpense.status === 'rejected' && (
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border border-[var(--color-border)] rounded-lg">Rejected</span>
+                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border border-[var(--color-border)] rounded-lg">Rejected</span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-3">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 bg-[var(--color-danger)] text-[var(--color-bg-base)] rounded-xl shadow-lg shadow-[var(--color-danger)]/20">{selectedExpense.category}</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] bg-[var(--color-surface-soft)] px-4 py-1.5 rounded-xl flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-normal px-4 py-1.5 bg-[var(--color-danger)] text-[var(--color-bg-base)] rounded-xl shadow-lg ">{selectedExpense.category}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] bg-[var(--color-surface-soft)] px-4 py-1.5 rounded-xl flex items-center gap-2">
                         <Calendar size={12} /> {new Date(selectedExpense.date).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="text-left md:text-right bg-[var(--color-bg-soft)] p-6 rounded-[2rem] border border-[var(--color-border)] min-w-[200px]">
-                  <p className="text-4xl font-black text-[var(--color-danger)] tracking-tighter">₹{selectedExpense.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mt-2">Total Amount</p>
+                <div className="text-left md:text-right bg-[var(--color-bg-soft)] p-6 rounded-xl border border-[var(--color-border)] min-w-[200px]">
+                  <p className="text-4xl font-bold text-[var(--color-danger)] tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Total Amount</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
+                <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                     <User size={60} strokeWidth={1} />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
                     <User size={12} className="text-[var(--color-danger)]" /> Created By
                   </p>
                   <div className="flex items-center gap-5">
-                    <div className="h-16 w-16 rounded-3xl bg-[var(--color-surface-soft)] border-2 border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] overflow-hidden shadow-inner">
+                    <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] border-2 border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] overflow-hidden shadow-inner">
                       {selectedExpense.createdBy?.profileImageUrl ? (
                         <img src={selectedExpense.createdBy.profileImageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl font-black text-[var(--color-danger)]">{selectedExpense.createdBy?.name?.substring(0, 2).toUpperCase()}</span>
+                        <span className="text-xl font-bold text-[var(--color-danger)]">{selectedExpense.createdBy?.name?.substring(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-black text-[var(--color-text-primary)] leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-danger)] mt-1 bg-[var(--color-danger)]/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
+                      <p className="text-base font-bold text-[var(--color-text-primary)] leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] mt-1 bg-[var(--color-danger)]/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
                   {selectedExpense.approvedBy && (
                     <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] flex items-center gap-2">
+                      <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
                         <Sparkles size={10} className="text-[var(--color-primary)]" /> Approved By {selectedExpense.approvedBy.name}
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
+                <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                     <MapPin size={60} strokeWidth={1} />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
                     <MapPin size={12} className="text-[var(--color-danger)]" /> Branch
                   </p>
                   <div className="space-y-1">
-                    <p className="text-base font-black text-[var(--color-text-primary)] leading-none">{selectedExpense.locationId?.name || 'Main Office'}</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mt-1">{selectedExpense.locationId?.city || 'Location'}</p>
+                    <p className="text-base font-bold text-[var(--color-text-primary)] leading-none">{selectedExpense.locationId?.name || 'Main Office'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">{selectedExpense.locationId?.city || 'Location'}</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
+                <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
                   <Info size={12} className="text-[var(--color-danger)]" /> Description
                 </p>
-                <div className="p-8 rounded-[2.5rem] bg-[var(--color-surface-soft)] border border-[var(--color-border)] relative">
+                <div className="p-8 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] relative">
                   <p className="text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed italic relative z-10">
                     &ldquo;{selectedExpense.description || 'No description provided for this expense.'}&rdquo;
                   </p>
@@ -662,11 +662,11 @@ export default function ExpensesPage() {
 
               {selectedExpense.billImage && (
                 <div className="space-y-6">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
                     <Sparkles size={12} className="text-[var(--color-danger)]" /> Bill / Receipt
                   </p>
-                  <div className="rounded-[3rem] overflow-hidden border-4 border-[var(--color-surface-soft)] bg-[var(--color-surface)] p-3 shadow-2xl relative group">
-                    <img src={selectedExpense.billImage} alt="Receipt" className="w-full h-auto rounded-[2.5rem] transition-all duration-1000 group-hover:scale-[1.02]" />
+                  <div className="rounded-xl overflow-hidden border-4 border-[var(--color-surface-soft)] bg-[var(--color-surface)] p-3 shadow-sm relative group">
+                    <img src={selectedExpense.billImage} alt="Receipt" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
                 </div>
@@ -676,7 +676,7 @@ export default function ExpensesPage() {
                 <div className="flex gap-4 pt-4">
                   <Button
                     variant="primary"
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-[var(--color-danger)]/20 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 text-[var(--color-bg-base)]"
+                    className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs shadow-sm  bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 text-[var(--color-bg-base)]"
                     icon={Sparkles}
                     onClick={() => handleApprove(selectedExpense._id)}
                   >
@@ -684,7 +684,7 @@ export default function ExpensesPage() {
                   </Button>
                   <Button
                     variant="secondary"
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                    className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                     onClick={() => handleReject(selectedExpense._id)}
                   >
                     Cancel
@@ -694,14 +694,14 @@ export default function ExpensesPage() {
                 <div className="flex gap-4 pt-4">
                   <Button
                     variant="primary"
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-[var(--color-danger)]/20 bg-[var(--color-danger)] text-[var(--color-bg-base)]"
+                    className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs shadow-sm  bg-[var(--color-danger)] text-[var(--color-bg-base)]"
                     icon={Download}
                   >
                     Download Evidence
                   </Button>
                   <Button
                     variant="secondary"
-                    className="flex-1 !rounded-2xl !py-6 font-black uppercase tracking-[0.2em] text-xs border-none bg-[var(--color-surface-soft)]"
+                    className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs border-none bg-[var(--color-surface-soft)]"
                     onClick={() => setSelectedExpense(null)}
                   >
                     Close
@@ -737,10 +737,10 @@ export default function ExpensesPage() {
                     exit={{ opacity: 0, height: 0, y: -20 }}
                     className="space-y-3 overflow-hidden"
                   >
-                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-danger)] ml-2">Enter Title</label>
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Enter Title</label>
                     <input
                       required
-                      className="w-full rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none"
+                      className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none"
                       placeholder="e.g. Electricity Bill"
                       value={formData.customTitle}
                       onChange={e => setFormData({ ...formData, customTitle: e.target.value })}
@@ -751,8 +751,8 @@ export default function ExpensesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-danger)] ml-2">Amount (₹)</label>
-                  <input required type="number" className="w-full rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-black text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Amount (₹)</label>
+                  <input required type="number" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
                 <div className="space-y-3">
                   <PremiumSelect
@@ -783,17 +783,17 @@ export default function ExpensesPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-danger)] ml-2">Date</label>
-                <input required type="date" className="w-full rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Date</label>
+                <input required type="date" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-danger)] ml-2">Notes / Description</label>
-                <textarea className="w-full rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-medium text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Enter details about this expense..." />
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Notes / Description</label>
+                <textarea className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-5 text-sm font-medium text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Enter details about this expense..." />
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full !rounded-[2rem] !py-6 shadow-2xl shadow-[var(--color-danger)]/30 font-black uppercase tracking-[0.4em] text-sm bg-[var(--color-danger)] text-[var(--color-bg-base)]" icon={Sparkles}>Add Expense</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-6 shadow-sm  font-bold uppercase tracking-normal text-sm bg-[var(--color-danger)] text-[var(--color-bg-base)]" icon={Sparkles}>Add Expense</Button>
           </form>
         </Modal>
       </div>

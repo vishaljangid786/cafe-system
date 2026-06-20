@@ -12,25 +12,24 @@ export const Button = ({
   loading = false
 }) => {
   const variants = {
-    primary: 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-[var(--shadow-soft)] hover:bg-[var(--color-primary-dark)]',
+    primary: 'bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-hover)]',
     secondary: 'bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] border border-[var(--color-border)]',
     outline: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
     ghost: 'bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-    danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-[var(--color-bg-base)] shadow-[var(--shadow-soft)]',
-    glass: 'glass-morphism text-[var(--color-text-primary)] hover:bg-[var(--color-hover)]'
+    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90',
+    glass: 'bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-border)]'
   };
 
   return (
     <motion.button
       type={type}
-      whileHover={!disabled && !loading ? { scale: 1.02 } : {}}
       whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
       onClick={onClick}
       disabled={disabled || loading}
       className={`
-        relative inline-flex items-center justify-center px-5 py-2.5 
-        rounded-xl font-semibold text-sm tracking-wide transition-all duration-300
-        disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden focus-ring
+        relative inline-flex items-center justify-center px-4 py-2.5
+        rounded-lg font-semibold text-sm transition-colors duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed focus-ring
         ${variants[variant]}
         ${className}
       `}
@@ -49,9 +48,6 @@ export const Button = ({
           {children}
         </>
       )}
-
-      {/* Shine effect on hover */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
     </motion.button>
   );
 };

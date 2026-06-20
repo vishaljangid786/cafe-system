@@ -72,25 +72,25 @@ export default function PayrollRecordsPage() {
       <div className="space-y-6">
         {/* Header */}
         <SlideIn direction="down">
-          <div className="relative overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-2xl shadow-sm transition-colors">
-            <div className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[var(--color-primary)]/20 blur-3xl" />
-            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-[var(--color-secondary)]/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/60  shadow-sm transition-colors">
+            <div className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[var(--color-primary)]/20 hidden" />
+            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-[var(--color-secondary)]/10 hidden" />
 
             <div className="relative p-5 sm:p-6 lg:p-7">
               <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div className="flex-1">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
-                    <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
+                    <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] " />
                     Salary Control Center
                   </div>
 
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-xl shadow-[var(--color-bg-deep)]/10 border border-[var(--color-border)]">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-sm  border border-[var(--color-border)]">
                       <Wallet size={28} strokeWidth={2.5} />
                     </div>
 
                     <div>
-                      <h1 className="text-3xl font-black leading-none tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
+                      <h1 className="text-3xl font-bold leading-none tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
                         Salary <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">History</span>
                       </h1>
                       <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-[var(--color-text-secondary)]">
@@ -104,7 +104,7 @@ export default function PayrollRecordsPage() {
                 <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:w-auto xl:min-w-[820px]">
                   {/* Search */}
                   <div className="relative group sm:col-span-2 lg:col-span-1">
-                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                    <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       Search
                     </label>
                     <div className="relative">
@@ -114,7 +114,7 @@ export default function PayrollRecordsPage() {
                       <input
                           type="text"
                           placeholder="Search staff..."
-                          className="h-[54px] w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 py-4 pl-12 pr-4 text-sm font-bold text-[var(--color-text-primary)] outline-none transition-all placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                          className="h-[54px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 py-4 pl-12 pr-4 text-sm font-bold text-[var(--color-text-primary)] outline-none transition-all placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
                           value={searchQuery}
                           onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -126,12 +126,12 @@ export default function PayrollRecordsPage() {
 
                   {/* Month Picker */}
                   <div>
-                    <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                    <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       Month
                     </label>
                     <div
                         onClick={() => monthInputRef.current?.showPicker()}
-                        className="flex h-[54px] cursor-pointer items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 px-4 transition-all hover:border-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-surface)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10"
+                        className="flex h-[54px] cursor-pointer items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/80 px-4 transition-all hover:border-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-surface)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10"
                     >
                       <input
                           ref={monthInputRef}
@@ -175,9 +175,9 @@ export default function PayrollRecordsPage() {
                       setActiveTab(tab.id);
                       setPage(1);
                     }}
-                    className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${
+                    className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all border ${
                       activeTab === tab.id 
-                        ? `bg-[var(--color-text-primary)] text-[var(--color-bg-base)] border-transparent shadow-xl shadow-[var(--color-bg-deep)]/20 scale-105` 
+                        ? `bg-[var(--color-text-primary)] text-[var(--color-bg-base)] border-transparent shadow-sm  scale-105` 
                         : `bg-[var(--color-surface)]/50 text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-[var(--color-primary)]/30`
                     }`}
                   >
@@ -189,25 +189,25 @@ export default function PayrollRecordsPage() {
              
               <div className="mt-6 flex flex-col gap-4 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Salary History</p>
-                    <p className="mt-1 text-sm font-black text-[var(--color-text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
+                    <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Salary History</p>
+                    <p className="mt-1 text-sm font-bold text-[var(--color-text-primary)]">
                       {filteredSalaries.length} Staff
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Cycle</p>
-                    <p className="mt-1 text-sm font-black text-[var(--color-text-primary)]">
+                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-4 py-3">
+                    <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Cycle</p>
+                    <p className="mt-1 text-sm font-bold text-[var(--color-text-primary)]">
                       {month}
                     </p>
                   </div>
 
-                   <div className="rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
+                   <div className="rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3">
+                    <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                       Scope
                     </p>
-                    <p className="mt-1 text-sm font-black text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
+                    <p className="mt-1 text-sm font-bold text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                       {selectedLocation === 'All' ? 'All Branches' : selectedLocation}
                     </p>
                   </div>
@@ -226,7 +226,7 @@ export default function PayrollRecordsPage() {
                         toast.error("Process constraints mapped", { id: loadToast });
                       }
                     }}
-                    className="h-[54px] px-6 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] shadow-md shadow-[var(--color-bg-deep)]/10"
+                    className="h-[54px] px-6 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-md "
                   >
                     Calculate Monthly Salary
                   </button>
@@ -253,9 +253,9 @@ export default function PayrollRecordsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-[var(--color-primary)] p-6 rounded-2xl shadow-lg shadow-[var(--color-primary)]/20 text-[var(--color-bg-base)] h-full">
-              <p className="text-xs font-black uppercase tracking-widest opacity-80">Total Salary Payout</p>
-              <p className="text-3xl font-black mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
+            <div className="bg-[var(--color-primary)] p-6 rounded-xl shadow-lg  text-[var(--color-bg-base)] h-full">
+              <p className="text-xs font-bold uppercase tracking-normal opacity-80">Total Salary Payout</p>
+              <p className="text-3xl font-bold mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
               <div className="mt-4 flex items-center text-xs font-medium opacity-90">
                 <Receipt size={14} className="mr-1" /> {selectedLocation === 'All' ? 'Total Network Cost' : `${selectedLocation} Total`}
               </div>
@@ -263,31 +263,31 @@ export default function PayrollRecordsPage() {
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Avg Salary / Employee</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Avg Salary / Employee</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-1">
                 ₹{filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Staff Count</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{filteredSalaries.length}</p>
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] h-full transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff Count</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-1">{filteredSalaries.length}</p>
             </div>
           </SlideIn>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <SlideIn delay={0.4}>
-            <div className="export-chart bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
+            <div className="export-chart bg-[var(--color-surface)]/40  p-8 rounded-xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">
+                  <h2 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
                     {selectedLocation === 'All' ? 'Branch Breakdown' : 'Staff Breakdown'}
                   </h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">
                     {selectedLocation === 'All' ? 'Payroll weight by location' : `Salary weights in ${selectedLocation}`}
                   </p>
                 </div>
@@ -315,13 +315,13 @@ export default function PayrollRecordsPage() {
           </SlideIn>
 
           <SlideIn delay={0.5}>
-            <div className="export-chart bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
+            <div className="export-chart bg-[var(--color-surface)]/40  p-8 rounded-xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">
+                  <h2 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
                     {selectedLocation === 'All' ? 'Comparative Cost' : 'Individual Payouts'}
                   </h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">
                     {selectedLocation === 'All' ? 'Direct salary payout comparison' : `Top earners in ${selectedLocation}`}
                   </p>
                 </div>
@@ -348,11 +348,11 @@ export default function PayrollRecordsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {loading ? (
               [1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-32 bg-[var(--color-surface-soft)] animate-pulse rounded-[2rem]" />
+                <div key={i} className="h-32 bg-[var(--color-surface-soft)] animate-pulse rounded-xl" />
               ))
             ) : filteredSalaries.length === 0 ? (
-              <div className="sm:col-span-2 xl:col-span-3 py-20 text-center bg-[var(--color-surface-soft)]/40 rounded-[3rem] border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">
-                <div className="h-20 w-20 rounded-3xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
+              <div className="sm:col-span-2 xl:col-span-3 py-20 text-center bg-[var(--color-surface-soft)]/40 rounded-xl border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">
+                <div className="h-20 w-20 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
                   <Receipt size={40} strokeWidth={1} />
                 </div>
                 <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No salary history found.</p>
@@ -365,32 +365,32 @@ export default function PayrollRecordsPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + idx * 0.05 }}
                   key={s._id}
-                  className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-[var(--color-border)] flex flex-col justify-between group hover:border-[var(--color-primary)]/40 transition-all shadow-sm"
+                  className="bg-[var(--color-surface)]/40  p-6 rounded-xl border border-[var(--color-border)] flex flex-col justify-between group hover:border-[var(--color-primary)]/40 transition-all shadow-sm"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] flex items-center justify-center text-xl font-black border border-[var(--color-primary)]/20 shadow-inner group-hover:scale-110 transition-transform">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] flex items-center justify-center text-xl font-bold border border-[var(--color-primary)]/20 shadow-inner group- transition-transform">
                           {s.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-black text-[var(--color-text-primary)] text-base leading-tight">{s.name}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">{s.email}</p>
+                          <p className="font-bold text-[var(--color-text-primary)] text-base leading-tight">{s.name}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">{s.email}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] rounded-lg">
+                      <span className="text-[10px] font-bold uppercase tracking-normal px-2.5 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] rounded-lg">
                         {(s.role === 'location_admin' || s.role === 'branch_admin') ? 'Branch Admin' : s.role?.replace('_', ' ')}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between border-y border-[var(--color-border)] py-4 my-4">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Location</p>
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Location</p>
                         <p className="text-sm font-bold text-[var(--color-text-secondary)]">{s.locationName || 'Unassigned'}</p>
                       </div>
                       {['staff', 'chef'].includes(activeTab) && (
                         <div className="text-right">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Working Days</p>
+                          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Working Days</p>
                           <p className="text-sm font-bold text-[var(--color-text-secondary)]">
                             <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">{s.payableDays}</span> / {s.daysInMonth || 30}
                           </p>
@@ -408,7 +408,7 @@ export default function PayrollRecordsPage() {
                           monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
                         });
                       }}
-                      className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-surface-soft)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] text-[var(--color-text-muted)] rounded-xl transition-colors"
+                      className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-[var(--color-surface-soft)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] text-[var(--color-text-muted)] rounded-xl transition-colors"
                     >
                       {['staff', 'chef'].includes(activeTab) ? 'Edit Profile' : 'Update'}
                     </button>
@@ -427,14 +427,14 @@ export default function PayrollRecordsPage() {
                                   toast.error(e.response?.data?.message || "Constraint hit", { id: loadToast });
                                 }
                               }}
-                              className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-success)] text-[var(--color-bg-base)] hover:bg-[var(--color-success)]/90 rounded-xl transition-all text-center"
+                              className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-[var(--color-success)] text-[var(--color-bg-base)] hover:bg-[var(--color-success)]/90 rounded-xl transition-all text-center"
                             >
                               Approve
                             </button>
                          )}
                         <button
                           onClick={() => setViewingSalary(s)}
-                          className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors text-center"
+                          className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors text-center"
                         >
                           View
                         </button>
@@ -448,7 +448,7 @@ export default function PayrollRecordsPage() {
                             monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
                           });
                         }}
-                        className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors"
+                        className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] rounded-xl transition-colors"
                       >
                         View Profile
                       </button>
@@ -475,8 +475,8 @@ export default function PayrollRecordsPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`h-10 w-10 rounded-xl font-black text-xs transition-all ${page === p
-                      ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20 scale-105'
+                  className={`h-10 w-10 rounded-xl font-bold text-xs transition-all ${page === p
+                      ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg  scale-105'
                       : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
                     }`}
                 >
@@ -496,16 +496,16 @@ export default function PayrollRecordsPage() {
         )}
 
         {viewingSalary && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 ">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-[var(--color-surface)] w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-[var(--color-border)]"
+              className="bg-[var(--color-surface)] w-full max-w-lg rounded-xl shadow-sm overflow-hidden border border-[var(--color-border)]"
             >
               <div className="p-8 border-b border-[var(--color-border)] flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-black text-[var(--color-text-primary)]">Payroll <span className="text-[var(--color-primary)]">Breakdown</span></h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">{month} Cycle</p>
+                  <h3 className="text-xl font-bold text-[var(--color-text-primary)]">Payroll <span className="text-[var(--color-primary)]">Breakdown</span></h3>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">{month} Cycle</p>
                 </div>
                 <button onClick={() => setViewingSalary(null)} className="h-10 w-10 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">
                   <X size={18} />
@@ -513,52 +513,52 @@ export default function PayrollRecordsPage() {
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="flex items-center gap-4 p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)]">
-                  <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] flex items-center justify-center text-xl font-black">
+                <div className="flex items-center gap-4 p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)]">
+                  <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] flex items-center justify-center text-xl font-bold">
                     {viewingSalary.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-black text-[var(--color-text-primary)]">{viewingSalary.name}</p>
-                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">
+                    <p className="font-bold text-[var(--color-text-primary)]">{viewingSalary.name}</p>
+                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
                       {viewingSalary.role === 'location_admin' || viewingSalary.role === 'branch_admin' ? 'Branch Admin' : viewingSalary.role?.replace('_', ' ')}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Fixed Salary</p>
-                    <p className="text-xl font-black text-[var(--color-text-primary)]">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
+                  <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Fixed Salary</p>
+                    <p className="text-xl font-bold text-[var(--color-text-primary)]">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Payable Days</p>
-                    <p className="text-xl font-black text-[var(--color-text-primary)]">{viewingSalary.payableDays} <span className="text-[10px] text-[var(--color-text-muted)]">/ {viewingSalary.daysInMonth}</span></p>
+                  <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Payable Days</p>
+                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{viewingSalary.payableDays} <span className="text-[10px] text-[var(--color-text-muted)]">/ {viewingSalary.daysInMonth}</span></p>
                   </div>
                 </div>
 
                 {viewingSalary.payrollRecord && (
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 text-[var(--color-success)]">
-                      <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Bonuses</p>
-                      <p className="text-xl font-black">
+                    <div className="p-4 rounded-xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 text-[var(--color-success)]">
+                      <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
+                      <p className="text-xl font-bold">
                         + ₹{((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}
                       </p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)]">
-                      <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Penalties</p>
-                      <p className="text-xl font-black">
+                    <div className="p-4 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)]">
+                      <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
+                      <p className="text-xl font-bold">
                         - ₹{((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}
                       </p>
                     </div>
                   </div>
                 )}
 
-                <div className="p-6 rounded-[2rem] bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-xl shadow-[var(--color-primary)]/20">
+                <div className="p-6 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-sm ">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Final Net Payout</span>
-                    <span className="px-2 py-0.5 bg-[var(--color-bg-base)]/20 rounded-md text-[8px] font-black uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">Final Net Payout</span>
+                    <span className="px-2 py-0.5 bg-[var(--color-bg-base)]/20 rounded-md text-[8px] font-bold uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
                   </div>
-                  <p className="text-4xl font-black tracking-tighter">
+                  <p className="text-4xl font-bold tracking-tight">
                     ₹{(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 </div>
@@ -572,14 +572,14 @@ export default function PayrollRecordsPage() {
                     printWindow.document.close();
                     setTimeout(() => printWindow.print(), 500);
                   }}
-                  className="flex-1 py-4 rounded-2xl bg-[var(--color-surface)] text-[var(--color-text-primary)] text-xs font-black uppercase tracking-widest border border-[var(--color-border)] shadow-sm transition-all hover:bg-[var(--color-surface-soft)]"
+                  className="flex-1 py-4 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-primary)] text-xs font-bold uppercase tracking-normal border border-[var(--color-border)] shadow-sm transition-all hover:bg-[var(--color-surface-soft)]"
                 >
                   Print Payslip
                 </button>
 
                 <button
                   onClick={() => setViewingSalary(null)}
-                  className="flex-1 py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-xl shadow-[var(--color-bg-deep)]/10"
+                  className="flex-1 py-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-bold uppercase tracking-normal transition-all  shadow-sm "
                 >
                   Close
                 </button>
@@ -589,20 +589,20 @@ export default function PayrollRecordsPage() {
         )}
 
         {editingUser && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 backdrop-blur-md">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[var(--color-bg-deep)]/60 ">
              <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-full max-w-lg bg-[var(--color-surface)] rounded-[2.5rem] p-10 border border-[var(--color-border)] shadow-2xl"
+              className="relative w-full max-w-lg bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] shadow-sm"
             >
               <div className="flex items-center justify-between mb-8">
                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-2xl font-black text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20">
+                    <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-2xl font-bold text-[var(--color-bg-base)] shadow-lg ">
                       {editingUser.name.charAt(0)}
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{editingUser.name}</h2>
-                      <p className="text-[10px] font-black uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] tracking-widest mt-2">Update Credentials</p>
+                      <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{editingUser.name}</h2>
+                      <p className="text-[10px] font-bold uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] tracking-normal mt-2">Update Credentials</p>
                     </div>
                  </div>
                  <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-colors">
@@ -624,28 +624,28 @@ export default function PayrollRecordsPage() {
               }} className="space-y-6">
                  <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Full Name</label>
-                      <input className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
+                      <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 ml-1">Full Name</label>
+                      <input className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Monthly Salary (₹)</label>
-                      <input type="number" className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
+                      <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 ml-1">Monthly Salary (₹)</label>
+                      <input type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Contact</label>
-                        <input className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 ml-1">Contact</label>
+                        <input className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 ml-1">Role</label>
-                        <input disabled className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-muted)] outline-none opacity-60" value={editFormData.role} />
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 ml-1">Role</label>
+                        <input disabled className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-muted)] outline-none opacity-60" value={editFormData.role} />
                       </div>
                     </div>
                  </div>
 
                  <div className="flex gap-4 pt-4">
-                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-2xl bg-[var(--color-surface-soft)] text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Cancel</button>
-                    <button type="submit" className="flex-1 py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--color-bg-deep)]/20">Update Profile</button>
+                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-xl bg-[var(--color-surface-soft)] text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Cancel</button>
+                    <button type="submit" className="flex-1 py-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-xs font-bold uppercase tracking-normal shadow-sm ">Update Profile</button>
                  </div>
               </form>
             </motion.div>

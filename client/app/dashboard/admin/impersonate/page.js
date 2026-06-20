@@ -118,7 +118,7 @@ export default function ImpersonatePage() {
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)] animate-pulse">Loading Staff</p>
+          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] animate-pulse">Loading Staff</p>
         </div>
       </div>
     );
@@ -132,14 +132,14 @@ export default function ImpersonatePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className={`px-4 py-1.5 ${user?.isImpersonating ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'} text-[10px] font-black uppercase tracking-[0.2em] rounded-full border shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.1)]`}>
+              <span className={`px-4 py-1.5 ${user?.isImpersonating ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'} text-[10px] font-bold uppercase tracking-normal rounded-full border `}>
                 {getSecurityLabel()}
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-              <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Staff Login Control</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Staff Login Control</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
-              <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]`} />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
+              <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-`} />
               Login As <span className="text-[var(--color-text-muted)] not-italic">Member</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-[var(--color-text-muted)] leading-relaxed">
@@ -152,7 +152,7 @@ export default function ImpersonatePage() {
           {user?.isImpersonating && (
             <Button 
               variant="danger" 
-              className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-3xl shadow-2xl shadow-[var(--color-danger)]/20"
+              className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-xl shadow-sm "
               icon={LogOut}
               onClick={handleExitImpersonation}
               disabled={impersonating}
@@ -168,7 +168,7 @@ export default function ImpersonatePage() {
           <input 
             type="text" 
             placeholder="Search by name, email or role..."
-            className="w-full pl-14 pr-6 py-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2rem] text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 outline-none transition-all"
+            className="w-full pl-14 pr-6 py-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -182,10 +182,10 @@ export default function ImpersonatePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="group relative overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2.5rem] p-6 hover:shadow-2xl transition-all duration-500"
+              className="group relative overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 hover:shadow-sm transition-all duration-500"
             >
               <div className="flex items-center gap-4 mb-6">
-                <div className="h-16 w-16 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group-hover:scale-110 transition-transform overflow-hidden shadow-lg">
+                <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group- transition-transform overflow-hidden shadow-lg">
                   {u.profileImageUrl ? (
                     <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -194,30 +194,30 @@ export default function ImpersonatePage() {
                   <div className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-surface)] ${!u.isBlocked ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-lg font-black text-[var(--color-text-primary)] truncate italic uppercase tracking-tighter">{u.name}</h3>
-                  <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest truncate">{u.email}</p>
+                  <h3 className="text-lg font-bold text-[var(--color-text-primary)] truncate italic uppercase tracking-tight">{u.name}</h3>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal truncate">{u.email}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Role</span>
-                  <div className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-full text-[9px] font-black uppercase tracking-widest">
+                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Role</span>
+                  <div className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-full text-[9px] font-bold uppercase tracking-normal">
                     {u.role.replace('_', ' ')}
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Status</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${u.isBlocked ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
+                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Status</span>
+                  <span className={`text-[9px] font-bold uppercase tracking-normal ${u.isBlocked ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
                     {u.isBlocked ? 'Restricted' : 'Active'}
                   </span>
                 </div>
 
                 {u.assignedLocation && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Branch</span>
-                    <span className="text-[9px] font-black text-primary uppercase truncate max-w-[150px]">
+                    <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Branch</span>
+                    <span className="text-[9px] font-bold text-primary uppercase truncate max-w-[150px]">
                       {u.assignedLocation.name || 'Assigned'}
                     </span>
                   </div>
@@ -227,7 +227,7 @@ export default function ImpersonatePage() {
               <div className="mt-8">
                 <Button 
                   variant="primary" 
-                  className="w-full !rounded-2xl h-12 shadow-lg shadow-[var(--color-primary)]/20 group-hover:bg-black group-hover:text-primary transition-colors"
+                  className="w-full !rounded-xl h-12 shadow-lg  group-hover:bg-[var(--color-primary-hover)] group-hover:text-primary transition-colors"
                   icon={ArrowRightLeft}
                   onClick={() => handleImpersonate(u._id, u.name)}
                   disabled={impersonating || u.isBlocked}

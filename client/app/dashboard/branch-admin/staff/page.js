@@ -109,7 +109,7 @@ export default function BranchStaffPage() {
 
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)}
+      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
     </div>
   );
 
@@ -117,12 +117,12 @@ export default function BranchStaffPage() {
     <PageTransition>
       <div className="space-y-10">
         <SlideIn direction="down">
-          <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-10 rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-blue-600" size={36} /> Branch <span className="ml-3 text-blue-600">Staff</span>
+              <h1 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+                <Users className="mr-4 text-[var(--color-primary)]" size={36} /> Branch <span className="ml-3 text-[var(--color-primary)]">Staff</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Manage your cafe team and staff members.</p>
+              <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Manage your cafe team and staff members.</p>
             </div>
             <div className="flex items-center space-x-6">
 
@@ -130,7 +130,7 @@ export default function BranchStaffPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCreateModal(true)}
-                className="bg-zinc-900 dark:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/10 flex items-center"
+                className="bg-[var(--color-primary)] text-[var(--color-on-primary)] px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
               >
                 <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
               </motion.button>
@@ -138,15 +138,15 @@ export default function BranchStaffPage() {
           </div>
         </SlideIn>
 
-        <div className="overflow-x-auto rounded-[2.5rem] border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-3xl shadow-2xl">
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Staff Member</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Contact Details</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Role</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Location</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] text-right">Actions</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff Member</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Contact Details</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Role</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Location</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -161,19 +161,19 @@ export default function BranchStaffPage() {
                 >
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 border border-blue-500/20 shadow-inner group-hover:scale-110 transition-transform font-black">
+                      <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group- transition-transform font-bold">
                         {member.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-[var(--color-text-primary)]">{member.name}</p>
-                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{member.name}</p>
+                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-primary)]">
-                        <Mail size={12} className="text-blue-600" />
+                        <Mail size={12} className="text-[var(--color-primary)]" />
                         {member.email}
                       </div>
                       <div className="flex items-center gap-2 text-[10px] font-medium text-[var(--color-text-muted)]">
@@ -183,13 +183,13 @@ export default function BranchStaffPage() {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
+                    <span className="px-3 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 text-[10px] font-bold uppercase tracking-normal">
                       {member.role}
                     </span>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                      <MapPin size={14} className="text-blue-600" />
+                      <MapPin size={14} className="text-[var(--color-primary)]" />
                       <span className="text-sm font-bold">{member.city}, {member.state}</span>
                     </div>
                   </td>
@@ -199,7 +199,7 @@ export default function BranchStaffPage() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                        className="p-2.5 text-zinc-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all"
+                        className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-xl transition-all"
                       >
                         <Edit3 size={18} />
                       </motion.button>
@@ -207,7 +207,7 @@ export default function BranchStaffPage() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
-                        className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                        className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all"
                       >
                         <Trash2 size={18} />
                       </motion.button>
@@ -220,29 +220,29 @@ export default function BranchStaffPage() {
           {staff.length === 0 && (
             <div className="p-20 text-center text-[var(--color-text-muted)]">
               <Users size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-black uppercase tracking-widest">Staff list is empty</p>
+              <p className="text-sm font-bold uppercase tracking-normal">Staff list is empty</p>
             </div>
           )}
         </div>
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[2.5rem] mt-10 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
               System Rule Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] dark:hover:bg-[var(--color-surface-soft)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] dark:hover:bg-[var(--color-surface-soft)]"
               >
                 Next
               </button>
@@ -258,23 +258,23 @@ export default function BranchStaffPage() {
           <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Full Name</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Email</label>
+                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Phone</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Phone</label>
+                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Age</label>
+                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect 
@@ -291,33 +291,33 @@ export default function BranchStaffPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Base Operations Address</label>
-              <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Base Operations Address</label>
+              <input required className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
             <div className="grid grid-cols-4 gap-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">City</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">City</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">State</label>
-                <input required className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">State</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Pincode</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Pincode</label>
+                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Monthly Yield (₹)</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold dark:text-zinc-100 outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Monthly Yield (₹)</label>
+                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-5 bg-zinc-900 dark:bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/20 mt-4"
+              className="w-full py-5 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  mt-4"
             >
               Update Staff Details
             </motion.button>
@@ -342,37 +342,37 @@ export default function BranchStaffPage() {
           {viewingStaff && (
             <div className="space-y-8">
               {/* Header Profile */}
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  group- transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
-                  <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-zinc-950 rounded-full flex items-center justify-center text-white">
+                  <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-[var(--color-success)] border-4 border-[var(--color-border)] dark:border-[var(--color-border)] rounded-full flex items-center justify-center text-white">
                     <UserCheck size={14} />
                   </div>
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{viewingStaff.name}</h2>
-                  <p className="text-sm font-bold text-zinc-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                    <Mail size={14} className="text-blue-600" /> {viewingStaff.email}
+                  <h2 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight leading-none">{viewingStaff.name}</h2>
+                  <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2 flex items-center justify-center md:justify-start gap-2">
+                    <Mail size={14} className="text-[var(--color-primary)]" /> {viewingStaff.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                    <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-500/20">
+                    <span className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20">
                       {viewingStaff.role}
                     </span>
-                    <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+                    <span className="px-3 py-1 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal rounded-full">
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
-                    <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+                    <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
                       Active Member
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 text-right min-w-[180px]">
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Yield</p>
-                  <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+                <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] text-right min-w-[180px]">
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Yield</p>
+                  <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -381,29 +381,29 @@ export default function BranchStaffPage() {
                 <div className="space-y-8">
                   {/* Identity Section */}
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <CreditCard size={14} className="text-blue-600" /> Staff Details
+                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                      <CreditCard size={14} className="text-[var(--color-primary)]" /> Staff Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
-                      <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Hash className="text-blue-600" size={20} />
+                      <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <Hash className="text-[var(--color-primary)]" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Index</p>
-                          <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Index</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Phone className="text-blue-600" size={20} />
+                      <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <Phone className="text-[var(--color-primary)]" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Primary Contact</p>
-                          <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.phone}</p>
+                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Primary Contact</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.phone}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Award className="text-blue-600" size={20} />
+                      <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <Award className="text-[var(--color-primary)]" size={20} />
                         <div>
-                          <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Academic Standing</p>
-                          <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
+                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Academic Standing</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
                     </div>
@@ -411,17 +411,17 @@ export default function BranchStaffPage() {
 
                   {/* Demographic Section */}
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Globe size={14} className="text-blue-600" /> Demographic Information
+                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                      <Globe size={14} className="text-[var(--color-primary)]" /> Demographic Information
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
-                      <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
+                      <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Age</p>
+                        <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.age} Years</p>
                       </div>
-                      <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
-                        <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
+                      <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Gender</p>
+                        <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.gender}</p>
                       </div>
                     </div>
                   </div>
@@ -430,11 +430,11 @@ export default function BranchStaffPage() {
                 <div className="space-y-8">
                   {/* Address Section */}
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <MapPin size={14} className="text-blue-600" /> Operational Base
+                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                      <MapPin size={14} className="text-[var(--color-primary)]" /> Operational Base
                     </h3>
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                    <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] leading-relaxed">
                         {viewingStaff.address1}<br />
                         {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
                         {viewingStaff.city}, {viewingStaff.state}
@@ -444,30 +444,30 @@ export default function BranchStaffPage() {
 
                   {/* Document Proof Section */}
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                      <Info size={14} className="text-blue-600" /> Aadhar Card
+                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                      <Info size={14} className="text-[var(--color-primary)]" /> Aadhar Card
                     </h3>
                     {viewingStaff.aadharImage ? (
-                      <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
+                      <div className="group relative rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] aspect-video">
                         <img
                           src={viewingStaff.aadharImage}
                           alt="Aadhar Card"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          className="w-full h-full object-cover group- transition-transform duration-700"
                         />
                         <a
                           href={viewingStaff.aadharImage}
                           target="_blank"
                           rel="noreferrer"
-                          className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                         >
-                          <Globe size={24} className="text-blue-500" />
-                          <span className="font-black text-[10px] uppercase tracking-widest">Verify Original Scan</span>
+                          <Globe size={24} className="text-[var(--color-primary)]" />
+                          <span className="font-bold text-[10px] uppercase tracking-normal">Verify Original Scan</span>
                         </a>
                       </div>
                     ) : (
-                      <div className="rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center justify-center text-zinc-400 aspect-video">
+                      <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] p-10 flex flex-col items-center justify-center text-[var(--color-text-muted)] aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-center">Aadhar Scan Missing</p>
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">Aadhar Scan Missing</p>
                       </div>
                     )}
                   </div>
@@ -475,16 +475,16 @@ export default function BranchStaffPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
+              <div className="pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)] flex gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
+                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
                   onClick={() => setViewingStaff(null)}
                 >
                   Close
                 </Button>
                 <Button
-                  className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-2xl"
+                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] shadow-sm"
                   onClick={() => {
                     handleEdit(viewingStaff);
                     setViewingStaff(null);
@@ -501,24 +501,24 @@ export default function BranchStaffPage() {
         <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Add New Staff">
           <form onSubmit={handleCreate} className="space-y-5 p-2">
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Full Name</label>
-              <input required className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.name} onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))} placeholder="Staff member's name" />
+              <label className="block text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Full Name</label>
+              <input required className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.name} onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))} placeholder="Staff member's name" />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Email</label>
-              <input required type="email" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} placeholder="email@cafe.com" />
+              <label className="block text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Email</label>
+              <input required type="email" className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} placeholder="email@cafe.com" />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Password</label>
-              <input required type="password" minLength={6} className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" />
+              <label className="block text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Password</label>
+              <input required type="password" minLength={6} className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Phone</label>
-              <input type="tel" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value }))} placeholder="Contact number" />
+              <label className="block text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Phone</label>
+              <input type="tel" className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value }))} placeholder="Contact number" />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Monthly Salary</label>
-              <input type="number" min="0" className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
+              <label className="block text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Monthly Salary</label>
+              <input type="number" min="0" className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
             </div>
             <div className="flex gap-4 pt-2">
               <Button type="submit" className="flex-1">Create Staff</Button>

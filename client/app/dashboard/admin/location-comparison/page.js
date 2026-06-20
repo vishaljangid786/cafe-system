@@ -132,7 +132,7 @@ export default function LocationComparisonPage() {
     ];
   };
 
-  if (loading) return <div className="p-10 font-black text-[var(--color-text-muted)]">Loading branch data...</div>;
+  if (loading) return <div className="p-10 font-bold text-[var(--color-text-muted)]">Loading branch data...</div>;
 
   return (
     <PageTransition>
@@ -141,14 +141,14 @@ export default function LocationComparisonPage() {
         <SlideIn direction="down">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
             <div className="flex items-center gap-6">
-              <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--color-primary)]/20">
+              <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--color-primary)]/20">
                 <ArrowRightLeft size={32} />
               </div>
               <div>
-                <h1 className="text-4xl font-black text-[var(--color-text-primary)] tracking-tight">
+                <h1 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
                   Branch <span className="text-[var(--color-primary)]">Benchmarking</span>
                 </h1>
-                <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-widest">Compare metrics globally across operations</p>
+                <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Compare metrics globally across operations</p>
               </div>
             </div>
 
@@ -158,9 +158,9 @@ export default function LocationComparisonPage() {
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc1Open(!isLoc1Open); setIsLoc2Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-sm hover:border-[var(--color-primary)]/50 transition-all min-w-[220px] font-bold text-xs"
+                      className="flex items-center gap-3 px-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm hover:border-[var(--color-primary)]/50 transition-all min-w-[220px] font-bold text-xs"
                     >
-                      <MapPin size={18} className="text-blue-500" />
+                      <MapPin size={18} className="text-[var(--color-primary)]" />
                       <div className="flex flex-col items-start">
                         <span className="text-[10px] uppercase text-[var(--color-text-muted)]">Branch 1</span>
                         <span>{locations.find(l => l._id === loc1)?.name || 'Select'}</span>
@@ -168,7 +168,7 @@ export default function LocationComparisonPage() {
                       <ChevronDown size={16} className="ml-auto" />
                     </button>
                     {isLoc1Open && (
-                      <div className="absolute top-full left-0 mt-3 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 p-2">
+                      <div className="absolute top-full left-0 mt-3 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc2).map(loc => (
                           <button key={loc._id} onClick={() => { setLoc1(loc._id); setIsLoc1Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] text-xs font-bold transition-colors">
                             {loc.name}
@@ -181,9 +181,9 @@ export default function LocationComparisonPage() {
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc2Open(!isLoc2Open); setIsLoc1Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-sm hover:border-blue-500/50 transition-all min-w-[220px] font-bold text-xs"
+                      className="flex items-center gap-3 px-6 py-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm hover:border-[var(--color-primary)]/50 transition-all min-w-[220px] font-bold text-xs"
                     >
-                      <MapPin size={18} className="text-blue-500" />
+                      <MapPin size={18} className="text-[var(--color-primary)]" />
                       <div className="flex flex-col items-start">
                         <span className="text-[10px] uppercase text-[var(--color-text-muted)]">Branch 2</span>
                         <span>{locations.find(l => l._id === loc2)?.name || 'Select'}</span>
@@ -191,9 +191,9 @@ export default function LocationComparisonPage() {
                       <ChevronDown size={16} className="ml-auto" />
                     </button>
                     {isLoc2Open && (
-                      <div className="absolute top-full left-0 mt-3 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 p-2">
+                      <div className="absolute top-full left-0 mt-3 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc1).map(loc => (
-                          <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-blue-500/10 hover:text-blue-500 text-xs font-bold transition-colors">
+                          <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] text-xs font-bold transition-colors">
                             {loc.name}
                           </button>
                         ))}
@@ -204,19 +204,19 @@ export default function LocationComparisonPage() {
               )}
 
               {/* Tab Selector */}
-              <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)]">
-                <button onClick={() => setActiveTab('dual')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dual' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+              <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)]">
+                <button onClick={() => setActiveTab('dual')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'dual' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
                   Dual Compare
                 </button>
-                <button onClick={() => setActiveTab('advanced')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'advanced' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+                <button onClick={() => setActiveTab('advanced')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'advanced' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
                   Benchmarking Suite
                 </button>
               </div>
 
               {/* Date Filter */}
-              <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)]">
+              <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)]">
                 {['week', 'month', 'year', 'FY'].map((p) => (
-                  <button key={p} onClick={() => setDateRange(p)} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === p ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+                  <button key={p} onClick={() => setDateRange(p)} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${dateRange === p ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
                     {p}
                   </button>
                 ))}
@@ -238,23 +238,23 @@ export default function LocationComparisonPage() {
                 const winner = getWinner(item.field);
                 const isWinner1 = winner?.name === l1Data?.name;
                 return (
-                  <div key={idx} className={`p-8 rounded-[2.5rem] border transition-all ${isWinner1 ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-500/5 border-blue-500/20'}`}>
+                  <div key={idx} className={`p-8 rounded-xl border transition-all ${isWinner1 ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20' : 'bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20'}`}>
                      <div className="flex items-center gap-4 mb-4">
-                       <item.icon size={20} className={isWinner1 ? 'text-blue-500' : 'text-blue-500'} />
-                       <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">{item.label}</span>
+                       <item.icon size={20} className={isWinner1 ? 'text-[var(--color-primary)]' : 'text-[var(--color-primary)]'} />
+                       <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{item.label}</span>
                      </div>
                      <div className="flex flex-col gap-4 mt-6">
                        <div className="flex justify-between items-center">
                          <span className="text-xs font-bold text-[var(--color-text-muted)]">{l1Data?.name || 'Center A'}</span>
-                         <span className="text-xs font-black text-[var(--color-text-primary)]">₹{l1Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{l1Data?.[item.field] || 0}</span>
                        </div>
                        <div className="flex justify-between items-center">
                          <span className="text-xs font-bold text-[var(--color-text-muted)]">{l2Data?.name || 'Center B'}</span>
-                         <span className="text-xs font-black text-[var(--color-text-primary)]">₹{l2Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{l2Data?.[item.field] || 0}</span>
                        </div>
                        <div className="pt-3 border-t border-[var(--color-border)] flex justify-between items-center">
-                         <span className="text-[10px] font-black truncate text-blue-500">{winner?.name}</span>
-                         <span className="text-[10px] font-black text-emerald-500">+{winner?.diff}%</span>
+                         <span className="text-[10px] font-bold truncate text-[var(--color-primary)]">{winner?.name}</span>
+                         <span className="text-[10px] font-bold text-[var(--color-success)]">+{winner?.diff}%</span>
                        </div>
                      </div>
                   </div>
@@ -264,8 +264,8 @@ export default function LocationComparisonPage() {
 
             {/* Graphical Benchmark */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] p-10">
-                <h3 className="text-sm font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-6">Performance Radar</h3>
+              <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] rounded-xl p-10">
+                <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-6">Performance Radar</h3>
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={getRadarData()}>
@@ -280,8 +280,8 @@ export default function LocationComparisonPage() {
                 </div>
               </div>
 
-              <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] p-10">
-                <h3 className="text-sm font-black text-[var(--color-text-muted)] uppercase tracking-widest mb-6">Total Sales Breakdown</h3>
+              <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] rounded-xl p-10">
+                <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-6">Total Sales Breakdown</h3>
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={[
@@ -305,54 +305,54 @@ export default function LocationComparisonPage() {
         ) : (
           <div className="space-y-10">
             {suiteLoading ? (
-              <div className="h-64 bg-[var(--color-surface-soft)] animate-pulse rounded-[2.5rem] flex items-center justify-center text-[var(--color-text-muted)] font-bold">
+              <div className="h-64 bg-[var(--color-surface-soft)] animate-pulse rounded-xl flex items-center justify-center text-[var(--color-text-muted)] font-bold">
                 Compiling benchmarking data array...
               </div>
             ) : (
               <>
                 {/* Outliers Premium Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="p-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2.5rem] text-white shadow-xl">
+                  <div className="p-8 bg-gradient-to-br from-[var(--color-success)] to-[var(--color-success)] rounded-xl text-white shadow-sm">
                     <Award size={24} className="opacity-80" />
-                    <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-80">Most Profitable</p>
-                    <p className="text-2xl font-black mt-1 truncate">{suiteData?.outliers?.mostProfitable?.name || 'N/A'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Most Profitable</p>
+                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.mostProfitable?.name || 'N/A'}</p>
                     <p className="text-sm font-bold mt-2 opacity-90">₹{suiteData?.outliers?.mostProfitable?.value}</p>
                   </div>
                   
-                  <div className="p-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[2.5rem] text-white shadow-xl">
+                  <div className="p-8 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] rounded-xl text-white shadow-sm">
                     <AlertTriangle size={24} className="opacity-80" />
-                    <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-80">Slowest Growth</p>
-                    <p className="text-2xl font-black mt-1 truncate">{suiteData?.outliers?.slowestGrowth?.name || 'N/A'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Slowest Growth</p>
+                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.slowestGrowth?.name || 'N/A'}</p>
                     <p className="text-sm font-bold mt-2 opacity-90">{suiteData?.outliers?.slowestGrowth?.value}</p>
                   </div>
 
-                  <div className="p-8 bg-gradient-to-br from-rose-500 to-red-600 rounded-[2.5rem] text-white shadow-xl">
+                  <div className="p-8 bg-gradient-to-br from-[var(--color-danger)] to-[var(--color-danger)] rounded-xl text-white shadow-sm">
                     <TrendingDown size={24} className="opacity-80" />
-                    <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-80">Lowest Performing</p>
-                    <p className="text-2xl font-black mt-1 truncate">{suiteData?.outliers?.lowestPerforming?.name || 'N/A'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Lowest Performing</p>
+                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.lowestPerforming?.name || 'N/A'}</p>
                     <p className="text-sm font-bold mt-2 opacity-90">₹{suiteData?.outliers?.lowestPerforming?.value}</p>
                   </div>
                 </div>
 
                 {/* Advanced Comparison List Table */}
-                <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl border border-[var(--color-border)] p-8 rounded-[2.5rem] shadow-sm">
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                    <Target size={16} className="text-blue-500" /> Advanced Benchmarking Array
+                <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] p-8 rounded-xl shadow-sm">
+                  <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+                    <Target size={16} className="text-[var(--color-primary)]" /> Advanced Benchmarking Array
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--color-border)]">
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Branch Name</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Revenue</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Orders</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Growth</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">UPI %</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Avg Ticket</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Staff Eff.</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Cancel Rate</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupon Usage</th>
-                          <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Profit</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch Name</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Revenue</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Orders</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Growth</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">UPI %</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Avg Ticket</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff Eff.</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Cancel Rate</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Coupon Usage</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Profit</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -361,13 +361,13 @@ export default function LocationComparisonPage() {
                             <td className="py-4 text-[var(--color-text-primary)]">{branch.name}</td>
                             <td className="py-4 text-[var(--color-text-primary)]">₹{branch.revenue}</td>
                             <td className="py-4 text-[var(--color-text-muted)]">{branch.orders}</td>
-                            <td className={`py-4 font-black ${Number(branch.growthPercent) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{branch.growthPercent}%</td>
+                            <td className={`py-4 font-bold ${Number(branch.growthPercent) >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>{branch.growthPercent}%</td>
                             <td className="py-4 text-[var(--color-text-muted)]">{branch.upiPercent}%</td>
                             <td className="py-4 text-[var(--color-text-primary)]">₹{branch.avgOrderValue}</td>
                             <td className="py-4 text-[var(--color-text-muted)]">{branch.staffEfficiency}</td>
-                            <td className="py-4 text-rose-500">{branch.cancellationRate}%</td>
+                            <td className="py-4 text-[var(--color-danger)]">{branch.cancellationRate}%</td>
                             <td className="py-4 text-[var(--color-text-muted)]">{branch.couponUsage}</td>
-                            <td className="py-4 text-emerald-500 font-black">₹{branch.profitability}</td>
+                            <td className="py-4 text-[var(--color-success)] font-bold">₹{branch.profitability}</td>
                           </tr>
                         ))}
                       </tbody>

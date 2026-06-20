@@ -205,7 +205,7 @@ export default function BranchesPage() {
         <SlideIn direction="down">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div>
-                  <h1 className="text-3xl font-black text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+                  <h1 className="text-3xl font-bold text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
                 <MapPin className="mr-4 text-[var(--color-primary)]" size={36} strokeWidth={2.5} /> Branch <span className="ml-3 text-[var(--color-primary)]">Management</span>
               </h1>
               <p className="text-[var(--color-text-secondary)] text-sm mt-3 font-medium flex items-center">
@@ -221,7 +221,7 @@ export default function BranchesPage() {
                 <input 
                   type="text"
                   placeholder="Search by city or branch name..."
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all text-[var(--color-text-primary)]"
+                  className="w-full pl-12 pr-6 py-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all text-[var(--color-text-primary)]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -235,7 +235,7 @@ export default function BranchesPage() {
                   setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both' });
                   setShowModal(true);
                 }}
-                className="flex items-center justify-center px-8 py-4 bg-[var(--color-primary)] text-black dark:text-black rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-[var(--color-primary)]/20 hover:opacity-90 transition-all whitespace-nowrap"
+                className="flex items-center justify-center px-8 py-4 bg-[var(--color-primary)] text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] rounded-xl font-bold uppercase tracking-normal text-[10px] shadow-sm  hover:opacity-90 transition-all whitespace-nowrap"
               >
                 <Plus className="mr-2" size={16} /> New Branch
               </motion.button>
@@ -243,15 +243,15 @@ export default function BranchesPage() {
           </div>
         </SlideIn>
 
-        <div className="overflow-x-auto rounded-[2.5rem] border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-3xl shadow-2xl">
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Branch Info</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Location</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Type</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] text-right">Actions</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch Info</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Location</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Type</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -272,12 +272,12 @@ export default function BranchesPage() {
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group-hover:scale-110 transition-transform">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group- transition-transform">
                           <MapPin size={20} />
                         </div>
                         <div>
-                          <p className="text-sm font-black text-[var(--color-text-primary)]">{loc.name}</p>
-                          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">ID: {loc._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-bold text-[var(--color-text-primary)]">{loc.name}</p>
+                          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">ID: {loc._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
@@ -288,7 +288,7 @@ export default function BranchesPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-sm ${
+                      <span className={`text-[9px] font-bold uppercase tracking-normal px-3 py-1 rounded-full border shadow-sm ${
                         loc.dietaryType === 'veg' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' :
                         loc.dietaryType === 'non-veg' ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20' :
                         'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
@@ -297,7 +297,7 @@ export default function BranchesPage() {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${loc.status === 'active'
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-normal border shadow-sm ${loc.status === 'active'
                         ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20'
                         : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20'
                         }`}>
@@ -335,7 +335,7 @@ export default function BranchesPage() {
           {locations.length === 0 && (
             <div className="p-20 text-center text-[var(--color-text-muted)]">
               <Globe size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-black uppercase tracking-widest">No branches found matching search</p>
+              <p className="text-sm font-bold uppercase tracking-normal">No branches found matching search</p>
             </div>
           )}
         </div>
@@ -348,17 +348,17 @@ export default function BranchesPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowModal(false)}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                className="absolute inset-0 bg-black/80 "
               />
               <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 40 }}
-                className="bg-[var(--color-surface)] rounded-[2.5rem] p-10 max-w-2xl w-full shadow-2xl relative z-10 border border-[var(--color-border)]"
+                className="bg-[var(--color-surface)] rounded-xl p-10 max-w-2xl w-full shadow-sm relative z-10 border border-[var(--color-border)]"
               >
                 <div className="flex justify-between items-start mb-10">
                   <div>
-                    <h2 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">
+                    <h2 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">
                       {editingId ? 'Edit' : 'Create'} <span className="text-[var(--color-primary)]">Branch</span>
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mt-2 font-medium">Update branch details below.</p>
@@ -372,10 +372,10 @@ export default function BranchesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">Branch Name</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Branch Name</label>
                         <input
                           required
-                          className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
+                          className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder="e.g. Bandra Cafe"
@@ -383,19 +383,19 @@ export default function BranchesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">City</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">City</label>
                           <input
                             required
-                            className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
+                            className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
                             value={formData.city}
                             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">State</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">State</label>
                           <input
                             required
-                            className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
+                            className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
                             value={formData.state}
                             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                           />
@@ -405,10 +405,10 @@ export default function BranchesPage() {
 
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">Postal Code</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Postal Code</label>
                         <input
                           required
-                          className="w-full px-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
+                          className="w-full px-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/50 transition-all font-bold"
                           value={formData.pincode}
                           onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                         />
@@ -441,7 +441,7 @@ export default function BranchesPage() {
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-bg-soft)] transition-all"
+                      className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-bg-soft)] transition-all"
                     >
                       Cancel
                     </motion.button>
@@ -449,7 +449,7 @@ export default function BranchesPage() {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-black dark:text-black bg-[var(--color-primary)] hover:opacity-90 shadow-xl shadow-[var(--color-primary)]/30 transition-all"
+                      className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] bg-[var(--color-primary)] hover:opacity-90 shadow-sm  transition-all"
                     >
                       {editingId ? 'Update Branch' : 'Confirm Branch'}
                     </motion.button>
@@ -468,28 +468,28 @@ export default function BranchesPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedLocation(null)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 "
               />
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-2xl bg-[var(--color-surface)] h-full shadow-2xl border-l border-[var(--color-border)] overflow-y-auto custom-scrollbar"
+                className="relative w-full max-w-2xl bg-[var(--color-surface)] h-full shadow-sm border-l border-[var(--color-border)] overflow-y-auto custom-scrollbar"
               >
-                <div className="p-8 border-b border-[var(--color-border)] sticky top-0 bg-[var(--color-surface)]/80 backdrop-blur-md z-10 flex items-center justify-between">
+                <div className="p-8 border-b border-[var(--color-border)] sticky top-0 bg-[var(--color-surface)]/80  z-10 flex items-center justify-between">
                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-black dark:text-black shadow-lg shadow-[var(--color-primary)]/20">
+                      <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] shadow-lg ">
                         <MapPin size={24} />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{selectedLocation.name}</h2>
-                        <p className="text-[10px] font-black uppercase text-[var(--color-primary)] tracking-widest mt-2">Branch Overview</p>
+                        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{selectedLocation.name}</h2>
+                        <p className="text-[10px] font-bold uppercase text-[var(--color-primary)] tracking-normal mt-2">Branch Overview</p>
                       </div>
                    </div>
                    <button 
                     onClick={() => setSelectedLocation(null)}
-                    className="p-3 rounded-2xl hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-colors"
+                    className="p-3 rounded-xl hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-colors"
                    >
                      <Plus className="rotate-45" size={24} />
                    </button>
@@ -498,28 +498,28 @@ export default function BranchesPage() {
                 <div className="p-8 space-y-12">
                    <section>
                       <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-2">
+                        <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
                           <ShieldAlert size={14} className="text-[var(--color-primary)]" /> Management
                         </h3>
                       </div>
                       
                       {fetchingStaff ? (
-                        <div className="h-24 bg-[var(--color-surface-soft)] rounded-3xl animate-pulse" />
+                        <div className="h-24 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />
                       ) : staff.filter(p => p.role === 'location_admin' || p.role === 'branch_admin').length === 0 ? (
-                        <div className="p-6 rounded-3xl border border-dashed border-[var(--color-border)] text-center text-[var(--color-text-muted)] text-xs italic">
+                        <div className="p-6 rounded-xl border border-dashed border-[var(--color-border)] text-center text-[var(--color-text-muted)] text-xs italic">
                           No manager assigned.
                         </div>
                       ) : (
                         staff.filter(p => p.role === 'location_admin' || p.role === 'branch_admin').map(admin => (
-                          <div key={admin._id} className="p-6 bg-[var(--color-surface-soft)] rounded-3xl border border-[var(--color-border)] flex items-center justify-between">
+                          <div key={admin._id} className="p-6 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] font-black">
+                              <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] font-bold">
                                 {admin.name.charAt(0)}
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm font-black text-[var(--color-text-primary)]">{admin.name}</p>
-                                  <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-md border border-[var(--color-primary)]/20">
+                                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{admin.name}</p>
+                                  <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-0.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-md border border-[var(--color-primary)]/20">
                                     Branch Admin
                                   </span>
                                 </div>
@@ -543,20 +543,20 @@ export default function BranchesPage() {
                     <section>
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex flex-col">
-                          <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-2">
+                          <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
                             <Users size={14} className={staffTab === 'staff' ? "text-[var(--color-primary-dark)]" : "text-[var(--color-primary)]"} /> Staff Members
                           </h3>
                         </div>
                         <div className="flex bg-[var(--color-surface-soft)] p-1 rounded-xl border border-[var(--color-border)]">
                           <button 
                             onClick={() => setStaffTab('staff')}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${staffTab === 'staff' ? 'bg-[var(--color-surface)] text-[var(--color-primary-dark)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${staffTab === 'staff' ? 'bg-[var(--color-surface)] text-[var(--color-primary-dark)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                           >
                             Staff ({staff.filter(p => p.role === 'staff').length})
                           </button>
                           <button 
                             onClick={() => setStaffTab('chef')}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${staffTab === 'chef' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${staffTab === 'chef' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                           >
                             Chefs ({staff.filter(p => p.role === 'chef').length})
                           </button>
@@ -565,14 +565,14 @@ export default function BranchesPage() {
 
                       <div className="space-y-4">
                         {fetchingStaff ? (
-                          [1,2,3].map(i => <div key={i} className="h-20 bg-[var(--color-surface-soft)] rounded-2xl animate-pulse" />)
+                          [1,2,3].map(i => <div key={i} className="h-20 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />)
                         ) : staff.filter(p => p.role === staffTab).length === 0 ? (
-                          <div className="p-10 rounded-3xl border border-dashed border-[var(--color-border)] text-center">
+                          <div className="p-10 rounded-xl border border-dashed border-[var(--color-border)] text-center">
                              <p className="text-[var(--color-text-muted)] text-xs font-medium">No {staffTab} records found.</p>
                           </div>
                         ) : (
                           staff.filter(p => p.role === staffTab).map(member => (
-                            <div key={member._id} className={`p-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-between group hover:border-[var(--color-primary)]/30 transition-all`}>
+                            <div key={member._id} className={`p-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between group hover:border-[var(--color-primary)]/30 transition-all`}>
                                <div className="flex items-center gap-4">
                                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs ${staffTab === 'staff' ? 'bg-[var(--color-primary-dark)]/10 text-[var(--color-primary-dark)]' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'}`}>
                                     {member.name.charAt(0)}
@@ -603,41 +603,41 @@ export default function BranchesPage() {
                       </div>
                    </section>
 
-                   <section className="bg-[var(--color-surface-soft)] rounded-[2.5rem] p-10 border border-[var(--color-border)] relative overflow-hidden group">
+                   <section className="bg-[var(--color-surface-soft)] rounded-xl p-10 border border-[var(--color-border)] relative overflow-hidden group">
                       <div className="relative z-10 space-y-10">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Branch Information</h3>
-                          <div className="h-2 w-2 rounded-full bg-[var(--color-success)] animate-pulse shadow-lg shadow-[var(--color-success)]/50" />
+                          <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch Information</h3>
+                          <div className="h-2 w-2 rounded-full bg-[var(--color-success)] animate-pulse shadow-lg " />
                         </div>
                         
                         <div className="grid grid-cols-2 gap-y-10 gap-x-8">
                            <SlideIn delay={0.1}>
-                              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest mb-2">Total Staff</p>
-                              <p className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter">
+                              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Total Staff</p>
+                              <p className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
                                 {staff.length}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.2}>
-                              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest mb-2">Attendance %</p>
-                              <p className="text-4xl font-black text-[var(--color-primary)] tracking-tighter">
+                              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Attendance %</p>
+                              <p className="text-4xl font-bold text-[var(--color-primary)] tracking-tight">
                                 {fetchingStats ? '...' : `${branchStats?.attendanceRate?.toFixed(1) || '0.0'}%`}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.3}>
-                              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest mb-2">Revenue (Monthly)</p>
-                              <p className="text-2xl font-black text-[var(--color-success)] tracking-tighter italic">
+                              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Revenue (Monthly)</p>
+                              <p className="text-2xl font-bold text-[var(--color-success)] tracking-tight italic">
                                 ₹{fetchingStats ? '...' : (branchStats?.revenue || 0).toLocaleString()}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.4}>
-                              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest mb-2">Net Profit</p>
-                              <p className="text-2xl font-black text-[var(--color-primary-dark)] tracking-tighter italic">
+                              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Net Profit</p>
+                              <p className="text-2xl font-bold text-[var(--color-primary-dark)] tracking-tight italic">
                                 ₹{fetchingStats ? '...' : (branchStats?.profit || 0).toLocaleString()}
                               </p>
                            </SlideIn>
                         </div>
                       </div>
-                      <div className="absolute top-0 right-0 p-12 opacity-5 dark:opacity-10 group-hover:scale-110 transition-transform duration-700">
+                      <div className="absolute top-0 right-0 p-12 opacity-5 dark:opacity-10 group- transition-transform duration-700">
                         <Activity size={120} className="text-[var(--color-primary)]" />
                       </div>
                    </section>
@@ -655,21 +655,21 @@ export default function BranchesPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedStaff(null)}
-                className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+                className="absolute inset-0 bg-black/80 "
               />
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="relative z-10 w-full max-w-lg bg-[var(--color-surface)] rounded-[2.5rem] p-10 border border-[var(--color-border)] shadow-2xl"
+                className="relative z-10 w-full max-w-lg bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] shadow-sm"
               >
                 <div className="flex items-center gap-4 mb-10">
-                   <div className="h-16 w-16 rounded-2xl bg-[var(--color-surface-soft)] flex items-center justify-center text-2xl font-black text-[var(--color-primary)] uppercase">
+                   <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-2xl font-bold text-[var(--color-primary)] uppercase">
                      {selectedStaff.name.charAt(0)}
                    </div>
                    <div>
-                     <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{selectedStaff.name}</h2>
-                     <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest mt-2">Staff Details</p>
+                     <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{selectedStaff.name}</h2>
+                     <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mt-2">Staff Details</p>
                    </div>
                 </div>
 
@@ -685,11 +685,11 @@ export default function BranchesPage() {
                         ]}
                       />
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Monthly Salary</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Monthly Salary</label>
                         <div className="relative">
                           <input 
                             type="number"
-                            className="w-full pl-10 pr-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-black outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
+                            className="w-full pl-10 pr-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
                             value={staffFormData.monthlySalary}
                             onChange={(e) => setStaffFormData({...staffFormData, monthlySalary: e.target.value})}
                           />
@@ -698,27 +698,27 @@ export default function BranchesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Phone Number</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Phone Number</label>
                           <input 
-                            className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
+                            className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
                             value={staffFormData.phone}
                             onChange={(e) => setStaffFormData({...staffFormData, phone: e.target.value})}
                             placeholder="Phone Number"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Email Address</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Email Address</label>
                           <input 
                             disabled
-                            className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-xs font-bold outline-none opacity-50 cursor-not-allowed text-[var(--color-text-muted)]"
+                            className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-xs font-bold outline-none opacity-50 cursor-not-allowed text-[var(--color-text-muted)]"
                             value={staffFormData.email}
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2.5 ml-1">Full Address</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Full Address</label>
                         <input 
-                          className="w-full px-5 py-4 rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
+                          className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
                           value={staffFormData.address1}
                           onChange={(e) => setStaffFormData({...staffFormData, address1: e.target.value})}
                           placeholder="Primary Address"
@@ -730,13 +730,13 @@ export default function BranchesPage() {
                       <button 
                         type="button"
                         onClick={() => setSelectedStaff(null)}
-                        className="flex-1 py-4 rounded-2xl bg-[var(--color-surface-soft)] text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] transition-all border border-[var(--color-border)]"
+                        className="flex-1 py-4 rounded-xl bg-[var(--color-surface-soft)] text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] transition-all border border-[var(--color-border)]"
                       >
                         Cancel
                       </button>
                       <button 
                         type="submit"
-                        className="flex-1 py-4 rounded-2xl bg-[var(--color-primary)] text-black dark:text-black text-xs font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20 hover:opacity-90 transition-all"
+                        className="flex-1 py-4 rounded-xl bg-[var(--color-primary)] text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] text-xs font-bold uppercase tracking-normal shadow-lg  hover:opacity-90 transition-all"
                       >
                         Save Changes
                       </button>

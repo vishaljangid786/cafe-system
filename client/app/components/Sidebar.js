@@ -277,7 +277,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   if (!user) return null;
 
   const content = (
-    <div className={`h-full flex flex-col bg-[var(--color-sidebar-bg)] backdrop-blur-xl border-r border-[var(--color-border)] transition-all duration-300 relative`}>
+    <div className={`h-full flex flex-col bg-[var(--color-sidebar-bg)] border-r border-[var(--color-border)] transition-colors duration-300 relative`}>
       <NotificationModal isOpen={showNotifModal} onClose={() => setShowNotifModal(false)} />
       {/* Brand Header */}
       <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0 mb-2`}>
@@ -318,14 +318,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
               >
                 {showLabels ? (
                   <div
-                    className={`px-4 py-3 flex items-center justify-between group/header rounded-2xl transition-all duration-300 ${openGroup === group.title ? 'bg-primary/10 shadow-sm' : 'hover:bg-[var(--color-surface-soft)]'}`}
+                    className={`px-3 py-2 flex items-center justify-between group/header rounded-lg transition-colors duration-200 ${openGroup === group.title ? 'bg-[var(--color-surface-soft)]' : 'hover:bg-[var(--color-surface-soft)]'}`}
                   >
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
                         handleGroupInteraction(e, group.title, 'click');
                       }}
-                      className={`flex-1 py-1 text-[11px] font-black uppercase tracking-[0.25em] cursor-pointer transition-colors ${openGroup === group.title ? 'text-primary' : 'text-[var(--color-text-muted)] group-hover/header:text-[var(--color-text-primary)]'}`}
+                      className={`flex-1 py-1 text-xs font-semibold cursor-pointer transition-colors ${openGroup === group.title ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)] group-hover/header:text-[var(--color-text-primary)]'}`}
                     >
                       {group.title}
                     </span>
@@ -334,11 +334,11 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                         e.stopPropagation();
                         handleGroupInteraction(e, group.title, 'toggle');
                       }}
-                      animate={{ rotate: openGroup === group.title ? 0 : -90, scale: openGroup === group.title ? 1.1 : 1 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-1 cursor-pointer hover:bg-primary/10 rounded-lg transition-colors"
+                      animate={{ rotate: openGroup === group.title ? 0 : -90 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-1 cursor-pointer hover:bg-[var(--color-hover)] rounded-md transition-colors"
                     >
-                      <ChevronDown size={14} className={openGroup === group.title ? 'text-primary' : 'text-[var(--color-text-muted)]'} />
+                      <ChevronDown size={14} className={openGroup === group.title ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'} />
                     </motion.div>
                   </div>
                 ) : (
@@ -347,9 +347,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       e.stopPropagation();
                       handleGroupInteraction(e, group.title, 'click');
                     }}
-                    className={`h-12 w-12 mx-auto flex items-center justify-center rounded-2xl cursor-pointer transition-all duration-300 ${openGroup === group.title || isActive ? 'bg-primary text-black shadow-xl shadow-primary/20 scale-110' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`h-11 w-11 mx-auto flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 ${openGroup === group.title || isActive ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}`}
                   >
-                    <FirstIcon size={22} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
+                    <FirstIcon size={20} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
                   </div>
                 )}
 
@@ -376,16 +376,16 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                               setOpenGroup(group.title);
                             }}
                             className={`
-                              flex items-center py-3 px-4 rounded-xl transition-all duration-200
+                              flex items-center py-2.5 px-3 rounded-lg transition-colors duration-150
                               ${isLinkActive
-                                ? 'bg-primary text-black font-bold shadow-sm'
+                                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
                                 : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
                             `}
                           >
                             <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="mr-3 shrink-0" />
-                            <span className="text-sm tracking-tight">{link.name}</span>
+                            <span className="text-sm">{link.name}</span>
                             {link.badge > 0 && (
-                              <span className={`ml-auto px-1.5 py-0.5 rounded-lg text-[10px] ${isLinkActive ? 'bg-black/20 text-black' : 'bg-primary/20 text-primary'}`}>
+                              <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-[var(--color-on-primary)]' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'}`}>
                                 {link.badge}
                               </span>
                             )}
@@ -410,7 +410,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             ${showLabels ? 'justify-start px-3' : 'justify-center'}
           `}
         >
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary group- transition-transform">
             <Send size={16} />
           </div>
           {showLabels && (
@@ -459,7 +459,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsMobileOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-black/40 z-[100]"
           />
         )}
       </AnimatePresence>
@@ -484,10 +484,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           {hoveredGroup && hoveredGroup !== currentActiveGroupTitle && (
             <motion.div
               key={hoveredGroup}
-              initial={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, x: -20, scale: 0.95, filter: 'blur(10px)' }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
               style={{
                 position: 'fixed',
                 top: Math.max(20, Math.min(flyoutTop, typeof window !== 'undefined' ? window.innerHeight - ((groups.find(g => g.title === hoveredGroup)?.items.length || 0) * 52 + 80) : flyoutTop)),
@@ -498,18 +498,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 setHoveredGroup(hoveredGroup);
               }}
               onMouseLeave={handleMouseLeave}
-              className="w-72 bg-[var(--color-sidebar-bg)] backdrop-blur-3xl border border-[var(--color-border)] rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] p-4 z-[300] space-y-1.5"
+              className="w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-[var(--shadow-md)] p-3 z-[300] space-y-1"
             >
               {(() => {
                 const groupData = groups.find(g => g.title === hoveredGroup);
                 if (!groupData) return null;
                 return (
                   <>
-                    <div className="px-4 py-2 mb-2 border-b border-[var(--color-border)] flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+                    <div className="px-3 py-1.5 mb-1 border-b border-[var(--color-border)]">
+                      <span className="text-xs font-semibold text-[var(--color-text-muted)]">
                         {groupData.title}
                       </span>
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                     </div>
                     <div className="max-h-[70vh] overflow-y-auto custom-scrollbar pr-1 space-y-1">
                       {groupData.items.map((link) => {
@@ -528,17 +527,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                               setOpenGroup(groupData.title);
                             }}
                             className={`
-                              group/item flex items-center relative py-3.5 px-4 rounded-2xl transition-all duration-300
+                              group/item flex items-center relative py-2.5 px-3 rounded-lg transition-colors duration-150
                               ${isLinkActive
-                                ? 'bg-primary text-black font-black shadow-lg shadow-primary/10'
+                                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
                                 : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
                             `}
                           >
                             <div className="relative z-10 flex items-center w-full">
-                              <Icon size={18} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0 transition-transform group-hover/item:scale-110" />
-                              <span className="ml-3 text-sm tracking-tight whitespace-nowrap flex-1">{link.name}</span>
+                              <Icon size={18} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0" />
+                              <span className="ml-3 text-sm whitespace-nowrap flex-1">{link.name}</span>
                               {link.badge > 0 && (
-                                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${isLinkActive ? 'bg-black/20 text-black' : 'bg-primary/20 text-primary'}`}>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-[var(--color-on-primary)]' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'}`}>
                                   {link.badge}
                                 </span>
                               )}

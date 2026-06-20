@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toneText, toneBg, toneSoft, toneBorder } from '../../components/ui/tone';
 import { 
   Coffee, 
   ChefHat, 
@@ -121,7 +122,7 @@ export default function ChefDashboard() {
         <Button 
           variant="primary" 
           size="sm" 
-          className="w-full mt-4 !rounded-xl bg-blue-500 hover:bg-blue-600 text-[10px] font-black uppercase tracking-widest"
+          className="w-full mt-4 !rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal"
           onClick={() => handleUpdateStatus(order._id, 'accept')}
         >
           Accept Order
@@ -140,7 +141,7 @@ export default function ChefDashboard() {
             <Button 
               variant="primary" 
               size="sm" 
-              className="flex-1 !rounded-xl bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest"
+              className="flex-1 !rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal"
               onClick={() => handleUpdateStatus(order._id, 'start')}
             >
               Start Prep
@@ -149,7 +150,7 @@ export default function ChefDashboard() {
             <Button 
               variant="primary" 
               size="sm" 
-              className="flex-1 !rounded-xl bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase tracking-widest"
+              className="flex-1 !rounded-xl bg-[var(--color-success)] hover:bg-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal"
               onClick={() => handleUpdateStatus(order._id, 'ready')}
             >
               Mark Ready
@@ -157,7 +158,7 @@ export default function ChefDashboard() {
           )}
           <button 
             onClick={() => { setSelectedOrder(order); setChefNote(order.chefNote || ''); setShowNoteModal(true); }}
-            className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:text-blue-500 transition-all"
+            className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all"
           >
             <MessageSquare size={16} />
           </button>
@@ -171,8 +172,8 @@ export default function ChefDashboard() {
       icon: UtensilsCrossed, 
       color: 'emerald',
       action: () => (
-        <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Pick up</span>
+        <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-center">
+          <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">Pick up</span>
         </div>
       )
     }
@@ -188,9 +189,9 @@ export default function ChefDashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
-                <ChefHat size={24} className="text-black" />
+            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
+                <ChefHat size={24} className="text-[var(--color-on-primary)]" />
               </div>
               Kitchen
             </h1>
@@ -200,12 +201,12 @@ export default function ChefDashboard() {
             <button
               onClick={handleManualRefresh}
               disabled={isRefreshing}
-              className="p-3 rounded-2xl bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-border)] disabled:opacity-50"
+              className="p-3 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-border)] disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
-            <div className="flex items-center gap-2 bg-[var(--color-surface)] p-1.5 rounded-2xl border border-[var(--color-border)]">
-               <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+            <div className="flex items-center gap-2 bg-[var(--color-surface)] p-1.5 rounded-xl border border-[var(--color-border)]">
+               <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                  Branch: <span className="text-[var(--color-primary)] ml-1">{selectedLocation?.name}</span>
                </div>
             </div>
@@ -213,12 +214,12 @@ export default function ChefDashboard() {
         </div>
 
         {/* Mobile Lane Switcher Tabs */}
-        <div className="flex lg:hidden bg-[var(--color-surface)] p-1.5 rounded-2xl border border-[var(--color-border)] gap-2 mb-4">
+        <div className="flex lg:hidden bg-[var(--color-surface)] p-1.5 rounded-xl border border-[var(--color-border)] gap-2 mb-4">
           {lanes.map(l => (
             <button
               key={l.id}
               onClick={() => setActiveLaneTab(l.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${activeLaneTab === l.id ? (l.id === 'incoming' ? 'bg-[var(--color-primary)] text-black shadow-lg shadow-[var(--color-primary)]/20' : l.id === 'preparing' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20') : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${activeLaneTab === l.id ? (l.id === 'incoming' ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg ' : l.id === 'preparing' ? 'bg-[var(--color-primary)] text-white shadow-lg ' : 'bg-[var(--color-success)] text-white shadow-lg ') : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
             >
               <l.icon size={14} />
               {l.title}
@@ -231,17 +232,17 @@ export default function ChefDashboard() {
           {lanes.map((lane) => (
             <div 
               key={lane.id} 
-              className={`flex flex-col h-full bg-[var(--color-surface-soft)]/30 rounded-[2.5rem] border border-[var(--color-border)] overflow-hidden ${activeLaneTab === lane.id ? 'flex' : 'hidden lg:flex'}`}
+              className={`flex flex-col h-full bg-[var(--color-surface-soft)]/30 rounded-xl border border-[var(--color-border)] overflow-hidden ${activeLaneTab === lane.id ? 'flex' : 'hidden lg:flex'}`}
             >
               <div className="p-6 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`h-8 w-8 rounded-xl bg-${lane.color}-500/10 flex items-center justify-center`}>
-                    <lane.icon size={16} className={`text-${lane.color}-500`} />
+                  <div className={`h-8 w-8 rounded-xl ${toneSoft(lane.color)} flex items-center justify-center`}>
+                    <lane.icon size={16} className={toneText(lane.color)} />
                   </div>
-                  <h3 className="text-[11px] font-black text-[var(--color-text-primary)] uppercase tracking-widest">{lane.title}</h3>
+                  <h3 className="text-[11px] font-bold text-[var(--color-text-primary)] uppercase tracking-normal">{lane.title}</h3>
                 </div>
                 <div className="h-6 px-2.5 rounded-full bg-[var(--color-bg-soft)] flex items-center justify-center">
-                  <span className="text-[10px] font-black text-[var(--color-text-muted)]">
+                  <span className="text-[10px] font-bold text-[var(--color-text-muted)]">
                     {orders.filter(o => lane.statuses.includes(o.status)).length}
                   </span>
                 </div>
@@ -258,42 +259,42 @@ export default function ChefDashboard() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         key={order._id}
-                        className="glass-card rounded-[2rem] border border-[var(--color-border)] p-5 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm"
+                        className="glass-card rounded-xl border border-[var(--color-border)] p-5 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm"
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
+                            <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-1">
                               TABLE {order.table?.tableNumber || '??'}
                             </div>
-                            <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                            <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
                               ID: #{order._id.slice(-6)} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
                           {order.status === 'PREPARING' && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 animate-pulse">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] animate-pulse">
                               <Timer size={10} />
-                              <span className="text-[8px] font-black uppercase">Cooking</span>
+                              <span className="text-[8px] font-bold uppercase">Cooking</span>
                             </div>
                           )}
                         </div>
 
                         <div className="space-y-3">
                           {order.items.map((item, i) => (
-                            <div key={i} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                            <div key={i} className="flex justify-between items-center bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-2.5 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                               <div className="flex items-center gap-3">
-                                <div className="h-6 w-6 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-600 dark:text-zinc-400">
+                                <div className="h-6 w-6 rounded-lg bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] flex items-center justify-center text-[10px] font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">
                                   {item.quantity}
                                 </div>
-                                <span className="text-[11px] font-black text-zinc-800 dark:text-zinc-200">{item.menuItem?.name || 'Custom Item'}</span>
+                                <span className="text-[11px] font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-muted)]">{item.menuItem?.name || 'Custom Item'}</span>
                               </div>
                             </div>
                           ))}
                         </div>
 
                         {order.chefNote && (
-                          <div className="mt-4 p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl border-l-2 border-blue-500 flex items-start gap-2">
-                            <MessageSquare size={12} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                            <p className="text-[9px] font-bold text-zinc-500 leading-relaxed italic">&quot;{order.chefNote}&quot;</p>
+                          <div className="mt-4 p-3 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 rounded-xl border-l-2 border-[var(--color-primary)] flex items-start gap-2">
+                            <MessageSquare size={12} className="text-[var(--color-primary)] mt-0.5 flex-shrink-0" />
+                            <p className="text-[9px] font-bold text-[var(--color-text-muted)] leading-relaxed italic">&quot;{order.chefNote}&quot;</p>
                           </div>
                         )}
 
@@ -305,7 +306,7 @@ export default function ChefDashboard() {
                 {orders.filter(o => lane.statuses.includes(o.status)).length === 0 && (
                   <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
                     <Coffee size={48} strokeWidth={1} />
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] mt-4">All done</p>
+                    <p className="text-[9px] font-bold uppercase tracking-normal mt-4">All done</p>
                   </div>
                 )}
               </div>
@@ -321,10 +322,10 @@ export default function ChefDashboard() {
           maxWidth="max-w-md"
         >
           <div className="space-y-6">
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 block">Note / Message</label>
+            <div className="p-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+               <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-3 block">Note / Message</label>
                <textarea
-                 className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-h-[120px] dark:text-white shadow-inner"
+                 className="w-full bg-[var(--color-surface)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all min-h-[120px] dark:text-white shadow-inner"
                  placeholder="e.g. 5 min delay due to high volume..."
                  value={chefNote}
                  onChange={(e) => setChefNote(e.target.value)}
@@ -333,14 +334,14 @@ export default function ChefDashboard() {
             <div className="flex gap-3">
                <Button 
                  variant="secondary" 
-                 className="flex-1 !rounded-xl text-[10px] font-black uppercase tracking-widest"
+                 className="flex-1 !rounded-xl text-[10px] font-bold uppercase tracking-normal"
                  onClick={() => setShowNoteModal(false)}
                >
                  Cancel
                </Button>
                <Button 
                  variant="primary" 
-                 className="flex-1 !rounded-xl bg-blue-500 hover:bg-blue-600 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                 className="flex-1 !rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal shadow-lg "
                  onClick={handleAddNote}
                >
                  Save Note

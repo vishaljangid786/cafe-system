@@ -113,10 +113,10 @@ export default function TopProgressBar() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-[3px]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-[2px]"
     >
       <div
-        className="relative h-full origin-left transition-[width] duration-200 ease-out"
+        className="relative h-full origin-left bg-[var(--color-primary)]"
         style={{
           width: `${s.value}%`,
           opacity: finishing ? 0 : 1,
@@ -124,21 +124,7 @@ export default function TopProgressBar() {
             ? 'width 200ms ease-out, opacity 350ms ease-in 150ms'
             : 'width 220ms cubic-bezier(0.65,0,0.35,1)',
         }}
-      >
-        {/* Core gradient fill */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-secondary)] via-[var(--color-primary)] to-[var(--color-secondary)]" />
-        {/* Soft ambient glow under the bar */}
-        <div className="absolute inset-x-0 -bottom-[6px] h-[6px] bg-[var(--color-primary)] opacity-40 blur-[6px]" />
-        {/* Bright leading-edge "peg" */}
-        <div
-          className="absolute right-0 top-0 h-full w-24 animate-[progress-peg_1s_ease-in-out_infinite]"
-          style={{
-            background:
-              'linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-primary) 90%, white) 80%, #fff)',
-            boxShadow: '0 0 12px 2px color-mix(in srgb, var(--color-primary) 70%, transparent)',
-          }}
-        />
-      </div>
+      />
     </div>
   );
 }

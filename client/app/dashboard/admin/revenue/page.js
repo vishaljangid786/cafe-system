@@ -129,9 +129,9 @@ export default function RevenuePage() {
   if (!hasAccess && user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <TrendingUp size={60} className="text-rose-500 opacity-20" />
-        <h2 className="text-2xl font-black text-[var(--color-text-primary)] italic uppercase">Entry Restricted</h2>
-        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-widest uppercase">Permission Denied: REVENUE_VIEW_RESTRICTED</p>
+        <TrendingUp size={60} className="text-[var(--color-danger)] opacity-20" />
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Entry Restricted</h2>
+        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">Permission Denied: REVENUE_VIEW_RESTRICTED</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function RevenuePage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-4xl font-black tracking-tighter flex items-center gap-4 text-[var(--color-text-primary)]">
+            <h1 className="text-4xl font-bold tracking-tight flex items-center gap-4 text-[var(--color-text-primary)]">
               <TrendingUp className="text-[var(--color-success)]" size={36} strokeWidth={2.5} />
               Revenue <span className="text-[var(--color-success)]">Dashboard</span>
             </h1>
@@ -188,20 +188,20 @@ export default function RevenuePage() {
 
         {/* Graph Section */}
         <SlideIn delay={0.1}>
-          <div className="glass-card p-8 rounded-[2.5rem] premium-shadow relative overflow-hidden">
+          <div className="glass-card p-8 rounded-xl premium-shadow relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Activity size={120} className="text-[var(--color-success)]" />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">Revenue Trends</h2>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">Revenue Trends</h2>
               <div className="flex gap-10">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Revenue</p>
-                  <p className="text-2xl font-black text-[var(--color-success)] tracking-tighter">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Revenue</p>
+                  <p className="text-2xl font-bold text-[var(--color-success)] tracking-tight">₹{totalRevenue.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Average Order</p>
-                  <p className="text-2xl font-black text-[var(--color-text-primary)] tracking-tighter">₹{avgOrder.toFixed(0)}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Average Order</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">₹{avgOrder.toFixed(0)}</p>
                 </div>
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function RevenuePage() {
             <input
               type="text"
               placeholder="Search by invoice or customer..."
-              className="w-full pl-12 pr-4 py-4 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-2xl focus:ring-2 focus:ring-[var(--color-success)]/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
+              className="w-full pl-12 pr-4 py-4 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-success)]/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] shadow-sm"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -254,7 +254,7 @@ export default function RevenuePage() {
             <Button
               variant="secondary"
               onClick={() => setShowFilters(!showFilters)}
-              className={`!py-4 px-6 rounded-2xl border-none transition-all shadow-sm ${showFilters ? 'bg-[var(--color-success)] text-[var(--color-bg-base)]' : 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-bg-base)]'}`}
+              className={`!py-4 px-6 rounded-xl border-none transition-all shadow-sm ${showFilters ? 'bg-[var(--color-success)] text-[var(--color-bg-base)]' : 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-bg-base)]'}`}
             >
               <Filter size={18} className="mr-2" /> Filters
             </Button>
@@ -274,10 +274,10 @@ export default function RevenuePage() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="glass-card p-6 rounded-[2rem] border border-[var(--color-border)] flex flex-wrap gap-6 items-end"
+            className="glass-card p-6 rounded-xl border border-[var(--color-border)] flex flex-wrap gap-6 items-end"
           >
             <div>
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Min Amount (₹)</label>
+              <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Min Amount (₹)</label>
               <input
                 type="number"
                 placeholder="0"
@@ -287,7 +287,7 @@ export default function RevenuePage() {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Max Amount (₹)</label>
+              <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Max Amount (₹)</label>
               <input
                 type="number"
                 placeholder="50000"
@@ -308,13 +308,13 @@ export default function RevenuePage() {
 
         {/* Data List */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Recent Transactions</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Recent Transactions</h3>
           {loading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 bg-[var(--color-bg-soft)] animate-pulse rounded-2xl" />)}
+              {[1, 2, 3].map(i => <div key={i} className="h-20 bg-[var(--color-bg-soft)] animate-pulse rounded-xl" />)}
             </div>
           ) : paginatedData.length === 0 ? (
-            <div className="py-20 text-center bg-[var(--color-bg-soft)]/40 rounded-[2.5rem] border border-dashed border-[var(--color-border)]">
+            <div className="py-20 text-center bg-[var(--color-bg-soft)]/40 rounded-xl border border-dashed border-[var(--color-border)]">
               <p className="text-[var(--color-text-muted)] font-bold">No transactions found.</p>
             </div>
           ) : (
@@ -324,7 +324,7 @@ export default function RevenuePage() {
                   <CardHover>
                     <div
                       onClick={() => setSelectedTransaction(t)}
-                      className="glass-card p-5 rounded-2xl premium-shadow flex items-center justify-between group hover:border-[var(--color-success)]/30 transition-all cursor-pointer"
+                      className="glass-card p-5 rounded-xl premium-shadow flex items-center justify-between group hover:border-[var(--color-success)]/30 transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-5">
                         <div className="h-12 w-12 rounded-xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)] shadow-sm">
@@ -332,18 +332,18 @@ export default function RevenuePage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-black text-[var(--color-text-primary)] tracking-tight leading-none text-base">
+                            <h4 className="font-bold text-[var(--color-text-primary)] tracking-tight leading-none text-base">
                               {t.title || `Order #${t._id.substring(t._id.length - 6).toUpperCase()}`}
                             </h4>
-                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[var(--color-bg-soft)] text-[var(--color-text-muted)]">
+                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--color-bg-soft)] text-[var(--color-text-muted)]">
                               {new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                             </span>
                           </div>
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--color-success)] bg-[var(--color-success)]/5 px-2 py-0.5 rounded-md">
+                            <span className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-success)] bg-[var(--color-success)]/5 px-2 py-0.5 rounded-md">
                               {t.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                             </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-1">
+                            <span className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-1">
                               <MapPin size={8} /> {t.locationId?.name || 'Main Branch'}
                             </span>
                           </div>
@@ -351,8 +351,8 @@ export default function RevenuePage() {
                       </div>
                       <div className="flex items-center gap-8">
                         <div className="text-right">
-                          <p className="text-xl font-black text-[var(--color-success)] tracking-tighter">+₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-1">Confirmed</p>
+                          <p className="text-xl font-bold text-[var(--color-success)] tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-[var(--color-text-muted)] group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -375,7 +375,7 @@ export default function RevenuePage() {
               <ChevronRight size={18} className="rotate-180" />
             </button>
             <div className="flex items-center gap-1 bg-[var(--color-surface)] px-3 py-1.5 rounded-xl border border-[var(--color-border)]">
-              <span className="text-xs font-black text-[var(--color-text-primary)]">{currentPage}</span>
+              <span className="text-xs font-bold text-[var(--color-text-primary)]">{currentPage}</span>
               <span className="text-[10px] font-bold text-[var(--color-text-muted)]">/ {totalPages}</span>
             </div>
             <button
@@ -399,11 +399,11 @@ export default function RevenuePage() {
               {/* Header Info */}
               <div className="flex justify-between items-start">
                 <div className="flex gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)] shadow-sm">
+                  <div className="h-14 w-14 rounded-xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)] shadow-sm">
                     <Receipt size={28} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-[var(--color-text-primary)] tracking-tighter">
+                    <h3 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
                       {selectedTransaction.title || `Order #${selectedTransaction._id.substring(selectedTransaction._id.length - 6).toUpperCase()}`}
                     </h3>
                     <p className="text-[var(--color-text-muted)] font-bold text-xs flex items-center gap-2 mt-1">
@@ -412,9 +412,9 @@ export default function RevenuePage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Date & Time</div>
+                  <div className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Date & Time</div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-black text-[var(--color-text-primary)] flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-1.5">
                       <Calendar size={14} className="text-[var(--color-success)]" />
                       {new Date(selectedTransaction.date).toLocaleDateString()}
                     </span>
@@ -428,29 +428,29 @@ export default function RevenuePage() {
 
               {/* Status & Location Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Payment Source</p>
+                <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Payment Source</p>
                   <div className="flex items-center gap-2">
                     <CreditCard size={16} className="text-[var(--color-success)]" />
-                    <span className="font-black text-[var(--color-text-primary)] text-xs">
+                    <span className="font-bold text-[var(--color-text-primary)] text-xs">
                       {selectedTransaction.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                     </span>
                   </div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Branch</p>
+                <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Branch</p>
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-[var(--color-success)]" />
-                    <span className="font-black text-[var(--color-text-primary)] text-xs">
+                    <span className="font-bold text-[var(--color-text-primary)] text-xs">
                       {selectedTransaction.locationId?.name || 'Main Branch'}
                     </span>
                   </div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] col-span-2 md:col-span-1">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Status</p>
+                <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] col-span-2 md:col-span-1">
+                  <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">Status</p>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-[var(--color-success)]" />
-                    <span className="font-black text-[var(--color-text-primary)] text-xs uppercase tracking-wider">Payment Received</span>
+                    <span className="font-bold text-[var(--color-text-primary)] text-xs uppercase tracking-wider">Payment Received</span>
                   </div>
                 </div>
               </div>
@@ -459,22 +459,22 @@ export default function RevenuePage() {
               {(selectedTransaction.customerName || selectedTransaction.staffId) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedTransaction.customerName && (
-                    <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
+                    <div className="p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
+                      <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
                         <User size={10} /> Customer Name
                       </p>
-                      <p className="text-sm font-black text-[var(--color-text-primary)]">{selectedTransaction.customerName}</p>
+                      <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedTransaction.customerName}</p>
                       {selectedTransaction.tableNumber && (
                         <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Table Assignment: {selectedTransaction.tableNumber}</p>
                       )}
                     </div>
                   )}
                   {selectedTransaction.staffId && (
-                    <div className="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
+                    <div className="p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
+                      <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-3 flex items-center gap-2">
                         <User size={10} /> Staff Member
                       </p>
-                      <p className="text-sm font-black text-[var(--color-text-primary)]">{selectedTransaction.staffId.name || 'Staff'}</p>
+                      <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedTransaction.staffId.name || 'Staff'}</p>
                       <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Service Execution</p>
                     </div>
                   )}
@@ -484,24 +484,24 @@ export default function RevenuePage() {
               {/* Order Details */}
               {selectedTransaction.orders && selectedTransaction.orders.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Order Details</p>
-                  <div className="rounded-2xl border border-[var(--color-border)] overflow-hidden">
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Order Details</p>
+                  <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-[var(--color-surface-soft)]/50">
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Item</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-center">Qty</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Price</th>
-                          <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Total</th>
+                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Item</th>
+                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-center">Qty</th>
+                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Price</th>
+                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Total</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--color-border)]">
                         {selectedTransaction.orders.map((item, i) => (
                           <tr key={i} className="hover:bg-[var(--color-surface-soft)] transition-colors">
-                            <td className="px-4 py-3 text-xs font-black text-[var(--color-text-primary)]">{item.itemName}</td>
+                            <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-primary)]">{item.itemName}</td>
                             <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-muted)] text-center">{item.quantity}</td>
                             <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-muted)] text-right">₹{item.price}</td>
-                            <td className="px-4 py-3 text-xs font-black text-[var(--color-text-primary)] text-right">₹{item.price * item.quantity}</td>
+                            <td className="px-4 py-3 text-xs font-bold text-[var(--color-text-primary)] text-right">₹{item.price * item.quantity}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -512,8 +512,8 @@ export default function RevenuePage() {
 
               {/* Description */}
               {selectedTransaction.description && (
-                <div className="p-4 rounded-2xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 flex items-center gap-2">
+                <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
+                  <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 flex items-center gap-2">
                     <Info size={10} /> Context / Notes
                   </p>
                   <p className="text-sm font-medium text-[var(--color-text-secondary)] italic">
@@ -531,13 +531,13 @@ export default function RevenuePage() {
                         <TrendingUp size={20} />
                       </div>
                       <div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Profit</p>
-                        <p className="text-lg font-black text-[var(--color-text-primary)] tracking-tighter">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
+                        <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Profit</p>
+                        <p className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Total Amount</p>
-                      <p className="text-3xl font-black text-[var(--color-success)] tracking-tighter">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Total Amount</p>
+                      <p className="text-3xl font-bold text-[var(--color-success)] tracking-tight">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -547,7 +547,7 @@ export default function RevenuePage() {
               <div className="pt-4">
                 <Button
                   onClick={() => setSelectedTransaction(null)}
-                  className="w-full !py-4 rounded-2xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-black uppercase tracking-widest text-[10px]"
+                  className="w-full !py-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold uppercase tracking-normal text-[10px]"
                 >
                   Close
                 </Button>

@@ -140,15 +140,15 @@ export default function ProfilePage() {
 
   return (
     <PageTransition>
-      <div className="max-w-[1500px] mx-auto pb-20 space-y-10">
-        {/* Cinematic Hero Section */}
+      <div className="max-w-[1500px] mx-auto pb-20 space-y-8">
+        {/* Hero Section */}
         {activeTab === 'details' &&
           <SlideIn direction="down">
-            <div className="relative overflow-hidden rounded-[3.5rem] bg-[var(--color-surface)] p-12 lg:p-20 text-[var(--color-text-primary)] shadow-2xl shadow-black/5 border border-[var(--color-border)]">
-              <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-10">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <div className="relative h-40 w-40 rounded-[3rem] bg-white/5 p-2 backdrop-blur-xl border border-white/10 overflow-hidden group">
-                    <div className="h-full w-full rounded-[2.5rem] overflow-hidden bg-[var(--color-bg-soft)] shadow-2xl flex items-center justify-center">
+            <div className="card rounded-xl p-6 lg:p-8 text-[var(--color-text-primary)]">
+              <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="relative h-32 w-32 rounded-xl bg-[var(--color-surface-soft)] p-2 border border-[var(--color-border)] overflow-hidden group">
+                    <div className="h-full w-full rounded-lg overflow-hidden bg-[var(--color-surface-soft)] flex items-center justify-center">
                       {(previewImage || user.profileImageUrl) ? (
                         <img src={previewImage || user.profileImageUrl} alt={user.name || 'Profile'} className="h-full w-full object-cover" />
                       ) : (
@@ -163,48 +163,44 @@ export default function ProfilePage() {
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
                   </div>
                   <div className="text-center md:text-left">
-                    <span className="px-4 py-1.5 bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[9px] font-black uppercase tracking-[0.4em] rounded-full border border-[var(--color-primary)]/30">
-                      {user.role.replace('_', ' ')} Command
+                    <span className="badge bg-[var(--color-primary-soft)] text-[var(--color-primary)] capitalize">
+                      {user.role.replace('_', ' ')}
                     </span>
-                    <h1 className="text-5xl lg:text-7xl font-black tracking-tighter mt-4 leading-none">{user.name}</h1>
-                    <p className="text-[var(--color-text-muted)] font-bold mt-4 tracking-tight flex items-center justify-center md:justify-start gap-2">
+                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight mt-3 leading-tight">{user.name}</h1>
+                    <p className="text-[var(--color-text-muted)] font-medium mt-2 flex items-center justify-center md:justify-start gap-2">
                       <Mail size={16} /> {user.email}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   {isEditing ? (
                     <>
-                      <Button onClick={handleSubmit} disabled={loading} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-[var(--color-primary)] text-white">
+                      <Button onClick={handleSubmit} disabled={loading}>
                         {loading ? <Loader2 className="animate-spin" /> : 'Save Changes'}
                       </Button>
-                      <Button onClick={() => setIsEditing(false)} variant="outline" className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest border-primary text-primary  border-2 hover:bg-primary border-primary ">
+                      <Button onClick={() => setIsEditing(false)} variant="outline">
                         Cancel
                       </Button>
                     </>
                   ) : (
-                    <Button onClick={() => setIsEditing(true)} className="!rounded-2xl px-8 py-6 font-black text-xs uppercase tracking-widest bg-primary border-2 border-primary hover:bg-accent hover:text-white transition-all">
-                      Edit My Profile
+                    <Button onClick={() => setIsEditing(true)}>
+                      Edit Profile
                     </Button>
                   )}
                 </div>
               </div>
-
-              {/* Decoration */}
-              <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[var(--color-primary)]/10 to-transparent" />
-              <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[var(--color-primary)]/10 rounded-full blur-[100px]" />
             </div>
           </SlideIn>
         }
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 p-1.5 bg-[var(--color-surface)] rounded-[2rem] w-fit mx-auto border border-[var(--color-border)] shadow-sm">
+        <div className="flex items-center gap-2 p-1.5 panel rounded-lg w-fit mx-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--color-primary)] text-black shadow-xl shadow-[var(--color-primary)]/10' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-colors ${activeTab === tab.id ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
             >
               <tab.icon size={16} /> {tab.label}
             </button>
@@ -214,13 +210,13 @@ export default function ProfilePage() {
         {/* Profile Details */}
         <AnimatePresence mode="wait">
           {activeTab === 'details' && (
-            <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-8 space-y-8">
-                <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
+            <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 space-y-6">
+                <div className="card rounded-xl p-6 lg:p-8">
+                  <h3 className="section-title mb-6 flex items-center gap-2">
                     <Shield size={16} className="text-[var(--color-primary)]" /> Personal Details
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <DetailsField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
                     <DetailsField label="Mobile Number" name="phone" value={formData.phone} icon={Phone} isEditing={isEditing} onChange={handleChange} />
                     <DetailsField label="Age" name="age" value={formData.age} icon={Calendar} isEditing={isEditing} onChange={handleChange} type="number" />
@@ -238,28 +234,25 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="lg:col-span-4 space-y-8">
+              <div className="lg:col-span-4 space-y-6">
                 <CardHover>
-                  <div className="bg-[var(--color-surface-soft)] rounded-[3rem] p-10 text-[var(--color-text-primary)] shadow-xl border border-[var(--color-border)] relative overflow-hidden group">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-primary)] mb-8 flex items-center gap-2">
+                  <div className="card rounded-xl p-6 text-[var(--color-text-primary)]">
+                    <h3 className="label text-[var(--color-primary)] mb-6 flex items-center gap-2">
                       <Briefcase size={14} /> Work Details
                     </h3>
-                    <div className="space-y-6 relative z-10">
+                    <div className="space-y-5">
                       <div>
-                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Designation</p>
-                        <p className="text-2xl font-black text-foreground mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+                        <p className="label">Designation</p>
+                        <p className="text-xl font-semibold text-[var(--color-text-primary)] mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Base Compensation</p>
-                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
+                        <p className="label">Base Salary</p>
+                        <p className="text-xl font-semibold text-[var(--color-success)] mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Primary Sector</p>
-                        <p className="text-xl font-black text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Global HQ'}</p>
+                        <p className="label">Branch</p>
+                        <p className="text-lg font-semibold text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Global HQ'}</p>
                       </div>
-                    </div>
-                    <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Zap size={150} />
                     </div>
                   </div>
                 </CardHover>
@@ -270,8 +263,8 @@ export default function ProfilePage() {
 
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-2xl mx-auto">
-              <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
-                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
+              <div className="bg-[var(--color-surface)] rounded-xl p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
+                <h3 className="text-[11px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
                   <Shield size={16} className="text-[var(--color-primary)]" /> Change Password
                 </h3>
 
@@ -300,7 +293,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="pt-6">
-                    <Button type="submit" className="w-full h-16 !text-xs font-black uppercase tracking-widest bg-[var(--color-primary)] text-white shadow-xl">
+                    <Button type="submit" className="w-full h-16 !text-xs font-bold uppercase tracking-normal bg-[var(--color-primary)] text-white shadow-sm">
                       Confirm Change
                     </Button>
                   </div>
@@ -317,7 +310,7 @@ export default function ProfilePage() {
 function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength }) {
   return (
     <div className="space-y-3">
-      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-4">{label}</label>
+      <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-4">{label}</label>
       <div className={`relative group transition-all duration-300 ${!isEditing ? 'opacity-70' : ''}`}>
         <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
         <input
@@ -327,7 +320,7 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
           value={value}
           onChange={onChange}
           maxLength={maxLength}
-          className="w-full pl-16 pr-6 py-5 rounded-[2rem] bg-[var(--color-bg-soft)] border-2 border-transparent focus:border-[var(--color-primary)]/30 focus:bg-[var(--color-surface)] outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-[var(--color-text-primary)]"
+          className="w-full pl-16 pr-6 py-5 rounded-xl bg-[var(--color-bg-soft)] border-2 border-transparent focus:border-[var(--color-primary)]/30 focus:bg-[var(--color-surface)] outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-[var(--color-text-primary)]"
           placeholder={`Input ${label}...`}
         />
       </div>
@@ -337,21 +330,21 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colors = {
-    amber: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20'
+    amber: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
+    blue: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
+    emerald: 'text-[var(--color-success)] bg-[var(--color-success)]/10 border-[var(--color-success)]/20',
+    rose: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20'
   };
 
   return (
     <CardHover>
-      <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm flex flex-col items-center text-center group">
-        <div className={`h-14 w-14 rounded-2xl ${colors[color]} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500`}>
+      <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm flex flex-col items-center text-center group">
+        <div className={`h-14 w-14 rounded-xl ${colors[color]} flex items-center justify-center mb-6 group- transition-transform duration-500`}>
           <Icon size={24} />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2">{label}</p>
-        <h4 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tighter mb-2">{value || '0'}</h4>
-        <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{sub}</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">{label}</p>
+        <h4 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight mb-2">{value || '0'}</h4>
+        <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{sub}</p>
       </div>
     </CardHover>
   );

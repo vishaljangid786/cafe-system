@@ -62,59 +62,39 @@ export default function LoadingScreen({
   return (
     <div
       className={`${
-        fullScreen ? 'min-h-screen' : 'min-h-[60vh] rounded-[2rem]'
+        fullScreen ? 'min-h-screen' : 'min-h-[60vh] rounded-xl'
       } w-full bg-[var(--color-bg-base)] flex items-center justify-center relative overflow-hidden ${className}`}
     >
-      {/* Cinematic ambient background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[55%] h-[55%] rounded-full bg-[var(--color-primary)]/10 blur-[150px] animate-pulse-slow" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-[var(--color-secondary)]/10 blur-[150px] animate-pulse-slow" />
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center gap-8 px-8 w-full max-w-sm">
-        {/* Branded mark with sweeping orbit ring */}
-        <div className="relative h-24 w-24 flex items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-[1.75rem] animate-loader-orbit"
-            style={{
-              background:
-                'conic-gradient(from 0deg, transparent 0deg, var(--color-primary) 300deg, transparent 360deg)',
-              mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
-              WebkitMask:
-                'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
-            }}
-          />
-          <div className="h-16 w-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-bg-base)] shadow-2xl shadow-[var(--color-primary)]/30 animate-loader-glow">
-            <Coffee size={30} strokeWidth={2.5} />
+      <div className="relative z-10 flex flex-col items-center gap-7 px-8 w-full max-w-sm">
+        {/* Branded mark with a simple spinner ring */}
+        <div className="relative h-20 w-20 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)] animate-loader-orbit" />
+          <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-on-primary)]">
+            <Coffee size={26} strokeWidth={2.5} />
           </div>
         </div>
 
         {/* Wordmark */}
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-black tracking-tighter text-[var(--color-text-primary)] leading-none">
+        <div className="text-center space-y-1.5">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none">
             Cafe<span className="text-[var(--color-primary)]">OS</span>
           </h1>
-          <p
-            key={label}
-            className="text-[10px] font-black uppercase tracking-[0.35em] text-[var(--color-text-muted)] animate-pulse"
-          >
+          <p key={label} className="text-sm text-[var(--color-text-muted)]">
             {label}
           </p>
         </div>
 
         {/* Determinate progress bar + live percentage */}
-        <div className="w-full space-y-2.5">
+        <div className="w-full space-y-2">
           <div className="relative h-1.5 w-full rounded-full bg-[var(--color-surface-soft)] overflow-hidden">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] transition-[width] duration-200 ease-out"
+              className="absolute inset-y-0 left-0 rounded-full bg-[var(--color-primary)] transition-[width] duration-200 ease-out"
               style={{ width: `${pct}%` }}
-            >
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
-            </div>
+            />
           </div>
-          <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
+          <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
             <span>Loading</span>
-            <span className="tabular-nums text-[var(--color-primary)]">{pct}%</span>
+            <span className="tabular-nums text-[var(--color-primary)] font-medium">{pct}%</span>
           </div>
         </div>
       </div>

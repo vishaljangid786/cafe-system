@@ -9,10 +9,10 @@ const NotificationPanel = ({ isOpen, onClose }) => {
 
   const getPriorityStyles = (priority) => {
     switch (priority) {
-      case 'high': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      case 'medium': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
-      case 'low': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
+      case 'high': return 'bg-[rgba(var(--color-danger-rgb),0.1)] text-[var(--color-danger)] border-[rgba(var(--color-danger-rgb),0.2)]';
+      case 'medium': return 'bg-[var(--color-primary-soft)] text-[var(--color-primary)] border-[rgba(var(--color-primary-rgb),0.2)]';
+      case 'low': return 'bg-[rgba(var(--color-success-rgb),0.1)] text-[var(--color-success)] border-[rgba(var(--color-success-rgb),0.2)]';
+      default: return 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border-[var(--color-border)]';
     }
   };
 
@@ -29,42 +29,37 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             className="fixed inset-0 z-[999]"
           />
           
-          <motion.div 
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute top-full right-0 mt-4 w-96 max-h-[600px] bg-white/95 dark:bg-zinc-950/95 border border-zinc-200 dark:border-zinc-800/50 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-[2rem] z-[1000] flex flex-col overflow-hidden backdrop-blur-2xl"
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="absolute top-full right-0 mt-3 w-96 max-h-[600px] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-md)] rounded-xl z-[1000] flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-bg-soft)]">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center relative shadow-inner">
-                  <Bell size={20} />
+            <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center relative">
+                  <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-rose-500 rounded-full border-2 border-[var(--color-surface)] text-[10px] font-black text-white flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-[var(--color-danger)] rounded-full border-2 border-[var(--color-surface)] text-[10px] font-semibold text-white flex items-center justify-center">
                       {unreadCount}
                     </span>
                   )}
                 </div>
-                <div>
-                  <h2 className="text-sm font-black text-[var(--color-text-primary)] uppercase tracking-widest leading-none">Notifications</h2>
-                  <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
-                    <span className="h-1 w-1 bg-blue-500 rounded-full" /> Recent Updates
-                  </p>
-                </div>
+                <h2 className="text-base font-semibold text-[var(--color-text-primary)] leading-none">Notifications</h2>
               </div>
               <div className="flex items-center gap-1">
-                <button 
+                <button
                   onClick={refresh}
-                  className="p-2 hover:bg-blue-500/10 hover:text-blue-500 rounded-xl transition-all text-[var(--color-text-muted)]"
+                  className="p-2 hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)] rounded-lg transition-colors text-[var(--color-text-muted)]"
                   title="Refresh"
                 >
                   <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
                 </button>
-                <button 
-                  onClick={onClose} 
-                  className="p-2 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all text-[var(--color-text-muted)]"
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)] rounded-lg transition-colors text-[var(--color-text-muted)]"
                 >
                   <X size={18} />
                 </button>
@@ -72,11 +67,11 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-opacity-50">
-              <div className="flex items-center justify-between px-2 mb-2">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Recent Activity</h3>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+              <div className="flex items-center justify-between px-1 mb-1">
+                <h3 className="label">Recent Activity</h3>
                 {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-[9px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                  <button onClick={markAllAsRead} className="text-xs font-medium text-[var(--color-primary)] hover:underline transition-colors">
                     Mark all read
                   </button>
                 )}
@@ -84,40 +79,39 @@ const NotificationPanel = ({ isOpen, onClose }) => {
 
               {notifications.length > 0 ? (
                 notifications.map((notif, idx) => (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 10 }}
+                  <motion.div
+                    initial={{ opacity: 0, x: 8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
+                    transition={{ delay: idx * 0.04 }}
                     key={notif._id}
-                    className={`relative p-4 rounded-2xl border transition-all duration-300 group ${notif.isRead ? 'bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800/50 opacity-60' : 'bg-white dark:bg-zinc-900 border-blue-500/20 shadow-sm hover:border-blue-500/40 hover:shadow-md'}`}
+                    className={`relative p-3 rounded-lg border transition-colors duration-200 group ${notif.isRead ? 'bg-[var(--color-surface-soft)] border-[var(--color-border)] opacity-70' : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'}`}
                   >
-                    <div className="flex gap-4">
-                      <div className={`h-9 w-9 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)} shadow-sm`}>
-                        {notif.type === 'alert' ? <AlertTriangle size={16} /> : 
+                    <div className="flex gap-3">
+                      <div className={`h-9 w-9 rounded-lg shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
+                        {notif.type === 'alert' ? <AlertTriangle size={16} /> :
                          notif.type === 'message' ? <MessageSquare size={16} /> :
                          <Bell size={16} />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className={`text-xs font-black truncate ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
+                          <p className={`text-sm font-semibold truncate ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
                             {notif.title}
                           </p>
-                          <span className="text-[9px] font-bold text-[var(--color-text-muted)] whitespace-nowrap bg-[var(--color-bg-soft)] px-2 py-0.5 rounded-md uppercase tracking-widest">
+                          <span className="text-[11px] text-[var(--color-text-muted)] whitespace-nowrap">
                             {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <p className={`text-[11px] leading-relaxed line-clamp-2 mb-3 font-medium ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)]'}`}>
+                        <p className={`text-xs leading-relaxed line-clamp-2 mb-2 ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)]'}`}>
                           {notif.message}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
+                          <span className="text-[11px] text-[var(--color-text-muted)]">
                             {notif.sender?.name || 'System'} • {notif.type}
                           </span>
                           {!notif.isRead && (
-                            <button 
+                            <button
                               onClick={() => markAsRead(notif._id)}
-                              className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-[11px] font-medium text-[var(--color-primary)] hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               Mark Read
                             </button>
@@ -129,23 +123,23 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center text-[var(--color-text-muted)]">
-                  <div className="h-16 w-16 rounded-3xl bg-[var(--color-bg-soft)] flex items-center justify-center mb-4 shadow-inner">
-                    <Zap size={32} className="opacity-20" />
+                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center mb-3">
+                    <Zap size={28} className="opacity-30" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em]">No new notifications</p>
+                  <p className="text-sm">No new notifications</p>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="p-5 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
-              <Link 
-                href="/dashboard/notifications" 
+            <div className="p-3 border-t border-[var(--color-border)]">
+              <Link
+                href="/dashboard/notifications"
                 onClick={onClose}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-zinc-700 transition-all shadow-xl shadow-zinc-900/10 group"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--color-primary)] text-[var(--color-on-primary)] text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-colors group"
               >
                 View All Notifications
-                <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </motion.div>

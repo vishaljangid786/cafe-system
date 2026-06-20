@@ -137,8 +137,8 @@ const NotificationsPage = () => {
   return (
     <PageTransition>
       <div className="space-y-8 pb-24">
-        {/* Cinematic Header */}
-        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-[2rem] p-8 border border-[var(--color-border)] shadow-sm">
+        {/* Header */}
+        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-xl p-8 border border-[var(--color-border)] shadow-sm">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
             <Bell size={160} className="text-[var(--color-primary)]" strokeWidth={1} />
           </div>
@@ -146,7 +146,7 @@ const NotificationsPage = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)]">
+                <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)]">
                   <Bell size={28} />
                 </div>
                 <div>
@@ -216,7 +216,7 @@ const NotificationsPage = () => {
           </button>
         </div>
 
-        <div className="bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] shadow-sm">
+        <div className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] shadow-sm">
   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-center">
 
     {/* 🔍 Search */}
@@ -337,7 +337,7 @@ const NotificationsPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   key={notif._id}
-                  className={`group relative bg-[var(--color-surface)] border ${notif.isRead ? 'border-[var(--color-border)]' : 'border-[var(--color-primary)]/20 shadow-lg shadow-[var(--color-primary)]/5'} rounded-2xl p-6 transition-all hover:shadow-md`}
+                  className={`group relative bg-[var(--color-surface)] border ${notif.isRead ? 'border-[var(--color-border)]' : 'border-[var(--color-primary)]/20 shadow-lg '} rounded-xl p-6 transition-all hover:shadow-md`}
                 >
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className={`h-12 w-12 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
@@ -383,7 +383,7 @@ const NotificationsPage = () => {
                           {!notif.isRead ? (
                             <button 
                               onClick={() => handleMarkAsRead(notif._id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl hover:bg-[var(--color-primary-dark)] transition-all shadow-sm shadow-[var(--color-primary)]/20"
+                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl hover:bg-[var(--color-primary-dark)] transition-all shadow-sm "
                             >
                               <CheckCircle2 size={14} />
                               Mark as Read
@@ -412,7 +412,7 @@ const NotificationsPage = () => {
                           <span className="text-xs font-bold text-[var(--color-text-secondary)]">{notif.sender?.name || 'System'}</span>
                         </div>
                         <span className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
-                        <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{notif.type}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{notif.type}</span>
                       </div>
                     </div>
                   </div>
@@ -487,12 +487,12 @@ const NotificationsPage = () => {
         >
           <div className="space-y-6">
             <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
-              <p className="text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2">Original Message</p>
+              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2">Original Message</p>
               <p className="text-sm italic text-[var(--color-text-secondary)]">&ldquo;{replyingTo?.message}&rdquo;</p>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-[var(--color-text-muted)] ml-1">Your Reply</label>
+              <label className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] ml-1">Your Reply</label>
               <textarea
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}

@@ -366,9 +366,9 @@ export default function AdminTablesPage() {
 
   if (loading) return (
     <div className="space-y-6 p-4">
-      <div className="h-16 bg-[var(--color-surface-soft)] rounded-2xl animate-pulse" />
+      <div className="h-16 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--color-surface-soft)] rounded-2xl animate-pulse" />)}
+        {[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />)}
       </div>
     </div>
   );
@@ -378,8 +378,8 @@ export default function AdminTablesPage() {
       <div className="space-y-6 pb-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
+            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
                 <Globe size={24} className="text-[var(--color-bg-base)]" />
               </div>
               Table Management
@@ -390,14 +390,14 @@ export default function AdminTablesPage() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-3 rounded-2xl bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-border)] disabled:opacity-50"
+              className="p-3 rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-border)] disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-[var(--color-border)] mx-2 hidden sm:block" />
             <Button 
               variant="primary" 
-              className="!rounded-2xl !py-4 shadow-xl shadow-[var(--color-primary)]/20 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-[10px] font-black uppercase tracking-[0.2em]"
+              className="!rounded-xl !py-4 shadow-sm  bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-[10px] font-bold uppercase tracking-normal"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -419,20 +419,20 @@ export default function AdminTablesPage() {
             { label: 'Total Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
-              <div className="glass-morphism rounded-2xl border border-[var(--color-border)] p-4 flex items-center gap-4">
+              <div className="glass-morphism rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4">
                 <div className={`h-10 w-10 rounded-xl bg-[var(--color-${stat.color === 'emerald' ? 'success' : 'primary'})]/10 flex items-center justify-center flex-shrink-0`}>
                   <stat.icon size={18} className={`text-[var(--color-${stat.color === 'emerald' ? 'success' : 'primary'})]`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-[var(--color-text-primary)] leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] leading-none">{stat.val}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
           ))}
         </div>
 
-        <div className="relative z-20 glass-morphism rounded-2xl border border-[var(--color-border)] p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10">
+        <div className="relative z-20 glass-morphism rounded-xl border border-[var(--color-border)] p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
             <input
@@ -453,15 +453,15 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[2.5rem] border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-3xl shadow-2xl">
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Table Info</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Branch</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Capacity</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">State</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] text-right">Actions</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Table Info</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Capacity</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">State</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -476,14 +476,14 @@ export default function AdminTablesPage() {
                   >
                     <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black border group-hover:scale-110 transition-transform ${
-                          table.status === 'available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border group- transition-transform ${
+                          table.status === 'available' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
                         }`}>
                           T{table.tableNumber}
                         </div>
                         <div>
-                          <p className="text-sm font-black text-[var(--color-text-primary)]">{table.tableName || `Table ${table.tableNumber}`}</p>
-                          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">ID: {table._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-bold text-[var(--color-text-primary)]">{table.tableName || `Table ${table.tableNumber}`}</p>
+                          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">ID: {table._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
@@ -500,10 +500,10 @@ export default function AdminTablesPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
-                        table.status === 'available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-normal border shadow-sm ${
+                        table.status === 'available' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
                       }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${table.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full ${table.status === 'available' ? 'bg-[var(--color-success)] animate-pulse' : 'bg-[var(--color-primary)]'}`} />
                         {table.status}
                       </div>
                     </td>
@@ -521,7 +521,7 @@ export default function AdminTablesPage() {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setShowDeleteConfirm(table._id)}
-                          className="p-2.5 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                          className="p-2.5 rounded-xl bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white transition-all"
                         >
                           <Trash2 size={16} />
                         </motion.button>
@@ -535,7 +535,7 @@ export default function AdminTablesPage() {
           {filteredTables.length === 0 && (
             <div className="p-20 text-center text-[var(--color-text-muted)]">
               <LayoutGrid size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-black uppercase tracking-widest">No tables found</p>
+              <p className="text-sm font-bold uppercase tracking-normal">No tables found</p>
             </div>
           )}
         </div>
@@ -552,50 +552,50 @@ export default function AdminTablesPage() {
               />
             )}
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest ml-1">Table ID</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table ID</label>
               <input required type="number" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-4 text-sm font-bold text-[var(--color-text-primary)]" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest ml-1">Designation</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Designation</label>
               <input type="text" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-4 text-sm font-bold text-[var(--color-text-primary)]" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest ml-1">Seating Capacity</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Seating Capacity</label>
               <input required type="number" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-4 text-sm font-bold text-[var(--color-text-primary)]" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
             </div>
-            <Button type="submit" variant="primary" className="w-full bg-[var(--color-primary)] !rounded-xl !py-4 shadow-xl shadow-[var(--color-primary)]/10" icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Save Changes' : 'Add Table'}</Button>
+            <Button type="submit" variant="primary" className="w-full bg-[var(--color-primary)] !rounded-xl !py-4 shadow-sm " icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Save Changes' : 'Add Table'}</Button>
           </form>
         </Modal>
 
         <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
-              <div className="lg:col-span-5 flex flex-col h-full bg-[var(--color-surface-soft)] rounded-[2.5rem] border border-[var(--color-border)] overflow-hidden shadow-2xl">
+              <div className="lg:col-span-5 flex flex-col h-full bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm">
                 <div className="p-8 border-b border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface-soft)] to-[var(--color-surface)] space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] flex items-center mb-1">
+                      <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Current Order</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Current Order</p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xl font-black text-[var(--color-text-primary)] tracking-tighter">
+                      <span className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Items</span>
+                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Items</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6 p-5 bg-[var(--color-surface)] rounded-[2rem] border border-[var(--color-border)] shadow-sm">
+                  <div className="grid grid-cols-2 gap-6 p-5 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <label className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1 flex items-center gap-2">
                         Customer Name <span className="text-[var(--color-danger)] font-bold">*</span>
                       </label>
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)]/30 text-[var(--color-text-primary)]"
+                        className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)]/30 text-[var(--color-text-primary)]"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
@@ -623,15 +623,15 @@ export default function AdminTablesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={`${order.menuItemId || order.itemName}-${idx}`}
-                      className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] group hover:border-[var(--color-primary)]/20 transition-all"
+                      className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] group hover:border-[var(--color-primary)]/20 transition-all"
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl overflow-hidden bg-[var(--color-bg-soft)] flex items-center justify-center">
                           {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-[var(--color-text-muted)]" />}
                         </div>
                         <div>
-                          <div className="text-xs font-black text-[var(--color-text-primary)] line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-[var(--color-text-muted)] tracking-widest uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-bold text-[var(--color-text-primary)] line-clamp-1">{order.itemName}</div>
+                          <div className="text-[9px] font-bold text-[var(--color-text-muted)] tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
@@ -643,7 +643,7 @@ export default function AdminTablesPage() {
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-black text-[var(--color-text-primary)]">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-bold text-[var(--color-text-primary)]">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
                             className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-all"
@@ -651,7 +651,7 @@ export default function AdminTablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-[var(--color-primary)] w-16 text-right">
+                        <div className="text-sm font-bold text-[var(--color-primary)] w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -667,24 +667,24 @@ export default function AdminTablesPage() {
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-[var(--color-text-muted)]" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">No items added yet</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No items added yet</p>
                     </div>
                   )}
 
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-[var(--color-border)]">
-                      <h3 className="text-[10px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-4 flex items-center gap-2">
                         <Zap size={14} /> Kitchen Queue
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
                           systemOrders.map((order) => (
-                            <div key={order._id} className="bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)] flex items-center justify-between group shadow-sm">
+                            <div key={order._id} className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] flex items-center justify-between group shadow-sm">
                               <div className="flex items-center gap-3">
-                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-[var(--color-success)] shadow-[0_0_8px_rgba(var(--color-success-rgb),0.5)]' : 'bg-[var(--color-primary)] animate-pulse'}`} />
+                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-[var(--color-success)] ' : 'bg-[var(--color-primary)] animate-pulse'}`} />
                                 <div>
-                                  <div className="text-[11px] font-black text-[var(--color-text-primary)] uppercase tracking-tight">#{order._id.slice(-6)}</div>
-                                  <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{order.status}</div>
+                                  <div className="text-[11px] font-bold text-[var(--color-text-primary)] uppercase tracking-tight">#{order._id.slice(-6)}</div>
+                                  <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{order.status}</div>
                                 </div>
                               </div>
                               
@@ -693,7 +693,7 @@ export default function AdminTablesPage() {
                                   <MessageSquare size={12} className="text-[var(--color-primary)] flex-shrink-0" />
                                   <p className="text-[9px] font-bold text-[var(--color-primary)] leading-tight line-clamp-1">{order.chefNote}</p>
                                   
-                                  <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                                  <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">
                                     {order.chefNote}
                                     <div className="absolute top-full left-4 border-8 border-transparent border-t-[var(--color-text-primary)]" />
                                   </div>
@@ -701,7 +701,7 @@ export default function AdminTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[10px] font-black text-[var(--color-text-primary)]">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[10px] font-bold text-[var(--color-text-primary)]">₹{Number(order.totalAmount).toLocaleString()}</div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -714,13 +714,13 @@ export default function AdminTablesPage() {
                                         toast.error('Failed to generate bill', { id: loadToast });
                                       }
                                     }}
-                                    className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-[var(--color-bg-base)] text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-[var(--color-primary)]/20"
+                                    className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-[var(--color-bg-base)] text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
                                   >
                                     Generate Bill
                                   </button>
                                 )}
                                 {order.isBilled && (
-                                  <div className="px-3 py-1.5 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
+                                  <div className="px-3 py-1.5 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[9px] font-bold uppercase tracking-normal rounded-lg flex items-center gap-1">
                                     <Check size={10} /> Billed
                                   </div>
                                 )}
@@ -728,7 +728,7 @@ export default function AdminTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">No orders in kitchen</div>
+                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No orders in kitchen</div>
                         )}
                       </div>
                     </div>
@@ -737,20 +737,20 @@ export default function AdminTablesPage() {
 
                 <div className="p-8 border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 space-y-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       <span>Subtotal</span>
                       <span className="text-[var(--color-text-primary)]">₹{systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-success)]">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">
                         <span>Discount Applied</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="h-px bg-[var(--color-border)] my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-black uppercase text-[var(--color-primary)] tracking-[0.3em] mb-2">Total Amount</span>
-                      <span className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter">
+                      <span className="text-[10px] font-bold uppercase text-[var(--color-primary)] tracking-normal mb-2">Total Amount</span>
+                      <span className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -760,7 +760,7 @@ export default function AdminTablesPage() {
                     <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                       <Button
                         variant="primary"
-                        className="w-full !rounded-2xl !py-4 shadow-xl shadow-[var(--color-primary)]/20 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-[10px] font-black uppercase tracking-widest"
+                        className="w-full !rounded-xl !py-4 shadow-sm  bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-[10px] font-bold uppercase tracking-normal"
                         icon={Zap}
                         onClick={handleSendToKitchen}
                         disabled={pendingOrders.length === 0}
@@ -770,7 +770,7 @@ export default function AdminTablesPage() {
                       {systemOrders.length > 0 && (
                         <Button
                           variant="primary"
-                          className="w-full !rounded-2xl !py-4 shadow-xl shadow-[var(--color-success)]/20 bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 text-[10px] font-black uppercase tracking-widest"
+                          className="w-full !rounded-xl !py-4 shadow-sm  bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 text-[10px] font-bold uppercase tracking-normal"
                           icon={Receipt}
                           onClick={() => {
                             const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
@@ -793,7 +793,7 @@ export default function AdminTablesPage() {
                   <input
                     type="text"
                     placeholder="Search menu items..."
-                    className="w-full rounded-2xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all text-[var(--color-text-primary)] shadow-sm"
+                    className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all text-[var(--color-text-primary)] shadow-sm"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -809,7 +809,7 @@ export default function AdminTablesPage() {
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                        className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${
                           dietaryFilter === f.id 
                             ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-sm' 
                             : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
@@ -823,14 +823,14 @@ export default function AdminTablesPage() {
 
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] flex items-center">
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
                       <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Performing Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 bg-[var(--color-surface)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer group shadow-sm"
+                          className="flex-shrink-0 w-40 bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer group shadow-sm"
                           onClick={() => {
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
@@ -864,7 +864,7 @@ export default function AdminTablesPage() {
                               <Plus className="text-[var(--color-bg-base)] drop-shadow-md" size={24} strokeWidth={3} />
                             </div>
                           </div>
-                          <div className="text-[10px] font-black text-[var(--color-text-primary)] truncate">{item.name}</div>
+                          <div className="text-[10px] font-bold text-[var(--color-text-primary)] truncate">{item.name}</div>
                           <div className="text-[10px] font-bold text-[var(--color-primary)] mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
@@ -873,7 +873,7 @@ export default function AdminTablesPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu Grid</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
                         <div
@@ -900,16 +900,16 @@ export default function AdminTablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-[var(--color-surface)] p-4 rounded-3xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-[var(--color-primary)]/5"
+                          className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-sm hover:"
                         >
-                          <div className="h-24 w-full rounded-2xl bg-[var(--color-bg-soft)] overflow-hidden relative shadow-inner">
+                          <div className="h-24 w-full rounded-xl bg-[var(--color-bg-soft)] overflow-hidden relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group- transition-transform duration-500" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]"><Coffee size={20} /></div>
                             )}
                             <div className="absolute top-2 left-2">
-                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest text-[var(--color-bg-base)] ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`}>
+                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-[var(--color-bg-base)] ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`}>
                                 {item.dietaryType || 'Cuisine'}
                               </div>
                             </div>
@@ -918,7 +918,7 @@ export default function AdminTablesPage() {
                             </div>
                           </div>
                           <div>
-                            <div className="text-[11px] font-black text-[var(--color-text-primary)] leading-tight truncate">{item.name}</div>
+                            <div className="text-[11px] font-bold text-[var(--color-text-primary)] leading-tight truncate">{item.name}</div>
                             <div className="flex items-center justify-between mt-1">
                               <div className="text-[10px] font-bold text-[var(--color-primary)]">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                               <div className="h-6 w-6 rounded-lg bg-[var(--color-bg-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-bg-base)] transition-all">
@@ -929,27 +929,27 @@ export default function AdminTablesPage() {
                         </div>
                       )) : (
                         [1,2,3,4,5,6].map(i => (
-                          <div key={i} className="h-40 rounded-3xl bg-[var(--color-bg-soft)]/20 animate-pulse border border-[var(--color-border)]" />
+                          <div key={i} className="h-40 rounded-xl bg-[var(--color-bg-soft)]/20 animate-pulse border border-[var(--color-border)]" />
                         ))
                       )}
                   </div>
                 </div>
 
-                <div className="p-6 bg-[var(--color-bg-soft)] rounded-3xl border border-[var(--color-border)]">
+                <div className="p-6 bg-[var(--color-bg-soft)] rounded-xl border border-[var(--color-border)]">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all text-[var(--color-text-primary)]"
+                          className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all text-[var(--color-text-primary)]"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="px-6 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[var(--color-text-primary)]/20"
+                          className="px-6 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] rounded-xl text-[10px] font-bold uppercase tracking-normal hover:opacity-90 transition-all shadow-lg "
                         >
                           Verify
                         </button>
@@ -967,7 +967,7 @@ export default function AdminTablesPage() {
                             setCouponCode('');
                             toast.success('Coupon removed - Order unlocked');
                           }}
-                          className="text-[var(--color-danger)] hover:opacity-80 uppercase text-[9px] font-black"
+                          className="text-[var(--color-danger)] hover:opacity-80 uppercase text-[9px] font-bold"
                         >
                           Remove
                         </button>

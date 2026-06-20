@@ -12,6 +12,7 @@ import Modal from '../../../components/ui/Modal';
 import TableCard from '../../../components/tables/TableCard';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
+import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function StaffTablesPage() {
@@ -327,12 +328,12 @@ export default function StaffTablesPage() {
 
   if (loading) return (
     <div className="space-y-6 p-4">
-      <Skeleton className="h-16 rounded-2xl" />
+      <Skeleton className="h-16 rounded-xl" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-36 rounded-2xl" />)}
+        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
       </div>
     </div>
   );
@@ -344,42 +345,42 @@ export default function StaffTablesPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Globe size={20} className="text-blue-500" />
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center">
+                <Globe size={20} className="text-[var(--color-primary)]" />
               </div>
-              Floor Command Deck
+              Tables
             </h1>
-            <p className="text-xs text-zinc-500 mt-1 font-medium">Real-time table sync & management</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">Real-time table sync & management</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] p-1 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
               {['all', 'available', 'occupied'].map((f) => (
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
-                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                  className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-normal transition-all ${
                     statusFilter === f 
-                      ? 'bg-blue-500 text-black shadow-lg shadow-blue-500/20' 
-                      : 'text-zinc-500 hover:text-blue-500'
+                      ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg ' 
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
                   }`}
                 >
                   {f}
                 </button>
               ))}
             </div>
-            <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
+            <div className="h-10 w-px bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] mx-1 hidden sm:block" />
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/10 transition-all disabled:opacity-50"
+              className="p-2.5 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
-            <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
-            <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-               <MapPin size={14} className="text-blue-500" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{user?.assignedLocation?.name || 'Sector Unknown'}</span>
+            <div className="h-10 w-px bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] mx-1 hidden sm:block" />
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm">
+               <MapPin size={14} className="text-[var(--color-primary)]" />
+               <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{user?.assignedLocation?.name || 'Unknown'}</span>
             </div>
           </div>
         </div>
@@ -392,13 +393,13 @@ export default function StaffTablesPage() {
             { label: 'Live Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
-              <div className="glass-morphism rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 flex items-center gap-4">
-                <div className={`h-10 w-10 rounded-xl bg-${stat.color}-500/10 flex items-center justify-center flex-shrink-0`}>
-                  <stat.icon size={18} className={`text-${stat.color}-500`} />
+              <div className="glass-morphism rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] p-4 flex items-center gap-4">
+                <div className={`h-10 w-10 rounded-xl ${toneSoft(stat.color)} flex items-center justify-center flex-shrink-0`}>
+                  <stat.icon size={18} className={toneText(stat.color)} />
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100 leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] leading-none">{stat.val}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
@@ -438,32 +439,32 @@ export default function StaffTablesPage() {
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
               {/* Left Side: Active Registry (Order Summary) */}
-              <div className="lg:col-span-5 flex flex-col h-full bg-muted/30 rounded-[2.5rem] border border-border overflow-hidden">
-                <div className="p-8 border-b border-border bg-gradient-to-br from-muted/50 to-card dark:from-zinc-950/50 dark:to-zinc-900/50 space-y-6">
+              <div className="lg:col-span-5 flex flex-col h-full bg-[var(--color-surface-soft)]/30 rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="p-8 border-b border-[var(--color-border)] bg-gradient-to-br from-muted/50 to-card dark:from-[var(--color-surface)]/50 dark:to-[var(--color-surface)]/50 space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center mb-1">
+                      <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Session Details
                       </h3>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Order Registry</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Active Order Registry</p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xl font-black text-foreground tracking-tighter">
+                      <span className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Units Staged</span>
+                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Units Staged</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6 p-5 bg-card rounded-[2rem] border border-border shadow-sm">
+                  <div className="grid grid-cols-2 gap-6 p-5 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        Guest Name <span className="text-rose-500 font-bold">*</span>
+                      <label className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1 flex items-center gap-2">
+                        Guest Name <span className="text-[var(--color-danger)] font-bold">*</span>
                       </label>
                       <input 
                         type="text"
                         placeholder="ENTER NAME"
-                        className="w-full bg-muted border border-border rounded-xl px-4 py-4 mt-1 text-xs font-black outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted-foreground/30 dark:text-white"
+                        className="w-full bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-[var(--color-text-muted)]/30 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
@@ -491,40 +492,40 @@ export default function StaffTablesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={order.uid || `${order.menuItemId || order.itemName}-${idx}`}
-                      className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border group hover:border-accent/20 transition-all"
+                      className="flex justify-between items-center bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] group hover:border-accent/20 transition-all"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                          {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-zinc-400" />}
+                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] flex items-center justify-center">
+                          {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-[var(--color-text-muted)]" />}
                         </div>
                         <div>
-                          <div className="text-xs font-black text-foreground line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-zinc-500 tracking-widest uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-bold text-[var(--color-text-primary)] line-clamp-1">{order.itemName}</div>
+                          <div className="text-[9px] font-bold text-[var(--color-text-muted)] tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center bg-muted rounded-xl p-1">
+                        <div className="flex items-center bg-[var(--color-surface-soft)] rounded-xl p-1">
                           <button
                             onClick={() => updateQuantity(idx, -1)}
-                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 text-zinc-500 transition-all"
+                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-[var(--color-surface)] dark:hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-all"
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-black text-foreground">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-bold text-[var(--color-text-primary)]">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
-                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 text-zinc-500 transition-all"
+                            className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-[var(--color-surface)] dark:hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-all"
                           >
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-black text-blue-600 w-16 text-right">
+                        <div className="text-sm font-bold text-[var(--color-primary)] w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
                           onClick={() => handleRemoveStagedItem(idx)}
-                          className="h-6 w-6 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                          className="h-6 w-6 rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)] flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-all"
                         >
                           <X size={12} />
                         </button>
@@ -534,45 +535,45 @@ export default function StaffTablesPage() {
 
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
-                      <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-zinc-400" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Registry is Empty</p>
+                      <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-[var(--color-text-muted)]" />
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Registry is Empty</p>
                     </div>
                   )}
 
                   {/* System Orders Section (OMS) */}
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
-                    <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
-                      <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <div className="mt-8 pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-4 flex items-center gap-2">
                         <Zap size={14} /> Production Queue (OMS)
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
                           systemOrders.map((order) => (
-                            <div key={order._id} className="bg-card p-4 rounded-2xl border border-border flex items-center justify-between group shadow-sm">
+                            <div key={order._id} className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] flex items-center justify-between group shadow-sm">
                               <div className="flex items-center gap-3">
-                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-blue-500 animate-pulse'}`} />
+                                <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-[var(--color-success)] ' : 'bg-[var(--color-primary)] animate-pulse'}`} />
                                 <div>
-                                  <div className="text-[11px] font-black text-foreground uppercase tracking-tight">#{order._id.slice(-6)}</div>
-                                  <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{order.status}</div>
+                                  <div className="text-[11px] font-bold text-[var(--color-text-primary)] uppercase tracking-tight">#{order._id.slice(-6)}</div>
+                                  <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{order.status}</div>
                                 </div>
                               </div>
                               
                               {/* Chef Note Display */}
                               {order.chefNote && (
-                                <div className="flex-1 mx-4 px-3 py-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2 group/note relative">
-                                  <MessageSquare size={12} className="text-blue-500 flex-shrink-0" />
-                                  <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 leading-tight line-clamp-1">{order.chefNote}</p>
+                                <div className="flex-1 mx-4 px-3 py-2 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 rounded-xl flex items-center gap-2 group/note relative">
+                                  <MessageSquare size={12} className="text-[var(--color-primary)] flex-shrink-0" />
+                                  <p className="text-[9px] font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] leading-tight line-clamp-1">{order.chefNote}</p>
                                   
                                   {/* Hover expansion */}
-                                  <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-zinc-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                                  <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-[var(--color-text-primary)] text-[var(--color-surface)] text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">
                                     {order.chefNote}
-                                    <div className="absolute top-full left-4 border-8 border-transparent border-t-zinc-900" />
+                                    <div className="absolute top-full left-4 border-8 border-transparent border-t-[var(--color-border-strong)]" />
                                   </div>
                                 </div>
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[10px] font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">₹{Number(order.totalAmount).toLocaleString()}</div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -585,13 +586,13 @@ export default function StaffTablesPage() {
                                         toast.error('Billing Failure', { id: loadToast });
                                       }
                                     }}
-                                    className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-500/20"
+                                    className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
                                   >
                                     Generate Bill
                                   </button>
                                 )}
                                 {order.isBilled && (
-                                  <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
+                                  <div className="px-3 py-1.5 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[9px] font-bold uppercase tracking-normal rounded-lg flex items-center gap-1">
                                     <Check size={10} /> Billed
                                   </div>
                                 )}
@@ -599,29 +600,29 @@ export default function StaffTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-black uppercase tracking-widest text-zinc-300">No active production units</div>
+                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No active production units</div>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 border-t border-border bg-card/50 space-y-4">
+                <div className="p-8 border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       <span>Production Subtotal</span>
                       <span>₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">
                         <span>Discount</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2" />
+                    <div className="h-px bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-2">Billed Total</span>
-                      <span className="text-4xl font-black text-foreground tracking-tighter">
+                      <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Billed Total</span>
+                      <span className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -631,7 +632,7 @@ export default function StaffTablesPage() {
                   <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                     <Button
                       variant="primary"
-                      className="w-full !rounded-2xl !py-4 shadow-xl shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest"
+                      className="w-full !rounded-xl !py-4 shadow-sm  bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal"
                       icon={Zap}
                       onClick={handleSendToKitchen}
                       disabled={pendingOrders.length === 0}
@@ -641,7 +642,7 @@ export default function StaffTablesPage() {
                     {systemOrders.length > 0 && (
                       <Button
                         variant="primary"
-                        className="w-full !rounded-2xl !py-4 shadow-xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase tracking-widest"
+                        className="w-full !rounded-xl !py-4 shadow-sm  bg-[var(--color-success)] hover:bg-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal"
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
@@ -659,32 +660,32 @@ export default function StaffTablesPage() {
               <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
                 {/* Search & Top Filters */}
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
                     placeholder="Search the menu list..."
-                    className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
+                    className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
                 </div>
 
                 {menuItems.some(i => i.dietaryType === 'veg') && menuItems.some(i => i.dietaryType === 'non-veg') && (
-                  <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-fit">
+                  <div className="flex bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-1 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] w-fit">
                     {[
                       { id: 'All', label: 'All Items' },
-                      { id: 'veg', label: 'Veg Only', color: 'text-green-500' },
-                      { id: 'non-veg', label: 'Non-Veg', color: 'text-red-500' }
+                      { id: 'veg', label: 'Veg Only', color: 'text-[var(--color-success)]' },
+                      { id: 'non-veg', label: 'Non-Veg', color: 'text-[var(--color-danger)]' }
                     ].map((f) => (
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                        className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${
                           dietaryFilter === f.id 
-                            ? 'bg-blue-500 text-black shadow-sm' 
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                            ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-sm' 
+                            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] dark:hover:text-[var(--color-text-muted)]'
                         } ${f.color || ''}`}
                       >
                         {f.label}
@@ -696,14 +697,14 @@ export default function StaffTablesPage() {
                 {/* Most Selling / Recommendations */}
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center">
-                      <Zap size={12} className="mr-2 text-blue-500" /> Top Performing Items
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
+                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Performing Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 hover:border-blue-500/30 transition-all cursor-pointer group"
+                          className="flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer group"
                           onClick={() => {
                             if (appliedCoupon) return toast.error('Remove coupon to add new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
@@ -727,18 +728,18 @@ export default function StaffTablesPage() {
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
                         >
-                          <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-zinc-100 dark:bg-zinc-800 relative">
+                          <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] relative">
                             {item.image ? (
                               <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-zinc-300"><Coffee size={24} /></div>
+                              <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]"><Coffee size={24} /></div>
                             )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                               <Plus className="text-white" size={24} />
                             </div>
                           </div>
-                          <div className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-blue-600 mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] truncate">{item.name}</div>
+                          <div className="text-[10px] font-bold text-[var(--color-primary)] mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -747,7 +748,7 @@ export default function StaffTablesPage() {
 
                 {/* Main Menu Grid */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu Grid</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
                         <div
@@ -775,47 +776,47 @@ export default function StaffTablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className={`bg-card p-4 rounded-3xl border transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-xl hover:shadow-accent/5 ${!item.isAvailable ? 'opacity-50 grayscale' : 'hover:border-accent/30'}`}
+                          className={`bg-[var(--color-surface)] p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-sm hover:shadow-accent/5 ${!item.isAvailable ? 'opacity-50 grayscale' : 'hover:border-accent/30'}`}
                         >
-                          <div className="h-24 w-full rounded-2xl bg-muted overflow-hidden relative shadow-inner">
+                          <div className="h-24 w-full rounded-xl bg-[var(--color-surface-soft)] overflow-hidden relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group- transition-transform duration-500" />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                              <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]">
                                 <Coffee size={20} />
                               </div>
                             )}
                             
                             {!item.isAvailable && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px]">
-                                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] px-3 py-1 border border-white/30 rounded-full">Sold Out</span>
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center -[2px]">
+                                <span className="text-[10px] font-bold text-white uppercase tracking-normal px-3 py-1 border border-[var(--color-border)] rounded-full">Sold Out</span>
                               </div>
                             )}
 
                             <div className="absolute top-2 left-2">
-                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest text-white ${item.dietaryType === 'veg' ? 'bg-green-500' : 'bg-red-500'}`}>
+                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-white ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`}>
                                 {item.dietaryType || 'Cuisine'}
                               </div>
                             </div>
                             
                             {item.isAvailable && (
-                              <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                              <div className="absolute inset-0 bg-[var(--color-primary)]/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                                 <Plus className="text-white drop-shadow-md" size={32} strokeWidth={3} />
                               </div>
                             )}
                           </div>
                           <div>
                             <div className="flex justify-between items-start gap-2">
-                              <div className="text-[11px] font-black text-foreground leading-tight truncate flex-1">{item.name}</div>
+                              <div className="text-[11px] font-bold text-[var(--color-text-primary)] leading-tight truncate flex-1">{item.name}</div>
                               {item.isAvailable && item.stock !== undefined && (
-                                <div className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter shrink-0 ${item.stock < 10 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                <div className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-tight shrink-0 ${item.stock < 10 ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]' : 'bg-[var(--color-success)]/10 text-[var(--color-success)]'}`}>
                                   {item.stock} left
                                 </div>
                               )}
                             </div>
                             <div className="flex items-center justify-between mt-1">
                               <div className="text-[10px] font-bold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
-                              <div className="h-6 w-6 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-accent group-hover:text-black transition-all">
+                              <div className="h-6 w-6 rounded-lg bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-on-primary)] transition-all">
                                 {item.isAvailable ? <Plus size={12} /> : <Zap size={10} className="opacity-40" />}
                               </div>
                             </div>
@@ -823,35 +824,35 @@ export default function StaffTablesPage() {
                         </div>
                       )) : (
                         [1,2,3,4,5,6].map(i => (
-                          <Skeleton key={i} className="h-40 rounded-3xl" />
+                          <Skeleton key={i} className="h-40 rounded-xl" />
                         ))
                       )}
                   </div>
                 </div>
 
                 {/* Coupon Panel */}
-                <div className="p-6 bg-zinc-50 dark:bg-zinc-950/30 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                <div className="p-6 bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)]/30 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
+                          className="flex-1 bg-[var(--color-surface)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="px-6 bg-zinc-900 dark:bg-zinc-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                          className="px-6 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-[var(--color-primary-hover)] transition-all"
                         >
                           Verify
                         </button>
                       </div>
                     </div>
                     {appliedCoupon && (
-                      <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-bold text-emerald-500 flex items-center justify-between gap-2">
+                      <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-[10px] font-bold text-[var(--color-success)] flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Check size={12} /> {appliedCoupon.code} Activated
                         </div>
@@ -862,7 +863,7 @@ export default function StaffTablesPage() {
                             setCouponCode('');
                             toast.success('Coupon removed - Order unlocked');
                           }}
-                          className="text-rose-500 hover:text-rose-700 uppercase text-[9px] font-black"
+                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)] uppercase text-[9px] font-bold"
                         >
                           Remove
                         </button>

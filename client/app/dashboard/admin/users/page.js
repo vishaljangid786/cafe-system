@@ -158,7 +158,7 @@ export default function UsersPage() {
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
         <div className="h-12 w-12 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--color-primary)] animate-pulse">Syncing Staff</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] animate-pulse">Syncing Staff</p>
       </div>
       </div>
     );
@@ -172,21 +172,21 @@ export default function UsersPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-[var(--color-primary)]/20 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.1)]">
+              <span className="px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20 ">
               Role: ADMIN
             </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-              <span className="text-[var(--color-text-muted)] text-[10px] font-black uppercase tracking-[0.2em]">Staff Management List</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Staff Management List</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
-              <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)]" />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
+              <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-" />
               Users <span className="text-[var(--color-text-muted)] not-italic">List</span>
             </h1>
           </div>
 
           <Button 
             variant="primary" 
-            className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-3xl shadow-2xl shadow-[var(--color-primary)]/20"
+            className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-xl shadow-sm "
             icon={UserPlus}
             onClick={() => router.push('/signup')}
           >
@@ -201,7 +201,7 @@ export default function UsersPage() {
             <input 
               type="text" 
               placeholder="Search by name, email..."
-              className="w-full pl-14 pr-6 py-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2rem] text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 outline-none transition-all"
+              className="w-full pl-14 pr-6 py-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 outline-none transition-all"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -249,7 +249,7 @@ export default function UsersPage() {
         </div>
 
         {/* User List */}
-        <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl rounded-[2rem] sm:rounded-[3.5rem] border border-[var(--color-border)] shadow-2xl overflow-hidden">
+        <div className="bg-[var(--color-surface)]/40  rounded-xl sm:rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
           {filteredUsers.length === 0 && (
             <div className="p-10 text-center text-sm text-[var(--color-text-muted)]">
               No users found for current filters.
@@ -264,7 +264,7 @@ export default function UsersPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.04 }}
-                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -277,11 +277,11 @@ export default function UsersPage() {
                       <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[var(--color-surface)] ${!u.isBlocked ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-black text-[var(--color-text-primary)] truncate">{u.name}</p>
-                      <p className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
+                      <p className="text-sm font-bold text-[var(--color-text-primary)] truncate">{u.name}</p>
+                      <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
                     </div>
                   </div>
-                  <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider ${getRoleStyle(u.role)}`}>
+                  <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${getRoleStyle(u.role)}`}>
                     <Shield size={10} />
                     {u.role.replace('_', ' ')}
                   </div>
@@ -301,7 +301,7 @@ export default function UsersPage() {
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => toggleUserStatus(u._id, u.isBlocked)}
-                    className={`p-2.5 rounded-xl border text-xs font-black transition-all ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
                       !u.isBlocked
                         ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white'
                         : 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 hover:bg-[var(--color-success)] hover:text-white'
@@ -315,7 +315,7 @@ export default function UsersPage() {
                   </button>
                   <button 
                     onClick={() => handleEdit(u)}
-                    className="p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text-secondary)] text-xs font-black hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all inline-flex items-center justify-center gap-1.5"
+                    className="p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text-secondary)] text-xs font-bold hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all inline-flex items-center justify-center gap-1.5"
                   >
                     <Edit size={14} />
                     Edit
@@ -329,7 +329,7 @@ export default function UsersPage() {
           <div className="responsive-table-container hidden md:block">
             <table className="w-full min-w-[760px] text-left border-separate border-spacing-0 bg-[var(--color-surface)]">
               <thead>
-                <tr className="bg-[var(--color-surface-soft)] text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
+                <tr className="bg-[var(--color-surface-soft)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                   <th className="px-4 sm:px-10 py-4 sm:py-6">Entity</th>
                   <th className="px-4 sm:px-10 py-4 sm:py-6">Credentials</th>
                   <th className="px-4 sm:px-10 py-4 sm:py-6">Location</th>
@@ -348,7 +348,7 @@ export default function UsersPage() {
                   >
                     <td className="px-4 sm:px-10 py-5 sm:py-8">
                       <div className="flex items-center gap-5">
-                        <div className="h-14 w-14 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group-hover:scale-110 transition-transform overflow-hidden shadow-lg">
+                        <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group- transition-transform overflow-hidden shadow-lg">
                           {u.profileImageUrl ? (
                             <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
                           ) : (
@@ -357,8 +357,8 @@ export default function UsersPage() {
                           <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[var(--color-surface)] ${!u.isBlocked ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`} />
                         </div>
                         <div>
-                          <p className="text-base font-black text-[var(--color-text-primary)] italic tracking-tight">{u.name}</p>
-                          <p className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
+                          <p className="text-base font-bold text-[var(--color-text-primary)] italic tracking-tight">{u.name}</p>
+                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
@@ -376,12 +376,12 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 sm:px-10 py-5 sm:py-8">
                       <div className="flex flex-col">
-                        <span className="text-xs font-black text-[var(--color-text-primary)] italic">{u.assignedLocation?.name || 'Global'}</span>
-                        <span className="text-[9px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">{u.assignedLocation?.city || 'HQ'}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-primary)] italic">{u.assignedLocation?.name || 'Global'}</span>
+                        <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{u.assignedLocation?.city || 'HQ'}</span>
                       </div>
                     </td>
                     <td className="px-4 sm:px-10 py-5 sm:py-8">
-                      <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${getRoleStyle(u.role)}`}>
+                      <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-normal ${getRoleStyle(u.role)}`}>
                         <Shield size={10} />
                         {u.role.replace('_', ' ')}
                       </div>
@@ -416,14 +416,14 @@ export default function UsersPage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-8 py-6 bg-[var(--color-surface)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-8 py-6 bg-[var(--color-surface)]/40  border border-[var(--color-border)] rounded-xl shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="h-10 px-6 !rounded-xl text-[10px] uppercase font-black tracking-widest"
+                className="h-10 px-6 !rounded-xl text-[10px] uppercase font-bold tracking-normal"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               >
@@ -431,7 +431,7 @@ export default function UsersPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-10 px-6 !rounded-xl text-[10px] uppercase font-black tracking-widest"
+                className="h-10 px-6 !rounded-xl text-[10px] uppercase font-bold tracking-normal"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               >
@@ -452,32 +452,32 @@ export default function UsersPage() {
             <form onSubmit={handleUpdate} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Full Name</label>
-                  <input required name="name" defaultValue={editingUser.name} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Full Name</label>
+                  <input required name="name" defaultValue={editingUser.name} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Email Address</label>
-                  <input required type="email" name="email" defaultValue={editingUser.email} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Email Address</label>
+                  <input required type="email" name="email" defaultValue={editingUser.email} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Phone Number</label>
-                  <input name="phone" defaultValue={editingUser.phone} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="10 Digit Number" maxLength="10" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Phone Number</label>
+                  <input name="phone" defaultValue={editingUser.phone} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="10 Digit Number" maxLength="10" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Age</label>
-                  <input type="number" name="age" defaultValue={editingUser.age} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Min 18" min="18" max="99" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Age</label>
+                  <input type="number" name="age" defaultValue={editingUser.age} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Min 18" min="18" max="99" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Gender</label>
-                  <select name="gender" defaultValue={editingUser.gender || 'Male'} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Gender</label>
+                  <select name="gender" defaultValue={editingUser.gender || 'Male'} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Staff Role</label>
-                  <select name="role" defaultValue={editingUser.role} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Staff Role</label>
+                  <select name="role" defaultValue={editingUser.role} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
                     <option value="staff">Field Operator (Staff)</option>
                     <option value="chef">Culinary Specialist (Chef)</option>
                     <option value="branch_admin">Branch Manager</option>
@@ -485,17 +485,17 @@ export default function UsersPage() {
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Address Details</label>
-                  <input name="address1" defaultValue={editingUser.address1} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Street Address" />
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Address Details</label>
+                  <input name="address1" defaultValue={editingUser.address1} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Street Address" />
                 </div>
                 <div className="grid grid-cols-2 gap-4 md:col-span-2">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">City</label>
-                    <input name="city" defaultValue={editingUser.city} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="City" />
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">City</label>
+                    <input name="city" defaultValue={editingUser.city} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="City" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Pincode</label>
-                    <input name="pincode" defaultValue={editingUser.pincode} className="w-full px-5 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="6 Digits" maxLength="6" />
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Pincode</label>
+                    <input name="pincode" defaultValue={editingUser.pincode} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="6 Digits" maxLength="6" />
                   </div>
                 </div>
               </div>
@@ -503,7 +503,7 @@ export default function UsersPage() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className="text-rose-500 border-rose-500/20 hover:bg-rose-500/10"
+                  className="text-[var(--color-danger)] border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)]/10"
                   onClick={() => {
                     setUserToDelete(editingUser);
                     setShowDeleteConfirm(true);

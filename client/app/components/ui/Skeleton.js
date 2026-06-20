@@ -20,7 +20,7 @@ export const Skeleton = ({ className = '', style }) => {
 
 /** A single stat / KPI card placeholder. */
 export const CardSkeleton = () => (
-  <div className="glass-card p-6 rounded-2xl space-y-4 border border-[var(--color-border)]">
+  <div className="glass-card p-6 rounded-xl space-y-4 border border-[var(--color-border)]">
     <div className="flex justify-between items-start">
       <Skeleton className="h-10 w-10 rounded-xl" />
       <Skeleton className="h-5 w-14 rounded-lg" />
@@ -43,7 +43,7 @@ export const StatGridSkeleton = ({ count = 4 }) => (
 
 /** Table placeholder with a header row + body rows. */
 export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
-  <div className="glass-card rounded-2xl overflow-hidden border border-[var(--color-border)]">
+  <div className="glass-card rounded-xl overflow-hidden border border-[var(--color-border)]">
     <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
       <Skeleton className="h-5 w-40" />
     </div>
@@ -61,7 +61,7 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
 
 /** Chart / graph panel placeholder with faux bars. */
 export const ChartSkeleton = ({ height = 280, title = true }) => (
-  <div className="glass-card rounded-2xl p-6 border border-[var(--color-border)] space-y-6">
+  <div className="glass-card rounded-xl p-6 border border-[var(--color-border)] space-y-6">
     {title && (
       <div className="flex items-center justify-between">
         <Skeleton className="h-5 w-44" />
@@ -84,7 +84,7 @@ export const ChartSkeleton = ({ height = 280, title = true }) => (
 
 /** Vertical list of rows (avatar + two lines + trailing value). */
 export const ListSkeleton = ({ rows = 6 }) => (
-  <div className="glass-card rounded-2xl p-6 border border-[var(--color-border)] space-y-5">
+  <div className="glass-card rounded-xl p-6 border border-[var(--color-border)] space-y-5">
     <Skeleton className="h-5 w-40 mb-2" />
     {Array.from({ length: rows }).map((_, i) => (
       <div key={i} className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export const ListSkeleton = ({ rows = 6 }) => (
 export const PageHeaderSkeleton = () => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div className="flex items-center gap-4">
-      <Skeleton className="h-14 w-14 rounded-2xl" />
+      <Skeleton className="h-14 w-14 rounded-xl" />
       <div className="space-y-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-3 w-32" />

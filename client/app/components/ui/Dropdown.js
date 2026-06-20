@@ -30,7 +30,7 @@ const Dropdown = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {label && (
-        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-2.5 ml-1">
+        <label className="label block mb-1.5 ml-0.5">
           {label}
         </label>
       )}
@@ -39,28 +39,29 @@ const Dropdown = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-full flex items-center justify-between px-5 py-4 rounded-2xl border transition-all duration-300
+          w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200
           ${isOpen
-            ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)]/50 shadow-lg shadow-[var(--color-primary)]/5'
-            : 'bg-[var(--color-surface-soft)]/50 border-[var(--color-border)] hover:border-[var(--color-primary)]/30'}
+            ? 'bg-[var(--color-surface)] border-[var(--color-primary)]'
+            : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'}
         `}
       >
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 overflow-hidden">
           {Icon && <Icon size={16} className={isOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'} />}
-          <span className={`text-sm font-bold truncate ${selectedOption ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}>
+          <span className={`text-sm font-medium truncate ${selectedOption ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}>
             {selectedOption ? (selectedOption.label || selectedOption.name || selectedOption.city) : placeholder}
           </span>
         </div>
-        <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-500 ${isOpen ? 'rotate-180 text-[var(--color-primary)]' : ''}`} />
+        <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-primary)]' : ''}`} />
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute z-[110] w-full mt-2 bg-[var(--color-surface)]/95 backdrop-blur-xl border border-[var(--color-border)] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden p-1.5"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute z-[110] w-full mt-1.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-[var(--shadow-md)] overflow-hidden p-1.5"
           >
             <div className="max-h-60 overflow-y-auto custom-scrollbar">
               {options.map((option) => {
@@ -76,9 +77,9 @@ const Dropdown = ({
                       setIsOpen(false);
                     }}
                     className={`
-                      w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs transition-all duration-200
+                      w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors duration-150
                       ${isSelected
-                        ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] font-black'
+                        ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
                         : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}
                     `}
                   >

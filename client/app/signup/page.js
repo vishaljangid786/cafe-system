@@ -172,60 +172,55 @@ function SignupContent() {
   };
 
   const InputField = ({ label, name, type = "text", placeholder, error, ...props }) => (
-    <div className="space-y-2">
-      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">{label}</label>
+    <div className="space-y-1.5">
+      <label className="label block ml-0.5">{label}</label>
       <input
         {...register(name)}
         type={type}
-        className={`w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all outline-none text-sm font-bold text-[var(--color-text-primary)] ${error ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-[var(--color-border)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
+        className={`input ${error ? '!border-[var(--color-danger)]' : ''}`}
         placeholder={placeholder}
         {...props}
       />
-      {error && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{error}</p>}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-500">
-      {/* Cinematic Panel */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-zinc-900">
-        <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} className="absolute inset-0 z-0">
-          <img src="/images/signup_bg.png" className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale" alt="" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[var(--color-bg-deep)]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-deep)] via-transparent to-transparent opacity-80" />
-        </motion.div>
+    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-300">
+      {/* Brand Panel */}
+      <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden bg-[var(--color-primary)]">
+        <img src="/images/signup_bg.png" className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />
+        <div className="absolute inset-0 bg-[var(--color-primary)]/70" />
 
-        <div className="relative z-10 w-full p-20 flex flex-col justify-between">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="h-14 w-14 rounded-2xl bg-blue-500 flex items-center justify-center text-black shadow-2xl shadow-blue-500/30">
-                <UserPlus size={28} strokeWidth={2.5} />
-              </div>
-              <div>
-                <h1 className="text-4xl font-black tracking-tighter text-white leading-none">Cafe<span className="text-blue-500">OS</span></h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500/60 mt-1 italic">New Account</p>
-              </div>
+        <div className="relative z-10 w-full p-16 flex flex-col justify-between text-white">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center text-white">
+              <UserPlus size={26} strokeWidth={2.5} />
             </div>
-          </motion.div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight leading-none">CafeOS</h1>
+              <p className="text-xs text-white/70 mt-1">New Account</p>
+            </div>
+          </div>
 
-          <div className="space-y-12">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="max-w-md">
-              <h2 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">Create <br /><span className="text-blue-500 italic">Account</span></h2>
-              <p className="text-zinc-400 font-medium mt-6 text-lg leading-relaxed border-l-2 border-blue-500/30 pl-6">Create your account to manage your cafe. Follow the simple steps below to get started.</p>
-            </motion.div>
+          <div className="space-y-10">
+            <div className="max-w-md">
+              <h2 className="text-4xl font-bold tracking-tight leading-tight">Create your account</h2>
+              <p className="text-white/80 mt-4 text-base leading-relaxed">Set up your account to manage your cafe. Just follow the steps.</p>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 { step: 1, label: "Basic Details" },
                 { step: 2, label: "Address" },
                 { step: 3, label: "Job Details" },
                 { step: 4, label: "Documents" }
               ].map((s) => (
-                <div key={s.step} className={`flex items-center gap-4 transition-all duration-500 ${activeStep >= s.step ? 'opacity-100 translate-x-2' : 'opacity-30'}`}>
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black border ${activeStep >= s.step ? 'bg-blue-500 border-blue-500 text-black shadow-lg shadow-blue-500/20' : 'border-zinc-700 text-zinc-500'}`}>
-                    {activeStep > s.step ? <CheckCircle2 size={14} /> : s.step}
+                <div key={s.step} className={`flex items-center gap-3 transition-opacity duration-300 ${activeStep >= s.step ? 'opacity-100' : 'opacity-50'}`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold border ${activeStep >= s.step ? 'bg-[var(--color-surface)] text-[var(--color-primary)] border-[var(--color-border)]' : 'border-[var(--color-border)] text-white/70'}`}>
+                    {activeStep > s.step ? <CheckCircle2 size={15} /> : s.step}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">{s.label}</span>
+                  <span className="text-sm font-medium text-white">{s.label}</span>
                 </div>
               ))}
             </div>
@@ -233,25 +228,17 @@ function SignupContent() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-20 bg-[var(--color-bg)] relative overflow-y-auto custom-scrollbar">
-        <div className="absolute inset-0 lg:hidden opacity-10 pointer-events-none">
-          <img
-            src="/images/signup_bg.png"
-            className="w-full h-full object-cover blur-3xl"
-            alt=""
-          />
-        </div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl relative z-10">
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-[var(--color-bg)] relative overflow-y-auto custom-scrollbar">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-xl relative z-10">
           {!isSetup && (
-            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-10 flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors text-[10px] font-black uppercase tracking-widest group">
-              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {activeStep > 1 ? 'Go Back' : 'Cancel'}
+            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-8 flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors text-sm font-medium group">
+              <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> {activeStep > 1 ? 'Go Back' : 'Cancel'}
             </button>
           )}
 
-          <div className="mb-12">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2 block">Step {activeStep}/4</span>
-            <h2 className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter uppercase italic">
+          <div className="mb-8">
+            <span className="text-sm font-medium text-[var(--color-primary)] mb-1 block">Step {activeStep} of 4</span>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
               {activeStep === 1 ? 'Basic Details' : activeStep === 2 ? 'Address' : activeStep === 3 ? 'Job Details' : 'Documents'}
             </h2>
           </div>
@@ -260,41 +247,41 @@ function SignupContent() {
             <AnimatePresence mode="wait">
               {activeStep === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <div className="flex flex-col items-center mb-8 p-8 bg-blue-500/5 rounded-3xl border border-blue-500/10 group relative overflow-hidden">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Profile Picture</label>
+                  <div className="flex flex-col items-center mb-6 p-6 bg-[var(--color-primary-soft)] rounded-xl border border-[var(--color-border)] group relative overflow-hidden">
+                    <label className="label mb-4">Profile Picture</label>
                     <div className="relative">
-                      <div className="h-32 w-32 rounded-3xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 shadow-xl">
-                        {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={32} className="text-zinc-700" />}
+                      <div className="h-28 w-28 rounded-xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-colors group-hover:border-[var(--color-primary)]">
+                        {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={30} className="text-[var(--color-text-soft)]" />}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
                       </div>
-                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-xl bg-blue-500 text-black flex items-center justify-center shadow-lg"><UserPlus size={18} /></div>
+                      <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-lg bg-[var(--color-primary)] text-[var(--color-on-primary)] flex items-center justify-center"><UserPlus size={16} /></div>
                     </div>
                   </div>
                   <InputField label="Full Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
                   <InputField label="Email Address" name="email" type="email" placeholder="rahul@cafeos.com" error={errors.email?.message} />
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-5">
                     <InputField label="Age" name="age" type="number" placeholder="24" error={errors.age?.message} onInput={(e) => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} />
                     <Controller name="gender" control={control} render={({ field }) => (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Gender</label>
+                      <div className="space-y-1.5">
+                        <label className="label block ml-0.5">Gender</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
                       </div>
                     )} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
-                    <div className="relative group">
+                  <div className="space-y-1.5">
+                    <label className="label block ml-0.5">Password</label>
+                    <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
                         {...register('password')}
-                        className={`w-full px-5 py-4 rounded-2xl bg-[var(--color-surface)] border transition-all outline-none text-sm font-bold text-[var(--color-text-primary)] ${errors.password ? 'border-rose-500 ring-4 ring-rose-500/10' : 'border-[var(--color-border)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
+                        className={`input pr-11 ${errors.password ? '!border-[var(--color-danger)]' : ''}`}
                         placeholder="••••••••"
                       />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-blue-500 transition-colors">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    {errors.password && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.password.message}</p>}
+                    {errors.password && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.password.message}</p>}
                   </div>
                 </motion.div>
               )}
@@ -317,30 +304,30 @@ function SignupContent() {
                 <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <Controller name="role" control={control} render={({ field }) => (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Your Role</label>
+                      <label className="label block ml-0.5">Your Role</label>
                       <PremiumSelect value={field.value} onChange={field.onChange} options={getAvailableRoles()} />
                     </div>
                   )} />
                   {!isSetup && (['staff', 'branch_admin', 'chef'].includes(selectedRole)) && (
                     <Controller name="assignedLocation" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Select Branch</label>
+                        <label className="label block ml-0.5">Select Branch</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} placeholder="Select Branch" />
-                        {errors.assignedLocation && <p className="text-[9px] text-rose-500 font-black mt-2 ml-1 uppercase tracking-widest italic">{errors.assignedLocation.message}</p>}
+                        {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
                       </div>
                     )} />
                   )}
                   {!isSetup && selectedRole === 'admin' && (
                     <Controller name="accessibleLocations" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-1">Linked Branches (Multi-Control)</label>
+                        <label className="label block ml-0.5">Linked Branches (Multi-Control)</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
                       </div>
                     )} />
                   )}
                   <Controller name="highestQualification" control={control} render={({ field }) => (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Highest Qualification</label>
+                      <label className="label block ml-0.5">Highest Qualification</label>
                       <PremiumSelect value={field.value} onChange={field.onChange} options={[{ label: '12th Pass', value: '12th Pass' }, { label: 'Diploma', value: 'Diploma' }, { label: 'Graduate', value: 'Graduate' }, { label: 'Post Graduate', value: 'Post Graduate' }]} />
                     </div>
                   )} />
@@ -352,26 +339,26 @@ function SignupContent() {
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <InputField label="Aadhar Number (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} onInput={(e) => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} />
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Upload Aadhar Image</label>
-                    <div className="group relative flex flex-col items-center justify-center min-h-[250px] bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-3xl hover:border-blue-500 transition-all cursor-pointer overflow-hidden shadow-xl">
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Upload Aadhar Image</label>
+                    <div className="group relative flex flex-col items-center justify-center min-h-[240px] bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)] transition-colors cursor-pointer overflow-hidden">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
-                      {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={40} className="text-zinc-700 group-hover:text-blue-500 transition-colors mb-4" /><p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Upload Aadhar Photo</p></div>}
+                      {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={36} className="text-[var(--color-text-soft)] group-hover:text-[var(--color-primary)] transition-colors mb-3" /><p className="text-sm font-medium text-[var(--color-text-muted)]">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="flex gap-4 pt-6">
+            <div className="flex gap-4 pt-4">
               {activeStep < 4 ? (
-                <Button type="button" onClick={nextStep} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-blue-500 text-black hover:bg-blue-600 border-none transition-all shadow-xl shadow-blue-500/20" icon={ArrowRight}>Next Step</Button>
+                <Button type="button" onClick={nextStep} className="w-full !py-3" icon={ArrowRight}>Next Step</Button>
               ) : (
-                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full h-16 !text-xs font-black uppercase tracking-[0.3em] !rounded-2xl bg-blue-500 text-black hover:bg-blue-600 border-none transition-all shadow-xl shadow-blue-500/20" icon={Zap}>Create Account</Button>
+                <Button type="submit" loading={isSubmitting} disabled={!isValid || isSubmitting} className="w-full !py-3" icon={Zap}>Create Account</Button>
               )}
             </div>
           </form>
 
-          <p className="mt-12 text-center text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.5em]">Cafe Management System &copy; 2026 CafeOS</p>
+          <p className="mt-10 text-center text-xs text-[var(--color-text-muted)]">Cafe Management System &copy; 2026 CafeOS</p>
         </motion.div>
       </div>
     </div>

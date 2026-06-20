@@ -1,92 +1,291 @@
 @import "tailwindcss";
 
+/* =================================================================
+   THEME TOKENS (Tailwind utilities)
+   Semantic colors map to the runtime CSS variables defined in
+   :root / .dark below, so utilities like `bg-primary`, `text-success`
+   automatically follow the active theme. Radius scale is left at the
+   Tailwind defaults (rounded-lg 8px, rounded-xl 12px, rounded-2xl 16px)
+   for a clean, soft look.
+   ================================================================= */
 @theme {
-  --color-bg-deep: #050505;
-  --color-surface-dark: #0a0a0a;
-  --color-accent-blue: #3b82f6;
-
-  --color-primary: var(--color-primary);
-  --color-primary-dark: #1d4ed8;
-  --color-success: var(--color-success);
-  --color-danger: var(--color-danger);
-
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 3rem;
-
-  --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-secondary: var(--color-secondary);
+  --color-success: var(--color-success);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
 }
 
 @layer base {
+  /* ----------------------------------------------------------------
+     LIGHT THEME
+     Edit the "Brand" block to recolor the whole app from one place.
+     ---------------------------------------------------------------- */
   :root {
-    --color-bg-base: #f4f4f5;
-    --color-bg: #f4f4f5;
-    --color-text-primary: #09090b;
-    --color-text-secondary: #3f3f46;
-    --color-text-muted: #71717a;
-    --color-border: #e4e4e7;
-    --color-surface: #ffffff;
-    --color-surface-soft: #f1f1f4;
-    --color-bg-soft: #f1f1f4;
-    --color-hover: rgba(0, 0, 0, 0.05);
-    --color-active: rgba(0, 0, 0, 0.1);
-    --color-sidebar-bg: rgba(255, 255, 255, 0.84);
+    /* Brand */
     --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-primary-dark: #2563eb;
+    --color-primary-soft: rgba(59, 130, 246, 0.10);
+    --color-on-primary: #ffffff;
     --color-primary-rgb: 59, 130, 246;
     --color-secondary: #2563eb;
     --color-secondary-rgb: 37, 99, 235;
-    --color-success: #10b981;
-    --color-success-rgb: 16, 185, 129;
-    --color-danger: #ef4444;
-    --color-danger-rgb: 239, 68, 68;
-    --color-warning: #3b82f6;
-    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --color-accent-blue: var(--color-primary);
+
+    /* Surfaces */
+    --color-bg: #f7f8fa;
+    --color-bg-base: #f7f8fa;
+    --color-bg-deep: #eef0f3;
+    --color-surface: #ffffff;
+    --color-surface-dark: #ffffff;
+    --color-surface-2: #f1f3f5;
+    --color-surface-soft: #f1f3f5;
+    --color-bg-soft: #f1f3f5;
+    --color-border: #e6e8eb;
+    --color-border-strong: #d4d7db;
+    --color-hover: rgba(15, 23, 42, 0.04);
+    --color-active: rgba(15, 23, 42, 0.07);
+    --color-sidebar-bg: #ffffff;
+
+    /* Text */
+    --color-text: #0f172a;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+    --color-text-soft: #94a3b8;
+
+    /* Status */
+    --color-success: #16a34a;
+    --color-success-rgb: 22, 163, 74;
+    --color-danger: #dc2626;
+    --color-danger-rgb: 220, 38, 38;
+    --color-warning: #d97706;
+    --color-warning-rgb: 217, 119, 6;
+    --color-info: #3b82f6;
+
+    /* Radius (for var() consumers; utilities use Tailwind defaults) */
+    --r-sm: 8px;
+    --r: 12px;
+    --r-lg: 16px;
+    --r-pill: 9999px;
+    --radius-lg: 12px; /* legacy alias used by Toaster */
+
+    /* Elevation — soft, subtle, no neon glow */
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-md: 0 6px 16px rgba(16, 24, 40, 0.08);
+    --shadow-soft: 0 1px 3px rgba(16, 24, 40, 0.08);
+    --shadow-premium: 0 12px 32px -12px rgba(16, 24, 40, 0.18);
     --gradient-primary: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
   }
 
+  /* ----------------------------------------------------------------
+     DARK THEME
+     ---------------------------------------------------------------- */
   .dark {
-    --color-bg-base: #050505;
-    --color-bg: #050505;
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #a1a1aa;
-    --color-text-muted: #71717a;
-    --color-border: rgba(255, 255, 255, 0.1);
-    --color-surface: #0a0a0a;
-    --color-surface-soft: #111111;
-    --color-bg-soft: #111111;
+    /* Brand */
+    --color-primary: #3b82f6;
+    --color-primary-hover: #60a5fa;
+    --color-primary-dark: #2563eb;
+    --color-primary-soft: rgba(59, 130, 246, 0.16);
+    --color-on-primary: #ffffff;
+    --color-primary-rgb: 59, 130, 246;
+    --color-secondary: #60a5fa;
+    --color-secondary-rgb: 96, 165, 250;
+    --color-accent-blue: var(--color-primary);
+
+    /* Surfaces */
+    --color-bg: #0b0d10;
+    --color-bg-base: #0b0d10;
+    --color-bg-deep: #060708;
+    --color-surface: #14171b;
+    --color-surface-dark: #14171b;
+    --color-surface-2: #1b1f24;
+    --color-surface-soft: #1b1f24;
+    --color-bg-soft: #1b1f24;
+    --color-border: #262b31;
+    --color-border-strong: #363c44;
     --color-hover: rgba(255, 255, 255, 0.05);
-    --color-active: rgba(255, 255, 255, 0.1);
-    --color-sidebar-bg: rgba(10, 10, 10, 0.8);
-    --color-primary: #60a5fa;
-    --color-primary-rgb: 96, 165, 250;
-    --color-secondary: #3b82f6;
-    --color-secondary-rgb: 59, 130, 246;
-    --color-success: #10b981;
-    --color-success-rgb: 16, 185, 129;
+    --color-active: rgba(255, 255, 255, 0.09);
+    --color-sidebar-bg: #14171b;
+
+    /* Text */
+    --color-text: #f3f5f7;
+    --color-text-primary: #f3f5f7;
+    --color-text-secondary: #b6bdc6;
+    --color-text-muted: #8b94a0;
+    --color-text-soft: #6b7480;
+
+    /* Status */
+    --color-success: #22c55e;
+    --color-success-rgb: 34, 197, 94;
     --color-danger: #ef4444;
     --color-danger-rgb: 239, 68, 68;
-    --color-warning: #60a5fa;
+    --color-warning: #f59e0b;
+    --color-warning-rgb: 245, 158, 11;
+    --color-info: #60a5fa;
+
+    /* Elevation */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-premium: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
   }
 
   html {
-    @apply transition-colors duration-500;
+    @apply transition-colors duration-300;
   }
 
   body {
     background-color: var(--color-bg-base) !important;
     color: var(--color-text-primary) !important;
-    @apply antialiased selection:bg-blue-500/30 selection:text-blue-500;
+    @apply antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 }
 
 @layer components {
-  /* Global Cinematic Scrollbar */
+  /* ----------------------------------------------------------------
+     CLEAN BUILDING BLOCKS (plain English names)
+     ---------------------------------------------------------------- */
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--r);
+  }
+
+  /* Small caption label — replaces uppercase tracking-widest font-black */
+  .label {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    line-height: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+  }
+
+  .section-title {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .chip,
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--r-pill);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+
+  .input {
+    width: 100%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--r-sm);
+    padding: 0.5rem 0.75rem;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .input::placeholder {
+    color: var(--color-text-soft);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+
+  .divider {
+    height: 1px;
+    width: 100%;
+    background-color: var(--color-border);
+  }
+
+  /* ----------------------------------------------------------------
+     LEGACY CLASSES — redefined to the clean look (no blur / no glow)
+     so existing markup updates automatically.
+     ---------------------------------------------------------------- */
+  .glass-morphism {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .glass-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .cinematic-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .dark .cinematic-card {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    box-shadow: none;
+  }
+
+  /* Gradient text helper neutralised to a solid accent color */
+  .text-gradient-amber {
+    color: var(--color-primary);
+    -webkit-text-fill-color: var(--color-primary);
+  }
+
+  .focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+    border-color: var(--color-primary);
+  }
+
+  /* ----------------------------------------------------------------
+     SCROLLBARS & TABLE HELPERS (structural — kept)
+     ---------------------------------------------------------------- */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -94,18 +293,17 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-border);
+    background-color: var(--color-border-strong);
     border-radius: 10px;
-    transition: all 0.3s;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-primary);
+    background-color: var(--color-text-soft);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -113,38 +311,17 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-border);
+    background-color: var(--color-border-strong);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-primary);
+    background-color: var(--color-text-soft);
   }
 
-  /* For Firefox */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-  }
-
-  .glass-morphism {
-    @apply backdrop-blur-xl border shadow-2xl;
-    background-color: var(--color-hover);
-    border-color: var(--color-border);
-  }
-
-  .cinematic-card {
-    @apply relative overflow-hidden rounded-[2.5rem] border transition-all duration-700 shadow-sm;
-    border-color: var(--color-border);
-    background-color: var(--color-surface);
-  }
-
-  .dark .cinematic-card {
-    @apply bg-zinc-900/30 backdrop-blur-3xl border-white/5 hover:border-blue-500/20 hover:bg-zinc-900/40 shadow-none;
-  }
-
-  .text-gradient-amber {
-    @apply bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 bg-clip-text text-transparent;
+    scrollbar-color: var(--color-border-strong) transparent;
   }
 
   .responsive-table-container {
@@ -153,8 +330,8 @@
   }
 
   .responsive-table-container::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
   }
 
   .responsive-table-container::-webkit-scrollbar-track {
@@ -162,12 +339,8 @@
   }
 
   .responsive-table-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-border);
+    background-color: var(--color-border-strong);
     border-radius: 10px;
-  }
-
-  .responsive-table-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-primary);
   }
 
   .stack-table-mobile td {
@@ -176,20 +349,8 @@
 
   .stack-table-mobile td::before {
     content: attr(data-label);
-    @apply absolute left-0 w-[40%] text-left font-black text-[10px] uppercase tracking-widest text-blue-500/70;
-  }
-
-  .glass-card {
-    @apply border shadow-2xl;
-    border-color: var(--color-border);
-    background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
-    backdrop-filter: blur(18px);
-  }
-
-  .focus-ring {
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
-    border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+    @apply absolute left-0 w-[40%] text-left font-semibold text-[11px];
+    color: var(--color-text-muted);
   }
 
   .sticky-filter {
@@ -205,20 +366,9 @@
   }
 }
 
-.scan-line {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.1), transparent);
-  opacity: 0.1;
-  pointer-events: none;
-  z-index: 9999;
-  animation: scan 8s linear infinite;
-}
-
-/* Dashboard-wide responsive safety rules */
+/* =================================================================
+   Dashboard-wide responsive safety rules
+   ================================================================= */
 @media (max-width: 1024px) {
   .dashboard-content {
     width: 100%;
@@ -226,13 +376,13 @@
   }
 
   .dashboard-content h1 {
-    font-size: clamp(1.5rem, 5vw, 2.5rem) !important;
-    line-height: 1.1 !important;
+    font-size: clamp(1.375rem, 4.5vw, 2rem) !important;
+    line-height: 1.15 !important;
     word-break: break-word;
   }
 
   .dashboard-content h2 {
-    font-size: clamp(1.125rem, 4vw, 1.75rem) !important;
+    font-size: clamp(1.125rem, 3.5vw, 1.5rem) !important;
     line-height: 1.2 !important;
   }
 
@@ -289,22 +439,11 @@
   }
 }
 
-@keyframes scan {
-  from { transform: translateY(-100vh); }
-  to { transform: translateY(100vh); }
-}
+/* =================================================================
+   FUNCTIONAL ANIMATIONS (loading / progress only — kept subtle)
+   ================================================================= */
 
-#cinematic-root {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: 
-    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-/* Skeleton Loading Animation */
+/* Skeleton placeholder shimmer */
 .animate-skeleton {
   background: linear-gradient(
     90deg,
@@ -313,7 +452,7 @@
     var(--color-surface-soft) 75%
   );
   background-size: 200% 100%;
-  animation: skeleton-shimmer 2s infinite linear;
+  animation: skeleton-shimmer 1.8s infinite linear;
 }
 
 @keyframes skeleton-shimmer {
@@ -321,7 +460,12 @@
   100% { background-position: -200% 0; }
 }
 
-/* SLA Pulsing Alert */
+/* Shine sweep used by skeleton overlays */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* SLA pulsing alert (functional, used for over-due states) */
 .animate-pulse-danger {
   animation: pulse-danger 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -329,42 +473,21 @@
 @keyframes pulse-danger {
   0%, 100% {
     border-color: var(--color-danger);
-    box-shadow: 0 0 0 0px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(var(--color-danger-rgb), 0);
   }
   50% {
     border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 0 4px rgba(var(--color-danger-rgb), 0.18);
   }
 }
 
-/* =================================================================
-   UNIFIED LOADING SYSTEM
-   Centralised keyframes + helpers powering every loading state.
-   ================================================================= */
-
-/* Skeleton shine sweep — referenced everywhere via animate-[shimmer_...]
-   but was previously NEVER defined, so skeletons sat completely static. */
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
-}
-
-/* Slow ambient breathing for dashboard glow orbs (was undefined). */
-@keyframes pulse-slow {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(1.05); }
-}
-.animate-pulse-slow {
-  animation: pulse-slow 7s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Top route/progress bar — moving highlight "peg" on the leading edge. */
+/* Top route/progress bar helpers */
 @keyframes progress-peg {
   0% { opacity: 0.45; }
   50% { opacity: 1; }
   100% { opacity: 0.45; }
 }
 
-/* Indeterminate sliding fill — used when no real percentage is available. */
 @keyframes indeterminate {
   0% { left: -45%; width: 45%; }
   60% { left: 60%; width: 55%; }
@@ -374,7 +497,7 @@
   animation: indeterminate 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
-/* Bouncing dots loader. */
+/* Bouncing dots loader */
 @keyframes loader-dot {
   0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
   40% { transform: scale(1); opacity: 1; }
@@ -383,7 +506,7 @@
   animation: loader-dot 1.2s ease-in-out infinite;
 }
 
-/* Soft sweeping conic ring used around the branded loader logo. */
+/* Spinner ring */
 @keyframes loader-orbit {
   to { transform: rotate(360deg); }
 }
@@ -391,22 +514,13 @@
   animation: loader-orbit 1.1s linear infinite;
 }
 
-/* Gentle glow throb for the branded loader logo. */
-@keyframes loader-glow {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 35%, transparent); }
-  50% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-primary) 0%, transparent); }
-}
-.animate-loader-glow {
-  animation: loader-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Respect users who prefer reduced motion. */
+/* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  .animate-skeleton,
   .animate-indeterminate,
   .animate-loader-dot,
   .animate-loader-orbit,
-  .animate-loader-glow,
-  .animate-pulse-slow {
+  .animate-pulse-danger {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
   }

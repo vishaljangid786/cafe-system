@@ -135,13 +135,13 @@ export default function StaffReportsAnalytics({ user }) {
   const catSalesData = getTotaldCategorySales();
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 space-y-10 print:p-0 print:bg-white print:text-black">
+    <div className="max-w-[1600px] mx-auto pb-20 space-y-10 print:p-0 print:bg-[var(--color-surface)] print:text-[var(--color-on-primary)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
-              <TrendingUp size={24} className="text-black" />
+          <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
+              <TrendingUp size={24} className="text-[var(--color-on-primary)]" />
             </div>
             Staff Reports & Analytics
           </h1>
@@ -151,13 +151,13 @@ export default function StaffReportsAnalytics({ user }) {
         <div className="flex gap-4">
           <button
             onClick={exportCSV}
-            className="px-5 py-3 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)] rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm border border-[var(--color-border)]"
+            className="px-5 py-3 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)] rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-[var(--color-border)]"
           >
             <Download size={16} /> Export CSV
           </button>
           <button
             onClick={exportPDF}
-            className="px-5 py-3 bg-[var(--color-primary)] text-black rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg"
+            className="px-5 py-3 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-lg"
           >
             <Printer size={16} /> Print/PDF
           </button>
@@ -165,21 +165,21 @@ export default function StaffReportsAnalytics({ user }) {
       </div>
 
       {/* Print Only Header */}
-      <div className="hidden print:block text-center pb-8 border-b border-zinc-200 mb-8">
+      <div className="hidden print:block text-center pb-8 border-b border-[var(--color-border)] mb-8">
         <h1 className="text-2xl font-bold">Staff Performance Report</h1>
-        <p className="text-sm text-zinc-600 mt-2">Generated on {new Date().toLocaleString()}</p>
+        <p className="text-sm text-[var(--color-text-secondary)] mt-2">Generated on {new Date().toLocaleString()}</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-6 print:hidden">
+      <div className="bg-[var(--color-surface)]/80  p-8 rounded-xl border border-[var(--color-border)] shadow-sm space-y-6 print:hidden">
         <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-[var(--color-primary)]" />
-            <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Filter Reports</span>
+            <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Filter Reports</span>
           </div>
           <button 
             onClick={resetFilters}
-            className="px-4 py-2 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-rose-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-[var(--color-border)] active:scale-95 flex items-center gap-2 group"
+            className="px-4 py-2 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] rounded-xl text-[9px] font-bold uppercase tracking-normal transition-all border border-[var(--color-border)] active:scale-95 flex items-center gap-2 group"
           >
             <CheckCircle2 size={12} className="group-hover:rotate-12 transition-transform" /> Reset Terminal
           </button>
@@ -188,7 +188,7 @@ export default function StaffReportsAnalytics({ user }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
           {/* Staff Name */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <User size={12} /> Staff Name
             </label>
             <input
@@ -203,7 +203,7 @@ export default function StaffReportsAnalytics({ user }) {
           {/* Branch (Hidden for Branch Admin) */}
           {user?.role !== 'branch_admin' && (
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
                 <Building size={12} /> Branch
               </label>
               <PremiumSelect
@@ -220,7 +220,7 @@ export default function StaffReportsAnalytics({ user }) {
 
           {/* Exact Date */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Specific Date
             </label>
             <input
@@ -233,7 +233,7 @@ export default function StaffReportsAnalytics({ user }) {
 
           {/* Month */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Month
             </label>
             <input
@@ -246,7 +246,7 @@ export default function StaffReportsAnalytics({ user }) {
 
           {/* Financial Year */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Bookmark size={12} /> Financial Year
             </label>
             <PremiumSelect
@@ -265,7 +265,7 @@ export default function StaffReportsAnalytics({ user }) {
       </div>
 
       {loading ? (
-        <div className="h-64 bg-[var(--color-surface)]/50 backdrop-blur-xl rounded-3xl animate-pulse flex items-center justify-center font-bold text-[var(--color-text-muted)]">
+        <div className="h-64 bg-[var(--color-surface)]/50  rounded-xl animate-pulse flex items-center justify-center font-bold text-[var(--color-text-muted)]">
           Preparing staff reports...
         </div>
       ) : (
@@ -273,8 +273,8 @@ export default function StaffReportsAnalytics({ user }) {
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:hidden">
             {/* Sales leaderboard */}
-            <div className="lg:col-span-7 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+            <div className="lg:col-span-7 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-[var(--color-primary)]" /> Sales Leaderboard (₹)
               </h3>
               <div className="h-[300px]">
@@ -291,8 +291,8 @@ export default function StaffReportsAnalytics({ user }) {
             </div>
 
             {/* Category Sales Share */}
-            <div className="lg:col-span-5 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8 flex flex-col">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+            <div className="lg:col-span-5 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8 flex flex-col">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
                 <Bookmark size={16} className="text-[var(--color-primary)]" /> Category Distribution
               </h3>
               <div className="flex-1 min-h-[250px] flex items-center justify-center">
@@ -319,7 +319,7 @@ export default function StaffReportsAnalytics({ user }) {
                 {catSalesData.slice(0, 6).map((item, index) => (
                   <div key={item.name} className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 truncate">{item.name}</span>
+                    <span className="text-[10px] font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] truncate">{item.name}</span>
                   </div>
                 ))}
               </div>
@@ -327,41 +327,41 @@ export default function StaffReportsAnalytics({ user }) {
           </div>
 
           {/* Detailed Performance Table */}
-          <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8 print:p-0 print:border-0 print:shadow-none">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3 print:hidden">
+          <div className="bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8 print:p-0 print:border-0 print:shadow-none">
+            <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3 print:hidden">
               <Award size={16} className="text-[var(--color-primary)]" /> Performance Analysis List
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--color-border)]">
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Rank</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Name</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Role</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Branch</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Sales</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Orders</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupons Used</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupon Disc.</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Est. Profit</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Cancelled %</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Avg Ticket</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Rank</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Name</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Role</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Sales</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Orders</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Coupons Used</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Coupon Disc.</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Est. Profit</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Cancelled %</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Avg Ticket</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.map((staff) => (
                     <tr key={staff._id} className="border-b border-[var(--color-border)]/50 hover:bg-[var(--color-surface-soft)]/30 transition-all group">
-                      <td className="py-4 text-xs font-black text-[var(--color-primary)]">#{staff.ranking}</td>
-                      <td className="py-4 text-xs font-black text-zinc-800 dark:text-zinc-100">{staff.name}</td>
-                      <td className="py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{staff.role}</td>
-                      <td className="py-4 text-xs font-bold text-zinc-500">{staff.branchName}</td>
-                      <td className="py-4 text-xs font-black text-zinc-900 dark:text-white">₹{staff.totalSales}</td>
-                      <td className="py-4 text-xs font-bold text-zinc-600 dark:text-zinc-400">{staff.ordersHandled}</td>
-                      <td className="py-4 text-xs font-bold text-zinc-600 dark:text-zinc-400">{staff.couponUsageCount}</td>
-                      <td className="py-4 text-xs font-bold text-zinc-500">₹{staff.couponDiscountAmount}</td>
-                      <td className="py-4 text-xs font-black text-emerald-500">₹{staff.estimatedProfitContribution}</td>
-                      <td className="py-4 text-xs font-bold text-rose-500">{staff.cancelledRatio}</td>
-                      <td className="py-4 text-xs font-bold text-zinc-900 dark:text-white">₹{staff.avgOrderValue}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-primary)]">#{staff.ranking}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{staff.name}</td>
+                      <td className="py-4 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{staff.role}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-muted)]">{staff.branchName}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-primary)] dark:text-white">₹{staff.totalSales}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{staff.ordersHandled}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{staff.couponUsageCount}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-muted)]">₹{staff.couponDiscountAmount}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-success)]">₹{staff.estimatedProfitContribution}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-danger)]">{staff.cancelledRatio}</td>
+                      <td className="py-4 text-xs font-bold text-[var(--color-text-primary)] dark:text-white">₹{staff.avgOrderValue}</td>
                     </tr>
                   ))}
                   {data.length === 0 && (

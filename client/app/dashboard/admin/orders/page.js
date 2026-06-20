@@ -198,32 +198,32 @@ export default function AdminOrdersDashboard() {
     <div className="flex items-center justify-center h-[70vh] flex-col gap-6">
       <div className="relative">
         <RefreshCw className="animate-spin text-[var(--color-primary)]" size={64} />
-        <div className="absolute inset-0 blur-2xl bg-[var(--color-primary)]/20 rounded-full animate-pulse" />
+        <div className="absolute inset-0 hidden bg-[var(--color-primary)]/20 rounded-full animate-pulse" />
       </div>
-      <p className="text-xs font-black uppercase tracking-[0.4em] text-[var(--color-text-muted)] animate-pulse">Syncing Operational Grid...</p>
+      <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] animate-pulse">Syncing Operational Grid...</p>
     </div>
   );
 
   return (
     <PageTransition>
       <div className="relative space-y-12 pb-24">
-        {/* Cinematic Grid Background Layer */}
+        {/* Background */}
         <div className="fixed inset-0 pointer-events-none z-[-1] opacity-[0.03]"
           style={{ backgroundImage: `radial-gradient(var(--color-primary) 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
 
         {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
           <div className="flex items-center gap-6">
-            <div className="h-20 w-20 rounded-[2rem] bg-[var(--color-primary)] flex items-center justify-center text-black shadow-2xl shadow-[var(--color-primary)]/20 relative overflow-hidden group">
+            <div className="h-20 w-20 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-on-primary)] shadow-sm  relative overflow-hidden group">
               <ShieldAlert size={36} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-4xl font-black tracking-tighter text-[var(--color-text-primary)] leading-none mb-2">
+              <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none mb-2">
                 Operational <span className="text-[var(--color-primary)]">Oversight</span>
               </h1>
-              <div className="text-xs font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-2 mt-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Cross-Branch Surveillance
+              <div className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-2 mt-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
+                All Branch Orders
               </div>
             </div>
           </div>
@@ -231,13 +231,13 @@ export default function AdminOrdersDashboard() {
           <div className="flex items-center gap-4">
             <button
               onClick={exportOrdersCSV}
-              className="h-14 px-8 bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] rounded-2xl border border-[var(--color-border)] text-xs font-black uppercase tracking-[0.2em] transition-all shadow-sm flex items-center gap-3"
+              className="h-14 px-8 bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] rounded-xl border border-[var(--color-border)] text-xs font-bold uppercase tracking-normal transition-all shadow-sm flex items-center gap-3"
             >
               <Download size={18} /> Export CSV
             </button>
             <button
               onClick={fetchData}
-              className="h-14 w-14 flex items-center justify-center bg-[var(--color-primary)] text-black rounded-2xl transition-all shadow-xl shadow-[var(--color-primary)]/20 active:scale-90"
+              className="h-14 w-14 flex items-center justify-center bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl transition-all shadow-sm  active:scale-90"
             >
               <RefreshCw size={22} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -276,12 +276,12 @@ export default function AdminOrdersDashboard() {
             {/* Efficiency Chart & Watchlist */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
               {/* ... remains the same as before ... */}
-              <div className="lg:col-span-8 bg-[var(--color-surface)] rounded-[3rem] border border-[var(--color-border)] p-10 shadow-sm relative overflow-hidden group">
+              <div className="lg:col-span-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm relative overflow-hidden group">
                 {/* Chart content */}
                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
                   <ChefHat size={180} />
                 </div>
-                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] flex items-center gap-3 mb-10">
+                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3 mb-10">
                   <BarChart3 size={18} className="text-primary" /> Kitchen Efficiency Analysis
                 </h3>
                 <div className="h-[300px] w-full relative z-10">
@@ -301,35 +301,35 @@ export default function AdminOrdersDashboard() {
                 </div>
               </div>
 
-              <div className="lg:col-span-4 bg-[var(--color-surface)] rounded-[3rem] border border-[var(--color-border)] p-10 shadow-sm flex flex-col relative overflow-hidden group">
+              <div className="lg:col-span-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm flex flex-col relative overflow-hidden group">
                 <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-rose-500 flex items-center gap-3">
+                  <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-danger)] flex items-center gap-3">
                     <AlertCircle size={18} /> Critical Watchlist
                   </h3>
                   {analytics?.delayedOrders?.length > 5 && (
-                    <button onClick={() => setIsWatchlistModalOpen(true)} className="text-[9px] font-black uppercase tracking-widest text-rose-500/60 hover:text-rose-500 transition-colors">
+                    <button onClick={() => setIsWatchlistModalOpen(true)} className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-danger)]/60 hover:text-[var(--color-danger)] transition-colors">
                       View All ({analytics.delayedOrders.length})
                     </button>
                   )}
                 </div>
                 <div className="space-y-4 relative z-10 flex-1 overflow-y-auto custom-scrollbar pr-2">
                   {analytics?.delayedOrders?.slice(0, 5).map((delay, idx) => (
-                    <div key={idx} className="p-5 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex items-center justify-between group hover:bg-rose-500/10 transition-all cursor-pointer" onClick={() => handleOrderSignalProbe(delay.id)}>
+                    <div key={idx} className="p-5 bg-[var(--color-danger)]/5 border border-[var(--color-danger)]/10 rounded-xl flex items-center justify-between group hover:bg-[var(--color-danger)]/10 transition-all cursor-pointer" onClick={() => handleOrderSignalProbe(delay.id)}>
                       <div className="flex items-center gap-5">
-                        <div className="h-12 w-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 font-black text-lg border border-rose-500/20 shadow-inner">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)] font-bold text-lg border border-[var(--color-danger)]/20 shadow-inner">
                           {delay.table}
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{delay.status}</p>
-                          <p className="text-xs font-black text-[var(--color-text-primary)] mt-1 tracking-tight">{delay.duration}m Delay</p>
+                          <p className="text-[10px] font-bold text-[var(--color-danger)] uppercase tracking-normal">{delay.status}</p>
+                          <p className="text-xs font-bold text-[var(--color-text-primary)] mt-1 tracking-tight">{delay.duration}m Delay</p>
                         </div>
                       </div>
-                      <ChevronRight size={18} className="text-rose-500 group-hover:translate-x-1 transition-all" />
+                      <ChevronRight size={18} className="text-[var(--color-danger)] group-hover:translate-x-1 transition-all" />
                     </div>
                   ))}
                   {(!analytics?.delayedOrders || analytics.delayedOrders.length === 0) && (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-20 italic text-xs font-bold text-[var(--color-text-muted)] py-10">
-                      Sector clear. No delays.
+                      All clear. No delays.
                     </div>
                   )}
                 </div>
@@ -340,18 +340,18 @@ export default function AdminOrdersDashboard() {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-primary/80 flex items-center gap-3 mb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-normal text-primary/80 flex items-center gap-3 mb-2">
                     <div className="h-1 w-8 bg-primary rounded-full" />
-                    Surveillance Stream
+                    Live Orders
                   </h3>
-                  <h2 className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter">Live Monitor <span className="text-[var(--color-text-muted)]">Matrix</span></h2>
+                  <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">Live Monitor <span className="text-[var(--color-text-muted)]">Matrix</span></h2>
                 </div>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                   <input
                     type="text"
                     placeholder="Filter active signals..."
-                    className="w-full h-14 pl-14 pr-6 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] text-xs font-bold focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+                    className="w-full h-14 pl-14 pr-6 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-xs font-bold focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
@@ -359,17 +359,17 @@ export default function AdminOrdersDashboard() {
               </div>
 
               {viewMode === 'list' ? (
-                <div className="bg-[var(--color-surface)] rounded-[3rem] border border-[var(--color-border)] shadow-sm overflow-hidden">
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Order Signal</th>
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Order Status</th>
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Sector / Table</th>
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Payload Detail</th>
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Value</th>
-                          <th className="py-6 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Actions</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Signal</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Status</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch / Table</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Payload Detail</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Value</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--color-border)]/50">
@@ -378,20 +378,20 @@ export default function AdminOrdersDashboard() {
                             <motion.tr layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={order._id} className="group hover:bg-[var(--color-surface-soft)]/30 transition-all cursor-pointer" onClick={() => setSelectedOrder(order)}>
                               <td className="py-6 px-8">
                                 <div className="flex flex-col">
-                                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">#{order._id.substring(order._id.length - 8)}</span>
+                                  <span className="text-[10px] font-bold text-primary uppercase tracking-normal">#{order._id.substring(order._id.length - 8)}</span>
                                   <span className="text-[9px] font-bold text-[var(--color-text-muted)] mt-1">{new Date(order.createdAt).toLocaleTimeString()}</span>
                                 </div>
                               </td>
                               <td className="py-6 px-8">
-                                <div className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-2 border ${order.status === 'READY' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : order.status === 'PLACED' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
-                                  <div className={`w-1 h-1 rounded-full animate-pulse ${order.status === 'READY' ? 'bg-emerald-500' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-rose-500' : 'bg-blue-500'}`} />
+                                <div className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal inline-flex items-center gap-2 border ${order.status === 'READY' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20' : order.status === 'PLACED' ? 'bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'}`}>
+                                  <div className={`w-1 h-1 rounded-full animate-pulse ${order.status === 'READY' ? 'bg-[var(--color-success)]' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-primary)]'}`} />
                                   {order.status}
                                 </div>
                               </td>
                               <td className="py-6 px-8">
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-black text-[var(--color-text-primary)]">{order.branch?.name}</span>
-                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 uppercase tracking-widest">Table {order.table?.tableNumber}</span>
+                                  <span className="text-xs font-bold text-[var(--color-text-primary)]">{order.branch?.name}</span>
+                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 uppercase tracking-normal">Table {order.table?.tableNumber}</span>
                                 </div>
                               </td>
                               <td className="py-6 px-8 max-w-[300px]">
@@ -400,15 +400,15 @@ export default function AdminOrdersDashboard() {
                                 </p>
                               </td>
                               <td className="py-6 px-8 text-right">
-                                <span className="text-sm font-black text-[var(--color-text-primary)]">₹{order.totalAmount}</span>
+                                <span className="text-sm font-bold text-[var(--color-text-primary)]">₹{order.totalAmount}</span>
                               </td>
                               <td className="py-6 px-8 text-right">
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="p-2.5 bg-[var(--color-surface)] text-blue-500 rounded-xl border border-[var(--color-border)] hover:bg-blue-500 hover:text-white transition-all shadow-sm">
+                                  <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="p-2.5 bg-[var(--color-surface)] text-[var(--color-primary)] rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-primary)] hover:text-white transition-all shadow-sm">
                                     <Eye size={14} />
                                   </button>
                                   {['admin', 'super_admin'].includes(user?.role) && order.status !== 'COMPLETED' && (
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order._id); }} className="p-2.5 bg-[var(--color-surface)] text-rose-500 rounded-xl border border-[var(--color-border)] hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order._id); }} className="p-2.5 bg-[var(--color-surface)] text-[var(--color-danger)] rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-danger)] hover:text-white transition-all shadow-sm">
                                       <Trash size={14} />
                                     </button>
                                   )}
@@ -439,11 +439,11 @@ export default function AdminOrdersDashboard() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-10 py-8 bg-[var(--color-surface)] rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Matrix Segment {currentPage} / {totalPages}</p>
+                <div className="flex items-center justify-between px-10 py-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Matrix Segment {currentPage} / {totalPages}</p>
                   <div className="flex gap-4">
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="px-8 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-primary hover:text-black hover:shadow-xl hover:shadow-primary/20 active:scale-95">Prev Segment</button>
-                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="px-8 py-4 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-primary hover:text-black hover:shadow-xl hover:shadow-primary/20 active:scale-95">Next Segment</button>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Prev Segment</button>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Next Segment</button>
                   </div>
                 </div>
               )}
@@ -461,7 +461,7 @@ export default function AdminOrdersDashboard() {
           userRole={user?.role}
         />
 
-        {/* Global Delay Surveillance Modal */}
+        {/* Delayed Orders Modal */}
         <WatchlistModal 
           isOpen={isWatchlistModalOpen}
           onClose={() => setIsWatchlistModalOpen(false)}
@@ -479,13 +479,13 @@ function DashboardSkeleton() {
     <div className="space-y-12">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-48 rounded-[2.5rem] animate-skeleton border border-[var(--color-border)]" />
+          <div key={i} className="h-48 rounded-xl animate-skeleton border border-[var(--color-border)]" />
         ))}
       </div>
-      <div className="h-24 rounded-[2.5rem] animate-skeleton border border-[var(--color-border)]" />
+      <div className="h-24 rounded-xl animate-skeleton border border-[var(--color-border)]" />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-          <div key={i} className="h-80 rounded-[3rem] animate-skeleton border border-[var(--color-border)]" />
+          <div key={i} className="h-80 rounded-xl animate-skeleton border border-[var(--color-border)]" />
         ))}
       </div>
     </div>

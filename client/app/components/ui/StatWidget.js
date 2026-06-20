@@ -4,31 +4,30 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, HdIcon, PiIcon 
 
 export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amber', delay = 0 }) => {
   const colorMap = {
-    amber: 'from-[var(--color-primary)]/20 to-[var(--color-primary)]/5 text-[var(--color-primary)] border-[var(--color-primary)]/20',
-    green: 'from-[var(--color-success)]/20 to-[var(--color-success)]/5 text-[var(--color-success)] border-[var(--color-success)]/20',
-    blue: 'from-[var(--color-secondary)]/20 to-[var(--color-secondary)]/5 text-[var(--color-secondary)] border-[var(--color-secondary)]/20',
-    red: 'from-[var(--color-danger)]/20 to-[var(--color-danger)]/5 text-[var(--color-danger)] border-[var(--color-danger)]/20',
-    rose: 'from-[var(--color-danger)]/20 to-[var(--color-danger)]/5 text-[var(--color-danger)] border-[var(--color-danger)]/20',
-    indigo: 'from-[var(--color-secondary)]/20 to-[var(--color-secondary)]/5 text-[var(--color-secondary)] border-[var(--color-secondary)]/20',
+    amber: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
+    green: 'bg-[rgba(var(--color-success-rgb),0.12)] text-[var(--color-success)]',
+    blue: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
+    red: 'bg-[rgba(var(--color-danger-rgb),0.12)] text-[var(--color-danger)]',
+    rose: 'bg-[rgba(var(--color-danger-rgb),0.12)] text-[var(--color-danger)]',
+    indigo: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.02 }}
-      className="glass-card rounded-2xl p-5 relative overflow-hidden group "
+      transition={{ duration: 0.25, delay }}
+      className="card rounded-xl p-5 relative transition-colors duration-200 hover:border-[var(--color-border-strong)]"
     >
-      <div className="flex justify-between items-start relative z-10">
-        <div className={`p-2.5 rounded-xl border bg-gradient-to-br ${colorMap[color]} group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
+      <div className="flex justify-between items-start">
+        <div className={`p-2.5 rounded-lg ${colorMap[color]}`}>
           <Icon size={20} />
         </div>
 
         {trend && (
-          <div className={`flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border ${isUp
-            ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20'
-            : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20'
+          <div className={`flex items-center px-2 py-1 rounded-md text-xs font-medium ${isUp
+            ? 'bg-[rgba(var(--color-success-rgb),0.1)] text-[var(--color-success)]'
+            : 'bg-[rgba(var(--color-danger-rgb),0.1)] text-[var(--color-danger)]'
             }`}>
             {isUp ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
             {trend}
@@ -36,25 +35,21 @@ export const StatWidget = ({ label, value, icon: Icon, trend, isUp, color = 'amb
         )}
       </div>
 
-      <div className="mt-5 relative z-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--color-text-muted)]">
+      <div className="mt-4">
+        <p className="label">
           {label}
         </p>
         <div className="flex items-baseline mt-1 space-x-1">
-          <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
+          <p className="text-2xl font-semibold text-[var(--color-text-primary)] tracking-tight">
             {value}
           </p>
           {trend && (
-            <span className={`text-[10px] font-medium ${isUp ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+            <span className={`text-xs ${isUp ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
               vs last month
             </span>
           )}
         </div>
       </div>
-
-      {/* Decorative inner glow */}
-      <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-[40px] opacity-10 transition-opacity duration-500 group-hover:opacity-30 pointer-events-none ${color === 'amber' ? 'bg-[var(--color-primary)]' : color === 'green' ? 'bg-[var(--color-success)]' : color === 'blue' ? 'bg-[var(--color-secondary)]' : 'bg-[var(--color-danger)]'
-        }`} />
     </motion.div>
   );
 };

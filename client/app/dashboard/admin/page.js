@@ -159,7 +159,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10 pb-20">
-      {/* Cinematic System Information Header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[95]">
         <div className="space-y-2">
           <motion.div
@@ -168,16 +168,16 @@ export default function AdminDashboard() {
             className="flex items-center gap-3"
           >
             <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-full">
-              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.8)]" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary)]/80">System: Online</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse " />
+              <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-primary)]/80">System: Online</span>
             </div>
             <div className="h-px w-8 bg-[var(--color-border)]" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+            <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
               {selectedLocationIds.length > 1 ? `View: ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}
             </span>
           </motion.div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-[var(--color-text-primary)] flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[var(--color-text-primary)] flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
             {selectedLocationIds.length > 1 ? 'Multi-Branch' : filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
             <span className="text-[var(--color-primary)] not-italic">Overview</span>
           </h1>
@@ -210,12 +210,12 @@ export default function AdminDashboard() {
             className="w-full sm:w-[220px]"
           />
 
-          <div className="flex items-center gap-2 sm:gap-3 bg-[var(--color-surface)]/40 p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm backdrop-blur-md overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
+          <div className="flex items-center gap-2 sm:gap-3 bg-[var(--color-surface)]/40 p-1.5 rounded-xl border border-[var(--color-border)] shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
             {['today', '7d', '30d', 'all', 'custom'].map(t => (
               <button
                 key={t}
                 onClick={() => setTimeFilter(t)}
-                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg shadow-[var(--color-primary)]/20' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]'}`}
+                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg ' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]'}`}
               >
                 {t}
               </button>
@@ -228,14 +228,14 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-[var(--color-border)] rounded-3xl premium-shadow"
+          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-[var(--color-border)] rounded-xl premium-shadow"
         >
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
             <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
             <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
           </div>
         </motion.div>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Daily Orders</CardTitle>
               <CardDescription>Total orders per day.</CardDescription>
             </div>
-            <div className="p-3 bg-[var(--color-primary)]/10 rounded-2xl text-[var(--color-primary)]">
+            <div className="p-3 bg-[var(--color-primary)]/10 rounded-xl text-[var(--color-primary)]">
               <Layers size={20} />
             </div>
           </div>
@@ -356,7 +356,7 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Recent Expenses</CardTitle>
               <CardDescription>Latest expenses from all branches.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-2xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
               <TrendingDown size={20} />
             </div>
           </div>
@@ -368,19 +368,19 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-danger)]/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-danger)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group- transition-transform">
                       <Receipt size={18} className="text-[var(--color-danger)]" />
                     </div>
                     <div>
                       <h5 className="text-sm font-bold text-[var(--color-text-primary)]">{exp.title}</h5>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">{exp.locationId?.name || 'Main Office'}</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{exp.locationId?.name || 'Main Office'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-[var(--color-danger)]">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
+                    <div className="text-sm font-bold text-[var(--color-danger)]">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
                     <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(exp.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
@@ -392,7 +392,7 @@ export default function AdminDashboard() {
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/expenses`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Expenses
           </Button>
@@ -405,7 +405,7 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Recent Sales</CardTitle>
               <CardDescription>Latest completed orders.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-2xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
               <TrendingUp size={20} />
             </div>
           </div>
@@ -417,21 +417,21 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-success)]/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-success)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group- transition-transform">
                       <ShoppingBag size={18} className="text-[var(--color-success)]" />
                     </div>
                     <div>
                       <h5 className="text-sm font-bold text-[var(--color-text-primary)] truncate w-32 sm:w-auto">
                         Order #{rev._id.substring(rev._id.length - 6).toUpperCase()}
                       </h5>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Marked by {rev.staffId?.name || 'Staff'}</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-[var(--color-success)]">+₹{rev.totalAmount.toLocaleString()}</div>
+                    <div className="text-sm font-bold text-[var(--color-success)]">+₹{rev.totalAmount.toLocaleString()}</div>
                     <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(rev.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/revenue`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             View All Sales
           </Button>
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Smart Forecasting</CardTitle>
               <CardDescription>Predicted sales trends based on history.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] animate-pulse">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] animate-pulse">
               <Zap size={20} />
             </div>
           </div>
@@ -476,12 +476,12 @@ export default function AdminDashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-6 p-4 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 rounded-2xl flex items-center justify-between">
+          <div className="mt-6 p-4 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Clock className="text-[var(--color-primary)]" size={18} />
-              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Expected Today:</span>
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Expected Today:</span>
             </div>
-            <span className="text-lg font-black text-[var(--color-primary)]">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
+            <span className="text-lg font-bold text-[var(--color-primary)]">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
           </div>
         </Card>
 
@@ -563,16 +563,16 @@ export default function AdminDashboard() {
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="p-2 bg-[var(--color-primary)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-black uppercase text-[var(--color-primary)]">UPI</p>
-              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.upiCount}</p>
+              <p className="text-[8px] font-bold uppercase text-[var(--color-primary)]">UPI</p>
+              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.upiCount}</p>
             </div>
             <div className="p-2 bg-[var(--color-secondary)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-black uppercase text-[var(--color-secondary)]">Cash</p>
-              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.cashCount}</p>
+              <p className="text-[8px] font-bold uppercase text-[var(--color-secondary)]">Cash</p>
+              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.cashCount}</p>
             </div>
             <div className="p-2 bg-[var(--color-amber)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-black uppercase text-[var(--color-amber)]">Other</p>
-              <p className="text-xs font-black">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
+              <p className="text-[8px] font-bold uppercase text-[var(--color-amber)]">Other</p>
+              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
             </div>
           </div>
         </Card>
@@ -587,13 +587,13 @@ export default function AdminDashboard() {
             {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)]">
                 <div className="flex items-center gap-3">
-                  <div className="h-7 w-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[10px] font-black text-[var(--color-primary)]">
+                  <div className="h-7 w-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[10px] font-bold text-[var(--color-primary)]">
                     {i + 1}
                   </div>
                   <span className="text-xs font-bold truncate w-24">{staff.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-[var(--color-success)]">₹{staff.revenue.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold text-[var(--color-success)]">₹{staff.revenue.toLocaleString()}</p>
                   <p className="text-[8px] font-bold text-[var(--color-text-muted)]">{staff.totalOrders} Orders</p>
                 </div>
               </div>
@@ -616,9 +616,9 @@ export default function AdminDashboard() {
                 </div>
                 <CardDescription>Breakdown of branch staff, chefs and monthly salary obligations.</CardDescription>
               </div>
-              <div className="px-6 py-3 bg-[var(--color-secondary)]/5 border border-[var(--color-secondary)]/10 rounded-2xl">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-secondary)] mb-1">Monthly Payroll Total</p>
-                <p className="text-3xl font-black text-[var(--color-secondary)] tracking-tighter">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
+              <div className="px-6 py-3 bg-[var(--color-secondary)]/5 border border-[var(--color-secondary)]/10 rounded-xl">
+                <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-secondary)] mb-1">Monthly Payroll Total</p>
+                <p className="text-3xl font-bold text-[var(--color-secondary)] tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
               </div>
             </div>
 
@@ -628,14 +628,14 @@ export default function AdminDashboard() {
                 { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, color: 'orange' },
                 { label: 'Branch Admins', count: analytics?.staffStats?.adminCount || 0, icon: User, color: 'indigo' }
               ].map((item, i) => (
-                <div key={i} className="p-6 rounded-3xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-primary)]/20 transition-all">
+                <div key={i} className="p-6 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-primary)]/20 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
+                    <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] group- transition-transform">
                       <item.icon size={22} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">{item.label}</p>
-                      <p className="text-2xl font-black text-[var(--color-text-primary)]">{item.count}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{item.label}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{item.count}</p>
                     </div>
                   </div>
                   <ChevronDown className="text-[var(--color-text-muted)] opacity-30 -rotate-90" size={18} />

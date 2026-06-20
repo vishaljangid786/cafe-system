@@ -21,15 +21,15 @@ import toast from 'react-hot-toast';
 
 function Skeleton({ className }) {
   return (
-    <div className={`animate-pulse bg-[var(--color-surface-soft)] rounded-2xl ${className}`} />
+    <div className={`animate-pulse bg-[var(--color-surface-soft)] rounded-xl ${className}`} />
   );
 }
 
 function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
   if (loading) {
     return (
-      <div className="bg-[var(--color-surface)] p-6 rounded-3xl border border-[var(--color-border)] h-full space-y-4">
-        <Skeleton className="h-12 w-12 rounded-2xl" />
+      <div className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] h-full space-y-4">
+        <Skeleton className="h-12 w-12 rounded-xl" />
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-8 w-32" />
       </div>
@@ -37,21 +37,21 @@ function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
   }
 
   const colors = {
-    blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-    violet: 'bg-violet-500/10 text-violet-500 border-violet-500/20'
+    blue: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20',
+    emerald: 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20',
+    amber: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20',
+    rose: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20',
+    violet: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
   };
 
   return (
     <CardHover>
-      <div className="bg-[var(--color-surface)] p-6 rounded-3xl border border-[var(--color-border)] shadow-sm h-full flex flex-col group">
-        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border mb-4 transition-transform group-hover:scale-110 duration-500 ${colors[color]}`}>
+      <div className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] shadow-sm h-full flex flex-col group">
+        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform group- duration-500 ${colors[color]}`}>
           <Icon size={20} />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">{label}</p>
-        <p className="text-2xl font-black text-[var(--color-text-primary)] tracking-tighter">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">{label}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">{value}</p>
         {sub && <p className="text-[9px] font-bold text-[var(--color-text-secondary)] mt-2">{sub}</p>}
       </div>
     </CardHover>
@@ -62,9 +62,9 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-10 pb-20">
       {/* Header Skeleton */}
-      <div className="bg-[var(--color-surface)] rounded-[3rem] p-10 border border-[var(--color-border)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+      <div className="bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-2xl" />
+          <Skeleton className="h-16 w-16 rounded-xl" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-32" />
@@ -87,21 +87,21 @@ function DashboardSkeleton() {
       {/* Charts & Content Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[400px]">
+          <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] h-[400px]">
              <Skeleton className="h-6 w-48 mb-8" />
              <Skeleton className="h-[280px] w-full" />
           </div>
-          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[300px]">
+          <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] h-[300px]">
              <Skeleton className="h-6 w-48 mb-8" />
              <Skeleton className="h-[180px] w-full" />
           </div>
         </div>
         <div className="lg:col-span-4 space-y-10">
           <div className="space-y-4">
-            <Skeleton className="h-28 w-full rounded-3xl" />
-            <Skeleton className="h-28 w-full rounded-3xl" />
+            <Skeleton className="h-28 w-full rounded-xl" />
+            <Skeleton className="h-28 w-full rounded-xl" />
           </div>
-          <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] h-[400px]">
+          <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] h-[400px]">
             <Skeleton className="h-6 w-40 mb-6" />
             <div className="space-y-5">
               {[1, 2, 3, 4, 5].map(i => (
@@ -199,24 +199,24 @@ export default function StaffDashboard() {
   return (
     <PageTransition>
       <div className="space-y-10 pb-20">
-        {/* Cinematic Header */}
-        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-[3rem] p-10 border border-[var(--color-border)] shadow-xl shadow-blue-500/5">
+        {/* Header */}
+        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] shadow-sm ">
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
-            <Activity size={200} className="text-blue-500" strokeWidth={1} />
+            <Activity size={200} className="text-[var(--color-primary)]" strokeWidth={1} />
           </div>
 
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/10">
+                <div className="h-16 w-16 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] shadow-lg ">
                   <Coffee size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-[var(--color-text-primary)] leading-none">
-                    Hi, <span className="text-blue-500">{mounted ? user?.name?.split(' ')[0] : ''}</span>
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none">
+                    Hi, <span className="text-[var(--color-primary)]">{mounted ? user?.name?.split(' ')[0] : ''}</span>
                   </h1>
                   <p className="text-[var(--color-text-muted)] font-bold mt-2 flex items-center gap-2">
-                    <Zap size={14} className="text-amber-500" />
+                    <Zap size={14} className="text-[var(--color-warning)]" />
                     {mounted ? user?.role?.replace('_', ' ').toUpperCase() : ''} @ {mounted ? user?.assignedLocation?.name : ''} Branch
                   </p>
                 </div>
@@ -225,7 +225,7 @@ export default function StaffDashboard() {
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
               {/* Timeframe Filter */}
-              <div className="bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] flex items-center gap-1">
+              <div className="bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)] flex items-center gap-1">
                 {[
                   { id: '7d', label: '7D' },
                   { id: 'month', label: 'Month' },
@@ -235,9 +235,9 @@ export default function StaffDashboard() {
                   <button
                     key={tf.id}
                     onClick={() => setTimeframe(tf.id)}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${
                       timeframe === tf.id 
-                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                        ? 'bg-[var(--color-primary)] text-white shadow-lg ' 
                         : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                     }`}
                   >
@@ -248,13 +248,13 @@ export default function StaffDashboard() {
 
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Payout ({timeframe})</p>
-                  <p className="text-2xl font-black text-emerald-500 tracking-tighter">₹{stats?.dailyPayout || 0}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Payout ({timeframe})</p>
+                  <p className="text-2xl font-bold text-[var(--color-success)] tracking-tight">₹{stats?.dailyPayout || 0}</p>
                 </div>
                 <div className="h-12 w-px bg-[var(--color-border)]" />
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Success Rate</p>
-                  <p className="text-2xl font-black text-blue-500 tracking-tighter">{stats?.successRate || 0}%</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Success Rate</p>
+                  <p className="text-2xl font-bold text-[var(--color-primary)] tracking-tight">{stats?.successRate || 0}%</p>
                 </div>
               </div>
             </div>
@@ -297,14 +297,14 @@ export default function StaffDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-10">
             {/* Order Trend Chart */}
-            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
+            <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] flex items-center gap-3">
-                    <TrendingUp size={16} className="text-blue-500" /> Order Lifecycle Trend
+                  <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3">
+                    <TrendingUp size={16} className="text-[var(--color-primary)]" /> Order Lifecycle Trend
                   </h3>
                 </div>
-                <div className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                <div className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-full text-[9px] font-bold uppercase tracking-normal">
                   {timeframe === 'all' ? 'LIFETIME' : timeframe.toUpperCase()} VIEW
                 </div>
               </div>
@@ -331,9 +331,9 @@ export default function StaffDashboard() {
             </div>
 
             {/* Attendance Visualization */}
-            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-8 flex items-center gap-3">
-                <Calendar size={16} className="text-amber-500" /> Attendance History ({timeframe})
+            <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-8 flex items-center gap-3">
+                <Calendar size={16} className="text-[var(--color-warning)]" /> Attendance History ({timeframe})
               </h3>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -360,58 +360,58 @@ export default function StaffDashboard() {
             {/* Quick Actions */}
             <div className="space-y-4">
               <Link href="/dashboard/staff/tables" className="block">
-                <div className="bg-blue-600 hover:bg-blue-700 p-6 rounded-3xl text-white shadow-lg shadow-blue-600/20 transition-all active:scale-95 group">
+                <div className="bg-[var(--color-primary)] hover:bg-[var(--color-primary)] p-6 rounded-xl text-white shadow-lg  transition-all active:scale-95 group">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Terminal</p>
-                      <h4 className="text-xl font-black tracking-tight">Active Orders</h4>
+                      <p className="text-xs font-bold uppercase tracking-normal opacity-80 mb-1">Terminal</p>
+                      <h4 className="text-xl font-bold tracking-tight">Active Orders</h4>
                     </div>
                     <ArrowRight className="group-hover:translate-x-2 transition-transform" />
                   </div>
                 </div>
               </Link>
               <Link href="/dashboard/staff/expenses" className="block">
-                <div className="bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] p-6 rounded-3xl border border-[var(--color-border)] shadow-sm transition-all active:scale-95 group text-left">
+                <div className="bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] p-6 rounded-xl border border-[var(--color-border)] shadow-sm transition-all active:scale-95 group text-left">
                   <div className="flex justify-between items-center text-left">
                     <div className="text-left">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Accounting</p>
-                      <h4 className="text-xl font-black tracking-tight text-[var(--color-text-primary)]">Log Expense</h4>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Accounting</p>
+                      <h4 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">Log Expense</h4>
                     </div>
-                    <ArrowUpRight className="text-blue-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                    <ArrowUpRight className="text-[var(--color-primary)] group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </Link>
             </div>
 
             {/* Recent Expenses List */}
-            <div className="bg-[var(--color-surface)] p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm">
+            <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] flex items-center gap-3">
-                  <History size={16} className="text-violet-500" /> Recent Expenses
+                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3">
+                  <History size={16} className="text-[var(--color-primary)]" /> Recent Expenses
                 </h3>
               </div>
               <div className="space-y-5">
                 {expenses.length === 0 ? (
-                  <div className="text-center py-6 border-2 border-dashed border-[var(--color-border)] rounded-2xl">
-                    <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">No recent logs</p>
+                  <div className="text-center py-6 border-2 border-dashed border-[var(--color-border)] rounded-xl">
+                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">No recent logs</p>
                   </div>
                 ) : (
                   expenses.map((ex) => (
                     <div key={ex._id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500 border border-violet-500/20">
+                        <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20">
                           <IndianRupee size={16} />
                         </div>
                         <div className="text-left">
-                          <p className="text-xs font-black text-[var(--color-text-primary)] tracking-tight line-clamp-1">{ex.title}</p>
+                          <p className="text-xs font-bold text-[var(--color-text-primary)] tracking-tight line-clamp-1">{ex.title}</p>
                           <p className="text-[9px] font-bold text-[var(--color-text-muted)]">{new Date(ex.date).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <p className="text-xs font-black text-[var(--color-text-primary)]">₹{ex.totalAmount}</p>
+                      <p className="text-xs font-bold text-[var(--color-text-primary)]">₹{ex.totalAmount}</p>
                     </div>
                   ))
                 )}
-                <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline">
+                <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] hover:underline">
                   View All Activity
                 </Link>
               </div>

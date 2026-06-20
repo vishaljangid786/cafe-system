@@ -78,28 +78,29 @@ const NotificationModal = ({ isOpen, onClose }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/60 backdrop-blur-md z-[-1]"
+        className="fixed inset-0 bg-black/50 z-[-1]"
       />
 
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.97, opacity: 0, y: 12 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="relative w-full max-w-lg glass-card rounded-[2.5rem] overflow-hidden shadow-[var(--shadow-premium)] border border-[var(--color-border)] my-auto"
+        exit={{ scale: 0.97, opacity: 0, y: 12 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className="relative w-full max-w-lg bg-[var(--color-surface)] rounded-xl overflow-hidden shadow-[var(--shadow-md)] border border-[var(--color-border)] my-auto"
       >
-        <div className="px-8 py-6 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-soft)]/50">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+            <div className="p-2 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
               <Send size={18} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-[var(--color-text-primary)]">New Update</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">New Update</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--color-bg-soft)] rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-surface-soft)] rounded-lg transition-colors">
             <X size={20} className="text-[var(--color-text-muted)]" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <PremiumSelect 
               label="Channel Type"
               value={formData.targetType}
@@ -138,10 +139,10 @@ const NotificationModal = ({ isOpen, onClose }) => {
           />
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Update Title</label>
+            <label className="label">Update Title</label>
             <input
               required
-              className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+              className="input"
               placeholder="Enter subject..."
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -149,26 +150,26 @@ const NotificationModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] ml-2">Message Information</label>
+            <label className="label">Message</label>
             <textarea
               required
               rows={4}
-              className="w-full bg-[var(--color-bg-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] p-4 rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 resize-none"
+              className="input resize-none"
               placeholder="Enter message details..."
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
             />
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-2">
             <Button
               type="submit"
               variant="primary"
-              className="bg-primary flex-1 !rounded-2xl !py-4 font-black uppercase tracking-[0.2em] text-[10px] shadow-[var(--shadow-premium)]"
+              className="flex-1"
               icon={Send}
               loading={loading}
             >
-              Dispatch Update
+              Send Update
             </Button>
           </div>
         </form>

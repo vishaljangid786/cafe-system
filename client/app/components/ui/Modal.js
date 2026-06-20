@@ -29,31 +29,28 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[var(--color-bg-deep)]/60 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-black/50 z-[9998]"
           />
 
           <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4 z-[9999] pointer-events-none overflow-hidden">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 50 }}
+              initial={{ scale: 0.97, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 50 }}
+              exit={{ scale: 0.97, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className={`glass-card w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-2xl rounded-t-[2.5rem] pointer-events-auto shadow-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-2xl relative flex flex-col mt-auto sm:mt-0`}
+              className={`w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-xl rounded-t-2xl pointer-events-auto shadow-[var(--shadow-md)] border border-[var(--color-border)] bg-[var(--color-surface)] relative flex flex-col mt-auto sm:mt-0`}
             >
-              <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
-                <div className="space-y-1">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)]">Details</h3>
-                  <p className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] tracking-tight line-clamp-1">{title}</p>
-                </div>
+              <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
+                <p className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] line-clamp-1">{title}</p>
                 <button
                   onClick={onClose}
-                  className="h-9 w-9 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-all hover:border-[var(--color-primary)]/30 cursor-pointer"
+                  className="h-9 w-9 rounded-lg bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                 {children}
               </div>
             </motion.div>

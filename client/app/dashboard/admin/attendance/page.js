@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import toast from 'react-hot-toast';
 import ExportActions from '../../../components/ui/ExportActions';
+import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
 
 export default function GlobalAttendancePage() {
   const dateInputRef = useRef(null);
@@ -106,16 +107,16 @@ export default function GlobalAttendancePage() {
       <div className="space-y-6">
         {/* Header & Controls */}
 <SlideIn direction="down">
-  <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 backdrop-blur-2xl p-5 md:p-7 shadow-[var(--shadow-premium)] transition-all">
+  <div className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/60  p-5 md:p-7 shadow-[var(--shadow-premium)] transition-all">
 
     {/* subtle gradient glow */}
-    <div className="absolute inset-0 opacity-30 pointer-events-none bg-[var(--gradient-primary)] blur-3xl" />
+    <div className="absolute inset-0 opacity-30 pointer-events-none bg-[var(--gradient-primary)] hidden" />
 
     <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
 
       {/* LEFT: Title Section */}
       <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-black tracking-tight flex items-center">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center">
           <div className="p-2 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] mr-3">
             <CalendarCheck size={22} />
           </div>
@@ -124,7 +125,7 @@ export default function GlobalAttendancePage() {
             Staff
           </span>
 
-          <span className="ml-2 bg-clip-text text-transparent bg-[var(--gradient-primary)]">
+          <span className="ml-2 text-[var(--color-primary)]">
             Attendance
           </span>
         </h1>
@@ -148,7 +149,7 @@ export default function GlobalAttendancePage() {
           onClick={() => dateInputRef.current?.showPicker()}
           className="group flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] hover:border-[var(--color-primary)]/40 transition-all cursor-pointer"
         >
-          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-105 transition-transform">
+          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group- transition-transform">
             <Calendar size={16} />
           </div>
 
@@ -187,21 +188,21 @@ export default function GlobalAttendancePage() {
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-success)] transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Present Today</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'present').length}</p>
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-success)] transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Present Today</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'present').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.2}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-danger)] transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Absent Today</p>
-              <p className="text-3xl font-black text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] border-l-4 border-l-[var(--color-danger)] transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Absent Today</p>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
             </div>
           </SlideIn>
           <SlideIn delay={0.3}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Presents (Month)</p>
-              <p className="text-3xl font-black text-[var(--color-success)] mt-1">
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Presents (Month)</p>
+              <p className="text-3xl font-bold text-[var(--color-success)] mt-1">
                 {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalPresentDays) || 0), 0)
                   : 0}
@@ -209,9 +210,9 @@ export default function GlobalAttendancePage() {
             </div>
           </SlideIn>
           <SlideIn delay={0.4}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-6 rounded-2xl shadow-sm border border-[var(--color-border)] transition-colors">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Total Absents (Month)</p>
-              <p className="text-3xl font-black text-[var(--color-danger)] mt-1">
+            <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl shadow-sm border border-[var(--color-border)] transition-colors">
+              <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Absents (Month)</p>
+              <p className="text-3xl font-bold text-[var(--color-danger)] mt-1">
                 {Array.isArray(summary)
                   ? summary.reduce((acc, s) => acc + (Number(s.totalAbsentDays) || 0), 0)
                   : 0}
@@ -224,11 +225,11 @@ export default function GlobalAttendancePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Daily Distribution */}
           <SlideIn delay={0.5}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
+            <div className="bg-[var(--color-surface)]/40  p-8 rounded-xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">Daily Distribution</h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">Real-time status breakdown</p>
+                  <h2 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">Daily Distribution</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Real-time status breakdown</p>
                 </div>
                 <PieIcon size={20} className="text-[var(--color-primary)]" />
               </div>
@@ -251,8 +252,8 @@ export default function GlobalAttendancePage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-black text-[var(--color-text-primary)] italic">{attendance.length}</span>
-                  <span className="text-[8px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Staff Members</span>
+                  <span className="text-3xl font-bold text-[var(--color-text-primary)] italic">{attendance.length}</span>
+                  <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Staff Members</span>
                 </div>
               </div>
             </div>
@@ -260,11 +261,11 @@ export default function GlobalAttendancePage() {
 
           {/* Monthly Historical Trends */}
           <SlideIn delay={0.6}>
-            <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm transition-colors">
+            <div className="bg-[var(--color-surface)]/40  p-8 rounded-xl border border-[var(--color-border)] shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-[var(--color-text-primary)] tracking-tight">Historical Trends</h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">Monthly presence vs absence</p>
+                  <h2 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">Historical Trends</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Monthly presence vs absence</p>
                 </div>
                 <Activity size={20} className="text-[var(--color-secondary)]" />
               </div>
@@ -290,11 +291,11 @@ export default function GlobalAttendancePage() {
         {/* Attendance Marking Section (Only when location is selected) */}
         {filters.locationId !== 'All' && (
           <SlideIn direction="up">
-            <div className="bg-[var(--color-surface)]/60 backdrop-blur-2xl rounded-3xl border border-[var(--color-border)] overflow-hidden shadow-[var(--shadow-premium)]">
+            <div className="bg-[var(--color-surface)]/60  rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[var(--shadow-premium)]">
               <div className="px-8 py-6 border-b border-[var(--color-border)] flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-black text-[var(--color-text-primary)] tracking-tight">Mark Attendance</h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mt-1">
+                  <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">Mark Attendance</h2>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">
                     Manage presence for {locations.find(l => l._id === filters.locationId)?.name}
                   </p>
                 </div>
@@ -314,7 +315,7 @@ export default function GlobalAttendancePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)]">
+                    <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] border-b border-[var(--color-border)]">
                       <th className="px-8 py-5">Staff Member</th>
                       <th className="px-8 py-5 text-center">Status</th>
                       <th className="px-8 py-5 text-right">Actions</th>
@@ -334,7 +335,7 @@ export default function GlobalAttendancePage() {
                           <tr key={user._id} className="hover:bg-[var(--color-primary)]/[0.02] transition-colors group">
                             <td className="px-8 py-5">
                               <div className="flex items-center">
-                                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center font-black text-[var(--color-primary)] border border-[var(--color-border)] group-hover:scale-105 transition-transform">
+                                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center font-bold text-[var(--color-primary)] border border-[var(--color-border)] group- transition-transform">
                                   {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="ml-4">
@@ -345,11 +346,11 @@ export default function GlobalAttendancePage() {
                             </td>
                             <td className="px-8 py-5">
                               <div className="flex justify-center">
-                                <span className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border shadow-sm ${
-                                  status === 'present' ? 'bg-green-50 text-green-600 border-green-200' :
-                                  status === 'absent' ? 'bg-red-50 text-red-600 border-red-200' :
-                                  status === 'half-day' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                  'bg-gray-50 text-gray-400 border-gray-200'
+                                <span className={`px-4 py-1.5 text-[9px] font-bold uppercase tracking-normal rounded-lg border shadow-sm ${
+                                  status === 'present' ? 'bg-[rgba(var(--color-success-rgb),0.12)] text-[var(--color-success)] border-[var(--color-success)]' :
+                                  status === 'absent' ? 'bg-[rgba(var(--color-danger-rgb),0.12)] text-[var(--color-danger)] border-[var(--color-danger)]' :
+                                  status === 'half-day' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)] border-[var(--color-primary)]' :
+                                  'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border-[var(--color-border)]'
                                 }`}>
                                   {status}
                                 </span>
@@ -368,8 +369,8 @@ export default function GlobalAttendancePage() {
                                     onClick={() => handleMarkAttendance(user._id, btn.id)}
                                     className={`p-2.5 rounded-xl border transition-all ${
                                       status === btn.id 
-                                        ? `bg-${btn.color}-600 text-white border-${btn.color}-600 shadow-lg shadow-${btn.color}-600/20` 
-                                        : `text-${btn.color}-600 bg-${btn.color}-50 hover:bg-${btn.color}-600 hover:text-white border-${btn.color}-100`
+                                        ? `${toneBg(btn.color)} text-[var(--color-on-primary)] border-transparent`
+                                        : `${toneText(btn.color)} ${toneSoft(btn.color)} hover:${toneBg(btn.color)} hover:text-[var(--color-on-primary)] border-[var(--color-border)]`
                                     }`}
                                     title={btn.label}
                                   >
@@ -391,14 +392,14 @@ export default function GlobalAttendancePage() {
 
         {/* Attendance Table */}
         <SlideIn direction="up" delay={0.5}>
-          <div className="bg-[var(--color-surface)]/40 backdrop-blur-2xl rounded-2xl shadow-sm border border-[var(--color-border)] overflow-hidden transition-colors">
+          <div className="bg-[var(--color-surface)]/40  rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden transition-colors">
             <div className="px-6 py-4 border-b border-[var(--color-border)]">
               <h2 className="font-bold text-[var(--color-text-primary)]">Daily Logs</h2>
             </div>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left min-w-[800px]">
                 <thead>
-                  <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+                  <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                     <th className="px-6 py-4">Staff Member</th>
                     <th className="px-6 py-4">Location</th>
                     <th className="px-6 py-4">Status</th>
@@ -437,11 +438,11 @@ export default function GlobalAttendancePage() {
                         </td>
                         <td className="px-6 py-4">
                           {record.status === 'present' ? (
-                            <div className="flex items-center text-[var(--color-success)] font-bold text-xs uppercase tracking-tighter">
+                            <div className="flex items-center text-[var(--color-success)] font-bold text-xs uppercase tracking-tight">
                               <CheckCircle2 size={14} className="mr-1" /> Present
                             </div>
                           ) : (
-                            <div className="flex items-center text-[var(--color-danger)] font-bold text-xs uppercase tracking-tighter">
+                            <div className="flex items-center text-[var(--color-danger)] font-bold text-xs uppercase tracking-tight">
                               <XCircle size={14} className="mr-1" /> Absent
                             </div>
                           )}
@@ -460,22 +461,22 @@ export default function GlobalAttendancePage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)]/40 backdrop-blur-2xl border border-[var(--color-border)] rounded-[2.5rem] mt-10 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+          <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)]/40  border border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
               List Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
               >
                 Next
               </button>

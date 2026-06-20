@@ -63,21 +63,21 @@ export default function AttendancePage() {
     <PageTransition>
       <div className="space-y-8">
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-zinc-800 gap-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)] gap-6">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-100 flex items-center tracking-tight leading-none">
-                <CalendarCheck className="mr-4 text-blue-600" size={36} /> Staff <span className="ml-3 text-blue-600">Attendance</span>
+              <h1 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+                <CalendarCheck className="mr-4 text-[var(--color-primary)]" size={36} /> Staff <span className="ml-3 text-[var(--color-primary)]">Attendance</span>
               </h1>
-              <p className="text-gray-500 dark:text-zinc-500 text-sm mt-2 font-medium">Track staff presence and availability.</p>
+              <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Track staff presence and availability.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                 <input
                   type="text"
                   placeholder="Search Staff..."
-                  className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-blue-500 text-xs font-bold dark:text-zinc-100 outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] text-xs font-bold dark:text-[var(--color-text-primary)] outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -85,13 +85,13 @@ export default function AttendancePage() {
 
               <div
                 onClick={() => dateInputRef.current?.showPicker()}
-                className="flex items-center space-x-3 bg-zinc-900 dark:bg-zinc-800 p-4 rounded-2xl border border-white/5 cursor-pointer hover:bg-black transition-all w-full sm:w-auto"
+                className="flex items-center space-x-3 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-primary-hover)] transition-all w-full sm:w-auto"
               >
-                <Calendar className="text-blue-500" size={20} />
+                <Calendar className="text-[var(--color-primary)]" size={20} />
                 <input
                   ref={dateInputRef}
                   type="date"
-                  className="bg-transparent outline-none text-xs font-black text-white pr-4 cursor-pointer"
+                  className="bg-transparent outline-none text-xs font-bold text-[var(--color-text-primary)] pr-4 cursor-pointer"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   max={new Date().toISOString().split('T')[0]}
@@ -101,17 +101,17 @@ export default function AttendancePage() {
           </div>
         </SlideIn>
 
-        <div className="bg-white dark:bg-zinc-900 shadow-sm rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 overflow-hidden">
+        <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] shadow-sm rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-gray-50/50 dark:bg-zinc-800/50 border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff Details</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Mark Attendance</th>
+                <tr className="bg-[var(--color-surface-soft)]/50 dark:bg-[var(--color-surface)]/50 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
+                  <th className="px-8 py-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Staff Details</th>
+                  <th className="px-8 py-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal text-center">Status</th>
+                  <th className="px-8 py-6 text-right text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Mark Attendance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+              <tbody className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]">
                 {loading && staff.length === 0 ? (
                   [1, 2, 3, 4].map(i => (
                     <tr key={i}>
@@ -123,7 +123,7 @@ export default function AttendancePage() {
                     <td colSpan="3" className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <UserX size={48} className="mb-4" />
-                        <p className="font-black text-xs uppercase tracking-widest">No staff found</p>
+                        <p className="font-bold text-xs uppercase tracking-normal">No staff found</p>
                       </div>
                     </td>
                   </tr>
@@ -134,16 +134,16 @@ export default function AttendancePage() {
                       <tr
                         key={user._id}
                         onClick={() => setViewingStaff(user)}
-                        className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors group cursor-pointer"
+                        className="hover:bg-[var(--color-surface-soft)]/50 dark:hover:bg-[var(--color-surface)]/30 transition-colors group cursor-pointer"
                       >
                         <td className="px-8 py-6">
                           <div className="flex items-center">
-                            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center font-black text-blue-600 border border-blue-200/20">
+                            <div className="h-12 w-12 rounded-xl bg-[var(--color-primary-soft)] flex items-center justify-center font-bold text-[var(--color-primary)] border border-[var(--color-primary)]/20">
                               {user.name.charAt(0)}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-black text-gray-900 dark:text-zinc-100 tracking-tight">{user.name}</div>
-                              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{user.email}</div>
+                              <div className="text-sm font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">{user.name}</div>
+                              <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{user.email}</div>
                             </div>
                           </div>
                         </td>
@@ -154,10 +154,10 @@ export default function AttendancePage() {
                                 key={status}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className={`px-5 py-2 inline-flex text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border shadow-sm ${status === 'present' ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:border-green-500/20' :
-                                  status === 'absent' ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:border-red-500/20' :
-                                    status === 'half-day' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20' :
-                                      'bg-gray-100 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'
+                                className={`px-5 py-2 inline-flex text-[10px] font-bold uppercase tracking-normal rounded-xl border shadow-sm ${status === 'present' ? 'bg-[rgba(var(--color-success-rgb),0.12)] text-[var(--color-success)] border-[var(--color-success)] dark:bg-[var(--color-success)]/10 dark:border-[var(--color-success)]/20' :
+                                  status === 'absent' ? 'bg-[rgba(var(--color-danger-rgb),0.12)] text-[var(--color-danger)] border-[var(--color-danger)] dark:bg-[var(--color-danger)]/10 dark:border-[var(--color-danger)]/20' :
+                                    status === 'half-day' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)] border-[var(--color-primary)] dark:bg-[var(--color-primary)]/10 dark:border-[var(--color-primary)]/20' :
+                                      'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:border-[var(--color-border)]'
                                   }`}
                               >
                                 {status}
@@ -168,16 +168,16 @@ export default function AttendancePage() {
                         <td className="px-8 py-6 text-right">
                           <div className="flex justify-end space-x-3">
                             {[
-                              { id: 'present', icon: CheckCircle2, label: 'Present', active: 'bg-green-600 text-white border-green-600', inactive: 'text-green-600 bg-green-50 dark:bg-green-500/5 hover:bg-green-600 hover:text-white' },
-                              { id: 'half-day', icon: Clock, label: 'Half', active: 'bg-blue-500 text-white border-blue-500', inactive: 'text-blue-600 bg-blue-50 dark:bg-blue-500/5 hover:bg-blue-500 hover:text-white' },
-                              { id: 'absent', icon: XCircle, label: 'Absent', active: 'bg-red-600 text-white border-red-600', inactive: 'text-red-600 bg-red-50 dark:bg-red-500/5 hover:bg-red-600 hover:text-white' },
+                              { id: 'present', icon: CheckCircle2, label: 'Present', active: 'bg-[var(--color-success)] text-white border-[var(--color-success)]', inactive: 'text-[var(--color-success)] bg-[rgba(var(--color-success-rgb),0.12)] hover:bg-[var(--color-success)] hover:text-white' },
+                              { id: 'half-day', icon: Clock, label: 'Half', active: 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]', inactive: 'text-[var(--color-primary)] bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)] hover:text-white' },
+                              { id: 'absent', icon: XCircle, label: 'Absent', active: 'bg-[var(--color-danger)] text-white border-[var(--color-danger)]', inactive: 'text-[var(--color-danger)] bg-[rgba(var(--color-danger-rgb),0.12)] hover:bg-[var(--color-danger)] hover:text-white' },
                             ].map(btn => (
                               <motion.button
                                 key={btn.id}
                                 whileHover={{ y: -2 }}
                                 whileTap={{ y: 0 }}
                                 onClick={(e) => { e.stopPropagation(); handleMarkAttendance(user._id, btn.id); }}
-                                className={`flex items-center px-5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest border transition-all shadow-sm ${status === btn.id ? btn.active : btn.inactive}`}
+                                className={`flex items-center px-5 py-3 rounded-xl text-[9px] font-bold uppercase tracking-normal border transition-all shadow-sm ${status === btn.id ? btn.active : btn.inactive}`}
                               >
                                 <btn.icon size={14} className="mr-2" />
                                 <span className="hidden lg:inline">{btn.label}</span>
@@ -204,83 +204,83 @@ export default function AttendancePage() {
       >
         {viewingStaff && (
           <div className="space-y-8">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
               <div className="relative group">
-                <div className="h-32 w-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  group- transition-transform">
                   {viewingStaff.name.charAt(0)}
                 </div>
-                <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-green-500 border-4 border-white dark:border-zinc-950 rounded-full flex items-center justify-center text-white">
+                <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-[var(--color-success)] border-4 border-[var(--color-border)] dark:border-[var(--color-border)] rounded-full flex items-center justify-center text-white">
                   <UserCheck size={14} />
                 </div>
               </div>
 
               <div className="text-center md:text-left flex-1">
-                <h2 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter leading-none">{viewingStaff.name}</h2>
-                <p className="text-sm font-bold text-zinc-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                  <Mail size={14} className="text-blue-600" /> {viewingStaff.email}
+                <h2 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight leading-none">{viewingStaff.name}</h2>
+                <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2 flex items-center justify-center md:justify-start gap-2">
+                  <Mail size={14} className="text-[var(--color-primary)]" /> {viewingStaff.email}
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                  <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-500/20">
+                  <span className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20">
                     {viewingStaff.role}
                   </span>
-                  <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+                  <span className="px-3 py-1 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal rounded-full">
                     ID: {viewingStaff._id.slice(-6).toUpperCase()}
                   </span>
-                  <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+                  <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
                     Active
                   </span>
                 </div>
               </div>
 
-              <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 text-right min-w-[180px]">
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Monthly Salary</p>
-                <p className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+              <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] text-right min-w-[180px]">
+                <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Salary</p>
+                <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <CreditCard size={14} className="text-blue-600" /> Staff Details
+                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                    <CreditCard size={14} className="text-[var(--color-primary)]" /> Staff Details
                   </h3>
                   <div className="grid grid-cols-1 gap-6">
-                    <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Hash className="text-blue-600" size={20} />
+                    <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <Hash className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Aadhar Number</p>
-                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.aadharNumber || 'Not Provided'}</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Number</p>
+                        <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not Provided'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Phone className="text-blue-600" size={20} />
+                    <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <Phone className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Primary Contact</p>
-                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.phone}</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Primary Contact</p>
+                        <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.phone}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <Award className="text-blue-600" size={20} />
+                    <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <Award className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">Highest Qualification</p>
-                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{viewingStaff.highestQualification}</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Highest Qualification</p>
+                        <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.highestQualification}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Globe size={14} className="text-blue-600" /> Staff Information
+                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                    <Globe size={14} className="text-[var(--color-primary)]" /> Staff Information
                   </h3>
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Age</p>
-                      <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.age} Years</p>
+                    <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Age</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.age} Years</p>
                     </div>
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[8px] font-black uppercase text-zinc-400 tracking-widest mb-1">Gender</p>
-                      <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">{viewingStaff.gender}</p>
+                    <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Gender</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.gender}</p>
                     </div>
                   </div>
                 </div>
@@ -288,11 +288,11 @@ export default function AttendancePage() {
 
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <MapPin size={14} className="text-blue-600" /> Address
+                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                    <MapPin size={14} className="text-[var(--color-primary)]" /> Address
                   </h3>
-                  <div className="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                  <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                    <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] leading-relaxed">
                       {viewingStaff.address1}<br />
                       {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
                       {viewingStaff.city}, {viewingStaff.state}
@@ -301,40 +301,40 @@ export default function AttendancePage() {
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 flex items-center gap-2">
-                    <Info size={14} className="text-blue-600" /> Aadhar Card
+                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+                    <Info size={14} className="text-[var(--color-primary)]" /> Aadhar Card
                   </h3>
                   {viewingStaff.aadharImage ? (
-                    <div className="group relative rounded-[2.5rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 aspect-video">
+                    <div className="group relative rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] aspect-video">
                       <img
                         src={viewingStaff.aadharImage}
                         alt="Aadhar Card"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="w-full h-full object-cover group- transition-transform duration-700"
                       />
                       <a
                         href={viewingStaff.aadharImage}
                         target="_blank"
                         rel="noreferrer"
-                        className="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                       >
-                        <Globe size={24} className="text-blue-500" />
-                        <span className="font-black text-[10px] uppercase tracking-widest">View Full Image</span>
+                        <Globe size={24} className="text-[var(--color-primary)]" />
+                        <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
                       </a>
                     </div>
                   ) : (
-                    <div className="rounded-[2.5rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center justify-center text-zinc-400 aspect-video">
+                    <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] p-10 flex flex-col items-center justify-center text-[var(--color-text-muted)] aspect-video">
                       <ShieldAlert size={32} className="mb-2 opacity-20" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-center">Aadhar Scan Missing</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-center">Aadhar Scan Missing</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
+            <div className="pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)] flex gap-4">
               <Button
                 variant="outline"
-                className="flex-1 py-5 !rounded-2xl font-black text-xs uppercase tracking-widest"
+                className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
                 onClick={() => setViewingStaff(null)}
               >
                 Close

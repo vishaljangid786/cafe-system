@@ -19,12 +19,10 @@ export const ActivityTimeline = ({ items }) => {
 
           {/* Icon Container */}
           <div className={`
-            h-10 w-10 rounded-xl shrink-0 flex items-center justify-center z-10 
-            border border-[var(--color-border)] shadow-lg
-            transition-transform duration-300 group-hover:scale-110
-            ${item.type === 'order' ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' :
+            h-10 w-10 rounded-lg shrink-0 flex items-center justify-center z-10
+            ${item.type === 'order' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' :
               item.type === 'system' ? 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]' :
-                'bg-[var(--color-success)]/10 text-[var(--color-success)]'}
+                'bg-[rgba(var(--color-success-rgb),0.12)] text-[var(--color-success)]'}
           `}>
             {item.icon}
           </div>
@@ -32,15 +30,15 @@ export const ActivityTimeline = ({ items }) => {
           {/* Content */}
           <div className="flex flex-col pt-0.5">
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-[var(--color-text-primary)] leading-none group-hover:text-[var(--color-primary)] transition-colors">
+              <h4 className="text-sm font-semibold text-[var(--color-text-primary)] leading-none">
                 {item.title}
               </h4>
-              <span className="h-1 w-1 rounded-full bg-[var(--color-border)]" />
-              <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest">
+              <span className="h-1 w-1 rounded-full bg-[var(--color-border-strong)]" />
+              <span className="text-xs text-[var(--color-text-muted)]">
                 {item.time}
               </span>
             </div>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-2 font-medium leading-relaxed max-w-[240px]">
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1.5 leading-relaxed max-w-[240px]">
               {item.description}
             </p>
           </div>

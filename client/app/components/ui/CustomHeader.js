@@ -25,28 +25,28 @@ export default function CustomHeader({
 
   return (
     <SlideIn direction="down">
-      <div className="bg-[var(--color-surface)] p-6 md:p-8 rounded-[2.5rem] border border-[var(--color-border)] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative overflow-hidden group">
-        <div className="flex items-center gap-4 relative z-10">
-          <button 
+      <div className="bg-[var(--color-surface)] p-5 md:p-6 rounded-xl border border-[var(--color-border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6">
+        <div className="flex items-center gap-3">
+          <button
             onClick={handleBack}
-            className="p-3 rounded-2xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] transition-all shadow-sm flex items-center justify-center"
+            className="p-2.5 rounded-lg bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors flex items-center justify-center"
             title="Go Back"
           >
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
-          
+
           {Icon && (
-            <div className="p-3.5 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner flex items-center justify-center">
-              <Icon size={24} strokeWidth={2.5} />
+            <div className="p-3 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center">
+              <Icon size={22} strokeWidth={2.5} />
             </div>
           )}
-          
+
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--color-text-primary)] flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-2">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-medium mt-1">
+              <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
                 {subtitle}
               </p>
             )}
@@ -54,13 +54,10 @@ export default function CustomHeader({
         </div>
 
         {rightElement && (
-          <div className="relative z-10 flex items-center gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-3 w-full md:w-auto">
             {rightElement}
           </div>
         )}
-
-        {/* Premium ambient glow */}
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[var(--color-primary)]/5 to-transparent pointer-events-none" />
       </div>
     </SlideIn>
   );

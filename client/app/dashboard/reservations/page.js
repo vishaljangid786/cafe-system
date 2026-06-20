@@ -117,7 +117,7 @@ export default function ReservationsPage() {
               setSelectedReservation(null);
               setIsFormOpen(true);
             }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white font-bold rounded-xl transition-all shadow-lg shadow-[var(--color-primary)]/20"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white font-bold rounded-xl transition-all shadow-lg "
           >
             <Plus size={20} />
             New Reservation
@@ -133,7 +133,7 @@ export default function ReservationsPage() {
           { label: 'Pending Requests', value: reservations.filter(r => r.status === 'pending').length, icon: AlertCircle, color: 'var(--color-primary)' },
           { label: 'Cancelled', value: reservations.filter(r => r.status === 'cancelled').length, icon: XCircle, color: 'var(--color-danger)' },
         ].map((stat, i) => (
-          <div key={i} className="glass-card p-4 rounded-2xl border border-[var(--color-border)]">
+          <div key={i} className="glass-card p-4 rounded-xl border border-[var(--color-border)]">
             <div className="flex items-center justify-between">
               <div className="p-2 rounded-lg" style={{ backgroundColor: `${stat.color}1a`, color: stat.color }}>
                 <stat.icon size={20} />
@@ -146,14 +146,14 @@ export default function ReservationsPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="glass-morphism p-6 rounded-[2rem] border border-[var(--color-border)] shadow-sm">
+      <div className="glass-morphism p-6 rounded-xl border border-[var(--color-border)] shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           <div className="md:col-span-5 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
             <input 
               type="text" 
               placeholder="Search by event, customer or phone..."
-              className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -186,7 +186,7 @@ export default function ReservationsPage() {
           <div className="md:col-span-2">
             <input 
               type="date"
-              className="w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
+              className="w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
               value={filters.date}
               onChange={(e) => setFilters({...filters, date: e.target.value})}
             />
@@ -195,7 +195,7 @@ export default function ReservationsPage() {
       </div>
 
       {/* Main Content Table */}
-      <div className="glass-morphism rounded-2xl border border-[var(--color-border)] overflow-hidden">
+      <div className="glass-morphism rounded-xl border border-[var(--color-border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -235,7 +235,7 @@ export default function ReservationsPage() {
                     <td className="px-6 py-4">
                       <div className="font-bold text-[var(--color-text-primary)]">{res.eventName}</div>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${res.reservationType === 'full-location' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${res.reservationType === 'full-location' ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'}`}>
                           {res.reservationType === 'full-location' ? 'Full Location' : 'Table Booking'}
                         </span>
                         {res.reservationType === 'table' && (
@@ -267,7 +267,7 @@ export default function ReservationsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-bold">${res.totalAmount}</div>
-                      <span className={`text-[10px] font-bold uppercase tracking-tight ${res.paymentStatus === 'paid' ? 'text-emerald-500' : res.paymentStatus === 'partial' ? 'text-blue-500' : 'text-zinc-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-tight ${res.paymentStatus === 'paid' ? 'text-[var(--color-success)]' : res.paymentStatus === 'partial' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
                         {res.paymentStatus}
                       </span>
                     </td>
@@ -291,21 +291,21 @@ export default function ReservationsPage() {
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface-soft)] border-t border-[var(--color-border)]">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+            <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
+                className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)]"
               >
                 Next
               </button>

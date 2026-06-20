@@ -108,14 +108,11 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   if (!user) return null;
 
   return (
-    <header className={`h-20 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[200] sticky top-0 transition-all duration-300 ${isScrolled
-      ? 'glass bg-[var(--color-bg)]/60 backdrop-blur-xl border-b border-[var(--color-border)] shadow-[var(--shadow-premium)]'
-      : 'bg-transparent border-b border-transparent'
-      }`}>
+    <header className={`h-16 px-3 gap-2 sm:px-4 md:px-8 flex items-center justify-between z-[200] sticky top-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-shadow duration-300 ${isScrolled ? 'shadow-[var(--shadow-sm)]' : ''}`}>
       <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={onToggleSidebar}
-          className="p-2 text-[var(--color-text-muted)] hover:text-primary hover:bg-[var(--color-bg-soft)] transition-all rounded-xl border border-transparent hover:border-[var(--color-border)]"
+          className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-soft)] transition-colors rounded-lg"
         >
           {isMobile ? (
             <Menu size={20} />
@@ -125,22 +122,22 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         </button>
 
         {!isMobile && (
-          <button 
-            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { 
-              key: 'k', 
-              ctrlKey: true, 
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', {
+              key: 'k',
+              ctrlKey: true,
               metaKey: true,
-              bubbles: true 
+              bubbles: true
              }))}
-            className="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:border-primary/50 transition-all text-[var(--color-text-muted)] group min-w-[280px] shadow-sm backdrop-blur-sm"
+            className="hidden lg:flex items-center gap-3 px-3.5 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] transition-colors text-[var(--color-text-muted)] group min-w-[280px]"
           >
-            <Search size={16} className="group-hover:text-primary transition-colors" />
-            <span className="text-[11px] font-bold">Search system or switch user...</span>
+            <Search size={16} className="group-hover:text-[var(--color-text-primary)] transition-colors" />
+            <span className="text-sm">Search or switch user...</span>
             <div className="ml-auto flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[10px] font-black text-[var(--color-text-muted)]">
+              <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-medium text-[var(--color-text-muted)]">
                 {modifierKey}
               </span>
-              <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[10px] font-black text-[var(--color-text-muted)]">K</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-medium text-[var(--color-text-muted)]">K</span>
             </div>
           </button>
         )}
@@ -158,10 +155,10 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                     setPendingIds(selectedLocationIds);
                     setShowBranchPanel(v => !v);
                   }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:border-primary/50 transition-all text-sm font-bold text-[var(--color-text-primary)] min-w-[200px] shadow-sm backdrop-blur-sm"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] transition-colors text-sm font-medium text-[var(--color-text-primary)] min-w-[200px]"
                 >
                   <MapPin size={15} className="text-[var(--color-primary)] shrink-0" />
-                  <span className="flex-1 text-left truncate text-[11px] font-black uppercase tracking-wider">{multiBranchLabel}</span>
+                  <span className="flex-1 text-left truncate text-sm font-medium">{multiBranchLabel}</span>
                   <ChevronDown size={14} className={`text-[var(--color-text-muted)] transition-transform ${showBranchPanel ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -172,12 +169,12 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -6, scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-[300] overflow-hidden"
+                      className="absolute right-0 top-full mt-2 w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-[var(--shadow-md)] z-[300] overflow-hidden"
                     >
                       <div className="p-2 border-b border-[var(--color-border)]">
                         <button
                           onClick={() => setPendingIds([])}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${pendingIds.length === 0 ? 'bg-[var(--color-primary)] text-white' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pendingIds.length === 0 ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
                         >
                           <Check size={13} className={pendingIds.length === 0 ? 'opacity-100' : 'opacity-0'} />
                           All Branches
@@ -193,10 +190,10 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                               onClick={() => setPendingIds(prev =>
                                 checked ? prev.filter(x => x !== id) : [...prev, id]
                               )}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all ${checked ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${checked ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
                             >
-                              <span className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-[var(--color-border)]'}`}>
-                                {checked && <Check size={10} className="text-white" strokeWidth={3} />}
+                              <span className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-[var(--color-border-strong)]'}`}>
+                                {checked && <Check size={10} className="text-[var(--color-on-primary)]" strokeWidth={3} />}
                               </span>
                               <span className="truncate">{branch.city && branch.name ? `${branch.city} — ${branch.name}` : branch.name || branch.city}</span>
                             </button>
@@ -209,7 +206,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                             switchLocationIds(pendingIds);
                             setShowBranchPanel(false);
                           }}
-                          className="w-full py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+                          className="w-full py-2 rounded-lg bg-[var(--color-primary)] text-[var(--color-on-primary)] text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-colors"
                         >
                           Apply
                         </button>
@@ -238,30 +235,28 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         )}
 
         {/* Action Controls */}
-        <div className="relative flex items-center gap-2 bg-[var(--color-bg-soft)]/50 p-1.5 rounded-2xl border border-[var(--color-border)] shadow-inner backdrop-blur-sm">
+        <div className="relative flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm"
+            className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors rounded-lg hover:bg-[var(--color-surface-soft)]"
             title="Toggle Theme"
           >
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
           <button
             onClick={() => window.location.reload()}
-            className="p-2.5 text-[var(--color-text-muted)] hover:text-primary transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm group"
+            className="p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors rounded-lg hover:bg-[var(--color-surface-soft)] group"
             title="Refresh Page"
           >
             <RefreshCw size={18} className="group-active:rotate-180 transition-transform duration-500" />
           </button>
-          <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`p-2.5 relative transition-all rounded-xl hover:bg-[var(--color-bg)] hover:shadow-sm ${showNotifications ? 'text-primary bg-[var(--color-bg)] shadow-sm' : 'text-[var(--color-text-muted)]'}`}
+            className={`p-2.5 relative transition-colors rounded-lg hover:bg-[var(--color-surface-soft)] ${showNotifications ? 'text-[var(--color-primary)] bg-[var(--color-surface-soft)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--color-bg)] animate-pulse" />
+              <span className="absolute top-2 right-2 h-2 w-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--color-bg)]" />
             )}
           </button>
 
@@ -269,28 +264,26 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         </div>
 
         {/* User Identity Section */}
-        <div className="flex items-center gap-4 pl-4 border-l border-[var(--color-border)]">
+        <div className="flex items-center gap-3 pl-3 border-l border-[var(--color-border)]">
           <div className="hidden sm:flex flex-col items-end leading-none">
-            <span className="text-xs font-black text-[var(--color-text-primary)]">{user.name}</span>
-            <span className="text-[9px] font-black text-[var(--color-success)] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
-              <span className="h-1 w-1 bg-[var(--color-success)] rounded-full animate-ping" /> Active Staff
+            <span className="text-sm font-semibold text-[var(--color-text-primary)]">{user.name}</span>
+            <span className="text-[11px] text-[var(--color-text-muted)] mt-1 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 bg-[var(--color-success)] rounded-full" /> Active
             </span>
           </div>
           <Link
             href="/dashboard/profile"
-            className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-[1.5px] group cursor-pointer shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95 overflow-hidden"
+            className="h-10 w-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-primary)] group cursor-pointer hover:border-[var(--color-border-strong)] transition-colors active:scale-95 overflow-hidden"
           >
-            <div className="h-full w-full rounded-[0.9rem] bg-[var(--color-bg)] flex items-center justify-center text-primary overflow-hidden">
-              {user.profileImageUrl ? (
-                <img
-                  src={user.profileImageUrl}
-                  alt={user.name}
-                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              ) : (
-                <UserIcon size={20} />
-              )}
-            </div>
+            {user.profileImageUrl ? (
+              <img
+                src={user.profileImageUrl}
+                alt={user.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserIcon size={20} />
+            )}
           </Link>
         </div>
       </div>

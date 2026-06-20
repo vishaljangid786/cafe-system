@@ -199,7 +199,7 @@ export default function CouponsManagementPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-3xl font-black text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
+            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
               <Tag className="mr-4 text-[var(--color-primary)]" size={36} strokeWidth={2.5} /> Coupon <span className="ml-3 text-[var(--color-primary)]">Management</span>
             </h1>
             <p className="text-[var(--color-text-secondary)] text-sm mt-3 font-medium flex items-center">
@@ -216,7 +216,7 @@ export default function CouponsManagementPage() {
               setAppliesToType('full_order');
               setShowCouponModal(true);
             }}
-            className="!py-3.5 !px-6 !rounded-2xl shadow-xl shadow-[var(--color-primary)]/20 text-xs font-black uppercase tracking-widest bg-[var(--color-primary)] text-[var(--color-bg-base)] hover-scale active:scale-95"
+            className="!py-3.5 !px-6 !rounded-xl shadow-sm  text-xs font-bold uppercase tracking-normal bg-[var(--color-primary)] text-[var(--color-bg-base)] hover-scale active:scale-95"
           >
             Create Coupon
           </Button>
@@ -226,31 +226,31 @@ export default function CouponsManagementPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="!p-6 bg-[var(--color-surface)]/40 border-[var(--color-border)] shadow-sm transition-colors">
             <div className="flex justify-between items-start">
-              <div className="p-3 bg-[var(--color-primary)]/10 rounded-2xl text-[var(--color-primary)]"><Ticket size={24} /></div>
-              <span className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest">Active Coupons</span>
+              <div className="p-3 bg-[var(--color-primary)]/10 rounded-xl text-[var(--color-primary)]"><Ticket size={24} /></div>
+              <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Active Coupons</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-3xl font-black text-[var(--color-text-primary)]">{coupons.filter(c => c.isActive).length}</h4>
+              <h4 className="text-3xl font-bold text-[var(--color-text-primary)]">{coupons.filter(c => c.isActive).length}</h4>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium">Coupons Live</p>
             </div>
           </Card>
           <Card className="!p-6 bg-[var(--color-surface)]/40 border-[var(--color-border)] shadow-sm transition-colors">
             <div className="flex justify-between items-start">
-              <div className="p-3 bg-[var(--color-secondary)]/10 rounded-2xl text-[var(--color-secondary)]"><BarChart3 size={24} /></div>
-              <span className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest">Redemptions</span>
+              <div className="p-3 bg-[var(--color-secondary)]/10 rounded-xl text-[var(--color-secondary)]"><BarChart3 size={24} /></div>
+              <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Redemptions</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-3xl font-black text-[var(--color-text-primary)]">{totalUsage}</h4>
+              <h4 className="text-3xl font-bold text-[var(--color-text-primary)]">{totalUsage}</h4>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium">Total Redemptions</p>
             </div>
           </Card>
           <Card className="!p-6 bg-[var(--color-surface)]/40 border-[var(--color-border)] shadow-sm transition-colors">
             <div className="flex justify-between items-start">
-              <div className="p-3 bg-[var(--color-success)]/10 rounded-2xl text-[var(--color-success)]"><Zap size={24} /></div>
-              <span className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest">Trending</span>
+              <div className="p-3 bg-[var(--color-success)]/10 rounded-xl text-[var(--color-success)]"><Zap size={24} /></div>
+              <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Trending</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-3xl font-black text-[var(--color-text-primary)] uppercase tracking-tighter">
+              <h4 className="text-3xl font-bold text-[var(--color-text-primary)] uppercase tracking-tight">
                 {coupons.sort((a, b) => (b.usedCount || 0) - (a.usedCount || 0))[0]?.code || 'N/A'}
               </h4>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium">Top Performing Coupon</p>
@@ -258,18 +258,18 @@ export default function CouponsManagementPage() {
           </Card>
           <Card className="!p-6 bg-[var(--color-surface)]/40 border-[var(--color-border)] shadow-sm transition-colors">
             <div className="flex justify-between items-start">
-              <div className="p-3 bg-[var(--color-danger)]/10 rounded-2xl text-[var(--color-danger)]"><Clock size={24} /></div>
-              <span className="text-[10px] font-black uppercase text-[var(--color-text-muted)] tracking-widest">Expiring</span>
+              <div className="p-3 bg-[var(--color-danger)]/10 rounded-xl text-[var(--color-danger)]"><Clock size={24} /></div>
+              <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Expiring</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-3xl font-black text-[var(--color-text-primary)]">{expiringSoon}</h4>
+              <h4 className="text-3xl font-bold text-[var(--color-text-primary)]">{expiringSoon}</h4>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium">Expiring within 7 days</p>
             </div>
           </Card>
         </div>
 
         {/* Search & Filter System Rule */}
-        <div className="bg-[var(--color-surface)]/60 backdrop-blur-xl p-4 rounded-[2rem] border border-[var(--color-border)] flex flex-col md:flex-row gap-4 shadow-sm">
+        <div className="bg-[var(--color-surface)]/60  p-4 rounded-xl border border-[var(--color-border)] flex flex-col md:flex-row gap-4 shadow-sm">
           <div className="relative flex-1">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
             <input
@@ -296,16 +296,16 @@ export default function CouponsManagementPage() {
           </div>
         </div>
 
-        <div className="bg-[var(--color-surface)]/30 rounded-[2.5rem] border border-[var(--color-border)] overflow-hidden shadow-sm transition-colors">
+        <div className="bg-[var(--color-surface)]/30 rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm transition-colors">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[var(--color-surface-soft)] border-b border-[var(--color-border)]">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Coupon Code</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Discount</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Usage</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Validity</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-right">Actions</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Coupon Code</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Discount</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Usage</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Validity</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</th>
+                <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-[var(--color-border)]">
@@ -322,7 +322,7 @@ export default function CouponsManagementPage() {
                       <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                         <Tag size={16} />
                       </div>
-                      <span className="text-sm font-black tracking-widest text-[var(--color-text-primary)]">{coupon.code}</span>
+                      <span className="text-sm font-bold tracking-normal text-[var(--color-text-primary)]">{coupon.code}</span>
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -339,7 +339,7 @@ export default function CouponsManagementPage() {
                           style={{ width: `${coupon.usageLimit ? Math.min(100, (coupon.usedCount / coupon.usageLimit) * 100) : 100}%` }}
                         />
                       </div>
-                      <span className="text-xs font-black text-[var(--color-text-primary)]">{coupon.usedCount} / {coupon.usageLimit || '∞'}</span>
+                      <span className="text-xs font-bold text-[var(--color-text-primary)]">{coupon.usedCount} / {coupon.usageLimit || '∞'}</span>
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -349,7 +349,7 @@ export default function CouponsManagementPage() {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-fit ${coupon.isActive ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal flex items-center gap-1.5 w-fit ${coupon.isActive ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}>
                       {coupon.isActive ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
                       {coupon.isActive ? 'Active' : 'Inactive'}
                     </span>
@@ -364,7 +364,7 @@ export default function CouponsManagementPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(coupon._id)}
-                        className="p-2.5 rounded-xl bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)] text-[var(--color-danger)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
+                        className="p-2.5 rounded-xl bg-[var(--color-danger)]/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-[var(--color-danger)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -378,21 +378,21 @@ export default function CouponsManagementPage() {
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface-soft)] border-t border-[var(--color-border)]">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                 System Rule Page {currentPage} of {totalPages}
               </p>
               <div className="flex gap-2">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
+                  className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
                 >
                   Prev Branch
                 </button>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
+                  className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
                 >
                   Next Branch
                 </button>
@@ -419,12 +419,12 @@ export default function CouponsManagementPage() {
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                       <Ticket size={18} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Details & Amount</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Details & Amount</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Coupon Code</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Coupon Code</label>
                       <div className="relative group">
                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
                         <input
@@ -432,15 +432,15 @@ export default function CouponsManagementPage() {
                           name="code"
                           defaultValue={editingCoupon?.code}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-5 py-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-black uppercase tracking-widest"
+                          className="w-full pl-12 pr-5 py-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-bold uppercase tracking-normal"
                           placeholder="e.g. SUMMER50"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Discount Magnitude</label>
-                      <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-2xl border border-[var(--color-border)] gap-4">
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Discount Magnitude</label>
+                      <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)] gap-4">
                         <div className="relative flex-1">
                           <input
                             required
@@ -448,7 +448,7 @@ export default function CouponsManagementPage() {
                             type="number"
                             defaultValue={editingCoupon?.discountValue}
                             onChange={handleInputChange}
-                            className="w-full pl-4 pr-4 py-3 bg-transparent text-[var(--color-text-primary)] outline-none font-black text-lg"
+                            className="w-full pl-4 pr-4 py-3 bg-transparent text-[var(--color-text-primary)] outline-none font-bold text-lg"
                             placeholder="0"
                           />
                         </div>
@@ -475,24 +475,24 @@ export default function CouponsManagementPage() {
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-secondary)]/10 flex items-center justify-center text-[var(--color-secondary)]">
                       <DollarSign size={18} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Fiscal Constraints</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Fiscal Constraints</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Minimum Order Value</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Minimum Order Value</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
                         <input
                           name="minOrderAmount"
                           type="number"
                           defaultValue={editingCoupon?.minOrderAmount || 0}
-                          className="w-full pl-10 pr-5 py-4 bg-[var(--color-bg-base)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/20 font-bold"
+                          className="w-full pl-10 pr-5 py-4 bg-[var(--color-bg-base)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/20 font-bold"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Maximum Discount Cap</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Maximum Discount Cap</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
                         <input
@@ -500,7 +500,7 @@ export default function CouponsManagementPage() {
                           type="number"
                           defaultValue={editingCoupon?.maxDiscount}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-5 py-4 bg-[var(--color-bg-base)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/20 font-bold"
+                          className="w-full pl-10 pr-5 py-4 bg-[var(--color-bg-base)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-secondary)]/20 font-bold"
                           placeholder="No Cap"
                         />
                       </div>
@@ -514,12 +514,12 @@ export default function CouponsManagementPage() {
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
                       <Clock size={18} />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Temporal & Volume Limits</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Temporal & Volume Limits</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Expiry Horizon</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Expiry Horizon</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                         <input
@@ -527,19 +527,19 @@ export default function CouponsManagementPage() {
                           name="expiryDate"
                           type="date"
                           defaultValue={editingCoupon?.expiryDate ? new Date(editingCoupon.expiryDate).toISOString().split('T')[0] : ''}
-                          className="w-full pl-12 pr-5 py-4 bg-[var(--color-bg-base)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-danger)]/20 font-bold"
+                          className="w-full pl-12 pr-5 py-4 bg-[var(--color-bg-base)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-danger)]/20 font-bold"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Total Redemption Limit</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Total Redemption Limit</label>
                       <div className="relative">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                          <input
                           name="usageLimit"
                           type="number"
                           defaultValue={editingCoupon?.usageLimit}
-                          className="w-full pl-12 pr-5 py-4 bg-[var(--color-bg-base)] rounded-2xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-danger)]/20 font-bold"
+                          className="w-full pl-12 pr-5 py-4 bg-[var(--color-bg-base)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-danger)]/20 font-bold"
                           placeholder="Infinite"
                         />
                       </div>
@@ -553,41 +553,41 @@ export default function CouponsManagementPage() {
 
                 {/* Live Identity Card */}
                  <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Live Preview</h4>
-                  <div className="relative h-64 rounded-[3rem] bg-gradient-to-br from-[var(--color-bg-deep)] to-[var(--color-bg-base)] p-8 flex flex-col justify-between overflow-hidden shadow-2xl border border-[var(--color-bg-base)]/10 group">
+                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Live Preview</h4>
+                  <div className="relative h-64 rounded-xl bg-gradient-to-br from-[var(--color-bg-deep)] to-[var(--color-bg-base)] p-8 flex flex-col justify-between overflow-hidden shadow-sm border border-[var(--color-bg-base)]/10 group">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_70%)]" />
-                    <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">
+                    <div className="absolute top-0 right-0 p-8 opacity-20 group- transition-transform duration-700">
                       <Ticket size={120} strokeWidth={1} />
                     </div>
 
                     <div className="relative">
                       <div className="flex items-center gap-3 mb-6">
-                        <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/30">
+                        <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/30">
                           <Zap size={20} />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-primary)]">Active Branch</span>
+                        <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)]">Active Branch</span>
                       </div>
-                      <h2 className="text-4xl font-black text-[var(--color-text-primary)] tracking-tighter italic">
+                      <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight italic">
                         {previewData.code || (editingCoupon?.code || 'WELCOME50')}
                       </h2>
                     </div>
 
                     <div className="relative flex justify-between items-end">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Benefit Magnitude</p>
-                        <p className="text-2xl font-black text-[var(--color-text-primary)]">
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Benefit Magnitude</p>
+                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                           {previewData.discountType === 'fixed' ? '₹' : ''}
                           {previewData.discountValue || (editingCoupon?.discountValue || '0')}
                           {previewData.discountType === 'percentage' ? '%' : ''}
                           <span className="text-xs text-[var(--color-text-muted)] font-bold ml-2">OFF</span>
                         </p>
                         {previewData.maxDiscount > 0 && (
-                          <p className="text-[8px] font-black text-[var(--color-primary)]/50 uppercase tracking-widest mt-1">
+                          <p className="text-[8px] font-bold text-[var(--color-primary)]/50 uppercase tracking-normal mt-1">
                             Capped at ₹{previewData.maxDiscount}
                           </p>
                         )}
                       </div>
-                      <div className="h-14 w-14 rounded-2xl border border-[var(--color-bg-base)]/10 flex items-center justify-center text-[var(--color-text-muted)]">
+                      <div className="h-14 w-14 rounded-xl border border-[var(--color-bg-base)]/10 flex items-center justify-center text-[var(--color-text-muted)]">
                         <ArrowRight size={24} />
                       </div>
                     </div>
@@ -596,8 +596,8 @@ export default function CouponsManagementPage() {
 
                 {/* Applicability System Rule */}
                  <div className="space-y-6">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-success)]">Applicability System Rule</h4>
-                  <div className="flex p-1.5 bg-[var(--color-surface-soft)] rounded-2xl border border-[var(--color-border)]">
+                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">Applicability System Rule</h4>
+                  <div className="flex p-1.5 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
                     {[
                       { id: 'full_order', label: 'Entire Order', icon: Layers },
                       { id: 'items', label: 'Specific Items', icon: Package },
@@ -607,7 +607,7 @@ export default function CouponsManagementPage() {
                          key={type.id}
                         type="button"
                         onClick={() => setAppliesToType(type.id)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${appliesToType === type.id ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-base)] shadow-xl' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${appliesToType === type.id ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-base)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
                       >
                         <type.icon size={16} />
                         {type.label}
@@ -641,7 +641,7 @@ export default function CouponsManagementPage() {
                           {selectedItems.map(itemId => {
                             const item = menuItems.find(i => i._id === itemId);
                             return (
-                              <span key={itemId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-black flex items-center gap-2 border border-[var(--color-primary)]/20">
+                              <span key={itemId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-bold flex items-center gap-2 border border-[var(--color-primary)]/20">
                                 {item?.name}
                                 <button type="button" onClick={() => setSelectedItems(selectedItems.filter(id => id !== itemId))}>
                                   <X size={12} />
@@ -676,7 +676,7 @@ export default function CouponsManagementPage() {
                           {selectedCategories.map(catId => {
                             const cat = categories.find(c => c._id === catId);
                             return (
-                              <span key={catId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-black flex items-center gap-2 border border-[var(--color-primary)]/20">
+                              <span key={catId} className="px-3 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-[10px] font-bold flex items-center gap-2 border border-[var(--color-primary)]/20">
                                 {cat?.name || catId}
                                 <button type="button" onClick={() => setSelectedCategories(selectedCategories.filter(id => id !== catId))}>
                                   <X size={12} />
@@ -690,12 +690,12 @@ export default function CouponsManagementPage() {
                   </AnimatePresence>
 
                    {/* Status Toggle */}
-                  <div className="flex items-center justify-between p-6 bg-[var(--color-surface-soft)] rounded-[2rem] border border-[var(--color-border)] mt-6">
+                  <div className="flex items-center justify-between p-6 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] mt-6">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-2xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
+                      <div className="h-10 w-10 rounded-xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
                         <CheckCircle2 size={20} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Status System Rule</span>
+                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status System Rule</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer select-none">
                       <input type="checkbox" name="isActive" defaultChecked={editingCoupon ? editingCoupon.isActive : true} className="peer hidden" />
@@ -712,14 +712,14 @@ export default function CouponsManagementPage() {
                <button
                 type="button"
                 onClick={() => { setShowCouponModal(false); setEditingCoupon(null); }}
-                className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
+                className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
               >
                 Cancel
               </button>
                <Button
                 type="submit"
                 variant="primary"
-                className="!py-6 !px-16 !rounded-3xl shadow-2xl shadow-[var(--color-primary)]/30 text-xs font-black uppercase tracking-[0.3em] bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-dark)] active:scale-95 transition-all"
+                className="!py-6 !px-16 !rounded-xl shadow-sm  text-xs font-bold uppercase tracking-normal bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-dark)] active:scale-95 transition-all"
               >
                 {editingCoupon ? 'Synchronize Updates' : 'Add Coupon'}
               </Button>

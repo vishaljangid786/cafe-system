@@ -247,7 +247,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         startY: 20,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [245, 158, 11] } // blue-500
+        headStyles: { fillColor: [245, 158, 11] } // [var(--color-primary)]
       });
 
       doc.save(generateFileName('pdf'));
@@ -354,7 +354,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
 
         <button
           onClick={() => setShowOptions(!showOptions)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-primary)] text-black rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[var(--color-primary)]/20 w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-lg font-semibold text-sm hover:bg-[var(--color-primary-hover)] active:scale-95 transition-colors w-full sm:w-auto"
         >
           <Download size={16} />
           Export
@@ -362,26 +362,26 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
       </div>
 
       {showOptions && (
-        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-[var(--shadow-md)] py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
           <button
             onClick={handleCSV}
             className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
-            <FileSpreadsheet size={16} className="text-green-600" />
+            <FileSpreadsheet size={16} className="text-[var(--color-success)]" />
             Download CSV
           </button>
           <button
             onClick={handleExcel}
             className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
-            <FileSpreadsheet size={16} className="text-emerald-500" />
+            <FileSpreadsheet size={16} className="text-[var(--color-success)]" />
             Download Excel (.xls)
           </button>
           <button
             onClick={handlePDF}
             className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
-            <FileText size={16} className="text-red-500" />
+            <FileText size={16} className="text-[var(--color-danger)]" />
             Download PDF
           </button>
           {hasCharts && (
@@ -389,7 +389,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
               onClick={handleChartExport}
               className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
             >
-              <ImageIcon size={16} className="text-blue-500" />
+              <ImageIcon size={16} className="text-[var(--color-primary)]" />
               Export Charts as Images
             </button>
           )}
@@ -398,7 +398,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
             onClick={handlePrint}
             className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
           >
-            <Printer size={16} className="text-blue-500" />
+            <Printer size={16} className="text-[var(--color-primary)]" />
             Print Data
           </button>
         </div>

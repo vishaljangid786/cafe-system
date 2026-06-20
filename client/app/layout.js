@@ -4,7 +4,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
-import CinematicBackground from "./components/ui/CinematicBackground";
 import TopProgressBar, { RouteProgress } from "./components/ui/TopProgressBar";
 
 export const metadata = {
@@ -46,11 +45,8 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-sans text-[var(--color-text-primary)] antialiased selection:bg-blue-500/30 selection:text-blue-500 transition-colors duration-300">
-        <div id="cinematic-root" />
-        <div className="scan-line" />
+      <body suppressHydrationWarning className="font-sans text-[var(--color-text-primary)] antialiased transition-colors duration-300">
         <ThemeProvider>
-          <CinematicBackground />
           <TopProgressBar />
           <AuthProvider>
             <RouteProgress />
@@ -58,7 +54,7 @@ export default function RootLayout({ children }) {
               <Toaster
                 position="bottom-right"
                 toastOptions={{
-                  className: '!bg-[var(--color-surface)] !text-[var(--color-text-primary)] !border !border-[var(--color-border)] !rounded-[var(--radius-lg)] !p-4 !text-sm !font-bold !shadow-[var(--shadow-premium)]',
+                  className: '!bg-[var(--color-surface)] !text-[var(--color-text-primary)] !border !border-[var(--color-border)] !rounded-xl !p-4 !text-sm !font-medium !shadow-[var(--shadow-md)]',
                   duration: 4000,
                 }}
               />

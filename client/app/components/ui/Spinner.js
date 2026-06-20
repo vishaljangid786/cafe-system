@@ -28,7 +28,7 @@ export function Spinner({ size = 'md', label, className = '', labelClassName = '
     <div className="inline-flex flex-col items-center gap-3">
       {ring}
       <span
-        className={`text-[10px] font-black uppercase tracking-[0.35em] text-[var(--color-text-muted)] animate-pulse ${labelClassName}`}
+        className={`text-sm text-[var(--color-text-muted)] ${labelClassName}`}
       >
         {label}
       </span>

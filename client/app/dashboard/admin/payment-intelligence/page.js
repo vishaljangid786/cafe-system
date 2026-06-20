@@ -11,21 +11,21 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
-    amber: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    violet: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
+    amber: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
+    blue: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
+    emerald: 'text-[var(--color-success)] bg-[var(--color-success)]/10 border-[var(--color-success)]/20',
+    rose: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20',
+    violet: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
   };
 
   return (
-    <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-3xl p-6 border border-[var(--color-border)] flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${colorMap[color] || 'text-[var(--color-text-muted)] bg-[var(--color-surface-soft)]'}`}>
+    <div className="bg-[var(--color-surface)]/80  rounded-xl p-6 border border-[var(--color-border)] flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className={`h-12 w-12 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-[var(--color-text-muted)] bg-[var(--color-surface-soft)]'}`}>
         <Icon size={20} />
       </div>
       <div>
-        <p className="text-2xl font-black text-[var(--color-text-primary)] tracking-tight leading-none">{value}</p>
-        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mt-2">{label}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">{label}</p>
         {sub && <p className="text-[9px] font-bold text-[var(--color-text-secondary)] mt-0.5">{sub}</p>}
       </div>
     </div>
@@ -104,8 +104,8 @@ export default function PaymentInformationPage() {
     <div className="max-w-[1600px] mx-auto pb-20 space-y-10">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+        <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
             <CreditCard size={24} className="text-white" />
           </div>
           Payment Information Dashboard
@@ -114,14 +114,14 @@ export default function PaymentInformationPage() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-8 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-6">
+      <div className="bg-[var(--color-surface)]/80  p-8 rounded-xl border border-[var(--color-border)] shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
-          <Filter size={16} className="text-violet-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-secondary)]">Payment Analytics Filters</span>
+          <Filter size={16} className="text-[var(--color-primary)]" />
+          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-secondary)]">Payment Analytics Filters</span>
         </div>
         
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Building size={12} /> Branch Center
             </label>
             <PremiumSelect
@@ -136,19 +136,19 @@ export default function PaymentInformationPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Exact Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-bold focus:border-violet-500 focus:outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Time Period
             </label>
             <PremiumSelect
@@ -166,7 +166,7 @@ export default function PaymentInformationPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Financial Year
             </label>
             <PremiumSelect
@@ -183,7 +183,7 @@ export default function PaymentInformationPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Custom Range
             </label>
             <div className="flex gap-2">
@@ -191,13 +191,13 @@ export default function PaymentInformationPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-violet-500 focus:outline-none transition-all"
+                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all"
               />
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-violet-500 focus:outline-none transition-all"
+                className="w-1/2 px-3 py-3 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[10px] font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function PaymentInformationPage() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] rounded-3xl" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] rounded-xl" />)}
         </div>
       ) : (
         <>
@@ -218,14 +218,14 @@ export default function PaymentInformationPage() {
           </div>
 
           {stats?.highestUPIBranch && (
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-3xl text-white flex items-center justify-between shadow-lg">
+            <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] p-6 rounded-xl text-white flex items-center justify-between shadow-lg">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-80 flex items-center gap-1"><Award size={14} /> Peak digital hub</span>
-                <p className="text-2xl font-black mt-1">{stats.highestUPIBranch.name}</p>
+                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80 flex items-center gap-1"><Award size={14} /> Peak digital hub</span>
+                <p className="text-2xl font-bold mt-1">{stats.highestUPIBranch.name}</p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-80">UPI Quota</span>
-                <p className="text-2xl font-black mt-1">₹{stats.highestUPIBranch.revenue}</p>
+                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">UPI Quota</span>
+                <p className="text-2xl font-bold mt-1">₹{stats.highestUPIBranch.revenue}</p>
               </div>
             </div>
           )}
@@ -233,9 +233,9 @@ export default function PaymentInformationPage() {
           {/* Charts & Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Trend Graph */}
-            <div className="lg:col-span-12 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-violet-500" /> Payment Trend Timeline (₹)
+            <div className="lg:col-span-12 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Payment Trend Timeline (₹)
               </h3>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -263,9 +263,9 @@ export default function PaymentInformationPage() {
             </div>
 
             {/* Branch Wise Mode Comparison */}
-            <div className="lg:col-span-12 bg-[var(--color-surface)]/80 backdrop-blur-xl rounded-[2.5rem] border border-[var(--color-border)] p-8">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <BarChart2 size={16} className="text-violet-500" /> Sector Allocation by payment mode (₹)
+            <div className="lg:col-span-12 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
+                <BarChart2 size={16} className="text-[var(--color-primary)]" /> Allocation by payment mode (₹)
               </h3>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">

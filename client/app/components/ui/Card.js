@@ -4,28 +4,16 @@ import { motion } from 'framer-motion';
 export const Card = ({ children, className = '', hover = true, delay = 0 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={hover ? {
-        scale: 1.02,
-        transition: { duration: 0.3, ease: "easeOut" }
-      } : {}}
+      transition={{ duration: 0.25, delay }}
       className={`
-        glass-card rounded-2xl p-6 relative overflow-hidden group
-        hover-glow focus-ring
+        card rounded-xl p-6 relative
+        ${hover ? 'transition-colors duration-200 hover:border-[var(--color-border-strong)]' : ''}
         ${className}
       `}
     >
-      {/* Decorative inner glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
- 
-      {/* Subtle border accent */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-      <div className="relative z-10">
-        {children}
-      </div>
+      {children}
     </motion.div>
   );
 };

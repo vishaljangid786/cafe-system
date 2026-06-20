@@ -56,12 +56,12 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Customer Name (Optional)</label>
+            <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Customer Name (Optional)</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
               <input
                 type="text"
-                className="w-full pl-12 pr-4 py-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-sm"
+                className="w-full pl-12 pr-4 py-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all font-bold text-sm"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g. John Doe"
@@ -74,7 +74,7 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
           <Button
             type="button"
             variant="outline"
-            className="flex-1 !rounded-2xl"
+            className="flex-1 !rounded-xl"
             onClick={onClose}
           >
             Cancel
@@ -82,7 +82,7 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
           <Button
             type="submit"
             variant="primary"
-            className="flex-1 !rounded-2xl shadow-lg shadow-blue-500/20"
+            className="flex-1 !rounded-xl shadow-lg "
             icon={ArrowRight}
           >
             Start Session

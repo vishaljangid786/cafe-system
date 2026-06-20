@@ -50,7 +50,7 @@ export const NotificationProvider = ({ children }) => {
         if (notification.priority === 'high') {
           toast.error(
             <div className="flex flex-col gap-1">
-              <span className="font-black text-[10px] uppercase tracking-widest text-rose-500">Urgent Update</span>
+              <span className="font-bold text-[10px] uppercase tracking-normal text-[var(--color-danger)]">Urgent Update</span>
               <span className="font-bold text-sm">{notification.title}</span>
             </div>,
             toastOptions
@@ -58,7 +58,7 @@ export const NotificationProvider = ({ children }) => {
         } else {
           toast.success(
             <div className="flex flex-col gap-1">
-              <span className="font-black text-[10px] uppercase tracking-widest text-emerald-500">New Alert</span>
+              <span className="font-bold text-[10px] uppercase tracking-normal text-[var(--color-success)]">New Alert</span>
               <span className="font-bold text-sm">{notification.title}</span>
             </div>,
             toastOptions

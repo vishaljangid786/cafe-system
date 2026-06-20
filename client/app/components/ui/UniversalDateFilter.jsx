@@ -280,20 +280,20 @@ export default function UniversalDateFilter({
             className="flex gap-2 p-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl items-center shrink-0"
           >
             <div className="flex items-center gap-2 pl-3">
-              <span className="text-[9px] font-black uppercase text-[var(--color-text-muted)] whitespace-nowrap">From</span>
+              <span className="text-xs font-medium text-[var(--color-text-muted)] whitespace-nowrap">From</span>
               <input
                 type="date"
-                className="bg-transparent text-[10px] font-black uppercase outline-none text-[var(--color-text-primary)] w-24"
+                className="bg-transparent text-xs outline-none text-[var(--color-text-primary)] w-24"
                 value={customDates.start}
                 onChange={e => setCustomDates({ ...customDates, start: e.target.value })}
               />
             </div>
             <div className="w-px h-4 bg-[var(--color-border)]" />
             <div className="flex items-center gap-2 pr-3">
-              <span className="text-[9px] font-black uppercase text-[var(--color-text-muted)] whitespace-nowrap">To</span>
+              <span className="text-xs font-medium text-[var(--color-text-muted)] whitespace-nowrap">To</span>
               <input
                 type="date"
-                className="bg-transparent text-[10px] font-black uppercase outline-none text-[var(--color-text-primary)] w-24"
+                className="bg-transparent text-xs outline-none text-[var(--color-text-primary)] w-24"
                 value={customDates.end}
                 onChange={e => setCustomDates({ ...customDates, end: e.target.value })}
               />
