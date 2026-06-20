@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { LoaderBlock } from '@/app/components/ui/Spinner';
 
 export default function BookingsManagementPage() {
   const { user, selectedLocation, globalSearch } = useAuth();
@@ -85,9 +86,7 @@ export default function BookingsManagementPage() {
   };
 
   if (loading && bookings.length === 0) return (
-    <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
-    </div>
+    <LoaderBlock label="Loading Bookings" minHeight="24rem" />
   );
 
   return (

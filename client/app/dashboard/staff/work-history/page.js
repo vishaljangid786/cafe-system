@@ -6,6 +6,7 @@ import {
   History, DollarSign, Receipt, CheckCircle2, Calendar
 } from 'lucide-react';
 import { PageTransition } from '../../../components/ui/AnimatedContainer';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -96,7 +97,7 @@ export default function WorkHistoryPage() {
         </div>
 
         {loading ? (
-          <div className="h-60 bg-zinc-100 dark:bg-zinc-900 rounded-[2.5rem] animate-pulse" />
+          <Skeleton className="h-60 rounded-[2.5rem]" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-6 space-y-8">
