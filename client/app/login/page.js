@@ -15,7 +15,7 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-const QUICK_LOGIN_PASSWORD = '123456';
+const QUICK_LOGIN_PASSWORD = '123456'; 
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
