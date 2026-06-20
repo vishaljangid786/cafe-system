@@ -20,6 +20,7 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -214,7 +215,7 @@ export default function StaffExpensesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {loading ? (
-                [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-[2rem]" />)
+                [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-[2rem]" />)
               ) : paginatedData.length === 0 ? (
                 <div className="sm:col-span-2 py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center">
                   <div className="h-20 w-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-300 mb-6">
