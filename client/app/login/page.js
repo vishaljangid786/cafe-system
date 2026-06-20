@@ -15,6 +15,8 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+const QUICK_LOGIN_PASSWORD = '123456';
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -56,7 +58,7 @@ export default function LoginPage() {
 
   const handleQuickLogin = async (email) => {
     setServerError('');
-    const res = await login(email, 'AdminAdmin');
+    const res = await login(email, QUICK_LOGIN_PASSWORD);
 
     if (!res.success) {
       const message = res.message || 'Quick login failed. Please check deployment settings.';
@@ -273,7 +275,7 @@ export default function LoginPage() {
                     {testUser.label}
                   </span>
                   <span className="text-[7px] font-bold text-[var(--color-text-muted)] mt-1 truncate max-w-full italic">
-                    TEST-LOGIN
+                    PASS: {QUICK_LOGIN_PASSWORD}
                   </span>
                 </button>
               ))}
