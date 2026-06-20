@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect } from 'react';
 import api from '@/app/services/api';
-import { Calendar, Wallet, CheckCircle, XCircle, Clock, Loader2, Search, Filter, TrendingUp, CalendarDays, Activity } from 'lucide-react';
+import { Calendar, Wallet, CheckCircle, XCircle, Clock, Search, Filter, TrendingUp, CalendarDays, Activity } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
+import { LoaderBlock } from '@/app/components/ui/Spinner';
 import { useAuth } from '@/app/context/AuthContext';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 
@@ -40,10 +41,7 @@ export default function StaffAttendancePage() {
   );
 
   if (loading && attendance.length === 0) return (
-    <div className="flex flex-col items-center justify-center h-96 space-y-4">
-      <Loader2 className="animate-spin text-blue-500" size={40} />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Loading records...</p>
-    </div>
+    <LoaderBlock label="Loading Records" minHeight="24rem" />
   );
 
   return (

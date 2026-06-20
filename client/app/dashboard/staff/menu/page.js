@@ -204,7 +204,7 @@ export default function StaffMenuPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {loading ? (
             Array(8).fill(0).map((_, i) => (
-              <div key={i} className="h-[400px] bg-zinc-100 dark:bg-zinc-900 rounded-[3rem] animate-pulse border border-zinc-200 dark:border-zinc-800" />
+              <Skeleton key={i} className="h-[400px] rounded-[3rem]" />
             ))
           ) : filteredItems.length === 0 ? (
             <div className="col-span-full py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3.5rem] border border-dashed border-zinc-200 dark:border-zinc-800">
