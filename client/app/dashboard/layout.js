@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from '../components/ui/PageTransition';
 import { useAuth } from '../context/AuthContext';
 import CommandPalette from '../components/ui/CommandPalette';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({ children }) {
-  const { user, exitImpersonation } = useAuth();
+  const { user, loading, exitImpersonation } = useAuth();
+  const router = useRouter();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -32,19 +34,25 @@ export default function DashboardLayout({ children }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [loading, user, router]);
+
   const handleToggleSidebar = (val) => {
     setIsSidebarExpanded(val);
     localStorage.setItem('sidebar-expanded', val);
   };
 
   // Prevent hydration mismatch by returning a consistent initial structure
-  if (!mounted) {
+  if (!mounted || loading || !user) {
     return (
       <div className="flex h-screen bg-transparent text-[var(--color-text-primary)] overflow-hidden font-sans">
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <main className="flex-1 overflow-x-auto overflow-y-auto bg-transparent p-3 sm:p-4 md:p-8 custom-scrollbar relative">
-            <div className="max-w-[1600px] mx-auto dashboard-content min-w-0">
-              {children}
+            <div className="min-h-full flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl border-2 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] animate-spin" />
             </div>
           </main>
         </div>

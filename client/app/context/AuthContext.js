@@ -148,8 +148,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       initializeSocket(userData, initialLoc);
-      await fetchLocations();
       toast.success(`Welcome back, ${userData.name}`);
+      setLoading(false);
       router.push(getRoleDashboard(userData.role));
 
       return { success: true };
@@ -206,6 +206,7 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
+      setLoading(false);
       router.push(getRoleDashboard(userData.role));
 
       return { success: true };
@@ -234,6 +235,7 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
+      setLoading(false);
       router.push('/dashboard/admin/users');
 
       return { success: true };

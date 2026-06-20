@@ -1,23 +1,8 @@
 import { NextResponse } from 'next/server';
 
-export function middleware(request) {
-  const token = request.cookies.get('token')?.value;
-  const { pathname } = request.nextUrl;
-
-  // Paths that do not require authentication
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/setup');
-
-  if (!token && !isAuthRoute) {
-    // Redirect to login if unauthenticated and trying to access protected routes
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  if (token && isAuthRoute) {
-    if (pathname.startsWith('/login')) {
-      return NextResponse.redirect(new URL('/dashboard/profile', request.url));
-    }
-  }
-
+export function middleware() {
+  // Auth is handled by AuthContext against the API session. Next middleware
+  // cannot reliably see API-owned cookies when client/server use different domains.
   return NextResponse.next();
 }
 
