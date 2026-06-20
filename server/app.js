@@ -35,24 +35,34 @@ const app = express();
 const parseOrigins = (value = '') =>
   value
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
-const allowedOrigins = parseOrigins(
-  process.env.CORS_ORIGIN ||
-  process.env.CLIENT_URL ||
-  'http://localhost:3000,http://127.0.0.1:3000'
-);
+const getVercelOrigin = () => {
+  if (!process.env.VERCEL_URL) return [];
+  const host = process.env.VERCEL_URL.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  return [`https://${host}`];
+};
 
-const allowAnyOrigin = process.env.CORS_ORIGIN === '*';
+const configuredCorsOrigins = parseOrigins(process.env.CORS_ORIGIN);
+const allowedOrigins = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  ...parseOrigins(process.env.CLIENT_URL),
+  ...configuredCorsOrigins,
+  ...getVercelOrigin(),
+]);
+
+const allowAnyOrigin = configuredCorsOrigins.includes('*');
 if (allowAnyOrigin && process.env.NODE_ENV === 'production') {
   throw new Error('CORS_ORIGIN="*" is not allowed in production when credentials are enabled');
 }
 
 const corsOptions = {
   origin(origin, callback) {
+    const normalizedOrigin = origin?.replace(/\/+$/, '');
     // In production wildcard is blocked above; in dev it is allowed only for non-credentialed testing
-    if (!origin || (allowAnyOrigin && process.env.NODE_ENV !== 'production') || allowedOrigins.includes(origin)) {
+    if (!origin || (allowAnyOrigin && process.env.NODE_ENV !== 'production') || allowedOrigins.has(normalizedOrigin)) {
       return callback(null, true);
     }
 

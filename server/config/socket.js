@@ -11,10 +11,25 @@ const createNoopIO = () => {
   return noop;
 };
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000,http://127.0.0.1:3000')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
+const parseOrigins = (value = '') =>
+  value
+    .split(',')
+    .map(origin => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
+const getVercelOrigin = () => {
+  if (!process.env.VERCEL_URL) return [];
+  const host = process.env.VERCEL_URL.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  return [`https://${host}`];
+};
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  ...parseOrigins(process.env.CLIENT_URL),
+  ...parseOrigins(process.env.CORS_ORIGIN).filter(origin => origin !== '*'),
+  ...getVercelOrigin(),
+];
 
 const parseCookies = (header = '') => header.split(';').reduce((acc, part) => {
   const [rawKey, ...rest] = part.trim().split('=');
