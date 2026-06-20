@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 
 export default function StaffMenuPage() {
   const { selectedLocation } = useAuth();
