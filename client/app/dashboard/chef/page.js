@@ -15,10 +15,10 @@ import {
   Timer,
   UtensilsCrossed,
   ArrowRight,
-  Loader2,
   RefreshCcw
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
+import { LoaderBlock } from '@/app/components/ui/Spinner';
 import api from '@/app/services/api';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../components/ui/AnimatedContainer';
@@ -179,12 +179,7 @@ export default function ChefDashboard() {
   ];
 
   if (loading) {
-    return (
-      <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
-        <ChefHat size={48} className="text-[var(--color-primary)] animate-bounce" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)]">Opening Kitchen...</p>
-      </div>
-    );
+    return <LoaderBlock label="Opening Kitchen" minHeight="80vh" />;
   }
 
   return (

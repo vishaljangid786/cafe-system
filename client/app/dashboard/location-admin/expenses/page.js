@@ -19,6 +19,7 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 export default function LocationExpensesPage() {
@@ -211,7 +212,7 @@ export default function LocationExpensesPage() {
           <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Recent Expenses</h3>
           {loading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-2xl" />)}
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}
             </div>
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-white/40 dark:bg-zinc-950/40 rounded-[2.5rem] border border-dashed border-zinc-200 dark:border-zinc-800">

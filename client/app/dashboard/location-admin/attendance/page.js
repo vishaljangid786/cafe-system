@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 
 export default function AttendancePage() {
   const dateInputRef = useRef(null);
@@ -113,8 +114,8 @@ export default function AttendancePage() {
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
                 {loading && staff.length === 0 ? (
                   [1, 2, 3, 4].map(i => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan="3" className="px-8 py-8"><div className="h-6 bg-gray-100 dark:bg-zinc-800 rounded-xl w-full"></div></td>
+                    <tr key={i}>
+                      <td colSpan="3" className="px-8 py-8"><Skeleton className="h-6 rounded-xl w-full" /></td>
                     </tr>
                   ))
                 ) : filteredStaff.length === 0 ? (

@@ -280,7 +280,7 @@ export default function BranchExpensesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {loading ? (
-                [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-zinc-100 dark:bg-zinc-900 animate-pulse rounded-[2rem]" />)
+                [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-[2rem]" />)
               ) : paginatedData.length === 0 ? (
                 <div className="sm:col-span-2 py-32 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800">
                   <p className="text-zinc-500 font-bold text-lg tracking-tight">No expenses found.</p>
