@@ -32,9 +32,31 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
+const parseOrigins = (value = '') =>
+  value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const allowedOrigins = parseOrigins(
+  process.env.CORS_ORIGIN ||
+  process.env.CLIENT_URL ||
+  'http://localhost:3000,http://127.0.0.1:3000'
+);
+
+const allowAnyOrigin = process.env.CORS_ORIGIN === '*';
+
 const corsOptions = {
-  origin: true, // Allow ALL origins
+  origin(origin, callback) {
+    if (!origin || allowAnyOrigin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 // Middlewares

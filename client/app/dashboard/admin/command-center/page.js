@@ -8,10 +8,11 @@ import {
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import io from 'socket.io-client';
+import getSocketUrl from '../../../services/socketUrl';
 import toast from 'react-hot-toast';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const SOCKET_URL = getSocketUrl();
 
 export default function CommandCenterPage() {
   const [locations, setLocations] = useState([]);
@@ -54,6 +55,8 @@ export default function CommandCenterPage() {
     }, 0);
     
     // Setup real-time socket connections
+    if (!SOCKET_URL) return;
+
     const socket = io(SOCKET_URL, { withCredentials: true });
     
     socket.on('connect', () => {

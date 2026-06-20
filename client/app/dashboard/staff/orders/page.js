@@ -16,12 +16,13 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
+import getSocketUrl from '../../../services/socketUrl';
 import Modal from '../../../components/ui/Modal';
 import { formatDistanceToNow } from 'date-fns';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const SOCKET_URL = getSocketUrl();
 
 function StatCard({ label, value, icon: Icon, color }) {
   const colors = {
@@ -145,6 +146,8 @@ export default function StaffOrdersPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (!SOCKET_URL) return;
+
     const socket = io(SOCKET_URL, { withCredentials: true });
     socket.on('connect', () => {
       socket.emit('join_session', { branchId: user.assignedLocation?._id || user.assignedLocation });

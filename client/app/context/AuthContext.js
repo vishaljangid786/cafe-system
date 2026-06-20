@@ -6,6 +6,7 @@ import api from '../services/api';
 import logger from '../services/logger';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
+import getSocketUrl from '../services/socketUrl';
 
 const AuthContext = createContext();
 
@@ -37,7 +38,9 @@ export const AuthProvider = ({ children }) => {
       socketRef.current.disconnect();
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const socketUrl = getSocketUrl();
+    if (!socketUrl) return;
+
     const newSocket = io(socketUrl, { withCredentials: true });
     newSocket.on('connect', () => {
       const activeLocation = locationOverride || selectedLocation;

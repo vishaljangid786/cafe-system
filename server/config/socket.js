@@ -2,6 +2,15 @@ let io;
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const createNoopIO = () => {
+  const noop = {
+    to: () => noop,
+    emit: () => false,
+  };
+
+  return noop;
+};
+
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000,http://127.0.0.1:3000')
   .split(',')
   .map(origin => origin.trim())
@@ -61,7 +70,7 @@ module.exports = {
   },
   getIO: () => {
     if (!io) {
-      throw new Error('Socket.io not initialized!');
+      return createNoopIO();
     }
     return io;
   },

@@ -1,16 +1,30 @@
 const mongoose = require('mongoose');
 
+let connectionPromise;
+
 const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    connectionPromise = mongoose.connect(process.env.MONGO_URI, {
       maxPoolSize: 20,      // Handle concurrent requests without exhausting connections
-      minPoolSize: 5,       // Keep minimum connections warm
+      minPoolSize: process.env.VERCEL === '1' ? 0 : 5,       // Keep local server warm without forcing serverless pools
       serverSelectionTimeoutMS: 5000,
     });
+
+    const conn = await connectionPromise;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn.connection;
   } catch (error) {
+    connectionPromise = null;
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 };
 
