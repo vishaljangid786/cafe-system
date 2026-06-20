@@ -191,9 +191,14 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       setLoading(false);
+      const message = error.response?.data?.message ||
+        (error.request
+          ? 'Cannot reach the API from this browser. Check the deployed API URL and CORS origin.'
+          : 'Login failed');
+
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed'
+        message
       };
     }
   };
