@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import api from '@/app/services/api';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../components/ui/AnimatedContainer';
@@ -38,7 +40,10 @@ export default function ChefDashboard() {
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!selectedLocation) return;
-    if (!silent) setLoading(true);
+    if (!silent) {
+      setLoading(true);
+      progress.start();
+    }
     try {
       const branchId = selectedLocation._id || selectedLocation;
       const res = await api.get(`/orders?branchId=${branchId}`);
@@ -51,6 +56,7 @@ export default function ChefDashboard() {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+      if (!silent) progress.done();
     }
   }, [selectedLocation]);
 

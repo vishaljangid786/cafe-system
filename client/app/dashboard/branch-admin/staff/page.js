@@ -2,7 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
-import { Skeleton } from '@/app/components/ui/Skeleton';
+import { Skeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -14,6 +16,8 @@ import PremiumSelect from '../../../components/ui/PremiumSelect';
 export default function BranchStaffPage() {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -29,15 +33,20 @@ export default function BranchStaffPage() {
   const itemsPerPage = 12;
 
   const fetchStaff = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true); else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const res = await api.get(`/users?page=${currentPage}&limit=${itemsPerPage}`);
       setStaff(res.data.data);
       setTotalPages(res.data.pagination.pages);
     } catch (error) {
       toast.error('Failed to load staff list');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -107,11 +116,7 @@ export default function BranchStaffPage() {
     }
   };
 
-  if (loading) return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -138,6 +143,9 @@ export default function BranchStaffPage() {
           </div>
         </SlideIn>
 
+        {refetching ? (
+          <TableSkeleton rows={6} cols={5} />
+        ) : (
         <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -224,6 +232,7 @@ export default function BranchStaffPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Pagination Controls */}
         {totalPages > 1 && (

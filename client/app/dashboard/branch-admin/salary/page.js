@@ -7,7 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { AlertCircle } from 'lucide-react';
-import { Skeleton } from '@/app/components/ui/Skeleton';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
 
 
@@ -15,19 +17,27 @@ export default function SalaryPage() {
   const monthInputRef = useRef(null);
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingUser, setViewingUser] = useState(null);
 
   const fetchSalaries = async () => {
-    setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
       const res = await api.get(`/salary/location?month=${month}`);
       setSalaries(res.data.data);
     } catch (error) {
       console.error('Failed to fetch salaries:', error);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -44,6 +54,8 @@ export default function SalaryPage() {
   );
 
   const totalPayout = salaries.reduce((acc, curr) => acc + curr.calculatedSalary, 0);
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -163,12 +175,12 @@ export default function SalaryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]/50">
-                  {loading ? (
-                    [1, 2, 3, 4, 5].map(i => (
-                      <tr key={i}>
-                        <td colSpan="4" className="px-10 py-12"><Skeleton className="h-6 rounded-full w-full" /></td>
-                      </tr>
-                    ))
+                  {refetching ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-6">
+                        <TableSkeleton rows={6} cols={3} />
+                      </td>
+                    </tr>
                   ) : filteredSalaries.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-10 py-32 text-center">

@@ -7,19 +7,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function AttendancePage() {
   const dateInputRef = useRef(null);
   const [staff, setStaff] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingStaff, setViewingStaff] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      const isInitial = !didInitRef.current;
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
       try {
         const [staffRes, attRes] = await Promise.all([
           api.get('/users'),
@@ -30,7 +38,10 @@ export default function AttendancePage() {
       } catch (error) {
         toast.error('Failed to load list');
       } finally {
+        didInitRef.current = true;
         setLoading(false);
+        setRefetching(false);
+        progress.done();
       }
     };
     fetchData();
@@ -57,6 +68,8 @@ export default function AttendancePage() {
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -111,12 +124,12 @@ export default function AttendancePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]">
-                {loading && staff.length === 0 ? (
-                  [1, 2, 3, 4].map(i => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan="3" className="px-8 py-8"><div className="h-6 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-xl w-full"></div></td>
-                    </tr>
-                  ))
+                {refetching ? (
+                  <tr>
+                    <td colSpan="3" className="px-8 py-8">
+                      <TableSkeleton rows={6} cols={3} />
+                    </td>
+                  </tr>
                 ) : filteredStaff.length === 0 ? (
                   <tr>
                     <td colSpan="3" className="px-8 py-24 text-center">

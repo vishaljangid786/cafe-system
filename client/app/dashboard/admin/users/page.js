@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
@@ -15,6 +15,9 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
 import Modal from '@/app/components/ui/Modal';
 import ConfirmDialog from '@/app/components/ui/ConfirmDialog';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function UsersPage() {
   const router = useRouter();
@@ -28,6 +31,8 @@ export default function UsersPage() {
     }
   }, [user, router]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
@@ -45,8 +50,11 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState(null);
 
   const fetchUsers = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const params = new URLSearchParams();
       params.append('page', currentPage);
       params.append('limit', itemsPerPage);
@@ -66,7 +74,10 @@ export default function UsersPage() {
     } catch (err) {
       toast.error('Failed to sync staff database');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -153,16 +164,7 @@ export default function UsersPage() {
     return 'bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border-[var(--color-text-muted)]/20';
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-        <div className="h-12 w-12 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] animate-pulse">Syncing Staff</p>
-      </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -250,6 +252,12 @@ export default function UsersPage() {
 
         {/* User List */}
         <div className="bg-[var(--color-surface)]/40  rounded-xl sm:rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+          {refetching ? (
+            <div className="p-6">
+              <TableSkeleton rows={6} cols={5} />
+            </div>
+          ) : (
+          <>
           {filteredUsers.length === 0 && (
             <div className="p-10 text-center text-sm text-[var(--color-text-muted)]">
               No users found for current filters.
@@ -412,6 +420,8 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
+          </>
+          )}
         </div>
 
         {/* Pagination Controls */}

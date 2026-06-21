@@ -71,7 +71,12 @@ export default function AdminTablesPage() {
   }, [showOrderModal]);
 
   const fetchTables = async (silent = false) => {
-    if (!silent) setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (!silent) {
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
+    }
     try {
       const url = selectedLocation === 'All' ? '/tables' : `/tables?locationId=${selectedLocation}`;
       const res = await api.get(url);
@@ -79,7 +84,12 @@ export default function AdminTablesPage() {
     } catch (error) {
       toast.error('Failed to sync floor plan');
     } finally {
-      setLoading(false);
+      didInitRef.current = true;
+      if (!silent) {
+        setLoading(false);
+        setRefetching(false);
+        progress.done();
+      }
       setIsRefreshing(false);
     }
   };
@@ -369,14 +379,7 @@ export default function AdminTablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   }), [tables]);
 
-  if (loading) return (
-    <div className="space-y-6 p-4">
-      <div className="h-16 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />)}
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -458,6 +461,7 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
+        {refetching ? <TableSkeleton rows={6} cols={5} /> : (
         <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -544,6 +548,7 @@ export default function AdminTablesPage() {
             </div>
           )}
         </div>
+        )}
 
         <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={isEditing ? 'Update Table' : 'Add New Table'} maxWidth="max-w-md">
           <form onSubmit={handleAddTable} className="space-y-4">

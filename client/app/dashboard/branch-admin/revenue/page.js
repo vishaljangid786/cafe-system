@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { 
@@ -17,19 +17,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 import ExportActions from '../../../components/ui/ExportActions';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function BranchRevenuePage() {
   const { user, selectedLocation } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [timeRange, setTimeRange] = useState('7d');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 20;
 
   const fetchRevenue = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const query = new URLSearchParams();
       // Branch Admin only sees their location data
       
@@ -49,7 +56,10 @@ export default function BranchRevenuePage() {
     } catch (err) {
       console.error('Revenue sync failed');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -77,6 +87,8 @@ export default function BranchRevenuePage() {
     date: new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
     amount: t.totalAmount
   }));
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -166,7 +178,7 @@ export default function BranchRevenuePage() {
         {/* Data List */}
         <div className="space-y-4">
           <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Latest Local Inflow</h3>
-          {loading ? (
+          {refetching ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
             </div>
