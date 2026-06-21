@@ -13,7 +13,8 @@ import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { Button } from '@/app/components/ui/Button';
 import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
-import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function TablesPage() {
   const { user } = useAuth();
@@ -40,6 +41,7 @@ export default function TablesPage() {
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
 
   const fetchTables = async () => {
+    progress.start();
     try {
       const res = await api.get('/tables');
       setTables(res.data.data);
@@ -47,6 +49,7 @@ export default function TablesPage() {
       toast.error('Failed to load tables');
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 
@@ -258,17 +261,7 @@ export default function TablesPage() {
     }
   };
 
-  if (loading) return (
-    <div className="space-y-6 p-4">
-      <Skeleton className="h-16 rounded-xl" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

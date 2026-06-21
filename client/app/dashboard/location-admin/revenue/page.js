@@ -56,7 +56,10 @@ export default function LocationRevenuePage() {
     } catch (err) {
       console.error('Revenue sync failed');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -84,6 +87,8 @@ export default function LocationRevenuePage() {
     date: new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
     amount: t.totalAmount
   }));
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -173,7 +178,7 @@ export default function LocationRevenuePage() {
         {/* Data List */}
         <div className="space-y-4">
           <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Latest Local Inflow</h3>
-          {loading ? (
+          {refetching ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
             </div>

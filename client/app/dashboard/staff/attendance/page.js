@@ -1,23 +1,30 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
 import { Calendar, Wallet, CheckCircle, XCircle, Clock, Search, Filter, TrendingUp, CalendarDays, Activity } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
 import { useAuth } from '@/app/context/AuthContext';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function StaffAttendancePage() {
   const { user } = useAuth();
   const [attendance, setAttendance] = useState([]);
   const [salaryData, setSalaryData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      const isInitial = !didInitRef.current;
+      if (isInitial) setLoading(true); else setRefetching(true);
+      progress.start();
       try {
         const [attRes, salRes] = await Promise.all([
           api.get(`/attendance/my?month=${month}`),
@@ -28,7 +35,10 @@ export default function StaffAttendancePage() {
       } catch (error) {
         console.error('Failed to load attendance');
       } finally {
+        didInitRef.current = true;
         setLoading(false);
+        setRefetching(false);
+        progress.done();
       }
     };
     if (user) fetchData();
@@ -40,9 +50,7 @@ export default function StaffAttendancePage() {
     log.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading && attendance.length === 0) return (
-    <LoaderBlock label="Loading Records" minHeight="24rem" />
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -146,6 +154,7 @@ export default function StaffAttendancePage() {
             </div>
           </SlideIn>
 
+          {refetching ? <TableSkeleton rows={6} cols={3} /> : (
           <SlideIn delay={0.3} direction="up">
             <div className="bg-[var(--color-surface)]/40  rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm">
               <div className="overflow-x-auto custom-scrollbar">
@@ -209,6 +218,7 @@ export default function StaffAttendancePage() {
               </div>
             </div>
           </SlideIn>
+          )}
         </div>
       </div>
     </PageTransition>

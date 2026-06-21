@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import {
@@ -21,6 +21,8 @@ import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -40,6 +42,8 @@ export default function StaffExpensesPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [timeRange, setTimeRange] = useState('7d');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,8 +64,11 @@ export default function StaffExpensesPage() {
   });
 
   const fetchExpenses = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const query = new URLSearchParams();
       query.append('type', 'EXPENSE');
       query.append('page', currentPage);
@@ -84,7 +91,10 @@ export default function StaffExpensesPage() {
     } catch (err) {
       console.error('Expenses sync failed');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -127,6 +137,8 @@ export default function StaffExpensesPage() {
     date: new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
     amount: t.totalAmount
   }));
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -214,7 +226,7 @@ export default function StaffExpensesPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {loading ? (
+              {refetching ? (
                 [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)
               ) : paginatedData.length === 0 ? (
                 <div className="sm:col-span-2 py-32 text-center bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)]/40 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col items-center justify-center">

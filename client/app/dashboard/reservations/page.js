@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 import { 
   CalendarDays, Plus, Search, Filter, 
   MapPin, Clock, Users, Phone, 
@@ -19,6 +22,8 @@ import PremiumSelect from '../../components/ui/PremiumSelect';
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -35,8 +40,11 @@ export default function ReservationsPage() {
   const { user } = useAuth();
 
   const fetchReservations = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const params = {
         ...filters,
         search: searchTerm,
@@ -51,7 +59,10 @@ export default function ReservationsPage() {
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -81,6 +92,8 @@ export default function ReservationsPage() {
       default: return 'bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border-[var(--color-text-muted)]/20';
     }
   };
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="space-y-6">
@@ -210,12 +223,12 @@ export default function ReservationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {loading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                  <td colSpan={7} className="px-6 py-8 h-12 bg-[var(--color-surface-soft)]/50"></td>
-                  </tr>
-                ))
+              {refetching ? (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <TableSkeleton rows={6} cols={7} />
+                  </td>
+                </tr>
               ) : reservations.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-muted)]">

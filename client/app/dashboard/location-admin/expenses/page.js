@@ -116,6 +116,8 @@ export default function LocationExpensesPage() {
     amount: t.totalAmount
   }));
 
+  if (loading) return <LoadingScreen fullScreen={false} />;
+
   return (
     <PageTransition>
       <div className="space-y-8 pb-20">

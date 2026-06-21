@@ -1,5 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import { 
   Bell, Search, Calendar,
   CheckCircle2, ChevronLeft,
@@ -18,6 +21,8 @@ import toast from 'react-hot-toast';
 const NotificationsPage = () => {
   const { markAsRead, markAsUnread, markAllAsRead, refresh } = useNotifications();
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [notifications, setNotifications] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [filters, setFilters] = useState({
@@ -33,8 +38,11 @@ const NotificationsPage = () => {
   const [sendingReply, setSendingReply] = useState(false);
 
   const fetchHistory = async (page = 1) => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const query = new URLSearchParams({
         page,
         limit: 15,
@@ -50,7 +58,10 @@ const NotificationsPage = () => {
       toast.error('Failed to sync archival records');
       console.error('Failed to sync archival records:', err.response?.data || err.message);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -133,6 +144,8 @@ const NotificationsPage = () => {
       return !isSystem;
     }
   });
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -328,6 +341,9 @@ const NotificationsPage = () => {
 
         {/* Results Section */}
         <div className="space-y-4">
+          {refetching ? (
+            <ListSkeleton rows={6} />
+          ) : (
           <AnimatePresence mode="popLayout">
             {filteredNotifications.length > 0 ? (
               filteredNotifications.map((notif, idx) => (
@@ -434,6 +450,7 @@ const NotificationsPage = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
 
           {/* Pagination Component */}
           {pagination.pages > 1 && (

@@ -12,12 +12,15 @@ import {
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../components/ui/AnimatedContainer';
 import { Button } from '../../components/ui/Button';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('details'); // details, stats, history, security
 
@@ -40,6 +43,7 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     if (!user) return;
+    progress.start();
     try {
       if (user.role === 'chef' || user.role === 'staff') {
         const statsParams = {};
@@ -62,6 +66,9 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Failed to load performance metrics');
+    } finally {
+      setPageLoading(false);
+      progress.done();
     }
   };
 
@@ -132,6 +139,7 @@ export default function ProfilePage() {
   };
 
   if (!user) return null;
+  if (pageLoading) return <LoadingScreen fullScreen={false} />;
 
   const tabs = [
     { id: 'details', label: 'My Details', icon: UserIcon },

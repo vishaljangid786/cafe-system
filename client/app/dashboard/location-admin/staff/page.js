@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -25,6 +27,7 @@ export default function LocationStaffPage() {
   });
 
   const fetchStaff = async () => {
+    progress.start();
     try {
       const res = await api.get('/users');
       setStaff(res.data.data);
@@ -32,6 +35,7 @@ export default function LocationStaffPage() {
       toast.error('Failed to load staff list');
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 
@@ -87,11 +91,7 @@ export default function LocationStaffPage() {
     }
   };
 
-  if (loading) return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
