@@ -78,6 +78,7 @@ export default function MenuManagementPage() {
   };
 
   const fetchAnalytics = async () => {
+    progress.start();
     try {
       const locId = filterLocation === 'all' ? '' : filterLocation;
       let query = `?locationId=${locId}`;
@@ -105,6 +106,8 @@ export default function MenuManagementPage() {
       }
     } catch (error) {
       console.error("Analytics sync error:", error);
+    } finally {
+      progress.done();
     }
   };
 
@@ -465,11 +468,7 @@ export default function MenuManagementPage() {
     return matchesSearch && matchesAvailability && matchesCat && (!isPriceFilterActive || matchesPrice);
   });
 
-  if (loading && menuItems.length === 0) return (
-    <div className="flex justify-center items-center h-96">
-      <LoaderBlock label="Loading Menu" />
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -896,7 +895,11 @@ export default function MenuManagementPage() {
           </div>
         </SlideIn>
 
-        {activeTab === 'items' ? (
+        {refetching ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
+          </div>
+        ) : activeTab === 'items' ? (
           /* Items Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <AnimatePresence>

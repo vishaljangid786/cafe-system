@@ -1,5 +1,12 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import LoadingScreen from "@/app/components/ui/LoadingScreen";
+import { progress } from "@/app/components/ui/TopProgressBar";
+import {
+  StatGridSkeleton,
+  ChartSkeleton,
+  CardSkeleton,
+} from "@/app/components/ui/Skeleton";
 import {
   BarChart3,
   Clock,
@@ -71,10 +78,15 @@ export default function OrderAnalyticsDashboard() {
   const [locations, setLocations] = useState([]);
   const [selectedBranchDetails, setSelectedBranchDetails] = useState(null);
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
 
   const fetchAnalytics = useCallback(async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const branchQuery =
         branchFilter !== "all" ? `&branchId=${branchFilter}` : "";
       const dateQuery = `&startDate=${dateRange.start}&endDate=${dateRange.end}`;
@@ -87,7 +99,10 @@ export default function OrderAnalyticsDashboard() {
     } catch (error) {
       toast.error("Failed to calculate report data");
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   }, [branchFilter, dateRange]);
 
@@ -124,18 +139,7 @@ export default function OrderAnalyticsDashboard() {
     toast.success("Terminal reset to defaults");
   };
 
-  if (loading && !data)
-    return (
-      <div className="flex items-center justify-center h-[70vh] flex-col gap-6">
-        <div className="relative">
-          <RefreshCw className="animate-spin text-[var(--color-primary)]" size={64} />
-          <div className="absolute inset-0 hidden bg-[var(--color-primary)]/20 rounded-full animate-pulse" />
-        </div>
-        <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] animate-pulse">
-          Updating Global Reports...
-        </p>
-      </div>
-    );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -317,6 +321,25 @@ export default function OrderAnalyticsDashboard() {
           </div>
         </div>
 
+        {refetching ? (
+          <div className="space-y-12">
+            <StatGridSkeleton count={5} />
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+              <div className="xl:col-span-8">
+                <ChartSkeleton />
+              </div>
+              <div className="xl:col-span-4">
+                <ChartSkeleton />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Tactical Metrics Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           <MetricCard
@@ -748,6 +771,8 @@ export default function OrderAnalyticsDashboard() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
         {/* Branch Detail Modal */}
         <Modal
