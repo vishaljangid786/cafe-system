@@ -74,13 +74,13 @@ export default function ChefDashboard() {
       // Listeners are now attached to rooms joined in AuthContext
       socket.on('order:new', (data) => {
         toast.success('New Order!', { icon: '🔥', duration: 4000 });
-        fetchOrders();
+        fetchOrders(true);
       });
 
-      socket.on('order:update', () => fetchOrders());
+      socket.on('order:update', () => fetchOrders(true));
       socket.on('order:cancel', () => {
         toast.error('Order Cancelled by Admin');
-        fetchOrders();
+        fetchOrders(true);
       });
 
       return () => {
@@ -185,9 +185,7 @@ export default function ChefDashboard() {
     }
   ];
 
-  if (loading) {
-    return <LoaderBlock label="Opening Kitchen" minHeight="80vh" />;
-  }
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { 
@@ -19,13 +19,17 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
-import { Skeleton } from '@/app/components/ui/Skeleton';
+import { Skeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
 
 export default function LocationExpensesPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [timeRange, setTimeRange] = useState('7d');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,8 +46,11 @@ export default function LocationExpensesPage() {
   });
 
   const fetchExpenses = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const query = new URLSearchParams();
       
       const now = new Date();
@@ -63,7 +70,10 @@ export default function LocationExpensesPage() {
     } catch (err) {
       console.error('Expenses load failed');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
