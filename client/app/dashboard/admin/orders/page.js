@@ -1,5 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 import {
   BarChart3, Clock, AlertCircle, CheckCircle2,
   XCircle, Filter, Search, Globe, ChefHat,
@@ -35,6 +38,8 @@ export default function AdminOrdersDashboard() {
   const [orders, setOrders] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [viewMode, setViewMode] = useState('list'); // Default to list view
   const [branchFilter, setBranchFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('');
@@ -47,9 +52,14 @@ export default function AdminOrdersDashboard() {
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const itemsPerPage = 24;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async ({ silent = false } = {}) => {
+    const isInitial = !didInitRef.current;
+    if (!silent) {
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
+    }
     try {
-      setLoading(true);
       const params = new URLSearchParams();
       params.append('page', currentPage);
       params.append('limit', itemsPerPage);

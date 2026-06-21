@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +18,9 @@ import {
   CreditCard, BarChart3, PieChart as PieChartIcon
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { ChartSkeleton } from '@/app/components/ui/Skeleton';
 import { StatWidget } from '../../components/ui/StatWidget';
 import { Card, CardTitle, CardDescription } from '../../components/ui/Card';
 import { ActivityTimeline } from '../../components/ui/ActivityTimeline';
