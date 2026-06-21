@@ -11,12 +11,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { CardSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function PayrollRecordsPage() {
   const monthInputRef = useRef(null);
   const [salaries, setSalaries] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [locations, setLocations] = useState([]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [selectedLocation, setSelectedLocation] = useState('All');
@@ -35,8 +40,11 @@ export default function PayrollRecordsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const isInitial = !didInitRef.current;
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
       try {
-        setLoading(true);
         const [salRes, locRes, payRes] = await Promise.all([
           api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
           api.get('/locations'),
@@ -58,7 +66,10 @@ export default function PayrollRecordsPage() {
       } catch (err) {
         console.error('Failed to fetch records');
       } finally {
+        didInitRef.current = true;
         setLoading(false);
+        setRefetching(false);
+        progress.done();
       }
     };
     fetchData();
@@ -66,6 +77,7 @@ export default function PayrollRecordsPage() {
 
   const filteredSalaries = salaries; // Now filtered by backend
 
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -346,9 +358,9 @@ export default function PayrollRecordsPage() {
 
         <SlideIn direction="up" delay={0.4}>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {loading ? (
+            {refetching ? (
               [1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-32 bg-[var(--color-surface-soft)] animate-pulse rounded-xl" />
+                <CardSkeleton key={i} />
               ))
             ) : filteredSalaries.length === 0 ? (
               <div className="sm:col-span-2 xl:col-span-3 py-20 text-center bg-[var(--color-surface-soft)]/40 rounded-xl border border-dashed border-[var(--color-border)] flex flex-col items-center justify-center">

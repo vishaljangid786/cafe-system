@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, ShoppingBag, Award, XCircle, CheckCircle2, Zap,
   Filter, Calendar, Bookmark, Building, Download, Printer, User
@@ -14,6 +17,8 @@ const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'
 export default function StaffReportsAnalytics({ user }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [branches, setBranches] = useState([]);
   const [filters, setFilters] = useState({
     staffName: '',
@@ -33,7 +38,10 @@ export default function StaffReportsAnalytics({ user }) {
   };
 
   const fetchReports = async () => {
-    setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
       const params = {};
       if (filters.staffName) params.staffName = filters.staffName;
@@ -47,7 +55,10 @@ export default function StaffReportsAnalytics({ user }) {
     } catch (error) {
       toast.error('Failed to load staff reports');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -133,6 +144,8 @@ export default function StaffReportsAnalytics({ user }) {
   };
 
   const catSalesData = getTotaldCategorySales();
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="max-w-[1600px] mx-auto pb-20 space-y-10 print:p-0 print:bg-[var(--color-surface)] print:text-[var(--color-on-primary)]">
@@ -264,9 +277,13 @@ export default function StaffReportsAnalytics({ user }) {
         </div>
       </div>
 
-      {loading ? (
-        <div className="h-64 bg-[var(--color-surface)]/50  rounded-xl animate-pulse flex items-center justify-center font-bold text-[var(--color-text-muted)]">
-          Preparing staff reports...
+      {refetching ? (
+        <div className="space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:hidden">
+            <div className="lg:col-span-7"><ChartSkeleton /></div>
+            <div className="lg:col-span-5"><ChartSkeleton /></div>
+          </div>
+          <TableSkeleton rows={6} cols={11} />
         </div>
       ) : (
         <>

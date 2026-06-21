@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
 import {
   TrendingUp, IndianRupee, Search, Filter,
@@ -31,6 +34,8 @@ export default function RevenuePage() {
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
 
   const [timeRange, setTimeRange] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -68,8 +73,11 @@ export default function RevenuePage() {
   };
 
   const fetchRevenue = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const query = new URLSearchParams();
 
       const locId = typeof selectedLocation === 'object' ? selectedLocation?._id : selectedLocation;
@@ -109,7 +117,10 @@ export default function RevenuePage() {
     } catch (err) {
       console.error('Failed to load revenue data:', err);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -135,6 +146,8 @@ export default function RevenuePage() {
       </div>
     );
   }
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   // With server-side filtering, transactions is already paginated
   const paginatedData = transactions || [];
@@ -181,7 +194,7 @@ export default function RevenuePage() {
                 setStartDate(startDate);
                 setEndDate(endDate);
               }}
-              loading={loading}
+              loading={refetching}
             />
           </div>
         </div>
@@ -309,10 +322,8 @@ export default function RevenuePage() {
         {/* Data List */}
         <div className="space-y-4">
           <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Recent Transactions</h3>
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 bg-[var(--color-bg-soft)] animate-pulse rounded-xl" />)}
-            </div>
+          {refetching ? (
+            <ListSkeleton rows={5} />
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-[var(--color-bg-soft)]/40 rounded-xl border border-dashed border-[var(--color-border)]">
               <p className="text-[var(--color-text-muted)] font-bold">No transactions found.</p>

@@ -7,12 +7,17 @@ import { PageTransition, SlideIn, CardHover } from '../../../components/ui/Anima
 import Link from 'next/link';
 import { motion } from 'framer-motion'
 import { useTheme } from '../../../context/ThemeContext';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { ChartSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function MonthlySummaryPage() {
   const { theme } = useTheme();
   const monthInputRef = useRef(null);
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const isDark = theme === 'dark';
@@ -27,14 +32,20 @@ export default function MonthlySummaryPage() {
   };
 
   const fetchSummary = async () => {
-    setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
       const res = await api.get(`/attendance/monthly-summary?month=${month}`);
       setSummary(res.data.data);
     } catch (error) {
       console.error('Failed to fetch monthly summary:', error);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -45,6 +56,8 @@ export default function MonthlySummaryPage() {
 
     return () => clearTimeout(timer);
   }, [month]);
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -75,10 +88,17 @@ export default function MonthlySummaryPage() {
           </div>
         </SlideIn>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 h-96 bg-[var(--color-surface-soft)] animate-pulse rounded-xl"></div>
-            <div className="h-96 bg-[var(--color-surface-soft)] animate-pulse rounded-xl"></div>
+        {refetching ? (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2"><ChartSkeleton /></div>
+              <ChartSkeleton />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
           </div>
         ) : (
           <>

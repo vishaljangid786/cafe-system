@@ -13,12 +13,17 @@ import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { Button } from '@/app/components/ui/Button';
 import TableCard from '@/app/components/tables/TableCard';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function AdminTablesPage() {
   const { user, socket } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');

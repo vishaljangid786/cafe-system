@@ -12,6 +12,9 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
 import ExportActions from '../../../components/ui/ExportActions';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 
 
 export default function LocationStaffPage() {
@@ -20,6 +23,8 @@ export default function LocationStaffPage() {
 
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [roleFilter, setRoleFilter] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -78,7 +83,10 @@ export default function LocationStaffPage() {
   };
 
   const fetchStaff = async () => {
-    setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
       // If in tree mode, we always want all available staff to build the hierarchy
       const params = viewMode === 'tree' ? {} : {
@@ -98,7 +106,10 @@ export default function LocationStaffPage() {
     } catch (error) {
       toast.error('Failed to load staff list');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -411,11 +422,7 @@ export default function LocationStaffPage() {
     );
   };
 
-  if (loading) return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-[var(--color-surface-soft)] animate-pulse rounded-xl"></div>)}
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -615,7 +622,9 @@ export default function LocationStaffPage() {
           </div>
         </SlideIn>
 
-        {viewMode === 'list' ? (
+        {refetching ? (
+          viewMode === 'list' ? <TableSkeleton rows={9} cols={5} /> : <ListSkeleton items={6} />
+        ) : viewMode === 'list' ? (
           <>
             <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/40  shadow-sm">
               <table className="w-full text-left border-collapse">

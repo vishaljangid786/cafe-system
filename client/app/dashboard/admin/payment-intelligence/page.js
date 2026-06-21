@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { StatGridSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, CreditCard, ShoppingBag, Award, Zap,
   Filter, Calendar, Building, DollarSign, BarChart2
@@ -35,6 +38,8 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
 export default function PaymentInformationPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [locations, setLocations] = useState([]);
   const [filters, setFilters] = useState({
     date: '',
@@ -62,7 +67,9 @@ export default function PaymentInformationPage() {
   }, []);
 
   const fetchStats = async () => {
-    setLoading(true);
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true); else setRefetching(true);
+    progress.start();
     try {
       const params = {};
       if (filters.date) params.date = filters.date;
@@ -77,7 +84,10 @@ export default function PaymentInformationPage() {
     } catch (error) {
       toast.error('Failed to load payment info metrics');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -99,6 +109,8 @@ export default function PaymentInformationPage() {
       return updated;
     });
   };
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="max-w-[1600px] mx-auto pb-20 space-y-10">
@@ -203,9 +215,11 @@ export default function PaymentInformationPage() {
           </div>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] rounded-xl" />)}
+      {refetching ? (
+        <div className="space-y-10">
+          <StatGridSkeleton count={4} />
+          <ChartSkeleton />
+          <ChartSkeleton />
         </div>
       ) : (
         <>
