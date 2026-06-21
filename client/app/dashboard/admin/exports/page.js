@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { useAuth } from '@/app/context/AuthContext';
+import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function ExportCenter() {
   const { user, selectedLocationIds } = useAuth();
@@ -44,11 +45,14 @@ export default function ExportCenter() {
   ];
 
   const fetchLocations = async () => {
+    progress.start();
     try {
       const res = await api.get('/locations');
       setLocations(res.data.data);
     } catch (err) {
       console.error(err);
+    } finally {
+      progress.done();
     }
   };
 
@@ -63,6 +67,7 @@ export default function ExportCenter() {
   const handleExport = async () => {
     try {
       setLoading(true);
+      progress.start();
       const exportFilters = { ...filters };
       // Multi-branch subset from Navbar overrides single branchId
       if (selectedLocationIds.length > 1) {
@@ -89,6 +94,7 @@ export default function ExportCenter() {
       console.error(err);
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 

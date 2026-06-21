@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   ShieldAlert, Activity, User, Clock,
@@ -18,6 +21,8 @@ export default function AuditLogsPage() {
   const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalLogs, setTotalLogs] = useState(0);
@@ -33,8 +38,11 @@ export default function AuditLogsPage() {
   ];
 
   const fetchLogs = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const res = await api.get(`/super-admin/audit-logs?page=${page}&actionType=${actionFilter}&userId=${searchUserId}`);
       setLogs(res.data.data);
       setTotalPages(res.data.pagination.pages);
@@ -42,7 +50,10 @@ export default function AuditLogsPage() {
     } catch (err) {
       toast.error('Failed to retrieve security rules');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -63,6 +74,8 @@ export default function AuditLogsPage() {
     return 'text-[var(--color-secondary)] bg-[var(--color-secondary)]/10';
   };
 
+  if (loading) return <LoadingScreen fullScreen={false} />;
+
   return (
     <PageTransition>
       <div className="space-y-10 pb-20 max-w-7xl mx-auto">
@@ -78,9 +91,9 @@ export default function AuditLogsPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
                 <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Activity History Stream</span>
               </div>
-              <h1 className="text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-4 italic">
-                <ShieldAlert className="text-[var(--color-primary)] h-16 w-16 drop-" />
-                ACTIVITY <span className="text-[var(--color-text-muted)]">HISTORY</span>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-4">
+                <ShieldAlert className="text-[var(--color-primary)] h-12 w-12 shrink-0 drop-shadow-sm" />
+                ACTIVITY <span className="text-[var(--color-primary)]">HISTORY</span>
               </h1>
               <p className="text-sm font-medium text-[var(--color-text-secondary)] max-w-md">Full history of every action across all branches.</p>
             </div>
@@ -167,12 +180,12 @@ export default function AuditLogsPage() {
               </thead>
               <tbody className="divide-y border-[var(--color-border)]">
                 <AnimatePresence mode="popLayout">
-                  {loading ? (
-                    [1, 2, 3, 4, 5].map(i => (
-                      <tr key={`skeleton-${i}`} className="animate-pulse">
-                        <td colSpan="4" className="px-10 py-8 bg-[var(--color-surface-soft)]" />
-                      </tr>
-                    ))
+                  {refetching ? (
+                    <tr>
+                      <td colSpan="4" className="px-10 py-8">
+                        <TableSkeleton rows={6} cols={4} />
+                      </td>
+                    </tr>
                   ) : logs.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-10 py-32 text-center">

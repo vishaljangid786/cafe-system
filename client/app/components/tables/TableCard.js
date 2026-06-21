@@ -37,7 +37,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
       `}>
         {/* Admin Controls Overlay */}
         {isAdmin && (
-          <div className="absolute top-8 left-8 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-10">
+          <div className="absolute top-8 left-8 flex items-center gap-2 transition-all z-10">
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(table); }}
               className="h-8 w-8 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 shadow-sm transition-all"

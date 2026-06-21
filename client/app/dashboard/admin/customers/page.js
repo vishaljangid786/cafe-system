@@ -1,21 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
 import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, X } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function CustomersDashboard() {
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [analytics, setAnalytics] = useState(null);
   const [topCustomers, setTopCustomers] = useState([]);
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [viewingCustomer, setViewingCustomer] = useState(null);
 
   const fetchCRMData = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const [analyticsRes, topRes, inactiveRes] = await Promise.all([
         api.get('/customers/analytics'),
         api.get('/customers/top'),
@@ -29,7 +37,10 @@ export default function CustomersDashboard() {
       console.error('Failed to load CRM data', err);
       toast.error('Failed to load CRM matrices');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -48,18 +59,7 @@ export default function CustomersDashboard() {
     return { label: 'Member', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success)]/10' };
   };
 
-  if (loading) {
-    return (
-      <PageTransition>
-        <div className="p-8 space-y-6">
-          <div className="h-10 w-48 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-[var(--color-surface-soft)] rounded-xl animate-pulse" />)}
-          </div>
-        </div>
-      </PageTransition>
-    );
-  }
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -85,7 +85,9 @@ export default function CustomersDashboard() {
         </SlideIn>
 
         {/* Analytics KPIs */}
-        {analytics && (
+        {refetching ? (
+          <StatGridSkeleton count={4} />
+        ) : analytics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <SlideIn delay={0.1}>
               <div className="bg-[var(--color-surface)]/40  p-6 rounded-xl border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
@@ -146,6 +148,9 @@ export default function CustomersDashboard() {
                 <Star className="text-[var(--color-primary)]" /> Top Reward Earners
               </h2>
             </SlideIn>
+            {refetching ? (
+              <TableSkeleton rows={6} cols={6} />
+            ) : (
             <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -187,7 +192,7 @@ export default function CustomersDashboard() {
                           <td className="p-6">
                             <button 
                               onClick={() => setViewingCustomer(cust)}
-                              className="p-2 rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary)] hover:text-[var(--color-on-primary)] transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                              className="p-2 rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary)] hover:text-[var(--color-on-primary)] transition-all shadow-sm"
                             >
                               <ChevronRight size={16} />
                             </button>
@@ -199,6 +204,7 @@ export default function CustomersDashboard() {
                 </table>
               </div>
             </div>
+            )}
           </div>
 
           {/* Inactive Customers Target List */}
@@ -209,6 +215,9 @@ export default function CustomersDashboard() {
               </h2>
             </SlideIn>
             
+            {refetching ? (
+              <ListSkeleton rows={5} />
+            ) : (
             <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-6 shadow-sm flex flex-col gap-4">
               {inactiveCustomers.map(cust => (
                 <div key={cust._id} className="p-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex justify-between items-center group hover:border-[var(--color-danger)]/30 transition-colors">
@@ -224,6 +233,7 @@ export default function CustomersDashboard() {
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
       </div>

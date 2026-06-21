@@ -11,16 +11,21 @@ import { Button } from '../../../components/ui/Button';
 import { Card, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function BookingsManagementPage() {
   const { user, selectedLocation, globalSearch } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -35,8 +40,11 @@ export default function BookingsManagementPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const fetchBookings = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const params = {
         date: dateFilter,
         locationId: selectedLocation?._id || selectedLocation
@@ -50,7 +58,10 @@ export default function BookingsManagementPage() {
     } catch (error) {
       toast.error('Failed to load bookings');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -85,9 +96,7 @@ export default function BookingsManagementPage() {
     }
   };
 
-  if (loading && bookings.length === 0) return (
-    <LoaderBlock label="Loading Bookings" minHeight="24rem" />
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -149,7 +158,15 @@ export default function BookingsManagementPage() {
           </div>
         </SlideIn>
 
-        {viewMode === 'list' ? (
+        {refetching ? (
+          viewMode === 'list' ? (
+            <TableSkeleton rows={6} cols={5} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
+            </div>
+          )
+        ) : viewMode === 'list' ? (
           /* List View */
           <div className="bg-[var(--color-surface)]/40 rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm  transition-colors">
             <div className="overflow-x-auto custom-scrollbar">
@@ -408,7 +425,7 @@ export default function BookingsManagementPage() {
           )}
         </Modal>
 
-        {filteredBookings.length === 0 && !loading && (
+        {filteredBookings.length === 0 && !loading && !refetching && (
           <div className="text-center py-32 bg-[var(--color-primary)]/[0.02] rounded-[4rem] border border-dashed border-[var(--color-border)]">
             <Calendar size={64} className="mx-auto text-[var(--color-text-muted)] mb-6" strokeWidth={1} />
             <h3 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">No Bookings Found</h3>

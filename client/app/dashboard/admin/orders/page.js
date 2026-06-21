@@ -403,7 +403,7 @@ export default function AdminOrdersDashboard() {
                                 <span className="text-sm font-bold text-[var(--color-text-primary)]">₹{order.totalAmount}</span>
                               </td>
                               <td className="py-6 px-8 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end gap-2 transition-opacity">
                                   <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="p-2.5 bg-[var(--color-surface)] text-[var(--color-primary)] rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-primary)] hover:text-white transition-all shadow-sm">
                                     <Eye size={14} />
                                   </button>

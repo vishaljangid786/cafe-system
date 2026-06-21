@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { StatGridSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -17,6 +20,8 @@ export default function ForecastingDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
 
   const fetchLocations = async () => {
     try {
@@ -28,14 +33,20 @@ export default function ForecastingDashboard() {
   };
 
   const fetchForecast = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const res = await api.get(`/analytics/forecasting?branchId=${selectedBranch}&period=${selectedPeriod}`);
       setForecast(res.data.data);
     } catch (err) {
       toast.error('Forecasting data mapping failed');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -55,7 +66,7 @@ export default function ForecastingDashboard() {
     return () => clearTimeout(timer);
   }, [selectedBranch, selectedPeriod]);
 
-  if (loading) return <div className="p-10 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Extrapolating performance list data...</div>;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -101,6 +112,14 @@ export default function ForecastingDashboard() {
           </div>
         </SlideIn>
 
+        {refetching ? (
+          <>
+            <StatGridSkeleton count={3} />
+            <StatGridSkeleton count={2} />
+            <ChartSkeleton />
+          </>
+        ) : (
+          <>
         {/* Prediction Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-8 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] rounded-xl text-white shadow-sm">
@@ -171,6 +190,8 @@ export default function ForecastingDashboard() {
             </ResponsiveContainer>
           </div>
         </div>
+          </>
+        )}
       </div>
     </PageTransition>
   );

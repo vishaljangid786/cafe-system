@@ -377,7 +377,7 @@ export default function TablesPage() {
                       )}
 
                       {/* Action buttons */}
-                      <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 mt-1 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
                           className="h-8 w-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-center hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5 transition-all text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"

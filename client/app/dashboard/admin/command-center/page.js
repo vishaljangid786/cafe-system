@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import {
   ShoppingBag, Flame, Users, DollarSign, Clock,
@@ -11,6 +11,9 @@ import io from 'socket.io-client';
 import getSocketUrl from '../../../services/socketUrl';
 import toast from 'react-hot-toast';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
+import { progress } from '../../../components/ui/TopProgressBar';
+import { CardSkeleton } from '../../../components/ui/Skeleton';
 
 const SOCKET_URL = getSocketUrl();
 
@@ -19,7 +22,9 @@ export default function CommandCenterPage() {
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
   const [alerts, setAlerts] = useState([]);
+  const didInitRef = useRef(false);
 
   const fetchInitialData = async () => {
     try {
@@ -30,14 +35,28 @@ export default function CommandCenterPage() {
     }
   };
 
-  const fetchStats = async () => {
+  // `silent` is used for real-time socket refreshes so live updates never
+  // flicker a skeleton. The first call drives the full-page loader; subsequent
+  // user-initiated calls (branch filter / manual refresh) show a section skeleton.
+  const fetchStats = async ({ silent = false } = {}) => {
+    const isInitial = !didInitRef.current;
+    if (!silent) {
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
+    }
     try {
       const res = await api.get(`/analytics/command-center?branchId=${selectedBranch}`);
       setStats(res.data.data);
     } catch (error) {
       console.error('Command center fetch fail');
     } finally {
-      setLoading(false);
+      didInitRef.current = true;
+      if (!silent) {
+        setLoading(false);
+        setRefetching(false);
+        progress.done();
+      }
     }
   };
 
@@ -64,7 +83,7 @@ export default function CommandCenterPage() {
     });
 
     const handleRealTimeEvent = () => {
-      fetchStats();
+      fetchStats({ silent: true });
     };
 
     socket.on('order:new', handleRealTimeEvent);
@@ -84,7 +103,7 @@ export default function CommandCenterPage() {
     };
   }, [selectedBranch]);
 
-  if (loading) return <div className="p-10 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Loading Command Data...</div>;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -114,15 +133,26 @@ export default function CommandCenterPage() {
               />
 
               <button
-                onClick={fetchStats}
-                className="p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)]/30 transition-all text-[var(--color-text-muted)]"
+                onClick={() => fetchStats()}
+                className={`p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)]/30 transition-all text-[var(--color-text-muted)] ${refetching ? 'opacity-60 pointer-events-none' : ''}`}
               >
-                <RefreshCcw size={16} />
+                <RefreshCcw size={16} className={refetching ? 'animate-spin' : ''} />
               </button>
             </div>
           </div>
         </SlideIn>
 
+        {refetching ? (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Real-Time Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
@@ -186,6 +216,8 @@ export default function CommandCenterPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
         {/* Alerts & Operational Logs */}
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-10 rounded-xl shadow-sm">

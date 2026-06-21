@@ -77,33 +77,33 @@ export default function PayrollRecordsPage() {
             <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-[var(--color-secondary)]/10 hidden" />
 
             <div className="relative p-5 sm:p-6 lg:p-7">
-              <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                <div className="flex-1">
+              <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-end 2xl:justify-between">
+                <div className="min-w-0 2xl:flex-1">
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                     <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] " />
                     Salary Control Center
                   </div>
 
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-sm  border border-[var(--color-border)]">
                       <Wallet size={28} strokeWidth={2.5} />
                     </div>
 
-                    <div>
-                      <h1 className="text-3xl font-bold leading-none tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
+                    <div className="min-w-0">
+                      <h1 className="text-3xl font-bold leading-tight tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
                         Salary <span className="text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">History</span>
                       </h1>
-                      <p className="mt-3 flex max-w-2xl items-center text-sm font-semibold text-[var(--color-text-secondary)]">
-                        <Target size={15} className="mr-2 shrink-0 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]" />
-                        Manage payouts, staff compensation, and branch-wise salary history for the selected cycle.
+                      <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-[var(--color-text-secondary)]">
+                        <Target size={15} className="mt-0.5 shrink-0 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]" />
+                        <span>Manage payouts, staff compensation, and branch-wise salary history for the selected cycle.</span>
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:w-auto xl:min-w-[820px]">
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 2xl:w-auto 2xl:min-w-[660px]">
                   {/* Search */}
-                  <div className="relative group sm:col-span-2 lg:col-span-1">
+                  <div className="relative group">
                     <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       Search
                     </label>

@@ -267,6 +267,20 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
 
   const showLabels = isExpanded || isMobile;
 
+  // Close the mobile drawer whenever the route changes (tap a link → drawer closes).
+  useEffect(() => {
+    if (isMobile && isMobileOpen) setIsMobileOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Lock background scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const locked = isMobile && isMobileOpen;
+    document.body.style.overflow = locked ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobile, isMobileOpen]);
+
   const sidebarVariants = {
     expanded: { width: 260, x: 0 },
     collapsed: { width: 80, x: 0 },
@@ -343,6 +357,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                   </div>
                 ) : (
                   <div
+                    title={group.title}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleGroupInteraction(e, group.title, 'click');
@@ -478,10 +493,12 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         {content}
       </motion.aside>
 
-      {/* Flyout Portals (ONLY for Non-Active Groups on Hover) */}
+      {/* Flyout Portals — on hover. When collapsed, show for EVERY group (incl.
+          the active one) so each icon reveals its name/submenu; when expanded,
+          keep the original behaviour of previewing only non-active groups. */}
       {!isMobile && (
         <AnimatePresence>
-          {hoveredGroup && hoveredGroup !== currentActiveGroupTitle && (
+          {hoveredGroup && (showLabels ? hoveredGroup !== currentActiveGroupTitle : true) && (
             <motion.div
               key={hoveredGroup}
               initial={{ opacity: 0, x: -8 }}

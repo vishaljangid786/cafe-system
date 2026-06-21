@@ -11,6 +11,9 @@ import {
 import toast from 'react-hot-toast';
 import ExportActions from '../../../components/ui/ExportActions';
 import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function GlobalAttendancePage() {
   const dateInputRef = useRef(null);
@@ -27,6 +30,8 @@ export default function GlobalAttendancePage() {
   const [staff, setStaff] = useState([]);
   const [markingLoading, setMarkingLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const itemsPerPage = 20;
   
   const columns = [
@@ -40,8 +45,11 @@ export default function GlobalAttendancePage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const isInitial = !didInitRef.current;
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
       try {
-        setLoading(true);
         const [attRes, summaryRes, locRes] = await Promise.all([
           api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`),
           api.get(`/attendance/monthly-summary?month=${filters.date.slice(0, 7)}&locationId=${filters.locationId}`),
@@ -63,7 +71,10 @@ export default function GlobalAttendancePage() {
         console.error('Failed to fetch attendance list:', err.response?.data || err.message);
         toast.error(err.response?.data?.message || 'Failed to fetch attendance data stream');
       } finally {
+        didInitRef.current = true;
         setLoading(false);
+        setRefetching(false);
+        progress.done();
       }
     };
     fetchData();
@@ -101,6 +112,8 @@ export default function GlobalAttendancePage() {
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -407,12 +420,12 @@ export default function GlobalAttendancePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
-                  {loading ? (
-                    [1, 2, 3].map(i => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan="4" className="px-6 py-8"><div className="h-4 bg-[var(--color-surface-soft)] rounded w-full"></div></td>
-                      </tr>
-                    ))
+                  {refetching ? (
+                    <tr>
+                      <td colSpan="4" className="p-0">
+                        <TableSkeleton rows={6} cols={4} />
+                      </td>
+                    </tr>
                   ) : attendance.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-12 text-center text-[var(--color-text-muted)] font-medium">No attendance records found for this date.</td>

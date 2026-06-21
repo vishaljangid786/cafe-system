@@ -8,13 +8,16 @@ import {
   Target
 } from 'lucide-react';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -24,6 +27,8 @@ export default function CouponsManagementPage() {
   const [coupons, setCoupons] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -57,8 +62,11 @@ export default function CouponsManagementPage() {
   };
 
   const fetchCoupons = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const params = new URLSearchParams({ page: currentPage, limit: itemsPerPage });
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter === 'Active') params.append('active', 'true');
@@ -69,7 +77,10 @@ export default function CouponsManagementPage() {
     } catch (error) {
       toast.error('Failed to load coupons');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -189,9 +200,7 @@ export default function CouponsManagementPage() {
     return expiry < soon && expiry > new Date();
   }).length;
 
-  if (loading && coupons.length === 0) return (
-    <LoaderBlock label="Loading Coupons" minHeight="24rem" />
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -297,6 +306,12 @@ export default function CouponsManagementPage() {
         </div>
 
         <div className="bg-[var(--color-surface)]/30 rounded-xl border border-[var(--color-border)] overflow-hidden shadow-sm transition-colors">
+          {refetching ? (
+            <div className="p-8">
+              <TableSkeleton rows={6} cols={6} />
+            </div>
+          ) : (
+          <>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[var(--color-surface-soft)] border-b border-[var(--color-border)]">
@@ -398,6 +413,8 @@ export default function CouponsManagementPage() {
                 </button>
               </div>
             </div>
+          )}
+          </>
           )}
         </div>
 

@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { CardSkeleton, ChartSkeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell
@@ -30,8 +33,11 @@ export default function LocationComparisonPage() {
   const [activeTab, setActiveTab] = useState('dual'); // dual, advanced
   const [suiteData, setSuiteData] = useState(null);
   const [suiteLoading, setSuiteLoading] = useState(false);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
 
   const fetchInitialData = async () => {
+    progress.start();
     try {
       const res = await api.get('/locations');
       const locs = res.data.data;
@@ -47,10 +53,14 @@ export default function LocationComparisonPage() {
       toast.error('Failed to initialize branches');
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 
   const fetchComparison = async () => {
+    const isInitial = !didInitRef.current;
+    if (!isInitial) setRefetching(true);
+    progress.start();
     try {
       const params = `locationIds=${loc1},${loc2}&period=${dateRange === 'week' ? 7 : (dateRange === 'month' ? 30 : 365)}`;
       const [compRes, detailRes] = await Promise.all([
@@ -61,11 +71,16 @@ export default function LocationComparisonPage() {
       setDetailedData(detailRes.data.data);
     } catch (error) {
       toast.error('List sync failed');
+    } finally {
+      didInitRef.current = true;
+      setRefetching(false);
+      progress.done();
     }
   };
 
   const fetchSuite = async () => {
     setSuiteLoading(true);
+    progress.start();
     try {
       const res = await api.get(`/analytics/branch-comparison-suite?period=${dateRange}`);
       setSuiteData(res.data.data);
@@ -73,6 +88,7 @@ export default function LocationComparisonPage() {
       toast.error('Performance benchmarking sync failed');
     } finally {
       setSuiteLoading(false);
+      progress.done();
     }
   };
 
@@ -132,7 +148,7 @@ export default function LocationComparisonPage() {
     ];
   };
 
-  if (loading) return <div className="p-10 font-bold text-[var(--color-text-muted)]">Loading branch data...</div>;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -226,6 +242,17 @@ export default function LocationComparisonPage() {
         </SlideIn>
 
         {activeTab === 'dual' ? (
+          refetching ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ChartSkeleton />
+                <ChartSkeleton />
+              </div>
+            </>
+          ) : (
           <>
             {/* Winner Analysis Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -302,12 +329,16 @@ export default function LocationComparisonPage() {
               </div>
             </div>
           </>
+          )
         ) : (
           <div className="space-y-10">
             {suiteLoading ? (
-              <div className="h-64 bg-[var(--color-surface-soft)] animate-pulse rounded-xl flex items-center justify-center text-[var(--color-text-muted)] font-bold">
-                Compiling benchmarking data array...
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
+                </div>
+                <TableSkeleton rows={6} cols={10} />
+              </>
             ) : (
               <>
                 {/* Outliers Premium Cards */}

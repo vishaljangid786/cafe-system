@@ -7,6 +7,8 @@ import api from '../../../services/api';
 import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -42,6 +44,7 @@ export default function BranchesPage() {
   const [staffTab, setStaffTab] = useState('staff'); // 'staff' or 'chef'
 
   const fetchLocations = async () => {
+    progress.start();
     try {
       const res = await api.get('/locations');
       setLocations(res.data.data);
@@ -49,6 +52,7 @@ export default function BranchesPage() {
       console.error("Failed to fetch locations list");
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 
@@ -581,7 +585,7 @@ export default function BranchesPage() {
                                     <p className="text-sm font-bold text-[var(--color-text-primary)]">{member.name}</p>
                                   </div>
                                </div>
-                               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <div className="flex items-center gap-2 transition-opacity">
                                   <motion.button 
                                     whileHover={{ scale: 1.1 }}
                                     onClick={() => handleUserAction(member._id, 'promote')}

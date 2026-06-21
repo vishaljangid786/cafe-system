@@ -1,6 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 import { 
   Package, AlertTriangle, Trash2, ShoppingCart, 
   TrendingDown, MapPin, Search, Filter, 
@@ -16,6 +19,8 @@ import ExportActions from '@/app/components/ui/ExportActions';
 
 export default function InventoryDashboard() {
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [activeTab, setActiveTab] = useState('stock'); // stock, waste, suggestions
   const [inventory, setInventory] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -58,24 +63,32 @@ export default function InventoryDashboard() {
   });
 
   const fetchInitialData = async () => {
+    setLoading(true);
+    progress.start();
     try {
-      setLoading(true);
       const [locRes, ingRes] = await Promise.all([
         api.get('/locations'),
         api.get('/inventory/ingredients')
       ]);
       setLocations(locRes.data.data);
       setIngredients(ingRes.data.data);
-      
-      await fetchData();
+
+      await fetchData({ initial: true });
     } catch (err) {
       toast.error('Failed to initialize dashboard');
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      progress.done();
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = async ({ initial = false } = {}) => {
+    // initial=true means called from fetchInitialData (loader already handled there)
+    if (!initial) {
+      setRefetching(true);
+      progress.start();
+    }
     try {
       const branchId = selectedBranch === 'All' ? '' : selectedBranch;
       const [invRes, alertRes, sugRes] = await Promise.all([
@@ -90,6 +103,11 @@ export default function InventoryDashboard() {
     } catch (err) {
       console.error(err);
       toast.error('Failed to refresh data');
+    } finally {
+      if (!initial) {
+        setRefetching(false);
+        progress.done();
+      }
     }
   };
 
@@ -166,6 +184,8 @@ export default function InventoryDashboard() {
     item.ingredient?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.branch?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -319,6 +339,9 @@ export default function InventoryDashboard() {
                   </div>
                 </div>
 
+                {refetching ? (
+                  <TableSkeleton rows={6} cols={5} />
+                ) : (
                 <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -378,7 +401,7 @@ export default function InventoryDashboard() {
                                   });
                                   setIsUpdateModalOpen(true);
                                 }}
-                                className="p-2 rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                                className="p-2 rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
                               >
                                 <RefreshCcw size={16} />
                               </button>
@@ -389,6 +412,7 @@ export default function InventoryDashboard() {
                     </table>
                   </div>
                 </div>
+                )}
               </motion.div>
             )}
 
@@ -399,7 +423,12 @@ export default function InventoryDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
-                {suggestions.map((sug, i) => (
+                {refetching ? (
+                  <>
+                    <CardSkeleton />
+                    <CardSkeleton />
+                  </>
+                ) : suggestions.map((sug, i) => (
                   <div key={i} className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between group hover:border-[var(--color-primary)]/50 transition-colors shadow-sm">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] mb-1">Procurement Suggestion</p>

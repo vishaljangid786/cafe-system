@@ -1505,7 +1505,7 @@ export default function MenuManagementPage() {
                             <button
                               type="button"
                               onClick={() => removeInstruction(idx)}
-                              className="h-10 w-10 flex items-center justify-center text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all h-fit opacity-0 group-hover:opacity-100"
+                              className="h-10 w-10 flex items-center justify-center text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-xl transition-all h-fit"
                             >
                               <Minus size={16} />
                             </button>

@@ -248,7 +248,7 @@ export default function LocationStaffPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-1 transition-opacity">
               {member.role !== 'system_group' && (
                 <>
                   <button

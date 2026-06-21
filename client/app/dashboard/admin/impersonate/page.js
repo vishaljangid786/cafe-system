@@ -11,6 +11,8 @@ import { PageTransition } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Button } from '@/app/components/ui/Button';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function ImpersonatePage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function ImpersonatePage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      progress.start();
       const res = await api.get('/users');
       let allUsers = res.data.data;
 
@@ -48,6 +51,7 @@ export default function ImpersonatePage() {
       toast.error('Failed to sync user database');
     } finally {
       setLoading(false);
+      progress.done();
     }
   };
 
@@ -113,16 +117,7 @@ export default function ImpersonatePage() {
     return 'Security Level: UNKNOWN';
   };
 
-  if (loading && users.length === 0) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 border-4 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] animate-pulse">Loading Staff</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading && users.length === 0) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

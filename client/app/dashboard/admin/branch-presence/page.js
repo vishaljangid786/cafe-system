@@ -9,6 +9,9 @@ import {
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { progress } from '@/app/components/ui/TopProgressBar';
+import { TableSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function BranchPresencePage() {
   const [locations, setLocations] = useState([]);
@@ -16,24 +19,31 @@ export default function BranchPresencePage() {
   const [staff, setStaff] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
   const [markingLoading, setMarkingLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const dateInputRef = useRef(null);
+  const didInitRef = useRef(false);
 
   const fetchLocations = async () => {
+    progress.start();
     try {
       const res = await api.get('/locations');
       setLocations(res.data.data);
-      setLoading(false);
     } catch (err) {
       toast.error('Failed to load branches');
+    } finally {
+      didInitRef.current = true;
+      setLoading(false);
+      progress.done();
     }
   };
 
   const fetchBranchData = async () => {
+    setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const [staffRes, attRes] = await Promise.all([
         api.get(`/users?locationId=${selectedLocation._id}`),
         api.get(`/attendance/location?locationId=${selectedLocation._id}&date=${date}`)
@@ -43,7 +53,8 @@ export default function BranchPresencePage() {
     } catch (err) {
       toast.error('Failed to load branch records');
     } finally {
-      setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -90,13 +101,7 @@ export default function BranchPresencePage() {
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading && locations.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Activity className="animate-spin text-[var(--color-primary)]" size={40} />
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -249,12 +254,12 @@ export default function BranchPresencePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-border)]">
-                      {loading ? (
-                        [1,2,3].map(i => (
-                          <tr key={i} className="animate-pulse">
-                            <td colSpan="3" className="px-10 py-10"><div className="h-10 bg-[var(--color-bg-soft)] rounded-xl w-full" /></td>
-                          </tr>
-                        ))
+                      {refetching ? (
+                        <tr>
+                          <td colSpan="3" className="px-10 py-8">
+                            <TableSkeleton rows={6} cols={3} />
+                          </td>
+                        </tr>
                       ) : filteredStaff.length === 0 ? (
                         <tr>
                           <td colSpan="3" className="px-10 py-20 text-center">
