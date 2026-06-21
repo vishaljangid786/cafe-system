@@ -46,6 +46,8 @@ export default function MenuManagementPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
@@ -188,8 +190,11 @@ export default function MenuManagementPage() {
   }, [editingCategory]);
 
   const fetchData = async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
     try {
-      setLoading(true);
       const params = {};
 
       const targetLoc = filterLocation !== 'all' ? filterLocation : (selectedLocation?._id || selectedLocation);
@@ -215,7 +220,10 @@ export default function MenuManagementPage() {
       toast.error('Failed to load menu items');
       console.error(error);
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
