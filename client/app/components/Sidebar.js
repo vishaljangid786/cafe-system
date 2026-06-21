@@ -368,9 +368,11 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                   </div>
                 )}
 
-                {/* Inline Dropdown (Determined by openGroup state) */}
+                {/* Inline Dropdown — only when labels are visible (expanded / mobile).
+                    In collapsed mode the items are reached via the hover flyout, so
+                    we must NOT render this inside the narrow 80px rail. */}
                 <AnimatePresence>
-                  {openGroup === group.title && (
+                  {showLabels && openGroup === group.title && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}

@@ -19,7 +19,7 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
-import { Skeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
+import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
@@ -220,10 +220,8 @@ export default function LocationExpensesPage() {
         {/* Data List */}
         <div className="space-y-4">
           <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Recent Expenses</h3>
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
-            </div>
+          {refetching ? (
+            <ListSkeleton rows={6} />
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-white/40 dark:bg-[var(--color-bg)]/40 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border)]">
               <p className="text-[var(--color-text-muted)] font-bold">No expense records detected.</p>
