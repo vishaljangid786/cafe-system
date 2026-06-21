@@ -48,6 +48,8 @@ export default function AdminDashboard() {
     recentRevenues: []
   });
   const [loading, setLoading] = useState(true);
+  const [refetching, setRefetching] = useState(false);
+  const didInitRef = useRef(false);
   const [timeFilter, setTimeFilter] = useState('all'); // '7d', '30d', 'all', 'custom'
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
   const [isLocSelectorOpen, setIsLocSelectorOpen] = useState(false);
@@ -79,8 +81,11 @@ export default function AdminDashboard() {
   };
 
   const fetchAnalytics = async () => {
+    const isInitial = !didInitRef.current;
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
+      else setRefetching(true);
+      progress.start();
       const params = new URLSearchParams();
       // Multi-branch subset takes priority over single location filter
       if (selectedLocationIds.length > 0) {
@@ -118,7 +123,10 @@ export default function AdminDashboard() {
       console.error("Failed to fetch analytics");
       toast.error("Failed to load dashboard");
     } finally {
+      didInitRef.current = true;
       setLoading(false);
+      setRefetching(false);
+      progress.done();
     }
   };
 
@@ -149,16 +157,7 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, [filterLocation, timeFilter, customDates, selectedLocationIds]);
 
-  if (loading) return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <CardSkeleton className="h-[400px]" /><CardSkeleton className="h-[400px]" />
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="space-y-10 pb-20">
@@ -244,6 +243,20 @@ export default function AdminDashboard() {
         </motion.div>
       )}
 
+      {refetching ? (
+        <div className="space-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <ChartSkeleton className="lg:col-span-2 h-[400px]" /><ChartSkeleton className="h-[400px]" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <CardSkeleton className="h-[300px]" /><CardSkeleton className="h-[300px]" />
+          </div>
+        </div>
+      ) : (
+      <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <Link href={`${dashPrefix}/orders`} className="contents">
           <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
@@ -647,6 +660,8 @@ export default function AdminDashboard() {
             </div>
           </Card>
         </SlideIn>
+      )}
+      </>
       )}
     </div>
   );

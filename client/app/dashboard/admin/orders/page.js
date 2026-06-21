@@ -81,7 +81,12 @@ export default function AdminOrdersDashboard() {
     } catch (error) {
       toast.error('Strategic sync failed');
     } finally {
-      setLoading(false);
+      didInitRef.current = true;
+      if (!silent) {
+        setLoading(false);
+        setRefetching(false);
+        progress.done();
+      }
     }
   }, [branchFilter, statusFilter, dateRange, currentPage]);
 
@@ -100,7 +105,7 @@ export default function AdminOrdersDashboard() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleRefresh = () => fetchData();
+    const handleRefresh = () => fetchData({ silent: true });
     socket.on('order:update', handleRefresh);
     socket.on('order:cancel', handleRefresh);
     socket.on('order:note', handleRefresh);
@@ -204,15 +209,7 @@ export default function AdminOrdersDashboard() {
 
   const filteredOrders = orders;
 
-  if (loading && !analytics) return (
-    <div className="flex items-center justify-center h-[70vh] flex-col gap-6">
-      <div className="relative">
-        <RefreshCw className="animate-spin text-[var(--color-primary)]" size={64} />
-        <div className="absolute inset-0 hidden bg-[var(--color-primary)]/20 rounded-full animate-pulse" />
-      </div>
-      <p className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] animate-pulse">Syncing Operational Grid...</p>
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -271,7 +268,7 @@ export default function AdminOrdersDashboard() {
         />
 
 
-        {loading && !analytics ? (
+        {refetching ? (
           <DashboardSkeleton />
         ) : (
           <>
