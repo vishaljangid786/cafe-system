@@ -195,13 +195,7 @@ export default function BranchesPage() {
     }
   };
 
-  if (loading) return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <CardSkeleton />
-      <CardSkeleton />
-      <CardSkeleton />
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
