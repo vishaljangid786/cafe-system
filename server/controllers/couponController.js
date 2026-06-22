@@ -94,7 +94,11 @@ const createCoupon = asyncHandler(async (req, res) => {
 // @route   PUT /api/coupons/:id
 // @access  Private (Admin)
 const updateCoupon = asyncHandler(async (req, res) => {
-  const updates = { ...req.body };
+  // Whitelist editable fields so a client can't over-post usedCount/createdBy/etc
+  // (resetting usedCount would defeat the usage limit).
+  const ALLOWED = ['code', 'discountType', 'discountValue', 'maxDiscount', 'minOrderAmount', 'expiryDate', 'usageLimit', 'appliesTo', 'isActive'];
+  const updates = {};
+  ALLOWED.forEach((k) => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
   if (updates.expiryDate && new Date(updates.expiryDate) <= new Date()) {
     res.status(400);
     throw new Error('Expiry date must be in the future');

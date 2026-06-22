@@ -314,6 +314,8 @@ exports.updateReservation = async (req, res) => {
     enforceLocationAccess(req, res, getReservationLocationId(existing));
 
     const updateData = { ...req.body };
+    // Never let the client over-post ownership/identity fields (e.g. forge userId).
+    ['userId', 'user', 'createdBy', '_id'].forEach((k) => delete updateData[k]);
     const locationId = updateData.locationId
       ? resolveReservationLocation(req, res, updateData.locationId)
       : getReservationLocationId(existing);

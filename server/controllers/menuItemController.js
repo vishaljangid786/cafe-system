@@ -455,6 +455,15 @@ const toggleAvailability = asyncHandler(async (req, res) => {
     throw new Error('Only Super Admins can toggle availability of global menu items');
   }
 
+  // A non-super actor may only toggle a branch item that belongs to one of their branches.
+  if (req.user.role !== 'super_admin' && !item.isGlobal) {
+    const owns = (item.availableBranches || []).some((b) => canAccessLocation(req.user, b.toString()));
+    if (!owns) {
+      res.status(403);
+      throw new Error('You can only toggle menu items for your own branch');
+    }
+  }
+
   item.isAvailable = !item.isAvailable;
   await item.save();
 

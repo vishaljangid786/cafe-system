@@ -334,7 +334,9 @@ const updateTable = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, table.locationId, 'You do not have permission to update tables from other locations');
 
-  const { locationId: _stripped, ...safeBody } = req.body;
+  // Strip location + operational/financial fields — these are owned by the order
+  // flow, not by a manual table edit (over-posting them could corrupt billing/state).
+  const { locationId: _l, orders, currentOrder, totalAmount, appliedCoupon, status, occupiedBy, occupiedAt, ...safeBody } = req.body;
   const updatedTable = await Table.findByIdAndUpdate(req.params.id, safeBody, {
     new: true,
     runValidators: true,
