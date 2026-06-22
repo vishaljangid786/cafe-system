@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
-const { canAccessLocation, userLocationIds } = require('../utils/accessControl');
+const { canAccessLocation, userLocationIds, clampLimit } = require('../utils/accessControl');
 
 // @desc    Get user notifications
 // @route   GET /api/notifications
@@ -28,13 +28,14 @@ const getNotifications = asyncHandler(async (req, res) => {
     if (endDate) query.createdAt.$lte = new Date(endDate);
   }
 
-  const skip = (page - 1) * limit;
+  const limitNum = clampLimit(limit, 20);
+  const skip = (page - 1) * limitNum;
 
   const notifications = await Notification.find(query)
     .populate('sender', 'name role profileImageUrl')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limitNum)
     .lean();
 
   const total = await Notification.countDocuments(query);
