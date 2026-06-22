@@ -113,6 +113,7 @@ export default function AdminOrdersDashboard() {
   }, [socket, fetchData]);
 
   const handleForceComplete = async (id) => {
+    if (!confirm('Force-complete this order? This skips the normal kitchen flow.')) return;
     try {
       await api.patch(`/orders/${id}/force-complete`);
       toast.success('Order marked as completed');
@@ -126,6 +127,7 @@ export default function AdminOrdersDashboard() {
   };
 
   const handleCancel = async (id) => {
+    if (!confirm('Cancel this order? This cannot be undone.')) return;
     try {
       await api.patch(`/orders/${id}/cancel`);
       toast.success('Order canceled');
@@ -145,6 +147,7 @@ export default function AdminOrdersDashboard() {
     if (!['admin', 'super_admin'].includes(user?.role)) {
       return toast.error('Unauthorized action');
     }
+    if (!confirm('Delete this order permanently? This cannot be undone.')) return;
     try {
       setLoading(true);
       await api.delete(`/orders/${id}`);

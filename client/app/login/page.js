@@ -46,15 +46,12 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     setServerError('');
-    console.log('Submitting login form with data:', data);
     const res = await login(data.email, data.password);
-    console.log('Login response:', res);
-    if (res.success) {
-      toast.success('Login successful. Welcome back.');
-    } else {
+    if (!res.success) {
       setServerError(res.message);
       toast.error(res.message || 'Login failed. Please check your details.');
     }
+    // Success toast ("Welcome back, <name>") is shown by AuthContext — no duplicate here.
   };
 
   const handleQuickLogin = async (email) => {

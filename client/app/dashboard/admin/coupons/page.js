@@ -156,6 +156,7 @@ export default function CouponsManagementPage() {
   };
 
   const handleDelete = async (id) => {
+    if (!confirm('Delete this coupon? This cannot be undone.')) return;
     const loadToast = toast.loading('Deleting coupon...');
     try {
       await api.delete(`/coupons/${id}`);
