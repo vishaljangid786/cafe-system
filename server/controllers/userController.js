@@ -6,12 +6,30 @@ const { encrypt } = require('../utils/encryption');
 
 const targetUserLocations = (user) => userLocationIds(user);
 
+const ROLE_RANK = { super_admin: 5, admin: 4, branch_admin: 3, location_admin: 2, staff: 1, chef: 1 };
+
 const ensureCanManageUserLocation = (req, res, user, message = 'You do not have permission to manage users from other locations') => {
   if (req.user.role === 'super_admin') return;
   const ids = targetUserLocations(user);
-  if (ids.length === 0) return;
+  // A location-less target is a global account (admin / super_admin). A non-super
+  // actor can't own it, so DENY rather than open-pass (this was an IDOR bypass).
+  if (ids.length === 0) {
+    res.status(403);
+    throw new Error(message);
+  }
   const hasUnauthorized = ids.some((id) => !canAccessLocation(req.user, id));
   if (hasUnauthorized) {
+    res.status(403);
+    throw new Error(message);
+  }
+};
+
+// The actor may only manage a user STRICTLY BELOW their own role rank
+// (super_admin may manage anyone). Blocks peer/superior account takeover —
+// e.g. an admin disabling/deleting/blocking another admin or a super_admin.
+const ensureCanManageUserRank = (req, res, user, message = 'You do not have permission to manage this user') => {
+  if (req.user.role === 'super_admin') return;
+  if ((ROLE_RANK[user.role] || 0) >= (ROLE_RANK[req.user.role] || 0)) {
     res.status(403);
     throw new Error(message);
   }
@@ -191,9 +209,11 @@ const promoteUser = asyncHandler(async (req, res) => {
   else if (user.role === 'branch_admin') nextRole = 'admin';
   else if (user.role === 'admin') nextRole = 'super_admin';
 
-  if (req.user.role === 'admin' && ['admin', 'super_admin'].includes(nextRole)) {
+  // Ceiling: a non-super actor can only promote a user to a role STRICTLY BELOW
+  // their own (stops e.g. a branch_admin manufacturing a peer branch_admin).
+  if (req.user.role !== 'super_admin' && (ROLE_RANK[nextRole] || 0) >= (ROLE_RANK[req.user.role] || 0)) {
     res.status(403);
-    throw new Error('Only Super Admin can promote to admin or super_admin');
+    throw new Error('You cannot promote a user to your own level or higher');
   }
 
   user.role = nextRole;
@@ -227,6 +247,9 @@ const demoteUser = asyncHandler(async (req, res) => {
   if (req.user.role !== 'super_admin' && user.assignedLocation) {
     enforceLocationAccess(req, res, user.assignedLocation, 'You do not have permission to demote this user');
   }
+
+  // Only act on users strictly below your own role (no peer/superior demotion).
+  ensureCanManageUserRank(req, res, user, 'You cannot demote a user at or above your own role');
 
   if (req.user.role === 'admin' && (user.role === 'admin' || user.role === 'super_admin')) {
     res.status(403);
@@ -275,6 +298,7 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('Branch Admins can only update Staff or Chef personnel');
   }
+  ensureCanManageUserRank(req, res, user, 'You cannot modify a user at or above your own role');
   ensureCanManageUserLocation(req, res, user, 'You do not have permission to update users from other locations');
 
   // Fields allowed to be updated by admins via this route
@@ -400,6 +424,7 @@ const deleteUser = asyncHandler(async (req, res) => {
       throw new Error('Branch Admins can only delete Staff or Chef personnel');
     }
   }
+  ensureCanManageUserRank(req, res, user, 'You cannot delete a user at or above your own role');
   ensureCanManageUserLocation(req, res, user, 'You do not have permission to delete users from other locations');
 
   if (user.role === 'super_admin') {
@@ -458,6 +483,7 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
     throw new Error('Cannot block Super Admin');
   }
 
+  ensureCanManageUserRank(req, res, user, 'You cannot block a user at or above your own role');
   ensureCanManageUserLocation(req, res, user, 'You do not have permission to block users from other branches');
 
   user.isBlocked = !user.isBlocked;
@@ -485,6 +511,7 @@ const getUser = asyncHandler(async (req, res) => {
   }
 
   // Location restriction
+  ensureCanManageUserRank(req, res, user, 'You do not have permission to view this user');
   ensureCanManageUserLocation(req, res, user, 'You do not have permission to view users from other locations');
 
   res.json({
