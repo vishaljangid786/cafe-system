@@ -485,7 +485,7 @@ export default function AdminTablesPage() {
                   >
                     <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border group- transition-transform ${
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border transition-transform ${
                           table.status === 'available' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
                         }`}>
                           T{table.tableNumber}
@@ -910,11 +910,11 @@ export default function AdminTablesPage() {
                             handleSyncOrders(newOrders);
                             toast.success(`Added ${item.name}`, { duration: 1000 });
                           }}
-                          className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-sm hover:"
+                          className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-sm"
                         >
                           <div className="h-24 w-full rounded-xl bg-[var(--color-bg-soft)] overflow-hidden relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group- transition-transform duration-500" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]"><Coffee size={20} /></div>
                             )}

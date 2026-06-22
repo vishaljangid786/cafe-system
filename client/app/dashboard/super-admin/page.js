@@ -69,7 +69,7 @@ export default function SuperAdminDashboard() {
                 <div className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Version 4.2.0</div>
               </div>
               <h1 className="text-8xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-6 italic leading-none">
-                <Crown className="text-[var(--color-primary)] h-20 w-20 drop-" />
+                <Crown className="text-[var(--color-primary)] h-20 w-20 " />
                 ADMIN <span className="text-[var(--color-text-muted)]">DASHBOARD</span>
               </h1>
               <div className="flex items-center gap-4 text-[var(--color-text-secondary)] font-bold italic text-sm">
@@ -181,7 +181,7 @@ export default function SuperAdminDashboard() {
                     >
                       <td className="p-8 rounded-l-[2rem] border-l border-t border-b border-[var(--color-border)]/50">
                         <div className="flex items-center gap-6">
-                          <span className={`h-14 w-14 rounded-xl flex items-center justify-center font-bold italic text-xl shadow-sm transition-transform group- ${idx === 0 ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]  rotate-3' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                          <span className={`h-14 w-14 rounded-xl flex items-center justify-center font-bold italic text-xl shadow-sm transition-transform ${idx === 0 ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]  rotate-3' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
                             }`}>
                             0{idx + 1}
                           </span>
@@ -310,7 +310,7 @@ function EntityItem({ icon, label, name, stat }) {
   return (
     <div className="flex items-center justify-between group cursor-pointer">
       <div className="flex items-center gap-6">
-        <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl group-hover:bg-[var(--color-surface)] transition-all border border-[var(--color-border)] group-hover:border-[var(--color-primary)]/30 group-">
+        <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl group-hover:bg-[var(--color-surface)] transition-all border border-[var(--color-border)] group-hover:border-[var(--color-primary)]/30">
           {icon}
         </div>
         <div>

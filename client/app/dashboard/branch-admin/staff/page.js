@@ -169,7 +169,7 @@ export default function BranchStaffPage() {
                 >
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group- transition-transform font-bold">
+                      <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner transition-transform font-bold">
                         {member.name.charAt(0)}
                       </div>
                       <div>
@@ -353,7 +353,7 @@ export default function BranchStaffPage() {
               {/* Header Profile */}
               <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  group- transition-transform">
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-[var(--color-success)] border-4 border-[var(--color-border)] dark:border-[var(--color-border)] rounded-full flex items-center justify-center text-white">
@@ -461,7 +461,7 @@ export default function BranchStaffPage() {
                         <img
                           src={viewingStaff.aadharImage}
                           alt="Aadhar Card"
-                          className="w-full h-full object-cover group- transition-transform duration-700"
+                          className="w-full h-full object-cover transition-transform duration-700"
                         />
                         <a
                           href={viewingStaff.aadharImage}

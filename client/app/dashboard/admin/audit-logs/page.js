@@ -206,7 +206,7 @@ export default function AuditLogsPage() {
                     >
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-4">
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-lg transition-transform group- ${getActionColor(log.action)}`}>
+                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-lg transition-transform ${getActionColor(log.action)}`}>
                             <Activity size={20} />
                           </div>
                           <div>

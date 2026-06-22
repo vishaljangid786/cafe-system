@@ -119,7 +119,7 @@ export default function StaffAttendancePage() {
                   { label: 'Absent', val: salaryData?.totalAbsent, color: 'text-[var(--color-danger)]', icon: XCircle },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-white/5 p-6 rounded-xl border border-[var(--color-border)] flex flex-col items-center text-center group hover:bg-white/10 transition-all duration-500">
-                    <stat.icon size={20} className={`${stat.color} mb-4 group- transition-transform`} />
+                    <stat.icon size={20} className={`${stat.color} mb-4 transition-transform`} />
                     <p className="text-2xl font-bold tracking-tight mb-1">{stat.val}</p>
                     <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{stat.label}</p>
                   </div>

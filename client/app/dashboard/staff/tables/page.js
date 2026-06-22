@@ -780,7 +780,7 @@ export default function StaffTablesPage() {
                         >
                           <div className="h-24 w-full rounded-xl bg-[var(--color-surface-soft)] overflow-hidden relative shadow-inner">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="h-full w-full object-cover group- transition-transform duration-500" />
+                              <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]">
                                 <Coffee size={20} />

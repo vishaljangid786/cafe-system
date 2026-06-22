@@ -220,12 +220,12 @@ export default function StaffMenuPage() {
               {filteredItems.map((item, i) => (
                 <SlideIn key={item._id} delay={i * 0.02}>
                   <CardHover>
-                    <div className={`group bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col h-full transition-all duration-500 hover:border-[var(--color-primary)]/40 hover:shadow-sm hover: ${!item.isAvailable && 'opacity-60 grayscale-[0.5]'}`}>
+                    <div className={`group bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col h-full transition-all duration-500 hover:border-[var(--color-primary)]/40 hover:shadow-sm ${!item.isAvailable && 'opacity-60 grayscale-[0.5]'}`}>
                       {/* Media Container */}
                       <div className="h-56 relative overflow-hidden bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] p-3">
                         <div className="w-full h-full rounded-[2.2rem] overflow-hidden relative">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group- transition-transform duration-1000" />
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-1000" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-[var(--color-text-muted)] dark:text-[var(--color-text-primary)] bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]">
                               <ImageIcon size={48} strokeWidth={1} />
@@ -349,7 +349,7 @@ export default function StaffMenuPage() {
           <div className="p-8 space-y-10">
             <div className="flex flex-col items-center text-center gap-6">
               <div className="h-24 w-24 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group relative">
-                <Package size={48} className="group- transition-transform duration-500" />
+                <Package size={48} className="transition-transform duration-500" />
                 <div className="absolute -top-2 -right-2 h-8 w-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center text-[10px] font-bold shadow-lg">
                   <Zap size={14} fill="currentColor" />
                 </div>

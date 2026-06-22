@@ -476,7 +476,7 @@ export default function TablesPage() {
                     >
                       <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
                         <div className="flex items-center gap-4">
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border group- transition-transform ${
+                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border transition-transform ${
                             table.status === 'available' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20'
                           }`}>
                             T{table.tableNumber}

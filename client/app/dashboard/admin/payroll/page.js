@@ -382,7 +382,7 @@ export default function PayrollRecordsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] flex items-center justify-center text-xl font-bold border border-[var(--color-primary)]/20 shadow-inner group- transition-transform">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] flex items-center justify-center text-xl font-bold border border-[var(--color-primary)]/20 shadow-inner transition-transform">
                           {s.name.charAt(0)}
                         </div>
                         <div>

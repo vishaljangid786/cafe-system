@@ -329,10 +329,10 @@ export default function TablesPage() {
                   <div
                     className={`relative group rounded-xl border-2 overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg
                         ${isAvailable
-                        ? 'border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-success)]/60 hover:'
+                        ? 'border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-success)]/60'
                         : isBooked
-                          ? 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 hover:border-[var(--color-primary)]/70 hover:'
-                          : 'border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 hover:border-[var(--color-danger)]/70 hover:'
+                          ? 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 hover:border-[var(--color-primary)]/70'
+                          : 'border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 hover:border-[var(--color-danger)]/70'
                       } bg-[var(--color-surface)] dark:bg-[var(--color-surface)]`}
                     onClick={() => isAvailable ? handleBookTable(table) : handleOpenOrder(table)}
                   >

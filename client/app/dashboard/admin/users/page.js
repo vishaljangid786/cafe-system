@@ -181,7 +181,7 @@ export default function UsersPage() {
               <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">User Management</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
-              <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-" />
+              <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 " />
               Users <span className="text-[var(--color-text-muted)] not-italic">List</span>
             </h1>
           </div>
@@ -356,7 +356,7 @@ export default function UsersPage() {
                   >
                     <td className="px-4 sm:px-10 py-5 sm:py-8">
                       <div className="flex items-center gap-5">
-                        <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group- transition-transform overflow-hidden shadow-lg">
+                        <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative transition-transform overflow-hidden shadow-lg">
                           {u.profileImageUrl ? (
                             <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
                           ) : (

@@ -106,7 +106,7 @@ export default function SalaryPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
             <div className="bg-[var(--color-primary)] p-8 rounded-xl text-white shadow-sm  relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group- transition-transform">
+              <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform">
                 <DollarSign size={120} />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-normal opacity-70 mb-4">Total Salary Payout</p>

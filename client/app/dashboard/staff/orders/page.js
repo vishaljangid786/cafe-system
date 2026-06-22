@@ -36,7 +36,7 @@ function StatCard({ label, value, icon: Icon, color }) {
   return (
     <CardHover>
       <div className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] shadow-sm h-full flex flex-col items-center text-center group">
-        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform group- duration-500 ${colors[color]}`}>
+        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 ${colors[color]}`}>
           <Icon size={20} strokeWidth={2.5} />
         </div>
         <p className="text-[28px] font-bold text-[var(--color-text-primary)] tracking-tight leading-none mb-1">{value}</p>
@@ -606,7 +606,7 @@ export default function StaffOrdersPage() {
                     >
                       <div className="h-32 w-full rounded-xl bg-[var(--color-surface-soft)] mb-4 overflow-hidden relative">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover group- transition-transform duration-1000" />
+                          <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-1000" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]"><Coffee size={24} /></div>
                         )}

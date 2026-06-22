@@ -806,7 +806,7 @@ export default function OrderAnalyticsDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] flex flex-col gap-6 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm">
-                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all group-">
+                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all">
                     <Mail size={24} />
                   </div>
                   <div>
@@ -820,7 +820,7 @@ export default function OrderAnalyticsDashboard() {
                   </div>
                 </div>
                 <div className="p-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] flex flex-col gap-6 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm">
-                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all group-">
+                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all">
                     <Phone size={24} />
                   </div>
                   <div>
@@ -896,7 +896,7 @@ function MetricCard({ label, value, icon: Icon, color }) {
         />
 
         <div
-          className={`h-16 w-16 rounded-xl ${theme.base} flex items-center justify-center mb-6 border-2 ${theme.accent} shadow-sm group- group-hover:rotate-6 transition-all duration-500 relative`}
+          className={`h-16 w-16 rounded-xl ${theme.base} flex items-center justify-center mb-6 border-2 ${theme.accent} shadow-sm group-hover:rotate-6 transition-all duration-500 relative`}
         >
           <div className="absolute inset-0 bg-white/5 rounded-xl" />
           <Icon size={28} strokeWidth={2.5} className="relative z-10" />

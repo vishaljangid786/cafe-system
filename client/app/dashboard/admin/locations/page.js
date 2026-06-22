@@ -270,7 +270,7 @@ export default function BranchesPage() {
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner group- transition-transform">
+                        <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-inner transition-transform">
                           <MapPin size={20} />
                         </div>
                         <div>
@@ -635,7 +635,7 @@ export default function BranchesPage() {
                            </SlideIn>
                         </div>
                       </div>
-                      <div className="absolute top-0 right-0 p-12 opacity-5 dark:opacity-10 group- transition-transform duration-700">
+                      <div className="absolute top-0 right-0 p-12 opacity-5 dark:opacity-10 transition-transform duration-700">
                         <Activity size={120} className="text-[var(--color-primary)]" />
                       </div>
                    </section>

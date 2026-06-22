@@ -573,7 +573,7 @@ export default function CouponsManagementPage() {
                   <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Live Preview</h4>
                   <div className="relative h-64 rounded-xl bg-gradient-to-br from-[var(--color-bg-deep)] to-[var(--color-bg-base)] p-8 flex flex-col justify-between overflow-hidden shadow-sm border border-[var(--color-bg-base)]/10 group">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_70%)]" />
-                    <div className="absolute top-0 right-0 p-8 opacity-20 group- transition-transform duration-700">
+                    <div className="absolute top-0 right-0 p-8 opacity-20 transition-transform duration-700">
                       <Ticket size={120} strokeWidth={1} />
                     </div>
 

@@ -464,7 +464,7 @@ export default function ExpensesPage() {
                           className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-danger)]/40 transition-all cursor-pointer relative overflow-hidden h-full shadow-sm"
                         >
                           <div className="flex items-center gap-5 relative z-10">
-                            <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner group- transition-transform duration-500">
+                            <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner transition-transform duration-500">
                               <ArrowDownRight size={24} strokeWidth={2.5} />
                             </div>
                             <div className="space-y-1.5">
@@ -482,7 +482,7 @@ export default function ExpensesPage() {
                             </div>
                           </div>
                           <div className="text-right relative z-10 shrink-0">
-                            <p className="text-xl font-bold text-[var(--color-danger)] tracking-tight leading-none group- transition-transform">-₹{t.totalAmount.toLocaleString()}</p>
+                            <p className="text-xl font-bold text-[var(--color-danger)] tracking-tight leading-none transition-transform">-₹{t.totalAmount.toLocaleString()}</p>
                             <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Verified</p>
                           </div>
                         </div>
@@ -522,7 +522,7 @@ export default function ExpensesPage() {
           <div className="space-y-8">
             <SlideIn direction="right" delay={0.2}>
               <div className="bg-gradient-to-br from-[var(--color-danger)] to-[var(--color-danger)]/80 rounded-xl p-8 text-[var(--color-bg-base)] shadow-sm  relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-20 group- transition-transform duration-700">
+                <div className="absolute top-0 right-0 p-8 opacity-20 transition-transform duration-700">
                   <Wallet size={100} strokeWidth={1} />
                 </div>
                 <h3 className="text-sm font-bold uppercase tracking-normal opacity-80 mb-6">Expense Trend</h3>
@@ -679,7 +679,7 @@ export default function ExpensesPage() {
                     <Sparkles size={12} className="text-[var(--color-danger)]" /> Bill / Receipt
                   </p>
                   <div className="rounded-xl overflow-hidden border-4 border-[var(--color-surface-soft)] bg-[var(--color-surface)] p-3 shadow-sm relative group">
-                    <img src={selectedExpense.billImage} alt="Receipt" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
+                    <img src={selectedExpense.billImage} alt="Receipt" className="w-full h-auto rounded-xl transition-all duration-1000" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
                 </div>

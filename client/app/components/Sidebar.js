@@ -427,7 +427,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             ${showLabels ? 'justify-start px-3' : 'justify-center'}
           `}
         >
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary group- transition-transform">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary transition-transform">
             <Send size={16} />
           </div>
           {showLabels && (

@@ -307,7 +307,7 @@ export default function BranchExpensesPage() {
                         className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-danger)]/40 transition-all cursor-pointer shadow-sm"
                       >
                         <div className="flex items-center gap-5">
-                          <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner group- transition-transform duration-500">
+                          <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center text-[var(--color-danger)] shadow-inner transition-transform duration-500">
                             <ArrowDownRight size={24} strokeWidth={2.5} />
                           </div>
                           <div className="space-y-1.5">
@@ -339,7 +339,7 @@ export default function BranchExpensesPage() {
           <div className="space-y-8">
             <SlideIn direction="right" delay={0.2}>
               <div className="bg-[var(--color-text-primary)] rounded-xl p-8 text-[var(--color-surface)] shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-20 group- transition-transform duration-700">
+                <div className="absolute top-0 right-0 p-8 opacity-20 transition-transform duration-700">
                   <Activity size={100} strokeWidth={1} />
                 </div>
                 <h3 className="text-sm font-bold uppercase tracking-normal opacity-80 mb-6">Expense Trend</h3>
@@ -450,7 +450,7 @@ export default function BranchExpensesPage() {
                   <Sparkles size={12} className="text-[var(--color-danger)]" /> Bill Image
                 </p>
                   <div className="rounded-xl overflow-hidden border-4 border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface)] dark:bg-[var(--color-bg)] p-3 shadow-sm relative group">
-                    <img src={selectedExpense.billImage} alt="Bill" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
+                    <img src={selectedExpense.billImage} alt="Bill" className="w-full h-auto rounded-xl transition-all duration-1000" />
                   </div>
                 </div>
               )}

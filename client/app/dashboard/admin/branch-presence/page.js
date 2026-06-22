@@ -164,7 +164,7 @@ export default function BranchPresencePage() {
                 <CardHover>
                   <div 
                     onClick={() => setSelectedLocation(loc)}
-                    className="group relative bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] cursor-pointer overflow-hidden transition-all hover:shadow-sm hover:"
+                    className="group relative bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] cursor-pointer overflow-hidden transition-all hover:shadow-sm"
                   >
                     <div className="relative z-10 flex flex-col h-full justify-between gap-10">
                       <div className="flex justify-between items-start">
@@ -276,7 +276,7 @@ export default function BranchPresencePage() {
                             <tr key={user._id} className="hover:bg-[var(--color-primary)]/[0.02] transition-colors group">
                               <td className="px-10 py-8">
                                 <div className="flex items-center">
-                                  <div className="h-14 w-14 rounded-[1.2rem] bg-[var(--color-bg-soft)] flex items-center justify-center font-bold text-xl text-[var(--color-primary)] border border-[var(--color-border)] group- transition-transform">
+                                  <div className="h-14 w-14 rounded-[1.2rem] bg-[var(--color-bg-soft)] flex items-center justify-center font-bold text-xl text-[var(--color-primary)] border border-[var(--color-border)] transition-transform">
                                     {user.name.charAt(0).toUpperCase()}
                                   </div>
                                   <div className="ml-5">

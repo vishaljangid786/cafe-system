@@ -47,7 +47,7 @@ function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
   return (
     <CardHover>
       <div className="bg-[var(--color-surface)] p-6 rounded-xl border border-[var(--color-border)] shadow-sm h-full flex flex-col group">
-        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform group- duration-500 ${colors[color]}`}>
+        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 ${colors[color]}`}>
           <Icon size={20} />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">{label}</p>

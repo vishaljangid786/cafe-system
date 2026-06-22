@@ -134,7 +134,7 @@ export default function ImpersonatePage() {
               <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Log in as a user</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
-              <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-`} />
+              <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 `} />
               Login As <span className="text-[var(--color-text-muted)] not-italic">User</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-[var(--color-text-muted)] leading-relaxed">
@@ -180,7 +180,7 @@ export default function ImpersonatePage() {
               className="group relative overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 hover:shadow-sm transition-all duration-500"
             >
               <div className="flex items-center gap-4 mb-6">
-                <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative group- transition-transform overflow-hidden shadow-lg">
+                <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center relative transition-transform overflow-hidden shadow-lg">
                   {u.profileImageUrl ? (
                     <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
                   ) : (

@@ -910,7 +910,7 @@ export default function MenuManagementPage() {
                       {/* Image */}
                       <div className="h-52 relative overflow-hidden bg-[var(--color-surface-soft)]">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group- transition-transform duration-700" />
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[var(--color-text-muted)]">
                             <ImageIcon size={48} strokeWidth={1} />
@@ -1248,7 +1248,7 @@ export default function MenuManagementPage() {
                   >
                     {imagePreview ? (
                       <>
-                        <img src={imagePreview} className="w-full h-full object-cover transition-transform duration-700 group-" />
+                        <img src={imagePreview} className="w-full h-full object-cover transition-transform duration-700" />
                         <div className="absolute inset-0 bg-[var(--color-bg-deep)]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[var(--color-bg-base)] p-6 text-center">
                           <div className="h-12 w-12 rounded-full bg-[var(--color-bg-base)]/20  flex items-center justify-center mb-3">
                             <ImageIcon size={20} />
@@ -1258,7 +1258,7 @@ export default function MenuManagementPage() {
                       </>
                     ) : (
                       <div className="p-8 text-center space-y-4">
-                        <div className="h-20 w-20 rounded-xl bg-[var(--color-bg-soft)] flex items-center justify-center mx-auto text-[var(--color-text-muted)] group- transition-transform group-hover:text-[var(--color-primary)]">
+                        <div className="h-20 w-20 rounded-xl bg-[var(--color-bg-soft)] flex items-center justify-center mx-auto text-[var(--color-text-muted)] transition-transform group-hover:text-[var(--color-primary)]">
                           <ImageIcon size={32} />
                         </div>
                         <div>

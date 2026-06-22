@@ -387,7 +387,7 @@ export default function AdminDashboard() {
                   className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-danger)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group- transition-transform">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm transition-transform">
                       <Receipt size={18} className="text-[var(--color-danger)]" />
                     </div>
                     <div>
@@ -436,7 +436,7 @@ export default function AdminDashboard() {
                   className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-success)]/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm group- transition-transform">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm transition-transform">
                       <ShoppingBag size={18} className="text-[var(--color-success)]" />
                     </div>
                     <div>
@@ -646,7 +646,7 @@ export default function AdminDashboard() {
               ].map((item, i) => (
                 <div key={i} className="p-6 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-primary)]/20 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] group- transition-transform">
+                    <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] transition-transform">
                       <item.icon size={22} />
                     </div>
                     <div>

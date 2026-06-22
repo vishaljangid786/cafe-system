@@ -127,7 +127,7 @@ export default function LocationStaffPage() {
                   onClick={() => setViewingStaff(member)}
                   className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)] p-8 relative group overflow-hidden h-full flex flex-col cursor-pointer"
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group- duration-700">
+                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform duration-700">
                     <Users size={120} />
                   </div>
 
@@ -278,7 +278,7 @@ export default function LocationStaffPage() {
               {/* Header Profile */}
               <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  group- transition-transform">
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] text-white flex items-center justify-center text-5xl font-bold shadow-sm  transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-[var(--color-success)] border-4 border-[var(--color-border)] dark:border-[var(--color-border)] rounded-full flex items-center justify-center text-white">
@@ -386,7 +386,7 @@ export default function LocationStaffPage() {
                         <img
                           src={viewingStaff.aadharImage}
                           alt="Aadhar Card"
-                          className="w-full h-full object-cover group- transition-transform duration-700"
+                          className="w-full h-full object-cover transition-transform duration-700"
                         />
                         <a
                           href={viewingStaff.aadharImage}

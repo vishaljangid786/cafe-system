@@ -163,7 +163,7 @@ export default function CommandCenterPage() {
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.1}>
               <div className={`p-8 bg-gradient-to-br ${stat.color} rounded-xl text-white shadow-sm relative overflow-hidden group`}>
-                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group- transition-transform duration-700">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none transition-transform duration-700">
                   <stat.icon size={120} />
                 </div>
                 <div className="flex justify-between items-start">

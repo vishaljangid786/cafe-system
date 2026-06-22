@@ -162,7 +162,7 @@ export default function GlobalAttendancePage() {
           onClick={() => dateInputRef.current?.showPicker()}
           className="group flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] hover:border-[var(--color-primary)]/40 transition-all cursor-pointer"
         >
-          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group- transition-transform">
+          <div className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] transition-transform">
             <Calendar size={16} />
           </div>
 
@@ -348,7 +348,7 @@ export default function GlobalAttendancePage() {
                           <tr key={user._id} className="hover:bg-[var(--color-primary)]/[0.02] transition-colors group">
                             <td className="px-8 py-5">
                               <div className="flex items-center">
-                                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center font-bold text-[var(--color-primary)] border border-[var(--color-border)] group- transition-transform">
+                                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center font-bold text-[var(--color-primary)] border border-[var(--color-border)] transition-transform">
                                   {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="ml-4">
