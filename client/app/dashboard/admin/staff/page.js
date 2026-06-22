@@ -118,21 +118,37 @@ export default function LocationStaffPage() {
     }
   };
 
-  const handleEdit = (member) => {
+  // The user list uses .lean(), so its aadharNumber is the ENCRYPTED value.
+  // Fetch the single-user record (decrypted Aadhaar + full details) for edit/view.
+  const handleEdit = async (member) => {
     setEditingStaff(member);
-    setFormData({
-      name: member.name || '',
-      email: member.email || '',
-      phone: member.phone || '',
-      age: member.age || '',
-      gender: member.gender || 'Male',
-      address1: member.address1 || '',
-      city: member.city || '',
-      state: member.state || '',
-      pincode: member.pincode || '',
-      monthlySalary: member.monthlySalary || ''
+    const fill = (m) => setFormData({
+      name: m.name || '',
+      email: m.email || '',
+      phone: m.phone || '',
+      age: m.age || '',
+      gender: m.gender || 'Male',
+      address1: m.address1 || '',
+      city: m.city || '',
+      state: m.state || '',
+      pincode: m.pincode || '',
+      monthlySalary: m.monthlySalary || '',
+      aadharNumber: m.aadharNumber || ''
     });
+    fill(member);
     setShowEditModal(true);
+    try {
+      const res = await api.get(`/users/${member._id}`);
+      fill(res.data.data);
+    } catch (err) { /* keep list data */ }
+  };
+
+  const handleViewStaff = async (member) => {
+    setViewingStaff(member); // show instantly with list data
+    try {
+      const res = await api.get(`/users/${member._id}`);
+      setViewingStaff(res.data.data); // enrich with decrypted Aadhaar + full details
+    } catch (err) { /* keep list data */ }
   };
 
   const handleUpdate = async (e) => {
@@ -283,7 +299,7 @@ export default function LocationStaffPage() {
               {member.role !== 'system_group' && (
                 <>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setViewingStaff(member); }}
+                    onClick={(e) => { e.stopPropagation(); handleViewStaff(member); }}
                     className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
                   >
                     <Info size={18} />
@@ -655,7 +671,7 @@ export default function LocationStaffPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      onClick={() => setViewingStaff(member)}
+                      onClick={() => handleViewStaff(member)}
                       className="group border-b border-(--color-border) hover:bg-primary/5 transition-all cursor-pointer"
                     >
                       <td className="px-8 py-6">
