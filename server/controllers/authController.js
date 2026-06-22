@@ -103,6 +103,19 @@ const registerUser = asyncHandler(async (req, res, next) => {
       throw new Error('You do not have permission to add new staff');
     }
 
+    // Authoritative role gate: a creator may only create roles BELOW them.
+    // Without this, an authenticated staff/chef/location_admin could pass
+    // `role: 'super_admin'` and self-escalate (no branch_admin/admin branch caught them).
+    const CREATABLE_ROLES = {
+      super_admin: ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'],
+      admin: ['branch_admin', 'location_admin', 'staff', 'chef'],
+      branch_admin: ['staff', 'chef'],
+    };
+    if (!(CREATABLE_ROLES[creator.role] || []).includes(role)) {
+      res.status(403);
+      throw new Error('You do not have permission to create a user with this role');
+    }
+
     if (creator.role === 'branch_admin') {
       if (!['staff', 'chef'].includes(role)) {
         res.status(403);
@@ -228,7 +241,19 @@ const registerUser = asyncHandler(async (req, res, next) => {
     );
 
     if (req.user) {
-      res.status(201).json({ success: true, data: user });
+      // Return only safe fields — never the password hash or (decrypted) Aadhaar.
+      res.status(201).json({
+        success: true,
+        data: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          assignedLocation: user.assignedLocation,
+          accessibleLocations: user.accessibleLocations,
+          permissions: user.permissions,
+        },
+      });
     } else {
       sendTokenResponse(user, 201, res);
     }

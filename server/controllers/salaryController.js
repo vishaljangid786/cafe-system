@@ -326,7 +326,7 @@ const generatePayroll = asyncHandler(async (req, res) => {
 });
 
 const approvePayroll = asyncHandler(async (req, res) => {
-  const payroll = await Payroll.findById(req.params.id).populate('user');
+  const payroll = await Payroll.findById(req.params.id).populate('user', 'name role assignedLocation');
   if (!payroll) {
     res.status(404);
     throw new Error('Payroll record not found');

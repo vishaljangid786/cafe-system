@@ -150,8 +150,16 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { getters: true },
-    toObject: { getters: true },
+    // Never serialize the password hash (or __v). This applies to EVERY response
+    // that returns a user document, closing password-hash leaks app-wide.
+    toJSON: {
+      getters: true,
+      transform: (doc, ret) => { delete ret.password; delete ret.__v; return ret; },
+    },
+    toObject: {
+      getters: true,
+      transform: (doc, ret) => { delete ret.password; delete ret.__v; return ret; },
+    },
   }
 );
 
