@@ -204,6 +204,14 @@ export default function AddMemberPage() {
       toast.error('Please select a branch for this member.');
       return;
     }
+    if (!/^[0-9]{12}$/.test(form.aadharNumber || '')) {
+      toast.error('Please enter a valid 12-digit Aadhaar number.');
+      return;
+    }
+    if (!aadharImage) {
+      toast.error('Please upload the Aadhaar card image.');
+      return;
+    }
 
     const payload = { ...form };
     if (form.role === 'branch_admin') {
@@ -374,19 +382,19 @@ export default function AddMemberPage() {
         </Section>
 
         {/* Identity */}
-        <Section icon={CreditCard} title="Identity Documents" desc="Aadhaar and profile photo (optional)">
+        <Section icon={CreditCard} title="Identity Documents" desc="Aadhaar number & card image are required. Profile photo is optional.">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Aadhaar Number">
-              <input className={inputCls} value={form.aadharNumber} maxLength={12} onChange={(e) => set('aadharNumber', e.target.value.replace(/\D/g, '').slice(0, 12))} placeholder="12-digit Aadhaar (optional)" />
+            <Field label={<>Aadhaar Number <span className="text-danger">*</span></>}>
+              <input className={inputCls} value={form.aadharNumber} maxLength={12} onChange={(e) => set('aadharNumber', e.target.value.replace(/\D/g, '').slice(0, 12))} placeholder="12-digit Aadhaar number" />
             </Field>
             <div />
-            <Field label="Aadhaar Card Image">
-              <label className="group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
+            <Field label={<>Aadhaar Card Image <span className="text-danger">*</span></>}>
+              <label className={`group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden ${aadharImage ? 'border-(--color-border)' : 'border-danger/40'}`}>
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setAadharImage(e.target.files[0])} />
                 {aadharPreview ? <img src={aadharPreview} alt="Aadhaar" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-bold">Upload Aadhaar photo</span></div>}
               </label>
             </Field>
-            <Field label="Profile Photo">
+            <Field label={<>Profile Photo <span className="text-(--color-text-muted) normal-case font-medium">(optional)</span></>}>
               <label className="group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} />
                 {profilePreview ? <img src={profilePreview} alt="Profile" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-bold">Upload profile photo</span></div>}
