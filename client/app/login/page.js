@@ -198,7 +198,7 @@ export default function LoginPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5">
               {[
-                { label: 'Super', email: 'super@cafeos.com' },
+                { label: 'Super', email: 'superadmin@cafe.com' },
                 { label: 'Admin', email: 'admin@cafeos.com' },
                 { label: 'Branch', email: 'branch1@cafeos.com' },
                 { label: 'Chef', email: 'chef1@cafeos.com' },
