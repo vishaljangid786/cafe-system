@@ -571,7 +571,8 @@ export default function LocationStaffPage() {
                       ? [{ label: 'Main Admin', value: 'admin' }]
                       : []),
                     { label: 'Branch Admin', value: 'branch_admin' },
-                    { label: 'Staff', value: 'staff' }
+                    { label: 'Staff', value: 'staff' },
+                    { label: 'Chef', value: 'chef' }
                   ]}
                   className="min-w-[130px] max-w-[150px]"
                 />
