@@ -62,6 +62,8 @@ function SignupContent() {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [aadharImagePreview, setAadharImagePreview] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [selectedAdminId, setSelectedAdminId] = useState('');
   const [activeStep, setActiveStep] = useState(1);
 
   // Manage object URLs for image previews so blobs are revoked on change/unmount
@@ -113,6 +115,32 @@ function SignupContent() {
     value: loc._id
   })), [locations]);
 
+  // Admins to choose from (super admin only), with their branch counts.
+  const adminOptions = useMemo(() => admins.map(a => {
+    const count = (a.accessibleLocations || []).length;
+    return { label: `${a.name} — ${count} branch${count === 1 ? '' : 'es'}`, value: a._id };
+  }), [admins]);
+
+  // The branches a branch admin can be assigned to: the selected admin's branches
+  // (for super admin) or the current admin's own branches (for an admin creator).
+  const branchAdminBranchOptions = useMemo(() => {
+    if (currentUser?.role === 'super_admin') {
+      const admin = admins.find(a => a._id === selectedAdminId);
+      return (admin?.accessibleLocations || []).map(b => ({
+        label: `${b.city || ''} - ${b.name || 'Branch'}`,
+        value: b._id || b,
+      }));
+    }
+    if (currentUser?.role === 'admin') {
+      return (currentUser.accessibleLocations || []).map(b => {
+        const id = b._id || b;
+        const loc = locations.find(l => l._id === id);
+        return { label: loc ? `${loc.city} - ${loc.name}` : `${b.city || ''} - ${b.name || 'Branch'}`, value: id };
+      });
+    }
+    return branchOptions;
+  }, [currentUser, admins, selectedAdminId, locations, branchOptions]);
+
   const setBranchAdminBranches = (ids) => {
     const nextIds = Array.isArray(ids) ? ids : [];
     setValue('accessibleLocations', nextIds, { shouldValidate: true });
@@ -120,14 +148,22 @@ function SignupContent() {
   };
 
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchData = async () => {
       try {
         const res = await api.get('/locations');
         setLocations(res.data.data);
       } catch (error) { }
+      // Super admin assigns a branch admin under a specific admin, so we need the
+      // list of admins (with their branches) to choose from.
+      if (currentUser?.role === 'super_admin') {
+        try {
+          const res = await api.get('/users?role=admin&limit=100');
+          setAdmins(res.data.data || []);
+        } catch (error) { }
+      }
     };
-    fetchLocations();
-  }, []);
+    fetchData();
+  }, [currentUser]);
 
   const getAvailableRoles = () => {
     if (isSetup) return [{ value: 'super_admin', label: 'Super Admin' }];
@@ -333,22 +369,43 @@ function SignupContent() {
                     </div>
                   )} />
                   {!isSetup && selectedRole === 'branch_admin' && (
-                    <Controller name="accessibleLocations" control={control} render={({ field }) => (
-                      <div className="space-y-2">
-                        <label className="label block ml-0.5">Branches This Branch Admin Can Manage</label>
-                        <PremiumSelect
-                          value={field.value || selectedBranchIds}
-                          onChange={(ids) => {
-                            field.onChange(ids);
-                            setBranchAdminBranches(ids);
-                          }}
-                          options={branchOptions}
-                          multiple
-                          placeholder="Select one or more branches"
-                        />
-                        {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
-                      </div>
-                    )} />
+                    <div className="space-y-4">
+                      {currentUser?.role === 'super_admin' && (
+                        <div className="space-y-2">
+                          <label className="label block ml-0.5">Select Admin (assign from their branches)</label>
+                          <PremiumSelect
+                            value={selectedAdminId}
+                            onChange={(val) => {
+                              setSelectedAdminId(val);
+                              setBranchAdminBranches([]); // reset branches when the admin changes
+                            }}
+                            options={adminOptions}
+                            placeholder={adminOptions.length ? 'Select an admin' : 'No admins found'}
+                          />
+                        </div>
+                      )}
+                      <Controller name="accessibleLocations" control={control} render={({ field }) => (
+                        <div className="space-y-2">
+                          <label className="label block ml-0.5">Branches This Branch Admin Can Manage</label>
+                          <PremiumSelect
+                            value={field.value || selectedBranchIds}
+                            onChange={(ids) => {
+                              field.onChange(ids);
+                              setBranchAdminBranches(ids);
+                            }}
+                            options={branchAdminBranchOptions}
+                            multiple
+                            placeholder={
+                              currentUser?.role === 'super_admin' && !selectedAdminId
+                                ? 'Select an admin first'
+                                : (branchAdminBranchOptions.length ? 'Select one or more branches' : 'This admin has no branches')
+                            }
+                          />
+                          {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
+                        </div>
+                      )} />
+                      <p className="text-[11px] text-[var(--color-text-muted)] ml-0.5">All branches assigned to a branch admin must belong to a single admin.</p>
+                    </div>
                   )}
                   {!isSetup && (['staff', 'chef'].includes(selectedRole)) && (
                     <Controller name="assignedLocation" control={control} render={({ field }) => (

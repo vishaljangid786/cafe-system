@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
-const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, normalizeIdList, userLocationIds } = require('../utils/accessControl');
+const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, normalizeIdList, userLocationIds, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
 const { encrypt } = require('../utils/encryption');
 
 const targetUserLocations = (user) => userLocationIds(user);
@@ -300,6 +300,12 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   normalizeBranchAdminUpdate(user, updateData);
+
+  // A branch admin's branches must all belong to a single admin.
+  const finalRoleForBranchCheck = updateData.role || user.role;
+  if (finalRoleForBranchCheck === 'branch_admin' && updateData.accessibleLocations !== undefined) {
+    await assertBranchesUnderOneAdmin(updateData.accessibleLocations);
+  }
 
   if (updateData.assignedLocation && req.user.role !== 'super_admin') {
     enforceLocationAccess(req, res, updateData.assignedLocation, 'You do not have permission to assign this location');

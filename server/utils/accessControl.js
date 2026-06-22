@@ -102,6 +102,28 @@ const scopedLocationIds = (req, rawLocationIds) => {
   return { $in: ids };
 };
 
+// Ensure every branch assigned to a Branch Admin belongs to a SINGLE admin.
+// A branch "belongs to" the admin(s) who have it in their accessibleLocations.
+// Throws a 400 if the chosen branches span more than one admin (or none owns
+// all of them). A single branch is always allowed.
+const assertBranchesUnderOneAdmin = async (branchIds) => {
+  const User = require('../models/User');
+  const ids = normalizeIdList(branchIds);
+  if (ids.length <= 1) return;
+  const admins = await User.find({ role: 'admin', accessibleLocations: { $in: ids } })
+    .select('accessibleLocations')
+    .lean();
+  const ownedByOneAdmin = admins.some((a) => {
+    const owned = new Set((a.accessibleLocations || []).map((x) => x.toString()));
+    return ids.every((id) => owned.has(id));
+  });
+  if (!ownedByOneAdmin) {
+    const err = new Error('These branches belong to different admins. A branch admin can only manage branches under a single admin.');
+    err.statusCode = 400;
+    throw err;
+  }
+};
+
 const clampLimit = (value, fallback = 20, max = 100) => {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -119,5 +141,6 @@ module.exports = {
   enforceLocationAccess,
   scopedLocationId,
   scopedLocationIds,
+  assertBranchesUnderOneAdmin,
   clampLimit,
 };

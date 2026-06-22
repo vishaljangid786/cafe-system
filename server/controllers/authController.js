@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const AuditLog = require('../models/AuditLog');
-const { canAccessLocation, normalizeIdList } = require('../utils/accessControl');
+const { canAccessLocation, normalizeIdList, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
 
 // Generate JWT
 const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false) => {
@@ -144,6 +144,11 @@ const registerUser = asyncHandler(async (req, res, next) => {
   if (finalRole === 'branch_admin' && accessibleLocations.length === 0) {
     res.status(400);
     throw new Error('Please assign at least one branch to this Branch Admin');
+  }
+
+  // A branch admin's branches must all belong to a single admin.
+  if (finalRole === 'branch_admin') {
+    await assertBranchesUnderOneAdmin(accessibleLocations);
   }
 
   const userExists = await User.findOne({ email });
