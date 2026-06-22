@@ -4,7 +4,7 @@ const Location = require('../models/Location');
 const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
-const { enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
+const { enforceLocationAccess, canAccessLocation, clampLimit, escapeRegex, scopedLocationId, userLocationIds } = require('../utils/accessControl');
 
 // Helper to validate date format (YYYY-MM-DD)
 const isValidDate = (dateString) => {
@@ -44,7 +44,7 @@ const markAttendance = asyncHandler(async (req, res) => {
   }
 
   // Ensure branch admin is marking for their own location
-  if (req.user.role === 'branch_admin' && staff.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
+  if (req.user.role === 'branch_admin' && !canAccessLocation(req.user, staff.assignedLocation)) {
     res.status(403);
     throw new Error('You do not have permission to mark attendance for personnel of another location');
   }
@@ -89,14 +89,11 @@ const markAttendance = asyncHandler(async (req, res) => {
 // @access  Private (Branch Admin, Admin, Super Admin)
 const getLocationAttendance = asyncHandler(async (req, res) => {
   const { date, month, locationId } = req.query;
-  const targetLocationId = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
-
+  const targetLocationId = scopedLocationId(req, locationId);
   if (!targetLocationId) {
     res.status(400);
     throw new Error('Location ID is required');
   }
-
-  enforceLocationAccess(req, res, targetLocationId, 'You do not have permission to view attendance for this location');
 
   let query = { locationId: targetLocationId };
 
@@ -142,8 +139,8 @@ const getAllAttendance = asyncHandler(async (req, res) => {
   if (locationId && locationId !== 'All') {
     enforceLocationAccess(req, res, locationId, 'You do not have permission to view attendance for this location');
     query.locationId = locationId;
-  } else if (req.user.role === 'admin') {
-    query.locationId = { $in: req.user.accessibleLocations || [] };
+  } else if (['admin', 'branch_admin'].includes(req.user.role)) {
+    query.locationId = { $in: userLocationIds(req.user) };
   }
   if (date) query.date = date;
   else if (month) query.date = { $regex: `^${escapeRegex(month)}` };
@@ -201,9 +198,10 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
       // If invalid ID provided and not "All", return empty result safely
       return res.json({ success: true, data: [] });
     }
-  } else if (req.user.role === 'admin') {
-    userMatch.assignedLocation = { $in: req.user.accessibleLocations || [] };
-    attendanceMatch.locationId = { $in: req.user.accessibleLocations || [] };
+  } else if (['admin', 'branch_admin'].includes(req.user.role)) {
+    const ids = userLocationIds(req.user);
+    userMatch.assignedLocation = { $in: ids };
+    attendanceMatch.locationId = { $in: ids };
   }
 
   // 1. Get location-wise staff count & total monthly salaries

@@ -2,7 +2,7 @@ const Expense = require('../models/Expense');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
-const { enforceLocationAccess, escapeRegex, clampLimit } = require('../utils/accessControl');
+const { enforceLocationAccess, escapeRegex, clampLimit, scopedLocationId } = require('../utils/accessControl');
 const TransactionService = require('../services/transactionService');
 
 // @desc    Add an expense
@@ -157,30 +157,8 @@ const deleteExpense = asyncHandler(async (req, res) => {
 const getExpenses = asyncHandler(async (req, res) => {
   let query = {};
 
-  // STRICT RBAC
-  if (req.user.role === 'super_admin') {
-    // Can see everything, but respect query filter if provided
-    if (req.query.locationId) {
-      query.locationId = req.query.locationId;
-    }
-  } else if (req.user.role === 'admin') {
-    // Admins can only see expenses from their accessible locations
-    if (req.query.locationId) {
-      // Validate requested location is in accessible locations
-      const isAccessible = req.user.accessibleLocations?.some(
-        loc => loc.toString() === req.query.locationId
-      );
-      if (!isAccessible) {
-        return res.status(403).json({ success: false, message: 'Permission denied to this location' });
-      }
-      query.locationId = req.query.locationId;
-    } else {
-      query.locationId = { $in: req.user.accessibleLocations || [] };
-    }
-  } else {
-    // Branch Admin, Chef, Staff
-    query.locationId = req.user.assignedLocation;
-  }
+  const branchScope = scopedLocationId(req, req.query.locationId);
+  if (branchScope) query.locationId = branchScope;
 
   // If chef, they can only see expenses created by them
   if (req.user.role === 'chef') {

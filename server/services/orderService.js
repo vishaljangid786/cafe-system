@@ -531,7 +531,10 @@ class OrderService {
     if (order.createdBy) recipients.push({ user: order.createdBy, isRead: false });
     
     const [branchAdmins, admins, supers] = await Promise.all([
-      User.find({ role: 'branch_admin', assignedLocation: order.branch }),
+      User.find({
+        role: 'branch_admin',
+        $or: [{ assignedLocation: order.branch }, { accessibleLocations: order.branch }]
+      }),
       User.find({ role: 'admin', accessibleLocations: order.branch }),
       User.find({ role: 'super_admin' })
     ]);

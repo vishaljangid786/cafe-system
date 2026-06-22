@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import LoadingScreen from "@/app/components/ui/LoadingScreen";
 import { progress } from "@/app/components/ui/TopProgressBar";
 import {
@@ -80,6 +80,14 @@ export default function OrderAnalyticsDashboard() {
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
+  const userBranchIds = useMemo(() => {
+    const ids = [];
+    if (user?.assignedLocation) ids.push(user.assignedLocation._id || user.assignedLocation);
+    if (Array.isArray(user?.accessibleLocations)) {
+      user.accessibleLocations.forEach((loc) => ids.push(loc._id || loc));
+    }
+    return [...new Set(ids.filter(Boolean))];
+  }, [user]);
 
   const fetchAnalytics = useCallback(async () => {
     const isInitial = !didInitRef.current;
@@ -107,12 +115,6 @@ export default function OrderAnalyticsDashboard() {
   }, [branchFilter, dateRange]);
 
   useEffect(() => {
-    if (user?.role === "branch_admin" && user?.assignedLocation) {
-      setBranchFilter(user.assignedLocation._id || user.assignedLocation);
-    }
-  }, [user]);
-
-  useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
@@ -130,11 +132,7 @@ export default function OrderAnalyticsDashboard() {
   ];
 
   const resetFilters = () => {
-    setBranchFilter(
-      user?.role === "branch_admin"
-        ? user.assignedLocation?._id || user.assignedLocation
-        : "all",
-    );
+    setBranchFilter("all");
     setDateRange({ start: "", end: "" });
     toast.success("Filters cleared");
   };
@@ -172,7 +170,7 @@ export default function OrderAnalyticsDashboard() {
                 </div>
                 <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
                   {user?.role === "branch_admin"
-                    ? "Showing your branch"
+                    ? userBranchIds.length > 1 ? "Showing assigned branches" : "Showing your branch"
                     : "Showing all branches"}
                 </div>
               </div>
@@ -212,11 +210,12 @@ export default function OrderAnalyticsDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
               {/* Branch Selector */}
               <div className="lg:col-span-4 bg-[var(--color-surface-soft)] rounded-xl p-1.5 border border-[var(--color-border)] relative">
-                {user?.role === "branch_admin" ? (
+                {user?.role === "branch_admin" && locations.length <= 1 ? (
                   <div className="h-12 w-full flex items-center px-8 text-[var(--color-primary)] gap-3">
                     <Building size={16} />
                     <span className="text-[10px] font-bold uppercase tracking-normal">
                       {locations.find((l) => l._id === branchFilter)?.name ||
+                        locations[0]?.name ||
                         "Your Branch"}
                     </span>
                   </div>
@@ -259,7 +258,7 @@ export default function OrderAnalyticsDashboard() {
                           className="absolute top-full left-0 right-0 mt-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm z-[100] p-3 overflow-hidden"
                         >
                           <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
-                            {user?.role !== "branch_admin" && (
+                            {(user?.role !== "branch_admin" || locations.length > 1) && (
                               <>
                                 <button
                                   onClick={() => {
@@ -268,7 +267,7 @@ export default function OrderAnalyticsDashboard() {
                                   }}
                                   className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === "all" ? "bg-[var(--color-primary)] text-white" : "hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]"}`}
                                 >
-                                  <Globe size={14} /> All Branches
+                                  <Globe size={14} /> {user?.role === "branch_admin" ? "All Assigned Branches" : "All Branches"}
                                 </button>
                                 <div className="h-px bg-[var(--color-border)] my-2" />
                               </>
@@ -614,8 +613,7 @@ export default function OrderAnalyticsDashboard() {
                 .filter(
                   (b) =>
                     user?.role !== "branch_admin" ||
-                    b.id ===
-                      (user?.assignedLocation?._id || user?.assignedLocation),
+                    userBranchIds.includes(b.id),
                 )
                 .map((branch, i) => (
                   <motion.div

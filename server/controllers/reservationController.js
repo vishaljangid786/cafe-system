@@ -9,9 +9,10 @@ const getReservationLocationId = (reservation) => reservation.locationId?._id ||
 
 const resolveReservationLocation = (req, res, requestedLocationId) => {
   if (req.user.role === 'super_admin') return requestedLocationId;
-  if (req.user.role === 'admin') {
-    enforceLocationAccess(req, res, requestedLocationId);
-    return requestedLocationId;
+  if (req.user.role === 'admin' || req.user.role === 'branch_admin') {
+    const targetLocationId = requestedLocationId || req.user.assignedLocation;
+    enforceLocationAccess(req, res, targetLocationId);
+    return targetLocationId;
   }
   return req.user.assignedLocation;
 };

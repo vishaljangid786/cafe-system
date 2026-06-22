@@ -80,25 +80,35 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
     return branches;
   }, [canViewAllBranches, locations, user]);
 
+  const canUseBranchPanel = canViewAllBranches || (user?.role === 'branch_admin' && availableBranches.length > 1);
+
   useEffect(() => {
-    if (canViewAllBranches && locations.length === 0) {
+    if ((canViewAllBranches || user?.role === 'branch_admin') && locations.length === 0) {
       refreshLocations();
     }
-  }, [canViewAllBranches, locations.length, refreshLocations]);
+  }, [canViewAllBranches, locations.length, refreshLocations, user?.role]);
 
   const selectedLocationId = selectedLocation === 'all'
     ? 'all'
-    : selectedLocation?._id || selectedLocation || (canViewAllBranches ? 'all' : '');
+    : selectedLocation?._id || selectedLocation || (canUseBranchPanel ? 'all' : '');
 
   // Label shown on the multi-select button for admin/super_admin
-  const multiBranchLabel = selectedLocationIds.length === 0
-    ? 'All Branches'
-    : selectedLocationIds.length === 1
-      ? (availableBranches.find(b => (b._id || b) === selectedLocationIds[0])?.name || '1 Branch')
-      : `${selectedLocationIds.length} Branches`;
+  const multiBranchLabel = (() => {
+    if (selectedLocationIds.length === 0) {
+      if (selectedLocation) {
+        const selectedId = selectedLocation._id || selectedLocation;
+        return availableBranches.find(b => (b._id || b) === selectedId)?.name || '1 Branch';
+      }
+      return canViewAllBranches ? 'All Branches' : 'All Assigned Branches';
+    }
+    if (selectedLocationIds.length === 1) {
+      return availableBranches.find(b => (b._id || b) === selectedLocationIds[0])?.name || '1 Branch';
+    }
+    return `${selectedLocationIds.length} Branches`;
+  })();
 
   const branchOptions = [
-    ...(canViewAllBranches ? [{ label: 'All Branches', value: 'all' }] : []),
+    ...(canUseBranchPanel ? [{ label: canViewAllBranches ? 'All Branches' : 'All Assigned Branches', value: 'all' }] : []),
     ...availableBranches.map((branch) => ({
       label: branch.city && branch.name ? `${branch.city} - ${branch.name}` : branch.name || branch.city || 'Assigned Branch',
       value: branch._id || branch,
@@ -147,12 +157,12 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
         {/* Location Selector */}
         {!isMobile && (
           <div className="relative" ref={branchPanelRef}>
-            {canViewAllBranches ? (
-              /* Multi-select panel for admin / super_admin */
+            {canUseBranchPanel ? (
+              /* Multi-select panel for admin / super_admin / multi-branch branch_admin */
               <>
                 <button
                   onClick={() => {
-                    setPendingIds(selectedLocationIds);
+                    setPendingIds(selectedLocationIds.length > 0 ? selectedLocationIds : (selectedLocation ? [selectedLocation._id || selectedLocation] : []));
                     setShowBranchPanel(v => !v);
                   }}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] transition-colors text-sm font-medium text-[var(--color-text-primary)] min-w-[200px]"
@@ -177,7 +187,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pendingIds.length === 0 ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]'}`}
                         >
                           <Check size={13} className={pendingIds.length === 0 ? 'opacity-100' : 'opacity-0'} />
-                          All Branches
+                          {canViewAllBranches ? 'All Branches' : 'All Assigned Branches'}
                         </button>
                       </div>
                       <div className="max-h-60 overflow-y-auto p-2 space-y-1">

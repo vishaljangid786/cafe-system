@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const AuditLog = require('../models/AuditLog');
+const { canAccessLocation, normalizeIdList } = require('../utils/accessControl');
 
 // Generate JWT
 const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false) => {
@@ -18,6 +19,31 @@ const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = f
 };
 
 const isProductionRuntime = () => process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
+const normalizeRoleLocations = (role, assignedLocation, accessibleLocations) => {
+  const accessIds = normalizeIdList(accessibleLocations);
+  const assignedId = normalizeIdList(assignedLocation)[0] || '';
+
+  if (role === 'branch_admin') {
+    const branchIds = normalizeIdList([assignedId, ...accessIds]);
+    return {
+      assignedLocation: assignedId || branchIds[0],
+      accessibleLocations: branchIds,
+    };
+  }
+
+  if (role === 'admin') {
+    return {
+      assignedLocation: undefined,
+      accessibleLocations: accessIds,
+    };
+  }
+
+  return {
+    assignedLocation: assignedId || undefined,
+    accessibleLocations: [],
+  };
+};
 
 const getAuthCookieOptions = () => ({
   expires: new Date(
@@ -57,9 +83,11 @@ const registerUser = asyncHandler(async (req, res, next) => {
   const {
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
-    alternatePhone, role, assignedLocation, accessibleLocations,
+    alternatePhone, role,
     aadharNumber, highestQualification, monthlySalary
   } = req.body;
+  let assignedLocation = req.body.assignedLocation;
+  let accessibleLocations = normalizeIdList(req.body.accessibleLocations);
 
   const userCount = await User.countDocuments();
   let finalRole = role;
@@ -76,29 +104,30 @@ const registerUser = asyncHandler(async (req, res, next) => {
     }
 
     if (creator.role === 'branch_admin') {
-      if (role !== 'staff') {
+      if (!['staff', 'chef'].includes(role)) {
         res.status(403);
-        throw new Error('Branch Admins can only register Staff members');
+        throw new Error('Branch Admins can only register Staff or Chef members');
       }
-      if (assignedLocation !== creator.assignedLocation.toString()) {
+      assignedLocation = assignedLocation || creator.assignedLocation;
+      if (!canAccessLocation(creator, assignedLocation)) {
         res.status(403);
-        throw new Error('Branch Admins can only register staff for their own location');
+        throw new Error('Branch Admins can only register staff for their assigned branches');
       }
       // Branch admin cannot set accessibleLocations
-      req.body.accessibleLocations = [];
+      accessibleLocations = [];
     } else if (creator.role === 'admin') {
       if (['super_admin', 'admin'].includes(role)) {
         res.status(403);
         throw new Error('Admins can only register Branch Admins and Staff');
       }
       // Admin can only assign locations they have permission for
-      if (assignedLocation && !creator.accessibleLocations?.some(loc => loc.toString() === assignedLocation)) {
+      if (assignedLocation && !canAccessLocation(creator, assignedLocation)) {
         res.status(403);
         throw new Error('You cannot assign a location you do not have permission for');
       }
       if (accessibleLocations?.length) {
         const hasUnauthorized = accessibleLocations.some(
-          loc => !creator.accessibleLocations?.some(cloc => cloc.toString() === loc.toString())
+          loc => !canAccessLocation(creator, loc)
         );
         if (hasUnauthorized) {
           res.status(403);
@@ -106,6 +135,15 @@ const registerUser = asyncHandler(async (req, res, next) => {
         }
       }
     }
+  }
+
+  const normalizedLocations = normalizeRoleLocations(finalRole, assignedLocation, accessibleLocations);
+  assignedLocation = normalizedLocations.assignedLocation;
+  accessibleLocations = normalizedLocations.accessibleLocations;
+
+  if (finalRole === 'branch_admin' && accessibleLocations.length === 0) {
+    res.status(400);
+    throw new Error('Please assign at least one branch to this Branch Admin');
   }
 
   const userExists = await User.findOne({ email });

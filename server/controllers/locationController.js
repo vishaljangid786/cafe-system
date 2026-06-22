@@ -4,6 +4,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const mongoose = require('mongoose');
+const { userLocationIds } = require('../utils/accessControl');
 
 // @desc    Get all locations
 // @route   GET /api/locations
@@ -19,10 +20,12 @@ const getLocations = asyncHandler(async (req, res) => {
   if (req.user) {
     const role = req.user.role;
     if (['branch_admin', 'staff', 'chef', 'location_admin'].includes(role)) {
-      query._id = req.user.assignedLocation || new mongoose.Types.ObjectId();
+      const ids = role === 'branch_admin' ? userLocationIds(req.user) : userLocationIds(req.user).slice(0, 1);
+      query._id = { $in: ids.length > 0 ? ids : [new mongoose.Types.ObjectId()] };
     } else if (role === 'admin') {
       // Always scope to accessible locations; empty array yields nothing
-      query._id = { $in: req.user.accessibleLocations?.length > 0 ? req.user.accessibleLocations : [new mongoose.Types.ObjectId()] };
+      const ids = userLocationIds(req.user);
+      query._id = { $in: ids.length > 0 ? ids : [new mongoose.Types.ObjectId()] };
     }
     // super_admin: no filter — can see all
   }

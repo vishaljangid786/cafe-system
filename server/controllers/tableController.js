@@ -2,7 +2,7 @@ const Table = require('../models/Table');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { getIO } = require('../config/socket');
-const { enforceLocationAccess } = require('../utils/accessControl');
+const { enforceLocationAccess, scopedLocationId } = require('../utils/accessControl');
 
 const Order = require('../models/Order');
 
@@ -13,26 +13,12 @@ const getTables = asyncHandler(async (req, res) => {
   let query = {};
   const { locationId } = req.query;
 
-  if (locationId) {
-    query.locationId = locationId;
-  }
-
   // Enforce access control
-  if (['branch_admin', 'staff', 'chef'].includes(req.user.role)) {
+  if (['branch_admin', 'admin'].includes(req.user.role)) {
+    const branchScope = scopedLocationId(req, locationId);
+    if (branchScope) query.locationId = branchScope;
+  } else if (['staff', 'chef', 'location_admin'].includes(req.user.role)) {
     query.locationId = req.user.assignedLocation;
-  } else if (req.user.role === 'admin') {
-    const allowed = (req.user.accessibleLocations || []).map(loc => loc.toString());
-    // If admin is requesting a specific location, check if they have access
-    if (locationId && locationId !== 'all') {
-      if (!allowed.includes(locationId)) {
-        res.status(403);
-        throw new Error('You do not have permission to use this location');
-      }
-      query.locationId = locationId;
-    } else {
-      // Default to all accessible locations
-      query.locationId = { $in: allowed };
-    }
   }
 
   const tables = await Table.find(query)

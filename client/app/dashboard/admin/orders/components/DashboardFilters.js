@@ -21,17 +21,17 @@ export default function DashboardFilters({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
         {/* Sector Selector */}
         <div className="lg:col-span-3 ">
-          {user?.role === 'branch_admin' ? (
+          {user?.role === 'branch_admin' && locations.length <= 1 ? (
             <div className="h-11 w-full flex items-center px-6 text-[var(--color-primary)] gap-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 shadow-inner">
               <Globe size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-normal">{locations.find(l => l._id === branchFilter)?.name || 'Restricted Session'}</span>
+              <span className="text-[10px] font-bold uppercase tracking-normal">{locations.find(l => l._id === branchFilter)?.name || locations[0]?.name || 'Restricted Session'}</span>
             </div>
           ) : (
             <PremiumSelect
               value={branchFilter}
               onChange={setBranchFilter}
               options={[
-                { label: 'Global Monitor', value: 'all' },
+                { label: user?.role === 'branch_admin' ? 'All Assigned Branches' : 'Global Monitor', value: 'all' },
                 ...locations.map(loc => ({ label: loc.name, value: loc._id }))
               ]}
               className="h-11"

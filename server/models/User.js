@@ -83,13 +83,13 @@ const userSchema = new mongoose.Schema(
       viewAnalytics: { type: Boolean, default: false },
       manageCoupons: { type: Boolean, default: false },
     },
-    // For Staff and Branch Admin
+    // Primary/default branch for Staff, Chef, Location Admin, and Branch Admin
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location',
       required: function() { return ['branch_admin', 'location_admin', 'staff', 'chef'].includes(this.role); },
     },
-    // For Admins (Super/Global)
+    // Branches managed by Admins and multi-branch Branch Admins
     accessibleLocations: [
       {
         type: mongoose.Schema.Types.ObjectId,

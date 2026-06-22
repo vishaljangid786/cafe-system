@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '../services/api';
 import {
@@ -41,10 +41,13 @@ const signupSchema = z.object({
   pincode: z.string().length(6, 'Pincode must be 6 digits'),
   accessibleLocations: z.array(z.string()).optional(),
 }).refine((data) => {
-  if (['staff', 'branch_admin', 'chef'].includes(data.role) && !data.assignedLocation) return false;
+  if (data.role === 'branch_admin') {
+    return !!data.assignedLocation || (data.accessibleLocations || []).length > 0;
+  }
+  if (['staff', 'chef'].includes(data.role) && !data.assignedLocation) return false;
   return true;
 }, {
-  message: "Please select a branch for this role",
+  message: "Please select at least one branch for this role",
   path: ["assignedLocation"],
 });
 
@@ -97,11 +100,24 @@ function SignupContent() {
       gender: 'Male',
       highestQualification: 'Post Graduate',
       role: isSetup ? 'super_admin' : 'staff',
-      country: 'India'
+      country: 'India',
+      accessibleLocations: []
     }
   });
 
   const selectedRole = watch('role');
+  const selectedBranchIds = watch('accessibleLocations') || [];
+
+  const branchOptions = useMemo(() => locations.map(loc => ({
+    label: `${loc.city} - ${loc.name}`,
+    value: loc._id
+  })), [locations]);
+
+  const setBranchAdminBranches = (ids) => {
+    const nextIds = Array.isArray(ids) ? ids : [];
+    setValue('accessibleLocations', nextIds, { shouldValidate: true });
+    setValue('assignedLocation', nextIds[0] || '', { shouldValidate: true });
+  };
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -143,7 +159,7 @@ function SignupContent() {
     let fieldsToValidate = [];
     if (activeStep === 1) fieldsToValidate = ['name', 'email', 'age', 'gender', 'password'];
     else if (activeStep === 2) fieldsToValidate = ['phone', 'address1', 'address2', 'city', 'state', 'country', 'pincode'];
-    else if (activeStep === 3) fieldsToValidate = ['role', 'assignedLocation', 'highestQualification', 'monthlySalary'];
+    else if (activeStep === 3) fieldsToValidate = ['role', 'assignedLocation', 'accessibleLocations', 'highestQualification', 'monthlySalary'];
 
     const isStepValid = await trigger(fieldsToValidate);
     if (isStepValid) setActiveStep(prev => prev + 1);
@@ -305,14 +321,40 @@ function SignupContent() {
                   <Controller name="role" control={control} render={({ field }) => (
                     <div className="space-y-2">
                       <label className="label block ml-0.5">Your Role</label>
-                      <PremiumSelect value={field.value} onChange={field.onChange} options={getAvailableRoles()} />
+                      <PremiumSelect
+                        value={field.value}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          setValue('assignedLocation', '', { shouldValidate: true });
+                          setValue('accessibleLocations', [], { shouldValidate: true });
+                        }}
+                        options={getAvailableRoles()}
+                      />
                     </div>
                   )} />
-                  {!isSetup && (['staff', 'branch_admin', 'chef'].includes(selectedRole)) && (
+                  {!isSetup && selectedRole === 'branch_admin' && (
+                    <Controller name="accessibleLocations" control={control} render={({ field }) => (
+                      <div className="space-y-2">
+                        <label className="label block ml-0.5">Branches This Branch Admin Can Manage</label>
+                        <PremiumSelect
+                          value={field.value || selectedBranchIds}
+                          onChange={(ids) => {
+                            field.onChange(ids);
+                            setBranchAdminBranches(ids);
+                          }}
+                          options={branchOptions}
+                          multiple
+                          placeholder="Select one or more branches"
+                        />
+                        {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
+                      </div>
+                    )} />
+                  )}
+                  {!isSetup && (['staff', 'chef'].includes(selectedRole)) && (
                     <Controller name="assignedLocation" control={control} render={({ field }) => (
                       <div className="space-y-2">
                         <label className="label block ml-0.5">Select Branch</label>
-                        <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} placeholder="Select Branch" />
+                        <PremiumSelect value={field.value} onChange={field.onChange} options={branchOptions} placeholder="Select Branch" />
                         {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
                       </div>
                     )} />
@@ -321,7 +363,7 @@ function SignupContent() {
                     <Controller name="accessibleLocations" control={control} render={({ field }) => (
                       <div className="space-y-2">
                         <label className="label block ml-0.5">Branches This Admin Can Manage</label>
-                        <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
+                        <PremiumSelect value={field.value} onChange={field.onChange} options={branchOptions} multiple={true} placeholder="Select multiple branches" />
                       </div>
                     )} />
                   )}

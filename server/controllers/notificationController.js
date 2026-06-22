@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
+const { canAccessLocation, userLocationIds } = require('../utils/accessControl');
 
 // @desc    Get user notifications
 // @route   GET /api/notifications
@@ -134,7 +135,6 @@ const createNotification = asyncHandler(async (req, res) => {
   }
 
   const senderRole = req.user.role;
-  const senderBranch = req.user.assignedLocation;
   let recipients = [];
 
   // HIERARCHY VALIDATION & RECIPIENT RESOLUTION
@@ -162,13 +162,17 @@ const createNotification = asyncHandler(async (req, res) => {
     recipients = users.map(u => ({ user: u._id }));
   } 
   else if (targetType === 'branch') {
-    const { canAccessLocation } = require('../utils/accessControl');
     const isAllowed = senderRole === 'super_admin' || canAccessLocation(req.user, targetId);
     if (!isAllowed) {
       res.status(403);
       throw new Error('You do not have access to broadcast to this branch');
     }
-    const users = await User.find({ assignedLocation: targetId });
+    const users = await User.find({
+      $or: [
+        { assignedLocation: targetId },
+        { accessibleLocations: targetId }
+      ]
+    });
     recipients = users.map(u => ({ user: u._id }));
   }
   else if (targetType === 'system') {
@@ -236,7 +240,8 @@ const createNotification = asyncHandler(async (req, res) => {
 function validateHierarchy(sender, receiver) {
   const sRole = sender.role;
   const rRole = receiver.role;
-  const sBranch = sender.assignedLocation?.toString();
+  const senderBranches = userLocationIds(sender);
+  const sBranch = senderBranches[0];
 
   if (sRole === 'super_admin') return true;
 
@@ -249,17 +254,17 @@ function validateHierarchy(sender, receiver) {
     if (rRole === 'super_admin') return true;
     if (rRole === 'admin') {
       if (!sBranch) return true;
-      return receiver.accessibleLocations?.some(loc => loc.toString() === sBranch);
+      return senderBranches.some(branchId => receiver.accessibleLocations?.some(loc => loc.toString() === branchId));
     }
     if (rRole === 'branch_admin' || rRole === 'location_admin') {
-      return receiver.assignedLocation?.toString() === sBranch;
+      return senderBranches.some(branchId => canAccessLocation(receiver, branchId));
     }
     return false;
   }
 
   // Same level or higher to lower
-  if (sRole === 'admin' && sBranch === receiver.assignedLocation?.toString()) return true;
-  if (sRole === 'branch_admin' && sBranch === receiver.assignedLocation?.toString()) return true;
+  if (sRole === 'admin' && canAccessLocation(sender, receiver.assignedLocation)) return true;
+  if (sRole === 'branch_admin' && canAccessLocation(sender, receiver.assignedLocation)) return true;
 
   return false;
 }
@@ -270,7 +275,8 @@ function validateHierarchy(sender, receiver) {
 const getTargetOptions = asyncHandler(async (req, res) => {
   const user = req.user;
   const role = user.role;
-  const branchId = user.assignedLocation;
+  const branchIds = userLocationIds(user);
+  const branchId = branchIds[0];
 
   let users = [];
   let roles = [];
@@ -293,9 +299,9 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     branches = await Location.find({ _id: { $in: accessibleBranches } }).select('name');
   }
   else if (role === 'branch_admin') {
-    const admins = await User.find({ role: 'admin', accessibleLocations: branchId }).select('name role');
+    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds } }).select('name role');
     const staff = await User.find({ 
-      assignedLocation: branchId, 
+      assignedLocation: { $in: branchIds },
       role: { $in: ['staff', 'chef', 'location_admin'] } 
     }).select('name role');
     const supers = await User.find({ role: 'super_admin' }).select('name role');
@@ -303,7 +309,10 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     users = [...supers, ...admins, ...staff];
   }
   else if (role === 'staff' || role === 'chef') {
-    const branchAdmins = await User.find({ role: 'branch_admin', assignedLocation: branchId }).select('name role');
+    const branchAdmins = await User.find({
+      role: 'branch_admin',
+      $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }]
+    }).select('name role');
     const admins = await User.find({ role: 'admin', accessibleLocations: branchId }).select('name role');
     const supers = await User.find({ role: 'super_admin' }).select('name role');
     

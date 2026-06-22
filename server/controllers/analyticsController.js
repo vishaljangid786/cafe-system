@@ -24,11 +24,15 @@ const AnalyticsService = require('../services/analyticsService');
 // @desc    Get analytics for a specific location
 const getLocationAnalytics = asyncHandler(async (req, res) => {
   const { startDate, endDate, locationId } = req.query;
-  const targetLocation = req.user.role === 'branch_admin' ? req.user.assignedLocation : locationId;
+  const targetLocation = locationId || req.user.assignedLocation;
 
   if (!targetLocation) {
     res.status(400);
     throw new Error('Location ID is required');
+  }
+  if (!canAccessLocation(req.user, targetLocation)) {
+    res.status(403);
+    throw new Error('You do not have permission to view this location');
   }
 
   const metrics = await AnalyticsService.getLocationMetrics(targetLocation, startDate, endDate);
@@ -57,7 +61,10 @@ const getAllAnalytics = asyncHandler(async (req, res) => {
 // @desc    Compare all locations
 const compareLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, status, sort } = req.query;
-  const ids = await Location.find({ isPermanentlyDeleted: false }).select('_id');
+  const locQuery = { isPermanentlyDeleted: false };
+  const allowedIds = allowedLocationFilter(req.user);
+  if (allowedIds) locQuery._id = { $in: allowedIds };
+  const ids = await Location.find(locQuery).select('_id');
   const metrics = await AnalyticsService.getLocationOutliers(ids.map(l => l._id), startDate, endDate, null);
 
   let comparisonData = metrics.map(m => ({
@@ -128,7 +135,10 @@ const getLocationComparison = asyncHandler(async (req, res) => {
 // @desc    Identify most profitable location
 const getTopLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, period, locationIds } = req.query;
-  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
+  const scopedIds = locationIds ? scopedLocationIds(req, locationIds) : null;
+  const ids = scopedIds
+    ? scopedIds.$in.map(id => new mongoose.Types.ObjectId(id))
+    : userLocationIds(req.user).map(id => new mongoose.Types.ObjectId(id));
   
   const metrics = await AnalyticsService.getLocationOutliers(ids, startDate, endDate, period);
   const topLocations = metrics
@@ -149,12 +159,14 @@ const getTopLocations = asyncHandler(async (req, res) => {
 // @desc    Track trending and most sold items
 const getTrendingItems = asyncHandler(async (req, res) => {
   const { locationId, locationIds, period = 7, startDate, endDate } = req.query;
-  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : (locationId ? [new mongoose.Types.ObjectId(locationId)] : []);
-  const matchScope = ids.length > 0 ? { locationId: { $in: ids } } : {};
-
-  // Security Layer
-  const branch = scopedLocationId(req, locationIds || locationId);
-  if (branch) matchScope.locationId = branch;
+  const matchScope = {};
+  if (locationIds) {
+    const multi = scopedLocationIds(req, locationIds);
+    if (multi) matchScope.locationId = { $in: multi.$in.map(id => new mongoose.Types.ObjectId(id)) };
+  } else {
+    const branch = scopedLocationId(req, locationId);
+    if (branch) matchScope.locationId = branch;
+  }
 
   const trends = await AnalyticsService.getTrendingItems(matchScope, period, startDate, endDate);
   res.json({ success: true, data: trends });
@@ -164,7 +176,8 @@ const getTrendingItems = asyncHandler(async (req, res) => {
 // @route   GET /api/analytics/underperforming-locations
 const getUnderperformingLocations = asyncHandler(async (req, res) => {
   const { startDate, endDate, period, locationIds } = req.query;
-  const ids = locationIds ? locationIds.split(',').map(id => new mongoose.Types.ObjectId(id)) : [];
+  const scopedIds = locationIds ? scopedLocationIds(req, locationIds) : null;
+  const ids = scopedIds ? scopedIds.$in.map(id => new mongoose.Types.ObjectId(id)) : [];
 
   const dateMatch = getDateMatchCriteria(startDate, endDate, period || 30, 'date');
   if (ids.length > 0) {
@@ -182,7 +195,11 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
     }
   ]);
 
-  const locations = await Location.find({ isPermanentlyDeleted: false }, 'name city status');
+  const locationFilter = { isPermanentlyDeleted: false };
+  const allowedIds = allowedLocationFilter(req.user);
+  if (allowedIds) locationFilter._id = { $in: ids.length > 0 ? ids : allowedIds };
+  else if (ids.length > 0) locationFilter._id = { $in: ids };
+  const locations = await Location.find(locationFilter, 'name city status');
 
   const results = locations.map(loc => {
     const stats = transactionAgg.find(t => t._id.toString() === loc._id.toString()) || { totalOrders: 0, totalRevenue: 0 };
@@ -222,6 +239,10 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
 const getProductPerformance = asyncHandler(async (req, res) => {
   const { locationId } = req.params;
   const { startDate, endDate, period } = req.query;
+  if (!canAccessLocation(req.user, locationId)) {
+    res.status(403);
+    throw new Error('You do not have access to this location');
+  }
 
   const match = { locationId: new mongoose.Types.ObjectId(locationId) };
   if (period) {

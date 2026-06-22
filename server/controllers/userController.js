@@ -1,8 +1,46 @@
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
-const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit } = require('../utils/accessControl');
+const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, normalizeIdList, userLocationIds } = require('../utils/accessControl');
 const { encrypt } = require('../utils/encryption');
+
+const targetUserLocations = (user) => userLocationIds(user);
+
+const ensureCanManageUserLocation = (req, res, user, message = 'You do not have permission to manage users from other locations') => {
+  if (req.user.role === 'super_admin') return;
+  const ids = targetUserLocations(user);
+  if (ids.length === 0) return;
+  const hasUnauthorized = ids.some((id) => !canAccessLocation(req.user, id));
+  if (hasUnauthorized) {
+    res.status(403);
+    throw new Error(message);
+  }
+};
+
+const normalizeBranchAdminUpdate = (user, updateData) => {
+  const finalRole = updateData.role || user.role;
+  const currentAccessible = updateData.accessibleLocations !== undefined
+    ? updateData.accessibleLocations
+    : user.accessibleLocations;
+  const currentAssigned = updateData.assignedLocation !== undefined
+    ? updateData.assignedLocation
+    : user.assignedLocation;
+
+  if (finalRole === 'branch_admin') {
+    const branchIds = normalizeIdList([currentAssigned, ...normalizeIdList(currentAccessible)]);
+    if (branchIds.length === 0) {
+      const error = new Error('Please assign at least one branch to this Branch Admin');
+      error.statusCode = 400;
+      throw error;
+    }
+    updateData.assignedLocation = normalizeIdList(currentAssigned)[0] || branchIds[0];
+    updateData.accessibleLocations = branchIds;
+  } else if (['staff', 'chef', 'location_admin'].includes(finalRole)) {
+    updateData.accessibleLocations = [];
+  } else if (finalRole === 'admin' && updateData.assignedLocation === '') {
+    delete updateData.assignedLocation;
+  }
+};
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -12,11 +50,11 @@ const getUsers = asyncHandler(async (req, res) => {
 
   // Hierarchy Visibility Logic
   if (req.user.role === 'branch_admin') {
-    query.assignedLocation = req.user.assignedLocation;
+    query.assignedLocation = { $in: userLocationIds(req.user) };
     query.role = { $in: ['staff', 'chef'] };
   } else if (req.user.role === 'admin') {
     // Admins see branch admins and staff under their accessible locations
-    const allowedLocs = (req.user.accessibleLocations || []).map(id => id.toString());
+    const allowedLocs = userLocationIds(req.user);
     query.$and = [
       { role: { $in: ['branch_admin', 'staff', 'chef'] } },
       { 
@@ -53,14 +91,17 @@ const getUsers = asyncHandler(async (req, res) => {
 
   if (req.query.locationId) {
     // Only apply location filter if user has permission for it
-    if (req.user.role === 'super_admin') {
-      query.assignedLocation = req.query.locationId;
-    } else if (req.user.role === 'admin') {
-      const isAccessible = req.user.accessibleLocations?.some(
-        loc => loc.toString() === req.query.locationId
-      );
-      if (isAccessible) {
-        query.assignedLocation = req.query.locationId;
+    if (req.user.role === 'super_admin' || canAccessLocation(req.user, req.query.locationId)) {
+      const locationClause = {
+        $or: [
+          { assignedLocation: req.query.locationId },
+          { accessibleLocations: req.query.locationId }
+        ]
+      };
+      if (query.$and) {
+        query.$and.push(locationClause);
+      } else {
+        query.$and = [locationClause];
       }
     }
   }
@@ -213,16 +254,11 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Location Admin can only update staff from their location
-  if (req.user.role === 'branch_admin' && user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
+  if (req.user.role === 'branch_admin' && !['staff', 'chef'].includes(user.role)) {
     res.status(403);
-    throw new Error('You do not have permission to update users from other locations');
+    throw new Error('Branch Admins can only update Staff or Chef personnel');
   }
-
-  if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('You do not have permission to update users from other locations');
-  }
+  ensureCanManageUserLocation(req, res, user, 'You do not have permission to update users from other locations');
 
   // Fields allowed to be updated by admins via this route
   const updatableFields = [
@@ -237,6 +273,10 @@ const updateUser = asyncHandler(async (req, res) => {
       updateData[field] = req.body[field];
     }
   });
+
+  if (updateData.accessibleLocations !== undefined) {
+    updateData.accessibleLocations = normalizeIdList(updateData.accessibleLocations);
+  }
 
   // The aadharNumber schema setter (encrypt) does NOT run on findByIdAndUpdate —
   // Mongoose skips setters on query updates — so encrypt it explicitly here to keep
@@ -253,6 +293,8 @@ const updateUser = asyncHandler(async (req, res) => {
       updateData.role = req.body.role;
     }
   }
+
+  normalizeBranchAdminUpdate(user, updateData);
 
   if (updateData.assignedLocation && req.user.role !== 'super_admin') {
     enforceLocationAccess(req, res, updateData.assignedLocation, 'You do not have permission to assign this location');
@@ -313,20 +355,12 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   // Restrictions
   if (req.user.role === 'branch_admin') {
-    if (user.assignedLocation?.toString() !== req.user.assignedLocation?.toString()) {
-      res.status(403);
-      throw new Error('You do not have permission to delete users from other locations');
-    }
     if (!['staff', 'chef'].includes(user.role)) {
       res.status(403);
       throw new Error('Branch Admins can only delete Staff or Chef personnel');
     }
   }
-
-  if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('You do not have permission to delete users from other locations');
-  }
+  ensureCanManageUserLocation(req, res, user, 'You do not have permission to delete users from other locations');
 
   if (user.role === 'super_admin') {
     res.status(403);
@@ -384,10 +418,7 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
     throw new Error('Cannot block Super Admin');
   }
 
-  if (req.user.role === 'admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('You do not have permission to block users from other branches');
-  }
+  ensureCanManageUserLocation(req, res, user, 'You do not have permission to block users from other branches');
 
   user.isBlocked = !user.isBlocked;
   await user.save();
@@ -403,7 +434,10 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
 // @route   GET /api/users/:id
 // @access  Private (Admin, Super Admin, Location Admin)
 const getUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select('-password').populate('assignedLocation', 'name city');
+  const user = await User.findById(req.params.id)
+    .select('-password')
+    .populate('assignedLocation', 'name city')
+    .populate('accessibleLocations', 'name city');
 
   if (!user) {
     res.status(404);
@@ -411,10 +445,7 @@ const getUser = asyncHandler(async (req, res) => {
   }
 
   // Location restriction
-  if (req.user.role !== 'super_admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('You do not have permission to view users from other locations');
-  }
+  ensureCanManageUserLocation(req, res, user, 'You do not have permission to view users from other locations');
 
   res.json({
     success: true,
@@ -536,10 +567,7 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
   const actorRole = req.user.role;
   const targetRole = user.role;
 
-  if (actorRole !== 'super_admin' && user.assignedLocation && !canAccessLocation(req.user, user.assignedLocation)) {
-    res.status(403);
-    throw new Error('You do not have permission to modify permissions outside your locations');
-  }
+  ensureCanManageUserLocation(req, res, user, 'You do not have permission to modify permissions outside your locations');
 
   let isAuthorized = false;
 
@@ -550,11 +578,11 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
       isAuthorized = true;
     }
   } else if (actorRole === 'branch_admin' && (targetRole === 'staff' || targetRole === 'chef')) {
-    if (user.assignedLocation?.toString() === req.user.assignedLocation?.toString()) {
+    if (canAccessLocation(req.user, user.assignedLocation)) {
       isAuthorized = true;
     } else {
       res.status(403);
-      throw new Error('You can only modify permissions for staff within your own branch');
+      throw new Error('You can only modify permissions for staff within your assigned branches');
     }
   }
 

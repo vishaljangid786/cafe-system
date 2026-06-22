@@ -19,7 +19,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 
 // Initialize Socket.io
 const io = require('./config/socket').init(server);
-const { canAccessLocation, normalizeId } = require('./utils/accessControl');
+const { canAccessLocation, normalizeId, userLocationIds } = require('./utils/accessControl');
 
 // Per-socket rate guard for client-driven events. Prevents an authenticated
 // client from spamming join_session / join_room and exhausting CPU even though
@@ -52,14 +52,13 @@ io.on('connection', (socket) => {
   if (user?.role) socket.join(`role_${user.role}`);
 
   // Track the currently active branch room so we can leave it on switch
-  socket.activeBranchId = null;
+  socket.activeBranchIds = new Set();
 
-  if (user?.assignedLocation) {
-    const branchId = normalizeId(user.assignedLocation);
+  userLocationIds(user).forEach((branchId) => {
     socket.join(`branch_${branchId}`);
     socket.join(`branch_${branchId}_${user.role}`);
-    socket.activeBranchId = branchId;
-  }
+    socket.activeBranchIds.add(branchId);
+  });
 
   // Advanced session management with branch and role scoping
   socket.on('join_session', ({ branchId } = {}) => {
@@ -68,16 +67,27 @@ io.on('connection', (socket) => {
     const isGlobalOrAll = branchId === 'global' || branchId === 'all';
 
     // Leave old branch rooms before joining a new one
-    if (socket.activeBranchId && socket.activeBranchId !== branchId) {
-      socket.leave(`branch_${socket.activeBranchId}`);
-      socket.leave(`branch_${socket.activeBranchId}_${targetRole}`);
-      socket.activeBranchId = null;
+    if (socket.activeBranchIds?.size) {
+      socket.activeBranchIds.forEach((activeBranchId) => {
+        if (activeBranchId !== branchId) {
+          socket.leave(`branch_${activeBranchId}`);
+          socket.leave(`branch_${activeBranchId}_${targetRole}`);
+          socket.activeBranchIds.delete(activeBranchId);
+        }
+      });
     }
 
-    if (branchId && !isGlobalOrAll && canAccessLocation(user, branchId)) {
-      socket.join(`branch_${branchId}`);
-      socket.join(`branch_${branchId}_${targetRole}`);
-      socket.activeBranchId = branchId;
+    if (isGlobalOrAll) {
+      userLocationIds(user).forEach((allowedBranchId) => {
+        socket.join(`branch_${allowedBranchId}`);
+        socket.join(`branch_${allowedBranchId}_${targetRole}`);
+        socket.activeBranchIds.add(allowedBranchId);
+      });
+    } else if (branchId && canAccessLocation(user, branchId)) {
+      const normalizedBranchId = normalizeId(branchId);
+      socket.join(`branch_${normalizedBranchId}`);
+      socket.join(`branch_${normalizedBranchId}_${targetRole}`);
+      socket.activeBranchIds.add(normalizedBranchId);
     }
   });
 

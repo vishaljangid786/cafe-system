@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { getIO } = require('../config/socket');
+const { normalizeId } = require('./accessControl');
 
 /**
  * Sends a notification hierarchically
@@ -25,7 +26,7 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
       return; 
     }
 
-    const targetLocationId = locationId || performedByUser.assignedLocation;
+    const targetLocationId = normalizeId(locationId || performedByUser.assignedLocation);
 
     // Filter by role and branch — admins only receive events for their accessible branches
     const query = {
@@ -33,7 +34,10 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
       $or: [
         ...(roleTarget.includes('super_admin') ? [{ role: 'super_admin' }] : []),
         ...(roleTarget.includes('admin') && targetLocationId ? [{ role: 'admin', accessibleLocations: targetLocationId }] : []),
-        ...(roleTarget.includes('branch_admin') ? [{ role: 'branch_admin', assignedLocation: targetLocationId }] : [])
+        ...(roleTarget.includes('branch_admin') && targetLocationId ? [{
+          role: 'branch_admin',
+          $or: [{ assignedLocation: targetLocationId }, { accessibleLocations: targetLocationId }]
+        }] : [])
       ]
     };
 

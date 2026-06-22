@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
@@ -51,7 +51,6 @@ export default function AdminOrdersDashboard() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const itemsPerPage = 24;
-
   const fetchData = useCallback(async ({ silent = false } = {}) => {
     const isInitial = !didInitRef.current;
     if (!silent) {
@@ -89,12 +88,6 @@ export default function AdminOrdersDashboard() {
       }
     }
   }, [branchFilter, statusFilter, dateRange, currentPage]);
-
-  useEffect(() => {
-    if (user?.role === 'branch_admin' && user?.assignedLocation) {
-      setBranchFilter(user.assignedLocation._id || user.assignedLocation);
-    }
-  }, [user]);
 
   useEffect(() => {
     fetchData();
@@ -166,7 +159,7 @@ export default function AdminOrdersDashboard() {
   };
 
   const resetFilters = () => {
-    setBranchFilter(user?.role === 'branch_admin' ? (user.assignedLocation?._id || user.assignedLocation) : 'all');
+    setBranchFilter('all');
     setStatusFilter('');
     setDateRange({ start: '', end: '' });
     setSearchTerm('');

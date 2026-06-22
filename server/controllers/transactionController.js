@@ -3,7 +3,7 @@ const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
-const { enforceLocationAccess, escapeRegex, clampLimit } = require('../utils/accessControl');
+const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, scopedLocationId, userLocationIds } = require('../utils/accessControl');
 
 // @desc    Get all transactions (unified ledger with search, filters, pagination, RBAC)
 // @route   GET /api/transactions
@@ -23,26 +23,8 @@ const getTransactions = asyncHandler(async (req, res) => {
   }
 
   // STRICT RBAC
-  if (req.user.role === 'super_admin') {
-    if (locationId && locationId !== 'all') {
-      query.locationId = locationId;
-    }
-  } else if (req.user.role === 'admin') {
-    if (locationId && locationId !== 'all') {
-      const isAccessible = req.user.accessibleLocations?.some(
-        loc => loc.toString() === locationId
-      );
-      if (!isAccessible) {
-        return res.status(403).json({ success: false, message: 'Permission denied to this location' });
-      }
-      query.locationId = locationId;
-    } else {
-      query.locationId = { $in: req.user.accessibleLocations || [] };
-    }
-  } else {
-    // Branch Admin, Chef, Staff
-    query.locationId = req.user.assignedLocation;
-  }
+  const branchScope = scopedLocationId(req, locationId);
+  if (branchScope) query.locationId = branchScope;
 
   // Scope by user role and myExpenses flag
   if (req.user.role === 'staff' || req.user.role === 'chef') {
@@ -161,8 +143,10 @@ const createTransaction = asyncHandler(async (req, res) => {
   }
 
   let targetLocation = locationId;
-  if (['branch_admin', 'staff', 'chef'].includes(req.user.role)) {
+  if (['staff', 'chef'].includes(req.user.role)) {
     targetLocation = req.user.assignedLocation;
+  } else if (req.user.role === 'branch_admin') {
+    targetLocation = locationId || req.user.assignedLocation;
   }
 
   if (!targetLocation) {
@@ -201,7 +185,7 @@ const createTransaction = asyncHandler(async (req, res) => {
       $or: [
         { role: 'super_admin' },
         { role: 'admin', accessibleLocations: targetLocation },
-        { role: 'branch_admin', assignedLocation: targetLocation }
+        { role: 'branch_admin', $or: [{ assignedLocation: targetLocation }, { accessibleLocations: targetLocation }] }
       ]
     });
 
@@ -238,13 +222,13 @@ const approveTransaction = asyncHandler(async (req, res) => {
 
   // IDOR Mitigation: Branch/Location Admin can only approve transactions for their own branch
   const transactionLocationId = transaction.locationId?._id || transaction.locationId;
-  if (['branch_admin', 'location_admin'].includes(req.user.role) && transactionLocationId?.toString() !== req.user.assignedLocation?.toString()) {
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to approve transactions for another branch');
   }
 
   // Admin: Only if they have permission for this location
-  if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
+  if (req.user.role === 'admin' && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to approve transactions for this branch');
   }
@@ -265,7 +249,7 @@ const approveTransaction = asyncHandler(async (req, res) => {
     $or: [
       { role: 'super_admin' },
       { role: 'admin', accessibleLocations: approvalLocationId },
-      { role: 'branch_admin', assignedLocation: approvalLocationId }
+        { role: 'branch_admin', $or: [{ assignedLocation: approvalLocationId }, { accessibleLocations: approvalLocationId }] }
     ]
   });
 
@@ -299,13 +283,13 @@ const rejectTransaction = asyncHandler(async (req, res) => {
 
   // IDOR Mitigation: Branch/Location Admin can only reject transactions for their own branch
   const transactionLocationId = transaction.locationId?._id || transaction.locationId;
-  if (['branch_admin', 'location_admin'].includes(req.user.role) && transactionLocationId?.toString() !== req.user.assignedLocation?.toString()) {
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to reject transactions for another branch');
   }
 
   // Admin: Only if they have permission for this location
-  if (req.user.role === 'admin' && !req.user.accessibleLocations?.some(loc => loc.toString() === transaction.locationId?.toString())) {
+  if (req.user.role === 'admin' && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to reject transactions for this branch');
   }
@@ -325,7 +309,7 @@ const rejectTransaction = asyncHandler(async (req, res) => {
     $or: [
       { role: 'super_admin' },
       { role: 'admin', accessibleLocations: rejectionLocationId },
-      { role: 'branch_admin', assignedLocation: rejectionLocationId }
+        { role: 'branch_admin', $or: [{ assignedLocation: rejectionLocationId }, { accessibleLocations: rejectionLocationId }] }
     ]
   });
 
@@ -361,10 +345,18 @@ const getTransactionStats = asyncHandler(async (req, res) => {
   
   // RBAC Enforcement
   if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
-    if (!req.user.assignedLocation) {
+    const ids = req.user.role === 'branch_admin'
+      ? userLocationIds(req.user)
+      : userLocationIds(req.user).slice(0, 1);
+    if (ids.length === 0) {
       return res.status(400).json({ success: false, message: 'User has no assigned location' });
     }
-    query.locationId = new mongoose.Types.ObjectId(req.user.assignedLocation.toString());
+    if (locationId && locationId !== 'all') {
+      if (!canAccessLocation(req.user, locationId)) return res.status(403).json({ success: false, message: 'Permission denied' });
+      query.locationId = new mongoose.Types.ObjectId(locationId);
+    } else {
+      query.locationId = { $in: ids.map(id => new mongoose.Types.ObjectId(id)) };
+    }
   } else if (req.user.role === 'admin') {
     const allowed = (req.user.accessibleLocations || []).map(id => id.toString());
     if (locationId && locationId !== 'all') {

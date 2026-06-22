@@ -21,6 +21,20 @@ export const AuthProvider = ({ children }) => {
   const socketRef = useRef(null);
   const router = useRouter();
 
+  const getUserBranchIds = (userData) => {
+    if (!userData) return [];
+    const ids = [];
+    if (userData.assignedLocation) ids.push(userData.assignedLocation._id || userData.assignedLocation);
+    if (Array.isArray(userData.accessibleLocations)) {
+      userData.accessibleLocations.forEach((loc) => ids.push(loc._id || loc));
+    }
+    return [...new Set(ids.filter(Boolean))];
+  };
+
+  const usesAllAssignedBranches = (userData) => (
+    userData?.role === 'branch_admin' && getUserBranchIds(userData).length > 1
+  );
+
   const fetchLocations = async () => {
     try {
       const res = await api.get('/locations');
@@ -46,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     const newSocket = io(socketUrl, { withCredentials: true });
     newSocket.on('connect', () => {
       const activeLocation = locationOverride || selectedLocation;
-      const branchId = activeLocation?._id || activeLocation || userData.assignedLocation?._id || userData.assignedLocation;
+      const branchId = activeLocation?._id || activeLocation || (usesAllAssignedBranches(userData) ? 'all' : (userData.assignedLocation?._id || userData.assignedLocation));
       newSocket.emit('join_session', { branchId });
     });
     socketRef.current = newSocket;
@@ -87,7 +101,7 @@ export const AuthProvider = ({ children }) => {
           } catch (e) {
             logger.error('Invalid stored location');
           }
-        } else if (['admin', 'super_admin'].includes(userData.role)) {
+        } else if (['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)) {
           initialLocation = null;
           setSelectedLocation(null);
         } else if (userData.assignedLocation) {
@@ -180,7 +194,7 @@ export const AuthProvider = ({ children }) => {
       // Do NOT store full user object in readable cookie (XSS risk).
       // In-memory state + server httpOnly JWT cookie is sufficient.
 
-      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)
         ? null
         : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
@@ -241,7 +255,7 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data.data;
       setUser(userData);
 
-      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)
         ? null
         : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {
@@ -275,7 +289,7 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data.data;
       setUser(userData);
 
-      const initialLoc = ['admin', 'super_admin'].includes(userData.role)
+      const initialLoc = ['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)
         ? null
         : userData.assignedLocation || (userData.accessibleLocations?.length > 0 ? userData.accessibleLocations[0] : null);
       if (initialLoc) {

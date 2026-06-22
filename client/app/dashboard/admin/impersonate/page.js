@@ -40,9 +40,13 @@ export default function ImpersonatePage() {
         filtered = allUsers.filter(u => u.role !== 'super_admin' && u._id !== user?._id);
       } else if (user?.role === 'branch_admin') {
         // Branch Admin can only impersonate staff and chefs of their branch
+        const branchIds = [
+          user.assignedLocation?._id || user.assignedLocation,
+          ...(user.accessibleLocations || []).map((loc) => loc._id || loc)
+        ].filter(Boolean).map((id) => id.toString());
         filtered = allUsers.filter(u => 
           ['staff', 'chef'].includes(u.role) && 
-          u.assignedLocation?._id === (user.assignedLocation?._id || user.assignedLocation)
+          branchIds.includes((u.assignedLocation?._id || u.assignedLocation)?.toString())
         );
       }
 

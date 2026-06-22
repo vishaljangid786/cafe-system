@@ -35,7 +35,8 @@ export default function LocationStaffPage() {
   const [expandedBranchs, setExpandedBranchs] = useState({});
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', age: '', gender: 'Male',
-    address1: '', city: '', state: '', pincode: '', monthlySalary: ''
+    address1: '', city: '', state: '', pincode: '', monthlySalary: '',
+    accessibleLocations: []
   });
   const [locations, setLocations] = useState([]);
   const [locationFilter, setLocationFilter] = useState('');
@@ -150,12 +151,18 @@ export default function LocationStaffPage() {
     try {
       // In a real scenario, we might want to generate a temporary password 
       // or send an invite. For now, we'll use a default password 'Staff@123'
+      const selectedBranchIds = formData.role === 'branch_admin'
+        ? (formData.accessibleLocations?.length ? formData.accessibleLocations : (formData.assignedLocation ? [formData.assignedLocation] : []))
+        : [];
       const data = {
         ...formData,
         password: 'Staff@123',
         confirmPassword: 'Staff@123',
         role: formData.role || 'staff',
-        assignedLocation: formData.assignedLocation || locationFilter || ''
+        assignedLocation: formData.role === 'branch_admin'
+          ? (selectedBranchIds[0] || locationFilter || '')
+          : (formData.assignedLocation || locationFilter || ''),
+        accessibleLocations: formData.role === 'branch_admin' ? selectedBranchIds : []
       };
 
       await api.post('/auth/register', data);
@@ -166,7 +173,7 @@ export default function LocationStaffPage() {
       setFormData({
         name: '', email: '', phone: '', age: '', gender: 'Male',
         address1: '', city: '', state: '', country: 'India', pincode: '', monthlySalary: '',
-        role: 'staff', assignedLocation: '', aadharNumber: '', highestQualification: '12th Pass'
+        role: 'staff', assignedLocation: '', accessibleLocations: [], aadharNumber: '', highestQualification: '12th Pass'
       });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not add staff. Please try again.', { id: loadToast });
@@ -206,6 +213,15 @@ export default function LocationStaffPage() {
 
   // No longer needed client-side, using backend filtered data
   const staffToDisplay = staff;
+
+  const getMemberBranchIds = (member) => {
+    const ids = [];
+    if (member?.assignedLocation) ids.push(member.assignedLocation._id || member.assignedLocation);
+    if (Array.isArray(member?.accessibleLocations)) {
+      member.accessibleLocations.forEach((loc) => ids.push(loc._id || loc));
+    }
+    return [...new Set(ids.filter(Boolean).map((id) => id.toString()))];
+  };
 
   const toggleBranch = (nodeId) => {
     setExpandedBranchs(prev => ({
@@ -249,7 +265,7 @@ export default function LocationStaffPage() {
                     <MapPin size={10} /> {member.assignedLocation.city} - {member.assignedLocation.name}
                   </span>
                 )}
-                {member.role === 'admin' && member.accessibleLocations?.length > 0 && (
+                {['admin', 'branch_admin'].includes(member.role) && member.accessibleLocations?.length > 0 && (
                   <span className="text-[9px] font-bold text-[var(--color-primary)] flex items-center gap-1">
                     <Layers size={10} /> {member.accessibleLocations.length} Branches Linked
                   </span>
@@ -327,10 +343,7 @@ export default function LocationStaffPage() {
         const locId = (loc._id || loc).toString();
         const locName = loc.name || 'Unknown Branch';
 
-        const branchAdminsInLoc = branchAdmins.filter(ba => {
-          const baLocId = (ba.assignedLocation?._id || ba.assignedLocation)?.toString();
-          return baLocId === locId;
-        });
+        const branchAdminsInLoc = branchAdmins.filter(ba => getMemberBranchIds(ba).includes(locId));
 
         const staffInLoc = operationalStaff.filter(s => {
           const sLocId = (s.assignedLocation?._id || s.assignedLocation)?.toString();
@@ -372,10 +385,10 @@ export default function LocationStaffPage() {
       ));
 
       const independentBranches = branchAdmins.filter(ba => !linkedBranchAdminIds.has(ba._id)).map(ba => {
-        const baLocId = (ba.assignedLocation?._id || ba.assignedLocation)?.toString();
+        const baLocIds = getMemberBranchIds(ba);
         const staffChildren = operationalStaff.filter(s => {
           const sLocId = (s.assignedLocation?._id || s.assignedLocation)?.toString();
-          return sLocId === baLocId;
+          return baLocIds.includes(sLocId);
         });
         return { ...ba, children: staffChildren };
       });
@@ -397,13 +410,13 @@ export default function LocationStaffPage() {
     } else if (currentUser?.role === 'admin') {
       roots = getAdminChildren(currentUser);
     } else if (currentUser?.role === 'branch_admin') {
-      const myLocId = (currentUser.assignedLocation?._id || currentUser.assignedLocation)?.toString();
+      const myLocIds = getMemberBranchIds(currentUser);
       const myLocName = currentUser.assignedLocation?.name?.toLowerCase().trim();
 
       roots = operationalStaff.filter(s => {
         const sLoc = s.assignedLocation;
         if (!sLoc) return false;
-        return (sLoc._id || sLoc).toString() === myLocId ||
+        return myLocIds.includes((sLoc._id || sLoc).toString()) ||
           sLoc.name?.toLowerCase().trim() === myLocName;
       });
     }
@@ -498,7 +511,7 @@ export default function LocationStaffPage() {
                       setFormData({
                         name: '', email: '', phone: '', age: '', gender: 'Male',
                         address1: '', city: '', state: '', country: 'India', pincode: '', monthlySalary: '',
-                        role: 'staff', assignedLocation: locationFilter || '', aadharNumber: '', highestQualification: '12th Pass'
+                        role: 'staff', assignedLocation: locationFilter || '', accessibleLocations: [], aadharNumber: '', highestQualification: '12th Pass'
                       });
                       setShowAddModal(true);
                     }}
@@ -679,7 +692,9 @@ export default function LocationStaffPage() {
                         <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
                           <MapPin size={14} className="text-[var(--color-primary)]" />
                           <span className="text-sm font-bold">
-                            {member.assignedLocation ? `${member.assignedLocation.city} - ${member.assignedLocation.name}` : 'Not Assigned'}
+                            {member.role === 'branch_admin' && getMemberBranchIds(member).length > 1
+                              ? `${getMemberBranchIds(member).length} Branches`
+                              : member.assignedLocation ? `${member.assignedLocation.city} - ${member.assignedLocation.name}` : 'Not Assigned'}
                           </span>
                         </div>
                       </td>
@@ -832,22 +847,40 @@ export default function LocationStaffPage() {
                 <PremiumSelect
                   label="Role"
                   value={formData.role || 'staff'}
-                  onChange={(val) => setFormData({ ...formData, role: val })}
+                  onChange={(val) => setFormData({ ...formData, role: val, assignedLocation: '', accessibleLocations: [] })}
                   options={[
                     { label: 'Staff Member', value: 'staff' },
                     { label: 'Kitchen Chef', value: 'chef' },
                     { label: 'Branch Admin', value: 'branch_admin' }
                   ]}
                 />
-                <PremiumSelect
-                  label="Assign Branch"
-                  value={formData.assignedLocation || ''}
-                  onChange={(val) => setFormData({ ...formData, assignedLocation: val })}
-                  options={locations.map(loc => ({
-                    label: `${loc.city} - ${loc.name}`,
-                    value: loc._id
-                  }))}
-                />
+                {formData.role === 'branch_admin' ? (
+                  <PremiumSelect
+                    label="Managed Branches"
+                    value={formData.accessibleLocations || []}
+                    onChange={(ids) => setFormData({
+                      ...formData,
+                      accessibleLocations: ids,
+                      assignedLocation: ids[0] || ''
+                    })}
+                    options={locations.map(loc => ({
+                      label: `${loc.city} - ${loc.name}`,
+                      value: loc._id
+                    }))}
+                    multiple
+                    placeholder="Select branches"
+                  />
+                ) : (
+                  <PremiumSelect
+                    label="Assign Branch"
+                    value={formData.assignedLocation || ''}
+                    onChange={(val) => setFormData({ ...formData, assignedLocation: val })}
+                    options={locations.map(loc => ({
+                      label: `${loc.city} - ${loc.name}`,
+                      value: loc._id
+                    }))}
+                  />
+                )}
               </div>
             )}
 

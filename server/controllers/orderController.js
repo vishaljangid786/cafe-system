@@ -23,9 +23,9 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount, couponId } = req.body;
-  const branch = ['staff', 'chef', 'branch_admin'].includes(req.user.role)
+  const branch = ['staff', 'chef'].includes(req.user.role)
     ? req.user.assignedLocation
-    : requestedBranch;
+    : (requestedBranch || (req.user.role === 'branch_admin' ? req.user.assignedLocation : null));
 
   if (!branch) {
     res.status(400);

@@ -3,7 +3,7 @@ const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
-const { enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
+const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
 
 // Helper to calculate total guests booked for a specific time range
 const getBookedGuests = async (locationId, date, startTime, endTime, excludeBookingId = null) => {
@@ -129,22 +129,13 @@ const getBookings = asyncHandler(async (req, res) => {
   const { locationId, date, status, search } = req.query;
   const query = {};
 
-  if (locationId) {
-    enforceLocationAccess(req, res, locationId, 'You do not have permission to view this location');
-    query.locationId = locationId;
-  }
+  const branchScope = scopedLocationId(req, locationId);
+  if (branchScope) query.locationId = branchScope;
   if (date) query.date = new Date(date);
   if (status) query.status = status;
   if (search) {
     const re = new RegExp(escapeRegex(search), 'i');
     query.$or = [{ guestName: re }, { guestEmail: re }, { guestPhone: re }];
-  }
-
-  // For branch admins, restrict to their assigned location
-  if (req.user.role === 'branch_admin') {
-    query.locationId = req.user.assignedLocation;
-  } else if (req.user.role === 'admin' && !locationId) {
-    query.locationId = { $in: req.user.accessibleLocations || [] };
   }
 
   // Pagination

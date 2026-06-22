@@ -33,17 +33,17 @@ const exportData = asyncHandler(async (req, res) => {
   const branchField = ['revenue', 'attendance'].includes(exportType) ? 'locationId' : exportType === 'staff' ? 'assignedLocation' : 'branch';
   let finalBranchId = null;
 
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
-    finalBranchId = req.user.assignedLocation;
-  } else if (locationIds) {
+  if (locationIds) {
     // Multi-branch subset export
     const multi = scopedLocationIds(req, locationIds);
     if (multi) finalBranchId = multi;
   } else if (branchId && branchId !== 'all') {
     enforceLocationAccess(req, res, branchId);
     finalBranchId = branchId;
-  } else if (req.user.role === 'admin') {
+  } else if (req.user.role === 'admin' || req.user.role === 'branch_admin') {
     finalBranchId = { $in: userLocationIds(req.user) };
+  } else if (req.user.role === 'staff' || req.user.role === 'chef') {
+    finalBranchId = req.user.assignedLocation;
   }
   
   if (finalBranchId) {
