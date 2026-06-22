@@ -31,6 +31,10 @@ const PERMISSION_LIST = [
   { key: 'manageNotifications', label: 'Manage Notifications' },
   { key: 'viewAnalytics', label: 'View Analytics' },
   { key: 'manageCoupons', label: 'Manage Coupons' },
+  // Page-access permissions (unlock normally role-locked pages)
+  { key: 'manageBranches', label: 'Open Branches Page' },
+  { key: 'viewAuditLogs', label: 'Open Security Logs' },
+  { key: 'impersonateUsers', label: 'Login As Users' },
 ];
 
 export default function UsersPage() {
@@ -39,7 +43,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    if (user && !['super_admin', 'admin'].includes(user.role)) {
+    if (user && !['super_admin', 'admin'].includes(user.role) && !user.permissions?.manageStaff) {
       toast.error('Access denied. Admin permission required.');
       router.push('/dashboard');
     }

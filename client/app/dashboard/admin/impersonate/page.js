@@ -60,7 +60,7 @@ export default function ImpersonatePage() {
   };
 
   useEffect(() => {
-    if (user && !['super_admin', 'admin', 'branch_admin'].includes(user.role) && !user?.impersonatedBy) {
+    if (user && !['super_admin', 'admin', 'branch_admin'].includes(user.role) && !user.permissions?.impersonateUsers && !user?.impersonatedBy) {
       toast.error('You do not have permission to log in as other users');
       router.push('/dashboard');
       return;

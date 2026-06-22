@@ -5,7 +5,7 @@ const {
   updateLocation,
   softDeleteLocation,
 } = require('../controllers/locationController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 const { locationSchema, updateLocationSchema, validate } = require('../middlewares/validateMiddleware');
 
 const router = express.Router();
@@ -25,10 +25,10 @@ router.get('/public', async (req, res) => {
 
 router.route('/')
   .get(verifyToken, getLocations)
-  .post(verifyToken, checkRoles('super_admin'), ...locationSchema, validate, createLocation);
+  .post(verifyToken, checkRoleOrPermission(['super_admin'], 'manageBranches'), ...locationSchema, validate, createLocation);
 
 router.route('/:id')
-  .patch(verifyToken, checkRoles('super_admin', 'admin'), ...updateLocationSchema, validate, updateLocation)
-  .delete(verifyToken, checkRoles('super_admin'), softDeleteLocation);
+  .patch(verifyToken, checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'), ...updateLocationSchema, validate, updateLocation)
+  .delete(verifyToken, checkRoleOrPermission(['super_admin'], 'manageBranches'), softDeleteLocation);
 
 module.exports = router;

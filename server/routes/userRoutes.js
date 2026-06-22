@@ -11,7 +11,7 @@ const {
   changePassword,
   updateUserPermissions
 } = require('../controllers/userController');
-const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
@@ -25,12 +25,12 @@ router.put('/change-password', changePassword);
 router.use(checkPermissions('manageStaff'));
 
 router.route('/')
-  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getUsers);
+  .get(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), getUsers);
 
 router.route('/:id')
-  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getUser)
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUser)
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteUser);
+  .get(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), getUser)
+  .put(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), updateUser)
+  .delete(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), deleteUser);
 
 router.route('/:id/permissions')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUserPermissions);
@@ -41,9 +41,9 @@ router.route('/:id/promote')
 router.route('/:id/demote')
   .patch(checkRoles('super_admin', 'admin'), demoteUser);
 
-router.patch('/:id/toggle-block', checkRoles('super_admin', 'admin'), toggleBlocklist);
+router.patch('/:id/toggle-block', checkRoleOrPermission(['super_admin', 'admin'], 'manageStaff'), toggleBlocklist);
 
 router.route('/:id/block')
-  .put(checkRoles('super_admin', 'admin'), toggleBlocklist);
+  .put(checkRoleOrPermission(['super_admin', 'admin'], 'manageStaff'), toggleBlocklist);
 
 module.exports = router;

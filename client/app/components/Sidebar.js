@@ -15,6 +15,20 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Pages that are normally role-locked but can be delegated to a user via a
+// permission. `defaultRoles` = roles that already see the page through their
+// normal menu; for everyone else we surface it under a "Granted Access" group.
+const GRANTABLE_PAGES = [
+  { name: 'Users', href: '/dashboard/admin/users', icon: Users, perm: 'manageStaff', defaultRoles: ['super_admin'] },
+  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity, perm: 'viewAuditLogs', defaultRoles: ['super_admin'] },
+  { name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert, perm: 'impersonateUsers', defaultRoles: ['super_admin'] },
+  { name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin, perm: 'manageBranches', defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
+];
+
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -174,6 +188,15 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         title: 'Rewards',
         items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }]
       });
+    }
+
+    // Granted Access: role-locked pages delegated to this user via a permission
+    // that their role wouldn't normally surface in the menu.
+    const grantedItems = GRANTABLE_PAGES
+      .filter(p => !isSuper && !p.defaultRoles.includes(role) && permissions[p.perm] === true)
+      .map(({ name, href, icon }) => ({ name, href, icon }));
+    if (grantedItems.length > 0) {
+      groupsList.push({ title: 'Granted Access', items: grantedItems });
     }
 
     // System Group

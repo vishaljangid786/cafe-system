@@ -82,6 +82,13 @@ const userSchema = new mongoose.Schema(
       manageNotifications: { type: Boolean, default: false },
       viewAnalytics: { type: Boolean, default: false },
       manageCoupons: { type: Boolean, default: false },
+      // Page-access permissions: let an admin/super-admin delegate normally
+      // role-locked pages (Users, Branches, Audit Logs, Impersonate) to any user.
+      // Analytics pages (Branch Compare, Payment, Command Center, Forecast) are
+      // unlocked by the existing viewAnalytics permission.
+      manageBranches: { type: Boolean, default: false },
+      viewAuditLogs: { type: Boolean, default: false },
+      impersonateUsers: { type: Boolean, default: false },
     },
     // Primary/default branch for Staff, Chef, Location Admin, and Branch Admin
     assignedLocation: {

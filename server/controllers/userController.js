@@ -66,6 +66,11 @@ const getUsers = asyncHandler(async (req, res) => {
     ];
   } else if (req.user.role === 'super_admin') {
     query.role = { $in: ['admin', 'branch_admin', 'staff', 'chef'] };
+  } else {
+    // Any other role (e.g. a staff/chef/location_admin granted manageStaff):
+    // restrict strictly to their own branch's staff & chefs — never global data.
+    query.assignedLocation = { $in: userLocationIds(req.user) };
+    query.role = { $in: ['staff', 'chef'] };
   }
 
   // Search functionality

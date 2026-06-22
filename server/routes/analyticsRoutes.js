@@ -27,28 +27,30 @@ router.use(checkPermissions('viewAnalytics'));
 router.route('/advanced')
   .get(checkRoles('admin', 'super_admin', 'branch_admin'), getAdvancedAnalytics);
 
+// Analytics pages are governed by the blanket viewAnalytics permission above,
+// so any user granted viewAnalytics (not just admins) can open them.
 router.route('/location-comparison')
-  .get(checkRoles('admin', 'super_admin'), getLocationComparison);
+  .get(getLocationComparison);
 
 router.route('/staff-reports')
   .get(checkRoles('branch_admin', 'admin', 'super_admin'), getStaffReports);
 
 router.route('/payment-intelligence')
-  .get(checkRoles('admin', 'super_admin'), getPaymentInfo);
+  .get(getPaymentInfo);
 
 router.route('/branch-comparison-suite')
-  .get(checkRoles('admin', 'super_admin'), getBranchComparisonSuite);
+  .get(getBranchComparisonSuite);
 
 router.route('/command-center')
-  .get(checkRoles('admin', 'super_admin'), getCommandCenterStats);
+  .get(getCommandCenterStats);
 
 router.route('/forecasting')
-  .get(checkRoles('admin', 'super_admin'), getForecastingAnalytics);
+  .get(getForecastingAnalytics);
 
 router.route('/location-intelligence/:id')
   .get(checkRoles('admin', 'super_admin'), getLocationInfo);
 
 router.route('/comparison-details')
-  .get(checkRoles('admin', 'super_admin'), getComparisonDetails);
+  .get(getComparisonDetails);
 
 module.exports = router;

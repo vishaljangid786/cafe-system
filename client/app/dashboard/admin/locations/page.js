@@ -19,7 +19,7 @@ export default function BranchesPage() {
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
-    if (user && !['super_admin', 'admin'].includes(user.role)) {
+    if (user && !['super_admin', 'admin'].includes(user.role) && !user.permissions?.manageBranches) {
       toast.error('Access denied. Admin permission required.');
       router.push('/dashboard');
     }

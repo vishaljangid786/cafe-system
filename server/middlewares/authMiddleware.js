@@ -97,4 +97,19 @@ const checkPermissions = (...permissions) => {
   };
 };
 
-module.exports = { verifyToken, checkRoles, checkPermissions };
+// Allow access if the user's role is in `roles`, OR they hold ALL of the given
+// permissions. super_admin always passes. This is what makes role-locked pages
+// (Users, Branches, Audit Logs, Impersonate, analytics) grantable to any user
+// via a permission, while keeping the original role access intact.
+const checkRoleOrPermission = (roles = [], ...permissions) => {
+  return (req, res, next) => {
+    if (req.user.role === 'super_admin') return next();
+    if (roles.includes(req.user.role)) return next();
+    const userPermissions = req.user.permissions || {};
+    if (permissions.length > 0 && permissions.every((p) => userPermissions[p])) return next();
+    res.status(403);
+    throw new Error('You do not have permission to open this area');
+  };
+};
+
+module.exports = { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission };

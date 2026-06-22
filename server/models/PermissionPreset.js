@@ -22,6 +22,9 @@ const permissionPresetSchema = new mongoose.Schema(
       manageNotifications: { type: Boolean, default: false },
       viewAnalytics: { type: Boolean, default: false },
       manageCoupons: { type: Boolean, default: false },
+      manageBranches: { type: Boolean, default: false },
+      viewAuditLogs: { type: Boolean, default: false },
+      impersonateUsers: { type: Boolean, default: false },
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

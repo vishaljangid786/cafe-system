@@ -240,6 +240,16 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     throw new Error('Target user not found');
   }
 
+  // Privilege-escalation guard: a delegated (non-super-admin) impersonator may
+  // only log in as users STRICTLY BELOW their own role — never a peer or higher.
+  // Without this, the impersonateUsers permission could be used to become an
+  // admin/super_admin by impersonating one.
+  const ROLE_RANK = { super_admin: 5, admin: 4, branch_admin: 3, location_admin: 2, staff: 1, chef: 1 };
+  if (req.user.role !== 'super_admin' && (ROLE_RANK[targetUser.role] || 0) >= (ROLE_RANK[req.user.role] || 0)) {
+    res.status(403);
+    throw new Error('You can only log in as users below your own role');
+  }
+
   const { viewOnly } = req.body;
 
   await AuditLog.create({

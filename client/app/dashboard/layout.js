@@ -30,6 +30,20 @@ const SHARED_PREFIXES = [
   '/dashboard/profile',
 ];
 
+// Pages that are normally role-locked but can be delegated to ANY user via a
+// permission. If the user holds the mapped permission, they may open the path
+// even if it falls outside their role's prefix.
+const PAGE_PERMISSIONS = [
+  { path: '/dashboard/admin/users', perm: 'manageStaff' },
+  { path: '/dashboard/admin/locations', perm: 'manageBranches' },
+  { path: '/dashboard/admin/audit-logs', perm: 'viewAuditLogs' },
+  { path: '/dashboard/admin/impersonate', perm: 'impersonateUsers' },
+  { path: '/dashboard/admin/location-comparison', perm: 'viewAnalytics' },
+  { path: '/dashboard/admin/payment-intelligence', perm: 'viewAnalytics' },
+  { path: '/dashboard/admin/command-center', perm: 'viewAnalytics' },
+  { path: '/dashboard/admin/forecasting', perm: 'viewAnalytics' },
+];
+
 export default function DashboardLayout({ children }) {
   const { user, loading, exitImpersonation } = useAuth();
   const router = useRouter();
@@ -67,7 +81,9 @@ export default function DashboardLayout({ children }) {
       const isShared = SHARED_PREFIXES.some(p => pathname.startsWith(p));
       if (allowed && !isShared) {
         const canAccess = allowed.some(p => pathname.startsWith(p));
-        if (!canAccess) {
+        const grantedPage = PAGE_PERMISSIONS.find(pp => pathname.startsWith(pp.path));
+        const hasPagePerm = !!grantedPage && user.permissions?.[grantedPage.perm] === true;
+        if (!canAccess && !hasPagePerm) {
           router.replace(allowed[0]);
         }
       }

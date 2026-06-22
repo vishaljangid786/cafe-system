@@ -4,6 +4,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const PERMISSION_KEYS = [
   'viewRevenue', 'editRevenue', 'viewOrders', 'manageOrders', 'forceComplete',
   'exportReports', 'manageStaff', 'manageNotifications', 'viewAnalytics', 'manageCoupons',
+  // Page-access permissions
+  'manageBranches', 'viewAuditLogs', 'impersonateUsers',
 ];
 
 // Keep only the known permission keys as strict booleans.

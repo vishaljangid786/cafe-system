@@ -1,6 +1,6 @@
 const express = require('express');
 const { registerUser, loginUser, getProfile, impersonateUser, exitImpersonation, logoutUser } = require('../controllers/authController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const { signupSchema, loginSchema, validate } = require('../middlewares/validateMiddleware');
 
@@ -28,7 +28,7 @@ router.post('/register', authLimiter, maybeVerifyToken, upload.fields([{ name: '
 router.post('/login', authLimiter, ...loginSchema, validate, loginUser);
 router.get('/profile', verifyToken, getProfile);
 
-router.post('/impersonate/:userId', verifyToken, checkRoles('super_admin'), impersonateUser);
+router.post('/impersonate/:userId', verifyToken, checkRoleOrPermission(['super_admin'], 'impersonateUsers'), impersonateUser);
 router.post('/exit-impersonation', verifyToken, exitImpersonation);
 router.get('/logout', logoutUser);
 
