@@ -10,14 +10,16 @@ const {
   getIngredients,
   getAllInventory
 } = require('../controllers/inventoryController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
-// Admin only routes
-router.get('/', checkRoles('admin', 'super_admin'), getAllInventory);
+// Reads are branch-scoped in the controller (scopedLocationId), so any manageOrders
+// holder / branch admin may view their own inventory — not just admins. Creating
+// ingredient definitions (catalog) stays admin-only.
+router.get('/', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getAllInventory);
 router.post('/ingredients', checkRoles('admin', 'super_admin'), createIngredient);
-router.get('/ingredients', checkRoles('admin', 'super_admin'), getIngredients);
+router.get('/ingredients', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getIngredients);
 
 // Shared/Branch Admin routes
 router.get('/branch/:branchId', checkRoles('admin', 'super_admin', 'branch_admin'), getBranchInventory);

@@ -295,6 +295,18 @@ const updateUser = asyncHandler(async (req, res) => {
     updateData.accessibleLocations = normalizeIdList(updateData.accessibleLocations);
   }
 
+  // A non-super admin may only (re)assign branches they themselves manage —
+  // otherwise a branch admin could move a staff member into a branch they don't own.
+  if (req.user.role !== 'super_admin') {
+    const targetBranches = [];
+    if (updateData.assignedLocation) targetBranches.push(updateData.assignedLocation);
+    if (Array.isArray(updateData.accessibleLocations)) targetBranches.push(...updateData.accessibleLocations);
+    if (targetBranches.some((loc) => !canAccessLocation(req.user, loc))) {
+      res.status(403);
+      throw new Error('You cannot assign a branch you do not manage');
+    }
+  }
+
   // The aadharNumber schema setter (encrypt) does NOT run on findByIdAndUpdate —
   // Mongoose skips setters on query updates — so encrypt it explicitly here to keep
   // the value encrypted at rest. The model getter/validator handle decryption.
