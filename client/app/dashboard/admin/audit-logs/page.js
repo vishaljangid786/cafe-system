@@ -135,25 +135,20 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Command Bar */}
-        <div className="flex flex-col md:flex-row gap-4 sticky-filter z-30">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={20} />
+        <div className="flex flex-col md:flex-row md:items-center gap-3 sticky-filter z-30">
+          <div className="relative flex-1 min-w-0 group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
             <input
               type="text"
               placeholder="Search activity..."
-              className="w-full pl-14 pr-6 py-5 bg-[var(--color-bg-soft)]  border border-[var(--color-border)] rounded-xl text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 transition-all outline-none"
+              className="w-full pl-12 pr-5 py-3.5 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 transition-all outline-none"
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
             />
           </div>
-          <div className="flex gap-4">
-            <ExportActions 
-              data={logs} 
-              columns={columns} 
-              filename={`AuditLogs_${new Date().toISOString().split('T')[0]}`} 
-            />
+          <div className="flex flex-wrap items-center gap-3">
             <PremiumSelect
-              className="min-w-[200px]"
+              className="min-w-[180px] flex-1 sm:flex-none"
               value={actionFilter}
               onChange={(val) => setActionFilter(val)}
               options={[
@@ -162,6 +157,11 @@ export default function AuditLogsPage() {
                 { label: 'Deletion', value: 'DELETE' },
                 { label: 'Login', value: 'LOGIN' }
               ]}
+            />
+            <ExportActions
+              data={logs}
+              columns={columns}
+              filename={`AuditLogs_${new Date().toISOString().split('T')[0]}`}
             />
           </div>
         </div>
