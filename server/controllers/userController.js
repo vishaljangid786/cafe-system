@@ -2,6 +2,7 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit } = require('../utils/accessControl');
+const { encrypt } = require('../utils/encryption');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -236,6 +237,13 @@ const updateUser = asyncHandler(async (req, res) => {
       updateData[field] = req.body[field];
     }
   });
+
+  // The aadharNumber schema setter (encrypt) does NOT run on findByIdAndUpdate —
+  // Mongoose skips setters on query updates — so encrypt it explicitly here to keep
+  // the value encrypted at rest. The model getter/validator handle decryption.
+  if (updateData.aadharNumber) {
+    updateData.aadharNumber = encrypt(updateData.aadharNumber);
+  }
 
   // Only Super Admin can change roles to 'admin' or 'super_admin'
   if (req.body.role) {

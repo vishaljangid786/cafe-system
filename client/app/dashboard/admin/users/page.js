@@ -3,10 +3,10 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
-import { 
+import {
   Users, UserPlus, Search,
   Shield, Mail, Phone, Edit, UserCheck,
-  UserX
+  UserX, Check
 } from 'lucide-react';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
@@ -18,6 +18,20 @@ import ConfirmDialog from '@/app/components/ui/ConfirmDialog';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+
+// All assignable staff permissions, with human-friendly labels.
+const PERMISSION_LIST = [
+  { key: 'viewRevenue', label: 'View Revenue' },
+  { key: 'editRevenue', label: 'Edit Revenue' },
+  { key: 'viewOrders', label: 'View Orders' },
+  { key: 'manageOrders', label: 'Manage Orders' },
+  { key: 'forceComplete', label: 'Force Complete Orders' },
+  { key: 'exportReports', label: 'Export Reports' },
+  { key: 'manageStaff', label: 'Manage Staff' },
+  { key: 'manageNotifications', label: 'Manage Notifications' },
+  { key: 'viewAnalytics', label: 'View Analytics' },
+  { key: 'manageCoupons', label: 'Manage Coupons' },
+];
 
 export default function UsersPage() {
   const router = useRouter();
@@ -48,6 +62,9 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [editPermissions, setEditPermissions] = useState({});
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [editingName, setEditingName] = useState('');
 
   const fetchUsers = async () => {
     const isInitial = !didInitRef.current;
@@ -116,19 +133,45 @@ export default function UsersPage() {
     }
   };
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
+  const togglePerm = (key) => {
+    setEditPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleEdit = async (u) => {
+    setEditingName(u.name);
+    setEditingUser(null);
+    setEditPermissions(u.permissions || {});
+    setLoadingEdit(true);
     setShowEditModal(true);
+    try {
+      // Fetch the full record so we get the DECRYPTED Aadhaar, salary, branch and permissions
+      // (the list uses .lean() which returns the encrypted Aadhaar value).
+      const res = await api.get(`/users/${u._id}`);
+      const full = res.data.data;
+      setEditingUser(full);
+      setEditPermissions(full.permissions || {});
+    } catch (err) {
+      toast.error('Could not load user details');
+      setShowEditModal(false);
+    } finally {
+      setLoadingEdit(false);
+    }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
-    
+    // Don't send empty optional fields (avoids ObjectId / Number cast errors on the backend).
+    if (data.assignedLocation === '') delete data.assignedLocation;
+    if (data.monthlySalary === '') delete data.monthlySalary;
+
     try {
       setSaving(true);
+      // 1) Core profile fields (name, role, branch, salary, Aadhaar, etc.)
       await api.put(`/users/${editingUser._id}`, data);
+      // 2) Permissions are saved through their dedicated endpoint.
+      await api.put(`/users/${editingUser._id}/permissions`, { permissions: editPermissions });
       toast.success('User updated successfully');
       setShowEditModal(false);
       setEditingUser(null);
@@ -456,10 +499,16 @@ export default function UsersPage() {
         <Modal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          title={`Edit User: ${editingUser?.name}`}
+          title={`Edit User: ${editingName}`}
+          maxWidth="max-w-3xl"
         >
-          {editingUser && (
-            <form onSubmit={handleUpdate} className="space-y-6">
+          {loadingEdit && (
+            <div className="py-16 flex items-center justify-center text-sm font-bold text-[var(--color-text-muted)]">
+              Loading user details…
+            </div>
+          )}
+          {!loadingEdit && editingUser && (
+            <form key={editingUser._id} onSubmit={handleUpdate} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Full Name</label>
@@ -508,6 +557,68 @@ export default function UsersPage() {
                     <input name="pincode" defaultValue={editingUser.pincode} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="6 Digits" maxLength="6" />
                   </div>
                 </div>
+              </div>
+
+              {/* Work, Branch & Identity */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-[var(--color-border)]">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Assigned Branch</label>
+                  <select name="assignedLocation" defaultValue={editingUser.assignedLocation?._id || editingUser.assignedLocation || ''} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
+                    <option value="">— No branch (Global) —</option>
+                    {locations.map((loc) => (
+                      <option key={loc._id} value={loc._id}>{loc.name} ({loc.city})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Monthly Salary (₹)</label>
+                  <input type="number" name="monthlySalary" defaultValue={editingUser.monthlySalary ?? 0} min="0" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Aadhaar Number</label>
+                  <input name="aadharNumber" defaultValue={editingUser.aadharNumber || ''} maxLength="12" placeholder="12-digit Aadhaar number (optional)" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                </div>
+              </div>
+
+              {/* Aadhaar Image */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Aadhaar Card Image</label>
+                {editingUser.aadharImage ? (
+                  <a href={editingUser.aadharImage} target="_blank" rel="noopener noreferrer" className="block w-fit">
+                    <img src={editingUser.aadharImage} alt="Aadhaar card" className="max-h-52 w-auto rounded-xl border border-[var(--color-border)] object-contain bg-[var(--color-bg-soft)]" />
+                    <span className="text-[10px] font-bold text-[var(--color-primary)] mt-1.5 inline-block">Open full image ↗</span>
+                  </a>
+                ) : (
+                  <div className="p-6 rounded-xl border border-dashed border-[var(--color-border)] text-center text-xs font-bold text-[var(--color-text-muted)]">
+                    No Aadhaar image uploaded
+                  </div>
+                )}
+              </div>
+
+              {/* Permissions */}
+              <div className="space-y-3 pt-6 border-t border-[var(--color-border)]">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Permissions</label>
+                  <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
+                    {Object.values(editPermissions).filter(Boolean).length} / {PERMISSION_LIST.length} enabled
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {PERMISSION_LIST.map((p) => (
+                    <button
+                      type="button"
+                      key={p.key}
+                      onClick={() => togglePerm(p.key)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border text-xs font-bold text-left transition-all ${editPermissions[p.key] ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)]/40 text-[var(--color-primary)]' : 'bg-[var(--color-surface-soft)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/30'}`}
+                    >
+                      {p.label}
+                      <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${editPermissions[p.key] ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white' : 'border-[var(--color-border)]'}`}>
+                        {editPermissions[p.key] && <Check size={12} />}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] font-bold text-[var(--color-text-muted)] ml-1">Note: a super-admin always has every permission, regardless of these toggles.</p>
               </div>
               <div className="flex justify-between items-center pt-6 border-t border-[var(--color-border)]">
                 <Button 
