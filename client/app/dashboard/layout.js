@@ -9,13 +9,18 @@ import CommandPalette from '../components/ui/CommandPalette';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import { useRouter, usePathname } from 'next/navigation';
 
+// Each role maps to the dashboard prefixes it is allowed to visit. The FIRST
+// entry is that role's default landing target (used when redirecting away from
+// a forbidden path). Only super_admin may enter /dashboard/super-admin; it also
+// keeps /dashboard/admin access because the Command Center links into those
+// admin sub-pages.
 const ROLE_PREFIX = {
-  super_admin: '/dashboard/admin',
-  admin: '/dashboard/admin',
-  branch_admin: '/dashboard/branch-admin',
-  chef: '/dashboard/chef',
-  staff: '/dashboard/staff',
-  location_admin: '/dashboard/branch-admin',
+  super_admin: ['/dashboard/super-admin', '/dashboard/admin'],
+  admin: ['/dashboard/admin'],
+  branch_admin: ['/dashboard/branch-admin'],
+  chef: ['/dashboard/chef'],
+  staff: ['/dashboard/staff'],
+  location_admin: ['/dashboard/branch-admin'],
 };
 
 const SHARED_PREFIXES = [
@@ -60,8 +65,11 @@ export default function DashboardLayout({ children }) {
     if (!loading && user) {
       const allowed = ROLE_PREFIX[user.role];
       const isShared = SHARED_PREFIXES.some(p => pathname.startsWith(p));
-      if (allowed && !pathname.startsWith(allowed) && !isShared) {
-        router.replace(allowed);
+      if (allowed && !isShared) {
+        const canAccess = allowed.some(p => pathname.startsWith(p));
+        if (!canAccess) {
+          router.replace(allowed[0]);
+        }
       }
     }
   }, [loading, user, router, pathname]);
