@@ -12,14 +12,68 @@ A full-stack senior-inspector pass is running across all 14 feature areas (auth,
 
 ### Pass 3 findings
 
-**Manual deep-inspection so far** (the code is testing well-hardened after passes 1–2):
-- ✅ **Notifications:** mark-read / mark-unread are user-scoped (`recipients.user`) — no IDOR. Fixed an **unclamped pagination `limit`** in `getNotifications` (was an unbounded query). _(LOW — fixed)_
-- ✅ **File uploads** (`uploadMiddleware`): 5 MB size cap + image/PDF type filter — OK.
-- ✅ **Pagination:** every list endpoint clamps its limit (`clampLimit`); notifications was the only gap (now fixed).
-- ✅ **Mutation routes:** all POST/PUT/PATCH/DELETE endpoints are role/permission-gated — no unprotected mutations.
-- ✅ **Frontend `api.js`:** 401 → redirect to `/login` (session expiry handled), no redirect loop on the login page.
+The 14-area inspector surfaced **55 findings** (mostly business-logic / financial / data-integrity bugs that the security-focused passes 1–2 didn't target). Verification is in progress; a few may turn out to be false positives. **7 fixed already**, the rest are open below by severity.
 
-**Systematic 14-area inspector workflow** is still running; any additional confirmed findings will be appended here by severity and then fixed.
+**✅ Fixed so far (pass 3):** removed the production "Quick Login" panel (hardcoded creds + one-click Super-Admin sign-in); hid menu `costPrice` from staff/chef and required branch ownership to edit a menu item; `updateUserPermissions` validates+merges (partial body can't wipe perms); `finalizeOrder` claims the order atomically (no duplicate REVENUE on concurrent /complete); impersonation re-checks the impersonator each request; clamped `getNotifications` pagination.
+
+**🔴 Open findings (being verified & fixed):**
+**CRITICAL**
+- Export leaks ALL branches' data to a location_admin (missing role in branch-scoping) — `exportController.js:40-51`
+
+**HIGH**
+- Global 401 interceptor bounces logged-out visitors off /signup, breaking public onboarding / first-run super-admin setup — `api.js:18-23`
+- updateItems mutates BranchStock outside any transaction and with no input validation — `orderService.js:331-412`
+- Reservation advance/full payment booked into the ledger as a NEGATIVE expense, corrupting revenue & P&L — `transactionService.js:79-93; reservationController.js:194-208`
+- Staff/admin can self-approve arbitrary reservation income into the ledger (bypasses expense approval) — `reservationController.js:194-209`
+- Table 'complete' wipes the table while live kitchen orders stay active → lost revenue + orphaned orders — `tableController.js:297-322`
+- Reservation income booked into the ledger as an EXPENSE, corrupting revenue/profit — `transactionService.js:84-91`
+- expenseId silently dropped by createTransaction, so expense→ledger sync duplicates instead of updating — `transactionService.js:9-93`
+- Revenue pages display approved EXPENSE rows as positive revenue (type filter case mismatch) — `admin/revenue/page.js:105; branch-admin/revenue/page.js:54`
+- Absent days deducted twice in payroll netSalary (double penalty) — `salaryController.js:294-304`
+- Super-admin payroll approval skips stages and is re-runnable (no idempotency) — `salaryController.js:348-351`
+- comparison-details endpoint crashes (ReferenceError: getDateMatchCriteria is not defined) — `analyticsController.js:290`
+- Recipe ingredient deduction drives BranchInventory.stock negative on order completion — `inventoryService.js:31-34`
+- "Record Waste" broken: expiry/damage reasons rejected by model enum — `admin/inventory/page.js:584-585`
+- updateInventory persists stock = NaN for non-numeric quantity — `inventoryController.js:36-48`
+
+**MEDIUM**
+- Editing a user's name 403s + partial save when their existing permissions exceed the editor's grantable set — `users/page.js:207-216`
+- uploadBill finalizes (bills + deducts inventory for) orders that were never prepared — `tableController.js:227-240`
+- Reservation overlap checks have no startTime<endTime validation; inverted ranges bypass conflict detection — `reservationController.js:20-22,116-191`
+- Public createBooking lets anyone exhaust a location's capacity (no auth/rate-limit) — `bookingRoutes.js:15; bookingController.js:61-95`
+- Expense submit UI posts to /transactions, bypassing the mandatory receipt/proof image — `{admin,branch-admin,location-admin,staff}/expenses/page.js`
+- GET /api/expenses has no permission/role gate — staff/chef can read branch financials — `expenseRoutes.js:10-11`
+- Manual EXPENSE via /transactions co-exists with the Expense/sync ledger → double counting — `transactionController.js:137-187`
+- Attendance status enum not enforced (findOneAndUpdate without runValidators) — `attendanceController.js:61-71`
+- Admin can view salaries of peer/superior admins via role query override — `salaryController.js:118-127`
+- Revenue export includes EXPENSE rows + pending/rejected txns, mislabeled as revenue — `exportController.js:91-102`
+- Revenue/orders export filters by createdAt while analytics use the business `date` field — `exportController.js:53-68`
+- Branch Comparison 'FY' period hard-coded to FY2025-26 (stale) — `analyticsController.js:738-742`
+- manageOrders staff can list inventory but 403 when a branch is selected (route gate mismatch) — `inventoryRoutes.js:25`
+- createIngredient mass-assigns req.body with no validation — `inventoryController.js:147`
+
+**LOW**
+- Signup password rule mismatch: frontend accepts 6 chars, backend rejects under 10 — `signup/page.js:24`
+- Login uses a unique 429 for locked accounts, enabling account enumeration — `authController.js:278-281`
+- getPresets returns every permission preset globally (no scoping) — `permissionPresetController.js:36-39`
+- getUsers exposes monthlySalary/aadharImage/permission matrix to any manageStaff holder — `userController.js:156-165`
+- demoteUser no-op on staff/chef but emits a misleading 'demoted' notification — `userController.js:264-283`
+- generate-bill not idempotent + never sets isBilled (repeat billing / history spam) — `orderController.js:266-314`
+- Order item quantity has no upper bound on create — `orderValidator.js:17-21`
+- getOrders status filter not validated against the enum — `orderController.js:59-62`
+- Stock update bypasses min:0 validator → negative/NaN stock — `menuItemController.js:480-500`
+- Recipe read endpoint has no access control / branch scoping — `recipeController.js:8-20`
+- deleteCategory soft-deletes only; items keep a dead category ref — `categoryController.js:107-122`
+- bookTable/updateOrders accept numberOfPeople with no capacity/sign validation — `tableController.js:117-159`
+- rejectTransaction lacks the creator self-action block that approveTransaction has — `transactionController.js:290-317`
+- Month param never format-validated; malformed month → NaN day count — `salaryController.js:10-13`
+- Monthly summary counts attendance for all roles but staff for headcount/salary — `attendanceController.js:189-247`
+- getAllSalary limit param unbounded (no clampLimit) — `salaryController.js:146-147`
+- comparison-details attendance window ignores endDate / different baseline than sales — `analyticsController.js:322-330`
+- getPurchaseSuggestions dereferences item.ingredient.name without null guard — `inventoryController.js:135`
+- updateInventory can't set costPerUnit/minThreshold to 0 (falsy bug) — `inventoryController.js:45-46`
+
+> Sanity-check note: also verified clean — notification mark-read/unread (user-scoped, no IDOR), file uploads (5 MB + type filter), all list endpoints clamp their limit except those noted, all mutation routes role/permission-gated, `api.js` 401 handling.
 
 ---
 
