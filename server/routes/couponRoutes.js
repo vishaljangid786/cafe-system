@@ -13,15 +13,18 @@ const { couponSchema, validate } = require('../middlewares/validateMiddleware');
 
 router.use(verifyToken);
 
+// Permission-driven: granting manageCoupons unlocks coupon management for any
+// role (super_admin bypasses; admin holds it by default). Previously checkRoles
+// hard-blocked branch_admin/staff even when granted the permission.
 router.route('/')
-  .get(checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('manageCoupons'), getCoupons)
-  .post(checkRoles('super_admin', 'admin'), checkPermissions('manageCoupons'), ...couponSchema, validate, createCoupon);
+  .get(checkPermissions('manageCoupons'), getCoupons)
+  .post(checkPermissions('manageCoupons'), ...couponSchema, validate, createCoupon);
 
 router.post('/apply', applyCoupon);
 
 router.route('/:id')
   .get(checkPermissions('manageCoupons'), getCoupon)
-  .put(checkRoles('super_admin', 'admin'), checkPermissions('manageCoupons'), ...couponSchema, validate, updateCoupon)
-  .delete(checkRoles('super_admin', 'admin'), checkPermissions('manageCoupons'), deleteCoupon);
+  .put(checkPermissions('manageCoupons'), ...couponSchema, validate, updateCoupon)
+  .delete(checkPermissions('manageCoupons'), deleteCoupon);
 
 module.exports = router;

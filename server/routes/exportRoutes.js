@@ -6,10 +6,12 @@ const { exportData } = require('../controllers/exportController');
 // @desc    Export Advanced Data
 // @route   GET /api/export
 router.get(
-  '/', 
-  verifyToken, 
-  checkRoles('admin', 'super_admin', 'branch_admin'),
-  checkPermissions('exportReports'), 
+  '/',
+  verifyToken,
+  // Permission-driven: super_admin bypasses; admin/branch/location admin hold
+  // exportReports by default; a granted staff/chef passes too. (checkRoles ran
+  // BEFORE this and 403'd granted lower roles.)
+  checkPermissions('exportReports'),
   exportData
 );
 

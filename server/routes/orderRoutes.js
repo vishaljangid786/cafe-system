@@ -55,7 +55,7 @@ router.patch('/:id/start', checkPermissions('manageOrders'), validateOrderTransi
 router.patch('/:id/ready', checkPermissions('manageOrders'), validateOrderTransition, markReady);
 router.patch('/:id/serve', checkPermissions('manageOrders'), validateOrderTransition, markServed);
 router.patch('/:id/complete', checkPermissions('manageOrders'), validateOrderTransition, completeOrder);
-router.patch('/:id/force-complete', checkRoles('super_admin', 'admin'), checkPermissions('forceComplete'), validateOrderTransition, forceCompleteOrder);
+router.patch('/:id/force-complete', checkPermissions('forceComplete'), validateOrderTransition, forceCompleteOrder);
 router.post('/:id/generate-bill', checkPermissions('manageOrders'), generateOrderBill);
 
 module.exports = router;
