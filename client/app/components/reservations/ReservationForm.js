@@ -201,10 +201,10 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         {/* Step 1: Event Details */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
               <Info size={16} />
             </div>
-            <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Event Information</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Event Information</h4>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -226,19 +226,19 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
             </div>
 
             <div className="lg:col-span-7 space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Event Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Event Name</label>
               <div className="relative">
                 <input
                   required
                   type="text"
                   placeholder={selectedEventType === 'Other' ? "Type a custom event name..." : "Pick a category, or choose 'Other' to type your own"}
                   disabled={selectedEventType !== 'Other' && selectedEventType !== ''}
-                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none transition-all text-[var(--color-text-primary)] font-bold placeholder:text-[var(--color-text-muted)] disabled:opacity-60"
+                  className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none transition-all text-(--color-text-primary) font-bold placeholder:text-(--color-text-muted) disabled:opacity-60"
                   value={formData.eventName}
                   onChange={e => setFormData({ ...formData, eventName: e.target.value })}
                 />
                 {selectedEventType === 'Other' && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal bg-[var(--color-primary)]/10 px-3 py-1 rounded-full border border-[var(--color-primary)]/20">Custom</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary uppercase tracking-normal bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Custom</span>
                 )}
               </div>
             </div>
@@ -248,28 +248,28 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         {/* Step 2: Booking Details */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-[var(--color-secondary)]/10 flex items-center justify-center text-[var(--color-secondary)]">
+            <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
               <MapPin size={16} />
             </div>
-            <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Booking Type & Branch</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Booking Type & Branch</h4>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Booking Type</label>
-                <div className="flex bg-[var(--color-bg-soft)] p-1.5 rounded-xl border border-[var(--color-border)]">
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Booking Type</label>
+                <div className="flex bg-(--color-bg-soft) p-1.5 rounded-xl border border-(--color-border)">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, reservationType: 'table' })}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${formData.reservationType === 'table' ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg ' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${formData.reservationType === 'table' ? 'bg-primary text-(--color-on-primary) shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                   >
                     Table
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, reservationType: 'full-location' })}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${formData.reservationType === 'full-location' ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg ' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${formData.reservationType === 'full-location' ? 'bg-primary text-(--color-on-primary) shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                   >
                     Full Branch
                   </button>
@@ -288,42 +288,42 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Date</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Date</label>
                 <div className="relative">
                   <input
                     required
                     type="date"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
                   />
-                  <Calendar className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+                  <Calendar className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Start Time</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Start Time</label>
                 <div className="relative">
                   <input
                     required
                     type="time"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.startTime}
                     onChange={e => setFormData({ ...formData, startTime: e.target.value })}
                   />
-                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">End Time</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">End Time</label>
                 <div className="relative">
                   <input
                     required
                     type="time"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.endTime}
                     onChange={e => setFormData({ ...formData, endTime: e.target.value })}
                   />
-                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+                  <Clock className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
                 </div>
               </div>
             </div>
@@ -341,19 +341,19 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
             >
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-[var(--color-text-muted)]/10 flex items-center justify-center text-[var(--color-text-muted)]">
+                  <div className="h-8 w-8 rounded-lg bg-(--color-text-muted)/10 flex items-center justify-center text-(--color-text-muted)">
                     <LayoutGrid size={16} />
                   </div>
-                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Select Tables</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Select Tables</h4>
                 </div>
                 {formData.tableIds.length > 0 && (
-                  <span className="text-[10px] font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-4 py-1.5 rounded-full uppercase tracking-normal">
+                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full uppercase tracking-normal">
                     {formData.tableIds.length} Tables Selected
                   </span>
                 )}
               </div>
 
-              <div className="p-6 bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl">
+              <div className="p-6 bg-(--color-bg-soft) border border-(--color-border) rounded-xl">
                 {tables.length === 0 ? (
                   <div className="py-10 text-center opacity-50 italic">No tables found for this branch.</div>
                 ) : (
@@ -366,15 +366,15 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                           type="button"
                           onClick={() => handleTableToggle(table._id)}
                           className={`relative group h-24 rounded-[1.5rem] border-2 flex flex-col items-center justify-center gap-1 transition-all duration-300 ${isSelected
-                              ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-on-primary)] shadow-sm  -translate-y-1'
-                              : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5'
+                              ? 'bg-primary border-primary text-(--color-on-primary) shadow-sm  -translate-y-1'
+                              : 'bg-(--color-surface) border-(--color-border) text-(--color-text-muted) hover:border-primary/50 hover:bg-primary/5'
                             }`}
                         >
-                          <Users size={16} className={isSelected ? 'text-[var(--color-on-primary)]' : 'text-[var(--color-text-muted)]'} />
-                          <span className={`text-base font-bold leading-none ${isSelected ? 'text-[var(--color-on-primary)]' : ''}`}>T{table.tableNumber}</span>
-                          <span className={`text-[9px] font-bold uppercase tracking-tight ${isSelected ? 'text-[var(--color-on-primary)]/60' : 'text-[var(--color-text-muted)]'}`}>{table.seats || 2} SEATS</span>
+                          <Users size={16} className={isSelected ? 'text-(--color-on-primary)' : 'text-(--color-text-muted)'} />
+                          <span className={`text-base font-bold leading-none ${isSelected ? 'text-(--color-on-primary)' : ''}`}>T{table.tableNumber}</span>
+                          <span className={`text-[9px] font-bold uppercase tracking-tight ${isSelected ? 'text-(--color-on-primary)/60' : 'text-(--color-text-muted)'}`}>{table.seats || 2} SEATS</span>
                           {isSelected && (
-                            <div className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-black rounded-full flex items-center justify-center text-[var(--color-primary)] shadow-lg ring-4 ring-[var(--color-primary)]">
+                            <div className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-black rounded-full flex items-center justify-center text-primary shadow-lg ring-4 ring-primary">
                               <CheckCircle2 size={12} strokeWidth={3} />
                             </div>
                           )}
@@ -395,17 +395,17 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`p-6 rounded-xl border-2 flex items-center gap-5 ${checkingAvailability ? 'bg-[var(--color-bg-soft)] border-[var(--color-border)] text-[var(--color-text-muted)]' :
-                  availabilityStatus?.available ? 'bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]' :
-                    'bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20 text-[var(--color-danger)]'
+              className={`p-6 rounded-xl border-2 flex items-center gap-5 ${checkingAvailability ? 'bg-(--color-bg-soft) border-(--color-border) text-(--color-text-muted)' :
+                  availabilityStatus?.available ? 'bg-success/10 border-success/20 text-success' :
+                    'bg-danger/10 border-danger/20 text-danger'
                 }`}
             >
-              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${checkingAvailability ? 'bg-[var(--color-border)]' :
-                  availabilityStatus?.available ? 'bg-[var(--color-success)]/20' :
-                    'bg-[var(--color-danger)]/20'
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${checkingAvailability ? 'bg-(--color-border)' :
+                  availabilityStatus?.available ? 'bg-success/20' :
+                    'bg-danger/20'
                 }`}>
                 {checkingAvailability ? (
-                  <Loader2 className="animate-spin text-[var(--color-text-muted)]" size={24} />
+                  <Loader2 className="animate-spin text-(--color-text-muted)" size={24} />
                 ) : availabilityStatus?.available ? (
                   <CheckCircle2 size={24} />
                 ) : (
@@ -423,36 +423,36 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         </AnimatePresence>
 
         {/* Step 3: Customer & Payment */}
-        <section className="pt-10 border-t border-[var(--color-border)] grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <section className="pt-10 border-t border-(--color-border) grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <Users className="text-[var(--color-primary)]" size={20} />
-              <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Customer Details</h4>
+              <Users className="text-primary" size={20} />
+              <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Customer Details</h4>
             </div>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Customer Full Name</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Customer Full Name</label>
                 <input
                   required
                   type="text"
-                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                  className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                   value={formData.customerName}
                   onChange={e => setFormData({ ...formData, customerName: e.target.value })}
                   placeholder="e.g. John Wick"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Phone Number</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Phone Number</label>
                 <div className="relative">
                   <input
                     required
                     type="tel"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.customerPhone}
                     onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
                     placeholder="+91 XXXXX XXXXX"
                   />
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
                 </div>
               </div>
             </div>
@@ -460,29 +460,29 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <CreditCard className="text-[var(--color-primary)]" size={20} />
-              <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Payment Details</h4>
+              <CreditCard className="text-primary" size={20} />
+              <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Payment Details</h4>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Total Amount</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Total Amount</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-bold">₹</span>
                   <input
                     type="number"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.totalAmount}
                     onChange={e => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Advance Payment</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Advance Payment</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-bold">₹</span>
                   <input
                     type="number"
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none text-[var(--color-text-primary)] font-bold"
+                    className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                     value={formData.advancePayment}
                     onChange={e => setFormData({ ...formData, advancePayment: Number(e.target.value) })}
                   />
@@ -503,18 +503,18 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         </section>
 
         {/* Footer Actions - Fixed-style with backdrop blur */}
-        <div className="pt-8 flex items-center justify-end gap-6 border-t border-[var(--color-border)]">
+        <div className="pt-8 flex items-center justify-end gap-6 border-t border-(--color-border)">
           <button
             type="button"
             onClick={onClose}
-            className="px-8 py-4 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
+            className="px-8 py-4 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
           >
             Cancel
           </button>
           <button
             disabled={loading || (availabilityStatus && !availabilityStatus.available)}
             type="submit"
-            className="px-10 py-5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-on-primary)] font-bold rounded-xl transition-all shadow-sm  flex items-center gap-3 uppercase tracking-normal text-xs"
+            className="px-10 py-5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-(--color-on-primary) font-bold rounded-xl transition-all shadow-sm  flex items-center gap-3 uppercase tracking-normal text-xs"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} strokeWidth={3} />}
             {editData ? 'Update Reservation' : 'Book Reservation'}

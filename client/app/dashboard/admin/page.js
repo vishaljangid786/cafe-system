@@ -162,28 +162,28 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-10 pb-20">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[95]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-95">
         <div className="space-y-2">
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
-            <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-full">
-              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse " />
-              <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-primary)]/80">Online</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse " />
+              <span className="text-[9px] font-bold uppercase tracking-normal text-primary/80">Online</span>
             </div>
-            <div className="h-px w-8 bg-[var(--color-border)]" />
-            <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
+            <div className="h-px w-8 bg-(--color-border)" />
+            <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
               {selectedLocationIds.length > 1 ? `Showing ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'Showing All Branches' : 'Showing Branch'}
             </span>
           </motion.div>
 
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[var(--color-text-primary)] flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-(--color-text-primary) flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
             {selectedLocationIds.length > 1 ? 'Multi-Branch' : filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
-            <span className="text-[var(--color-primary)] not-italic">Overview</span>
+            <span className="text-primary not-italic">Overview</span>
           </h1>
-          <p className="text-sm text-[var(--color-text-muted)] font-medium max-w-lg leading-relaxed border-l-2 border-[var(--color-primary)]/30 pl-4">
+          <p className="text-sm text-(--color-text-muted) font-medium max-w-lg leading-relaxed border-l-2 border-primary/30 pl-4">
             Real-time data for {selectedLocationIds.length > 1 ? `${selectedLocationIds.length} selected branches` : filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
           </p>
         </div>
@@ -212,12 +212,12 @@ export default function AdminDashboard() {
             className="w-full sm:w-[220px]"
           />
 
-          <div className="flex items-center gap-2 sm:gap-3 bg-[var(--color-surface)]/40 p-1.5 rounded-xl border border-[var(--color-border)] shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
+          <div className="flex items-center gap-2 sm:gap-3 bg-(--color-surface)/40 p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
             {['today', '7d', '30d', 'all', 'custom'].map(t => (
               <button
                 key={t}
                 onClick={() => setTimeFilter(t)}
-                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-[var(--color-primary)] text-[var(--color-bg-base)] shadow-lg ' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]'}`}
+                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface)'}`}
               >
                 {t}
               </button>
@@ -230,15 +230,15 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-[var(--color-border)] rounded-xl premium-shadow"
+          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-(--color-border) rounded-xl premium-shadow"
         >
           <div className="flex-1">
-            <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">Start Date</label>
-            <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+            <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
+            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2 ml-1">End Date</label>
-            <input type="date" className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl p-3 text-xs font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+            <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
+            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
           </div>
         </motion.div>
       )}
@@ -293,10 +293,10 @@ export default function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 !p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+        <Card className="lg:col-span-2 !p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <CardTitle className="text-xl">Sales Report</CardTitle>
-            <TrendingUp size={20} className="text-[var(--color-primary)]" />
+            <TrendingUp size={20} className="text-primary" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -331,13 +331,13 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Orders Timeline */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] export-chart premium-shadow" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) export-chart premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-10">
             <div className="space-y-1">
               <CardTitle className="text-xl">Daily Orders</CardTitle>
               <CardDescription>Total orders per day.</CardDescription>
             </div>
-            <div className="p-3 bg-[var(--color-primary)]/10 rounded-xl text-[var(--color-primary)]">
+            <div className="p-3 bg-primary/10 rounded-xl text-primary">
               <Layers size={20} />
             </div>
           </div>
@@ -366,13 +366,13 @@ export default function AdminDashboard() {
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Expenditures */}
-        <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
+        <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Expenses</CardTitle>
               <CardDescription>Latest expenses from all branches.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
+            <div className="h-10 w-10 rounded-xl bg-danger/10 flex items-center justify-center text-danger">
               <TrendingDown size={20} />
             </div>
           </div>
@@ -384,44 +384,44 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-danger)]/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border) hover:border-danger/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm transition-transform">
-                      <Receipt size={18} className="text-[var(--color-danger)]" />
+                    <div className="h-10 w-10 rounded-xl bg-(--color-surface) flex items-center justify-center shadow-sm transition-transform">
+                      <Receipt size={18} className="text-danger" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-[var(--color-text-primary)]">{exp.title}</h5>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{exp.locationId?.name || 'Main Office'}</p>
+                      <h5 className="text-sm font-bold text-(--color-text-primary)">{exp.title}</h5>
+                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{exp.locationId?.name || 'Main Office'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-[var(--color-danger)]">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(exp.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-bold text-danger">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
+                    <div className="text-[10px] font-bold text-(--color-text-muted) uppercase">{new Date(exp.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-[var(--color-text-muted)] font-medium italic text-sm">No recent expenses found.</div>
+              <div className="text-center py-10 text-(--color-text-muted) font-medium italic text-sm">No recent expenses found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/expenses`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
           >
             View All Expenses
           </Button>
         </Card>
 
         {/* Recent Revenues */}
-        <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
+        <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Sales</CardTitle>
               <CardDescription>Latest completed orders.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
+            <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center text-success">
               <TrendingUp size={20} />
             </div>
           </div>
@@ -433,33 +433,33 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-success)]/30 transition-all group"
+                  className="flex items-center justify-between p-4 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border) hover:border-success/30 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center shadow-sm transition-transform">
-                      <ShoppingBag size={18} className="text-[var(--color-success)]" />
+                    <div className="h-10 w-10 rounded-xl bg-(--color-surface) flex items-center justify-center shadow-sm transition-transform">
+                      <ShoppingBag size={18} className="text-success" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-[var(--color-text-primary)] truncate w-32 sm:w-auto">
+                      <h5 className="text-sm font-bold text-(--color-text-primary) truncate w-32 sm:w-auto">
                         Order #{rev._id.substring(rev._id.length - 6).toUpperCase()}
                       </h5>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
+                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-[var(--color-success)]">+₹{rev.totalAmount.toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">{new Date(rev.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-bold text-success">+₹{rev.totalAmount.toLocaleString()}</div>
+                    <div className="text-[10px] font-bold text-(--color-text-muted) uppercase">{new Date(rev.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-[var(--color-text-muted)] font-medium italic text-sm">No recent sales found.</div>
+              <div className="text-center py-10 text-(--color-text-muted) font-medium italic text-sm">No recent sales found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/revenue`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
           >
             View All Sales
           </Button>
@@ -469,13 +469,13 @@ export default function AdminDashboard() {
       {/* Advanced Intelligence Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Smart Forecasting Chart */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Sales Forecast</CardTitle>
               <CardDescription>Predicted sales based on past records.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] animate-pulse">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary animate-pulse">
               <Zap size={20} />
             </div>
           </div>
@@ -492,23 +492,23 @@ export default function AdminDashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-6 p-4 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 rounded-xl flex items-center justify-between">
+          <div className="mt-6 p-4 bg-primary/5 border border-primary/10 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Clock className="text-[var(--color-primary)]" size={18} />
-              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Expected Today:</span>
+              <Clock className="text-primary" size={18} />
+              <span className="text-xs font-bold text-(--color-text-muted) uppercase tracking-normal">Expected Today:</span>
             </div>
-            <span className="text-lg font-bold text-[var(--color-primary)]">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
+            <span className="text-lg font-bold text-primary">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
           </div>
         </Card>
 
         {/* Attendance Trend */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Staff Attendance</CardTitle>
               <CardDescription>Daily present and absent trends.</CardDescription>
             </div>
-            <Activity size={20} className="text-[var(--color-secondary)]" />
+            <Activity size={20} className="text-secondary" />
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -528,7 +528,7 @@ export default function AdminDashboard() {
       {/* Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Category Sales Distribution */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
           <CardTitle className="text-lg mb-6">Sales by Category</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -552,7 +552,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Payment Methods */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
           <CardTitle className="text-lg mb-6">Payment Methods</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -578,39 +578,39 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="p-2 bg-[var(--color-primary)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-[var(--color-primary)]">UPI</p>
+            <div className="p-2 bg-primary/5 rounded-xl text-center">
+              <p className="text-[8px] font-bold uppercase text-primary">UPI</p>
               <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.upiCount}</p>
             </div>
-            <div className="p-2 bg-[var(--color-secondary)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-[var(--color-secondary)]">Cash</p>
+            <div className="p-2 bg-secondary/5 rounded-xl text-center">
+              <p className="text-[8px] font-bold uppercase text-secondary">Cash</p>
               <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.cashCount}</p>
             </div>
-            <div className="p-2 bg-[var(--color-amber)]/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-[var(--color-amber)]">Other</p>
+            <div className="p-2 bg-(--color-amber)/5 rounded-xl text-center">
+              <p className="text-[8px] font-bold uppercase text-(--color-amber)">Other</p>
               <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
             </div>
           </div>
         </Card>
 
         {/* Staff Performance Leaderboard */}
-        <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow lg:col-span-1" hover={false}>
+        <Card className="!p-8 glass-card border-(--color-border) premium-shadow lg:col-span-1" hover={false}>
           <div className="flex items-center justify-between mb-6">
             <CardTitle className="text-lg">Staff Leaderboard</CardTitle>
-            <Target size={18} className="text-[var(--color-amber)]" />
+            <Target size={18} className="text-(--color-amber)" />
           </div>
           <div className="space-y-3">
             {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-[var(--color-surface-soft)]/50 rounded-xl border border-[var(--color-border)]">
+              <div key={i} className="flex items-center justify-between p-3 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
                 <div className="flex items-center gap-3">
-                  <div className="h-7 w-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[10px] font-bold text-[var(--color-primary)]">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
                     {i + 1}
                   </div>
                   <span className="text-xs font-bold truncate w-24">{staff.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-[var(--color-success)]">₹{staff.revenue.toLocaleString()}</p>
-                  <p className="text-[8px] font-bold text-[var(--color-text-muted)]">{staff.totalOrders} Orders</p>
+                  <p className="text-[10px] font-bold text-success">₹{staff.revenue.toLocaleString()}</p>
+                  <p className="text-[8px] font-bold text-(--color-text-muted)">{staff.totalOrders} Orders</p>
                 </div>
               </div>
             ))}
@@ -621,20 +621,20 @@ export default function AdminDashboard() {
       {/* Staff & Payroll Section */}
       {(user?.role === 'admin' || user?.role === 'super_admin') && analytics?.staffStats && (
         <SlideIn delay={0.4}>
-          <Card className="!p-8 bg-[var(--color-surface)]/20 border-[var(--color-border)]" hover={false}>
+          <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-[var(--color-secondary)]/10 rounded-xl text-[var(--color-secondary)]">
+                  <div className="p-2.5 bg-secondary/10 rounded-xl text-secondary">
                     <Users size={24} />
                   </div>
                   <CardTitle className="text-2xl">Staff & Payroll</CardTitle>
                 </div>
                 <CardDescription>Breakdown of branch staff, chefs and monthly salary obligations.</CardDescription>
               </div>
-              <div className="px-6 py-3 bg-[var(--color-secondary)]/5 border border-[var(--color-secondary)]/10 rounded-xl">
-                <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-secondary)] mb-1">Monthly Payroll Total</p>
-                <p className="text-3xl font-bold text-[var(--color-secondary)] tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
+              <div className="px-6 py-3 bg-secondary/5 border border-secondary/10 rounded-xl">
+                <p className="text-[10px] font-bold uppercase tracking-normal text-secondary mb-1">Monthly Payroll Total</p>
+                <p className="text-3xl font-bold text-secondary tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
               </div>
             </div>
 
@@ -644,17 +644,17 @@ export default function AdminDashboard() {
                 { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, color: 'orange' },
                 { label: 'Branch Admins', count: analytics?.staffStats?.adminCount || 0, icon: User, color: 'indigo' }
               ].map((item, i) => (
-                <div key={i} className="p-6 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] flex items-center justify-between group hover:border-[var(--color-primary)]/20 transition-all">
+                <div key={i} className="p-6 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) flex items-center justify-between group hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] transition-transform">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform">
                       <item.icon size={22} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{item.label}</p>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{item.count}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{item.label}</p>
+                      <p className="text-2xl font-bold text-(--color-text-primary)">{item.count}</p>
                     </div>
                   </div>
-                  <ChevronDown className="text-[var(--color-text-muted)] opacity-30 -rotate-90" size={18} />
+                  <ChevronDown className="text-(--color-text-muted) opacity-30 -rotate-90" size={18} />
                 </div>
               ))}
             </div>

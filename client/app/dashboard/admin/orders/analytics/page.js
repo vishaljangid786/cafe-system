@@ -150,25 +150,25 @@ export default function OrderAnalyticsDashboard() {
             backgroundSize: "40px 40px",
           }}
         />
-        <div className="fixed inset-0 pointer-events-none z-[-1] bg-gradient-to-b from-transparent via-[var(--color-bg-base)]/50 to-[var(--color-bg-base)]" />
+        <div className="fixed inset-0 pointer-events-none z-[-1] bg-gradient-to-b from-transparent via-(--color-bg-base)/50 to-(--color-bg-base)" />
 
         {/* Futuristic Command Header */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
           <div className="flex items-center gap-6">
-            <div className="h-20 w-20 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white shadow-sm  relative overflow-hidden group">
+            <div className="h-20 w-20 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm  relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <TrendingUp size={36} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none mb-2">
-                Order <span className="text-[var(--color-primary)]">Analytics</span>
+              <h1 className="text-4xl font-bold tracking-tight text-(--color-text-primary) leading-none mb-2">
+                Order <span className="text-primary">Analytics</span>
               </h1>
               <div className="flex items-center gap-3">
-                <div className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-success)]/20 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
+                <div className="px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-full border border-success/20 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                   Live Data
                 </div>
-                <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
+                <div className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">
                   {user?.role === "branch_admin"
                     ? userBranchIds.length > 1 ? "Showing assigned branches" : "Showing your branch"
                     : "Showing all branches"}
@@ -179,7 +179,7 @@ export default function OrderAnalyticsDashboard() {
 
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <p className="text-[9px] font-bold uppercase text-[var(--color-text-muted)] mr-2">
+              <p className="text-[9px] font-bold uppercase text-(--color-text-muted) mr-2">
                 Export Data:
               </p>
               <ExportActions
@@ -196,7 +196,7 @@ export default function OrderAnalyticsDashboard() {
             </div>
             <button
               onClick={fetchAnalytics}
-              className="p-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all"
+              className="p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-muted) hover:text-primary transition-all"
             >
               <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
             </button>
@@ -205,13 +205,13 @@ export default function OrderAnalyticsDashboard() {
 
         {/* Modular Command Console (Filters) */}
         <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-primary)]/20 to-[var(--color-primary)]/20 hidden opacity-10 -z-10 rounded-xl" />
-          <div className="bg-[var(--color-surface)] p-2 rounded-xl border border-[var(--color-border)] shadow-sm space-y-2">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/20 hidden opacity-10 -z-10 rounded-xl" />
+          <div className="bg-(--color-surface) p-2 rounded-xl border border-(--color-border) shadow-sm space-y-2">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
               {/* Branch Selector */}
-              <div className="lg:col-span-4 bg-[var(--color-surface-soft)] rounded-xl p-1.5 border border-[var(--color-border)] relative">
+              <div className="lg:col-span-4 bg-(--color-surface-soft) rounded-xl p-1.5 border border-(--color-border) relative">
                 {user?.role === "branch_admin" && locations.length <= 1 ? (
-                  <div className="h-12 w-full flex items-center px-8 text-[var(--color-primary)] gap-3">
+                  <div className="h-12 w-full flex items-center px-8 text-primary gap-3">
                     <Building size={16} />
                     <span className="text-[10px] font-bold uppercase tracking-normal">
                       {locations.find((l) => l._id === branchFilter)?.name ||
@@ -225,15 +225,15 @@ export default function OrderAnalyticsDashboard() {
                       onClick={() =>
                         setIsBranchDropdownOpen(!isBranchDropdownOpen)
                       }
-                      className="w-full h-12 flex items-center justify-between px-8 text-[var(--color-text-primary)] hover:text-[var(--color-primary)] transition-colors"
+                      className="w-full h-12 flex items-center justify-between px-8 text-(--color-text-primary) hover:text-primary transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <Globe
                           size={16}
                           className={
                             branchFilter === "all"
-                              ? "text-[var(--color-primary)]"
-                              : "text-[var(--color-primary)]"
+                              ? "text-primary"
+                              : "text-primary"
                           }
                         />
                         <span className="text-[10px] font-bold uppercase tracking-normal">
@@ -255,7 +255,7 @@ export default function OrderAnalyticsDashboard() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute top-full left-0 right-0 mt-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm z-[100] p-3 overflow-hidden"
+                          className="absolute top-full left-0 right-0 mt-4 bg-(--color-surface) rounded-xl border border-(--color-border) shadow-sm z-100 p-3 overflow-hidden"
                         >
                           <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
                             {(user?.role !== "branch_admin" || locations.length > 1) && (
@@ -265,11 +265,11 @@ export default function OrderAnalyticsDashboard() {
                                     setBranchFilter("all");
                                     setIsBranchDropdownOpen(false);
                                   }}
-                                  className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === "all" ? "bg-[var(--color-primary)] text-white" : "hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]"}`}
+                                  className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === "all" ? "bg-primary text-white" : "hover:bg-(--color-surface-soft) text-(--color-text-muted)"}`}
                                 >
                                   <Globe size={14} /> {user?.role === "branch_admin" ? "All Assigned Branches" : "All Branches"}
                                 </button>
-                                <div className="h-px bg-[var(--color-border)] my-2" />
+                                <div className="h-px bg-(--color-border) my-2" />
                               </>
                             )}
                             {locations.map((loc) => (
@@ -279,7 +279,7 @@ export default function OrderAnalyticsDashboard() {
                                   setBranchFilter(loc._id);
                                   setIsBranchDropdownOpen(false);
                                 }}
-                                className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === loc._id ? "bg-[var(--color-primary)] text-white" : "hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]"}`}
+                                className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === loc._id ? "bg-primary text-white" : "hover:bg-(--color-surface-soft) text-(--color-text-muted)"}`}
                               >
                                 <Building size={14} /> {loc.name}
                               </button>
@@ -307,7 +307,7 @@ export default function OrderAnalyticsDashboard() {
               <div className="lg:col-span-2">
                 <button
                   onClick={resetFilters}
-                  className="w-full h-full min-h-[60px] bg-[var(--color-surface-soft)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/30 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] font-bold text-[10px] uppercase tracking-normal transition-all flex items-center justify-center gap-3 group"
+                  className="w-full h-full min-h-[60px] bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-bold text-[10px] uppercase tracking-normal transition-all flex items-center justify-center gap-3 group"
                 >
                   <FilterX
                     size={18}
@@ -376,20 +376,20 @@ export default function OrderAnalyticsDashboard() {
         {/* High-Fidelity Data Visualization */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* Main Distribution Chart */}
-          <div className="xl:col-span-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm relative overflow-hidden group">
+          <div className="xl:col-span-8 bg-(--color-surface) rounded-xl border border-(--color-border) p-10 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
               <LineIcon size={200} />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3">
-                  <Activity size={18} className="text-[var(--color-primary)]" /> Orders by Hour
+                <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
+                  <Activity size={18} className="text-primary" /> Orders by Hour
                 </h3>
-                <p className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 uppercase tracking-tight">
+                <p className="text-[10px] font-bold text-(--color-text-muted) mt-1 uppercase tracking-tight">
                   How many orders come in each hour
                 </p>
               </div>
-              <div className="px-4 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[9px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20">
+              <div className="px-4 py-1 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-full border border-primary/20">
                 Busiest Hour:{" "}
                 {Math.max(
                   ...(data?.charts?.ordersPerHour?.map((d) => d.count) || [0]),
@@ -453,9 +453,9 @@ export default function OrderAnalyticsDashboard() {
           </div>
 
           {/* Status Breakdown Pie */}
-          <div className="xl:col-span-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm flex flex-col relative overflow-hidden group">
-            <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
-              <PieIcon size={18} className="text-[var(--color-primary)]" /> Orders by Status
+          <div className="xl:col-span-4 bg-(--color-surface) rounded-xl border border-(--color-border) p-10 shadow-sm flex flex-col relative overflow-hidden group">
+            <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-10 flex items-center gap-3">
+              <PieIcon size={18} className="text-primary" /> Orders by Status
             </h3>
             <div className="flex-1 min-h-[300px] w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
@@ -496,10 +496,10 @@ export default function OrderAnalyticsDashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
+                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">
                   Total
                 </p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
+                <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight">
                   {data?.metrics?.totalOrders}
                 </p>
               </div>
@@ -508,7 +508,7 @@ export default function OrderAnalyticsDashboard() {
               {data?.charts?.ordersByStatus.map((s, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-3 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]"
+                  className="flex items-center gap-3 p-3 bg-(--color-surface-soft) rounded-xl border border-(--color-border)"
                 >
                   <div
                     className="h-2 w-2 rounded-full shrink-0"
@@ -525,7 +525,7 @@ export default function OrderAnalyticsDashboard() {
                   <span className="text-[9px] font-bold uppercase tracking-tight truncate flex-1">
                     {s.name}
                   </span>
-                  <span className="text-[10px] font-bold text-[var(--color-primary)]">
+                  <span className="text-[10px] font-bold text-primary">
                     {s.value}
                   </span>
                 </div>
@@ -537,14 +537,14 @@ export default function OrderAnalyticsDashboard() {
           <div className="xl:col-span-12 space-y-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-primary)] flex items-center gap-3 mb-4">
-                  <div className="h-1 w-8 bg-[var(--color-primary)] rounded-full" />
+                <h3 className="text-xs font-bold uppercase tracking-normal text-primary flex items-center gap-3 mb-4">
+                  <div className="h-1 w-8 bg-primary rounded-full" />
                   Branches
                 </h3>
-                <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
-                  Branch <span className="text-[var(--color-primary)]">Breakdown</span>
+                <h2 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                  Branch <span className="text-primary">Breakdown</span>
                 </h2>
-                <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2 max-w-xl">
+                <p className="text-sm font-bold text-(--color-text-muted) mt-2 max-w-xl">
                   See how each branch is performing.
                 </p>
               </div>
@@ -559,18 +559,18 @@ export default function OrderAnalyticsDashboard() {
                   onClick={() => setBranchFilter("all")}
                   className={`group relative p-8 rounded-xl border overflow-hidden cursor-pointer transition-all duration-500 ${
                     branchFilter === "all"
-                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm "
-                      : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-primary)]/40 shadow-sm"
+                      ? "bg-primary text-white border-primary shadow-sm "
+                      : "bg-(--color-surface) border-(--color-border) hover:border-primary/40 shadow-sm"
                   }`}
                 >
                   <div
-                    className={`absolute -bottom-10 -right-10 w-40 h-40 rounded-full hidden transition-opacity duration-700 ${branchFilter === "all" ? "bg-white/20 opacity-100" : "bg-[var(--color-primary)]/5 opacity-0 group-hover:opacity-100"}`}
+                    className={`absolute -bottom-10 -right-10 w-40 h-40 rounded-full hidden transition-opacity duration-700 ${branchFilter === "all" ? "bg-white/20 opacity-100" : "bg-primary/5 opacity-0 group-hover:opacity-100"}`}
                   />
 
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-center justify-between mb-8">
                       <div
-                        className={`h-14 w-14 rounded-xl flex items-center justify-center transition-all duration-500 ${branchFilter === "all" ? "bg-[var(--color-surface)] text-[var(--color-primary)]" : "bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"}`}
+                        className={`h-14 w-14 rounded-xl flex items-center justify-center transition-all duration-500 ${branchFilter === "all" ? "bg-(--color-surface) text-primary" : "bg-(--color-surface-soft) text-(--color-text-primary)"}`}
                       >
                         <Globe size={24} strokeWidth={2.5} />
                       </div>
@@ -584,7 +584,7 @@ export default function OrderAnalyticsDashboard() {
                       All Branches
                     </h4>
                     <p
-                      className={`text-[10px] font-bold uppercase tracking-normal ${branchFilter === "all" ? "opacity-80" : "text-[var(--color-text-muted)]"}`}
+                      className={`text-[10px] font-bold uppercase tracking-normal ${branchFilter === "all" ? "opacity-80" : "text-(--color-text-muted)"}`}
                     >
                       Combined totals
                     </p>
@@ -599,7 +599,7 @@ export default function OrderAnalyticsDashboard() {
                         </p>
                       </div>
                       <div
-                        className={`h-10 w-10 rounded-xl flex items-center justify-center border ${branchFilter === "all" ? "border-[var(--color-border)] bg-white/10" : "border-[var(--color-border)] bg-[var(--color-surface-soft)]"}`}
+                        className={`h-10 w-10 rounded-xl flex items-center justify-center border ${branchFilter === "all" ? "border-(--color-border) bg-white/10" : "border-(--color-border) bg-(--color-surface-soft)"}`}
                       >
                         <ArrowRight size={18} />
                       </div>
@@ -624,18 +624,18 @@ export default function OrderAnalyticsDashboard() {
                     onClick={() => setBranchFilter(branch.id)}
                     className={`group relative p-8 rounded-xl border overflow-hidden cursor-pointer transition-all duration-500 ${
                       branchFilter === branch.id
-                        ? "bg-[var(--color-text-primary)] text-[var(--color-bg-base)] border-[var(--color-text-primary)] shadow-sm"
-                        : "bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-primary)]/40 shadow-sm"
+                        ? "bg-(--color-text-primary) text-(--color-bg-base) border-(--color-text-primary) shadow-sm"
+                        : "bg-(--color-surface) border-(--color-border) hover:border-primary/40 shadow-sm"
                     }`}
                   >
                     <div
-                      className={`absolute -bottom-10 -right-10 w-40 h-40 rounded-full hidden transition-opacity duration-700 ${branchFilter === branch.id ? "bg-[var(--color-primary)]/10 opacity-100" : "bg-[var(--color-primary)]/5 opacity-0 group-hover:opacity-100"}`}
+                      className={`absolute -bottom-10 -right-10 w-40 h-40 rounded-full hidden transition-opacity duration-700 ${branchFilter === branch.id ? "bg-primary/10 opacity-100" : "bg-primary/5 opacity-0 group-hover:opacity-100"}`}
                     />
 
                     <div className="relative z-10 flex flex-col h-full">
                       <div className="flex items-center justify-between mb-8">
                         <div
-                          className={`h-14 w-14 rounded-xl flex items-center justify-center transition-all duration-500 ${branchFilter === branch.id ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"}`}
+                          className={`h-14 w-14 rounded-xl flex items-center justify-center transition-all duration-500 ${branchFilter === branch.id ? "bg-primary text-white" : "bg-(--color-surface-soft) text-(--color-text-primary)"}`}
                         >
                           <Building size={24} strokeWidth={2.5} />
                         </div>
@@ -646,7 +646,7 @@ export default function OrderAnalyticsDashboard() {
                               locations.find((l) => l._id === branch.id),
                             );
                           }}
-                          className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${branchFilter === branch.id ? "bg-white/10 text-white hover:bg-white/20" : "bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"}`}
+                          className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${branchFilter === branch.id ? "bg-white/10 text-white hover:bg-white/20" : "bg-(--color-surface-soft) text-(--color-text-muted) hover:text-primary"}`}
                         >
                           <Zap size={16} />
                         </button>
@@ -656,7 +656,7 @@ export default function OrderAnalyticsDashboard() {
                         {branch.name}
                       </h4>
                       <p
-                        className={`text-[10px] font-bold uppercase tracking-normal ${branchFilter === branch.id ? "opacity-80" : "text-[var(--color-text-muted)]"}`}
+                        className={`text-[10px] font-bold uppercase tracking-normal ${branchFilter === branch.id ? "opacity-80" : "text-(--color-text-muted)"}`}
                       >
                         {branch.city} Area
                       </p>
@@ -674,7 +674,7 @@ export default function OrderAnalyticsDashboard() {
                           <p className="text-[9px] font-bold uppercase tracking-normal opacity-60 mb-1">
                             Avg Prep
                           </p>
-                          <p className="text-xl font-bold tracking-tight text-[var(--color-primary)]">
+                          <p className="text-xl font-bold tracking-tight text-primary">
                             {branch.avgPrepTime}m
                           </p>
                         </div>
@@ -686,24 +686,24 @@ export default function OrderAnalyticsDashboard() {
           </div>
 
           {/* Culinary Intelligence (Chef Leaderboard) */}
-          <div className="xl:col-span-12 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-12 relative overflow-hidden group">
+          <div className="xl:col-span-12 bg-(--color-surface) rounded-xl border border-(--color-border) p-12 relative overflow-hidden group">
             <div className="absolute top-0 left-0 p-20 opacity-[0.01] group-hover:opacity-[0.03] transition-opacity">
               <ChefHat size={300} />
             </div>
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12 relative z-10">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-primary)] flex items-center gap-3 mb-4">
-                  <div className="h-1 w-10 bg-[var(--color-primary)] rounded-full" />
+                <h3 className="text-xs font-bold uppercase tracking-normal text-primary flex items-center gap-3 mb-4">
+                  <div className="h-1 w-10 bg-primary rounded-full" />
                   Chef Performance
                 </h3>
-                <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
-                  Kitchen <span className="text-[var(--color-primary)]">Leaderboard</span>
+                <h2 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                  Kitchen <span className="text-primary">Leaderboard</span>
                 </h2>
-                <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2">
+                <p className="text-sm font-bold text-(--color-text-muted) mt-2">
                   See how fast each chef prepares orders.
                 </p>
               </div>
-              <button className="h-14 px-10 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white text-[10px] font-bold uppercase tracking-normal rounded-[1.5rem] shadow-sm  active:scale-95 transition-all flex items-center gap-4">
+              <button className="h-14 px-10 bg-primary hover:bg-primary text-white text-[10px] font-bold uppercase tracking-normal rounded-[1.5rem] shadow-sm  active:scale-95 transition-all flex items-center gap-4">
                 <Download size={18} strokeWidth={3} /> Download Report
               </button>
             </div>
@@ -714,44 +714,44 @@ export default function OrderAnalyticsDashboard() {
                 .map((chef, i) => (
                   <div
                     key={i}
-                    className="relative p-8 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] overflow-hidden group/chef hover:border-[var(--color-primary)]/30 transition-all"
+                    className="relative p-8 bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-hidden group/chef hover:border-primary/30 transition-all"
                   >
-                    <div className="absolute -top-4 -right-4 h-24 w-24 bg-[var(--color-primary)]/5 rounded-full hidden group-hover/chef:bg-[var(--color-primary)]/10 transition-colors" />
+                    <div className="absolute -top-4 -right-4 h-24 w-24 bg-primary/5 rounded-full hidden group-hover/chef:bg-primary/10 transition-colors" />
 
                     <div className="flex items-center justify-between mb-8">
-                      <div className="h-12 w-12 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-border)] shadow-sm">
+                      <div className="h-12 w-12 rounded-xl bg-(--color-surface) flex items-center justify-center text-primary border border-(--color-border) shadow-sm">
                         <ChefHat size={22} />
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal">
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-normal">
                           Rank #{i + 1}
                         </span>
-                        <span className="text-[10px] font-bold text-[var(--color-text-muted)] mt-0.5">
+                        <span className="text-[10px] font-bold text-(--color-text-muted) mt-0.5">
                           {chef.total} Orders
                         </span>
                       </div>
                     </div>
 
-                    <h4 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6 tracking-tight">
+                    <h4 className="text-2xl font-bold text-(--color-text-primary) mb-6 tracking-tight">
                       {chef.name}
                     </h4>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
+                        <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                           Avg Prep Time
                         </span>
-                        <span className="text-xl font-bold text-[var(--color-primary)] tracking-tight">
+                        <span className="text-xl font-bold text-primary tracking-tight">
                           {chef.avgTime}m
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-[var(--color-surface)] rounded-full overflow-hidden border border-[var(--color-border)]">
+                      <div className="h-1.5 w-full bg-(--color-surface) rounded-full overflow-hidden border border-(--color-border)">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{
                             width: `${Math.max(10, 100 - chef.avgTime * 2)}%`,
                           }}
-                          className="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] rounded-full "
+                          className="h-full bg-gradient-to-r from-primary to-primary rounded-full "
                         />
                       </div>
                     </div>
@@ -759,7 +759,7 @@ export default function OrderAnalyticsDashboard() {
                 ))}
               {(!data?.charts?.chefPerformance ||
                 data.charts.chefPerformance.length === 0) && (
-                <div className="lg:col-span-4 h-60 flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] rounded-xl opacity-30 italic text-[10px] font-bold uppercase tracking-normal">
+                <div className="lg:col-span-4 h-60 flex flex-col items-center justify-center border-2 border-dashed border-(--color-border) rounded-xl opacity-30 italic text-[10px] font-bold uppercase tracking-normal">
                   Not enough data to show rankings
                 </div>
               )}
@@ -778,14 +778,14 @@ export default function OrderAnalyticsDashboard() {
         >
           {selectedBranchDetails && (
             <div className="space-y-10 p-4">
-              <div className="flex items-center gap-8 p-10 bg-[var(--color-text-primary)] text-[var(--color-surface)] rounded-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-primary)]/10 rounded-full blur-[100px]" />
-                <div className="h-28 w-28 rounded-xl bg-white/5 border border-[var(--color-border)] flex items-center justify-center text-[var(--color-primary)] shadow-sm relative z-10 ">
+              <div className="flex items-center gap-8 p-10 bg-(--color-text-primary) text-(--color-surface) rounded-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
+                <div className="h-28 w-28 rounded-xl bg-white/5 border border-(--color-border) flex items-center justify-center text-primary shadow-sm relative z-10 ">
                   <Building size={56} strokeWidth={1} />
                 </div>
                 <div className="relative z-10 flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="px-3 py-1 bg-[var(--color-primary)] rounded-full text-[9px] font-bold uppercase tracking-normal">
+                    <div className="px-3 py-1 bg-primary rounded-full text-[9px] font-bold uppercase tracking-normal">
                       Active Branch
                     </div>
                     <span className="text-[10px] font-bold text-white/50 uppercase tracking-normal">
@@ -796,53 +796,53 @@ export default function OrderAnalyticsDashboard() {
                     {selectedBranchDetails.name}
                   </h3>
                   <p className="text-sm font-medium text-white/60 flex items-center gap-2">
-                    <MapPin size={16} className="text-[var(--color-primary)]" />{" "}
+                    <MapPin size={16} className="text-primary" />{" "}
                     {selectedBranchDetails.address}
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] flex flex-col gap-6 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm">
-                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all">
+                <div className="p-8 bg-(--color-surface) rounded-xl border border-(--color-border) flex flex-col gap-6 group hover:border-primary/30 transition-all shadow-sm">
+                  <div className="h-14 w-14 rounded-xl bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) group-hover:text-primary transition-all">
                     <Mail size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">
                       Email
                     </p>
-                    <p className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
+                    <p className="text-lg font-bold text-(--color-text-primary) tracking-tight">
                       {selectedBranchDetails.contactEmail ||
                         "Not added"}
                     </p>
                   </div>
                 </div>
-                <div className="p-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] flex flex-col gap-6 group hover:border-[var(--color-primary)]/30 transition-all shadow-sm">
-                  <div className="h-14 w-14 rounded-xl bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all">
+                <div className="p-8 bg-(--color-surface) rounded-xl border border-(--color-border) flex flex-col gap-6 group hover:border-primary/30 transition-all shadow-sm">
+                  <div className="h-14 w-14 rounded-xl bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) group-hover:text-primary transition-all">
                     <Phone size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">
                       Phone
                     </p>
-                    <p className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
+                    <p className="text-lg font-bold text-(--color-text-primary) tracking-tight">
                       {selectedBranchDetails.contactPhone || "Not added"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 pt-6 border-t border-[var(--color-border)]">
+              <div className="flex flex-col gap-4 pt-6 border-t border-(--color-border)">
                 <button
                   onClick={() => {
                     setBranchFilter(selectedBranchDetails._id);
                     setSelectedBranchDetails(null);
                   }}
-                  className="w-full py-6 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white rounded-xl text-xs font-bold uppercase tracking-normal  active:scale-95 transition-all shadow-sm  flex items-center justify-center gap-4"
+                  className="w-full py-6 bg-primary hover:bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-normal  active:scale-95 transition-all shadow-sm  flex items-center justify-center gap-4"
                 >
                   <Layers size={18} /> View This Branch's Analytics
                 </button>
-                <p className="text-center text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal opacity-40">
+                <p className="text-center text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal opacity-40">
                   Admin access only
                 </p>
               </div>
@@ -857,29 +857,29 @@ export default function OrderAnalyticsDashboard() {
 function MetricCard({ label, value, icon: Icon, color }) {
   const themes = {
     blue: {
-      base: "text-[var(--color-primary)] bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20 ",
-      glow: "bg-[var(--color-primary)]/10",
-      accent: "border-[var(--color-primary)]/30",
+      base: "text-primary bg-primary/5 border-primary/20 ",
+      glow: "bg-primary/10",
+      accent: "border-primary/30",
     },
     indigo: {
-      base: "text-[var(--color-primary)] bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20 ",
-      glow: "bg-[var(--color-primary)]/10",
-      accent: "border-[var(--color-primary)]/30",
+      base: "text-primary bg-primary/5 border-primary/20 ",
+      glow: "bg-primary/10",
+      accent: "border-primary/30",
     },
     rose: {
-      base: "text-[var(--color-danger)] bg-[var(--color-danger)]/5 border-[var(--color-danger)]/20 ",
-      glow: "bg-[var(--color-danger)]/10",
-      accent: "border-[var(--color-danger)]/30",
+      base: "text-danger bg-danger/5 border-danger/20 ",
+      glow: "bg-danger/10",
+      accent: "border-danger/30",
     },
     amber: {
-      base: "text-[var(--color-warning)] bg-[var(--color-warning)]/5 border-[var(--color-warning)]/20 ",
-      glow: "bg-[var(--color-warning)]/10",
-      accent: "border-[var(--color-warning)]/30",
+      base: "text-warning bg-warning/5 border-warning/20 ",
+      glow: "bg-warning/10",
+      accent: "border-warning/30",
     },
     emerald: {
-      base: "text-[var(--color-success)] bg-[var(--color-success)]/5 border-[var(--color-success)]/20 ",
-      glow: "bg-[var(--color-success)]/10",
-      accent: "border-[var(--color-success)]/30",
+      base: "text-success bg-success/5 border-success/20 ",
+      glow: "bg-success/10",
+      accent: "border-success/30",
     },
   };
 
@@ -887,7 +887,7 @@ function MetricCard({ label, value, icon: Icon, color }) {
 
   return (
     <CardHover>
-      <div className="relative bg-[var(--color-surface)]/60  p-8 rounded-xl border border-[var(--color-border)] flex flex-col items-center text-center group hover:border-[var(--color-primary)]/40 transition-all duration-500 shadow-sm overflow-hidden h-full">
+      <div className="relative bg-(--color-surface)/60  p-8 rounded-xl border border-(--color-border) flex flex-col items-center text-center group hover:border-primary/40 transition-all duration-500 shadow-sm overflow-hidden h-full">
         {/* Animated Glow Backplate */}
         <div
           className={`absolute inset-0 ${theme.glow} opacity-0 group-hover:opacity-100 blur-[60px] transition-opacity duration-1000 -z-10`}
@@ -900,14 +900,14 @@ function MetricCard({ label, value, icon: Icon, color }) {
           <Icon size={28} strokeWidth={2.5} className="relative z-10" />
         </div>
 
-        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-3 group-hover:text-[var(--color-text-primary)] transition-colors">
+        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-3 group-hover:text-(--color-text-primary) transition-colors">
           {label}
         </p>
-        <h4 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight mb-1 relative">
+        <h4 className="text-4xl font-bold text-(--color-text-primary) tracking-tight mb-1 relative">
           {value || "0"}
           <span className="absolute -top-1 -right-4 h-1.5 w-1.5 rounded-full bg-primary animate-ping opacity-0 group-hover:opacity-100 transition-opacity" />
         </h4>
-        <div className="w-8 h-1 bg-[var(--color-border)] rounded-full mt-4 group-hover:w-16 group-hover:bg-primary transition-all duration-500" />
+        <div className="w-8 h-1 bg-(--color-border) rounded-full mt-4 group-hover:w-16 group-hover:bg-primary transition-all duration-500" />
       </div>
     </CardHover>
   );

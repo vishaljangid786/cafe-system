@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-sans text-[var(--color-text-primary)] antialiased transition-colors duration-300">
+      <body suppressHydrationWarning className="font-sans text-(--color-text-primary) antialiased transition-colors duration-300">
         <ThemeProvider>
           <DateInputEnhancer />
           <TopProgressBar />
@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
               <Toaster
                 position="bottom-right"
                 toastOptions={{
-                  className: '!bg-[var(--color-surface)] !text-[var(--color-text-primary)] !border !border-[var(--color-border)] !rounded-xl !p-4 !text-sm !font-medium !shadow-[var(--shadow-md)]',
+                  className: '!bg-(--color-surface) !text-(--color-text-primary) !border !border-(--color-border) !rounded-xl !p-4 !text-sm !font-medium !shadow-[var(--shadow-md)]',
                   duration: 4000,
                 }}
               />

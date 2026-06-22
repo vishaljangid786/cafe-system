@@ -33,7 +33,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[100] px-4 pb-5 pt-2 bg-[var(--color-surface)] border-t border-[var(--color-border)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-100 px-4 pb-5 pt-2 bg-(--color-surface) border-t border-(--color-border)">
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {links.map((link) => {
           const isActive = pathname === link.href;
@@ -47,13 +47,13 @@ export default function BottomNav() {
             >
               <div className={`p-2 rounded-lg transition-colors duration-200 ${
                 isActive
-                  ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]'
-                  : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
+                  ? 'bg-primary text-(--color-on-primary)'
+                  : 'text-(--color-text-muted) group-hover:text-(--color-text-primary)'
               }`}>
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
               </div>
               <span className={`text-[11px] font-medium ${
-                isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
+                isActive ? 'text-primary' : 'text-(--color-text-muted)'
               }`}>
                 {link.name}
               </span>

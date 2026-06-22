@@ -72,7 +72,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -86,17 +86,17 @@ const NotificationModal = ({ isOpen, onClose }) => {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.97, opacity: 0, y: 12 }}
         transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="relative w-full max-w-lg bg-[var(--color-surface)] rounded-xl overflow-hidden shadow-[var(--shadow-md)] border border-[var(--color-border)] my-auto"
+        className="relative w-full max-w-lg bg-(--color-surface) rounded-xl overflow-hidden shadow-[var(--shadow-md)] border border-(--color-border) my-auto"
       >
-        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-(--color-border) flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+            <div className="p-2 rounded-lg bg-(--color-primary-soft) text-primary">
               <Send size={18} />
             </div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">New Message</h2>
+            <h2 className="text-base font-semibold text-(--color-text-primary)">New Message</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--color-surface-soft)] rounded-lg transition-colors">
-            <X size={20} className="text-[var(--color-text-muted)]" />
+          <button onClick={onClose} className="p-2 hover:bg-(--color-surface-soft) rounded-lg transition-colors">
+            <X size={20} className="text-(--color-text-muted)" />
           </button>
         </div>
 

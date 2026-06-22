@@ -73,15 +73,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-300">
+    <div className="min-h-screen bg-(--color-bg-base) flex flex-col lg:flex-row transition-colors duration-300">
       {/* Brand Panel (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-[50%] relative overflow-hidden bg-[var(--color-primary)]">
+      <div className="hidden lg:flex lg:w-[50%] relative overflow-hidden bg-primary">
         <img
           src="/images/login_bg.png"
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-20"
         />
-        <div className="absolute inset-0 bg-[var(--color-primary)]/70" />
+        <div className="absolute inset-0 bg-primary/70" />
 
         <div className="relative z-10 w-full p-16 flex flex-col justify-between text-white">
           <div className="flex items-center gap-3">
@@ -113,7 +113,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 relative bg-[var(--color-bg)]">
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 relative bg-(--color-bg)">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,15 +121,15 @@ export default function LoginPage() {
           className="w-full max-w-md relative z-10"
         >
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-on-primary)] mb-3">
+            <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center text-(--color-on-primary) mb-3">
               <Coffee size={28} strokeWidth={2.5} />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">CafeOS</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-(--color-text-primary)">CafeOS</h1>
           </div>
 
           <div className="space-y-1 text-center lg:text-left mb-8">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Welcome back</h2>
-            <p className="text-sm text-[var(--color-text-muted)]">Enter your details to log in to your account.</p>
+            <h2 className="text-2xl font-bold text-(--color-text-primary)">Welcome back</h2>
+            <p className="text-sm text-(--color-text-muted)">Enter your details to log in to your account.</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
@@ -141,8 +141,8 @@ export default function LoginPage() {
                   exit={{ opacity: 0, y: -8 }}
                   className="bg-[rgba(var(--color-danger-rgb),0.1)] border border-[rgba(var(--color-danger-rgb),0.2)] p-3 rounded-lg flex items-center gap-3"
                 >
-                  <AlertCircle size={18} className="text-[var(--color-danger)] shrink-0" />
-                  <p className="text-sm text-[var(--color-danger)] font-medium">{serverError}</p>
+                  <AlertCircle size={18} className="text-danger shrink-0" />
+                  <p className="text-sm text-danger font-medium">{serverError}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -151,10 +151,10 @@ export default function LoginPage() {
               <label className="label block ml-0.5">Email Address</label>
               <input
                 {...register('email')}
-                className={`input ${errors.email ? '!border-[var(--color-danger)]' : ''}`}
+                className={`input ${errors.email ? '!border-danger' : ''}`}
                 placeholder="admin@cafeos.com"
               />
-              {errors.email && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -163,18 +163,18 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   {...register('password')}
-                  className={`input pr-11 ${errors.password ? '!border-[var(--color-danger)]' : ''}`}
+                  className={`input pr-11 ${errors.password ? '!border-danger' : ''}`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-(--color-text-muted) hover:text-primary transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.password.message}</p>}
+              {errors.password && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.password.message}</p>}
             </div>
 
             <Button
@@ -191,9 +191,9 @@ export default function LoginPage() {
           {/* Quick Login (Testing) */}
           <div className="mt-10 space-y-5">
             <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-[var(--color-border)]" />
-              <p className="text-xs font-medium text-[var(--color-text-muted)]">Quick Login (Testing Only)</p>
-              <div className="h-px flex-1 bg-[var(--color-border)]" />
+              <div className="h-px flex-1 bg-(--color-border)" />
+              <p className="text-xs font-medium text-(--color-text-muted)">Quick Login (Testing Only)</p>
+              <div className="h-px flex-1 bg-(--color-border)" />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5">
@@ -208,12 +208,12 @@ export default function LoginPage() {
                   key={testUser.label}
                   type="button"
                   onClick={() => handleQuickLogin(testUser.email)}
-                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition-colors group"
+                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-(--color-border) hover:border-primary hover:bg-(--color-primary-soft) transition-colors group"
                 >
-                  <span className="text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-primary)] transition-colors">
+                  <span className="text-sm font-medium text-(--color-text-secondary) group-hover:text-primary transition-colors">
                     {testUser.label}
                   </span>
-                  <span className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  <span className="text-[10px] text-(--color-text-muted) mt-0.5">
                     pass: {QUICK_LOGIN_PASSWORD}
                   </span>
                 </button>
@@ -221,9 +221,9 @@ export default function LoginPage() {
             </div>
 
             <div className="flex justify-center pt-2">
-              <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-full">
-                <Lock size={11} className="text-[var(--color-primary)]" />
-                <span className="text-xs text-[var(--color-text-muted)]">Secure connection</span>
+              <div className="flex items-center gap-2 px-3 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-full">
+                <Lock size={11} className="text-primary" />
+                <span className="text-xs text-(--color-text-muted)">Secure connection</span>
               </div>
             </div>
           </div>

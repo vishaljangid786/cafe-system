@@ -114,10 +114,10 @@ const NotificationsPage = () => {
 
   const getPriorityStyles = (priority) => {
     switch (priority) {
-      case 'high': return 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20';
-      case 'medium': return 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20';
-      case 'low': return 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20';
-      default: return 'bg-[var(--color-text-muted)]/10 text-[var(--color-text-muted)] border-[var(--color-text-muted)]/20';
+      case 'high': return 'bg-danger/10 text-danger border-danger/20';
+      case 'medium': return 'bg-primary/10 text-primary border-primary/20';
+      case 'low': return 'bg-success/10 text-success border-success/20';
+      default: return 'bg-(--color-text-muted)/10 text-(--color-text-muted) border-(--color-text-muted)/20';
     }
   };
 
@@ -151,22 +151,22 @@ const NotificationsPage = () => {
     <PageTransition>
       <div className="space-y-8 pb-24">
         {/* Header */}
-        <div className="relative group overflow-hidden bg-[var(--color-surface)] rounded-xl p-8 border border-[var(--color-border)] shadow-sm">
+        <div className="relative group overflow-hidden bg-(--color-surface) rounded-xl p-8 border border-(--color-border) shadow-sm">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-            <Bell size={160} className="text-[var(--color-primary)]" strokeWidth={1} />
+            <Bell size={160} className="text-primary" strokeWidth={1} />
           </div>
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)]">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                   <Bell size={28} />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-(--color-text-primary)">
                     Notifications
                   </h1>
-                  <p className="text-[var(--color-text-muted)] font-medium mt-1 text-sm">
+                  <p className="text-(--color-text-muted) font-medium mt-1 text-sm">
                     See and manage all your alerts and messages.
                   </p>
                 </div>
@@ -187,58 +187,58 @@ const NotificationsPage = () => {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-6 border-b border-[var(--color-border)] mb-2">
+        <div className="flex items-center gap-6 border-b border-(--color-border) mb-2">
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'all' }))}
             className={`pb-4 px-1 text-sm font-bold transition-all relative ${
               filters.activeTab === 'all' 
-                ? 'text-[var(--color-primary)]' 
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                ? 'text-primary' 
+                : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
             }`}
           >
             All
             {filters.activeTab === 'all' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'general' }))}
             className={`pb-4 px-1 text-sm font-bold transition-all relative ${
               filters.activeTab === 'general' 
-                ? 'text-[var(--color-primary)]' 
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                ? 'text-primary' 
+                : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
             }`}
           >
             General Alerts
             {filters.activeTab === 'general' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'system' }))}
             className={`pb-4 px-1 text-sm font-bold transition-all relative ${
               filters.activeTab === 'system' 
-                ? 'text-[var(--color-primary)]' 
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                ? 'text-primary' 
+                : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
             }`}
           >
             Activity
             {filters.activeTab === 'system' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
         </div>
 
-        <div className="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] shadow-sm">
+        <div className="bg-(--color-surface) p-4 rounded-xl border border-(--color-border) shadow-sm">
   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-center">
 
     {/* 🔍 Search */}
     <div className="relative group md:col-span-1">
       {/* Glow */}
-      <div className="absolute inset-0 rounded-xl bg-[var(--color-primary)]/0 group-focus-within:bg-[var(--color-primary)]/10 blur-lg transition-all" />
+      <div className="absolute inset-0 rounded-xl bg-primary/0 group-focus-within:bg-primary/10 blur-lg transition-all" />
 
       <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition"
         size={15}
       />
 
@@ -249,7 +249,7 @@ const NotificationsPage = () => {
         onChange={(e) =>
           setFilters((prev) => ({ ...prev, search: e.target.value }))
         }
-        className="relative w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="relative w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
       />
 
       {/* Clear */}
@@ -258,7 +258,7 @@ const NotificationsPage = () => {
           onClick={() =>
             setFilters((prev) => ({ ...prev, search: '' }))
           }
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) hover:text-danger transition"
         >
           ✕
         </button>
@@ -299,7 +299,7 @@ const NotificationsPage = () => {
     {/* 📅 Start Date */}
     <div className="relative group">
       <Calendar
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)]"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary"
         size={15}
       />
 
@@ -312,14 +312,14 @@ const NotificationsPage = () => {
             startDate: e.target.value
           }))
         }
-        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
       />
     </div>
 
     {/* 📅 End Date */}
     <div className="relative group">
       <Calendar
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)]"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary"
         size={15}
       />
 
@@ -332,7 +332,7 @@ const NotificationsPage = () => {
             endDate: e.target.value
           }))
         }
-        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none transition-all"
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
       />
     </div>
 
@@ -353,7 +353,7 @@ const NotificationsPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   key={notif._id}
-                  className={`group relative bg-[var(--color-surface)] border ${notif.isRead ? 'border-[var(--color-border)]' : 'border-[var(--color-primary)]/20 shadow-lg '} rounded-xl p-6 transition-all hover:shadow-md`}
+                  className={`group relative bg-(--color-surface) border ${notif.isRead ? 'border-(--color-border)' : 'border-primary/20 shadow-lg '} rounded-xl p-6 transition-all hover:shadow-md`}
                 >
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className={`h-12 w-12 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
@@ -365,16 +365,16 @@ const NotificationsPage = () => {
                     <div className="flex-1 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <h3 className={`font-bold text-lg ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
+                          <h3 className={`font-bold text-lg ${notif.isRead ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`}>
                             {notif.title}
                           </h3>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs font-medium text-[var(--color-text-muted)] flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-(--color-text-muted) flex items-center gap-1.5">
                               <Calendar size={12} />
                               {new Date(notif.createdAt).toLocaleDateString()}
                             </span>
-                            <span className="text-xs font-medium text-[var(--color-text-muted)]">•</span>
-                            <span className="text-xs font-medium text-[var(--color-text-muted)]">
+                            <span className="text-xs font-medium text-(--color-text-muted)">•</span>
+                            <span className="text-xs font-medium text-(--color-text-muted)">
                               {new Date(notif.createdAt).toLocaleTimeString()}
                             </span>
                           </div>
@@ -384,12 +384,12 @@ const NotificationsPage = () => {
                             {notif.priority} Priority
                           </span>
                           
-                          <div className="h-8 w-[1px] bg-[var(--color-border)] mx-1" />
+                          <div className="h-8 w-[1px] bg-(--color-border) mx-1" />
 
                           {notif.sender && (
                             <button 
                               onClick={() => setReplyingTo(notif)}
-                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-soft)] text-[var(--color-primary)] text-xs font-bold rounded-xl hover:bg-[var(--color-primary)]/10 transition-all border border-[var(--color-primary)]/20"
+                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-primary text-xs font-bold rounded-xl hover:bg-primary/10 transition-all border border-primary/20"
                             >
                               <Reply size={14} />
                               Reply
@@ -399,7 +399,7 @@ const NotificationsPage = () => {
                           {!notif.isRead ? (
                             <button 
                               onClick={() => handleMarkAsRead(notif._id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl hover:bg-[var(--color-primary-dark)] transition-all shadow-sm "
+                              className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all shadow-sm "
                             >
                               <CheckCircle2 size={14} />
                               Mark as Read
@@ -407,7 +407,7 @@ const NotificationsPage = () => {
                           ) : (
                             <button 
                               onClick={() => handleMarkAsUnread(notif._id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] text-xs font-bold rounded-xl hover:bg-[var(--color-border)] transition-all border border-[var(--color-border)]"
+                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-(--color-text-muted) text-xs font-bold rounded-xl hover:bg-(--color-border) transition-all border border-(--color-border)"
                             >
                               <Bell size={14} />
                               Mark as Unread
@@ -416,19 +416,19 @@ const NotificationsPage = () => {
                         </div>
                       </div>
 
-                      <p className={`text-sm leading-relaxed max-w-3xl ${notif.isRead ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)]'}`}>
+                      <p className={`text-sm leading-relaxed max-w-3xl ${notif.isRead ? 'text-(--color-text-muted)' : 'text-(--color-text-secondary)'}`}>
                         {notif.message}
                       </p>
 
-                      <div className="pt-2 flex items-center gap-4 border-t border-[var(--color-border)]">
+                      <div className="pt-2 flex items-center gap-4 border-t border-(--color-border)">
                         <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center">
-                            <User size={12} className="text-[var(--color-text-muted)]" />
+                          <div className="h-6 w-6 rounded-full bg-(--color-surface-soft) flex items-center justify-center">
+                            <User size={12} className="text-(--color-text-muted)" />
                           </div>
-                          <span className="text-xs font-bold text-[var(--color-text-secondary)]">{notif.sender?.name || 'System'}</span>
+                          <span className="text-xs font-bold text-(--color-text-secondary)">{notif.sender?.name || 'System'}</span>
                         </div>
-                        <span className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
-                        <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{notif.type}</span>
+                        <span className="h-1 w-1 bg-(--color-border) rounded-full" />
+                        <span className="text-xs font-bold text-(--color-text-muted) uppercase tracking-normal">{notif.type}</span>
                       </div>
                     </div>
                   </div>
@@ -440,11 +440,11 @@ const NotificationsPage = () => {
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-32 text-center"
               >
-                <div className="h-20 w-20 rounded-full bg-[var(--color-surface-soft)] flex items-center justify-center mb-6">
-                  <Bell size={40} className="text-[var(--color-text-muted)]/40" />
+                <div className="h-20 w-20 rounded-full bg-(--color-surface-soft) flex items-center justify-center mb-6">
+                  <Bell size={40} className="text-(--color-text-muted)/40" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">No notifications found</h3>
-                <p className="text-[var(--color-text-muted)] max-w-sm">
+                <h3 className="text-xl font-bold text-(--color-text-primary) mb-2">No notifications found</h3>
+                <p className="text-(--color-text-muted) max-w-sm">
                   We couldn&apos;t find any notifications matching your current filters. Try adjusting your search criteria.
                 </p>
               </motion.div>
@@ -471,8 +471,8 @@ const NotificationsPage = () => {
                     onClick={() => fetchHistory(i + 1)}
                     className={`h-10 w-10 rounded-xl text-sm font-bold transition-all ${
                       pagination.page === i + 1 
-                        ? 'bg-[var(--color-primary)] text-white'
-                        : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] border border-[var(--color-border)]'
+                        ? 'bg-primary text-white'
+                        : 'bg-(--color-surface) text-(--color-text-muted) hover:bg-(--color-surface-soft) border border-(--color-border)'
                     }`}
                   >
                     {i + 1}
@@ -503,18 +503,18 @@ const NotificationsPage = () => {
           title={replyingTo ? `Replying to ${replyingTo.sender?.name || 'System'}` : 'Reply'}
         >
           <div className="space-y-6">
-            <div className="p-4 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
-              <p className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] mb-2">Original Message</p>
-              <p className="text-sm italic text-[var(--color-text-secondary)]">&ldquo;{replyingTo?.message}&rdquo;</p>
+            <div className="p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
+              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) mb-2">Original Message</p>
+              <p className="text-sm italic text-(--color-text-secondary)">&ldquo;{replyingTo?.message}&rdquo;</p>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] ml-1">Your Reply</label>
+              <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">Your Reply</label>
               <textarea
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 placeholder="Type your response here..."
-                className="w-full min-h-[150px] p-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all resize-none"
+                className="w-full min-h-[150px] p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
               />
             </div>
 

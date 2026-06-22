@@ -29,22 +29,22 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-[9998]"
+            className="fixed inset-0 bg-black/50 z-9998"
           />
 
-          <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4 z-[9999] pointer-events-none overflow-hidden">
+          <div className="fixed inset-0 flex items-center justify-center p-0 sm:p-4 z-9999 pointer-events-none overflow-hidden">
             <motion.div
               initial={{ scale: 0.97, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.97, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className={`w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-xl rounded-t-2xl pointer-events-auto shadow-[var(--shadow-md)] border border-[var(--color-border)] bg-[var(--color-surface)] relative flex flex-col mt-auto sm:mt-0`}
+              className={`w-full ${maxWidth} max-h-[100vh] sm:max-h-[90vh] sm:rounded-xl rounded-t-2xl pointer-events-auto shadow-[var(--shadow-md)] border border-(--color-border) bg-(--color-surface) relative flex flex-col mt-auto sm:mt-0`}
             >
-              <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
-                <p className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] line-clamp-1">{title}</p>
+              <div className="px-6 py-4 border-b border-(--color-border) flex items-center justify-between shrink-0">
+                <p className="text-base sm:text-lg font-semibold text-(--color-text-primary) line-clamp-1">{title}</p>
                 <button
                   onClick={onClose}
-                  className="h-9 w-9 rounded-lg bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors cursor-pointer"
+                  className="h-9 w-9 rounded-lg bg-(--color-surface-soft) border border-(--color-border) flex items-center justify-center text-(--color-text-muted) hover:text-(--color-text-primary) hover:border-(--color-border-strong) transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>

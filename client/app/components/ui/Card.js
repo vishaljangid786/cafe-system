@@ -9,7 +9,7 @@ export const Card = ({ children, className = '', hover = true, delay = 0 }) => {
       transition={{ duration: 0.25, delay }}
       className={`
         card rounded-xl p-6 relative
-        ${hover ? 'transition-colors duration-200 hover:border-[var(--color-border-strong)]' : ''}
+        ${hover ? 'transition-colors duration-200 hover:border-(--color-border-strong)' : ''}
         ${className}
       `}
     >
@@ -19,13 +19,13 @@ export const Card = ({ children, className = '', hover = true, delay = 0 }) => {
 };
 
 export const CardTitle = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-bold tracking-tight text-[var(--color-text-primary)] ${className}`}>
+  <h3 className={`text-lg font-bold tracking-tight text-(--color-text-primary) ${className}`}>
     {children}
   </h3>
 );
 
 export const CardDescription = ({ children, className = '' }) => (
-  <p className={`text-sm text-[var(--color-text-muted)] font-medium leading-relaxed ${className}`}>
+  <p className={`text-sm text-(--color-text-muted) font-medium leading-relaxed ${className}`}>
     {children}
   </p>
 );

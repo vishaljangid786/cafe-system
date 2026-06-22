@@ -315,7 +315,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   if (!user) return null;
 
   const content = (
-    <div className={`h-full flex flex-col bg-[var(--color-sidebar-bg)] border-r border-[var(--color-border)] transition-colors duration-300 relative`}>
+    <div className={`h-full flex flex-col bg-(--color-sidebar-bg) border-r border-(--color-border) transition-colors duration-300 relative`}>
       <NotificationModal isOpen={showNotifModal} onClose={() => setShowNotifModal(false)} />
       {/* Brand Header */}
       <div className={`h-20 flex items-center ${showLabels ? 'px-6' : 'justify-center'} shrink-0 mb-2`}>
@@ -329,7 +329,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 initial={{ opacity: 0, x: -5 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -5 }}
-                className="text-lg font-bold tracking-tight text-[var(--color-text-primary)] whitespace-nowrap"
+                className="text-lg font-bold tracking-tight text-(--color-text-primary) whitespace-nowrap"
               >
                 Cafe<span className="text-primary">OS</span>
               </motion.span>
@@ -356,14 +356,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
               >
                 {showLabels ? (
                   <div
-                    className={`px-3 py-2 flex items-center justify-between group/header rounded-lg transition-colors duration-200 ${openGroup === group.title ? 'bg-[var(--color-surface-soft)]' : 'hover:bg-[var(--color-surface-soft)]'}`}
+                    className={`px-3 py-2 flex items-center justify-between group/header rounded-lg transition-colors duration-200 ${openGroup === group.title ? 'bg-(--color-surface-soft)' : 'hover:bg-(--color-surface-soft)'}`}
                   >
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
                         handleGroupInteraction(e, group.title, 'click');
                       }}
-                      className={`flex-1 py-1 text-xs font-semibold cursor-pointer transition-colors ${openGroup === group.title ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)] group-hover/header:text-[var(--color-text-primary)]'}`}
+                      className={`flex-1 py-1 text-xs font-semibold cursor-pointer transition-colors ${openGroup === group.title ? 'text-(--color-text-primary)' : 'text-(--color-text-muted) group-hover/header:text-(--color-text-primary)'}`}
                     >
                       {group.title}
                     </span>
@@ -374,9 +374,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       }}
                       animate={{ rotate: openGroup === group.title ? 0 : -90 }}
                       transition={{ duration: 0.2 }}
-                      className="p-1 cursor-pointer hover:bg-[var(--color-hover)] rounded-md transition-colors"
+                      className="p-1 cursor-pointer hover:bg-(--color-hover) rounded-md transition-colors"
                     >
-                      <ChevronDown size={14} className={openGroup === group.title ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'} />
+                      <ChevronDown size={14} className={openGroup === group.title ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'} />
                     </motion.div>
                   </div>
                 ) : (
@@ -386,7 +386,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       e.stopPropagation();
                       handleGroupInteraction(e, group.title, 'click');
                     }}
-                    className={`h-11 w-11 mx-auto flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 ${openGroup === group.title || isActive ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`h-11 w-11 mx-auto flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 ${openGroup === group.title || isActive ? 'bg-primary text-(--color-on-primary)' : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}`}
                   >
                     <FirstIcon size={20} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
                   </div>
@@ -402,7 +402,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="mt-1 ml-4 mr-1 overflow-hidden rounded-xl border border-[rgba(var(--color-primary-rgb),0.18)] bg-[var(--color-primary-soft)] p-1.5 space-y-1"
+                      className="mt-1 ml-4 mr-1 overflow-hidden rounded-xl border border-[rgba(var(--color-primary-rgb),0.18)] bg-(--color-primary-soft) p-1.5 space-y-1"
                     >
                       {group.items.map((link) => {
                         const Icon = link.icon;
@@ -419,14 +419,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                             className={`
                               flex items-center py-2.5 px-3 rounded-lg transition-colors duration-150
                               ${isLinkActive
-                                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
-                                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
+                                ? 'bg-primary text-(--color-on-primary) font-medium'
+                                : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}
                             `}
                           >
                             <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="mr-3 shrink-0" />
                             <span className="text-sm">{link.name}</span>
                             {link.badge > 0 && (
-                              <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-[var(--color-on-primary)]' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'}`}>
+                              <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
                                 {link.badge}
                               </span>
                             )}
@@ -447,7 +447,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         <button
           onClick={() => setShowNotifModal(true)}
           className={`
-            w-full flex items-center gap-3 p-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] transition-all group
+            w-full flex items-center gap-3 p-2.5 rounded-xl border border-(--color-border) bg-(--color-surface-soft) hover:bg-(--color-surface) transition-all group
             ${showLabels ? 'justify-start px-3' : 'justify-center'}
           `}
         >
@@ -455,32 +455,32 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             <Send size={16} />
           </div>
           {showLabels && (
-            <span className="text-xs font-bold text-[var(--color-text-primary)]">Send Message</span>
+            <span className="text-xs font-bold text-(--color-text-primary)">Send Message</span>
           )}
         </button>
       </div>
 
       {/* User Footer */}
-      <div className={`p-4 mt-auto border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]/70`}>
+      <div className={`p-4 mt-auto border-t border-(--color-border) bg-(--color-bg-soft)/70`}>
         <div className={`flex items-center gap-3 ${showLabels ? '' : 'justify-center'}`}>
-          <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
+          <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-(--color-surface) border border-(--color-border) flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
             {user.profileImageUrl ? (
               <img src={user.profileImageUrl} alt={user.name} className="h-full w-full object-cover" />
             ) : (
               <span className="text-xs font-bold text-primary">{user.name.substring(0, 2).toUpperCase()}</span>
             )}
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[var(--color-success)] border-2 border-[var(--color-surface)] rounded-full" />
+            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success border-2 border-(--color-surface) rounded-full" />
           </Link>
           {showLabels && (
             <Link href="/dashboard/profile" className="min-w-0 flex-1 group">
-              <p className="text-xs font-bold text-[var(--color-text-primary)] truncate leading-none group-hover:text-primary transition-colors">{user.name}</p>
-              <p className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+              <p className="text-xs font-bold text-(--color-text-primary) truncate leading-none group-hover:text-primary transition-colors">{user.name}</p>
+              <p className="text-[10px] font-medium text-(--color-text-muted) uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
             </Link>
           )}
           {showLabels && (
             <button
               onClick={logout}
-              className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 rounded-lg transition-all"
+              className="p-1.5 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
             >
               <LogOut size={16} />
             </button>
@@ -500,7 +500,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsMobileOpen(false)}
-            className="fixed inset-0 bg-black/40 z-[100]"
+            className="fixed inset-0 bg-black/40 z-100"
           />
         )}
       </AnimatePresence>
@@ -512,7 +512,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         variants={sidebarVariants}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className={`
-          fixed inset-y-0 left-0 z-[101] 
+          fixed inset-y-0 left-0 z-101 
           lg:static lg:block
         `}
       >
@@ -541,15 +541,15 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                 setHoveredGroup(hoveredGroup);
               }}
               onMouseLeave={handleMouseLeave}
-              className="w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-[var(--shadow-md)] p-3 z-[300] space-y-1"
+              className="w-64 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-[var(--shadow-md)] p-3 z-300 space-y-1"
             >
               {(() => {
                 const groupData = groups.find(g => g.title === hoveredGroup);
                 if (!groupData) return null;
                 return (
                   <>
-                    <div className="px-3 py-1.5 mb-1 border-b border-[var(--color-border)]">
-                      <span className="text-xs font-semibold text-[var(--color-text-muted)]">
+                    <div className="px-3 py-1.5 mb-1 border-b border-(--color-border)">
+                      <span className="text-xs font-semibold text-(--color-text-muted)">
                         {groupData.title}
                       </span>
                     </div>
@@ -572,15 +572,15 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                             className={`
                               group/item flex items-center relative py-2.5 px-3 rounded-lg transition-colors duration-150
                               ${isLinkActive
-                                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
-                                : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'}
+                                ? 'bg-primary text-(--color-on-primary) font-medium'
+                                : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}
                             `}
                           >
                             <div className="relative z-10 flex items-center w-full">
                               <Icon size={18} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0" />
                               <span className="ml-3 text-sm whitespace-nowrap flex-1">{link.name}</span>
                               {link.badge > 0 && (
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-[var(--color-on-primary)]' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'}`}>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
                                   {link.badge}
                                 </span>
                               )}

@@ -75,11 +75,11 @@ export default function ForecastingDashboard() {
         <SlideIn direction="down">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-4">
-                <TrendingUp className="text-[var(--color-primary)]" size={36} />
-                Sales <span className="text-[var(--color-primary)]">Forecast</span>
+              <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-4">
+                <TrendingUp className="text-primary" size={36} />
+                Sales <span className="text-primary">Forecast</span>
               </h1>
-              <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Estimates based on your past sales</p>
+              <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal">Estimates based on your past sales</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -105,7 +105,7 @@ export default function ForecastingDashboard() {
                 className="min-w-[150px]"
               />
 
-              <button onClick={fetchForecast} className="p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)]/30 text-[var(--color-text-muted)]">
+              <button onClick={fetchForecast} className="p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 text-(--color-text-muted)">
                 <RefreshCcw size={16} />
               </button>
             </div>
@@ -122,7 +122,7 @@ export default function ForecastingDashboard() {
           <>
         {/* Prediction Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] rounded-xl text-white shadow-sm">
+          <div className="p-8 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <Calendar size={24} className="opacity-80" />
             <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Expected Today Revenue</p>
             <h2 className="text-4xl font-bold mt-2 tracking-tight">₹{forecast?.expectedTodayRevenue?.toLocaleString() || 0}</h2>
@@ -131,7 +131,7 @@ export default function ForecastingDashboard() {
             </div>
           </div>
 
-          <div className="p-8 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] rounded-xl text-white shadow-sm">
+          <div className="p-8 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <TrendingUp size={24} className="opacity-80" />
             <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Weekly Revenue Estimate</p>
             <h2 className="text-4xl font-bold mt-2 tracking-tight">₹{forecast?.weeklyRevenueEstimate?.toLocaleString() || 0}</h2>
@@ -140,7 +140,7 @@ export default function ForecastingDashboard() {
             </div>
           </div>
 
-          <div className="p-8 bg-gradient-to-br from-[var(--color-success)] to-[var(--color-success)] rounded-xl text-white shadow-sm">
+          <div className="p-8 bg-gradient-to-br from-success to-success rounded-xl text-white shadow-sm">
             <Award size={24} className="opacity-80" />
             <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Best Category Forecast</p>
             <h2 className="text-4xl font-bold mt-2 tracking-tight">{forecast?.bestCategoryForecast || 'N/A'}</h2>
@@ -152,32 +152,32 @@ export default function ForecastingDashboard() {
 
         {/* Quick Insights */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between shadow-sm">
+          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Slowest Business Days</p>
-              <h3 className="text-2xl font-bold mt-2 text-[var(--color-text-primary)]">{forecast?.slowBusinessDays || 'N/A'}</h3>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Recommended for promotions & maintenance</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Slowest Business Days</p>
+              <h3 className="text-2xl font-bold mt-2 text-(--color-text-primary)">{forecast?.slowBusinessDays || 'N/A'}</h3>
+              <p className="text-xs text-(--color-text-secondary) mt-1">Recommended for promotions & maintenance</p>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-[var(--color-danger)]/10 text-[var(--color-danger)] flex items-center justify-center border border-[var(--color-danger)]/20">
+            <div className="h-14 w-14 rounded-xl bg-danger/10 text-danger flex items-center justify-center border border-danger/20">
               <Calendar size={24} />
             </div>
           </div>
 
-          <div className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between shadow-sm">
+          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Peak Hours Forecast</p>
-              <h3 className="text-2xl font-bold mt-2 text-[var(--color-text-primary)]">{forecast?.peakHoursForecast || 'N/A'}</h3>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Add extra staff to keep wait times low</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Peak Hours Forecast</p>
+              <h3 className="text-2xl font-bold mt-2 text-(--color-text-primary)">{forecast?.peakHoursForecast || 'N/A'}</h3>
+              <p className="text-xs text-(--color-text-secondary) mt-1">Add extra staff to keep wait times low</p>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center border border-[var(--color-primary)]/20">
+            <div className="h-14 w-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <Clock size={24} />
             </div>
           </div>
         </div>
 
         {/* Monthly Projection Chart */}
-        <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] p-10 rounded-xl shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-8">Expected Revenue Next Month</h3>
+        <div className="bg-(--color-surface)/80  border border-(--color-border) p-10 rounded-xl shadow-sm">
+          <h3 className="text-sm font-bold uppercase tracking-normal text-(--color-text-muted) mb-8">Expected Revenue Next Month</h3>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={forecast?.nextMonthSalesTrend || []}>

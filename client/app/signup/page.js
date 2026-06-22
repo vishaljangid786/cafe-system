@@ -229,20 +229,20 @@ function SignupContent() {
       <input
         {...register(name)}
         type={type}
-        className={`input ${error ? '!border-[var(--color-danger)]' : ''}`}
+        className={`input ${error ? '!border-danger' : ''}`}
         placeholder={placeholder}
         {...props}
       />
-      {error && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{error}</p>}
+      {error && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{error}</p>}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col lg:flex-row transition-colors duration-300">
+    <div className="min-h-screen bg-(--color-bg-base) flex flex-col lg:flex-row transition-colors duration-300">
       {/* Brand Panel */}
-      <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden bg-[var(--color-primary)]">
+      <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden bg-primary">
         <img src="/images/signup_bg.png" className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />
-        <div className="absolute inset-0 bg-[var(--color-primary)]/70" />
+        <div className="absolute inset-0 bg-primary/70" />
 
         <div className="relative z-10 w-full p-16 flex flex-col justify-between text-white">
           <div className="flex items-center gap-3">
@@ -269,7 +269,7 @@ function SignupContent() {
                 { step: 4, label: "Documents" }
               ].map((s) => (
                 <div key={s.step} className={`flex items-center gap-3 transition-opacity duration-300 ${activeStep >= s.step ? 'opacity-100' : 'opacity-50'}`}>
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold border ${activeStep >= s.step ? 'bg-[var(--color-surface)] text-[var(--color-primary)] border-[var(--color-border)]' : 'border-[var(--color-border)] text-white/70'}`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold border ${activeStep >= s.step ? 'bg-(--color-surface) text-primary border-(--color-border)' : 'border-(--color-border) text-white/70'}`}>
                     {activeStep > s.step ? <CheckCircle2 size={15} /> : s.step}
                   </div>
                   <span className="text-sm font-medium text-white">{s.label}</span>
@@ -280,17 +280,17 @@ function SignupContent() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-[var(--color-bg)] relative overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-(--color-bg) relative overflow-y-auto custom-scrollbar">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-xl relative z-10">
           {!isSetup && (
-            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-8 flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors text-sm font-medium group">
+            <button onClick={() => activeStep > 1 ? setActiveStep(prev => prev - 1) : router.back()} className="mb-8 flex items-center gap-2 text-(--color-text-muted) hover:text-primary transition-colors text-sm font-medium group">
               <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> {activeStep > 1 ? 'Go Back' : 'Cancel'}
             </button>
           )}
 
           <div className="mb-8">
-            <span className="text-sm font-medium text-[var(--color-primary)] mb-1 block">Step {activeStep} of 4</span>
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+            <span className="text-sm font-medium text-primary mb-1 block">Step {activeStep} of 4</span>
+            <h2 className="text-2xl font-bold text-(--color-text-primary)">
               {activeStep === 1 ? 'Basic Details' : activeStep === 2 ? 'Address' : activeStep === 3 ? 'Job Details' : 'Documents'}
             </h2>
           </div>
@@ -299,14 +299,14 @@ function SignupContent() {
             <AnimatePresence mode="wait">
               {activeStep === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <div className="flex flex-col items-center mb-6 p-6 bg-[var(--color-primary-soft)] rounded-xl border border-[var(--color-border)] group relative overflow-hidden">
+                  <div className="flex flex-col items-center mb-6 p-6 bg-(--color-primary-soft) rounded-xl border border-(--color-border) group relative overflow-hidden">
                     <label className="label mb-4">Profile Picture</label>
                     <div className="relative">
-                      <div className="h-28 w-28 rounded-xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-colors group-hover:border-[var(--color-primary)]">
-                        {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={30} className="text-[var(--color-text-soft)]" />}
+                      <div className="h-28 w-28 rounded-xl bg-(--color-surface) border-2 border-dashed border-(--color-border) flex items-center justify-center overflow-hidden transition-colors group-hover:border-primary">
+                        {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={30} className="text-(--color-text-soft)" />}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
                       </div>
-                      <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-lg bg-[var(--color-primary)] text-[var(--color-on-primary)] flex items-center justify-center"><UserPlus size={16} /></div>
+                      <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-lg bg-primary text-(--color-on-primary) flex items-center justify-center"><UserPlus size={16} /></div>
                     </div>
                   </div>
                   <InputField label="Full Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
@@ -326,14 +326,14 @@ function SignupContent() {
                       <input
                         type={showPassword ? "text" : "password"}
                         {...register('password')}
-                        className={`input pr-11 ${errors.password ? '!border-[var(--color-danger)]' : ''}`}
+                        className={`input pr-11 ${errors.password ? '!border-danger' : ''}`}
                         placeholder="••••••••"
                       />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-(--color-text-muted) hover:text-primary transition-colors">
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    {errors.password && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.password.message}</p>}
+                    {errors.password && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.password.message}</p>}
                   </div>
                 </motion.div>
               )}
@@ -401,10 +401,10 @@ function SignupContent() {
                                 : (branchAdminBranchOptions.length ? 'Select one or more branches' : 'This admin has no branches')
                             }
                           />
-                          {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
+                          {errors.assignedLocation && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
                         </div>
                       )} />
-                      <p className="text-[11px] text-[var(--color-text-muted)] ml-0.5">All branches assigned to a branch admin must belong to a single admin.</p>
+                      <p className="text-[11px] text-(--color-text-muted) ml-0.5">All branches assigned to a branch admin must belong to a single admin.</p>
                     </div>
                   )}
                   {!isSetup && (['staff', 'chef'].includes(selectedRole)) && (
@@ -412,7 +412,7 @@ function SignupContent() {
                       <div className="space-y-2">
                         <label className="label block ml-0.5">Select Branch</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={branchOptions} placeholder="Select Branch" />
-                        {errors.assignedLocation && <p className="text-xs text-[var(--color-danger)] font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
+                        {errors.assignedLocation && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.assignedLocation.message}</p>}
                       </div>
                     )} />
                   )}
@@ -438,10 +438,10 @@ function SignupContent() {
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <InputField label="Aadhar Number (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} onInput={(e) => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} />
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Upload Aadhar Image</label>
-                    <div className="group relative flex flex-col items-center justify-center min-h-[240px] bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)] transition-colors cursor-pointer overflow-hidden">
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Upload Aadhar Image</label>
+                    <div className="group relative flex flex-col items-center justify-center min-h-[240px] bg-(--color-surface) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
-                      {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={36} className="text-[var(--color-text-soft)] group-hover:text-[var(--color-primary)] transition-colors mb-3" /><p className="text-sm font-medium text-[var(--color-text-muted)]">Upload Aadhar Photo</p></div>}
+                      {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={36} className="text-(--color-text-soft) group-hover:text-primary transition-colors mb-3" /><p className="text-sm font-medium text-(--color-text-muted)">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
                 </motion.div>
@@ -457,7 +457,7 @@ function SignupContent() {
             </div>
           </form>
 
-          <p className="mt-10 text-center text-xs text-[var(--color-text-muted)]">Cafe Management System &copy; 2026 CafeOS</p>
+          <p className="mt-10 text-center text-xs text-(--color-text-muted)">Cafe Management System &copy; 2026 CafeOS</p>
         </motion.div>
       </div>
     </div>

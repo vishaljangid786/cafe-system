@@ -12,7 +12,7 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
       maxWidth="max-w-2xl"
     >
       <div className="space-y-10 p-2">
-        <div className="flex items-center justify-between p-8 bg-[var(--color-text-primary)] text-[var(--color-surface)] rounded-xl relative overflow-hidden">
+        <div className="flex items-center justify-between p-8 bg-(--color-text-primary) text-(--color-surface) rounded-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12">
             <Zap size={120} />
           </div>
@@ -33,58 +33,58 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
         <div className="space-y-6">
           <div className="flex items-center gap-3 px-2">
             <div className="h-1 w-6 bg-primary rounded-full" />
-            <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Items</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Order Items</h4>
           </div>
           <div className="grid grid-cols-1 gap-3">
             {selectedOrder.items.map((item, idx) => (
-              <div key={idx} className="p-5 bg-[var(--color-surface-soft)] rounded-[1.5rem] border border-[var(--color-border)] flex items-center justify-between group">
+              <div key={idx} className="p-5 bg-(--color-surface-soft) rounded-[1.5rem] border border-(--color-border) flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center border border-[var(--color-border)] text-primary transition-transform">
+                  <div className="h-10 w-10 rounded-xl bg-(--color-surface) flex items-center justify-center border border-(--color-border) text-primary transition-transform">
                     <Zap size={16} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[var(--color-text-primary)]">{item.menuItem?.name}</p>
-                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{item.quantity} x ₹{item.menuItem?.price}</p>
+                    <p className="text-sm font-bold text-(--color-text-primary)">{item.menuItem?.name}</p>
+                    <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{item.quantity} x ₹{item.menuItem?.price}</p>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{item.quantity * (item.menuItem?.price || 0)}</span>
+                <span className="text-xs font-bold text-(--color-text-primary)">₹{item.quantity * (item.menuItem?.price || 0)}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 pt-6 border-t border-[var(--color-border)]">
+        <div className="flex flex-col gap-3 pt-6 border-t border-(--color-border)">
           {!['COMPLETED', 'CANCELLED', 'REJECTED'].includes(selectedOrder.status) && (
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleCancel(selectedOrder._id)}
-                className="py-4 bg-[var(--color-danger)]/10 text-[var(--color-danger)] text-[10px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white transition-all"
+                className="py-4 bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-normal rounded-xl border border-danger/20 hover:bg-danger hover:text-white transition-all"
               >
                 Cancel Order
               </button>
               <button
                 onClick={() => handleForceComplete(selectedOrder._id)}
-                className="py-4 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-success)]/20 hover:bg-[var(--color-success)] hover:text-white transition-all"
+                className="py-4 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-xl border border-success/20 hover:bg-success hover:text-white transition-all"
               >
                 Complete Order
               </button>
             </div>
           )}
           {selectedOrder.status === 'COMPLETED' && (
-            <div className="p-4 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-center">
-              <p className="text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal">Order Completed</p>
+            <div className="p-4 bg-success/10 border border-success/20 rounded-xl text-center">
+              <p className="text-success text-[10px] font-bold uppercase tracking-normal">Order Completed</p>
             </div>
           )}
 
           {['admin', 'super_admin'].includes(userRole) && selectedOrder.status !== 'COMPLETED' && (
             <button
               onClick={() => handleDeleteOrder(selectedOrder._id)}
-              className="w-full py-4 bg-[var(--color-danger)]/5 text-[var(--color-danger)]/40 text-[9px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-danger)]/10 hover:bg-[var(--color-danger)] hover:text-white transition-all mt-2"
+              className="w-full py-4 bg-danger/5 text-danger/40 text-[9px] font-bold uppercase tracking-normal rounded-xl border border-danger/10 hover:bg-danger hover:text-white transition-all mt-2"
             >
               Delete Order
             </button>
           )}
-          <button className="w-full py-4 text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2">
+          <button className="w-full py-4 text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2">
             <Printer size={14} /> Print Order
           </button>
         </div>

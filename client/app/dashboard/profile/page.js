@@ -152,15 +152,15 @@ export default function ProfilePage() {
         {/* Hero Section */}
         {activeTab === 'details' &&
           <SlideIn direction="down">
-            <div className="card rounded-xl p-6 lg:p-8 text-[var(--color-text-primary)]">
+            <div className="card rounded-xl p-6 lg:p-8 text-(--color-text-primary)">
               <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
                 <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="relative h-32 w-32 rounded-xl bg-[var(--color-surface-soft)] p-2 border border-[var(--color-border)] overflow-hidden group">
-                    <div className="h-full w-full rounded-lg overflow-hidden bg-[var(--color-surface-soft)] flex items-center justify-center">
+                  <div className="relative h-32 w-32 rounded-xl bg-(--color-surface-soft) p-2 border border-(--color-border) overflow-hidden group">
+                    <div className="h-full w-full rounded-lg overflow-hidden bg-(--color-surface-soft) flex items-center justify-center">
                       {(previewImage || user.profileImageUrl) ? (
                         <img src={previewImage || user.profileImageUrl} alt={user.name || 'Profile'} className="h-full w-full object-cover" />
                       ) : (
-                        <UserIcon size={64} className="text-[var(--color-primary)] opacity-20" />
+                        <UserIcon size={64} className="text-primary opacity-20" />
                       )}
                     </div>
                     {isEditing && (
@@ -171,11 +171,11 @@ export default function ProfilePage() {
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
                   </div>
                   <div className="text-center md:text-left">
-                    <span className="badge bg-[var(--color-primary-soft)] text-[var(--color-primary)] capitalize">
+                    <span className="badge bg-(--color-primary-soft) text-primary capitalize">
                       {user.role.replace('_', ' ')}
                     </span>
                     <h1 className="text-2xl lg:text-3xl font-bold tracking-tight mt-3 leading-tight">{user.name}</h1>
-                    <p className="text-[var(--color-text-muted)] font-medium mt-2 flex items-center justify-center md:justify-start gap-2">
+                    <p className="text-(--color-text-muted) font-medium mt-2 flex items-center justify-center md:justify-start gap-2">
                       <Mail size={16} /> {user.email}
                     </p>
                   </div>
@@ -208,7 +208,7 @@ export default function ProfilePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-colors ${activeTab === tab.id ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-colors ${activeTab === tab.id ? 'bg-primary text-(--color-on-primary)' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
             >
               <tab.icon size={16} /> {tab.label}
             </button>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
               <div className="lg:col-span-8 space-y-6">
                 <div className="card rounded-xl p-6 lg:p-8">
                   <h3 className="section-title mb-6 flex items-center gap-2">
-                    <Shield size={16} className="text-[var(--color-primary)]" /> Personal Details
+                    <Shield size={16} className="text-primary" /> Personal Details
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <DetailsField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
@@ -244,22 +244,22 @@ export default function ProfilePage() {
 
               <div className="lg:col-span-4 space-y-6">
                 <CardHover>
-                  <div className="card rounded-xl p-6 text-[var(--color-text-primary)]">
-                    <h3 className="label text-[var(--color-primary)] mb-6 flex items-center gap-2">
+                  <div className="card rounded-xl p-6 text-(--color-text-primary)">
+                    <h3 className="label text-primary mb-6 flex items-center gap-2">
                       <Briefcase size={14} /> Work Details
                     </h3>
                     <div className="space-y-5">
                       <div>
                         <p className="label">Designation</p>
-                        <p className="text-xl font-semibold text-[var(--color-text-primary)] mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+                        <p className="text-xl font-semibold text-(--color-text-primary) mt-1 tracking-tight capitalize">{user.role === 'location_admin' || user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
                       </div>
                       <div>
                         <p className="label">Base Salary</p>
-                        <p className="text-xl font-semibold text-[var(--color-success)] mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
+                        <p className="text-xl font-semibold text-success mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
                         <p className="label">Branch</p>
-                        <p className="text-lg font-semibold text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Head Office'}</p>
+                        <p className="text-lg font-semibold text-(--color-text-secondary) mt-1 tracking-tight">{user.assignedLocation?.name || 'Head Office'}</p>
                       </div>
                     </div>
                   </div>
@@ -271,9 +271,9 @@ export default function ProfilePage() {
 
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-2xl mx-auto">
-              <div className="bg-[var(--color-surface)] rounded-xl p-10 lg:p-14 border border-[var(--color-border)] shadow-sm">
-                <h3 className="text-[11px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
-                  <Shield size={16} className="text-[var(--color-primary)]" /> Change Password
+              <div className="bg-(--color-surface) rounded-xl p-10 lg:p-14 border border-(--color-border) shadow-sm">
+                <h3 className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-10 flex items-center gap-3">
+                  <Shield size={16} className="text-primary" /> Change Password
                 </h3>
 
                 <form className="space-y-8" onSubmit={async (e) => {
@@ -295,13 +295,13 @@ export default function ProfilePage() {
                 }}>
                   <div className="space-y-6">
                     <DetailsField label="Current Password" name="currentPassword" icon={Shield} isEditing={true} type="password" />
-                    <div className="h-px bg-[var(--color-border)] my-4" />
+                    <div className="h-px bg-(--color-border) my-4" />
                     <DetailsField label="New Password" name="newPassword" icon={Zap} isEditing={true} type="password" />
                     <DetailsField label="Confirm New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
                   </div>
 
                   <div className="pt-6">
-                    <Button type="submit" className="w-full h-16 !text-xs font-bold uppercase tracking-normal bg-[var(--color-primary)] text-white shadow-sm">
+                    <Button type="submit" className="w-full h-16 !text-xs font-bold uppercase tracking-normal bg-primary text-white shadow-sm">
                       Confirm Change
                     </Button>
                   </div>
@@ -318,9 +318,9 @@ export default function ProfilePage() {
 function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength }) {
   return (
     <div className="space-y-3">
-      <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-4">{label}</label>
+      <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-4">{label}</label>
       <div className={`relative group transition-all duration-300 ${!isEditing ? 'opacity-70' : ''}`}>
-        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
+        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
         <input
           name={name}
           type={type}
@@ -328,7 +328,7 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
           value={value}
           onChange={onChange}
           maxLength={maxLength}
-          className="w-full pl-16 pr-6 py-5 rounded-xl bg-[var(--color-bg-soft)] border-2 border-transparent focus:border-[var(--color-primary)]/30 focus:bg-[var(--color-surface)] outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-[var(--color-text-primary)]"
+          className="w-full pl-16 pr-6 py-5 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 focus:bg-(--color-surface) outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-(--color-text-primary)"
           placeholder={`Enter ${label}...`}
         />
       </div>
@@ -338,21 +338,21 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colors = {
-    amber: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
-    blue: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
-    emerald: 'text-[var(--color-success)] bg-[var(--color-success)]/10 border-[var(--color-success)]/20',
-    rose: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20'
+    amber: 'text-primary bg-primary/10 border-primary/20',
+    blue: 'text-primary bg-primary/10 border-primary/20',
+    emerald: 'text-success bg-success/10 border-success/20',
+    rose: 'text-danger bg-danger/10 border-danger/20'
   };
 
   return (
     <CardHover>
-      <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm flex flex-col items-center text-center group">
+      <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) shadow-sm flex flex-col items-center text-center group">
         <div className={`h-14 w-14 rounded-xl ${colors[color]} flex items-center justify-center mb-6 transition-transform duration-500`}>
           <Icon size={24} />
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2">{label}</p>
-        <h4 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight mb-2">{value || '0'}</h4>
-        <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{sub}</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">{label}</p>
+        <h4 className="text-3xl font-bold text-(--color-text-primary) tracking-tight mb-2">{value || '0'}</h4>
+        <p className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">{sub}</p>
       </div>
     </CardHover>
   );

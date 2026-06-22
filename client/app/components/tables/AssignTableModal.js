@@ -56,12 +56,12 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Customer Name (Optional)</label>
+            <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Customer Name (Optional)</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
               <input
                 type="text"
-                className="w-full pl-12 pr-4 py-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all font-bold text-sm"
+                className="w-full pl-12 pr-4 py-4 bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all font-bold text-sm"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g. John Doe"

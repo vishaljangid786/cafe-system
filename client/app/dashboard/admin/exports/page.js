@@ -39,9 +39,9 @@ export default function ExportCenter() {
   ];
 
   const formats = [
-    { id: 'pdf', name: 'PDF', icon: <FileText className="text-[var(--color-danger)]" /> },
-    { id: 'excel', name: 'Excel', icon: <FileSpreadsheet className="text-[var(--color-success)]" /> },
-    { id: 'csv', name: 'CSV', icon: <TableIcon className="text-[var(--color-primary)]" /> }
+    { id: 'pdf', name: 'PDF', icon: <FileText className="text-danger" /> },
+    { id: 'excel', name: 'Excel', icon: <FileSpreadsheet className="text-success" /> },
+    { id: 'csv', name: 'CSV', icon: <TableIcon className="text-primary" /> }
   ];
 
   const fetchLocations = async () => {
@@ -101,9 +101,9 @@ export default function ExportCenter() {
   if (!hasAccess && user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Download size={60} className="text-[var(--color-danger)] opacity-20" />
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Access Restricted</h2>
-        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">You do not have permission to export reports.</p>
+        <Download size={60} className="text-danger opacity-20" />
+        <h2 className="text-2xl font-bold text-(--color-text-primary) italic uppercase">Access Restricted</h2>
+        <p className="text-(--color-text-muted) font-bold text-sm tracking-normal uppercase">You do not have permission to export reports.</p>
       </div>
     );
   }
@@ -116,11 +116,11 @@ export default function ExportCenter() {
         <SlideIn>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--color-text-primary)] flex items-center gap-3">
-                <Download className="text-[var(--color-primary)] h-10 w-10" />
-                Export <span className="text-[var(--color-primary)]">Reports</span>
+              <h1 className="text-4xl font-bold text-(--color-text-primary) flex items-center gap-3">
+                <Download className="text-primary h-10 w-10" />
+                Export <span className="text-primary">Reports</span>
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Download your business reports in different formats.</p>
+              <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Download your business reports in different formats.</p>
             </div>
           </div>
         </SlideIn>
@@ -129,8 +129,8 @@ export default function ExportCenter() {
           
           {/* Category Selection */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 shadow-sm">
-              <h2 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-8 shadow-sm">
+              <h2 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                 <Filter size={14} /> 1. Choose What to Export
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,52 +140,52 @@ export default function ExportCenter() {
                     onClick={() => setFilters({ ...filters, type: cat.id })}
                     className={`flex items-center justify-between p-5 rounded-xl border transition-all ${
                       filters.type === cat.id 
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-1 ring-[var(--color-primary)]'
-                        : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/30'
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        : 'border-(--color-border) hover:border-primary/30'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-xl ${filters.type === cat.id ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}>
+                      <div className={`p-3 rounded-xl ${filters.type === cat.id ? 'bg-primary text-white' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
                         {cat.icon}
                       </div>
-                      <span className={`font-bold ${filters.type === cat.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}>{cat.name}</span>
+                      <span className={`font-bold ${filters.type === cat.id ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'}`}>{cat.name}</span>
                     </div>
-                    {filters.type === cat.id && <CheckCircle2 className="text-[var(--color-primary)]" size={18} />}
+                    {filters.type === cat.id && <CheckCircle2 className="text-primary" size={18} />}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Date and Branch Filters */}
-            <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-8 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <Calendar size={12} /> Start Date
                 </label>
                 <input 
                   type="date" 
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full p-3 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
+                  className="w-full p-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <Calendar size={12} /> End Date
                 </label>
                 <input 
                   type="date" 
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full p-3 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 text-[var(--color-text-primary)]"
+                  className="w-full p-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
+                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <MapPin size={12} /> Branch
                 </label>
                 {selectedLocationIds.length > 1 ? (
-                  <div className="w-full p-3 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl text-xs font-bold text-[var(--color-primary)] uppercase tracking-normal">
+                  <div className="w-full p-3 bg-primary/10 border border-primary/30 rounded-xl text-xs font-bold text-primary uppercase tracking-normal">
                     {selectedLocationIds.length} branches selected
                   </div>
                 ) : (
@@ -205,11 +205,11 @@ export default function ExportCenter() {
 
           {/* Format and Action */}
           <div className="space-y-6">
-            <div className="bg-[var(--color-surface)] text-[var(--color-text-primary)] rounded-xl p-8 shadow-sm relative overflow-hidden h-full flex flex-col justify-between border border-[var(--color-border)]">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)]/20 hidden -mr-16 -mt-16 rounded-full" />
+            <div className="bg-(--color-surface) text-(--color-text-primary) rounded-xl p-8 shadow-sm relative overflow-hidden h-full flex flex-col justify-between border border-(--color-border)">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 hidden -mr-16 -mt-16 rounded-full" />
               
               <div className="space-y-8 relative z-10">
-                <h2 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">2. Choose Format</h2>
+                <h2 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">2. Choose Format</h2>
                 <div className="space-y-3">
                   {formats.map((f) => (
                     <button
@@ -217,8 +217,8 @@ export default function ExportCenter() {
                       onClick={() => setFilters({ ...filters, format: f.id })}
                       className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
                         filters.format === f.id 
-                          ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
-                          : 'border-[var(--color-border)] bg-[var(--color-surface-soft)] hover:border-[var(--color-primary)]/30'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-(--color-border) bg-(--color-surface-soft) hover:border-primary/30'
                       }`}
                     >
                       {f.icon}
@@ -232,7 +232,7 @@ export default function ExportCenter() {
                 <button
                   onClick={handleExport}
                   disabled={loading}
-                  className="w-full py-5 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] disabled:bg-[var(--color-surface-soft)] disabled:text-[var(--color-text-muted)] text-white font-bold uppercase tracking-normal rounded-xl transition-all shadow-sm  flex items-center justify-center gap-3 active:scale-95"
+                  className="w-full py-5 bg-primary hover:bg-secondary disabled:bg-(--color-surface-soft) disabled:text-(--color-text-muted) text-white font-bold uppercase tracking-normal rounded-xl transition-all shadow-sm  flex items-center justify-center gap-3 active:scale-95"
                 >
                   {loading ? (
                     <>

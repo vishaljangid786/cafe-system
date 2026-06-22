@@ -23,30 +23,30 @@ export default function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-[10000]"
+            className="fixed inset-0 bg-black/50 z-10000"
           />
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-[10001] pointer-events-none">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-10001 pointer-events-none">
             <motion.div
               initial={{ scale: 0.97, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.97, opacity: 0, y: 12 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="w-full max-w-sm rounded-xl overflow-hidden pointer-events-auto p-7 text-center border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-md)]"
+              className="w-full max-w-sm rounded-xl overflow-hidden pointer-events-auto p-7 text-center border border-(--color-border) bg-(--color-surface) shadow-[var(--shadow-md)]"
             >
-              <div className={`h-14 w-14 ${type === 'danger' ? 'bg-[rgba(var(--color-danger-rgb),0.1)] text-[var(--color-danger)]' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'} rounded-xl mx-auto flex items-center justify-center mb-5`}>
+              <div className={`h-14 w-14 ${type === 'danger' ? 'bg-[rgba(var(--color-danger-rgb),0.1)] text-danger' : 'bg-(--color-primary-soft) text-primary'} rounded-xl mx-auto flex items-center justify-center mb-5`}>
                 {type === 'danger' ? <ShieldAlert size={28} /> : <AlertCircle size={28} />}
               </div>
 
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{title}</h3>
+              <h3 className="text-lg font-semibold text-(--color-text-primary) mb-2">{title}</h3>
 
               {isImpersonating && (
-                <div className="bg-[rgba(var(--color-danger-rgb),0.1)] text-[var(--color-danger)] text-xs font-medium py-2 rounded-lg mb-4 border border-[rgba(var(--color-danger-rgb),0.2)] flex items-center justify-center gap-2">
+                <div className="bg-[rgba(var(--color-danger-rgb),0.1)] text-danger text-xs font-medium py-2 rounded-lg mb-4 border border-[rgba(var(--color-danger-rgb),0.2)] flex items-center justify-center gap-2">
                   <ShieldAlert size={12} />
                   Destructive action during impersonation
                 </div>
               )}
 
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-6 px-2">{message}</p>
+              <p className="text-sm text-(--color-text-secondary) leading-relaxed mb-6 px-2">{message}</p>
 
               <div className="grid grid-cols-2 gap-3">
                 <Button

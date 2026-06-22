@@ -18,7 +18,7 @@ const SIZES = {
 export function Spinner({ size = 'md', label, className = '', labelClassName = '' }) {
   const ring = (
     <span
-      className={`inline-block rounded-full border-[var(--color-primary)]/15 border-t-[var(--color-primary)] animate-spin ${SIZES[size] || SIZES.md} ${className}`}
+      className={`inline-block rounded-full border-primary/15 border-t-primary animate-spin ${SIZES[size] || SIZES.md} ${className}`}
     />
   );
 
@@ -28,7 +28,7 @@ export function Spinner({ size = 'md', label, className = '', labelClassName = '
     <div className="inline-flex flex-col items-center gap-3">
       {ring}
       <span
-        className={`text-sm text-[var(--color-text-muted)] ${labelClassName}`}
+        className={`text-sm text-(--color-text-muted) ${labelClassName}`}
       >
         {label}
       </span>
@@ -43,7 +43,7 @@ export function DotsLoader({ className = '' }) {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="h-2 w-2 rounded-full bg-[var(--color-primary)] animate-loader-dot"
+          className="h-2 w-2 rounded-full bg-primary animate-loader-dot"
           style={{ animationDelay: `${i * 0.16}s` }}
         />
       ))}

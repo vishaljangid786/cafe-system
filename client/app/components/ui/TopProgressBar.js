@@ -113,10 +113,10 @@ export default function TopProgressBar() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-[2px]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-9999 h-[2px]"
     >
       <div
-        className="relative h-full origin-left bg-[var(--color-primary)]"
+        className="relative h-full origin-left bg-primary"
         style={{
           width: `${s.value}%`,
           opacity: finishing ? 0 : 1,

@@ -215,7 +215,7 @@ export default function UniversalDateFilter({
 
         {loading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <Loader2 className="animate-spin text-[var(--color-primary)]" size={18} />
+            <Loader2 className="animate-spin text-primary" size={18} />
           </div>
         )}
       </div>
@@ -277,23 +277,23 @@ export default function UniversalDateFilter({
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            className="flex gap-2 p-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl items-center shrink-0"
+            className="flex gap-2 p-1 bg-(--color-surface) border border-(--color-border) rounded-xl items-center shrink-0"
           >
             <div className="flex items-center gap-2 pl-3">
-              <span className="text-xs font-medium text-[var(--color-text-muted)] whitespace-nowrap">From</span>
+              <span className="text-xs font-medium text-(--color-text-muted) whitespace-nowrap">From</span>
               <input
                 type="date"
-                className="bg-transparent text-xs outline-none text-[var(--color-text-primary)] w-24"
+                className="bg-transparent text-xs outline-none text-(--color-text-primary) w-24"
                 value={customDates.start}
                 onChange={e => setCustomDates({ ...customDates, start: e.target.value })}
               />
             </div>
-            <div className="w-px h-4 bg-[var(--color-border)]" />
+            <div className="w-px h-4 bg-(--color-border)" />
             <div className="flex items-center gap-2 pr-3">
-              <span className="text-xs font-medium text-[var(--color-text-muted)] whitespace-nowrap">To</span>
+              <span className="text-xs font-medium text-(--color-text-muted) whitespace-nowrap">To</span>
               <input
                 type="date"
-                className="bg-transparent text-xs outline-none text-[var(--color-text-primary)] w-24"
+                className="bg-transparent text-xs outline-none text-(--color-text-primary) w-24"
                 value={customDates.end}
                 onChange={e => setCustomDates({ ...customDates, end: e.target.value })}
               />

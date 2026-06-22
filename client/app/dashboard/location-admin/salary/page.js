@@ -62,20 +62,20 @@ export default function SalaryPage() {
       <div className="space-y-10 pb-20">
         {/* Top Branding & Filter Section */}
         <SlideIn direction="down">
-          <div className="relative overflow-hidden bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-10 rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)]">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-primary)]/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>
+          <div className="relative overflow-hidden bg-(--color-surface) dark:bg-(--color-surface) p-10 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border)">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>
 
             <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
               <div>
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="px-3 py-1 bg-[var(--color-primary-soft)] text-[var(--color-primary)] rounded-full text-[10px] font-bold uppercase tracking-normal border border-[rgba(var(--color-primary-rgb),0.2)]">
+                  <div className="px-3 py-1 bg-(--color-primary-soft) text-primary rounded-full text-[10px] font-bold uppercase tracking-normal border border-[rgba(var(--color-primary-rgb),0.2)]">
                     Accounts
                   </div>
                 </div>
-                <h1 className="text-4xl lg:text-5xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight leading-tight">
-                  Staff <span className="text-[var(--color-primary)]">Salary</span>
+                <h1 className="text-4xl lg:text-5xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-tight">
+                  Staff <span className="text-primary">Salary</span>
                 </h1>
-                <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-4 font-medium max-w-md">
+                <p className="text-(--color-text-muted) dark:text-(--color-text-muted) text-sm mt-4 font-medium max-w-md">
                   Monthly salary calculation based on staff attendance.
                 </p>
               </div>
@@ -83,18 +83,18 @@ export default function SalaryPage() {
               <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                 <div
                   onClick={() => monthInputRef.current?.showPicker()}
-                  className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] p-2 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center px-4 cursor-pointer hover:border-[var(--color-primary)]/50 transition-colors"
+                  className="bg-(--color-surface-soft) dark:bg-(--color-surface) p-2 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center px-4 cursor-pointer hover:border-primary/50 transition-colors"
                 >
-                  <Calendar size={18} className="text-[var(--color-primary)] mr-3" />
+                  <Calendar size={18} className="text-primary mr-3" />
                   <input
                     ref={monthInputRef}
                     type="month"
-                    className="bg-transparent border-none outline-none py-2 text-sm font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] uppercase tracking-normal cursor-pointer"
+                    className="bg-transparent border-none outline-none py-2 text-sm font-bold text-(--color-text-primary) dark:text-(--color-text-primary) uppercase tracking-normal cursor-pointer"
                     value={month}
                     onChange={(e) => setMonth(e.target.value)}
                   />
                 </div>
-                <button className="px-8 py-4 bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-xl font-bold text-xs uppercase tracking-normal  transition-all shadow-sm flex items-center justify-center">
+                <button className="px-8 py-4 bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) rounded-xl font-bold text-xs uppercase tracking-normal  transition-all shadow-sm flex items-center justify-center">
                   <Download size={16} className="mr-2" /> Export PDF
                 </button>
               </div>
@@ -105,42 +105,42 @@ export default function SalaryPage() {
         {/* Analytics Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-[var(--color-primary)] p-8 rounded-xl text-white shadow-sm  relative overflow-hidden group">
+            <div className="bg-primary p-8 rounded-xl text-white shadow-sm  relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform">
                 <DollarSign size={120} />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-normal opacity-70 mb-4">Total Salary Payout</p>
               <div className="text-4xl font-bold tracking-tight">₹{totalPayout.toLocaleString()}</div>
-              <div className="mt-6 flex items-center text-[10px] font-bold uppercase bg-white/10 w-fit px-3 py-1 rounded-full border border-[var(--color-border)]">
+              <div className="mt-6 flex items-center text-[10px] font-bold uppercase bg-white/10 w-fit px-3 py-1 rounded-full border border-(--color-border)">
                 <TrendingUp size={12} className="mr-2" /> +4.2% vs last month
               </div>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Average Attendance</p>
-              <div className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
+            <div className="bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
+              <p className="text-[10px] font-bold text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal mb-4">Average Attendance</p>
+              <div className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
                 {salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100).toFixed(1) : 0}%
               </div>
-              <div className="mt-6 h-1.5 w-full bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-full overflow-hidden">
+              <div className="mt-6 h-1.5 w-full bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100) : 0}%` }}
-                  className="h-full bg-[var(--color-success)] rounded-full"
+                  className="h-full bg-success rounded-full"
                 />
               </div>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Average Salary</p>
-              <div className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
+            <div className="bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
+              <p className="text-[10px] font-bold text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal mb-4">Average Salary</p>
+              <div className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
                 ₹{salaries.length > 0 ? Math.round(totalPayout / salaries.length).toLocaleString() : 0}
               </div>
-              <p className="mt-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
-                <Info size={14} className="mr-2 text-[var(--color-primary)]" /> Per regular employee
+              <p className="mt-6 text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center">
+                <Info size={14} className="mr-2 text-primary" /> Per regular employee
               </p>
             </div>
           </SlideIn>
@@ -148,17 +148,17 @@ export default function SalaryPage() {
 
         {/* List Section */}
         <SlideIn direction="up" delay={0.4}>
-          <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)] overflow-hidden">
-            <div className="p-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col md:flex-row justify-between items-center gap-4">
-              <h2 className="text-xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight flex items-center">
-                <FileText className="mr-3 text-[var(--color-primary)]" size={24} /> Salary <span className="ml-2 text-[var(--color-primary)]">List</span>
+          <div className="bg-(--color-surface) dark:bg-(--color-surface) rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) overflow-hidden">
+            <div className="p-8 border-b border-(--color-border) dark:border-(--color-border) flex flex-col md:flex-row justify-between items-center gap-4">
+              <h2 className="text-xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center">
+                <FileText className="mr-3 text-primary" size={24} /> Salary <span className="ml-2 text-primary">List</span>
               </h2>
               <div className="relative w-full md:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
                 <input
                   type="text"
                   placeholder="Search Staff..."
-                  className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-xl border-none focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-xs font-bold dark:text-[var(--color-text-muted)]"
+                  className="w-full pl-12 pr-4 py-3 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border-none focus:ring-2 focus:ring-primary outline-none text-xs font-bold dark:text-(--color-text-muted)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -168,13 +168,13 @@ export default function SalaryPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[var(--color-surface-soft)]/30 dark:bg-[var(--color-surface)]/30 text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal">
+                  <tr className="bg-(--color-surface-soft)/30 dark:bg-(--color-surface)/30 text-[10px] font-bold text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal">
                     <th className="px-10 py-6">Staff Details</th>
                     <th className="px-10 py-6 text-center">Attendance Summary</th>
                     <th className="px-10 py-6 text-right">Details</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]/50">
+                <tbody className="divide-y divide-(--color-border) dark:divide-(--color-border)/50">
                   {refetching ? (
                     <tr>
                       <td colSpan="4" className="px-10 py-8">
@@ -197,39 +197,39 @@ export default function SalaryPage() {
                       transition={{ delay: idx * 0.05 }}
                       key={item._id}
                       onClick={() => setViewingUser(item)}
-                      className="hover:bg-[var(--color-surface-soft)]/50 dark:hover:bg-[var(--color-surface)]/20 transition-all group cursor-pointer"
+                      className="hover:bg-(--color-surface-soft)/50 dark:hover:bg-(--color-surface)/20 transition-all group cursor-pointer"
                     >
                       <td className="px-10 py-8">
                         <div className="flex items-center">
                           <div className="relative">
-                            <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 to-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] dark:text-[var(--color-primary)] font-bold text-2xl border border-[rgba(var(--color-primary-rgb),0.2)] shadow-lg">
+                            <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-primary dark:text-primary font-bold text-2xl border border-[rgba(var(--color-primary-rgb),0.2)] shadow-lg">
                               {item.name.charAt(0)}
                             </div>
-                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-[var(--color-success)] border-4 border-[var(--color-border)] dark:border-[var(--color-border)] rounded-full"></div>
+                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full"></div>
                           </div>
                           <div className="ml-6">
-                            <div className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight group-hover:text-[var(--color-primary)] transition-colors">{item.name}</div>
-                            <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">{item.email}</div>
+                            <div className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight group-hover:text-primary transition-colors">{item.name}</div>
+                            <div className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">{item.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-10 py-8">
                         <div className="flex flex-col items-center">
                           <div className="flex -space-x-2 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-success)] text-white flex flex-col items-center justify-center border-2 border-[var(--color-border)] dark:border-[var(--color-border)] shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-success text-white flex flex-col items-center justify-center border-2 border-(--color-border) dark:border-(--color-border) shadow-md">
                               <span className="text-xs font-bold leading-none">{item.totalPresent}</span>
                               <span className="text-[6px] font-bold uppercase">Pres</span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)] text-white flex flex-col items-center justify-center border-2 border-[var(--color-border)] dark:border-[var(--color-border)] shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-primary text-white flex flex-col items-center justify-center border-2 border-(--color-border) dark:border-(--color-border) shadow-md">
                               <span className="text-xs font-bold leading-none">{item.totalHalfDay}</span>
                               <span className="text-[6px] font-bold uppercase">Half</span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-danger)] text-white flex flex-col items-center justify-center border-2 border-[var(--color-border)] dark:border-[var(--color-border)] shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-danger text-white flex flex-col items-center justify-center border-2 border-(--color-border) dark:border-(--color-border) shadow-md">
                               <span className="text-xs font-bold leading-none">{item.totalAbsent}</span>
                               <span className="text-[6px] font-bold uppercase">Abs</span>
                             </div>
                           </div>
-                          <div className="px-3 py-1 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-lg text-[9px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal">
+                          <div className="px-3 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-lg text-[9px] font-bold text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal">
                             {item.payableDays} Effective Days
                           </div>
                         </div>
@@ -237,7 +237,7 @@ export default function SalaryPage() {
                       <td className="px-10 py-8 text-right">
                         <button 
                           onClick={() => setViewingUser(item)}
-                          className="px-6 py-3 bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-[var(--color-primary)] transition-all shadow-sm"
+                          className="px-6 py-3 bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-primary transition-all shadow-sm"
                         >
                           View Salary
                         </button>
@@ -259,60 +259,60 @@ export default function SalaryPage() {
         >
           {viewingUser && (
             <div className="space-y-8">
-              <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-[var(--color-border)] dark:border-[var(--color-border)] pb-8">
+              <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-(--color-border) dark:border-(--color-border) pb-8">
                 <div className="flex items-center gap-6">
-                  <div className="h-20 w-20 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center text-3xl font-bold shadow-sm ">
+                  <div className="h-20 w-20 rounded-xl bg-primary text-white flex items-center justify-center text-3xl font-bold shadow-sm ">
                     {viewingUser.name.charAt(0)}
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight leading-none">{viewingUser.name}</h2>
-                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-2">{viewingUser.email}</p>
+                    <h2 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none">{viewingUser.name}</h2>
+                    <p className="text-xs font-bold text-(--color-text-muted) uppercase tracking-normal mt-2">{viewingUser.email}</p>
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="px-3 py-1 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] rounded-full">
+                      <span className="px-3 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) rounded-full">
                         {viewingUser.role?.replace('_', ' ')}
                       </span>
-                      <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
+                      <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-full">
                         Staff
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Salary</p>
-                  <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
+                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
+                  <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
                     ₹{viewingUser.monthlySalary.toLocaleString()}
                   </p>
-                  <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase mt-1">Per Month</p>
+                  <p className="text-[10px] font-bold text-primary uppercase mt-1">Per Month</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-4">Attendance Detail ({month})</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-4">Attendance Detail ({month})</h4>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-[var(--color-success)]/10 p-4 rounded-xl border border-[var(--color-success)]/10">
-                        <p className="text-[10px] font-bold uppercase text-[var(--color-success)] mb-1">Present</p>
-                        <p className="text-2xl font-bold text-[var(--color-success)] dark:text-[var(--color-success)]">{viewingUser.totalPresent} Days</p>
+                      <div className="bg-success/10 p-4 rounded-xl border border-success/10">
+                        <p className="text-[10px] font-bold uppercase text-success mb-1">Present</p>
+                        <p className="text-2xl font-bold text-success dark:text-success">{viewingUser.totalPresent} Days</p>
                       </div>
-                      <div className="bg-[var(--color-primary)]/10 p-4 rounded-xl border border-[var(--color-primary)]/10">
-                        <p className="text-[10px] font-bold uppercase text-[var(--color-primary)] mb-1">Half Days</p>
-                        <p className="text-2xl font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{viewingUser.totalHalfDay} Days</p>
+                      <div className="bg-primary/10 p-4 rounded-xl border border-primary/10">
+                        <p className="text-[10px] font-bold uppercase text-primary mb-1">Half Days</p>
+                        <p className="text-2xl font-bold text-primary dark:text-primary">{viewingUser.totalHalfDay} Days</p>
                       </div>
-                      <div className="bg-[var(--color-danger)]/10 p-4 rounded-xl border border-[var(--color-danger)]/10">
-                        <p className="text-[10px] font-bold uppercase text-[var(--color-danger)] mb-1">Absent</p>
-                        <p className="text-2xl font-bold text-[var(--color-danger)] dark:text-[var(--color-danger)]">{viewingUser.totalAbsent} Days</p>
+                      <div className="bg-danger/10 p-4 rounded-xl border border-danger/10">
+                        <p className="text-[10px] font-bold uppercase text-danger mb-1">Absent</p>
+                        <p className="text-2xl font-bold text-danger dark:text-danger">{viewingUser.totalAbsent} Days</p>
                       </div>
-                      <div className="bg-[var(--color-primary)]/10 p-4 rounded-xl border border-[var(--color-primary)]/10">
-                        <p className="text-[10px] font-bold uppercase text-[var(--color-primary)] mb-1">Late Marks</p>
-                        <p className="text-2xl font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{viewingUser.totalLate} Marks</p>
+                      <div className="bg-primary/10 p-4 rounded-xl border border-primary/10">
+                        <p className="text-[10px] font-bold uppercase text-primary mb-1">Late Marks</p>
+                        <p className="text-2xl font-bold text-primary dark:text-primary">{viewingUser.totalLate} Marks</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface-soft)] p-6 rounded-xl text-[var(--color-text-primary)] shadow-sm relative overflow-hidden group">
+                  <div className="bg-(--color-surface) dark:bg-(--color-surface-soft) p-6 rounded-xl text-(--color-text-primary) shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform">
                       <Wallet size={80} />
                     </div>
@@ -323,16 +323,16 @@ export default function SalaryPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/50 dark:border-[var(--color-primary)]/10 flex items-start gap-3">
-                    <Info size={16} className="text-[var(--color-primary)] shrink-0 mt-0.5" />
-                    <p className="text-[10px] font-bold text-[var(--color-primary)]/60 dark:text-[var(--color-primary)]/60 leading-relaxed uppercase tracking-normal">
+                  <div className="p-4 rounded-xl bg-(--color-primary-soft) border border-primary/50 dark:border-primary/10 flex items-start gap-3">
+                    <Info size={16} className="text-primary shrink-0 mt-0.5" />
+                    <p className="text-[10px] font-bold text-primary/60 dark:text-primary/60 leading-relaxed uppercase tracking-normal">
                       Salary calculated based on total working days and attendance.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[var(--color-border)] dark:border-[var(--color-border)] flex gap-4">
+              <div className="pt-6 border-t border-(--color-border) dark:border-(--color-border) flex gap-4">
                 <Button
                   variant="outline"
                   className="flex-1 py-4 !rounded-xl font-bold text-xs uppercase tracking-normal"
@@ -341,7 +341,7 @@ export default function SalaryPage() {
                   Close 
                 </Button>
                 <Button
-                  className="flex-1 py-4 !rounded-xl font-bold text-xs uppercase tracking-normal bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] shadow-sm"
+                  className="flex-1 py-4 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) shadow-sm"
                   onClick={() => {
                     toast.success('Salary slip exported');
                   }}

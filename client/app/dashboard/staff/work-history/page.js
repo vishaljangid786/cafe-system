@@ -59,38 +59,38 @@ export default function WorkHistoryPage() {
       <div className="max-w-[1500px] mx-auto pb-20 space-y-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
+            <h1 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
                 <History size={24} className="text-white" />
               </div>
               Work History
             </h1>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium ml-13">View your complete compensation and shift records.</p>
+            <p className="text-xs text-(--color-text-muted) mt-1 font-medium ml-13">View your complete compensation and shift records.</p>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-end gap-6 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm">
+        <div className="flex flex-col md:flex-row items-end gap-6 bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm">
           <div className="flex-1 space-y-3">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-4">Start Date</label>
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-4">Start Date</label>
             <input
               type="date"
               value={historyFilter.startDate}
               onChange={(e) => setHistoryFilter(prev => ({ ...prev, startDate: e.target.value }))}
-              className="w-full px-6 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border-2 border-transparent focus:border-[var(--color-primary)]/20 outline-none text-xs font-bold transition-all"
+              className="w-full px-6 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border-2 border-transparent focus:border-primary/20 outline-none text-xs font-bold transition-all"
             />
           </div>
           <div className="flex-1 space-y-3">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-4">End Date</label>
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-4">End Date</label>
             <input
               type="date"
               value={historyFilter.endDate}
               onChange={(e) => setHistoryFilter(prev => ({ ...prev, endDate: e.target.value }))}
-              className="w-full px-6 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border-2 border-transparent focus:border-[var(--color-primary)]/20 outline-none text-xs font-bold transition-all"
+              className="w-full px-6 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border-2 border-transparent focus:border-primary/20 outline-none text-xs font-bold transition-all"
             />
           </div>
           <button
             onClick={fetchData}
-            className="px-8 py-4 bg-[var(--color-primary)] text-white rounded-xl text-[10px] font-bold uppercase tracking-normal shadow-lg   active:scale-95 transition-all"
+            className="px-8 py-4 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-normal shadow-lg   active:scale-95 transition-all"
           >
             Apply Filter
           </button>
@@ -102,26 +102,26 @@ export default function WorkHistoryPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-6 space-y-8">
               {/* Salary Records */}
-              <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm">
-                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
-                  <DollarSign size={16} className="text-[var(--color-success)]" /> Salary Records
+              <div className="bg-(--color-surface) dark:bg-(--color-surface) rounded-xl p-10 border border-(--color-border) dark:border-(--color-border) shadow-sm">
+                <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) dark:text-(--color-text-muted) mb-10 flex items-center gap-3">
+                  <DollarSign size={16} className="text-success" /> Salary Records
                 </h3>
                 <div className="space-y-4">
                   {salaryHistory.map((entry, i) => (
-                    <div key={i} className="flex items-center justify-between p-6 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/40 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] group hover:border-[var(--color-success)]/30 transition-all">
+                    <div key={i} className="flex items-center justify-between p-6 bg-(--color-surface-soft) dark:bg-(--color-surface)/40 rounded-xl border border-(--color-border) dark:border-(--color-border) group hover:border-success/30 transition-all">
                       <div className="flex items-center gap-6">
-                        <div className="h-12 w-12 rounded-xl bg-[var(--color-surface)] dark:bg-[var(--color-bg)] flex items-center justify-center text-[var(--color-success)] shadow-lg">
+                        <div className="h-12 w-12 rounded-xl bg-(--color-surface) dark:bg-(--color-bg) flex items-center justify-center text-success shadow-lg">
                           <Receipt size={20} />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">{new Date(entry.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-                          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">{entry.payableDays} Working Days</p>
+                          <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">{new Date(entry.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                          <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">{entry.payableDays} Working Days</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-[var(--color-success)] tracking-tight">₹{Math.round(entry.calculatedSalary).toLocaleString()}</p>
-                        <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1 flex items-center gap-1 justify-end">
-                          Paid <CheckCircle2 size={10} className="text-[var(--color-success)]" />
+                        <p className="text-2xl font-bold text-success tracking-tight">₹{Math.round(entry.calculatedSalary).toLocaleString()}</p>
+                        <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1 flex items-center gap-1 justify-end">
+                          Paid <CheckCircle2 size={10} className="text-success" />
                         </p>
                       </div>
                     </div>
@@ -133,9 +133,9 @@ export default function WorkHistoryPage() {
               </div>
 
               {/* Salary Graph */}
-              <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm flex flex-col">
-                <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-8 flex items-center gap-3">
-                  <DollarSign size={16} className="text-[var(--color-success)]" /> Salary Trends (6 Months)
+              <div className="bg-(--color-surface) dark:bg-(--color-surface) rounded-xl p-10 border border-(--color-border) dark:border-(--color-border) shadow-sm flex flex-col">
+                <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) dark:text-(--color-text-muted) mb-8 flex items-center gap-3">
+                  <DollarSign size={16} className="text-success" /> Salary Trends (6 Months)
                 </h3>
                 <div className="flex-1 min-h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -158,19 +158,19 @@ export default function WorkHistoryPage() {
             </div>
 
             <div className="lg:col-span-6 space-y-8">
-              <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl p-10 border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm h-full flex flex-col justify-between">
+              <div className="bg-(--color-surface) dark:bg-(--color-surface) rounded-xl p-10 border border-(--color-border) dark:border-(--color-border) shadow-sm h-full flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
-                    <Calendar size={16} className="text-[var(--color-primary)]" /> Daily Attendance
+                  <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) dark:text-(--color-text-muted) mb-10 flex items-center gap-3">
+                    <Calendar size={16} className="text-primary" /> Daily Attendance
                   </h3>
                   <div className="space-y-3">
                     {attendance.map((att, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/30 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <div key={i} className="flex items-center justify-between p-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/30 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <div className="flex items-center gap-4">
-                          <div className={`h-2 w-2 rounded-full ${att.status === 'present' ? 'bg-[var(--color-success)]' : att.status === 'absent' ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-primary)]'}`} />
-                          <p className="text-xs font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{new Date(att.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                          <div className={`h-2 w-2 rounded-full ${att.status === 'present' ? 'bg-success' : att.status === 'absent' ? 'bg-danger' : 'bg-primary'}`} />
+                          <p className="text-xs font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{new Date(att.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                         </div>
-                        <span className={`text-[9px] font-bold uppercase tracking-normal px-2 py-1 rounded-md ${att.status === 'present' ? 'text-[var(--color-success)] bg-[var(--color-success)]/10' : 'text-[var(--color-danger)] bg-[var(--color-danger)]/10'}`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-normal px-2 py-1 rounded-md ${att.status === 'present' ? 'text-success bg-success/10' : 'text-danger bg-danger/10'}`}>
                           {att.status}
                         </span>
                       </div>
@@ -183,19 +183,19 @@ export default function WorkHistoryPage() {
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--color-border)] dark:border-[var(--color-border)]/50">
+                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-(--color-border) dark:border-(--color-border)/50">
                     <button
                       disabled={currentPage === 1}
                       onClick={() => fetchData(currentPage - 1)}
-                      className="px-5 py-2.5 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] disabled:opacity-40"
+                      className="px-5 py-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) text-[10px] font-bold uppercase tracking-wider text-(--color-text-secondary) dark:text-(--color-text-muted) disabled:opacity-40"
                     >
                       Previous
                     </button>
-                    <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Page {currentPage} of {totalPages}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Page {currentPage} of {totalPages}</span>
                     <button
                       disabled={currentPage === totalPages}
                       onClick={() => fetchData(currentPage + 1)}
-                      className="px-5 py-2.5 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] disabled:opacity-40"
+                      className="px-5 py-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) text-[10px] font-bold uppercase tracking-wider text-(--color-text-secondary) dark:text-(--color-text-muted) disabled:opacity-40"
                     >
                       Next
                     </button>

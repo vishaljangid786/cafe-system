@@ -247,7 +247,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         startY: 20,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [245, 158, 11] } // [var(--color-primary)]
+        headStyles: { fillColor: [245, 158, 11] } // primary
       });
 
       doc.save(generateFileName('pdf'));
@@ -325,18 +325,18 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
     <div className="relative z-40 w-full sm:w-auto">
       <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
         {showDateFilter && (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-2 shadow-sm w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-(--color-surface) border border-(--color-border) rounded-xl p-2 shadow-sm w-full sm:w-auto">
             <input 
               type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border border-[var(--color-border)] sm:border-none rounded-lg sm:rounded-none outline-none text-[var(--color-text-primary)] w-full sm:w-auto"
+              className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
               value={dateFilter.startDate}
               onChange={e => setDateFilter({...dateFilter, startDate: e.target.value})}
               title="Start Date"
             />
-            <span className="text-[var(--color-text-muted)] text-xs hidden sm:inline">-</span>
+            <span className="text-(--color-text-muted) text-xs hidden sm:inline">-</span>
             <input 
               type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border border-[var(--color-border)] sm:border-none rounded-lg sm:rounded-none outline-none text-[var(--color-text-primary)] w-full sm:w-auto"
+              className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
               value={dateFilter.endDate}
               onChange={e => setDateFilter({...dateFilter, endDate: e.target.value})}
               title="End Date"
@@ -346,7 +346,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         
         <button
           onClick={() => setShowDateFilter(!showDateFilter)}
-          className={`p-2.5 rounded-xl border transition-all ${showDateFilter ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)] text-[var(--color-primary)]' : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]'}`}
+          className={`p-2.5 rounded-xl border transition-all ${showDateFilter ? 'bg-primary/10 border-primary text-primary' : 'bg-(--color-surface) border-(--color-border) text-(--color-text-muted) hover:border-primary hover:text-primary'}`}
           title="Date Range Filter"
         >
           <Calendar size={18} />
@@ -354,7 +354,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
 
         <button
           onClick={() => setShowOptions(!showOptions)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-lg font-semibold text-sm hover:bg-[var(--color-primary-hover)] active:scale-95 transition-colors w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-(--color-on-primary) rounded-lg font-semibold text-sm hover:bg-(--color-primary-hover) active:scale-95 transition-colors w-full sm:w-auto"
         >
           <Download size={16} />
           Export
@@ -362,43 +362,43 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
       </div>
 
       {showOptions && (
-        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-[var(--shadow-md)] py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-(--color-surface) border border-(--color-border) rounded-lg shadow-[var(--shadow-md)] py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
           <button
             onClick={handleCSV}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
-            <FileSpreadsheet size={16} className="text-[var(--color-success)]" />
+            <FileSpreadsheet size={16} className="text-success" />
             Download CSV
           </button>
           <button
             onClick={handleExcel}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
-            <FileSpreadsheet size={16} className="text-[var(--color-success)]" />
+            <FileSpreadsheet size={16} className="text-success" />
             Download Excel (.xls)
           </button>
           <button
             onClick={handlePDF}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
-            <FileText size={16} className="text-[var(--color-danger)]" />
+            <FileText size={16} className="text-danger" />
             Download PDF
           </button>
           {hasCharts && (
             <button
               onClick={handleChartExport}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
             >
-              <ImageIcon size={16} className="text-[var(--color-primary)]" />
+              <ImageIcon size={16} className="text-primary" />
               Export Charts as Images
             </button>
           )}
-          <div className="h-px bg-[var(--color-border)] my-1 mx-4"></div>
+          <div className="h-px bg-(--color-border) my-1 mx-4"></div>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
-            <Printer size={16} className="text-[var(--color-primary)]" />
+            <Printer size={16} className="text-primary" />
             Print Data
           </button>
         </div>

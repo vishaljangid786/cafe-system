@@ -5,34 +5,34 @@
 
 const TONE = {
   primary: {
-    text: 'text-[var(--color-primary)]',
-    bg: 'bg-[var(--color-primary)]',
-    soft: 'bg-[var(--color-primary-soft)]',
+    text: 'text-primary',
+    bg: 'bg-primary',
+    soft: 'bg-(--color-primary-soft)',
     border: 'border-[rgba(var(--color-primary-rgb),0.2)]',
   },
   success: {
-    text: 'text-[var(--color-success)]',
-    bg: 'bg-[var(--color-success)]',
+    text: 'text-success',
+    bg: 'bg-success',
     soft: 'bg-[rgba(var(--color-success-rgb),0.12)]',
     border: 'border-[rgba(var(--color-success-rgb),0.2)]',
   },
   danger: {
-    text: 'text-[var(--color-danger)]',
-    bg: 'bg-[var(--color-danger)]',
+    text: 'text-danger',
+    bg: 'bg-danger',
     soft: 'bg-[rgba(var(--color-danger-rgb),0.12)]',
     border: 'border-[rgba(var(--color-danger-rgb),0.2)]',
   },
   warning: {
-    text: 'text-[var(--color-warning)]',
-    bg: 'bg-[var(--color-warning)]',
+    text: 'text-warning',
+    bg: 'bg-warning',
     soft: 'bg-[rgba(var(--color-warning-rgb),0.12)]',
     border: 'border-[rgba(var(--color-warning-rgb),0.2)]',
   },
   muted: {
-    text: 'text-[var(--color-text-muted)]',
-    bg: 'bg-[var(--color-surface-soft)]',
-    soft: 'bg-[var(--color-surface-soft)]',
-    border: 'border-[var(--color-border)]',
+    text: 'text-(--color-text-muted)',
+    bg: 'bg-(--color-surface-soft)',
+    soft: 'bg-(--color-surface-soft)',
+    border: 'border-(--color-border)',
   },
 };
 

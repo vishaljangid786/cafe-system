@@ -12,12 +12,12 @@ export const Button = ({
   loading = false
 }) => {
   const variants = {
-    primary: 'bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-hover)]',
-    secondary: 'bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] border border-[var(--color-border)]',
-    outline: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
-    ghost: 'bg-transparent hover:bg-[var(--color-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90',
-    glass: 'bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-border)]'
+    primary: 'bg-primary text-(--color-on-primary) hover:bg-(--color-primary-hover)',
+    secondary: 'bg-(--color-surface-soft) text-(--color-text-primary) hover:bg-(--color-border) border border-(--color-border)',
+    outline: 'border border-(--color-border) bg-transparent hover:bg-(--color-hover) text-(--color-text-secondary) hover:text-(--color-text-primary)',
+    ghost: 'bg-transparent hover:bg-(--color-hover) text-(--color-text-muted) hover:text-(--color-text-primary)',
+    danger: 'bg-danger text-white hover:opacity-90',
+    glass: 'bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) hover:bg-(--color-border)'
   };
 
   return (

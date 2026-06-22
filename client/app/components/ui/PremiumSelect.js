@@ -89,11 +89,11 @@ export default function PremiumSelect({
             width: coords.width,
             zIndex: 999999
           }}
-          className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] shadow-[var(--shadow-md)] overflow-hidden"
+          className="bg-(--color-surface) rounded-lg border border-(--color-border) shadow-[var(--shadow-md)] overflow-hidden"
         >
           <div className="max-h-64 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
             {options.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-[var(--color-text-muted)] text-center">No options available</div>
+              <div className="px-4 py-3 text-sm text-(--color-text-muted) text-center">No options available</div>
             ) : (
               options.map((option, idx) => {
                 const optValue = typeof option === 'object' ? option.value : option;
@@ -119,8 +119,8 @@ export default function PremiumSelect({
                       }
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${isSelected
-                        ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]'
-                        : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]'
+                        ? 'bg-primary text-(--color-on-primary)'
+                        : 'text-(--color-text-secondary) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'
                       }`}
                   >
                     <span className="truncate pr-4">{optLabel}</span>
@@ -147,30 +147,30 @@ export default function PremiumSelect({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200 text-left relative ${isOpen
-            ? 'bg-[var(--color-surface)] border-[var(--color-primary)]'
-            : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
+            ? 'bg-(--color-surface) border-primary'
+            : 'bg-(--color-surface) border-(--color-border) hover:border-(--color-border-strong)'
           } ${Icon ? 'pl-11' : 'pl-3.5'}`}
       >
         <div className="flex items-center gap-3 overflow-hidden">
           {Icon && (
-            <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${isOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
+            <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${isOpen ? 'text-primary' : 'text-(--color-text-muted)'}`}>
               <Icon size={18} />
             </div>
           )}
-          <span className={`text-sm font-medium truncate ${!value ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'}`}>
+          <span className={`text-sm font-medium truncate ${!value ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`}>
             {displayLabel || placeholder}
           </span>
         </div>
         <ChevronDown
           size={16}
-          className={`text-[var(--color-text-muted)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-primary)]' : ''}`}
+          className={`text-(--color-text-muted) transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : ''}`}
         />
       </button>
 
       {mounted && createPortal(dropdownMenu, document.body)}
 
       {error && (
-        <p className="mt-1.5 ml-0.5 text-xs font-medium text-[var(--color-danger)]">
+        <p className="mt-1.5 ml-0.5 text-xs font-medium text-danger">
           {error}
         </p>
       )}

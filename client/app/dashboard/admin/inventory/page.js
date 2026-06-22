@@ -196,10 +196,10 @@ export default function InventoryDashboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="page-title text-2xl flex items-center gap-3">
-                <Package className="text-[var(--color-primary)] h-7 w-7" />
+                <Package className="text-primary h-7 w-7" />
                 Inventory
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Track ingredients and plan purchases.</p>
+              <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Track ingredients and plan purchases.</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -209,8 +209,8 @@ export default function InventoryDashboard() {
                 filename={`Inventory_${selectedBranch}`}
                 hasCharts={true}
               />
-              <div className="flex items-center gap-4 bg-[var(--color-surface)] p-2 rounded-lg border border-[var(--color-border)]">
-                <MapPin size={18} className="text-[var(--color-text-muted)] ml-2" />
+              <div className="flex items-center gap-4 bg-(--color-surface) p-2 rounded-lg border border-(--color-border)">
+                <MapPin size={18} className="text-(--color-text-muted) ml-2" />
                 <PremiumSelect 
                   value={selectedBranch}
                   onChange={(val) => setSelectedBranch(val)}
@@ -233,15 +233,15 @@ export default function InventoryDashboard() {
                 <AlertTriangle size={120} />
               </div>
               <p className="label">Low Stock Alerts</p>
-              <p className="text-3xl font-bold text-[var(--color-danger)] mt-2">{alerts.length}</p>
-              <p className="text-xs font-medium text-[var(--color-text-muted)] mt-2 flex items-center gap-1">
+              <p className="text-3xl font-bold text-danger mt-2">{alerts.length}</p>
+              <p className="text-xs font-medium text-(--color-text-muted) mt-2 flex items-center gap-1">
                 Items running low
               </p>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-[var(--color-primary)] p-6 rounded-xl shadow-sm text-[var(--color-on-primary)] relative overflow-hidden">
+            <div className="bg-primary p-6 rounded-xl shadow-sm text-(--color-on-primary) relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-20">
                 <ShoppingCart size={120} />
               </div>
@@ -259,8 +259,8 @@ export default function InventoryDashboard() {
                 <RefreshCcw size={120} />
               </div>
               <p className="label">Total Ingredients</p>
-              <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-2">{inventory.length}</p>
-              <p className="text-xs font-medium text-[var(--color-success)] mt-2 flex items-center gap-1">
+              <p className="text-3xl font-bold text-(--color-text-primary) mt-2">{inventory.length}</p>
+              <p className="text-xs font-medium text-success mt-2 flex items-center gap-1">
                 Items being tracked
               </p>
             </div>
@@ -268,15 +268,15 @@ export default function InventoryDashboard() {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-2 p-1.5 bg-[var(--color-surface-soft)] rounded-xl w-fit">
+        <div className="flex items-center gap-2 p-1.5 bg-(--color-surface-soft) rounded-xl w-fit">
           {['stock', 'suggestions', 'waste'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-normal transition-all ${
                 activeTab === tab 
-                  ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm scale-[1.02]' 
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                  ? 'bg-(--color-surface) text-primary shadow-sm scale-[1.02]' 
+                  : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
               }`}
             >
               {tab}
@@ -297,13 +297,13 @@ export default function InventoryDashboard() {
               >
                 <div className="flex items-center justify-between">
                   <div className="relative w-full max-w-md">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
                     <input 
                       type="text"
                       placeholder="Search ingredients..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all outline-none text-[var(--color-text-primary)]"
+                      className="w-full pl-12 pr-4 py-3 bg-(--color-surface) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none text-(--color-text-primary)"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -317,7 +317,7 @@ export default function InventoryDashboard() {
                         });
                         setIsNewIngredientModalOpen(true);
                       }}
-                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-xl text-xs font-bold uppercase tracking-normal hover:border-[var(--color-primary)] transition-colors"
+                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) rounded-xl text-xs font-bold uppercase tracking-normal hover:border-primary transition-colors"
                     >
                       <Plus size={16} /> New Ingredient
                     </button>
@@ -332,7 +332,7 @@ export default function InventoryDashboard() {
                         });
                         setIsAddModalOpen(true);
                       }}
-                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] rounded-xl text-xs font-bold uppercase tracking-normal"
+                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-xs font-bold uppercase tracking-normal"
                     >
                       <Plus size={16} /> Add Stock
                     </button>
@@ -342,48 +342,48 @@ export default function InventoryDashboard() {
                 {refetching ? (
                   <TableSkeleton rows={6} cols={5} />
                 ) : (
-                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-(--color-surface) rounded-xl border border-(--color-border) overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-[var(--color-surface-soft)] border-b border-[var(--color-border)]">
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Ingredient</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Category</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-center">Status</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Quantity</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Action</th>
+                        <tr className="bg-(--color-surface-soft) border-b border-(--color-border)">
+                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Ingredient</th>
+                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Category</th>
+                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-center">Status</th>
+                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Quantity</th>
+                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[var(--color-border)]">
+                      <tbody className="divide-y divide-(--color-border)">
                         {filteredInventory.map((item) => (
-                          <tr key={item._id} className="group hover:bg-[var(--color-primary)]/[0.02] transition-colors">
+                          <tr key={item._id} className="group hover:bg-primary/[0.02] transition-colors">
                             <td className="p-6">
-                              <p className="font-bold text-[var(--color-text-primary)]">{item.ingredient?.name}</p>
-                              <p className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase mt-1">Cost: ₹{item.costPerUnit}/{item.ingredient?.unit}</p>
+                              <p className="font-bold text-(--color-text-primary)">{item.ingredient?.name}</p>
+                              <p className="text-[10px] font-medium text-(--color-text-muted) uppercase mt-1">Cost: ₹{item.costPerUnit}/{item.ingredient?.unit}</p>
                             </td>
                             <td className="p-6">
-                              <span className="px-3 py-1 bg-[var(--color-surface-soft)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] rounded-lg">
+                              <span className="px-3 py-1 bg-(--color-surface-soft) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) rounded-lg">
                                 {item.ingredient?.category || 'General'}
                               </span>
                             </td>
                             <td className="p-6 text-center">
                               {item.stock <= item.minThreshold ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--color-danger)]/10 text-[var(--color-danger)] text-[10px] font-bold uppercase rounded-lg">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-danger/10 text-danger text-[10px] font-bold uppercase rounded-lg">
                                   <AlertTriangle size={10} /> Low Stock
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase rounded-lg">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase rounded-lg">
                                   In Stock
                                 </span>
                               )}
                             </td>
                             <td className="p-6">
-                              <p className={`text-xl font-bold ${item.stock <= item.minThreshold ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-primary)]'}`}>
-                                {item.stock} <span className="text-[10px] text-[var(--color-text-muted)] ml-1">{item.ingredient?.unit}</span>
+                              <p className={`text-xl font-bold ${item.stock <= item.minThreshold ? 'text-danger' : 'text-(--color-text-primary)'}`}>
+                                {item.stock} <span className="text-[10px] text-(--color-text-muted) ml-1">{item.ingredient?.unit}</span>
                               </p>
-                              <div className="w-24 h-1.5 bg-[var(--color-surface-soft)] rounded-full mt-2 overflow-hidden">
+                              <div className="w-24 h-1.5 bg-(--color-surface-soft) rounded-full mt-2 overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full ${item.stock <= item.minThreshold ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-success)]'}`}
+                                  className={`h-full rounded-full ${item.stock <= item.minThreshold ? 'bg-danger' : 'bg-success'}`}
                                   style={{ width: `${Math.min((item.stock / (item.minThreshold * 2)) * 100, 100)}%` }}
                                 />
                               </div>
@@ -401,7 +401,7 @@ export default function InventoryDashboard() {
                                   });
                                   setIsUpdateModalOpen(true);
                                 }}
-                                className="p-2 rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg-base)] transition-all shadow-sm"
+                                className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-bg-base) transition-all shadow-sm"
                               >
                                 <RefreshCcw size={16} />
                               </button>
@@ -429,15 +429,15 @@ export default function InventoryDashboard() {
                     <CardSkeleton />
                   </>
                 ) : suggestions.map((sug, i) => (
-                  <div key={i} className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between group hover:border-[var(--color-primary)]/50 transition-colors shadow-sm">
+                  <div key={i} className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors shadow-sm">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] mb-1">Buying Suggestion</p>
-                      <h3 className="text-2xl font-bold text-[var(--color-text-primary)]">{sug.ingredient}</h3>
-                      <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Current: <span className="font-bold">{sug.currentStock} {sug.unit}</span> | Shortfall: <span className="text-[var(--color-danger)] font-bold">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-primary mb-1">Buying Suggestion</p>
+                      <h3 className="text-2xl font-bold text-(--color-text-primary)">{sug.ingredient}</h3>
+                      <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Current: <span className="font-bold">{sug.currentStock} {sug.unit}</span> | Shortfall: <span className="text-danger font-bold">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-[var(--color-text-muted)] mb-1 uppercase tracking-normal">Suggested Order</p>
-                      <p className="text-3xl font-bold text-[var(--color-text-primary)]">{sug.suggestedOrder} {sug.unit}</p>
+                      <p className="text-xs font-bold text-(--color-text-muted) mb-1 uppercase tracking-normal">Suggested Order</p>
+                      <p className="text-3xl font-bold text-(--color-text-primary)">{sug.suggestedOrder} {sug.unit}</p>
                     </div>
                   </div>
                 ))}
@@ -451,14 +451,14 @@ export default function InventoryDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-20"
               >
-                <div className="h-20 w-20 bg-[var(--color-danger)]/10 text-[var(--color-danger)] rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="h-20 w-20 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-6">
                   <Trash2 size={40} />
                 </div>
-                <h3 className="text-2xl font-bold text-[var(--color-text-primary)]">Record Waste</h3>
-                <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto mt-2">Record spillage, expiry, and damage to keep your stock counts accurate.</p>
+                <h3 className="text-2xl font-bold text-(--color-text-primary)">Record Waste</h3>
+                <p className="text-(--color-text-secondary) max-w-sm mx-auto mt-2">Record spillage, expiry, and damage to keep your stock counts accurate.</p>
                 <button 
                   onClick={() => setIsWasteModalOpen(true)}
-                  className="mt-8 px-8 py-4 bg-[var(--color-danger)] text-[var(--color-bg-base)] rounded-xl text-xs font-bold uppercase tracking-normal  transition-transform shadow-sm "
+                  className="mt-8 px-8 py-4 bg-danger text-(--color-bg-base) rounded-xl text-xs font-bold uppercase tracking-normal  transition-transform shadow-sm "
                 >
                   Record Waste
                 </button>
@@ -498,36 +498,36 @@ export default function InventoryDashboard() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Quantity</label>
+                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
                 <input 
                   type="number"
                   required
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
-                  className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                  className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="0.00"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Cost Per Unit</label>
+                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Cost Per Unit</label>
                 <input 
                   type="number"
                   required
                   value={formData.costPerUnit}
                   onChange={(e) => setFormData({...formData, costPerUnit: e.target.value})}
-                  className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                  className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="₹ 0.00"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Low Stock Alert Level</label>
+              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Low Stock Alert Level</label>
               <input 
                 type="number"
                 value={formData.minThreshold}
                 onChange={(e) => setFormData({...formData, minThreshold: e.target.value})}
-                className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                 placeholder="10"
               />
             </div>
@@ -565,13 +565,13 @@ export default function InventoryDashboard() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Quantity</label>
+                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
                 <input 
                   type="number"
                   required
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
-                  className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                  className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="0.00"
                 />
               </div>
@@ -589,11 +589,11 @@ export default function InventoryDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Notes</label>
+              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Notes</label>
               <textarea 
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none min-h-[100px] resize-none"
+                className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px] resize-none"
                 placeholder="Details about the waste"
               />
             </div>
@@ -616,36 +616,36 @@ export default function InventoryDashboard() {
         >
           <form onSubmit={handleCreateIngredient} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Ingredient Name</label>
+              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Ingredient Name</label>
               <input 
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                 placeholder="e.g. Milk, Coffee Beans"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Unit</label>
+                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Unit</label>
                 <input 
                   type="text"
                   required
                   value={formData.unit}
                   onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                  className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                  className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="kg, ltr, pcs"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Base Cost</label>
+                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Base Cost</label>
                 <input 
                   type="number"
                   value={formData.baseCost}
                   onChange={(e) => setFormData({...formData, baseCost: e.target.value})}
-                  className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none"
+                  className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="0.00"
                 />
               </div>

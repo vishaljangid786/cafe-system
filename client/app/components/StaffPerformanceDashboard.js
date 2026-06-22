@@ -12,23 +12,23 @@ import PremiumSelect from './ui/PremiumSelect';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
-    amber: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
-    blue: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
-    emerald: 'text-[var(--color-success)] bg-[var(--color-success)]/10 border-[var(--color-success)]/20',
-    rose: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20',
-    violet: 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20',
+    amber: 'text-primary bg-primary/10 border-primary/20',
+    blue: 'text-primary bg-primary/10 border-primary/20',
+    emerald: 'text-success bg-success/10 border-success/20',
+    rose: 'text-danger bg-danger/10 border-danger/20',
+    violet: 'text-primary bg-primary/10 border-primary/20',
     fuchsia: 'text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20'
   };
 
   return (
-    <div className="bg-[var(--color-surface)]/80  rounded-xl p-6 border border-[var(--color-border)] flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className={`h-12 w-12 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-[var(--color-text-muted)] bg-[var(--color-surface-soft)]'}`}>
+    <div className="bg-(--color-surface)/80  rounded-xl p-6 border border-(--color-border) flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className={`h-12 w-12 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-(--color-text-muted) bg-(--color-surface-soft)'}`}>
         <Icon size={20} />
       </div>
       <div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{value}</p>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">{label}</p>
-        {sub && <p className="text-[9px] font-bold text-[var(--color-text-secondary)] mt-0.5">{sub}</p>}
+        <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-2">{label}</p>
+        {sub && <p className="text-[9px] font-bold text-(--color-text-secondary) mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -131,50 +131,50 @@ export default function StaffPerformanceDashboard({ user, role }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
-              <TrendingUp size={24} className="text-[var(--color-on-primary)]" />
+          <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
+              <TrendingUp size={24} className="text-(--color-on-primary)" />
             </div>
             {role === 'chef' ? 'Chef' : 'Staff'} Performance Dashboard
           </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">See your orders, sales, and overall work performance.</p>
+          <p className="text-xs text-(--color-text-muted) mt-1 font-medium">See your orders, sales, and overall work performance.</p>
         </div>
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-[var(--color-surface)]/80  p-8 rounded-xl border border-[var(--color-border)] shadow-sm space-y-6">
-        <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
-          <Filter size={16} className="text-[var(--color-primary)]" />
-          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Filters</span>
+      <div className="bg-(--color-surface)/80  p-8 rounded-xl border border-(--color-border) shadow-sm space-y-6">
+        <div className="flex items-center gap-2 pb-4 border-b border-(--color-border)">
+          <Filter size={16} className="text-primary" />
+          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Filters</span>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> From Date
             </label>
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all text-[var(--color-text-primary)]"
+              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> To Date
             </label>
             <input
               type="date"
               value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)] text-xs font-bold focus:border-[var(--color-primary)] focus:outline-none transition-all text-[var(--color-text-primary)]"
+              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Bookmark size={12} /> Category
             </label>
             <PremiumSelect
@@ -189,7 +189,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Utensils size={12} /> Food Item
             </label>
             <PremiumSelect
@@ -204,7 +204,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Building size={12} /> Branch
             </label>
             <PremiumSelect
@@ -223,7 +223,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <CreditCard size={12} /> Payment Type
             </label>
             <PremiumSelect
@@ -241,7 +241,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Ticket size={12} /> Coupon Used
             </label>
             <PremiumSelect
@@ -260,7 +260,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
               onClick={() => setFilters({
                 startDate: '', endDate: '', category: '', foodItem: '', branch: '', paymentType: '', coupon: ''
               })}
-              className="w-full py-3 bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary)]/80 rounded-xl text-xs font-bold uppercase tracking-normal transition-all shadow-sm"
+              className="w-full py-3 bg-primary text-(--color-on-primary) hover:bg-primary/80 rounded-xl text-xs font-bold uppercase tracking-normal transition-all shadow-sm"
             >
               Reset Filters
             </button>
@@ -270,7 +270,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="h-28 bg-[var(--color-surface-soft)] rounded-xl" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="h-28 bg-(--color-surface-soft) rounded-xl" />)}
         </div>
       ) : (
         <>
@@ -290,9 +290,9 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-6 bg-white/80 dark:bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)]/50 dark:border-[var(--color-border)]/50 p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Orders by Week
+            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-8">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+                <TrendingUp size={16} className="text-primary" /> Orders by Week
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -313,9 +313,9 @@ export default function StaffPerformanceDashboard({ user, role }) {
               </div>
             </div>
 
-            <div className="lg:col-span-6 bg-white/80 dark:bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)]/50 dark:border-[var(--color-border)]/50 p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Orders by Month
+            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-8">
+              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+                <TrendingUp size={16} className="text-primary" /> Orders by Month
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -331,38 +331,38 @@ export default function StaffPerformanceDashboard({ user, role }) {
             </div>
           </div>
 
-          <div className="bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
-            <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-              <History size={16} className="text-[var(--color-primary)]" /> Recent Orders
+          <div className="bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8">
+            <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+              <History size={16} className="text-primary" /> Recent Orders
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)]">
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order ID</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Date</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Items</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Table</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Amount</th>
+                  <tr className="border-b border-(--color-border)">
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Order ID</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Date</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Items</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Table</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Status</th>
+                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats?.recentOrders?.map((order) => (
-                    <tr key={order._id} className="border-b border-[var(--color-border)]/50 hover:bg-[var(--color-surface-soft)]/30 transition-all group">
-                      <td className="py-4 text-xs font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">#{order._id.slice(-6).toUpperCase()}</td>
-                      <td className="py-4 text-xs font-bold text-[var(--color-text-muted)]">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td className="py-4 text-xs font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-muted)] line-clamp-1 mt-2">{order.items?.map(it => it.menuItem?.name || 'Item').join(', ')}</td>
-                      <td className="py-4 text-xs font-bold text-[var(--color-primary)]">T{order.table?.tableNumber || 'N/A'}</td>
+                    <tr key={order._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group">
+                      <td className="py-4 text-xs font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">#{order._id.slice(-6).toUpperCase()}</td>
+                      <td className="py-4 text-xs font-bold text-(--color-text-muted)">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-muted) line-clamp-1 mt-2">{order.items?.map(it => it.menuItem?.name || 'Item').join(', ')}</td>
+                      <td className="py-4 text-xs font-bold text-primary">T{order.table?.tableNumber || 'N/A'}</td>
                       <td className="py-4">
                         <span className={`text-[9px] font-bold uppercase tracking-normal px-2 py-1 rounded-md ${
-                          order.status === 'SERVED' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' :
-                          order.status === 'CANCELLED' ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]' : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+                          order.status === 'SERVED' ? 'bg-success/10 text-success' :
+                          order.status === 'CANCELLED' ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'
                         }`}>
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-4 text-xs font-bold text-[var(--color-text-primary)] dark:text-white">₹{order.totalAmount}</td>
+                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-white">₹{order.totalAmount}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -370,19 +370,19 @@ export default function StaffPerformanceDashboard({ user, role }) {
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-(--color-border) dark:border-(--color-border)">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => fetchPerformance(currentPage - 1)}
-                  className="px-4 py-2 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] dark:hover:bg-[var(--color-surface-soft)] disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
+                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
                 >
                   Prev
                 </button>
-                <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Page {currentPage} of {totalPages}</span>
+                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Page {currentPage} of {totalPages}</span>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => fetchPerformance(currentPage + 1)}
-                  className="px-4 py-2 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] dark:hover:bg-[var(--color-surface-soft)] disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
+                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
                 >
                   Next
                 </button>

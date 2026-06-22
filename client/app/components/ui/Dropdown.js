@@ -41,17 +41,17 @@ const Dropdown = ({
         className={`
           w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200
           ${isOpen
-            ? 'bg-[var(--color-surface)] border-[var(--color-primary)]'
-            : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'}
+            ? 'bg-(--color-surface) border-primary'
+            : 'bg-(--color-surface) border-(--color-border) hover:border-(--color-border-strong)'}
         `}
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
-          {Icon && <Icon size={16} className={isOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'} />}
-          <span className={`text-sm font-medium truncate ${selectedOption ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}>
+          {Icon && <Icon size={16} className={isOpen ? 'text-primary' : 'text-(--color-text-muted)'} />}
+          <span className={`text-sm font-medium truncate ${selectedOption ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'}`}>
             {selectedOption ? (selectedOption.label || selectedOption.name || selectedOption.city) : placeholder}
           </span>
         </div>
-        <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-primary)]' : ''}`} />
+        <ChevronDown size={16} className={`text-(--color-text-muted) transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -61,7 +61,7 @@ const Dropdown = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute z-[110] w-full mt-1.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-[var(--shadow-md)] overflow-hidden p-1.5"
+            className="absolute z-110 w-full mt-1.5 bg-(--color-surface) border border-(--color-border) rounded-lg shadow-[var(--shadow-md)] overflow-hidden p-1.5"
           >
             <div className="max-h-60 overflow-y-auto custom-scrollbar">
               {options.map((option) => {
@@ -79,8 +79,8 @@ const Dropdown = ({
                     className={`
                       w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors duration-150
                       ${isSelected
-                        ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] font-medium'
-                        : 'hover:bg-[var(--color-surface-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}
+                        ? 'bg-primary text-(--color-on-primary) font-medium'
+                        : 'hover:bg-(--color-surface-soft) text-(--color-text-secondary) hover:text-(--color-text-primary)'}
                     `}
                   >
                     <span className="truncate">{option.label || option.name || option.city}</span>

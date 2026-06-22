@@ -121,10 +121,10 @@ export default function BookingPage() {
 
         <SlideIn direction="down">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-[var(--color-text-primary)]">
-              Reserve Your <span className="text-[var(--color-primary)]">Table</span>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-(--color-text-primary)">
+              Reserve Your <span className="text-primary">Table</span>
             </h1>
-            <p className="text-[var(--color-text-muted)] text-base max-w-2xl mx-auto">
+            <p className="text-(--color-text-muted) text-base max-w-2xl mx-auto">
               Select a location, pick a time, and secure your spot in seconds.
             </p>
           </div>
@@ -202,8 +202,8 @@ export default function BookingPage() {
 
                 {/* Guest contact fields — shown only for unauthenticated visitors */}
                 {!user && (
-                  <div className="space-y-4 p-4 bg-[var(--color-primary-soft)] rounded-lg border border-[var(--color-border)]">
-                    <p className="text-sm font-semibold text-[var(--color-primary)]">Guest Details (Required)</p>
+                  <div className="space-y-4 p-4 bg-(--color-primary-soft) rounded-lg border border-(--color-border)">
+                    <p className="text-sm font-semibold text-primary">Guest Details (Required)</p>
                     <div className="space-y-1.5">
                       <label className="label">Your Name</label>
                       <input required={!user} value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Full name" className="input" />
@@ -236,7 +236,7 @@ export default function BookingPage() {
                   <button
                     type="submit"
                     disabled={checking}
-                    className="w-full md:w-auto px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-on-primary)] rounded-lg font-semibold text-sm transition-colors flex items-center justify-center disabled:opacity-50 active:scale-95"
+                    className="w-full md:w-auto px-6 py-2.5 bg-primary hover:bg-(--color-primary-hover) text-(--color-on-primary) rounded-lg font-semibold text-sm transition-colors flex items-center justify-center disabled:opacity-50 active:scale-95"
                   >
                     {checking ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
                     Check Availability
@@ -254,21 +254,21 @@ export default function BookingPage() {
                   >
                     <div className="flex items-start">
                       {availability.available ? (
-                        <CheckCircle className="text-[var(--color-success)] mr-3 shrink-0" size={22} />
+                        <CheckCircle className="text-success mr-3 shrink-0" size={22} />
                       ) : (
-                        <XCircle className="text-[var(--color-danger)] mr-3 shrink-0" size={22} />
+                        <XCircle className="text-danger mr-3 shrink-0" size={22} />
                       )}
                       <div>
-                        <h4 className={`font-semibold text-base ${availability.available ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                        <h4 className={`font-semibold text-base ${availability.available ? 'text-success' : 'text-danger'}`}>
                           {availability.available ? 'Slots Available!' : 'Not Available'}
                         </h4>
-                        <p className="text-sm text-[var(--color-text-secondary)] mt-1">{availability.message}</p>
+                        <p className="text-sm text-(--color-text-secondary) mt-1">{availability.message}</p>
 
                         {availability.available && (
                           <button
                             onClick={handleBook}
                             disabled={bookingInProgress}
-                            className="mt-4 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-on-primary)] rounded-lg font-semibold text-sm transition-colors flex items-center active:scale-95"
+                            className="mt-4 px-5 py-2.5 bg-primary hover:bg-(--color-primary-hover) text-(--color-on-primary) rounded-lg font-semibold text-sm transition-colors flex items-center active:scale-95"
                           >
                             {bookingInProgress && <Loader2 className="animate-spin mr-2" size={14} />}
                             Confirm Booking
@@ -285,33 +285,33 @@ export default function BookingPage() {
           {/* User's Bookings */}
           <SlideIn direction="left" delay={0.2}>
             <div className="card p-6 rounded-xl h-full flex flex-col">
-              <h2 className="text-lg font-semibold mb-5 flex items-center text-[var(--color-text-primary)]">
-                <CalendarIcon className="mr-2 text-[var(--color-primary)]" size={20} /> My Schedule
+              <h2 className="text-lg font-semibold mb-5 flex items-center text-(--color-text-primary)">
+                <CalendarIcon className="mr-2 text-primary" size={20} /> My Schedule
               </h2>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
                 {myBookings.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)]">
+                  <div className="h-full flex flex-col items-center justify-center text-(--color-text-muted)">
                     <CalendarIcon size={44} className="mb-3 opacity-40" />
                     <p className="text-sm text-center">You have no upcoming bookings.</p>
                   </div>
                 ) : (
                   myBookings.map(booking => (
-                    <div key={booking._id} className="p-4 rounded-lg bg-[var(--color-surface-soft)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] transition-colors">
+                    <div key={booking._id} className="p-4 rounded-lg bg-(--color-surface-soft) border border-(--color-border) hover:border-(--color-border-strong) transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <span className={`chip capitalize ${booking.status === 'confirmed' ? 'bg-[rgba(var(--color-success-rgb),0.15)] text-[var(--color-success)]' :
-                          booking.status === 'pending' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' :
-                            'bg-[rgba(var(--color-danger-rgb),0.15)] text-[var(--color-danger)]'
+                        <span className={`chip capitalize ${booking.status === 'confirmed' ? 'bg-[rgba(var(--color-success-rgb),0.15)] text-success' :
+                          booking.status === 'pending' ? 'bg-(--color-primary-soft) text-primary' :
+                            'bg-[rgba(var(--color-danger-rgb),0.15)] text-danger'
                           }`}>
                           {booking.status}
                         </span>
-                        <span className="text-xs text-[var(--color-text-muted)]">{new Date(booking.date).toLocaleDateString()}</span>
+                        <span className="text-xs text-(--color-text-muted)">{new Date(booking.date).toLocaleDateString()}</span>
                       </div>
-                      <h3 className="font-semibold text-base mb-1 text-[var(--color-text-primary)]">{booking.locationId?.name}</h3>
-                      <div className="flex items-center text-sm text-[var(--color-text-muted)] mb-1">
+                      <h3 className="font-semibold text-base mb-1 text-(--color-text-primary)">{booking.locationId?.name}</h3>
+                      <div className="flex items-center text-sm text-(--color-text-muted) mb-1">
                         <Clock size={14} className="mr-1.5" /> {booking.startTime} - {booking.endTime}
                       </div>
-                      <div className="flex items-center text-sm text-[var(--color-text-muted)]">
+                      <div className="flex items-center text-sm text-(--color-text-muted)">
                         <Users size={14} className="mr-1.5" /> {booking.numberOfGuests} Guests
                       </div>
                     </div>

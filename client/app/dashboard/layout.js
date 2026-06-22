@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-transparent text-[var(--color-text-primary)] overflow-hidden selection:bg-[var(--color-primary)]/30 selection:text-[var(--color-primary)] font-sans transition-colors duration-300">
+    <div className="flex h-screen bg-transparent text-(--color-text-primary) overflow-hidden selection:bg-primary/30 selection:text-primary font-sans transition-colors duration-300">
       {/* Sidebar - Desktop & Mobile */}
       <Sidebar
         isExpanded={isSidebarExpanded}
@@ -114,7 +114,7 @@ export default function DashboardLayout({ children }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {user?.impersonatedBy && (
-          <div className="bg-[var(--color-primary)] text-[var(--color-on-primary)] px-4 py-2.5 shadow-lg z-[100] relative">
+          <div className="bg-primary text-(--color-on-primary) px-4 py-2.5 shadow-lg z-100 relative">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-normal flex items-center gap-2 text-center">
                 <span className="w-2 h-2 rounded-full bg-black animate-pulse shrink-0" />
@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }) {
               </span>
               <button 
                 onClick={exitImpersonation}
-                className="bg-black text-[var(--color-primary)] px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-normal hover:bg-[var(--color-bg-deep)]  active:scale-95 transition-all whitespace-nowrap shadow-sm"
+                className="bg-black text-primary px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-normal hover:bg-(--color-bg-deep)  active:scale-95 transition-all whitespace-nowrap shadow-sm"
               >
                 Exit Session
               </button>

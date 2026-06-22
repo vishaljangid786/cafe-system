@@ -78,7 +78,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
             .text-xl { font-size: 20px; }
             .text-base { font-size: 14px; }
             .opacity-70 { opacity: 0.7; }
-            .text-[var(--color-text-muted)] { color: #71717a; }
+            .text-(--color-text-muted) { color: #71717a; }
             .space-y-1 > * + * { margin-top: 0.25rem; }
             table { width: 100%; border-collapse: collapse; }
             th { border-bottom: 1px solid #000; font-weight: 900; }
@@ -197,15 +197,15 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
     >
       <div className="space-y-8 ">
         {/* Receipt Preview */}
-        <div className="bg-[var(--color-bg-base)] p-6 rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-(--color-bg-base) p-6 rounded-xl border border-(--color-border) overflow-hidden">
           <div
             ref={billRef}
-            className="bg-[var(--color-surface)] text-[var(--color-on-primary)] p-8 shadow-sm mx-auto"
+            className="bg-(--color-surface) text-(--color-on-primary) p-8 shadow-sm mx-auto"
             style={{ width: '100%', maxWidth: '350px', fontFamily: "'Courier New', Courier, monospace" }}
           >
             <div className="text-center space-y-1">
               <h2 className="text-xl font-bold uppercase tracking-tight">{cafeName}</h2>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
+              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                 {table.locationId?.name || table.locationName || 'Main Branch'}
               </p>
               <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
@@ -233,7 +233,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                   <th className="pb-2 text-right">PRICE</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
+              <tbody className="divide-y divide-(--color-border)">
                 {allBillableItems.map((item, i) => (
                   <tr key={i}>
                     <td className="py-2 uppercase font-bold">{item.itemName}</td>
@@ -257,7 +257,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                 <span>₹{taxes.toLocaleString()}</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-[var(--color-danger)]">
+                <div className="flex justify-between text-danger">
                   <span>DISCOUNT:</span>
                   <span>-₹{discount.toLocaleString()}</span>
                 </div>
@@ -299,7 +299,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           </Button>
         </div>
 
-        <p className="text-[10px] text-center text-[var(--color-text-muted)] font-bold uppercase tracking-normal">
+        <p className="text-[10px] text-center text-(--color-text-muted) font-bold uppercase tracking-normal">
           Note: Completing will automatically save the bill proof and close the table.
         </p>
       </div>

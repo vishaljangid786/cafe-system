@@ -127,41 +127,41 @@ export default function CommandPalette() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/40 z-[9998]"
+            className="fixed inset-0 bg-black/40 z-9998"
           />
-          <div className="fixed inset-0 flex items-start justify-center sm:pt-[15vh] pt-4 p-4 z-[9999] pointer-events-none">
+          <div className="fixed inset-0 flex items-start justify-center sm:pt-[15vh] pt-4 p-4 z-9999 pointer-events-none">
             <motion.div
               initial={{ scale: 0.98, opacity: 0, y: -8 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.98, opacity: 0, y: -8 }}
               transition={{ duration: 0.16, ease: 'easeOut' }}
-              className="bg-[var(--color-surface)] w-full max-w-xl rounded-xl overflow-hidden shadow-[var(--shadow-md)] border border-[var(--color-border)] pointer-events-auto flex flex-col max-h-[85vh] sm:max-h-[60vh]"
+              className="bg-(--color-surface) w-full max-w-xl rounded-xl overflow-hidden shadow-[var(--shadow-md)] border border-(--color-border) pointer-events-auto flex flex-col max-h-[85vh] sm:max-h-[60vh]"
             >
-              <div className="flex items-center px-5 border-b border-[var(--color-border)]">
-                <Search className="text-[var(--color-text-muted)] mr-3" size={20} />
+              <div className="flex items-center px-5 border-b border-(--color-border)">
+                <Search className="text-(--color-text-muted) mr-3" size={20} />
                 <input
                   ref={inputRef}
                   type="text"
                   placeholder="Type a command or search users..."
-                  className="flex-1 py-4 bg-transparent border-none outline-none text-base font-medium text-[var(--color-text-primary)]"
+                  className="flex-1 py-4 bg-transparent border-none outline-none text-base font-medium text-(--color-text-primary)"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
                 />
-                <div className="flex items-center gap-1 px-2 py-1 bg-[var(--color-surface-soft)] rounded-md">
-                  <span className="text-[10px] font-medium text-[var(--color-text-muted)]">ESC</span>
+                <div className="flex items-center gap-1 px-2 py-1 bg-(--color-surface-soft) rounded-md">
+                  <span className="text-[10px] font-medium text-(--color-text-muted)">ESC</span>
                 </div>
               </div>
  
               <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
                 {loading && (
-                  <div className="p-4 text-center text-[var(--color-text-muted)] text-sm font-medium">Searching...</div>
+                  <div className="p-4 text-center text-(--color-text-muted) text-sm font-medium">Searching...</div>
                 )}
                 
                 {!loading && results.length === 0 && search && (
                   <div className="p-8 text-center space-y-2">
-                    <div className="text-[var(--color-text-primary)] font-bold">No results found</div>
-                    <div className="text-[var(--color-text-muted)] text-xs">Try searching for &apos;Expenses&apos; or a user&apos;s name</div>
+                    <div className="text-(--color-text-primary) font-bold">No results found</div>
+                    <div className="text-(--color-text-muted) text-xs">Try searching for &apos;Expenses&apos; or a user&apos;s name</div>
                   </div>
                 )}
  
@@ -177,12 +177,12 @@ export default function CommandPalette() {
                         <button
                           key={idx}
                           onClick={() => handleSelect({ type: 'nav', path: item.path })}
-                          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--color-surface-soft)] transition-colors text-left"
+                          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-(--color-surface-soft) transition-colors text-left"
                         >
-                          <div className="w-9 h-9 rounded-lg bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-text-muted)]">
+                          <div className="w-9 h-9 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted)">
                             <item.icon size={18} />
                           </div>
-                          <span className="text-sm font-medium text-[var(--color-text-secondary)]">{item.name}</span>
+                          <span className="text-sm font-medium text-(--color-text-secondary)">{item.name}</span>
                         </button>
                       ))}
                     </div>
@@ -193,34 +193,34 @@ export default function CommandPalette() {
                   <button
                     key={idx}
                     onClick={() => handleSelect(item)}
-                    className={`flex items-center justify-between w-full p-2.5 rounded-lg transition-colors ${idx === selectedIndex ? 'bg-[var(--color-primary-soft)] border border-[rgba(var(--color-primary-rgb),0.2)]' : 'border border-transparent hover:bg-[var(--color-surface-soft)]'}`}
+                    className={`flex items-center justify-between w-full p-2.5 rounded-lg transition-colors ${idx === selectedIndex ? 'bg-(--color-primary-soft) border border-[rgba(var(--color-primary-rgb),0.2)]' : 'border border-transparent hover:bg-(--color-surface-soft)'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.type === 'user' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}>
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.type === 'user' ? 'bg-(--color-primary-soft) text-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
                         <item.icon size={18} />
                       </div>
                       <div className="text-left">
-                        <div className="text-sm font-medium text-[var(--color-text-primary)]">{item.name}</div>
-                        {item.subtext && <div className="text-xs text-[var(--color-text-muted)]">{item.subtext}</div>}
+                        <div className="text-sm font-medium text-(--color-text-primary)">{item.name}</div>
+                        {item.subtext && <div className="text-xs text-(--color-text-muted)">{item.subtext}</div>}
                       </div>
                     </div>
-                    {idx === selectedIndex && <ChevronRight size={16} className="text-[var(--color-primary)]" />}
+                    {idx === selectedIndex && <ChevronRight size={16} className="text-primary" />}
                   </button>
                 ))}
               </div>
 
-              <div className="p-3 border-t border-[var(--color-border)] flex items-center justify-between">
+              <div className="p-3 border-t border-(--color-border) flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
-                    <kbd className="px-1.5 py-0.5 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded text-[10px]">↵</kbd>
+                  <div className="flex items-center gap-1.5 text-xs text-(--color-text-muted)">
+                    <kbd className="px-1.5 py-0.5 bg-(--color-surface-soft) border border-(--color-border) rounded text-[10px]">↵</kbd>
                     <span>Select</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
-                    <kbd className="px-1.5 py-0.5 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded text-[10px]">↑↓</kbd>
+                  <div className="flex items-center gap-1.5 text-xs text-(--color-text-muted)">
+                    <kbd className="px-1.5 py-0.5 bg-(--color-surface-soft) border border-(--color-border) rounded text-[10px]">↑↓</kbd>
                     <span>Navigate</span>
                   </div>
                 </div>
-                <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-2">
+                <div className="text-xs text-(--color-text-muted) flex items-center gap-2">
                   <Command size={12} />
                   Cafe Management v1.0
                 </div>
