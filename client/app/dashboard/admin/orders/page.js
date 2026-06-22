@@ -87,7 +87,7 @@ export default function AdminOrdersDashboard() {
         progress.done();
       }
     }
-  }, [branchFilter, statusFilter, dateRange, currentPage]);
+  }, [branchFilter, statusFilter, dateRange, currentPage, searchTerm]);
 
   useEffect(() => {
     fetchData();

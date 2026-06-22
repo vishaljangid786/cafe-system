@@ -1547,7 +1547,7 @@ export default function MenuManagementPage() {
             <div className="pt-10 flex items-center justify-end gap-6 border-t border-(--color-border)">
               <button
                 type="button"
-                onClick={() => { setShowItemModal(false); setEditingItem(null); }}
+                onClick={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); }}
                 className="px-8 py-4 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
               >
                 Cancel
@@ -1685,7 +1685,7 @@ export default function MenuManagementPage() {
             <UtensilsCrossed size={64} className="mx-auto text-primary/10 mb-6" strokeWidth={1} />
             <h3 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
             <p className="text-(--color-text-muted) font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
-            <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => activeTab === 'items' ? setShowItemModal(true) : setShowCategoryModal(true)}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
+            <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
           </div>
         ) : null}
         {activeTab === 'items' && totalPages > 1 && (

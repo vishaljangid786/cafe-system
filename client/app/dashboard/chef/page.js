@@ -39,7 +39,7 @@ export default function ChefDashboard() {
   const [activeLaneTab, setActiveLaneTab] = useState('incoming');
 
   const fetchOrders = useCallback(async (silent = false) => {
-    if (!selectedLocation) return;
+    if (!selectedLocation) { setLoading(false); return; }
     if (!silent) {
       setLoading(true);
       progress.start();

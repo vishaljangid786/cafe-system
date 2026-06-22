@@ -63,7 +63,7 @@ export default function StaffTablesPage() {
 
   const fetchTables = async (silent = false) => {
     const locId = selectedLocation?._id || selectedLocation || user?.assignedLocation?._id || user?.assignedLocation;
-    if (!locId) return;
+    if (!locId) { setLoading(false); return; }
     if (!silent) setLoading(true);
     try {
       const res = await api.get(`/tables?locationId=${locId}`);

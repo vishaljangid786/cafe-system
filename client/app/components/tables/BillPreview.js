@@ -171,10 +171,13 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
         const file = new File([blob], `bill-${table.tableNumber}-${Date.now()}.png`, { type: 'image/png' });
 
         try {
+          // The parent (onComplete) validates + saves and shows its OWN success/
+          // error toast. Previously this claimed success even when the parent
+          // early-returned (e.g. missing customer name) — so just defer to it.
           await onComplete(file, total);
-          toast.success('Bill generated successfully', { id: loadToast });
+          toast.dismiss(loadToast);
         } catch (err) {
-          toast.error('Failed to save bill', { id: loadToast });
+          toast.dismiss(loadToast);
         } finally {
           setIsGenerating(false);
         }
