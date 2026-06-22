@@ -394,6 +394,12 @@ class OrderService {
 
     order.items = updatedItemsWithSnapshots;
     order.totalAmount = recalculatedTotal;
+    // Re-clamp any previously applied discount so it can never exceed the new
+    // (possibly smaller) total — otherwise reducing items leaves a stale coupon
+    // discount that pushes the payable amount negative.
+    if (order.discountAmount) {
+      order.discountAmount = Math.min(order.discountAmount, recalculatedTotal);
+    }
     await order.save();
 
     const io = getIO();

@@ -50,6 +50,16 @@ const createCoupon = asyncHandler(async (req, res) => {
     throw new Error('Expiry date must be in the future');
   }
 
+  const numDiscount = Number(discountValue);
+  if (!Number.isFinite(numDiscount) || numDiscount <= 0) {
+    res.status(400);
+    throw new Error('Discount value must be a positive number');
+  }
+  if (discountType === 'percentage' && numDiscount > 100) {
+    res.status(400);
+    throw new Error('Percentage discount cannot exceed 100%');
+  }
+
   const existing = await Coupon.findOne({ code: code.toUpperCase() });
   if (existing) {
     res.status(400);
@@ -92,6 +102,20 @@ const updateCoupon = asyncHandler(async (req, res) => {
 
   if (updates.isActive !== undefined) {
     updates.isActive = updates.isActive === 'on' || updates.isActive === 'true' || updates.isActive === true;
+  }
+
+  if (updates.discountValue !== undefined || updates.discountType !== undefined) {
+    const existing = await Coupon.findById(req.params.id).select('discountType discountValue');
+    const effType = updates.discountType ?? existing?.discountType;
+    const effVal = Number(updates.discountValue ?? existing?.discountValue);
+    if (!Number.isFinite(effVal) || effVal <= 0) {
+      res.status(400);
+      throw new Error('Discount value must be a positive number');
+    }
+    if (effType === 'percentage' && effVal > 100) {
+      res.status(400);
+      throw new Error('Percentage discount cannot exceed 100%');
+    }
   }
 
   const coupon = await Coupon.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });

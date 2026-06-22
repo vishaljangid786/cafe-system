@@ -288,7 +288,9 @@ const generatePayroll = asyncHandler(async (req, res) => {
   const processedPayrolls = [];
 
   for (const raw of rawSalaries) {
-    const dailyRate = Math.round(raw.monthlySalary / daysInMonth) || 300; 
+    // No phantom wage: a staff/chef with an unset (0) monthlySalary gets 0, not a
+    // silent ₹300/day default that would fabricate payroll.
+    const dailyRate = Math.round((raw.monthlySalary || 0) / daysInMonth) || 0;
     const payableDays = raw.payableDays || 0;
     const baseSalary = dailyRate * payableDays;
 

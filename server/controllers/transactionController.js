@@ -142,6 +142,13 @@ const createTransaction = asyncHandler(async (req, res) => {
     throw new Error('Valid transaction type (MANUAL_REVENUE or EXPENSE) is required');
   }
 
+  // Amount must be positive — a negative EXPENSE would otherwise post as profit.
+  const numAmount = Number(amount);
+  if (!Number.isFinite(numAmount) || numAmount <= 0) {
+    res.status(400);
+    throw new Error('Amount must be a positive number');
+  }
+
   let targetLocation = locationId;
   if (['staff', 'chef'].includes(req.user.role)) {
     targetLocation = req.user.assignedLocation;
@@ -167,8 +174,8 @@ const createTransaction = asyncHandler(async (req, res) => {
 
   const transaction = await Transaction.create({
     type,
-    totalAmount: amount,
-    totalProfit: type === 'MANUAL_REVENUE' ? amount : -amount, // Expense reduces total profit
+    totalAmount: numAmount,
+    totalProfit: type === 'MANUAL_REVENUE' ? numAmount : -numAmount, // Expense reduces total profit
     title,
     category,
     locationId: targetLocation,
@@ -218,6 +225,13 @@ const approveTransaction = asyncHandler(async (req, res) => {
   if (!transaction) {
     res.status(404);
     throw new Error('Transaction record not found');
+  }
+
+  // Segregation of duties: you cannot approve a transaction you created.
+  const creatorId = (transaction.createdBy?._id || transaction.createdBy)?.toString();
+  if (creatorId && creatorId === req.user._id.toString()) {
+    res.status(403);
+    throw new Error('You cannot approve a transaction you created');
   }
 
   // IDOR Mitigation: Branch/Location Admin can only approve transactions for their own branch

@@ -2,10 +2,12 @@ const crypto = require('crypto');
 
 const ALGORITHM = 'aes-256-cbc';
 if (!process.env.ENCRYPTION_KEY) {
-  // Do NOT ship to production without this set: the fallback key is in source
-  // control, so anyone with the repo can decrypt stored Aadhaar numbers. Keep
-  // ENCRYPTION_KEY constant once set, or existing records won't decrypt.
-  console.warn('[security] ENCRYPTION_KEY is not set — Aadhaar PII is encrypted with an INSECURE built-in fallback key. Set ENCRYPTION_KEY in the backend environment.');
+  const msg = 'ENCRYPTION_KEY is not set — the in-source fallback key is committed, so stored Aadhaar PII would be trivially decryptable.';
+  // Fail closed in production: never run real PII on the public fallback key.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`[security] ${msg} Refusing to start — set ENCRYPTION_KEY in the backend environment (keep it constant, or existing records won't decrypt).`);
+  }
+  console.warn(`[security] ${msg} Using a dev fallback; set ENCRYPTION_KEY before deploying.`);
 }
 const KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY || 'cafe-system-secure-key-2026', 'salt', 32);
 const IV_LENGTH = 16;

@@ -33,6 +33,11 @@ const permissionPresetRoutes = require('./routes/permissionPresetRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
+// Behind a proxy (Vercel / host load balancer) — required so express-rate-limit
+// and req.ip use the real client IP instead of the proxy's egress IP (otherwise
+// the login throttle keys off one shared IP and is trivially defeated).
+app.set('trust proxy', 1);
+
 const parseOrigins = (value = '') =>
   value
     .split(',')

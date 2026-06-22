@@ -23,6 +23,12 @@ const addExpense = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, locationId, 'You do not have permission to create expenses for this location');
 
+  const numAmount = Number(amount);
+  if (!Number.isFinite(numAmount) || numAmount <= 0) {
+    res.status(400);
+    throw new Error('Amount must be a positive number');
+  }
+
   // Map category to description if description is empty
   if (!description && category) {
     description = category;
@@ -41,7 +47,7 @@ const addExpense = asyncHandler(async (req, res) => {
   const expense = await Expense.create({
     title,
     description,
-    amount,
+    amount: numAmount,
     category: category || 'misc',
     date: date || Date.now(),
     locationId,
@@ -244,6 +250,12 @@ const updateExpenseStatus = asyncHandler(async (req, res) => {
   if (!expense) {
     res.status(404);
     throw new Error('Expense not found');
+  }
+
+  // Segregation of duties: the creator cannot approve/reject their own expense.
+  if (['approved', 'rejected'].includes(status) && expense.createdBy?.toString() === req.user._id.toString()) {
+    res.status(403);
+    throw new Error('You cannot approve or reject an expense you created');
   }
 
   enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to update this expense');
