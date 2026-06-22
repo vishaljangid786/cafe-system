@@ -30,6 +30,6 @@ router.get('/profile', verifyToken, getProfile);
 
 router.post('/impersonate/:userId', verifyToken, checkRoleOrPermission(['super_admin'], 'impersonateUsers'), impersonateUser);
 router.post('/exit-impersonation', verifyToken, exitImpersonation);
-router.get('/logout', logoutUser);
+router.post('/logout', logoutUser);
 
 module.exports = router;

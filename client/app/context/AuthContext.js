@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      await api.get('/auth/logout');
+      await api.post('/auth/logout');
     } catch (err) {
       logger.error('Backend logout failed');
     }
