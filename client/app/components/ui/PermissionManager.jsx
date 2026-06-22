@@ -25,6 +25,9 @@ const permissionList = [
   { key: 'manageBranches', label: 'Open Branches Page' },
   { key: 'viewAuditLogs', label: 'Open Security Logs' },
   { key: 'impersonateUsers', label: 'Login As Users' },
+  { key: 'viewAdminCenter', label: 'Open Admin Center' },
+  { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
+  { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
 ];
 
 const ROLE_FILTERS = [

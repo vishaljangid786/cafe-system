@@ -42,6 +42,7 @@ const PAGE_PERMISSIONS = [
   { path: '/dashboard/admin/payment-intelligence', perm: 'viewAnalytics' },
   { path: '/dashboard/admin/command-center', perm: 'viewAnalytics' },
   { path: '/dashboard/admin/forecasting', perm: 'viewAnalytics' },
+  { path: '/dashboard/super-admin', perm: 'viewAdminCenter' },
 ];
 
 export default function DashboardLayout({ children }) {

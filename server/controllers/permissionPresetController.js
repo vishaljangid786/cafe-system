@@ -6,6 +6,8 @@ const PERMISSION_KEYS = [
   'exportReports', 'manageStaff', 'manageNotifications', 'viewAnalytics', 'manageCoupons',
   // Page-access permissions
   'manageBranches', 'viewAuditLogs', 'impersonateUsers',
+  // Delegated super-admin capabilities
+  'viewAdminCenter', 'manageGlobalMenu', 'sendGlobalNotifications',
 ];
 
 // Keep only the known permission keys as strict booleans.

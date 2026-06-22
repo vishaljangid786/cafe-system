@@ -35,6 +35,9 @@ const PERMISSION_LIST = [
   { key: 'manageBranches', label: 'Open Branches Page' },
   { key: 'viewAuditLogs', label: 'Open Security Logs' },
   { key: 'impersonateUsers', label: 'Login As Users' },
+  { key: 'viewAdminCenter', label: 'Open Admin Center' },
+  { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
+  { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
 ];
 
 export default function UsersPage() {

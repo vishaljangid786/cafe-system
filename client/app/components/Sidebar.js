@@ -27,6 +27,7 @@ const GRANTABLE_PAGES = [
   { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
   { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
   { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap, perm: 'viewAdminCenter', defaultRoles: ['super_admin'] },
 ];
 
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {

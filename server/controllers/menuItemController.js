@@ -149,7 +149,7 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
   }
 
   // Only super_admin can create global menu items
-  const isGlobalItem = (isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) && req.user.role === 'super_admin';
+  const isGlobalItem = (isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) && (req.user.role === 'super_admin' || req.user.permissions?.manageGlobalMenu === true);
   let branchIds = [];
 
   if (!isGlobalItem) {
@@ -276,7 +276,7 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
   if (preparationTime !== undefined) updates.preparationTime = Number(preparationTime);
   
   // Non-super_admin cannot make items global (or keep them global)
-  const canBeGlobal = req.user.role === 'super_admin';
+  const canBeGlobal = req.user.role === 'super_admin' || req.user.permissions?.manageGlobalMenu === true;
   const isGlobalItem = isGlobal !== undefined
     ? ((isGlobal === 'on' || isGlobal === 'true' || isGlobal === true) && canBeGlobal)
     : (item.isGlobal && canBeGlobal);
@@ -389,7 +389,7 @@ const deleteMenuItem = asyncHandler(async (req, res) => {
 
   // Non-super_admin can only delete items assigned to their accessible branches
   if (req.user.role !== 'super_admin') {
-    if (item.isGlobal) {
+    if (item.isGlobal && req.user.permissions?.manageGlobalMenu !== true) {
       res.status(403);
       throw new Error('Only Super Admins can delete global menu items');
     }

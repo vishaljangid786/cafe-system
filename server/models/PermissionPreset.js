@@ -25,6 +25,9 @@ const permissionPresetSchema = new mongoose.Schema(
       manageBranches: { type: Boolean, default: false },
       viewAuditLogs: { type: Boolean, default: false },
       impersonateUsers: { type: Boolean, default: false },
+      viewAdminCenter: { type: Boolean, default: false },
+      manageGlobalMenu: { type: Boolean, default: false },
+      sendGlobalNotifications: { type: Boolean, default: false },
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

@@ -151,7 +151,7 @@ const createNotification = asyncHandler(async (req, res) => {
     recipients = [{ user: targetUser._id }];
   } 
   else if (targetType === 'role') {
-    if (senderRole !== 'super_admin' && targetId !== 'super_admin') {
+    if (senderRole !== 'super_admin' && req.user.permissions?.sendGlobalNotifications !== true && targetId !== 'super_admin') {
        // Only super admin can broadcast to roles, except others can message super admin role? 
        // User said: Admin -> Super Admin. Branch Admin -> Their Admin.
        // Let's simplify: only super admin can do bulk role broadcast.
@@ -176,7 +176,7 @@ const createNotification = asyncHandler(async (req, res) => {
     recipients = users.map(u => ({ user: u._id }));
   }
   else if (targetType === 'system') {
-    if (senderRole !== 'super_admin') {
+    if (senderRole !== 'super_admin' && req.user.permissions?.sendGlobalNotifications !== true) {
       res.status(403);
       throw new Error('Only Super Admins can broadcast to the entire system');
     }
@@ -282,11 +282,11 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   let roles = [];
   let branches = [];
 
-  if (role === 'super_admin') {
+  if (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) {
     users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
     roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
     branches = await Location.find().select('name city');
-  } 
+  }
   else if (role === 'admin') {
     const supers = await User.find({ role: 'super_admin' }).select('name role');
     const accessibleBranches = user.accessibleLocations || [];
@@ -323,9 +323,9 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     success: true,
     data: {
       users,
-      roles: role === 'super_admin' ? roles : [],
-      // Admins get their accessible branches; super_admin gets all; others get none
-      branches: role === 'super_admin' ? branches : (role === 'admin' ? branches : [])
+      roles: (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) ? roles : [],
+      // Admins get their accessible branches; super_admin / global-notify gets all; others get none
+      branches: (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) ? branches : (role === 'admin' ? branches : [])
     }
   });
 });
