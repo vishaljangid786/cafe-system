@@ -5,7 +5,7 @@ import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   UserPlus, User, Mail, Phone, MapPin, Shield, CreditCard,
-  Image as ImageIcon, Check, ArrowLeft, Lock
+  Image as ImageIcon, Check
 } from 'lucide-react';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
@@ -243,7 +243,7 @@ export default function AddMemberPage() {
 
   return (
     <PageTransition>
-      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-8 pb-24">
+      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-8 pb-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -255,9 +255,6 @@ export default function AddMemberPage() {
               <p className="text-sm text-(--color-text-muted)">Create a new team member and set their access.</p>
             </div>
           </div>
-          <Button type="button" variant="outline" icon={ArrowLeft} onClick={() => router.back()} className="w-full sm:w-auto">
-            Back
-          </Button>
         </div>
 
         {/* Basic Info */}
@@ -399,7 +396,7 @@ export default function AddMemberPage() {
         </Section>
 
         {/* Submit */}
-        <div className="flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 bg-(--color-bg-base)/80 backdrop-blur py-4 -mx-1 px-1">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
           <Button type="submit" variant="primary" icon={UserPlus} disabled={submitting} className="w-full sm:w-auto">
             {submitting ? 'Creating...' : 'Create Member'}
