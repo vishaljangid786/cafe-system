@@ -136,7 +136,9 @@ const getUsers = asyncHandler(async (req, res) => {
   const total = await User.countDocuments(query);
 
   const users = await User.find(query)
-    .select('-password')
+    // .lean() skips getters, so aadharNumber would be the raw ciphertext — and the
+    // list never needs it (the detail view fetches the decrypted value). Exclude it.
+    .select('-password -aadharNumber')
     .populate('assignedLocation', 'name city')
     .populate('accessibleLocations', 'name city')
     .sort({ createdAt: -1 })
@@ -565,11 +567,14 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword;
+  // Invalidate every existing session (including any stolen token) on password change.
+  user.sessionVersion = (user.sessionVersion || 1) + 1;
   await user.save();
 
   res.json({
     success: true,
-    message: 'Password updated successfully',
+    requireRelogin: true,
+    message: 'Password updated. Please log in again with your new password.',
   });
 });
 

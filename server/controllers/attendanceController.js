@@ -187,7 +187,7 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
   }
 
   let userMatch = { role: 'staff' };
-  let attendanceMatch = { date: { $regex: `^${month}` } };
+  let attendanceMatch = { date: { $regex: `^${escapeRegex(month)}` } };
 
   if (locationId && locationId !== 'All') {
     if (mongoose.Types.ObjectId.isValid(locationId)) {

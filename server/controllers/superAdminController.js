@@ -131,14 +131,14 @@ const getAuditLogs = asyncHandler(async (req, res) => {
 
   // Text Search in details
   if (req.query.search) {
-    query.details = { $regex: req.query.search, $options: 'i' };
+    query.details = { $regex: escapeRegex(req.query.search), $options: 'i' };
   }
 
   const logs = await AuditLog.find(query)
     .populate('performedBy', 'name email role')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limitNum);
 
   const total = await AuditLog.countDocuments(query);
 
@@ -148,7 +148,7 @@ const getAuditLogs = asyncHandler(async (req, res) => {
     pagination: {
       total,
       page,
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limitNum)
     }
   });
 });

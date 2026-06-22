@@ -8,7 +8,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId, scopedLocationIds, normalizeId, canAccessLocation, userLocationIds } = require('../utils/accessControl');
+const { scopedLocationId, scopedLocationIds, normalizeId, canAccessLocation, userLocationIds, escapeRegex } = require('../utils/accessControl');
 
 // Returns a Mongoose $in array for the current user's accessible locations, or null for super_admin (no filter)
 const allowedLocationFilter = (user) => {
@@ -480,7 +480,7 @@ const getStaffReports = asyncHandler(async (req, res) => {
 
   let userQuery = { role: { $in: ['staff', 'chef', 'branch_admin'] } };
   if (staffName) {
-    userQuery.name = { $regex: staffName, $options: 'i' };
+    userQuery.name = { $regex: escapeRegex(staffName), $options: 'i' };
   }
   // Scope to accessible locations for all non-super_admin roles
   if (req.user.role !== 'super_admin') {

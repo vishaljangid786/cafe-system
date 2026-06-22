@@ -243,6 +243,14 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     throw new Error('Menu item not found');
   }
 
+  // A user who cannot manage global items must not edit one — otherwise the
+  // logic below would silently demote it from global to branch-scoped.
+  const canManageGlobal = req.user.role === 'super_admin' || req.user.permissions?.manageGlobalMenu === true;
+  if (item.isGlobal && !canManageGlobal) {
+    res.status(403);
+    throw new Error('Only users who can manage the global menu may edit a global item');
+  }
+
   const {
     name, category, price, costPrice, originalPrice, discountedPrice,
     description, isAvailable, preparationTime, locationId, dietaryType, stock,

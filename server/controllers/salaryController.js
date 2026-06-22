@@ -3,7 +3,7 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const Payroll = require('../models/Payroll');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId, enforceLocationAccess, clampLimit } = require('../utils/accessControl');
+const { scopedLocationId, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
 const mongoose = require('mongoose');
 
 // Helper to get days in a month (format: YYYY-MM)
@@ -24,7 +24,7 @@ const getSalaryAggregation = async (userIds, month, daysInMonth) => {
               $expr: { 
                 $and: [
                   { $eq: ['$user', '$$userId'] },
-                  { $regexMatch: { input: '$date', regex: `^${month}` } }
+                  { $regexMatch: { input: '$date', regex: `^${escapeRegex(month)}` } }
                 ]
               }
             }
@@ -127,9 +127,10 @@ const getAllSalary = asyncHandler(async (req, res) => {
   if (branchScope) userQuery.assignedLocation = branchScope;
   
   if (search) {
+    const safeSearch = escapeRegex(search);
     userQuery.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { name: { $regex: safeSearch, $options: 'i' } },
+      { email: { $regex: safeSearch, $options: 'i' } }
     ];
   }
 

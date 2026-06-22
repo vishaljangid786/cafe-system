@@ -21,6 +21,10 @@ const getCustomers = asyncHandler(async (req, res) => {
   const limitNum = clampLimit(limit, 50);
   const skip = (pageNum - 1) * limitNum;
 
+  // Only allow sorting by known fields (user-supplied `sort` otherwise reaches Mongoose verbatim).
+  const SORTABLE = new Set(['totalSpend', 'visits', 'orderCount', 'name', 'createdAt', 'lastVisit', 'loyaltyPoints']);
+  const safeSort = SORTABLE.has(String(sort).replace(/^-/, '')) ? sort : '-totalSpend';
+
   const query = buildBranchFilter(req);
 
   if (search) {
@@ -33,7 +37,7 @@ const getCustomers = asyncHandler(async (req, res) => {
 
   const total = await Customer.countDocuments(query);
   const customers = await Customer.find(query)
-    .sort(sort)
+    .sort(safeSort)
     .skip(skip)
     .limit(limitNum)
     .lean();
