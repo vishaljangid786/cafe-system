@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '../services/api';
 import {
@@ -223,7 +223,11 @@ function SignupContent() {
     }
   };
 
-  const InputField = ({ label, name, type = "text", placeholder, error, ...props }) => (
+  // Defined with useCallback so it keeps a STABLE identity across re-renders.
+  // (Previously this was a plain inline component; every re-render — e.g. when
+  // `isValid` flips as the email becomes a valid format — created a new
+  // component type, which made React remount the input and steal focus.)
+  const InputField = useCallback(({ label, name, type = "text", placeholder, error, ...props }) => (
     <div className="space-y-1.5">
       <label className="label block ml-0.5">{label}</label>
       <input
@@ -235,7 +239,7 @@ function SignupContent() {
       />
       {error && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{error}</p>}
     </div>
-  );
+  ), [register]);
 
   return (
     <div className="min-h-screen bg-(--color-bg-base) flex flex-col lg:flex-row transition-colors duration-300">
