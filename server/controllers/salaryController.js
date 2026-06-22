@@ -143,8 +143,9 @@ const getAllSalary = asyncHandler(async (req, res) => {
   const allSalaries = await getSalaryAggregation(userIds, month, daysInMonth);
 
   // Pagination logic
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-  const paginatedSalaries = allSalaries.slice(skip, skip + parseInt(limit));
+  const lim = clampLimit(limit, 20);
+  const skip = (parseInt(page) - 1) * lim;
+  const paginatedSalaries = allSalaries.slice(skip, skip + lim);
 
   // Group by location for expense overview
   const locationTotals = allSalaries.reduce((acc, curr) => {

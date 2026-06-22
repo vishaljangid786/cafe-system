@@ -17,8 +17,8 @@ const createOrderValidator = [
   body('items.*.quantity')
     .notEmpty()
     .withMessage('Quantity is required')
-    .isInt({ min: 1 })
-    .withMessage('Quantity must be at least 1'),
+    .isInt({ min: 1, max: 999 })
+    .withMessage('Quantity must be between 1 and 999'),
   body('paymentType')
     .optional()
     .isIn(['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'])

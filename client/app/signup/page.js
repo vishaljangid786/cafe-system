@@ -21,7 +21,7 @@ import * as z from 'zod';
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(10, 'Password must be at least 10 characters'),
   phone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
   age: z.string().refine((val) => {
     const n = parseInt(val);

@@ -67,7 +67,7 @@ const markAttendance = asyncHandler(async (req, res) => {
       status,
       markedBy: req.user._id,
     },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+    { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true }
   );
 
   await sendNotification({

@@ -295,6 +295,13 @@ const rejectTransaction = asyncHandler(async (req, res) => {
     throw new Error('Transaction record not found');
   }
 
+  // Segregation of duties: you cannot reject a transaction you created.
+  const creatorId = (transaction.createdBy?._id || transaction.createdBy)?.toString();
+  if (creatorId && creatorId === req.user._id.toString()) {
+    res.status(403);
+    throw new Error('You cannot reject a transaction you created');
+  }
+
   // IDOR Mitigation: Branch/Location Admin can only reject transactions for their own branch
   const transactionLocationId = transaction.locationId?._id || transaction.locationId;
   if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, transactionLocationId)) {
