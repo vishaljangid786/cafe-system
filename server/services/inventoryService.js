@@ -28,9 +28,10 @@ const deductIngredientsFromRecipe = async (order, branchId) => {
 
       for (const ingredientInfo of recipe.ingredients) {
         const deductionQuantity = ingredientInfo.quantity * item.quantity;
+        // Clamp at 0 — physical stock can't go negative even if an order exceeds it.
         await BranchInventory.findOneAndUpdate(
           { branch: branchId, ingredient: ingredientInfo.ingredient },
-          { $inc: { stock: -deductionQuantity } }
+          [{ $set: { stock: { $max: [0, { $subtract: ['$stock', deductionQuantity] }] } } }]
         );
       }
     }

@@ -304,12 +304,24 @@ const completeOrder = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, table.locationId, 'You do not have permission to complete tables from other locations');
 
+  // Don't wipe a table that still has live kitchen orders — they'd be orphaned
+  // and their revenue lost. Serve/complete or cancel them first.
+  const Order = require('../models/Order');
+  const liveOrder = await Order.findOne({
+    table: table._id,
+    status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] },
+  });
+  if (liveOrder) {
+    res.status(400);
+    throw new Error('This table still has active orders. Complete or cancel them before clearing the table.');
+  }
+
   table.status = 'available';
   table.isBooked = false;
   table.orders = [];
   table.totalAmount = 0;
   table.numberOfPeople = 0;
-  
+
   await table.save();
 
   const io = getIO();

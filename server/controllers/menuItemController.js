@@ -505,11 +505,17 @@ const updateStock = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
+  const numStock = Number(stock);
+  if (!Number.isFinite(numStock) || numStock < 0) {
+    res.status(400);
+    throw new Error('Stock must be a number of 0 or more');
+  }
+
   if (branchId) {
     enforceLocationAccess(req, res, branchId, 'You do not have permission to update stock for this branch');
     const branchStock = await BranchStock.findOneAndUpdate(
       { menuItem: item._id, branch: branchId },
-      { stock: Number(stock), isAvailable: Number(stock) > 0 },
+      { stock: numStock, isAvailable: numStock > 0 },
       { new: true, upsert: true }
     );
     
@@ -520,7 +526,7 @@ const updateStock = asyncHandler(async (req, res) => {
     });
   } else {
     // Fallback for global stock if no branchId (deprecated behavior)
-    item.stock = Number(stock);
+    item.stock = numStock;
     await item.save();
     res.json({
       success: true,
