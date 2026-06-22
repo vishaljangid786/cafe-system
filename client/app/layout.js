@@ -5,6 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import TopProgressBar, { RouteProgress } from "./components/ui/TopProgressBar";
+import DateInputEnhancer from "./components/ui/DateInputEnhancer";
 
 export const metadata = {
   title: "Cafe Management System | Premium Dashboard",
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning className="font-sans text-[var(--color-text-primary)] antialiased transition-colors duration-300">
         <ThemeProvider>
+          <DateInputEnhancer />
           <TopProgressBar />
           <AuthProvider>
             <RouteProgress />

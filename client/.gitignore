@@ -18,6 +18,7 @@ node_modules
 # next.js
 /.next/
 /out/
+.next-dev*.log
 
 # production
 /build
