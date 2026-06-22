@@ -21,23 +21,18 @@ _Done for you locally:_ a **fresh strong `JWT_SECRET` and `ENCRYPTION_KEY` are n
 
 ---
 
-## 🔄 Audits in progress — findings will be added here when they complete
+## ⬜ Remaining open — low priority (deep pass 2)
 
-Two adversarially-verified audits are running; their confirmed new findings will be appended below and then fixed:
+Both deep audits (security pass 2 + UI/flow/feature) completed. **Every confirmed CRITICAL, HIGH and MEDIUM finding has been fixed and removed from this list** (see git log). The few that remain are low-impact:
 
-- **Deep security pass 2** — IDOR / object-level authorization on every `:id` route, mass-assignment / over-posting, CSRF (cookie auth), file-upload safety, Socket.io authorization, tenant/branch isolation bypass, race conditions, privilege-escalation via update.
-- **UI / Flow / Feature audit** — UI rendering & state bugs, UX/error states, responsive/theme/accessibility, auth/order/ops flow breakages, FE↔BE feature mismatch, data-consistency.
-
-### Security (pass 2) — _pending_
-
-### UI bugs — _pending_
-
-### User-flow issues — _pending_
-
-### Feature gaps & correctness — _pending_
+- **Long-lived JWT/cookie (30d, `sameSite=none`)** — widens the token-theft / CSRF window. Already mitigated by the new CSRF guard + logout revocation; lower `JWT_EXPIRE` if you want tighter sessions. _(config)_
+- **PDF uploads served inline** via raw Cloudinary URLs (no `fl_attachment`) — a PDF opens in-browser instead of downloading. _(`uploadMiddleware.js`)_
+- **/register runs the Cloudinary upload before the role gate** — an authenticated low-priv user could trigger an upload before being rejected (bounded by the auth rate limiter). _(`authRoutes.js`)_
 
 ---
 
 ## ✅ Resolved this session (summary — details in git log)
 
-All **34** pass-1 security findings are now either fixed or covered by the operational/by-design items above, and the **16-permission RBAC** review is resolved (every granted permission now works end-to-end; `exportReports`/`manageCoupons`/`forceComplete` made permission-driven; sidebar/page-access completed). Notable fixes pushed: register privilege-escalation, password/Aadhaar response leaks, destructive password-reset migration removed, regex-injection hardening, session revocation on password change & logout, per-account login lockout, trust-proxy, encryption fail-closed, transaction/expense positive-amount + approval segregation, coupon cap, order stale-coupon clamp, inventory link, user-reassignment branch-scope, and assorted UI fixes (CommandPalette, ReservationForm, dead links).
+All **34** pass-1 security findings are now either fixed or covered by the operational/by-design items above, and the **16-permission RBAC** review is resolved (every granted permission now works end-to-end; `exportReports`/`manageCoupons`/`forceComplete` made permission-driven; sidebar/page-access completed). Notable pass-1 fixes: register privilege-escalation, password/Aadhaar response leaks, destructive password-reset migration removed, regex-injection hardening, session revocation on password change & logout, per-account login lockout, trust-proxy, encryption fail-closed, transaction/expense positive-amount + approval segregation, coupon cap, order stale-coupon clamp, inventory link, user-reassignment branch-scope, and assorted UI fixes (CommandPalette, ReservationForm, dead links).
+
+**Deep pass 2 (25 confirmed) — all CRITICAL/HIGH/MEDIUM fixed:** rank guard on user management (admin could disable/delete/block/read a super_admin or peer admin — CRITICAL), empty-location IDOR bypass, CSRF protection for cookie auth, Socket.io tenant-isolation leaks (notifications + `order:new` were broadcast across branches), mass-assignment/over-posting on coupon/reservation/table updates, cross-branch menu toggle, promoteUser peer loophole, logout→POST; plus UI/flow: order search stale closure, BillPreview false-success, destructive-action confirmations (orders + coupons), chef/staff loading hangs, menu stale image preview, duplicate login toast + credential console.log.
