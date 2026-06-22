@@ -378,7 +378,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden space-y-1 mt-1 pl-4 pr-1"
+                      className="overflow-hidden space-y-1 mt-1 pl-4 pr-1 bg-gray-600 "
                     >
                       {group.items.map((link) => {
                         const Icon = link.icon;

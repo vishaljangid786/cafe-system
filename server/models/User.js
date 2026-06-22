@@ -98,12 +98,19 @@ const userSchema = new mongoose.Schema(
     ],
     aadharNumber: {
       type: String,
-      match: [/^[0-9]{12}$/, 'Please add a valid 12-digit Aadhar number'],
       set: (val) => encrypt(val),
       get: (val) => decrypt(val),
+      // Setters run BEFORE validators in Mongoose, so `val` here is the encrypted
+      // string. Decrypt first, then check the 12-digit format. Skip when empty
+      // (field is optional). A plain (unencrypted) value passes through decrypt
+      // unchanged, so this also holds for non-encrypted input.
+      validate: {
+        validator: (val) => !val || /^[0-9]{12}$/.test(decrypt(val)),
+        message: 'Please add a valid 12-digit Aadhar number',
+      },
     },
     aadharImage: {
-      type: String, // Cloudinary URL
+      type: String,
     },
     highestQualification: {
       type: String,
