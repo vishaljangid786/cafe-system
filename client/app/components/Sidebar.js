@@ -11,7 +11,7 @@ import {
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
   Target, TrendingUp, Crown, Package,
   Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download,
-  Activity, ShieldAlert, ChevronDown, ShieldCheck
+  Activity, ShieldAlert, ChevronDown, ShieldCheck, UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -77,6 +77,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
       const adminItems = [];
       const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
+
+      // Add Member -> full /signup page (super_admin, admin, branch_admin)
+      adminItems.push({ name: 'Add Member', href: '/signup', icon: UserPlus });
 
       if (role === 'super_admin') {
         adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });

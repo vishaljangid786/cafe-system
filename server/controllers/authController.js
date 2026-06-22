@@ -176,12 +176,38 @@ const registerUser = asyncHandler(async (req, res, next) => {
   };
   const defaultPerms = DEFAULT_PERMISSIONS[finalRole] || {};
 
+  // Start from the role's sensible defaults; if the creator sent an explicit
+  // permission selection, use that instead — but a non-super-admin can only
+  // grant permissions they themselves hold. (A super_admin role always gets the
+  // full default set since it bypasses permission checks anyway.)
+  let finalPermissions = { ...defaultPerms };
+  if (finalRole !== 'super_admin' && req.user) {
+    let requested = req.body.permissions;
+    if (typeof requested === 'string') {
+      try { requested = JSON.parse(requested); } catch (e) { requested = null; }
+    }
+    if (requested && typeof requested === 'object') {
+      const ALL_PERMISSION_KEYS = [
+        'viewRevenue', 'editRevenue', 'viewOrders', 'manageOrders', 'forceComplete',
+        'exportReports', 'manageStaff', 'manageNotifications', 'viewAnalytics', 'manageCoupons',
+        'manageBranches', 'viewAuditLogs', 'impersonateUsers', 'viewAdminCenter',
+        'manageGlobalMenu', 'sendGlobalNotifications',
+      ];
+      const actorIsSuper = req.user.role === 'super_admin';
+      const actorPerms = req.user.permissions || {};
+      finalPermissions = {};
+      ALL_PERMISSION_KEYS.forEach((k) => {
+        finalPermissions[k] = requested[k] === true && (actorIsSuper || actorPerms[k] === true);
+      });
+    }
+  }
+
   const user = await User.create({
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
     alternatePhone, role: finalRole, assignedLocation, accessibleLocations,
     aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary,
-    permissions: defaultPerms
+    permissions: finalPermissions
   });
 
   if (user) {

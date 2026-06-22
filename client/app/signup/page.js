@@ -51,6 +51,36 @@ const signupSchema = z.object({
   path: ["assignedLocation"],
 });
 
+const PERMISSION_LIST = [
+  { key: 'viewRevenue', label: 'View Revenue' },
+  { key: 'editRevenue', label: 'Edit Revenue' },
+  { key: 'viewOrders', label: 'View Orders' },
+  { key: 'manageOrders', label: 'Manage Orders' },
+  { key: 'forceComplete', label: 'Force Complete Orders' },
+  { key: 'exportReports', label: 'Export Reports' },
+  { key: 'manageStaff', label: 'Manage Staff' },
+  { key: 'manageNotifications', label: 'Manage Notifications' },
+  { key: 'viewAnalytics', label: 'View Analytics' },
+  { key: 'manageCoupons', label: 'Manage Coupons' },
+  { key: 'manageBranches', label: 'Open Branches Page' },
+  { key: 'viewAuditLogs', label: 'Open Security Logs' },
+  { key: 'impersonateUsers', label: 'Login As Users' },
+  { key: 'viewAdminCenter', label: 'Open Admin Center' },
+  { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
+  { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
+];
+
+// Default permissions each role gets (mirrors the backend). Keys not listed default to false.
+const ROLE_DEFAULTS = {
+  admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
+  branch_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, viewAnalytics: true },
+  location_admin: { viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true, viewAnalytics: true },
+  staff: { viewOrders: true, manageOrders: true },
+  chef: { viewOrders: true, manageOrders: true },
+};
+
+const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
+
 function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -64,6 +94,7 @@ function SignupContent() {
   const [locations, setLocations] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
+  const [permissions, setPermissions] = useState(emptyPerms());
   const [activeStep, setActiveStep] = useState(1);
 
   // Manage object URLs for image previews so blobs are revoked on change/unmount
@@ -191,6 +222,18 @@ function SignupContent() {
     }
   };
 
+  // Whenever the chosen role changes, pre-select that role's default permissions.
+  useEffect(() => {
+    setPermissions({ ...emptyPerms(), ...(ROLE_DEFAULTS[selectedRole] || {}) });
+  }, [selectedRole]);
+
+  // A creator can only grant permissions they themselves hold (super_admin: all).
+  const actorCanGrant = (key) => currentUser?.role === 'super_admin' || !!currentUser?.permissions?.[key];
+  const togglePermission = (key) => {
+    if (!actorCanGrant(key)) return;
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const nextStep = async () => {
     let fieldsToValidate = [];
     if (activeStep === 1) fieldsToValidate = ['name', 'email', 'age', 'gender', 'password'];
@@ -213,11 +256,19 @@ function SignupContent() {
     });
     if (image) data.append('aadharImage', image);
     if (profileImage) data.append('profileImage', profileImage);
+    // An admin/branch-admin creating a member sends the chosen permission set;
+    // the backend validates it against what the creator is allowed to grant.
+    if (!isSetup) data.append('permissions', JSON.stringify(permissions));
 
     try {
       await api.post('/auth/register', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success('Account created successfully.', { id: loadToast });
-      router.push('/login');
+      if (isSetup) {
+        toast.success('Account created successfully.', { id: loadToast });
+        router.push('/login');
+      } else {
+        toast.success('Member created successfully.', { id: loadToast });
+        router.push(currentUser?.role === 'branch_admin' ? '/dashboard/branch-admin/staff' : '/dashboard/admin/staff');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not create account. Please check your details.', { id: loadToast });
     }
@@ -435,6 +486,40 @@ function SignupContent() {
                     </div>
                   )} />
                   <InputField label="Monthly Salary (₹)" name="monthlySalary" type="number" placeholder="28000" error={errors.monthlySalary?.message} />
+
+                  {!isSetup && selectedRole && selectedRole !== 'super_admin' && (
+                    <div className="space-y-2 pt-4 border-t border-(--color-border)">
+                      <div className="flex items-center justify-between">
+                        <label className="label block ml-0.5">Permissions</label>
+                        <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                          {Object.values(permissions).filter(Boolean).length} selected
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-(--color-text-muted) ml-0.5">This role's defaults are pre-selected. Add more if needed — you can only grant permissions you have.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {PERMISSION_LIST.map(({ key, label }) => {
+                          const checked = !!permissions[key];
+                          const allowed = actorCanGrant(key);
+                          return (
+                            <button
+                              type="button"
+                              key={key}
+                              onClick={() => togglePermission(key)}
+                              className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'} ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <span className="flex flex-col">
+                                {label}
+                                {!allowed && <span className="text-[9px] text-danger normal-case">You don't have this</span>}
+                              </span>
+                              <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
+                                {checked && <CheckCircle2 size={12} />}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
