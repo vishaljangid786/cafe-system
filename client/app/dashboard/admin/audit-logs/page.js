@@ -148,7 +148,7 @@ export default function AuditLogsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <PremiumSelect
-              className="min-w-[180px] flex-1 sm:flex-none"
+              className="min-w-45 flex-1 sm:flex-none"
               value={actionFilter}
               onChange={(val) => setActionFilter(val)}
               options={[

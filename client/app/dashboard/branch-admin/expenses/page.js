@@ -344,7 +344,7 @@ export default function BranchExpensesPage() {
                 </div>
                 <h3 className="text-sm font-bold uppercase tracking-normal opacity-80 mb-6">Expense Trend</h3>
                 <div className="space-y-6 relative z-10">
-                  <div className="h-[180px] w-full">
+                  <div className="h-45 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <Area type="monotone" dataKey="amount" stroke="#f43f5e" strokeWidth={3} fill="#f43f5e30" />
@@ -389,7 +389,7 @@ export default function BranchExpensesPage() {
                     </div>
                   </div>
                 </div>
-                <div className="text-left md:text-right bg-(--color-surface-soft) dark:bg-(--color-bg) p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) min-w-[200px]">
+                <div className="text-left md:text-right bg-(--color-surface-soft) dark:bg-(--color-bg) p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) min-w-50">
                   <p className="text-4xl font-bold text-danger tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
                   <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-2">Total Amount</p>
                 </div>

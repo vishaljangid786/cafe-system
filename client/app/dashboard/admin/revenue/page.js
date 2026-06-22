@@ -186,7 +186,7 @@ export default function RevenuePage() {
                   { label: 'All Branches', value: 'all' },
                   ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                 ]}
-                className="min-w-[180px] !py-2"
+                className="min-w-45 !py-2"
               />
             )}
             <UniversalDateFilter
@@ -218,7 +218,7 @@ export default function RevenuePage() {
                 </div>
               </div>
             </div>
-            <div className="h-[300px] w-full relative z-10">
+            <div className="h-75 w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>

@@ -53,8 +53,8 @@ export default function SuperAdminDashboard() {
       <div className="min-h-screen text-(--color-text-primary) p-6 lg:p-12 space-y-16 overflow-hidden relative selection:bg-primary selection:text-white">
 
         {/* Atmospheric Smart Network */}
-        {/* <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-primary/5 blur-[150px] rounded-full -ml-64 -mb-64 pointer-events-none" />
+        {/* <div className="absolute top-0 right-0 w-200 h-200 bg-primary/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-200 h-200 bg-primary/5 blur-[150px] rounded-full -ml-64 -mb-64 pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" /> */}
 
         {/* Global Control Header */}

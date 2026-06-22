@@ -338,7 +338,7 @@ export default function PermissionManager({ className = "" }) {
       ) : (
         <div className="card rounded-xl overflow-hidden">
           <div className="responsive-table-container">
-            <table className="w-full min-w-[800px] text-left border-separate border-spacing-0">
+            <table className="w-full min-w-200 text-left border-separate border-spacing-0">
               <thead>
                 <tr className="bg-(--color-surface-soft) text-xs font-semibold text-(--color-text-muted)">
                   <th className="px-6 py-3">Staff Member</th>

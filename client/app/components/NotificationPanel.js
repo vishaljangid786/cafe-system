@@ -34,7 +34,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="absolute top-full right-0 mt-3 w-96 max-h-[600px] bg-(--color-surface) border border-(--color-border) shadow-[var(--shadow-md)] rounded-xl z-1000 flex flex-col overflow-hidden"
+            className="absolute top-full right-0 mt-3 w-96 max-h-150 bg-(--color-surface) border border-(--color-border) shadow-[var(--shadow-md)] rounded-xl z-1000 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 border-b border-(--color-border) flex items-center justify-between">

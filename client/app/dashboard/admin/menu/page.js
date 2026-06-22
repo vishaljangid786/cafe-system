@@ -515,7 +515,7 @@ export default function MenuManagementPage() {
                 { label: 'All Branches', value: 'all' },
                 ...locations.map(loc => ({ label: loc.name, value: loc._id }))
               ]}
-              className="min-w-[200px]"
+              className="min-w-50"
             />
 
             {/* Time Filter */}
@@ -1021,7 +1021,7 @@ export default function MenuManagementPage() {
                     </div>
                   </div>
 
-                  <p className="text-sm text-(--color-text-muted) font-medium mb-8 min-h-[40px]">{cat.description || 'No description added.'}</p>
+                  <p className="text-sm text-(--color-text-muted) font-medium mb-8 min-h-10">{cat.description || 'No description added.'}</p>
 
                   <div className="flex justify-between items-center pt-4 border-t border-(--color-border)">
                     <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal ${cat.isActive ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
@@ -1605,7 +1605,7 @@ export default function MenuManagementPage() {
                       />
                     </div>
                     <div className="flex-1 bg-(--color-bg-soft) rounded-xl border border-(--color-border) p-2 overflow-hidden">
-                      <div className="flex flex-wrap gap-1.5 h-[56px] overflow-y-auto no-scrollbar justify-center items-center">
+                      <div className="flex flex-wrap gap-1.5 h-14 overflow-y-auto no-scrollbar justify-center items-center">
                         {SUGGESTED_ICONS.map(icon => (
                           <button
                             key={icon}

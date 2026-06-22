@@ -113,7 +113,7 @@ export default function PayrollRecordsPage() {
                   </div>
                 </div>
 
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 2xl:w-auto 2xl:min-w-[660px]">
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 2xl:w-auto 2xl:min-w-165">
                   {/* Search */}
                   <div className="relative group">
                     <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
@@ -305,7 +305,7 @@ export default function PayrollRecordsPage() {
                 </div>
                 <PieIcon size={20} className="text-primary" />
               </div>
-              <div className="h-[300px] w-full relative">
+              <div className="h-75 w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -339,7 +339,7 @@ export default function PayrollRecordsPage() {
                 </div>
                 <Activity size={20} className="text-primary" />
               </div>
-              <div className="h-[300px] w-full">
+              <div className="h-75 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={selectedLocation === 'All'
                     ? (stats?.locationTotals ? Object.entries(stats.locationTotals).map(([name, total]) => ({ name, value: total })) : [])

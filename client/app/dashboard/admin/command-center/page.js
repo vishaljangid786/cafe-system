@@ -129,7 +129,7 @@ export default function CommandCenterPage() {
                   { label: 'All Locations', value: 'all' },
                   ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                 ]}
-                className="min-w-[200px]"
+                className="min-w-50"
               />
 
               <button

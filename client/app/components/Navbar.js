@@ -139,7 +139,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               metaKey: true,
               bubbles: true
              }))}
-            className="hidden lg:flex items-center gap-3 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-(--color-text-muted) group min-w-[280px]"
+            className="hidden lg:flex items-center gap-3 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-(--color-text-muted) group min-w-70"
           >
             <Search size={16} className="group-hover:text-(--color-text-primary) transition-colors" />
             <span className="text-sm">Search or switch user...</span>
@@ -165,7 +165,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                     setPendingIds(selectedLocationIds.length > 0 ? selectedLocationIds : (selectedLocation ? [selectedLocation._id || selectedLocation] : []));
                     setShowBranchPanel(v => !v);
                   }}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-sm font-medium text-(--color-text-primary) min-w-[200px]"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-sm font-medium text-(--color-text-primary) min-w-50"
                 >
                   <MapPin size={15} className="text-primary shrink-0" />
                   <span className="flex-1 text-left truncate text-sm font-medium">{multiBranchLabel}</span>
@@ -227,7 +227,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               </>
             ) : (
               /* Single-select for branch_admin / location_admin */
-              <div className="w-[220px]">
+              <div className="w-55">
                 <PremiumSelect
                   icon={MapPin}
                   value={selectedLocationId}

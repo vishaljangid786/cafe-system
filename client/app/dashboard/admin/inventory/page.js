@@ -218,7 +218,7 @@ export default function InventoryDashboard() {
                     { label: 'All Branches', value: 'All' },
                     ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                   ]}
-                  className="min-w-[200px]"
+                  className="min-w-50"
                 />
               </div>
             </div>
@@ -593,7 +593,7 @@ export default function InventoryDashboard() {
               <textarea 
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px] resize-none"
+                className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-25 resize-none"
                 placeholder="Details about the waste"
               />
             </div>

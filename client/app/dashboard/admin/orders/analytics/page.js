@@ -307,7 +307,7 @@ export default function OrderAnalyticsDashboard() {
               <div className="lg:col-span-2">
                 <button
                   onClick={resetFilters}
-                  className="w-full h-full min-h-[60px] bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-bold text-[10px] uppercase tracking-normal transition-all flex items-center justify-center gap-3 group"
+                  className="w-full h-full min-h-15 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-bold text-[10px] uppercase tracking-normal transition-all flex items-center justify-center gap-3 group"
                 >
                   <FilterX
                     size={18}
@@ -457,7 +457,7 @@ export default function OrderAnalyticsDashboard() {
             <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-10 flex items-center gap-3">
               <PieIcon size={18} className="text-primary" /> Orders by Status
             </h3>
-            <div className="flex-1 min-h-[300px] w-full relative z-10">
+            <div className="flex-1 min-h-75 w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie

@@ -174,7 +174,7 @@ export default function LocationComparisonPage() {
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc1Open(!isLoc1Open); setIsLoc2Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-[220px] font-bold text-xs"
+                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-bold text-xs"
                     >
                       <MapPin size={18} className="text-primary" />
                       <div className="flex flex-col items-start">
@@ -197,7 +197,7 @@ export default function LocationComparisonPage() {
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc2Open(!isLoc2Open); setIsLoc1Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-[220px] font-bold text-xs"
+                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-bold text-xs"
                     >
                       <MapPin size={18} className="text-primary" />
                       <div className="flex flex-col items-start">

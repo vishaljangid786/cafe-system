@@ -127,7 +127,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
   if (!user) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 space-y-10">
+    <div className="max-w-400 mx-auto pb-20 space-y-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -294,7 +294,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
               <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Orders by Week
               </h3>
-              <div className="h-[300px]">
+              <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={stats?.ordersByWeek || []} margin={{ left: -20, right: 10 }}>
                     <defs>
@@ -317,7 +317,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
               <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Orders by Month
               </h3>
-              <div className="h-[300px]">
+              <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats?.ordersByMonth || []} margin={{ left: -20, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />

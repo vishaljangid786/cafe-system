@@ -178,7 +178,7 @@ export default function GlobalAttendancePage() {
         </div>
 
         {/* Branch Select */}
-        <div className="min-w-[180px]">
+        <div className="min-w-45">
           <PremiumSelect
             icon={MapPin}
             value={filters.locationId}
@@ -246,7 +246,7 @@ export default function GlobalAttendancePage() {
                 </div>
                 <PieIcon size={20} className="text-primary" />
               </div>
-              <div className="h-[300px] w-full relative">
+              <div className="h-75 w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -282,7 +282,7 @@ export default function GlobalAttendancePage() {
                 </div>
                 <Activity size={20} className="text-secondary" />
               </div>
-              <div className="h-[300px] w-full">
+              <div className="h-75 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={Array.isArray(summary) ? summary.map(s => ({
                     name: s.locationName,
@@ -410,7 +410,7 @@ export default function GlobalAttendancePage() {
               <h2 className="font-bold text-(--color-text-primary)">Daily Logs</h2>
             </div>
             <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left min-w-[800px]">
+              <table className="w-full text-left min-w-200">
                 <thead>
                   <tr className="bg-(--color-surface-soft)/50 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                     <th className="px-6 py-4">Staff Member</th>

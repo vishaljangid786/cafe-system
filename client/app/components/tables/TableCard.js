@@ -32,7 +32,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
   return (
     <CardHover>
       <div className={`
-        glass-card p-8 rounded-xl border relative group transition-all duration-500 flex flex-col h-full min-h-[480px] w-full
+        glass-card p-8 rounded-xl border relative group transition-all duration-500 flex flex-col h-full min-h-120 w-full
         ${isAvailable ? 'border-(--color-border)' : 'border-primary/30 shadow-[var(--shadow-premium)]'}
       `}>
         {/* Admin Controls Overlay */}

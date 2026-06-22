@@ -329,7 +329,7 @@ export default function ChefDashboard() {
             <div className="p-4 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border border-(--color-border) dark:border-(--color-border)">
                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-3 block">Note / Message</label>
                <textarea
-                 className="w-full bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[120px] dark:text-white shadow-inner"
+                 className="w-full bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-30 dark:text-white shadow-inner"
                  placeholder="e.g. 5 min delay due to high volume..."
                  value={chefNote}
                  onChange={(e) => setChefNote(e.target.value)}

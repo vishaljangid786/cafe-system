@@ -414,7 +414,7 @@ export default function UsersPage() {
 
           {/* Desktop table */}
           <div className="responsive-table-container hidden md:block">
-            <table className="w-full min-w-[760px] text-left border-separate border-spacing-0 bg-(--color-surface)">
+            <table className="w-full min-w-190 text-left border-separate border-spacing-0 bg-(--color-surface)">
               <thead>
                 <tr className="bg-(--color-surface-soft) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                   <th className="px-4 sm:px-10 py-4 sm:py-6">Name</th>

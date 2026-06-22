@@ -38,7 +38,7 @@ export const ActivityTimeline = ({ items }) => {
                 {item.time}
               </span>
             </div>
-            <p className="text-xs text-(--color-text-secondary) mt-1.5 leading-relaxed max-w-[240px]">
+            <p className="text-xs text-(--color-text-secondary) mt-1.5 leading-relaxed max-w-60">
               {item.description}
             </p>
           </div>

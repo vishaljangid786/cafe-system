@@ -113,7 +113,7 @@ export default function PaymentInformationPage() {
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 space-y-10">
+    <div className="max-w-400 mx-auto pb-20 space-y-10">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
@@ -281,7 +281,7 @@ export default function PaymentInformationPage() {
               <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <BarChart2 size={16} className="text-primary" /> Branch-wise Payment Split (₹)
               </h3>
-              <div className="h-[400px]">
+              <div className="h-100">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats?.branchUPIStats || []} margin={{ left: -10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />

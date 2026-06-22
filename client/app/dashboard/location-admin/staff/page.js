@@ -304,7 +304,7 @@ export default function LocationStaffPage() {
                   </div>
                 </div>
 
-                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-[180px]">
+                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
                   <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
                   <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>

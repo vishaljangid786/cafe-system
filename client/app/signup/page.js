@@ -439,7 +439,7 @@ function SignupContent() {
                   <InputField label="Aadhar Number (12 Digits)" name="aadharNumber" placeholder="XXXX XXXX XXXX" error={errors.aadharNumber?.message} onInput={(e) => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} />
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Upload Aadhar Image</label>
-                    <div className="group relative flex flex-col items-center justify-center min-h-[240px] bg-(--color-surface) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
+                    <div className="group relative flex flex-col items-center justify-center min-h-60 bg-(--color-surface) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
                       <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
                       {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={36} className="text-(--color-text-soft) group-hover:text-primary transition-colors mb-3" /><p className="text-sm font-medium text-(--color-text-muted)">Upload Aadhar Photo</p></div>}
                     </div>

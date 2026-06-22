@@ -148,7 +148,7 @@ export default function ProfilePage() {
 
   return (
     <PageTransition>
-      <div className="max-w-[1500px] mx-auto pb-20 space-y-8">
+      <div className="max-w-375 mx-auto pb-20 space-y-8">
         {/* Hero Section */}
         {activeTab === 'details' &&
           <SlideIn direction="down">

@@ -87,13 +87,13 @@ function DashboardSkeleton() {
       {/* Charts & Content Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-[400px]">
+          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-100">
              <Skeleton className="h-6 w-48 mb-8" />
-             <Skeleton className="h-[280px] w-full" />
+             <Skeleton className="h-70 w-full" />
           </div>
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-[300px]">
+          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-75">
              <Skeleton className="h-6 w-48 mb-8" />
-             <Skeleton className="h-[180px] w-full" />
+             <Skeleton className="h-45 w-full" />
           </div>
         </div>
         <div className="lg:col-span-4 space-y-10">
@@ -101,7 +101,7 @@ function DashboardSkeleton() {
             <Skeleton className="h-28 w-full rounded-xl" />
             <Skeleton className="h-28 w-full rounded-xl" />
           </div>
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-[400px]">
+          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-100">
             <Skeleton className="h-6 w-40 mb-6" />
             <div className="space-y-5">
               {[1, 2, 3, 4, 5].map(i => (
@@ -308,7 +308,7 @@ export default function StaffDashboard() {
                   {timeframe === 'all' ? 'ALL TIME' : timeframe.toUpperCase()} VIEW
                 </div>
               </div>
-              <div className="h-[300px]">
+              <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={orderTrendData}>
                     <defs>
@@ -335,7 +335,7 @@ export default function StaffDashboard() {
               <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-8 flex items-center gap-3">
                 <Calendar size={16} className="text-warning" /> Attendance ({timeframe})
               </h3>
-              <div className="h-[200px]">
+              <div className="h-50">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={attendanceChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" vertical={false} />

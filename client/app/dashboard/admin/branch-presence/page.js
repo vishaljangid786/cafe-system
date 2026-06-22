@@ -105,7 +105,7 @@ export default function BranchPresencePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 max-w-[1600px] mx-auto">
+      <div className="space-y-10 max-w-400 mx-auto">
         
         {/* Header */}
         <SlideIn direction="down">

@@ -284,7 +284,7 @@ export default function AdminOrdersDashboard() {
                 <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3 mb-10">
                   <BarChart3 size={18} className="text-primary" /> Kitchen Performance
                 </h3>
-                <div className="h-[300px] w-full relative z-10">
+                <div className="h-75 w-full relative z-10">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics?.charts?.chefPerformance || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -394,7 +394,7 @@ export default function AdminOrdersDashboard() {
                                   <span className="text-[10px] font-bold text-(--color-text-muted) mt-1 uppercase tracking-normal">Table {order.table?.tableNumber}</span>
                                 </div>
                               </td>
-                              <td className="py-6 px-8 max-w-[300px]">
+                              <td className="py-6 px-8 max-w-75">
                                 <p className="text-[10px] font-bold text-(--color-text-muted) truncate italic">
                                   {order.items.map(i => `${i.quantity}x ${i.menuItem?.name}`).join(', ')}
                                 </p>

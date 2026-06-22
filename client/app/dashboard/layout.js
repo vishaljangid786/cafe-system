@@ -118,7 +118,7 @@ export default function DashboardLayout({ children }) {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-normal flex items-center gap-2 text-center">
                 <span className="w-2 h-2 rounded-full bg-black animate-pulse shrink-0" />
-                <span className="truncate max-w-[200px] sm:max-w-none">
+                <span className="truncate max-w-50 sm:max-w-none">
                   Impersonating: {user.name} ({user.role})
                 </span>
               </span>
@@ -139,7 +139,7 @@ export default function DashboardLayout({ children }) {
 
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-transparent p-3 sm:p-4 md:p-8 custom-scrollbar relative">
           <PageTransition>
-            <div className="max-w-[1600px] mx-auto dashboard-content min-w-0">
+            <div className="max-w-400 mx-auto dashboard-content min-w-0">
               {children}
             </div>
           </PageTransition>

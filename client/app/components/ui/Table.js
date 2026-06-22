@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export const Table = ({ children, className = '' }) => (
   <div className={`w-full overflow-x-auto custom-scrollbar ${className}`}>
-    <table className="w-full min-w-[640px] text-left border-separate border-spacing-0">
+    <table className="w-full min-w-160 text-left border-separate border-spacing-0">
       {children}
     </table>
   </div>

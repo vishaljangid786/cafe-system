@@ -148,7 +148,7 @@ export default function StaffReportsAnalytics({ user }) {
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 space-y-10 print:p-0 print:bg-(--color-surface) print:text-(--color-on-primary)">
+    <div className="max-w-400 mx-auto pb-20 space-y-10 print:p-0 print:bg-(--color-surface) print:text-(--color-on-primary)">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
@@ -294,7 +294,7 @@ export default function StaffReportsAnalytics({ user }) {
               <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Sales Leaderboard (₹)
               </h3>
-              <div className="h-[300px]">
+              <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.slice(0, 10)} margin={{ left: -10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />

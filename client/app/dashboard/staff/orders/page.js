@@ -357,7 +357,7 @@ export default function StaffOrdersPage() {
 
                  <button 
                   onClick={() => { setSearchTerm(''); setSelectedCategory('all'); setStartDate(''); setEndDate(''); }}
-                  className="h-[60px] px-8 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-bold text-[10px] uppercase tracking-normal transition-all flex items-center gap-3 group shrink-0"
+                  className="h-15 px-8 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-bold text-[10px] uppercase tracking-normal transition-all flex items-center gap-3 group shrink-0"
                  >
                     <FilterX size={18} className="group-hover:rotate-12 transition-transform" /> Clear Filters
                  </button>

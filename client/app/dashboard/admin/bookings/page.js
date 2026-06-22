@@ -170,7 +170,7 @@ export default function BookingsManagementPage() {
           /* List View */
           <div className="bg-(--color-surface)/40 rounded-xl border border-(--color-border) overflow-hidden shadow-sm  transition-colors">
             <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+              <table className="w-full text-left border-collapse min-w-200">
                 <thead>
                   <tr className="bg-(--color-surface-soft) border-b border-(--color-border)">
                     <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Customer</th>

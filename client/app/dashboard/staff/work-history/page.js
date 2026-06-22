@@ -56,7 +56,7 @@ export default function WorkHistoryPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-[1500px] mx-auto pb-20 space-y-10">
+      <div className="max-w-375 mx-auto pb-20 space-y-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">

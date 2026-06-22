@@ -90,7 +90,7 @@ export default function ForecastingDashboard() {
                   { label: 'All Branches', value: 'all' },
                   ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                 ]}
-                className="min-w-[180px]"
+                className="min-w-45"
               />
 
               <PremiumSelect

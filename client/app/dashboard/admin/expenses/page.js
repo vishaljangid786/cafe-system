@@ -288,7 +288,7 @@ export default function ExpensesPage() {
                     { label: 'All Branches', value: 'all' },
                     ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                   ]}
-                  className="min-w-[180px] !py-2.5"
+                  className="min-w-45 !py-2.5"
                 />
               )}
               <Button
@@ -527,7 +527,7 @@ export default function ExpensesPage() {
                 </div>
                 <h3 className="text-sm font-bold uppercase tracking-normal opacity-80 mb-6">Expense Trend</h3>
                 <div className="space-y-6 relative z-10">
-                  <div className="h-[200px] w-full">
+                  <div className="h-50 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
@@ -612,7 +612,7 @@ export default function ExpensesPage() {
                     </div>
                   </div>
                 </div>
-                <div className="text-left md:text-right bg-(--color-bg-soft) p-6 rounded-xl border border-(--color-border) min-w-[200px]">
+                <div className="text-left md:text-right bg-(--color-bg-soft) p-6 rounded-xl border border-(--color-border) min-w-50">
                   <p className="text-4xl font-bold text-danger tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
                   <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-2">Total Amount</p>
                 </div>

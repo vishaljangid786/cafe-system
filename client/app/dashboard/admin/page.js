@@ -209,7 +209,7 @@ export default function AdminDashboard() {
               { label: 'All Branches', value: 'all' },
               ...locations.map(loc => ({ label: loc.name, value: loc._id }))
             ]}
-            className="w-full sm:w-[220px]"
+            className="w-full sm:w-55"
           />
 
           <div className="flex items-center gap-2 sm:gap-3 bg-(--color-surface)/40 p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
@@ -249,10 +249,10 @@ export default function AdminDashboard() {
             <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <ChartSkeleton className="lg:col-span-2 h-[400px]" /><ChartSkeleton className="h-[400px]" />
+            <ChartSkeleton className="lg:col-span-2 h-100" /><ChartSkeleton className="h-100" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <CardSkeleton className="h-[300px]" /><CardSkeleton className="h-[300px]" />
+            <CardSkeleton className="h-75" /><CardSkeleton className="h-75" />
           </div>
         </div>
       ) : (
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
             <CardTitle className="text-xl">Sales Report</CardTitle>
             <TrendingUp size={20} className="text-primary" />
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={analytics.timeSeries}>
                 <defs>
@@ -341,7 +341,7 @@ export default function AdminDashboard() {
               <Layers size={20} />
             </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics?.timeSeries}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
@@ -479,7 +479,7 @@ export default function AdminDashboard() {
               <Zap size={20} />
             </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics?.forecast?.nextMonthSalesTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
@@ -510,7 +510,7 @@ export default function AdminDashboard() {
             </div>
             <Activity size={20} className="text-secondary" />
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={analytics?.attendanceStats}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />

@@ -610,7 +610,7 @@ export default function LocationStaffPage() {
                     { label: '50k - 100k', value: '50000-100000' },
                     { label: 'Over 100k', value: '100000-1000000' }
                   ]}
-                  className="min-w-[140px] max-w-[170px]"
+                  className="min-w-35 max-w-[170px]"
                 />
 
                 {/* 📍 Compact Location Filter */}
@@ -628,7 +628,7 @@ export default function LocationStaffPage() {
                       value: loc._id
                     }))
                   ]}
-                  className="min-w-[150px] max-w-[180px]"
+                  className="min-w-[150px] max-w-45"
                 />
               </div>
             )}
@@ -991,7 +991,7 @@ export default function LocationStaffPage() {
                   </div>
                 </div>
 
-                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-[180px]">
+                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
                   <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
                   <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
