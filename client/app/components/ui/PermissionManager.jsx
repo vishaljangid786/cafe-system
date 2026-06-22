@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Check, X, Search, ShieldCheck } from 'lucide-react';
+import { Shield, Check, X, Search, ShieldCheck, Plus, Trash2, Pencil, Layers } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Modal from './Modal';
 import { Button } from './Button';
 import { Spinner } from './Spinner';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const permissionList = [
   { key: 'viewRevenue', label: 'View Revenue' },
@@ -22,16 +23,39 @@ const permissionList = [
   { key: 'manageCoupons', label: 'Manage Coupons' },
 ];
 
+const ROLE_FILTERS = [
+  { label: 'All Roles', value: 'all' },
+  { label: 'Admin', value: 'admin' },
+  { label: 'Branch Admin', value: 'branch_admin' },
+  { label: 'Chef', value: 'chef' },
+  { label: 'Staff', value: 'staff' },
+];
+
+const emptyPerms = () => permissionList.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
+
 export default function PermissionManager({ className = "" }) {
   const { user: currentUser, selectedLocation } = useAuth();
   const [subordinates, setSubordinates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [editedPermissions, setEditedPermissions] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Saved roles (permission presets)
+  const [presets, setPresets] = useState([]);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [editingPreset, setEditingPreset] = useState(null);
+  const [roleName, setRoleName] = useState('');
+  const [rolePerms, setRolePerms] = useState(emptyPerms());
+  const [savingRole, setSavingRole] = useState(false);
+  const [roleError, setRoleError] = useState('');
+
+  // A non-super-admin can only grant permissions they themselves hold.
+  const actorCanGrant = (key) => currentUser?.role === 'super_admin' || !!currentUser?.permissions?.[key];
 
   const fetchSubordinates = async () => {
     try {
@@ -40,7 +64,14 @@ export default function PermissionManager({ className = "" }) {
       const allUsers = res.data.data || [];
 
       let filtered = [];
-      const currentBranchId = selectedLocation?._id || currentUser?.assignedLocation?._id || currentUser?.assignedLocation;
+      const selectedBranchId = selectedLocation?._id || selectedLocation;
+      const allowedBranchIds = selectedBranchId
+        ? [selectedBranchId]
+        : [
+            currentUser?.assignedLocation?._id || currentUser?.assignedLocation,
+            ...(currentUser?.accessibleLocations || []).map((loc) => loc._id || loc)
+          ].filter(Boolean);
+      const allowedBranchSet = new Set(allowedBranchIds.map((id) => id.toString()));
 
       if (currentUser?.role === 'super_admin') {
         // Super Admin can manage everyone except themselves
@@ -52,9 +83,9 @@ export default function PermissionManager({ className = "" }) {
       } else if (currentUser?.role === 'branch_admin') {
         // Branch Admin can manage chefs and staff in their branch
         const allowedRoles = ['chef', 'staff'];
-        filtered = allUsers.filter(u => 
-          allowedRoles.includes(u.role) && 
-          (u.assignedLocation?._id === currentBranchId || u.assignedLocation === currentBranchId)
+        filtered = allUsers.filter(u =>
+          allowedRoles.includes(u.role) &&
+          allowedBranchSet.has((u.assignedLocation?._id || u.assignedLocation)?.toString())
         );
       }
 
@@ -67,10 +98,20 @@ export default function PermissionManager({ className = "" }) {
     }
   };
 
+  const fetchPresets = async () => {
+    try {
+      const res = await api.get('/permission-presets');
+      setPresets(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to load roles');
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       const timer = setTimeout(() => {
         fetchSubordinates();
+        fetchPresets();
       }, 0);
 
       return () => clearTimeout(timer);
@@ -91,6 +132,19 @@ export default function PermissionManager({ className = "" }) {
     }));
   };
 
+  // Fill the toggles from a saved role, but only for permissions the current
+  // user is actually allowed to grant (so the save never hits a 403).
+  const applyPresetToEdit = (presetId) => {
+    if (!presetId) return;
+    const preset = presets.find(p => p._id === presetId);
+    if (!preset) return;
+    const next = {};
+    permissionList.forEach(({ key }) => {
+      next[key] = !!preset.permissions?.[key] && actorCanGrant(key);
+    });
+    setEditedPermissions(next);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -98,6 +152,7 @@ export default function PermissionManager({ className = "" }) {
       await api.put(`/users/${selectedUser._id}/permissions`, {
         permissions: editedPermissions
       });
+      toast.success('Permissions updated');
       setIsModalOpen(false);
       fetchSubordinates(); // Refresh list
     } catch (err) {
@@ -108,11 +163,74 @@ export default function PermissionManager({ className = "" }) {
     }
   };
 
-  const filteredUsers = subordinates.filter(sub => 
-    sub.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sub.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sub.role?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ---- Saved role (preset) management ----
+  const openCreateRole = () => {
+    setEditingPreset(null);
+    setRoleName('');
+    setRolePerms(emptyPerms());
+    setRoleError('');
+    setShowRoleModal(true);
+  };
+
+  const openEditRole = (preset) => {
+    setEditingPreset(preset);
+    setRoleName(preset.name);
+    setRolePerms({ ...emptyPerms(), ...preset.permissions });
+    setRoleError('');
+    setShowRoleModal(true);
+  };
+
+  const toggleRolePerm = (key) => {
+    if (!actorCanGrant(key)) return;
+    setRolePerms(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSaveRole = async () => {
+    if (!roleName.trim()) {
+      setRoleError('Please enter a role name');
+      return;
+    }
+    try {
+      setSavingRole(true);
+      setRoleError('');
+      if (editingPreset) {
+        await api.put(`/permission-presets/${editingPreset._id}`, { name: roleName.trim(), permissions: rolePerms });
+        toast.success('Role updated');
+      } else {
+        await api.post('/permission-presets', { name: roleName.trim(), permissions: rolePerms });
+        toast.success('Role created');
+      }
+      setShowRoleModal(false);
+      fetchPresets();
+    } catch (err) {
+      setRoleError(err.response?.data?.message || 'Failed to save role');
+    } finally {
+      setSavingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (preset) => {
+    if (!confirm(`Delete role "${preset.name}"? This will not change any user who already has these permissions.`)) return;
+    try {
+      await api.delete(`/permission-presets/${preset._id}`);
+      toast.success('Role deleted');
+      fetchPresets();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not delete role');
+    }
+  };
+
+  const canModifyPreset = (preset) =>
+    currentUser?.role === 'super_admin' || preset.createdBy === currentUser?._id;
+
+  const filteredUsers = subordinates.filter(sub => {
+    const matchesSearch =
+      sub.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sub.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sub.role?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' || sub.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   if (loading && subordinates.length === 0) {
     return (
@@ -123,7 +241,7 @@ export default function PermissionManager({ className = "" }) {
   }
 
   return (
-    <div className={`space-y-10 ${className}`}>
+    <div className={`space-y-8 ${className}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3">
@@ -131,12 +249,60 @@ export default function PermissionManager({ className = "" }) {
             Staff Permissions
           </h1>
           <p className="max-w-2xl text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Choose what each team member is allowed to do.
+            Choose what each team member is allowed to do, or build reusable roles you can apply in one click.
             {currentUser?.role === 'branch_admin' && <span className="text-[var(--color-primary)] font-medium ml-1">Branch staff only.</span>}
           </p>
         </div>
+        <Button variant="primary" icon={Plus} onClick={openCreateRole} className="w-full md:w-auto">
+          Create Role
+        </Button>
+      </div>
 
-        <div className="relative group w-full md:w-80">
+      {/* Saved Roles (presets) */}
+      <div className="card rounded-xl p-5 sm:p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Layers size={16} className="text-[var(--color-primary)]" />
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Saved Roles</h2>
+          <span className="text-xs text-[var(--color-text-muted)]">({presets.length})</span>
+        </div>
+        {presets.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-muted)]">
+            No roles yet. Click <span className="font-semibold text-[var(--color-text-primary)]">Create Role</span> to make a reusable set of permissions you can apply to any team member.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {presets.map((preset) => {
+              const count = Object.values(preset.permissions || {}).filter(Boolean).length;
+              const editable = canModifyPreset(preset);
+              return (
+                <div key={preset._id} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-[var(--color-text-primary)] truncate">{preset.name}</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{count} permission{count === 1 ? '' : 's'}</p>
+                    {preset.createdByName && (
+                      <p className="text-[10px] text-[var(--color-text-muted)] mt-1">by {preset.createdByName}</p>
+                    )}
+                  </div>
+                  {editable && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => openEditRole(preset)} title="Edit role" className="p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/40 transition-colors">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDeleteRole(preset)} title="Delete role" className="p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/40 transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Search + role filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative group flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={18} />
           <input
             type="text"
@@ -146,6 +312,15 @@ export default function PermissionManager({ className = "" }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="input sm:w-56 appearance-none cursor-pointer"
+        >
+          {ROLE_FILTERS.map((r) => (
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
       </div>
 
       {filteredUsers.length === 0 ? (
@@ -217,6 +392,7 @@ export default function PermissionManager({ className = "" }) {
         </div>
       )}
 
+      {/* Edit user permissions */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -229,10 +405,26 @@ export default function PermissionManager({ className = "" }) {
             </div>
           )}
 
+          {presets.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[var(--color-text-muted)]">Apply a saved role</label>
+              <select
+                defaultValue=""
+                onChange={(e) => { applyPresetToEdit(e.target.value); e.target.value = ''; }}
+                className="input appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Choose a role to fill the permissions below…</option>
+                {presets.map((p) => (
+                  <option key={p._id} value={p._id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {permissionList.map(({ key, label }) => {
               const isChecked = editedPermissions[key] || false;
-              const superiorHasPermission = currentUser?.role === 'super_admin' || (currentUser?.permissions && currentUser.permissions[key]);
+              const superiorHasPermission = actorCanGrant(key);
 
               return (
                 <div
@@ -276,6 +468,84 @@ export default function PermissionManager({ className = "" }) {
               className="order-1 sm:order-2"
             >
               Save Permissions
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create / edit role (preset) */}
+      <Modal
+        isOpen={showRoleModal}
+        onClose={() => setShowRoleModal(false)}
+        title={editingPreset ? 'Edit Role' : 'Create Role'}
+      >
+        <div className="space-y-6">
+          {roleError && (
+            <div className="p-3 bg-[rgba(var(--color-danger-rgb),0.1)] text-[var(--color-danger)] border border-[rgba(var(--color-danger-rgb),0.2)] rounded-lg text-sm font-medium text-center">
+              {roleError}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[var(--color-text-muted)]">Role Name</label>
+            <input
+              type="text"
+              value={roleName}
+              onChange={(e) => setRoleName(e.target.value)}
+              placeholder="e.g. Senior Staff"
+              className="input"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-[var(--color-text-muted)]">Permissions in this role</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {permissionList.map(({ key, label }) => {
+                const isChecked = rolePerms[key] || false;
+                const allowed = actorCanGrant(key);
+                return (
+                  <div
+                    key={key}
+                    onClick={() => toggleRolePerm(key)}
+                    className={`p-4 rounded-lg border transition-colors flex items-center justify-between cursor-pointer group/item ${
+                      isChecked
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]'
+                        : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-soft)]'
+                    } ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">{label}</span>
+                      {!allowed && (
+                        <span className="text-xs text-[var(--color-danger)] flex items-center gap-1">
+                          <X size={10} /> You don't have this
+                        </span>
+                      )}
+                    </div>
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${
+                      isChecked
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-on-primary)]'
+                        : 'border-[var(--color-border-strong)] group-hover/item:border-[var(--color-primary)]'
+                    }`}>
+                      {isChecked && <Check size={14} strokeWidth={3} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-5 border-t border-[var(--color-border)]">
+            <Button variant="outline" onClick={() => setShowRoleModal(false)} className="order-2 sm:order-1">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveRole}
+              loading={savingRole}
+              icon={editingPreset ? Pencil : Plus}
+              className="order-1 sm:order-2"
+            >
+              {editingPreset ? 'Save Role' : 'Create Role'}
             </Button>
           </div>
         </div>

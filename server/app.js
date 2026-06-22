@@ -29,6 +29,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
+const permissionPresetRoutes = require('./routes/permissionPresetRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -127,6 +128,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/permission-presets', permissionPresetRoutes);
 
 
 // Base route
