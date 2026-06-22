@@ -8,14 +8,16 @@ _Last updated: 2026-06-22._
 
 ## ⚠️ Operational action items — only you can do these (before next deploy)
 
-1. **Rotate the leaked secrets.** `JWT_SECRET`, MongoDB Atlas password, and the Cloudinary API secret are in git **history** (commit `cfad6ae:server/.env`). Anyone with the history can forge a valid JWT for any user (incl. super_admin) → full auth bypass. **Do:** generate a new `JWT_SECRET`, rotate the Atlas DB-user password (stop using `demo`), regenerate the Cloudinary secret, then purge the file from history (`git filter-repo` / BFG) and force-push. Inject secrets only via host env going forward.
-2. **Set `ENCRYPTION_KEY`** in the backend host environment. The backend now **fails closed in production** (won't boot) without it. Keep the value constant once set, or existing encrypted Aadhaar records won't decrypt.
+_Done for you locally:_ a **fresh strong `JWT_SECRET` and `ENCRYPTION_KEY` are now in `server/.env`** (gitignored), `server/.env.example` documents every required var, and the old `.env` is untracked. Remaining steps need your dashboards / host:
+
+1. **Rotate the leaked secrets** (they're still in git **history**, commit `cfad6ae:server/.env`). On the dashboards: rotate the **MongoDB Atlas** DB-user password (stop using `demo`) and regenerate the **Cloudinary** API secret. Then set on your **backend host** env: the new `JWT_SECRET` + `ENCRYPTION_KEY` (from `server/.env`), the new `MONGO_URI` (with the rotated password) and the new Cloudinary secret. Finally purge the file from history (`git filter-repo --path server/.env --invert-paths` or BFG) and force-push — _say the word and I'll run the history purge for you._
+2. **Set `ENCRYPTION_KEY` on the host** to the **same value** that's now in `server/.env` (local and host share the Atlas DB, so the key must match). The backend **fails closed in production** without it. Keep it constant.
 
 ---
 
-## 🧭 Kept by design (not bugs — confirm if you want changed)
+## 🧭 Kept by design (decided)
 
-- **`getUser` returns the decrypted Aadhaar to a managing admin** (`userController.js`). Kept because you asked for Aadhaar to be visible in the staff detail view. If you'd rather restrict it (e.g. super_admin / admin only, or mask all but last 4 digits), say so and I'll lock it down.
+- **`getUser` shows the FULL decrypted Aadhaar (all 12 digits) to a managing admin** (`userController.js`). Confirmed desired — Aadhaar is visible in the staff detail view, no masking.
 
 ---
 
