@@ -91,15 +91,17 @@ export default function LocationStaffPage() {
     else setRefetching(true);
     progress.start();
     try {
-      // If in tree mode, we always want all available staff to build the hierarchy
-      const params = viewMode === 'tree' ? {} : {
+      // In tree mode we need EVERY user to build the full hierarchy, so request a
+      // high limit (was sending {} which made the backend default to just 10,
+      // cutting off staff/chef once there were more than 10 users).
+      const params = viewMode === 'tree' ? { limit: 1000 } : {
         role: roleFilter,
         locationId: locationFilter,
         status: statusFilter,
         salaryRange: salaryFilter,
         search: searchQuery,
         page,
-        limit: viewMode === 'tree' ? 1000 : limit
+        limit
       };
       const res = await api.get('/users', { params });
       setStaff(res.data.data);

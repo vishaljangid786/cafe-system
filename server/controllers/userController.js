@@ -131,7 +131,7 @@ const getUsers = asyncHandler(async (req, res) => {
 
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = clampLimit(req.query.limit, 10);
+  const limit = clampLimit(req.query.limit, 10, 1000); // allow large limit for the staff tree view
   const startIndex = (page - 1) * limit;
   const total = await User.countDocuments(query);
 
