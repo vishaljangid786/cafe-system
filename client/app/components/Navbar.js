@@ -220,7 +220,6 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               <div className="w-[220px]">
                 <PremiumSelect
                   icon={MapPin}
-                  label="Active Branch"
                   value={selectedLocationId}
                   onChange={(value) => {
                     const nextLocation = availableBranches.find((branch) => (branch._id || branch) === value);

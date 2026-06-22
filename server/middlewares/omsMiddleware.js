@@ -60,7 +60,7 @@ const validateOrderTransition = async (req, res, next) => {
 
     // Idempotency: If the status is already what we want, just return success
     if (currentStatus === nextStatus) {
-      return res.json({ success: true, data: order, message: 'Signal already at target state' });
+      return res.json({ success: true, data: order, message: 'Order is already in this status' });
     }
 
     const isTerminal = ['CANCELLED', 'REJECTED', 'COMPLETED'].includes(currentStatus);
@@ -72,7 +72,7 @@ const validateOrderTransition = async (req, res, next) => {
         console.error(`[OMS_PROTOCOL_VIOLATION] Order: ${id} - Attempted: ${currentStatus} -> ${nextStatus} - ForceComplete: ${isForceComplete}`);
         return res.status(400).json({
           success: false,
-          message: `Strict Protocol Violation: Cannot transition from ${currentStatus} to ${nextStatus}`
+          message: `Cannot change order from ${currentStatus} to ${nextStatus}`
         });
       }
     }

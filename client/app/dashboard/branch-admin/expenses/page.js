@@ -126,7 +126,7 @@ export default function BranchExpensesPage() {
       setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
       fetchExpenses();
     } catch (error) {
-      toast.error(error.message || 'Action failed', { id: loadToast });
+      toast.error(error.message || 'Could not save expense. Please try again.', { id: loadToast });
     }
   };
 
@@ -138,7 +138,7 @@ export default function BranchExpensesPage() {
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
-      const msg = error.response?.data?.message || 'Authorization failed';
+      const msg = error.response?.data?.message || 'Could not approve expense. Please try again.';
       toast.error(msg, { id: loadToast });
     }
   };
@@ -151,7 +151,7 @@ export default function BranchExpensesPage() {
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
-      const msg = error.response?.data?.message || 'Revocation failed';
+      const msg = error.response?.data?.message || 'Could not reject expense. Please try again.';
       toast.error(msg, { id: loadToast });
     }
   };
@@ -226,7 +226,7 @@ export default function BranchExpensesPage() {
                 onClick={() => setShowAddModal(true)}
                 className="!rounded-xl !py-4 px-8 bg-[var(--color-danger)] hover:bg-[var(--color-danger)] shadow-sm  scale-105  active:scale-95 transition-all"
               >
-                New Entry
+                Add Expense
               </Button>
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function BranchExpensesPage() {
                     { header: 'Date', key: item => new Date(item.date).toLocaleDateString() },
                     { header: 'Amount', key: 'totalAmount' }
                   ]} 
-                  filename="branch_expense_vault" 
+                  filename="branch_expenses"
                 />
                 <Button
                   variant="secondary"
@@ -326,7 +326,7 @@ export default function BranchExpensesPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xl font-bold text-[var(--color-danger)] tracking-tight leading-none">-₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Settled</p>
+                          <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Paid</p>
                         </div>
                       </div>
                     </CardHover>
@@ -378,7 +378,7 @@ export default function BranchExpensesPage() {
                         <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-lg animate-pulse">Pending Review</span>
                       )}
                       {selectedExpense.status === 'rejected' && (
-                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-surface-soft)]/10 text-[var(--color-text-secondary)] border border-[var(--color-border)]/20 rounded-lg">Revoked</span>
+                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-surface-soft)]/10 text-[var(--color-text-secondary)] border border-[var(--color-border)]/20 rounded-lg">Rejected</span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-3">
@@ -409,8 +409,8 @@ export default function BranchExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] mt-1 bg-[var(--color-danger)]/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'System Rule'}</p>
+                      <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Unknown'}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] mt-1 bg-[var(--color-danger)]/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
                   {selectedExpense.approvedBy && (
@@ -427,7 +427,7 @@ export default function BranchExpensesPage() {
                     <MapPin size={12} className="text-[var(--color-danger)]" /> Branch
                   </p>
                   <div className="space-y-1">
-                    <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.locationId?.name || 'Central Command'}</p>
+                    <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.locationId?.name || 'Main Branch'}</p>
                     <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">{selectedExpense.locationId?.city || 'Branch'}</p>
                   </div>
                 </div>
@@ -450,7 +450,7 @@ export default function BranchExpensesPage() {
                   <Sparkles size={12} className="text-[var(--color-danger)]" /> Bill Image
                 </p>
                   <div className="rounded-xl overflow-hidden border-4 border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface)] dark:bg-[var(--color-bg)] p-3 shadow-sm relative group">
-                    <img src={selectedExpense.billImage} alt="Evidence" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
+                    <img src={selectedExpense.billImage} alt="Bill" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
                   </div>
                 </div>
               )}
@@ -508,11 +508,11 @@ export default function BranchExpensesPage() {
                     exit={{ opacity: 0, height: 0, y: -20 }}
                     className="space-y-3 overflow-hidden"
                   >
-                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Specify Custom Title</label>
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Enter Custom Title</label>
                     <input 
                       required 
                       className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" 
-                      placeholder="e.g. Special Equipment Repair"
+                      placeholder="e.g. Special equipment repair"
                       value={formData.customTitle}
                       onChange={e => setFormData({...formData, customTitle: e.target.value})}
                     />
@@ -547,7 +547,7 @@ export default function BranchExpensesPage() {
 
               <div className="space-y-3">
                 <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Description</label>
-                <textarea className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Provide specific context for this outflow..." />
+                <textarea className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Add a short note about this expense..." />
               </div>
             </div>
 

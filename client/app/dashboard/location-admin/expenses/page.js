@@ -96,7 +96,7 @@ export default function LocationExpensesPage() {
       setFormData({ title: '', amount: '', category: 'Daily', date: new Date().toISOString().split('T')[0], description: '' });
       fetchExpenses();
     } catch (error) {
-      toast.error('Error', { id: loadToast });
+      toast.error('Could not save expense. Please try again.', { id: loadToast });
     }
   };
 
@@ -226,7 +226,7 @@ export default function LocationExpensesPage() {
             <ListSkeleton rows={6} />
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-white/40 dark:bg-[var(--color-bg)]/40 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border)]">
-              <p className="text-[var(--color-text-muted)] font-bold">No expense records detected.</p>
+              <p className="text-[var(--color-text-muted)] font-bold">No expenses found.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">

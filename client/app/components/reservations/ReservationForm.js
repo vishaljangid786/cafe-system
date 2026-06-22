@@ -220,7 +220,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                     setFormData({ ...formData, eventName: '' });
                   }
                 }}
-                placeholder="Select Designation"
+                placeholder="Select Event Type"
                 options={EVENT_DESIGNATIONS.map(d => ({ label: d, value: d }))}
               />
             </div>
@@ -231,7 +231,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                 <input
                   required
                   type="text"
-                  placeholder={selectedEventType === 'Other' ? "Type custom designation..." : "Select category or type 'Other'"}
+                  placeholder={selectedEventType === 'Other' ? "Type a custom event name..." : "Pick a category, or choose 'Other' to type your own"}
                   disabled={selectedEventType !== 'Other' && selectedEventType !== ''}
                   className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 focus:ring-2 focus:ring-[var(--color-primary)]/30 outline-none transition-all text-[var(--color-text-primary)] font-bold placeholder:text-[var(--color-text-muted)] disabled:opacity-60"
                   value={formData.eventName}
@@ -257,7 +257,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Type Selector</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Booking Type</label>
                 <div className="flex bg-[var(--color-bg-soft)] p-1.5 rounded-xl border border-[var(--color-border)]">
                   <button
                     type="button"
@@ -288,7 +288,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
             <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Calendar Date</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Date</label>
                 <div className="relative">
                   <input
                     required
@@ -427,11 +427,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Users className="text-[var(--color-primary)]" size={20} />
-              <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Client Details</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Customer Details</h4>
             </div>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Client Full Name</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Customer Full Name</label>
                 <input
                   required
                   type="text"

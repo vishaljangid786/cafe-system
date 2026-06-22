@@ -121,7 +121,7 @@ export default function AdminDashboard() {
       setAnalytics(res.data.data);
     } catch (error) {
       console.error("Failed to fetch analytics");
-      toast.error("Failed to load dashboard");
+      toast.error("Could not load dashboard. Please try again.");
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -171,11 +171,11 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-full">
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse " />
-              <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-primary)]/80">System: Online</span>
+              <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-primary)]/80">Online</span>
             </div>
             <div className="h-px w-8 bg-[var(--color-border)]" />
             <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-              {selectedLocationIds.length > 1 ? `View: ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'View: All Branches' : 'View: Branch'}
+              {selectedLocationIds.length > 1 ? `Showing ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'Showing All Branches' : 'Showing Branch'}
             </span>
           </motion.div>
 
@@ -472,8 +472,8 @@ export default function AdminDashboard() {
         <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
-              <CardTitle className="text-xl">Smart Forecasting</CardTitle>
-              <CardDescription>Predicted sales trends based on history.</CardDescription>
+              <CardTitle className="text-xl">Sales Forecast</CardTitle>
+              <CardDescription>Predicted sales based on past records.</CardDescription>
             </div>
             <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] animate-pulse">
               <Zap size={20} />
@@ -505,8 +505,8 @@ export default function AdminDashboard() {
         <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
-              <CardTitle className="text-xl">Workforce Attendance</CardTitle>
-              <CardDescription>Daily presence and absence trends.</CardDescription>
+              <CardTitle className="text-xl">Staff Attendance</CardTitle>
+              <CardDescription>Daily present and absent trends.</CardDescription>
             </div>
             <Activity size={20} className="text-[var(--color-secondary)]" />
           </div>
@@ -529,7 +529,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Category Sales Distribution */}
         <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
-          <CardTitle className="text-lg mb-6">Category Distribution</CardTitle>
+          <CardTitle className="text-lg mb-6">Sales by Category</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -553,7 +553,7 @@ export default function AdminDashboard() {
 
         {/* Payment Methods */}
         <Card className="!p-8 glass-card border-[var(--color-border)] premium-shadow" hover={false}>
-          <CardTitle className="text-lg mb-6">Payment Intelligence</CardTitle>
+          <CardTitle className="text-lg mb-6">Payment Methods</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

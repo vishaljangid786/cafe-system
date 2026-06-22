@@ -6,12 +6,12 @@ export default function WatchlistModal({ isOpen, onClose, delayedOrders, handleO
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Critical Watchlist: Global Surveillance"
+      title="Delayed Orders"
       maxWidth="max-w-3xl"
     >
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between mb-4 px-2">
-          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)]">Total Delayed Signals: {delayedOrders?.length || 0}</p>
+          <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)]">Total Delayed Orders: {delayedOrders?.length || 0}</p>
           <div className="h-1 w-20 bg-[var(--color-danger)]/20 rounded-full" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2 p-1">
@@ -42,7 +42,7 @@ export default function WatchlistModal({ isOpen, onClose, delayedOrders, handleO
             onClick={onClose}
             className="px-10 py-4 bg-[var(--color-surface)] text-[var(--color-text-primary)] text-[10px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-surface-soft)] transition-all"
           >
-            Close Surveillance
+            Close
           </button>
         </div>
       </div>

@@ -98,7 +98,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
       setCurrentPage(res.data.data.pagination?.page || 1);
       setTotalPages(res.data.data.pagination?.pages || 1);
     } catch (error) {
-      toast.error('Failed to load performance metrics');
+      toast.error('Could not load your performance data');
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
             </div>
             {role === 'chef' ? 'Chef' : 'Staff'} Performance Dashboard
           </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">Analyze productivity and financial yields across metrics.</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">See your orders, sales, and overall work performance.</p>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
       <div className="bg-[var(--color-surface)]/80  p-8 rounded-xl border border-[var(--color-border)] shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
           <Filter size={16} className="text-[var(--color-primary)]" />
-          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Advanced Analytics Filters</span>
+          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Filters</span>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -275,24 +275,24 @@ export default function StaffPerformanceDashboard({ user, role }) {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard label="Total Orders" value={stats?.totalOrders || 0} sub="Overall processing volume" icon={ShoppingBag} color="amber" />
-            <MetricCard label="Highest Order" value={`₹${stats?.highestValue || 0}`} sub="Peak ticket threshold" icon={Award} color="emerald" />
-            <MetricCard label="Lowest Order" value={`₹${stats?.lowestValue || 0}`} sub="Minimum ticket threshold" icon={XCircle} color="rose" />
+            <MetricCard label="Total Orders" value={stats?.totalOrders || 0} sub="Orders you handled" icon={ShoppingBag} color="amber" />
+            <MetricCard label="Highest Order" value={`₹${stats?.highestValue || 0}`} sub="Your biggest bill" icon={Award} color="emerald" />
+            <MetricCard label="Lowest Order" value={`₹${stats?.lowestValue || 0}`} sub="Your smallest bill" icon={XCircle} color="rose" />
             <MetricCard label="Completed" value={stats?.completedOrders || 0} sub="Successfully served" icon={CheckCircle2} color="emerald" />
-            <MetricCard label="Cancelled" value={stats?.cancelledOrders || 0} sub="Terminated lifecycle" icon={XCircle} color="rose" />
-            <MetricCard label="Ignored/Unaccepted" value={stats?.unacceptedOrders || 0} sub="Pending verification" icon={Timer} color="amber" />
-            <MetricCard label="Avg Ticket Size" value={`₹${stats?.avgTicketSize || 0}`} sub="Mean financial footprint" icon={TrendingUp} color="amber" />
-            <MetricCard label="Total Sales" value={`₹${stats?.totalSales || 0}`} sub="Total direct revenue" icon={Zap} color="violet" />
-            <MetricCard label="Daily Payout" value={`₹${stats?.dailyPayout || 0}`} sub="Pro-rated base compensation" icon={CreditCard} color="fuchsia" />
-            <MetricCard label="Top Category" value={stats?.bestSellingCategory || 'None'} sub="Highest item distribution" icon={Bookmark} color="amber" />
-            <MetricCard label="Top Item" value={stats?.bestSellingItem || 'None'} sub="Maximum operational volume" icon={Utensils} color="amber" />
-            <MetricCard label="Fulfillment Success" value={`${stats?.successRate || 0}%`} sub="Order completion rating" icon={Award} color="emerald" />
+            <MetricCard label="Cancelled" value={stats?.cancelledOrders || 0} sub="Orders cancelled" icon={XCircle} color="rose" />
+            <MetricCard label="Ignored/Unaccepted" value={stats?.unacceptedOrders || 0} sub="Not yet accepted" icon={Timer} color="amber" />
+            <MetricCard label="Avg Ticket Size" value={`₹${stats?.avgTicketSize || 0}`} sub="Average bill amount" icon={TrendingUp} color="amber" />
+            <MetricCard label="Total Sales" value={`₹${stats?.totalSales || 0}`} sub="Total sales amount" icon={Zap} color="violet" />
+            <MetricCard label="Daily Payout" value={`₹${stats?.dailyPayout || 0}`} sub="Your daily pay" icon={CreditCard} color="fuchsia" />
+            <MetricCard label="Top Category" value={stats?.bestSellingCategory || 'None'} sub="Best-selling category" icon={Bookmark} color="amber" />
+            <MetricCard label="Top Item" value={stats?.bestSellingItem || 'None'} sub="Best-selling item" icon={Utensils} color="amber" />
+            <MetricCard label="Completion Rate" value={`${stats?.successRate || 0}%`} sub="Orders served on time" icon={Award} color="emerald" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-6 bg-white/80 dark:bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)]/50 dark:border-[var(--color-border)]/50 p-8">
               <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Weekly Distribution
+                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Orders by Week
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -315,7 +315,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
 
             <div className="lg:col-span-6 bg-white/80 dark:bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)]/50 dark:border-[var(--color-border)]/50 p-8">
               <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Monthly Distribution
+                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Orders by Month
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -333,7 +333,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
 
           <div className="bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
             <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-              <History size={16} className="text-[var(--color-primary)]" /> Recent Order Sequence
+              <History size={16} className="text-[var(--color-primary)]" /> Recent Orders
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">

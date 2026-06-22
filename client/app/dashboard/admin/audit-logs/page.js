@@ -48,7 +48,7 @@ export default function AuditLogsPage() {
       setTotalPages(res.data.pagination.pages);
       setTotalLogs(res.data.pagination.total);
     } catch (err) {
-      toast.error('Failed to retrieve security rules');
+      toast.error('Could not load activity history. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -86,16 +86,16 @@ export default function AuditLogsPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <span className="px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20 ">
-                  Level 5 Access
+                  Admin Only
                 </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
-                <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Activity History Stream</span>
+                <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Activity History</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-4">
                 <ShieldAlert className="text-[var(--color-primary)] h-12 w-12 shrink-0 drop-shadow-sm" />
                 ACTIVITY <span className="text-[var(--color-primary)]">HISTORY</span>
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] max-w-md">Full history of every action across all branches.</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)] max-w-md">A full record of every action across all branches.</p>
             </div>
 
             <div className="flex items-center gap-6 bg-[var(--color-surface)]/40  p-6 rounded-xl border border-[var(--color-border)] shadow-sm">
@@ -115,22 +115,22 @@ export default function AuditLogsPage() {
         {/* Information Summaries */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SecurityCard
-            title="Access Points"
-            value={totalLogs > 100 ? 'ACTIVE' : 'STABLE'}
+            title="Activity"
+            value={totalLogs > 100 ? 'HIGH' : 'NORMAL'}
             icon={<Activity className="text-[var(--color-secondary)]" />}
-            sub="Global network access state"
+            sub="Activity level across all branches"
           />
           <SecurityCard
-            title="System Rule Level"
-            value="LEVEL 5"
+            title="Access Level"
+            value="ADMIN"
             icon={<User className="text-[var(--color-primary)]" />}
-            sub="Maximum security enforcement"
+            sub="Only admins can view this page"
           />
           <SecurityCard
-            title="Data Integrity"
+            title="Records"
             value="100%"
             icon={<ShieldAlert className="text-[var(--color-success)]" />}
-            sub="No corruption detected"
+            sub="All records are saved"
           />
         </div>
 
@@ -140,7 +140,7 @@ export default function AuditLogsPage() {
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={20} />
             <input
               type="text"
-              placeholder="Search Information Stream..."
+              placeholder="Search activity..."
               className="w-full pl-14 pr-6 py-5 bg-[var(--color-bg-soft)]  border border-[var(--color-border)] rounded-xl text-sm font-bold text-[var(--color-text-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 transition-all outline-none"
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
@@ -157,10 +157,10 @@ export default function AuditLogsPage() {
               value={actionFilter}
               onChange={(val) => setActionFilter(val)}
               options={[
-                { label: 'All Directives', value: '' },
+                { label: 'All Actions', value: '' },
                 { label: 'Promotion', value: 'PROMOTE' },
                 { label: 'Deletion', value: 'DELETE' },
-                { label: 'Authentication', value: 'LOGIN' }
+                { label: 'Login', value: 'LOGIN' }
               ]}
             />
           </div>
@@ -174,8 +174,8 @@ export default function AuditLogsPage() {
                 <tr className="bg-[var(--color-surface-soft)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                   <th className="px-10 py-6">Action Details</th>
                   <th className="px-10 py-6">Done By</th>
-                  <th className="px-10 py-6 text-center">System Rule</th>
-                  <th className="px-10 py-6 text-right">Sync</th>
+                  <th className="px-10 py-6 text-center">Type</th>
+                  <th className="px-10 py-6 text-right">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y border-[var(--color-border)]">
@@ -191,7 +191,7 @@ export default function AuditLogsPage() {
                       <td colSpan="4" className="px-10 py-32 text-center">
                         <div className="flex flex-col items-center opacity-20">
                           <ShieldAlert size={60} />
-                          <p className="text-xs font-bold uppercase tracking-normal mt-4">No actions found</p>
+                          <p className="text-xs font-bold uppercase tracking-normal mt-4">No activity found</p>
                         </div>
                       </td>
                     </tr>
@@ -210,8 +210,8 @@ export default function AuditLogsPage() {
                             <Activity size={20} />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-[var(--color-text-primary)] italic uppercase tracking-tight">{log.action?.replace(/_/g, ' ') || 'Unknown directive'}</p>
-                            <p className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 max-w-[250px] truncate">{log.details || 'No meta-data captured'}</p>
+                            <p className="text-sm font-bold text-[var(--color-text-primary)] italic uppercase tracking-tight">{log.action?.replace(/_/g, ' ') || 'Unknown action'}</p>
+                            <p className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 max-w-[250px] truncate">{log.details || 'No details'}</p>
                           </div>
                         </div>
                       </td>
@@ -221,7 +221,7 @@ export default function AuditLogsPage() {
                             {log.performedBy?.name?.substring(0, 2).toUpperCase() || 'SY'}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-[var(--color-text-primary)]">{log.performedBy?.name || 'Automated Branch'}</p>
+                            <p className="text-sm font-bold text-[var(--color-text-primary)]">{log.performedBy?.name || 'System'}</p>
                             <p className="text-[9px] font-bold text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] uppercase tracking-normal mt-0.5">{log.performedBy?.role || 'SYSTEM'}</p>
                           </div>
                         </div>
@@ -245,7 +245,7 @@ export default function AuditLogsPage() {
           {/* Quick Pagination */}
           {totalPages > 1 && (
             <div className="px-10 py-8 bg-[var(--color-surface-soft)]/50 flex items-center justify-between border-t border-[var(--color-border)]">
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch Sync: {page}/{totalPages}</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Page {page} of {totalPages}</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setPage(prev => Math.max(1, prev - 1))}

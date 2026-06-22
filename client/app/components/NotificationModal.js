@@ -38,7 +38,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
           const res = await api.get('/notifications/targets');
           setTargets(res.data.data);
         } catch (err) {
-          toast.error('Failed to fetch communication targets');
+          toast.error('Could not load the recipient list');
         }
       };
       fetchTargets();
@@ -48,10 +48,10 @@ const NotificationModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const loadToast = toast.loading('Dispatching update...');
+    const loadToast = toast.loading('Sending message...');
     try {
       await api.post('/notifications', formData);
-      toast.success('Notification dispatched successfully', { id: loadToast });
+      toast.success('Message sent successfully', { id: loadToast });
       onClose();
       setFormData({
         title: '',
@@ -63,7 +63,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
       });
       refresh();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(err.response?.data?.message || 'Could not send the message', { id: loadToast });
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
             <div className="p-2 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
               <Send size={18} />
             </div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">New Update</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">New Message</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[var(--color-surface-soft)] rounded-lg transition-colors">
             <X size={20} className="text-[var(--color-text-muted)]" />
@@ -101,15 +101,15 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            <PremiumSelect 
-              label="Channel Type"
+            <PremiumSelect
+              label="Send To"
               value={formData.targetType}
               onChange={val => setFormData({ ...formData, targetType: val, targetId: '' })}
               options={[
-                { label: 'Individual Branch', value: 'individual' },
-                ...(targets.roles.length > 0 ? [{ label: 'Role Broadcast', value: 'role' }] : []),
-                ...(targets.branches.length > 0 ? [{ label: 'Branch Direct', value: 'branch' }] : []),
-                ...(targets.roles.includes('all') ? [{ label: 'Global System', value: 'system' }] : [])
+                { label: 'A Single Person', value: 'individual' },
+                ...(targets.roles.length > 0 ? [{ label: 'A Role', value: 'role' }] : []),
+                ...(targets.branches.length > 0 ? [{ label: 'A Branch', value: 'branch' }] : []),
+                ...(targets.roles.includes('all') ? [{ label: 'Everyone', value: 'system' }] : [])
               ]}
             />
 
@@ -118,32 +118,32 @@ const NotificationModal = ({ isOpen, onClose }) => {
               value={formData.priority}
               onChange={val => setFormData({ ...formData, priority: val })}
               options={[
-                { label: 'Low Priority', value: 'low' },
-                { label: 'Standard', value: 'medium' },
+                { label: 'Low', value: 'low' },
+                { label: 'Normal', value: 'medium' },
                 { label: 'Urgent', value: 'high' }
               ]}
             />
         
 
-          <PremiumSelect 
-            label="Select Target"
+          <PremiumSelect
+            label="Choose Recipient"
             value={formData.targetId}
             onChange={val => setFormData({ ...formData, targetId: val })}
             options={[
-              { label: 'Choose Recipient...', value: '', disabled: true },
+              { label: 'Choose recipient...', value: '', disabled: true },
               ...(formData.targetType === 'individual' ? targets.users.map(u => ({ label: `${u.name} (${u.role.replace('_', ' ')})`, value: u._id })) : []),
               ...(formData.targetType === 'role' ? targets.roles.map(r => ({ label: r.replace('_', ' ').toUpperCase(), value: r })) : []),
               ...(formData.targetType === 'branch' ? targets.branches.map(b => ({ label: `${b.name} - ${b.city}`, value: b._id })) : []),
-              ...(formData.targetType === 'system' ? [{ label: 'Entire Network', value: 'all' }] : [])
+              ...(formData.targetType === 'system' ? [{ label: 'Everyone', value: 'all' }] : [])
             ]}
           />
 
           <div className="space-y-2">
-            <label className="label">Update Title</label>
+            <label className="label">Title</label>
             <input
               required
               className="input"
-              placeholder="Enter subject..."
+              placeholder="Enter a subject..."
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
@@ -169,7 +169,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
               icon={Send}
               loading={loading}
             >
-              Send Update
+              Send Message
             </Button>
           </div>
         </form>

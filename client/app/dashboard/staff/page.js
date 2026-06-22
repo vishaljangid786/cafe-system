@@ -174,7 +174,7 @@ export default function StaffDashboard() {
       setAttendance(attendanceRes.data.data || []);
     } catch (error) {
       console.error('Dashboard data fetch error:', error);
-      toast.error('Failed to sync dashboard metrics');
+      toast.error('Could not load dashboard. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -263,33 +263,33 @@ export default function StaffDashboard() {
 
         {/* Primary Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard 
-            label="Total Orders" 
-            value={stats?.totalOrders || 0} 
-            icon={ShoppingBag} 
-            color="blue" 
-            sub={`Lifetime activity`} 
+          <MetricCard
+            label="Total Orders"
+            value={stats?.totalOrders || 0}
+            icon={ShoppingBag}
+            color="blue"
+            sub={`All-time total`}
           />
-          <MetricCard 
-            label="Direct Yield" 
-            value={`₹${stats?.totalSales || 0}`} 
-            icon={IndianRupee} 
-            color="emerald" 
-            sub="Revenue contribution" 
+          <MetricCard
+            label="Total Sales"
+            value={`₹${stats?.totalSales || 0}`}
+            icon={IndianRupee}
+            color="emerald"
+            sub="Sales you brought in"
           />
-          <MetricCard 
-            label="Presence" 
-            value={attendance.filter(a => a.status === 'present').length} 
-            icon={CheckCircle2} 
-            color="amber" 
-            sub={`Days active overall`} 
+          <MetricCard
+            label="Present Days"
+            value={attendance.filter(a => a.status === 'present').length}
+            icon={CheckCircle2}
+            color="amber"
+            sub={`Total days present`}
           />
-          <MetricCard 
-            label="Expenses" 
-            value={expenses.length} 
-            icon={Wallet} 
-            color="violet" 
-            sub="Logged transactions" 
+          <MetricCard
+            label="Expenses"
+            value={expenses.length}
+            icon={Wallet}
+            color="violet"
+            sub="Entries you added"
           />
         </div>
 
@@ -301,11 +301,11 @@ export default function StaffDashboard() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3">
-                    <TrendingUp size={16} className="text-[var(--color-primary)]" /> Order Lifecycle Trend
+                    <TrendingUp size={16} className="text-[var(--color-primary)]" /> Order Trend
                   </h3>
                 </div>
                 <div className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-full text-[9px] font-bold uppercase tracking-normal">
-                  {timeframe === 'all' ? 'LIFETIME' : timeframe.toUpperCase()} VIEW
+                  {timeframe === 'all' ? 'ALL TIME' : timeframe.toUpperCase()} VIEW
                 </div>
               </div>
               <div className="h-[300px]">
@@ -333,7 +333,7 @@ export default function StaffDashboard() {
             {/* Attendance Visualization */}
             <div className="bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-8 flex items-center gap-3">
-                <Calendar size={16} className="text-[var(--color-warning)]" /> Attendance History ({timeframe})
+                <Calendar size={16} className="text-[var(--color-warning)]" /> Attendance ({timeframe})
               </h3>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -363,7 +363,7 @@ export default function StaffDashboard() {
                 <div className="bg-[var(--color-primary)] hover:bg-[var(--color-primary)] p-6 rounded-xl text-white shadow-lg  transition-all active:scale-95 group">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-normal opacity-80 mb-1">Terminal</p>
+                      <p className="text-xs font-bold uppercase tracking-normal opacity-80 mb-1">Tables</p>
                       <h4 className="text-xl font-bold tracking-tight">Active Orders</h4>
                     </div>
                     <ArrowRight className="group-hover:translate-x-2 transition-transform" />
@@ -374,8 +374,8 @@ export default function StaffDashboard() {
                 <div className="bg-[var(--color-surface)] hover:bg-[var(--color-surface-soft)] p-6 rounded-xl border border-[var(--color-border)] shadow-sm transition-all active:scale-95 group text-left">
                   <div className="flex justify-between items-center text-left">
                     <div className="text-left">
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Accounting</p>
-                      <h4 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">Log Expense</h4>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Expenses</p>
+                      <h4 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">Add Expense</h4>
                     </div>
                     <ArrowUpRight className="text-[var(--color-primary)] group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -393,7 +393,7 @@ export default function StaffDashboard() {
               <div className="space-y-5">
                 {expenses.length === 0 ? (
                   <div className="text-center py-6 border-2 border-dashed border-[var(--color-border)] rounded-xl">
-                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">No recent logs</p>
+                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">No recent expenses</p>
                   </div>
                 ) : (
                   expenses.map((ex) => (
@@ -412,7 +412,7 @@ export default function StaffDashboard() {
                   ))
                 )}
                 <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] hover:underline">
-                  View All Activity
+                  View All Expenses
                 </Link>
               </div>
             </div>

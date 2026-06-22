@@ -148,7 +148,7 @@ export default function StaffAttendancePage() {
                   <Filter size={18} />
                 </div>
                 <div className="px-5 py-3.5 bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-xl text-[10px] font-bold uppercase tracking-normal shadow-lg">
-                  Total Logs: {filteredAttendance.length}
+                  Total Records: {filteredAttendance.length}
                 </div>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function StaffAttendancePage() {
                     <tr className="bg-[var(--color-surface-soft)]/50 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
                       <th className="px-8 py-5 border-b border-[var(--color-border)]">Date</th>
                       <th className="px-8 py-5 border-b border-[var(--color-border)] text-center">Status</th>
-                      <th className="px-8 py-5 border-b border-[var(--color-border)] text-right">Recorded Time</th>
+                      <th className="px-8 py-5 border-b border-[var(--color-border)] text-right">Time</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--color-border)]">
@@ -178,7 +178,7 @@ export default function StaffAttendancePage() {
                               <p className="text-sm font-bold text-[var(--color-text-primary)] tracking-tight">
                                 {new Date(log.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
                               </p>
-                              <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-0.5">Record Verified</p>
+                              <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-0.5">Marked</p>
                             </div>
                           </div>
                         </td>
@@ -197,7 +197,7 @@ export default function StaffAttendancePage() {
                               {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
                             <p className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-tight mt-1 flex items-center gap-1.5">
-                              <Activity size={8} /> Attendance Recorded
+                              <Activity size={8} /> Attendance marked
                             </p>
                           </div>
                         </td>

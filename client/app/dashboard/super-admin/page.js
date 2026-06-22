@@ -25,7 +25,7 @@ export default function SuperAdminDashboard() {
       const res = await api.get('/super-admin/executive-summary');
       setData(res.data.data);
     } catch (err) {
-      toast.error('Failed to sync executive info');
+      toast.error('Could not load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -66,15 +66,15 @@ export default function SuperAdminDashboard() {
                   <Cpu size={12} className="animate-pulse" /> Admin Dashboard
                 </div>
                 <div className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
-                <div className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Network Version 4.2.0</div>
+                <div className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Version 4.2.0</div>
               </div>
               <h1 className="text-8xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-6 italic leading-none">
                 <Crown className="text-[var(--color-primary)] h-20 w-20 drop-" />
-                COMMAND <span className="text-[var(--color-text-muted)]">CENTER</span>
+                ADMIN <span className="text-[var(--color-text-muted)]">DASHBOARD</span>
               </h1>
               <div className="flex items-center gap-4 text-[var(--color-text-secondary)] font-bold italic text-sm">
                 <Radio size={16} className="text-[var(--color-success)] animate-ping" />
-                System Activity: <span className="text-[var(--color-text-primary)] uppercase tracking-normal">{data?.totalBranches} Branches Active</span>
+                <span className="text-[var(--color-text-primary)] uppercase tracking-normal">{data?.totalBranches} branches active</span>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="relative z-10 text-right">
                 <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 flex items-center justify-end gap-2">
-                  <Zap size={10} /> System Health
+                  <Zap size={10} /> Uptime
                 </p>
                 <p className="text-5xl font-bold text-[var(--color-success)] tracking-tight italic">99.8%</p>
               </div>
@@ -113,7 +113,7 @@ export default function SuperAdminDashboard() {
               value={`₹${data?.todayRevenue?.toLocaleString()}`}
               icon={<Zap className="text-[var(--color-primary)]" />}
               trend="+8.2%"
-              sub="Current sales stream"
+              sub="Sales so far today"
               highlight
             />
           </Link>
@@ -128,7 +128,7 @@ export default function SuperAdminDashboard() {
           </Link>
           <Link href="/dashboard/admin/audit-logs" className="contents">
             <MetricCard
-              title="System Alerts"
+              title="Alerts"
               value={data?.alerts?.lowStockItems + data?.alerts?.recentCancellations}
               icon={<AlertOctagon className="text-[var(--color-danger)]" />}
               trend="NEEDS ATTENTION"
@@ -266,7 +266,7 @@ export default function SuperAdminDashboard() {
               />
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/60-lines.png')] opacity-20" />
               <div className="relative p-12 text-white space-y-6">
-                <p className="text-[10px] font-bold uppercase tracking-normal text-white/60">System Update</p>
+                <p className="text-[10px] font-bold uppercase tracking-normal text-white/60">Update</p>
                 <h3 className="text-3xl font-bold italic tracking-tight leading-tight">Total sales is 18% more than last week.</h3>
                 <div className="flex items-center gap-3 text-xs font-bold bg-[var(--color-bg-base)]/50 w-fit px-6 py-3 rounded-xl  border border-[var(--color-border)] group-hover:bg-[var(--color-primary-hover)]/20 transition-all uppercase tracking-normal italic">
                   View Details <ChevronRight size={16} />

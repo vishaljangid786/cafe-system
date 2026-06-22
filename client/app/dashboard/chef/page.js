@@ -52,7 +52,7 @@ export default function ChefDashboard() {
       const activeOrders = res.data.data.filter(o => activeStatuses.includes(o.status));
       setOrders(activeOrders);
     } catch (error) {
-      toast.error('Failed to load orders');
+      toast.error('Could not load orders. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -79,7 +79,7 @@ export default function ChefDashboard() {
 
       socket.on('order:update', () => fetchOrders(true));
       socket.on('order:cancel', () => {
-        toast.error('Order Cancelled by Admin');
+        toast.error('Order cancelled by admin');
         fetchOrders(true);
       });
 
@@ -101,7 +101,7 @@ export default function ChefDashboard() {
       fetchOrders();
       toast.success('Status updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error updating status', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not update status. Please try again.', { id: loadToast });
     }
   };
 
@@ -113,7 +113,7 @@ export default function ChefDashboard() {
       setChefNote('');
       fetchOrders();
     } catch (error) {
-      toast.error('Failed to attach note');
+      toast.error('Could not save the note. Please try again.');
     }
   };
 

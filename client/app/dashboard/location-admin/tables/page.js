@@ -101,7 +101,7 @@ export default function TablesPage() {
       setNewTableCapacity('1');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -129,7 +129,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Booking error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not book the table. Please try again.', { id: loadToast });
     }
   };
 
@@ -144,7 +144,7 @@ export default function TablesPage() {
 
   const handleStageOrder = (e) => {
     e.preventDefault();
-    if (!orderItem.itemName || !orderItem.price) return toast.error('Name & Price required');
+    if (!orderItem.itemName || !orderItem.price) return toast.error('Please enter item name and price');
 
     const newItem = {
       ...orderItem,
@@ -206,7 +206,7 @@ export default function TablesPage() {
       setSelectedTable(res.data.data);
       fetchTables();
     } catch (error) {
-      toast.error('Auto-sync failed');
+      toast.error('Could not update the order. Please try again.');
     }
   };
 
@@ -220,7 +220,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Item removed', { id: loadToast });
     } catch (error) {
-      toast.error('Removal failed', { id: loadToast });
+      toast.error('Could not remove item. Please try again.', { id: loadToast });
     }
   };
 
@@ -238,7 +238,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Bill generated and saved', { id: loadToast });
     } catch (error) {
-      toast.error('Bill generation failed', { id: loadToast });
+      toast.error('Could not generate the bill. Please try again.', { id: loadToast });
     }
   };
 
@@ -257,7 +257,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Table removed', { id: loadToast });
     } catch (error) {
-      toast.error('Error', { id: loadToast });
+      toast.error('Could not delete the table. Please try again.', { id: loadToast });
     }
   };
 
@@ -710,7 +710,7 @@ export default function TablesPage() {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="ENTER CODE"
+                          placeholder="Enter code"
                           className="flex-1 bg-[var(--color-surface)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
@@ -725,7 +725,7 @@ export default function TablesPage() {
                     </div>
                     {appliedCoupon && (
                       <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-[10px] font-bold text-[var(--color-success)] flex items-center gap-2">
-                        <Check size={12} /> {appliedCoupon.code} Activated
+                        <Check size={12} /> {appliedCoupon.code} applied
                       </div>
                     )}
                   </div>
@@ -740,7 +740,7 @@ export default function TablesPage() {
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDeleteTable}
           title="Delete Table?"
-          message="This table will be removed from the system."
+          message="This table will be permanently removed."
         />
 
         <BillPreview

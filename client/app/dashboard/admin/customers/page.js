@@ -35,7 +35,7 @@ export default function CustomersDashboard() {
       setInactiveCustomers(inactiveRes.data.data);
     } catch (err) {
       console.error('Failed to load CRM data', err);
-      toast.error('Failed to load CRM matrices');
+      toast.error('Could not load customer data. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -94,10 +94,10 @@ export default function CustomersDashboard() {
                 <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Users size={120} />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Reach</p>
+                <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Customers</p>
                 <p className="text-4xl font-bold text-[var(--color-text-primary)] mt-2">{analytics.totalCustomers}</p>
                 <p className="text-xs font-bold text-[var(--color-success)] mt-2 flex items-center gap-1">
-                  Active tracked profiles
+                  All registered customers
                 </p>
               </div>
             </SlideIn>
@@ -120,7 +120,7 @@ export default function CustomersDashboard() {
                 <div className="absolute -right-4 -bottom-4 opacity-20">
                   <Award size={120} />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-normal opacity-80">Outstanding Points</p>
+                <p className="text-[10px] font-bold uppercase tracking-normal opacity-80">Reward Points</p>
                 <p className="text-4xl font-bold mt-2">{analytics.totalRewardPoints?.toLocaleString()}</p>
                 <p className="text-xs font-bold opacity-90 mt-2 flex items-center gap-1">
                   Total reward points
@@ -211,7 +211,7 @@ export default function CustomersDashboard() {
           <div className="space-y-6">
             <SlideIn delay={0.6}>
               <h2 className="text-lg font-bold uppercase tracking-normal text-[var(--color-text-primary)] flex items-center gap-2">
-                <Heart className="text-[var(--color-danger)]" /> Retention Targets
+                <Heart className="text-[var(--color-danger)]" /> Customers to Win Back
               </h2>
             </SlideIn>
             

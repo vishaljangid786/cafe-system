@@ -69,7 +69,7 @@ export default function StaffTablesPage() {
       const res = await api.get(`/tables?locationId=${locId}`);
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync floor plan');
+      toast.error('Could not load tables. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -136,7 +136,7 @@ export default function StaffTablesPage() {
   }, [user, socket]);
 
   const handleBookTable = async (table) => {
-    const loadToast = toast.loading('Securing table...');
+    const loadToast = toast.loading('Booking table...');
     try {
       const res = await api.put(`/tables/${table._id}/book`, {
         numberOfPeople: table.capacity || 1,
@@ -144,9 +144,9 @@ export default function StaffTablesPage() {
       });
       fetchTables();
       handleOpenOrder(res.data.data);
-      toast.success('Table secured', { id: loadToast });
+      toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Encryption error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not book the table. Please try again.', { id: loadToast });
     }
   };
 
@@ -159,7 +159,7 @@ export default function StaffTablesPage() {
 
   const handleStageOrder = (e) => {
     e.preventDefault();
-    if (!orderItem.itemName || !orderItem.price) return toast.error('Selection required');
+    if (!orderItem.itemName || !orderItem.price) return toast.error('Please select an item');
 
     const newItem = {
       ...orderItem,
@@ -173,7 +173,7 @@ export default function StaffTablesPage() {
     setPendingOrders(prev => [...prev, newItem]);
     setOrderItem({ itemName: '', quantity: 1, price: '', menuItemId: '', categoryId: '' });
     setShowMenuGrid(false);
-    toast.success('Staged locally');
+    toast.success('Item added');
   };
 
   const handleSyncOrders = async (ordersToSync, extra = {}) => {
@@ -203,7 +203,7 @@ export default function StaffTablesPage() {
   };
 
   const handleRemoveStagedItem = (idx) => {
-    if (appliedCoupon) return toast.error('Remove coupon to modify order');
+    if (appliedCoupon) return toast.error('Please remove the coupon before changing the order');
     const newOrders = pendingOrders.filter((_, i) => i !== idx);
     setPendingOrders(newOrders);
     handleSyncOrders(newOrders);
@@ -219,14 +219,14 @@ export default function StaffTablesPage() {
       fetchTables();
       toast.success('Item removed', { id: loadToast });
     } catch (error) {
-      toast.error('Removal failed', { id: loadToast });
+      toast.error('Could not remove the item. Please try again.', { id: loadToast });
     }
   };
 
   const handleFinalizeSession = async (file, finalTotal) => {
-    const loadToast = toast.loading('Archiving session...');
+    const loadToast = toast.loading('Saving bill...');
     if (!selectedTable.customerName) {
-      toast.error('Customer name required for archival', { id: loadToast });
+      toast.error('Please enter the customer name', { id: loadToast });
       return;
     }
 
@@ -243,17 +243,17 @@ export default function StaffTablesPage() {
       setDiscountAmount(0);
       setCouponCode('');
       fetchTables();
-      toast.success('Session saved', { id: loadToast });
+      toast.success('Bill saved', { id: loadToast });
     } catch (error) {
-      toast.error('Archival failure', { id: loadToast });
+      toast.error('Could not save the bill. Please try again.', { id: loadToast });
     }
   };
 
   const handleSendToKitchen = async () => {
-    if (pendingOrders.length === 0) return toast.error('No items staged for production');
-    if (!selectedTable.customerName) return toast.error('Guest name required');
+    if (pendingOrders.length === 0) return toast.error('Please add at least one item');
+    if (!selectedTable.customerName) return toast.error('Please enter the customer name');
 
-    const loadToast = toast.loading('Transmitting to kitchen...');
+    const loadToast = toast.loading('Sending to kitchen...');
     try {
       const payload = {
         branch: selectedTable.locationId?._id || selectedTable.locationId,
@@ -278,16 +278,16 @@ export default function StaffTablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Update Successful', { id: loadToast });
+      toast.success('Order sent to kitchen', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not send the order. Please try again.', { id: loadToast });
     }
   };
 
   const handleApplyCoupon = async () => {
-    if (pendingOrders.length === 0) return toast.error('Please add items before applying coupon');
-    if (!couponCode) return toast.error('Enter coupon code');
-    const loadToast = toast.loading('Verifying coupon...');
+    if (pendingOrders.length === 0) return toast.error('Please add items before applying a coupon');
+    if (!couponCode) return toast.error('Please enter a coupon code');
+    const loadToast = toast.loading('Checking coupon...');
     try {
       const subtotal = pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
       const res = await api.post('/coupons/apply', { 
@@ -302,14 +302,14 @@ export default function StaffTablesPage() {
       });
       setAppliedCoupon(res.data.data);
       setDiscountAmount(res.data.data.discount);
-      toast.success('Coupon activated', { id: loadToast });
+      toast.success('Coupon applied', { id: loadToast });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Invalid coupon', { id: loadToast });
     }
   };
 
   const updateQuantity = (idx, delta) => {
-    if (appliedCoupon) return toast.error('Remove coupon to modify order quantity');
+    if (appliedCoupon) return toast.error('Please remove the coupon before changing quantity');
     const newOrders = [...pendingOrders];
     const item = { ...newOrders[idx] };
     if (item.quantity + delta > 0) {
@@ -351,7 +351,7 @@ export default function StaffTablesPage() {
               </div>
               Tables
             </h1>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">Real-time table sync & management</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1 font-medium">Manage your tables in real time</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] p-1 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
@@ -390,7 +390,7 @@ export default function StaffTablesPage() {
           {[
             { label: 'Total Tables', val: stats.total, color: 'amber', icon: Globe },
             { label: 'Occupied', val: stats.occupied, color: 'amber', icon: Zap },
-            { label: 'Live Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
+            { label: 'Current Sales', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
               <div className="glass-morphism rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] p-4 flex items-center gap-4">
@@ -433,7 +433,7 @@ export default function StaffTablesPage() {
         <Modal
           isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          title={`Session List: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
+          title={`Table ${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
@@ -444,26 +444,26 @@ export default function StaffTablesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center mb-1">
-                        <ShoppingBag size={14} className="mr-2" /> Session Details
+                        <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Active Order Registry</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Current Order</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Units Staged</span>
+                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Items Added</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6 p-5 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
                     <div className="space-y-2">
                       <label className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1 flex items-center gap-2">
-                        Guest Name <span className="text-[var(--color-danger)] font-bold">*</span>
+                        Customer Name <span className="text-[var(--color-danger)] font-bold">*</span>
                       </label>
                       <input 
                         type="text"
-                        placeholder="ENTER NAME"
+                        placeholder="ENTER CUSTOMER NAME"
                         className="w-full bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-[var(--color-text-muted)]/30 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
@@ -471,8 +471,8 @@ export default function StaffTablesPage() {
                     </div>
                     <div>
                       <PremiumSelect
-                        label="Table Party"
-                        placeholder="Select Guests"
+                        label="Number of People"
+                        placeholder="Select People"
                         options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
                           value: i + 1,
                           label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
@@ -536,7 +536,7 @@ export default function StaffTablesPage() {
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-[var(--color-text-muted)]" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Registry is Empty</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No items added yet</p>
                     </div>
                   )}
 
@@ -544,7 +544,7 @@ export default function StaffTablesPage() {
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-4 flex items-center gap-2">
-                        <Zap size={14} /> Production Queue (OMS)
+                        <Zap size={14} /> Kitchen Orders
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
@@ -577,13 +577,13 @@ export default function StaffTablesPage() {
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
-                                      const loadToast = toast.loading('Generating fiscal proof...');
+                                      const loadToast = toast.loading('Generating bill...');
                                       try {
                                         const res = await api.post(`/orders/${order._id}/generate-bill`);
-                                        toast.success('Bill Generated & Locked', { id: loadToast });
+                                        toast.success('Bill generated', { id: loadToast });
                                         fetchSystemOrders(selectedTable._id);
                                       } catch (err) {
-                                        toast.error('Billing Failure', { id: loadToast });
+                                        toast.error('Could not generate the bill. Please try again.', { id: loadToast });
                                       }
                                     }}
                                     className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
@@ -600,7 +600,7 @@ export default function StaffTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No active production units</div>
+                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No orders sent to kitchen yet</div>
                         )}
                       </div>
                     </div>
@@ -610,7 +610,7 @@ export default function StaffTablesPage() {
                 <div className="p-8 border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                      <span>Production Subtotal</span>
+                      <span>Kitchen Subtotal</span>
                       <span>₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
@@ -646,11 +646,11 @@ export default function StaffTablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('Culinary System Rule: All orders must be SERVED before finalization');
+                          if (!allReady) return toast.error('All orders must be served before you can finish the bill');
                           setIsBillPreviewOpen(true);
                         }}
                       >
-                        Finalize & Bill
+                        Finish & Bill
                       </Button>
                     )}
                   </div>
@@ -665,7 +665,7 @@ export default function StaffTablesPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu list..."
+                    placeholder="Search the menu..."
                     className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
@@ -698,7 +698,7 @@ export default function StaffTablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
-                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Selling Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
@@ -706,7 +706,7 @@ export default function StaffTablesPage() {
                           key={item._id}
                           className="flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all cursor-pointer group"
                           onClick={() => {
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
+                            if (appliedCoupon) return toast.error('Please remove the coupon before adding new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
                             let newOrders;
                             if (existingIdx > -1) {
@@ -748,14 +748,14 @@ export default function StaffTablesPage() {
 
                 {/* Main Menu Grid */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
                         <div
                           key={item._id}
                           onClick={() => {
-                            if (!item.isAvailable) return toast.error(`${item.name} is currently out of stock!`, { icon: '🚫' });
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
+                            if (!item.isAvailable) return toast.error(`${item.name} is out of stock right now`, { icon: '🚫' });
+                            if (appliedCoupon) return toast.error('Please remove the coupon before adding new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
                             let newOrders;
                             if (existingIdx > -1) {
@@ -795,7 +795,7 @@ export default function StaffTablesPage() {
 
                             <div className="absolute top-2 left-2">
                               <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-white ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`}>
-                                {item.dietaryType || 'Cuisine'}
+                                {item.dietaryType || 'Food'}
                               </div>
                             </div>
                             
@@ -847,21 +847,21 @@ export default function StaffTablesPage() {
                           onClick={handleApplyCoupon}
                           className="px-6 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-[var(--color-primary-hover)] transition-all"
                         >
-                          Verify
+                          Apply
                         </button>
                       </div>
                     </div>
                     {appliedCoupon && (
                       <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-[10px] font-bold text-[var(--color-success)] flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Check size={12} /> {appliedCoupon.code} Activated
+                          <Check size={12} /> {appliedCoupon.code} Applied
                         </div>
                         <button 
                           onClick={() => {
                             setAppliedCoupon(null);
                             setDiscountAmount(0);
                             setCouponCode('');
-                            toast.success('Coupon removed - Order unlocked');
+                            toast.success('Coupon removed');
                           }}
                           className="text-[var(--color-danger)] hover:text-[var(--color-danger)] uppercase text-[9px] font-bold"
                         >

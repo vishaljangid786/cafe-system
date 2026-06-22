@@ -99,7 +99,7 @@ export default function CommandPalette() {
     if (item.type === 'nav') {
       router.push(item.path);
     } else if (item.type === 'user') {
-      if (confirm(`Initiate ${item.fullAccess ? 'FULL-ACCESS' : 'VIEW-ONLY'} impersonation for ${item.name}?`)) {
+      if (confirm(`Log in as ${item.name} with ${item.fullAccess ? 'full access' : 'view-only access'}?`)) {
         await impersonate(item.id, !item.fullAccess);
       }
     }

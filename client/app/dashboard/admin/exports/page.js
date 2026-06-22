@@ -30,18 +30,18 @@ export default function ExportCenter() {
 
   const categories = [
     { id: 'orders', name: 'Order History', icon: <FileText size={18} /> },
-    { id: 'revenue', name: 'Revenue & TXs', icon: <FileText size={18} /> },
-    { id: 'staff', name: 'Staff Directory', icon: <FileText size={18} /> },
-    { id: 'payroll', name: 'Payroll Records', icon: <FileText size={18} /> },
-    { id: 'attendance', name: 'Attendance Logs', icon: <FileText size={18} /> },
-    { id: 'coupons', name: 'Coupon Analytics', icon: <FileText size={18} /> },
+    { id: 'revenue', name: 'Revenue & Payments', icon: <FileText size={18} /> },
+    { id: 'staff', name: 'Staff List', icon: <FileText size={18} /> },
+    { id: 'payroll', name: 'Salary Records', icon: <FileText size={18} /> },
+    { id: 'attendance', name: 'Attendance Records', icon: <FileText size={18} /> },
+    { id: 'coupons', name: 'Coupon Reports', icon: <FileText size={18} /> },
     { id: 'inventory', name: 'Inventory Status', icon: <FileText size={18} /> }
   ];
 
   const formats = [
-    { id: 'pdf', name: 'Professional PDF', icon: <FileText className="text-[var(--color-danger)]" /> },
-    { id: 'excel', name: 'Microsoft Excel', icon: <FileSpreadsheet className="text-[var(--color-success)]" /> },
-    { id: 'csv', name: 'Standard CSV', icon: <TableIcon className="text-[var(--color-primary)]" /> }
+    { id: 'pdf', name: 'PDF', icon: <FileText className="text-[var(--color-danger)]" /> },
+    { id: 'excel', name: 'Excel', icon: <FileSpreadsheet className="text-[var(--color-success)]" /> },
+    { id: 'csv', name: 'CSV', icon: <TableIcon className="text-[var(--color-primary)]" /> }
   ];
 
   const fetchLocations = async () => {
@@ -90,7 +90,7 @@ export default function ExportCenter() {
       
       toast.success(`${filters.type.toUpperCase()} exported successfully!`);
     } catch (err) {
-      toast.error('Export failed. Please check your filters.');
+      toast.error('Could not export. Please check your filters and try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -102,8 +102,8 @@ export default function ExportCenter() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <Download size={60} className="text-[var(--color-danger)] opacity-20" />
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Entry Restricted</h2>
-        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">Permission Denied: EXPORT_GEN_RESTRICTED</p>
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Access Restricted</h2>
+        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">You do not have permission to export reports.</p>
       </div>
     );
   }
@@ -118,9 +118,9 @@ export default function ExportCenter() {
             <div>
               <h1 className="text-4xl font-bold text-[var(--color-text-primary)] flex items-center gap-3">
                 <Download className="text-[var(--color-primary)] h-10 w-10" />
-                Information <span className="text-[var(--color-primary)]">Export</span>
+                Export <span className="text-[var(--color-primary)]">Reports</span>
               </h1>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Generate branded business reports in multiple formats.</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Download your business reports in different formats.</p>
             </div>
           </div>
         </SlideIn>
@@ -131,7 +131,7 @@ export default function ExportCenter() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 shadow-sm">
               <h2 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                <Filter size={14} /> 1. Select Data Category
+                <Filter size={14} /> 1. Choose What to Export
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {categories.map((cat) => (
@@ -182,18 +182,18 @@ export default function ExportCenter() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2">
-                  <MapPin size={12} /> Target Branch
+                  <MapPin size={12} /> Branch
                 </label>
                 {selectedLocationIds.length > 1 ? (
                   <div className="w-full p-3 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl text-xs font-bold text-[var(--color-primary)] uppercase tracking-normal">
-                    {selectedLocationIds.length} branches selected via Navbar
+                    {selectedLocationIds.length} branches selected
                   </div>
                 ) : (
                   <PremiumSelect
                     value={filters.branchId}
                     onChange={(val) => setFilters({ ...filters, branchId: val })}
                     options={[
-                      { label: 'Global Network', value: 'all' },
+                      { label: 'All Branches', value: 'all' },
                       ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                     ]}
                     className="w-full"
@@ -209,7 +209,7 @@ export default function ExportCenter() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)]/20 hidden -mr-16 -mt-16 rounded-full" />
               
               <div className="space-y-8 relative z-10">
-                <h2 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">2. Delivery Format</h2>
+                <h2 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)]">2. Choose Format</h2>
                 <div className="space-y-3">
                   {formats.map((f) => (
                     <button
@@ -237,7 +237,7 @@ export default function ExportCenter() {
                   {loading ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      Synthesizing...
+                      Preparing...
                     </>
                   ) : (
                     <>

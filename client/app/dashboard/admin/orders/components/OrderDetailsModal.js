@@ -8,7 +8,7 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
     <Modal
       isOpen={!!selectedOrder}
       onClose={onClose}
-      title="Signal Dossier"
+      title="Order Details"
       maxWidth="max-w-2xl"
     >
       <div className="space-y-10 p-2">
@@ -18,14 +18,14 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
           </div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
-              <span className="px-2 py-0.5 bg-primary/20 text-primary text-[8px] font-bold uppercase tracking-normal rounded border border-primary/20">SECURE SIGNAL</span>
+              <span className="px-2 py-0.5 bg-primary/20 text-primary text-[8px] font-bold uppercase tracking-normal rounded border border-primary/20">ORDER</span>
               <span className="text-[10px] font-bold text-white/40 uppercase tracking-normal">#{selectedOrder._id}</span>
             </div>
             <h3 className="text-3xl font-bold tracking-tight">Table {selectedOrder.table?.tableNumber}</h3>
             <p className="text-xs font-bold text-white/60 mt-1 uppercase tracking-normal">{selectedOrder.branch?.name} / {new Date(selectedOrder.createdAt).toLocaleTimeString()}</p>
           </div>
           <div className="relative z-10 text-right">
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-normal mb-1">Total Value</p>
+            <p className="text-[10px] font-bold text-white/40 uppercase tracking-normal mb-1">Total Amount</p>
             <p className="text-4xl font-bold text-primary tracking-tight">₹{selectedOrder.totalAmount}</p>
           </div>
         </div>
@@ -33,18 +33,18 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
         <div className="space-y-6">
           <div className="flex items-center gap-3 px-2">
             <div className="h-1 w-6 bg-primary rounded-full" />
-            <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Payload Contents</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Items</h4>
           </div>
           <div className="grid grid-cols-1 gap-3">
             {selectedOrder.items.map((item, idx) => (
               <div key={idx} className="p-5 bg-[var(--color-surface-soft)] rounded-[1.5rem] border border-[var(--color-border)] flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center border border-[var(--color-border)] text-primary group- transition-transform">
+                  <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center border border-[var(--color-border)] text-primary transition-transform">
                     <Zap size={16} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[var(--color-text-primary)]">{item.menuItem?.name}</p>
-                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{item.quantity} Units x ₹{item.menuItem?.price}</p>
+                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{item.quantity} x ₹{item.menuItem?.price}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{item.quantity * (item.menuItem?.price || 0)}</span>
@@ -60,19 +60,19 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
                 onClick={() => handleCancel(selectedOrder._id)}
                 className="py-4 bg-[var(--color-danger)]/10 text-[var(--color-danger)] text-[10px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white transition-all"
               >
-                Terminate Order
+                Cancel Order
               </button>
               <button
                 onClick={() => handleForceComplete(selectedOrder._id)}
                 className="py-4 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-success)]/20 hover:bg-[var(--color-success)] hover:text-white transition-all"
               >
-                Finalize Delivery
+                Complete Order
               </button>
             </div>
           )}
           {selectedOrder.status === 'COMPLETED' && (
             <div className="p-4 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-center">
-              <p className="text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal">Order Finished: Saved</p>
+              <p className="text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal">Order Completed</p>
             </div>
           )}
 
@@ -81,11 +81,11 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
               onClick={() => handleDeleteOrder(selectedOrder._id)}
               className="w-full py-4 bg-[var(--color-danger)]/5 text-[var(--color-danger)]/40 text-[9px] font-bold uppercase tracking-normal rounded-xl border border-[var(--color-danger)]/10 hover:bg-[var(--color-danger)] hover:text-white transition-all mt-2"
             >
-              Delete Order Record
+              Delete Order
             </button>
           )}
           <button className="w-full py-4 text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2">
-            <Printer size={14} /> Print Order Blueprint
+            <Printer size={14} /> Print Order
           </button>
         </div>
       </div>

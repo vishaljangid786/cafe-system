@@ -220,7 +220,7 @@ export default function MenuManagementPage() {
       setTotalPages(itemsRes.data.pagination.pages);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Failed to load menu items');
+      toast.error('Could not load menu items');
       console.error(error);
     } finally {
       didInitRef.current = true;
@@ -270,19 +270,19 @@ export default function MenuManagementPage() {
       setEditingCategory(null);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
   const deleteCategory = async (id) => {
-    if (!confirm('Deactivate this category? All items in this category will be unassigned.')) return;
-    const loadToast = toast.loading('Deactivating category...');
+    if (!confirm('Turn off this category? All items in this category will be unassigned.')) return;
+    const loadToast = toast.loading('Turning off category...');
     try {
       await api.delete(`/categories/${id}`);
-      toast.success('Category deactivated', { id: loadToast });
+      toast.success('Category turned off', { id: loadToast });
       fetchData();
     } catch (error) {
-      toast.error('Deactivation failed', { id: loadToast });
+      toast.error('Could not turn off category. Please try again.', { id: loadToast });
     }
   };
 
@@ -315,7 +315,7 @@ export default function MenuManagementPage() {
     const discPrice = formData.get('discountedPrice') ? parseFloat(formData.get('discountedPrice')) : null;
 
     if (originalPrice && discPrice && discPrice >= originalPrice) {
-      return toast.error(`Pricing logic error: Offer Price (₹${discPrice}) cannot be higher than the Original Price (₹${originalPrice})`);
+      return toast.error(`Offer Price (₹${discPrice}) cannot be higher than the Original Price (₹${originalPrice})`);
     }
 
     const loadToast = toast.loading(editingItem ? 'Updating item...' : 'Adding item...');
@@ -350,7 +350,7 @@ export default function MenuManagementPage() {
       setShowRecipeEditor(false);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -362,7 +362,7 @@ export default function MenuManagementPage() {
       ));
       toast.success('Availability updated');
     } catch (error) {
-      toast.error('Toggle failed');
+      toast.error('Could not update availability. Please try again.');
     }
   };
 
@@ -374,7 +374,7 @@ export default function MenuManagementPage() {
       toast.success('Item deleted', { id: loadToast });
       fetchData();
     } catch (error) {
-      toast.error('Erasure failed', { id: loadToast });
+      toast.error('Could not delete item. Please try again.', { id: loadToast });
     }
   };
 
@@ -622,8 +622,8 @@ export default function MenuManagementPage() {
 
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
-                <CardTitle className="text-lg">Branch Momentum</CardTitle>
-                <CardDescription className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Live operational performance</CardDescription>
+                <CardTitle className="text-lg">Top Staff</CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff performance</CardDescription>
               </div>
               <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                 <Users size={18} />
@@ -638,14 +638,14 @@ export default function MenuManagementPage() {
                     <Zap size={40} className="text-[var(--color-primary)] animate-pulse" />
                   </div>
                   <h4 className="text-2xl font-bold text-[var(--color-text-primary)] uppercase tracking-tight max-w-md">
-                    <span className="text-[var(--color-primary)]">{analytics.staffPerformance[0].name}</span> is single-handedly driving the floor
+                    <span className="text-[var(--color-primary)]">{analytics.staffPerformance[0].name}</span> is handling everything alone
                   </h4>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-2">Solo Operation Mastery</p>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-2">Top Performer</p>
 
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight">{analytics.staffPerformance[0].totalOrders}</p>
-                      <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">Orders Synced</p>
+                      <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">Orders</p>
                     </div>
                     <div className="h-12 w-px bg-[var(--color-border)]" />
                     <div className="text-center">
@@ -668,7 +668,7 @@ export default function MenuManagementPage() {
                             <span className="text-sm font-bold text-[var(--color-text-primary)] truncate">{staff.name}</span>
                             <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-full uppercase">Rank #{idx + 1}</span>
                           </div>
-                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">{staff.totalOrders} Orders Handled</p>
+                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">{staff.totalOrders} Orders</p>
                         </div>
                       </div>
 
@@ -693,7 +693,7 @@ export default function MenuManagementPage() {
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
                   <Users size={32} className="mb-4" />
-                  <p className="text-[10px] font-bold uppercase tracking-normal">No Active Staff Data</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal">No Staff Data Yet</p>
                 </div>
               )}
             </div>
@@ -918,7 +918,7 @@ export default function MenuManagementPage() {
                         )}
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
                           <span className="px-3 py-1 bg-[var(--color-surface)]/80  rounded-full text-[10px] font-bold uppercase tracking-normal border border-[var(--color-border)] text-[var(--color-text-primary)]">
-                            {item.category?.name || 'Unsorted'}
+                            {item.category?.name || 'Uncategorized'}
                           </span>
                           <span className={`px-3 py-1  rounded-full text-[8px] font-bold uppercase tracking-normal border self-start ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]/20 border-[var(--color-success)]/30 text-[var(--color-success)]' : 'bg-[var(--color-danger)]/20 border-[var(--color-danger)]/30 text-[var(--color-danger)]'
                             }`}>
@@ -1289,7 +1289,7 @@ export default function MenuManagementPage() {
                   </div>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between p-5 bg-[var(--color-bg-soft)] rounded-xl border border-[var(--color-border)] cursor-pointer group">
-                      <span className="text-xs font-bold text-[var(--color-text-primary)]">Active Availability</span>
+                      <span className="text-xs font-bold text-[var(--color-text-primary)]">Available for ordering</span>
                       <input
                         type="checkbox"
                         name="isAvailable"
@@ -1583,7 +1583,7 @@ export default function MenuManagementPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-6 space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Item Name</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2.5 ml-1">Category Name</label>
                   <input
                     name="name"
                     defaultValue={editingCategory?.name}
@@ -1593,7 +1593,7 @@ export default function MenuManagementPage() {
                   />
                 </div>
                 <div className="md:col-span-6 space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Visual Icon & Suggestions</label>
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Icon</label>
                   <div className="flex gap-3">
                     <div className="relative group shrink-0">
                       <input
@@ -1623,19 +1623,19 @@ export default function MenuManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Categorical Scope (Description)</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Description</label>
                 <textarea
                   name="description"
                   defaultValue={editingCategory?.description}
                   rows="3"
                   className="w-full px-5 py-4 bg-[var(--color-bg-soft)] rounded-xl border border-[var(--color-border)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 font-bold transition-all resize-none text-[var(--color-text-primary)]"
-                  placeholder="Define the scope of culinary nodes within this sector..."
+                  placeholder="Write a short description for this category..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Hierarchy Index (Sort Order)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Sort Order</label>
                   <input
                     name="sortOrder"
                     type="number"
@@ -1652,8 +1652,8 @@ export default function MenuManagementPage() {
                       <div className="absolute left-1 top-1 w-5 h-5 bg-[var(--color-bg-base)] rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">Operational Status</span>
-                      <span className="text-[8px] text-[var(--color-text-muted)] uppercase tracking-tight">Availability in list</span>
+                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">Active</span>
+                      <span className="text-[8px] text-[var(--color-text-muted)] uppercase tracking-tight">Show in list</span>
                     </div>
                   </label>
                 </div>
@@ -1691,7 +1691,7 @@ export default function MenuManagementPage() {
         {activeTab === 'items' && totalPages > 1 && (
           <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
             <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-              Inventory Page {currentPage} of {totalPages}
+              Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button

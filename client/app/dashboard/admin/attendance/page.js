@@ -69,7 +69,7 @@ export default function GlobalAttendancePage() {
         }
       } catch (err) {
         console.error('Failed to fetch attendance list:', err.response?.data || err.message);
-        toast.error(err.response?.data?.message || 'Failed to fetch attendance data stream');
+        toast.error(err.response?.data?.message || 'Could not load attendance data. Please try again.');
       } finally {
         didInitRef.current = true;
         setLoading(false);
@@ -97,7 +97,7 @@ export default function GlobalAttendancePage() {
       
       toast.success('Attendance updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to mark attendance', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not mark attendance. Please try again.', { id: loadToast });
     } finally {
       setMarkingLoading(false);
     }
@@ -144,7 +144,7 @@ export default function GlobalAttendancePage() {
         </h1>
 
         <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-medium">
-          Real-time tracking across all branches with smart insights.
+          Track staff attendance across all branches.
         </p>
       </div>
 
@@ -242,7 +242,7 @@ export default function GlobalAttendancePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">Daily Distribution</h2>
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Real-time status breakdown</p>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Today's status breakdown</p>
                 </div>
                 <PieIcon size={20} className="text-[var(--color-primary)]" />
               </div>
@@ -476,7 +476,7 @@ export default function GlobalAttendancePage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)]/40  border border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
             <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-              List Page {currentPage} of {totalPages}
+              Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button

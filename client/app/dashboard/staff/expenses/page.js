@@ -107,7 +107,7 @@ export default function StaffExpensesPage() {
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Archiving expense...');
+    const loadToast = toast.loading('Saving expense...');
     try {
       const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
       if (!finalTitle) throw new Error("Title is required");
@@ -124,7 +124,7 @@ export default function StaffExpensesPage() {
       setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toLocaleDateString('en-CA'), description: '' });
       fetchExpenses();
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'System Rule failure';
+      const msg = error.response?.data?.message || error.message || 'Something went wrong. Please try again.';
       toast.error(msg, { id: loadToast });
     }
   };
@@ -161,7 +161,7 @@ export default function StaffExpensesPage() {
                   </h1>
                   <p className="text-[var(--color-text-muted)] font-bold mt-2 flex items-center gap-2 text-sm">
                     <Sparkles size={14} className="text-[var(--color-primary)]" />
-                    Record and track your personal operational spend.
+                    Add and track your own expenses.
                   </p>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export default function StaffExpensesPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-danger)] transition-colors" size={20} />
                 <input
                   type="text"
-                  placeholder="Scan your records..."
+                  placeholder="Search your expenses..."
                   className="w-full pl-14 pr-6 py-5 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl focus:ring-4 focus:ring-[var(--color-danger)]/10 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -213,7 +213,7 @@ export default function StaffExpensesPage() {
                     { header: 'Date', key: item => new Date(item.date).toLocaleDateString() },
                     { header: 'Amount', key: 'totalAmount' }
                   ]}
-                  filename="my_expense_vault"
+                  filename="my_expenses"
                 />
                 <Button
                   variant="secondary"
@@ -233,7 +233,7 @@ export default function StaffExpensesPage() {
                   <div className="h-20 w-20 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-text-muted)] mb-6">
                     <Receipt size={40} strokeWidth={1} />
                   </div>
-                  <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No personal expenditure nodes detected.</p>
+                  <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">You have not added any expenses yet.</p>
                 </div>
               ) : (
                 paginatedData.map((t, idx) => (
@@ -269,7 +269,7 @@ export default function StaffExpensesPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className={`text-xl font-bold tracking-tight leading-none ${t.status === 'rejected' ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-danger)]'}`}>-₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Personal</p>
+                          <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Expense</p>
                         </div>
                       </div>
                     </CardHover>
@@ -282,7 +282,7 @@ export default function StaffExpensesPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                  Vault Page {currentPage} of {totalPages}
+                  Page {currentPage} of {totalPages}
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -310,7 +310,7 @@ export default function StaffExpensesPage() {
                 <div className="absolute top-0 right-0 p-8 opacity-5 group- transition-transform duration-700">
                   <Wallet size={100} strokeWidth={1} />
                 </div>
-                <h3 className="text-sm font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6">Personal Speed</h3>
+                <h3 className="text-sm font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6">Spending Trend</h3>
                 <div className="space-y-6 relative z-10">
                   <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -320,7 +320,7 @@ export default function StaffExpensesPage() {
                     </ResponsiveContainer>
                   </div>
                   <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] pt-6">
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Outflow</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Spent</p>
                     <p className="text-2xl font-bold tracking-tight mt-1 text-[var(--color-danger)]">₹{totalExpenditure.toLocaleString()}</p>
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export default function StaffExpensesPage() {
 
         {/* Modal components are shared and will be identical to Admin for UI consistency */}
         {/* Detail Modal */}
-        <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Record Dossier" maxWidth="max-w-2xl">
+        <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Expense Details" maxWidth="max-w-2xl">
           {selectedExpense && (
             <div className="space-y-10">
               <div className="flex flex-col md:flex-row justify-between items-start gap-6">
@@ -346,7 +346,7 @@ export default function StaffExpensesPage() {
                         <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 rounded-lg animate-pulse">Pending Review</span>
                       )}
                       {selectedExpense.status === 'rejected' && (
-                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-surface-soft)]/10 text-[var(--color-text-secondary)] border border-[var(--color-border)]/20 rounded-lg">Revoked</span>
+                        <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-1 bg-[var(--color-surface-soft)]/10 text-[var(--color-text-secondary)] border border-[var(--color-border)]/20 rounded-lg">Rejected</span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-3">
@@ -359,14 +359,14 @@ export default function StaffExpensesPage() {
                 </div>
                 <div className="text-left md:text-right bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] min-w-[200px]">
                   <p className="text-4xl font-bold text-[var(--color-danger)] tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Personal Cost</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-2">Total Amount</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden group">
                   <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                    <User size={12} className="text-[var(--color-danger)]" /> Origin Agent
+                    <User size={12} className="text-[var(--color-danger)]" /> Added By
                   </p>
                   <div className="flex items-center gap-5">
                     <div className="h-16 w-16 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border-2 border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] overflow-hidden shadow-inner">
@@ -377,7 +377,7 @@ export default function StaffExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.createdBy?.name || 'System Rule User'}</p>
+                      <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.createdBy?.name || 'Unknown User'}</p>
                       <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] mt-1 bg-[var(--color-danger)]/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
@@ -385,10 +385,10 @@ export default function StaffExpensesPage() {
 
                 <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden group">
                   <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                    <MapPin size={12} className="text-[var(--color-danger)]" /> Station Center
+                    <MapPin size={12} className="text-[var(--color-danger)]" /> Branch
                   </p>
                   <div className="space-y-1">
-                    <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.locationId?.name || 'Central Command'}</p>
+                    <p className="text-base font-bold text-[var(--color-text-primary)] dark:text-white leading-none">{selectedExpense.locationId?.name || 'Head Office'}</p>
                     <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mt-1">{selectedExpense.locationId?.city || 'Branch'}</p>
                   </div>
                 </div>
@@ -396,11 +396,11 @@ export default function StaffExpensesPage() {
 
               <div className="space-y-6">
                 <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
-                  <Info size={12} className="text-[var(--color-danger)]" /> Descriptive Information
+                  <Info size={12} className="text-[var(--color-danger)]" /> Notes
                 </p>
                 <div className="p-8 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] relative">
                   <p className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] leading-relaxed italic relative z-10">
-                    &ldquo;{selectedExpense.description || 'No descriptive info was saved for this spending.'}&rdquo;
+                    &ldquo;{selectedExpense.description || 'No notes were added for this expense.'}&rdquo;
                   </p>
                 </div>
               </div>
@@ -408,7 +408,7 @@ export default function StaffExpensesPage() {
               {selectedExpense.billImage && (
                 <div className="space-y-6">
                   <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-2 ml-2">
-                    <Sparkles size={12} className="text-[var(--color-danger)]" /> Archival Evidence
+                    <Sparkles size={12} className="text-[var(--color-danger)]" /> Bill Photo
                   </p>
                   <div className="rounded-xl overflow-hidden border-4 border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface)] dark:bg-[var(--color-bg)] p-3 shadow-sm relative group">
                     <img src={selectedExpense.billImage} alt="Evidence" className="w-full h-auto rounded-xl transition-all duration-1000 group-" />
@@ -421,18 +421,18 @@ export default function StaffExpensesPage() {
                 className="w-full !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs border-none bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]"
                 onClick={() => setSelectedExpense(null)}
               >
-                Exit
+                Close
               </Button>
             </div>
           )}
         </Modal>
 
         {/* Add Modal */}
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Personal Outflow" maxWidth="max-w-xl">
+        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Expense" maxWidth="max-w-xl">
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
                 <PremiumSelect 
-                  label="Archival Title"
+                  label="Expense Title"
                   value={formData.title}
                   onChange={val => {
                     setFormData({ ...formData, title: val });
@@ -449,11 +449,11 @@ export default function StaffExpensesPage() {
                     exit={{ opacity: 0, height: 0, y: -20 }}
                     className="space-y-3 overflow-hidden"
                   >
-                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Specify Custom Title</label>
+                    <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Enter Custom Title</label>
                     <input
                       required
                       className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none"
-                      placeholder="e.g. Special Equipment Repair"
+                      placeholder="e.g. Equipment Repair"
                       value={formData.customTitle}
                       onChange={e => setFormData({ ...formData, customTitle: e.target.value })}
                     />
@@ -463,11 +463,11 @@ export default function StaffExpensesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Economic Volume (₹)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Amount (₹)</label>
                   <input required type="number" className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-bold dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
                 <PremiumSelect 
-                  label="Category Vector"
+                  label="Category"
                   value={formData.category}
                   onChange={val => setFormData({ ...formData, category: val })}
                   options={[
@@ -482,17 +482,17 @@ export default function StaffExpensesPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Temporal Stamp</label>
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Date</label>
                 <input required type="date" readOnly className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] cursor-not-allowed outline-none" value={formData.date} />
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Information Notes</label>
-                <textarea className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Provide specific context for this outflow..." />
+                <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-danger)] ml-2">Notes</label>
+                <textarea className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] p-5 text-sm font-medium dark:text-white focus:ring-4 focus:ring-[var(--color-danger)]/10 transition-all outline-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Add any details about this expense..." />
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full !rounded-xl bg-primary !py-6 shadow-sm  font-bold uppercase tracking-normal text-sm" icon={Sparkles}>Finalize Outflow</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-xl bg-primary !py-6 shadow-sm  font-bold uppercase tracking-normal text-sm" icon={Sparkles}>Save Expense</Button>
           </form>
         </Modal>
       </div>

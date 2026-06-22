@@ -69,14 +69,14 @@ export default function SalaryPage() {
               <div>
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="px-3 py-1 bg-[var(--color-primary-soft)] text-[var(--color-primary)] rounded-full text-[10px] font-bold uppercase tracking-normal border border-[rgba(var(--color-primary-rgb),0.2)]">
-                    Financial Operations
+                    Salary
                   </div>
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight leading-tight">
-                  Staff <span className="text-[var(--color-primary)]">Remuneration</span>
+                  Staff <span className="text-[var(--color-primary)]">Salary</span>
                 </h1>
                 <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-4 font-medium max-w-md">
-                  Real-time payroll engine processing monthly disbursements based on validated attendance logs.
+                  Monthly salary worked out from each staff member's attendance.
                 </p>
               </div>
 
@@ -109,7 +109,7 @@ export default function SalaryPage() {
               <div className="absolute top-0 right-0 p-8 opacity-10 group- transition-transform">
                 <DollarSign size={120} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-normal opacity-70 mb-4">Gross Disbursement</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal opacity-70 mb-4">Total Salary Payout</p>
               <div className="text-4xl font-bold tracking-tight">₹{totalPayout.toLocaleString()}</div>
               <div className="mt-6 flex items-center text-[10px] font-bold uppercase bg-white/10 w-fit px-3 py-1 rounded-full border border-[var(--color-border)]">
                 <TrendingUp size={12} className="mr-2" /> +4.2% vs last month
@@ -119,7 +119,7 @@ export default function SalaryPage() {
 
           <SlideIn delay={0.2}>
             <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Headcount Efficiency</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Average Attendance</p>
               <div className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
                 {salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100).toFixed(1) : 0}%
               </div>
@@ -135,12 +135,12 @@ export default function SalaryPage() {
 
           <SlideIn delay={0.3}>
             <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] p-8 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-sm relative overflow-hidden">
-              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Average Take-Home</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Average Salary</p>
               <div className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
                 ₹{salaries.length > 0 ? Math.round(totalPayout / salaries.length).toLocaleString() : 0}
               </div>
               <p className="mt-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
-                <Info size={14} className="mr-2 text-[var(--color-primary)]" /> Per regular employee
+                <Info size={14} className="mr-2 text-[var(--color-primary)]" /> Per staff member
               </p>
             </div>
           </SlideIn>
@@ -151,13 +151,13 @@ export default function SalaryPage() {
           <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] dark:border-[var(--color-border)] overflow-hidden">
             <div className="p-8 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex flex-col md:flex-row justify-between items-center gap-4">
               <h2 className="text-xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight flex items-center">
-                <FileText className="mr-3 text-[var(--color-primary)]" size={24} /> Detailed <span className="ml-2 text-[var(--color-primary)]">Breakdown</span>
+                <FileText className="mr-3 text-[var(--color-primary)]" size={24} /> Salary <span className="ml-2 text-[var(--color-primary)]">Details</span>
               </h2>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                 <input
                   type="text"
-                  placeholder="Search employee..."
+                  placeholder="Search staff..."
                   className="w-full pl-12 pr-4 py-3 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-xl border-none focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-xs font-bold dark:text-[var(--color-text-muted)]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -169,8 +169,8 @@ export default function SalaryPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[var(--color-surface-soft)]/30 dark:bg-[var(--color-surface)]/30 text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal">
-                    <th className="px-10 py-6">Staff Information</th>
-                    <th className="px-10 py-6 text-center">Log Analysis</th>
+                    <th className="px-10 py-6">Staff Member</th>
+                    <th className="px-10 py-6 text-center">Attendance</th>
                     <th className="px-10 py-6 text-right">Action</th>
                   </tr>
                 </thead>
@@ -186,7 +186,7 @@ export default function SalaryPage() {
                       <td colSpan="4" className="px-10 py-32 text-center">
                         <div className="flex flex-col items-center opacity-20">
                           <Receipt size={64} className="mb-4" />
-                          <p className="text-sm font-bold uppercase tracking-normal">Zero entries found</p>
+                          <p className="text-sm font-bold uppercase tracking-normal">No staff found</p>
                         </div>
                       </td>
                     </tr>
@@ -230,7 +230,7 @@ export default function SalaryPage() {
                             </div>
                           </div>
                           <div className="px-3 py-1 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] rounded-lg text-[9px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-normal">
-                            {item.payableDays} Effective Days
+                            {item.payableDays} Payable Days
                           </div>
                         </div>
                       </td>
@@ -239,7 +239,7 @@ export default function SalaryPage() {
                           onClick={() => setViewingUser(item)}
                           className="px-6 py-3 bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-[var(--color-primary)] transition-all shadow-sm"
                         >
-                          View Breakdown
+                          View Details
                         </button>
                       </td>
                     </motion.tr>
@@ -254,7 +254,7 @@ export default function SalaryPage() {
         <Modal
           isOpen={!!viewingUser}
           onClose={() => setViewingUser(null)}
-          title="Staff Remuneration Details"
+          title="Staff Salary Details"
           maxWidth="max-w-2xl"
         >
           {viewingUser && (
@@ -272,13 +272,13 @@ export default function SalaryPage() {
                         {viewingUser.role?.replace('_', ' ')}
                       </span>
                       <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
-                        Verified Details
+                        Verified
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Contracted Base</p>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Base Salary</p>
                   <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
                     ₹{viewingUser.monthlySalary.toLocaleString()}
                   </p>
@@ -289,7 +289,7 @@ export default function SalaryPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-4">Attendance Analysis ({month})</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-4">Attendance ({month})</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-[var(--color-success)]/10 p-4 rounded-xl border border-[var(--color-success)]/10">
                         <p className="text-[10px] font-bold uppercase text-[var(--color-success)] mb-1">Present</p>
@@ -316,17 +316,17 @@ export default function SalaryPage() {
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform">
                       <Wallet size={80} />
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-normal opacity-60 mb-4">Calculated Net Payable</p>
+                    <p className="text-[10px] font-bold uppercase tracking-normal opacity-60 mb-4">Net Salary Payable</p>
                     <div className="text-4xl font-bold tracking-tight mb-2">₹{Math.round(viewingUser.calculatedSalary).toLocaleString()}</div>
                     <p className="text-[10px] font-bold uppercase tracking-normal opacity-60">
-                      Based on {viewingUser.payableDays} Effective Days
+                      Based on {viewingUser.payableDays} Payable Days
                     </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/50 dark:border-[var(--color-primary)]/10 flex items-start gap-3">
                     <Info size={16} className="text-[var(--color-primary)] shrink-0 mt-0.5" />
                     <p className="text-[10px] font-bold text-[var(--color-primary)]/60 dark:text-[var(--color-primary)]/60 leading-relaxed uppercase tracking-normal">
-                      Calculated using automated payroll algorithm weighting full days, half days, and late deductions.
+                      Worked out from full days, half days, and late deductions.
                     </p>
                   </div>
                 </div>
@@ -343,10 +343,10 @@ export default function SalaryPage() {
                 <Button
                   className="flex-1 py-4 !rounded-xl font-bold text-xs uppercase tracking-normal bg-[var(--color-surface-soft)] text-[var(--color-text-primary)] border border-[var(--color-border)] shadow-sm"
                   onClick={() => {
-                    toast.success('Paystub exported to secure list');
+                    toast.success('Salary slip downloaded');
                   }}
                 >
-                  Generate Paystub
+                  Download Salary Slip
                 </Button>
               </div>
             </div>

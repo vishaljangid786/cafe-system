@@ -72,7 +72,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
 
         <div className="flex-1 space-y-6">
           <div>
-            <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal block mb-1">Terminal</span>
+            <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal block mb-1">Table</span>
             <h3 className="text-5xl font-bold text-[var(--color-text-primary)] tracking-tight">T{table.tableNumber}</h3>
             {table.tableName && (
               <span className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-tight block mt-1">{table.tableName}</span>
@@ -84,7 +84,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
 
           <div className="flex flex-wrap gap-2">
             <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal border border-current opacity-80 ${statusTextColors[table.status]}`}>
-              {isOccupied ? 'Occupied' : table.status === 'ongoing' ? 'Session' : table.status}
+              {isOccupied ? 'Occupied' : table.status === 'ongoing' ? 'In Progress' : table.status}
             </span>
             <span className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] flex items-center gap-1.5">
               <Users size={10} /> {table.capacity || 1} Seater
@@ -94,8 +94,8 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
           {(isOccupied || table.status === 'ongoing') && table.activeOrdersCount > 0 && (
             <div className="bg-[var(--color-bg-soft)]/50 p-4 rounded-xl border border-[var(--color-border)] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Culinary Progress</span>
-                <span className="text-10px font-bold text-[var(--color-primary)] uppercase tracking-tight">{table.activeOrdersCount} Active Unit{table.activeOrdersCount > 1 ? 's' : ''}</span>
+                <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Order Progress</span>
+                <span className="text-10px font-bold text-[var(--color-primary)] uppercase tracking-tight">{table.activeOrdersCount} Active Order{table.activeOrdersCount > 1 ? 's' : ''}</span>
               </div>
               <div className="h-1.5 w-full bg-[var(--color-border)] rounded-full overflow-hidden">
                 <motion.div
@@ -116,10 +116,10 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
                   <Clock size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-normal">Active Session</span>
+                  <span className="text-[10px] font-bold uppercase tracking-normal">Active Order</span>
                 </div>
                 <span className="text-xs font-bold text-[var(--color-text-primary)]">
-                  {table.orders?.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)} Units
+                  {table.orders?.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)} Items
                 </span>
               </div>
               <div className="flex items-center justify-between bg-[var(--color-bg-soft)]/50 p-4 rounded-xl border border-[var(--color-border)]">
@@ -140,7 +140,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             icon={isAvailable ? Plus : Zap}
             onClick={() => isAvailable ? onAssign(table) : onManage(table)}
           >
-            {isAvailable ? 'Assign Table' : 'Manage Session'}
+            {isAvailable ? 'Assign Table' : 'Manage Order'}
           </Button>
         </div>
       </div>

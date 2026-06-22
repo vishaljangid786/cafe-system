@@ -97,7 +97,7 @@ export default function OrderAnalyticsDashboard() {
       setData(analyticsRes.data.data);
       setLocations(locRes.data.data);
     } catch (error) {
-      toast.error("Failed to calculate report data");
+      toast.error("Could not load analytics. Please try again.");
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -117,7 +117,7 @@ export default function OrderAnalyticsDashboard() {
   }, [fetchAnalytics]);
 
   const sectorColumns = [
-    { header: "Sector Name", key: "name" },
+    { header: "Branch Name", key: "name" },
     { header: "City", key: "city" },
     { header: "Total Orders", key: "totalOrders" },
     { header: "Avg Prep Time (m)", key: "avgPrepTime" },
@@ -126,7 +126,7 @@ export default function OrderAnalyticsDashboard() {
   const chefColumns = [
     { header: "Chef Name", key: "name" },
     { header: "Total Orders", key: "total" },
-    { header: "Avg Fulfillment Speed (m)", key: "avgTime" },
+    { header: "Avg Prep Time (m)", key: "avgTime" },
   ];
 
   const resetFilters = () => {
@@ -136,7 +136,7 @@ export default function OrderAnalyticsDashboard() {
         : "all",
     );
     setDateRange({ start: "", end: "" });
-    toast.success("Terminal reset to defaults");
+    toast.success("Filters cleared");
   };
 
   if (loading) return <LoadingScreen fullScreen={false} />;
@@ -168,12 +168,12 @@ export default function OrderAnalyticsDashboard() {
               <div className="flex items-center gap-3">
                 <div className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-success)]/20 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
-                  Live Dataset
+                  Live Data
                 </div>
                 <div className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">
                   {user?.role === "branch_admin"
-                    ? "Branch operational monitor active"
-                    : "Global operations monitoring active"}
+                    ? "Showing your branch"
+                    : "Showing all branches"}
                 </div>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function OrderAnalyticsDashboard() {
                     <Building size={16} />
                     <span className="text-[10px] font-bold uppercase tracking-normal">
                       {locations.find((l) => l._id === branchFilter)?.name ||
-                        "Restricted Session"}
+                        "Your Branch"}
                     </span>
                   </div>
                 ) : (
@@ -239,7 +239,7 @@ export default function OrderAnalyticsDashboard() {
                         />
                         <span className="text-[10px] font-bold uppercase tracking-normal">
                           {branchFilter === "all"
-                            ? "All Global Sectors"
+                            ? "All Branches"
                             : locations.find((l) => l._id === branchFilter)
                                 ?.name}
                         </span>
@@ -268,7 +268,7 @@ export default function OrderAnalyticsDashboard() {
                                   }}
                                   className={`w-full p-4 rounded-xl text-left text-[10px] font-bold uppercase tracking-normal flex items-center gap-3 transition-all ${branchFilter === "all" ? "bg-[var(--color-primary)] text-white" : "hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]"}`}
                                 >
-                                  <Globe size={14} /> All Sectors
+                                  <Globe size={14} /> All Branches
                                 </button>
                                 <div className="h-px bg-[var(--color-border)] my-2" />
                               </>
@@ -314,7 +314,7 @@ export default function OrderAnalyticsDashboard() {
                     size={18}
                     className="group-hover:rotate-12 transition-transform"
                   />{" "}
-                  Reset Terminal
+                  Clear Filters
                 </button>
               </div>
             </div>
@@ -349,19 +349,19 @@ export default function OrderAnalyticsDashboard() {
             color="blue"
           />
           <MetricCard
-            label="Avg Fulfillment"
+            label="Avg Prep Time"
             value={`${data?.metrics?.avgPrepTime}m`}
             icon={Timer}
             color="indigo"
           />
           <MetricCard
-            label="Failure Rate"
+            label="Cancel Rate"
             value={`${(((data?.metrics?.cancelledOrders + data?.metrics?.rejectedOrders) / (data?.metrics?.totalOrders || 1)) * 100).toFixed(1)}%`}
             icon={AlertCircle}
             color="rose"
           />
           <MetricCard
-            label="Peak Sector"
+            label="Busiest Hour"
             value={data?.metrics?.peakHour}
             icon={Target}
             color="amber"
@@ -384,19 +384,18 @@ export default function OrderAnalyticsDashboard() {
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3">
-                  <Activity size={18} className="text-[var(--color-primary)]" /> Hourly Load
-                  Analytics
+                  <Activity size={18} className="text-[var(--color-primary)]" /> Orders by Hour
                 </h3>
                 <p className="text-[10px] font-bold text-[var(--color-text-muted)] mt-1 uppercase tracking-tight">
-                  Real-time throughput distribution per sector
+                  How many orders come in each hour
                 </p>
               </div>
               <div className="px-4 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[9px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20">
-                Peak Load:{" "}
+                Busiest Hour:{" "}
                 {Math.max(
                   ...(data?.charts?.ordersPerHour?.map((d) => d.count) || [0]),
                 )}{" "}
-                Units
+                Orders
               </div>
             </div>
             <div className="h-[350px] w-full relative z-10">
@@ -457,7 +456,7 @@ export default function OrderAnalyticsDashboard() {
           {/* Status Breakdown Pie */}
           <div className="xl:col-span-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm flex flex-col relative overflow-hidden group">
             <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-10 flex items-center gap-3">
-              <PieIcon size={18} className="text-[var(--color-primary)]" /> Quality Matrix
+              <PieIcon size={18} className="text-[var(--color-primary)]" /> Orders by Status
             </h3>
             <div className="flex-1 min-h-[300px] w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
@@ -541,14 +540,13 @@ export default function OrderAnalyticsDashboard() {
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-primary)] flex items-center gap-3 mb-4">
                   <div className="h-1 w-8 bg-[var(--color-primary)] rounded-full" />
-                  Strategic Infrastructure
+                  Branches
                 </h3>
                 <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
-                  Sector <span className="text-[var(--color-primary)]">Breakdown</span>
+                  Branch <span className="text-[var(--color-primary)]">Breakdown</span>
                 </h2>
                 <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2 max-w-xl">
-                  Deep dive into individual branch performance and operational
-                  efficiency metrics.
+                  See how each branch is performing.
                 </p>
               </div>
             </div>
@@ -579,23 +577,23 @@ export default function OrderAnalyticsDashboard() {
                       </div>
                       {branchFilter === "all" && (
                         <div className="px-3 py-1 bg-white/20 rounded-full text-[9px] font-bold uppercase tracking-normal ">
-                          Primary Hub
+                          Selected
                         </div>
                       )}
                     </div>
                     <h4 className="text-2xl font-bold tracking-tight mb-1">
-                      Global Sectors
+                      All Branches
                     </h4>
                     <p
                       className={`text-[10px] font-bold uppercase tracking-normal ${branchFilter === "all" ? "opacity-80" : "text-[var(--color-text-muted)]"}`}
                     >
-                      Consolidated Stream
+                      Combined totals
                     </p>
 
                     <div className="mt-10 flex items-center justify-between">
                       <div>
                         <p className="text-[9px] font-bold uppercase tracking-normal opacity-60 mb-1">
-                          Total Signals
+                          Total Orders
                         </p>
                         <p className="text-2xl font-bold tracking-tight">
                           {data?.metrics?.totalOrders}
@@ -668,7 +666,7 @@ export default function OrderAnalyticsDashboard() {
                       <div className="mt-10 grid grid-cols-2 gap-6">
                         <div>
                           <p className="text-[9px] font-bold uppercase tracking-normal opacity-60 mb-1">
-                            Signals
+                            Orders
                           </p>
                           <p className="text-xl font-bold tracking-tight">
                             {branch.totalOrders}
@@ -676,7 +674,7 @@ export default function OrderAnalyticsDashboard() {
                         </div>
                         <div>
                           <p className="text-[9px] font-bold uppercase tracking-normal opacity-60 mb-1">
-                            Efficiency
+                            Avg Prep
                           </p>
                           <p className="text-xl font-bold tracking-tight text-[var(--color-primary)]">
                             {branch.avgPrepTime}m
@@ -698,18 +696,17 @@ export default function OrderAnalyticsDashboard() {
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-primary)] flex items-center gap-3 mb-4">
                   <div className="h-1 w-10 bg-[var(--color-primary)] rounded-full" />
-                  Culinary Performance
+                  Chef Performance
                 </h3>
                 <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
                   Kitchen <span className="text-[var(--color-primary)]">Leaderboard</span>
                 </h2>
                 <p className="text-sm font-bold text-[var(--color-text-muted)] mt-2">
-                  Evaluation of fulfillment speed and precision across all
-                  executive chefs.
+                  See how fast each chef prepares orders.
                 </p>
               </div>
               <button className="h-14 px-10 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white text-[10px] font-bold uppercase tracking-normal rounded-[1.5rem] shadow-sm  active:scale-95 transition-all flex items-center gap-4">
-                <Download size={18} strokeWidth={3} /> Intelligence Report
+                <Download size={18} strokeWidth={3} /> Download Report
               </button>
             </div>
 
@@ -744,7 +741,7 @@ export default function OrderAnalyticsDashboard() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                          Fulfillment Speed
+                          Avg Prep Time
                         </span>
                         <span className="text-xl font-bold text-[var(--color-primary)] tracking-tight">
                           {chef.avgTime}m
@@ -765,7 +762,7 @@ export default function OrderAnalyticsDashboard() {
               {(!data?.charts?.chefPerformance ||
                 data.charts.chefPerformance.length === 0) && (
                 <div className="lg:col-span-4 h-60 flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] rounded-xl opacity-30 italic text-[10px] font-bold uppercase tracking-normal">
-                  Signals insufficient for ranking data
+                  Not enough data to show rankings
                 </div>
               )}
             </div>
@@ -778,7 +775,7 @@ export default function OrderAnalyticsDashboard() {
         <Modal
           isOpen={!!selectedBranchDetails}
           onClose={() => setSelectedBranchDetails(null)}
-          title="Sector Intelligence Dossier"
+          title="Branch Details"
           maxWidth="max-w-4xl"
         >
           {selectedBranchDetails && (
@@ -791,7 +788,7 @@ export default function OrderAnalyticsDashboard() {
                 <div className="relative z-10 flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="px-3 py-1 bg-[var(--color-primary)] rounded-full text-[9px] font-bold uppercase tracking-normal">
-                      Active Sector
+                      Active Branch
                     </div>
                     <span className="text-[10px] font-bold text-white/50 uppercase tracking-normal">
                       ID: {selectedBranchDetails._id.substring(0, 12)}
@@ -814,11 +811,11 @@ export default function OrderAnalyticsDashboard() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">
-                      Communications
+                      Email
                     </p>
                     <p className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
                       {selectedBranchDetails.contactEmail ||
-                        "SECURE_CHANNEL_PENDING"}
+                        "Not added"}
                     </p>
                   </div>
                 </div>
@@ -828,10 +825,10 @@ export default function OrderAnalyticsDashboard() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">
-                      Emergency Uplink
+                      Phone
                     </p>
                     <p className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
-                      {selectedBranchDetails.contactPhone || "ENCRYPTED_LINE"}
+                      {selectedBranchDetails.contactPhone || "Not added"}
                     </p>
                   </div>
                 </div>
@@ -845,10 +842,10 @@ export default function OrderAnalyticsDashboard() {
                   }}
                   className="w-full py-6 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white rounded-xl text-xs font-bold uppercase tracking-normal  active:scale-95 transition-all shadow-sm  flex items-center justify-center gap-4"
                 >
-                  <Layers size={18} /> Deep Probe Analytics
+                  <Layers size={18} /> View This Branch's Analytics
                 </button>
                 <p className="text-center text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal opacity-40">
-                  Permission level: Administrator
+                  Admin access only
                 </p>
               </div>
             </div>

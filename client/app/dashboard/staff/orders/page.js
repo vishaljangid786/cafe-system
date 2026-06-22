@@ -129,7 +129,7 @@ export default function StaffOrdersPage() {
       setTables(tableRes.data.data);
       setMenuItems(menuRes.data.data);
     } catch (error) {
-      toast.error('Failed to load operational data');
+      toast.error('Could not load tables and menu. Please try again.');
     }
   }, [user]);
 
@@ -164,10 +164,10 @@ export default function StaffOrdersPage() {
   }, [user, fetchOrders]);
 
   const handleCreateOrder = async () => {
-    if (!selectedTable) return toast.error('Select a table');
-    if (stagedItems.length === 0) return toast.error('Add items to order');
+    if (!selectedTable) return toast.error('Please select a table');
+    if (stagedItems.length === 0) return toast.error('Please add items to the order');
 
-    const loadToast = toast.loading('Transmitting order to kitchen...');
+    const loadToast = toast.loading('Sending order to kitchen...');
     try {
       const branchId = user?.assignedLocation?._id || user?.assignedLocation;
       const totalAmount = stagedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -191,7 +191,7 @@ export default function StaffOrdersPage() {
       fetchOrders();
       fetchStats();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Placement failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not place the order. Please try again.', { id: loadToast });
     }
   };
 
@@ -241,12 +241,12 @@ export default function StaffOrdersPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none mb-2">
-                  Dispatch <span className="text-[var(--color-primary)]">Center</span>
+                  Orders <span className="text-[var(--color-primary)]">Center</span>
                 </h1>
                 <div className="flex items-center gap-3">
                    <div className="px-3 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/20 flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
-                      Live Feed Active
+                      Live Updates On
                    </div>
                    <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">{user?.assignedLocation?.name} Branch</p>
                 </div>
@@ -270,7 +270,7 @@ export default function StaffOrdersPage() {
               </div>
               <div className="h-10 w-px bg-[var(--color-border)]" />
               <button 
-                onClick={() => { fetchOrders(); fetchStats(); toast.success('Syncing with Kitchen...'); }}
+                onClick={() => { fetchOrders(); fetchStats(); toast.success('Refreshing orders...'); }}
                 className="h-14 w-14 flex items-center justify-center bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 transition-all text-[var(--color-text-muted)] hover:text-[var(--color-primary)] shadow-sm"
               >
                 <RefreshCcw size={22} className={loading ? 'animate-spin' : ''} />
@@ -279,7 +279,7 @@ export default function StaffOrdersPage() {
                 onClick={() => setShowCreateModal(true)}
                 className="h-14 px-10 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white font-bold text-xs uppercase tracking-normal rounded-[1.5rem] transition-all shadow-sm  flex items-center gap-3 active:scale-95"
               >
-                <Plus size={22} strokeWidth={3} /> Dispatch New Order
+                <Plus size={22} strokeWidth={3} /> New Order
               </button>
            </div>
         </div>
@@ -311,7 +311,7 @@ export default function StaffOrdersPage() {
                     <Search className="text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors" size={20} />
                     <input 
                       type="text"
-                      placeholder="SCAN TABLE, ID OR FOOD SIGNATURE..."
+                      placeholder="SEARCH BY TABLE, ORDER ID OR ITEM..."
                       className="w-full bg-transparent px-6 py-5 text-[11px] font-bold uppercase tracking-normal outline-none text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]/50"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -348,7 +348,7 @@ export default function StaffOrdersPage() {
                        <div className="h-6 w-px bg-[var(--color-border)]" />
                        <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center gap-2">
                           <Activity size={14} className="animate-pulse" />
-                          {filteredOrders.length} SIGNALS FOUND
+                          {filteredOrders.length} ORDERS FOUND
                        </p>
                     </div>
 
@@ -359,7 +359,7 @@ export default function StaffOrdersPage() {
                   onClick={() => { setSearchTerm(''); setSelectedCategory('all'); setStartDate(''); setEndDate(''); }}
                   className="h-[60px] px-8 bg-[var(--color-surface-soft)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/30 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] font-bold text-[10px] uppercase tracking-normal transition-all flex items-center gap-3 group shrink-0"
                  >
-                    <FilterX size={18} className="group-hover:rotate-12 transition-transform" /> Reset Terminal
+                    <FilterX size={18} className="group-hover:rotate-12 transition-transform" /> Clear Filters
                  </button>
               </div>
            </div>
@@ -371,8 +371,8 @@ export default function StaffOrdersPage() {
             <StatCard label="Total Handled" value={stats.totalOrders} icon={ShoppingBag} color="blue" />
             <StatCard label="Placed by Me" value={stats.createdCount} icon={Plus} color="indigo" />
             <StatCard label="Served by Me" value={stats.servedCount} icon={CheckCircle2} color="emerald" />
-            <StatCard 
-              label="Live Active" 
+            <StatCard
+              label="In Progress"
               value={orders.filter(o => !['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(o.status)).length} 
               icon={Clock} 
               color="amber" 
@@ -406,7 +406,7 @@ export default function StaffOrdersPage() {
           {!loading && filteredOrders.length === 0 && (
             <div className="h-80 flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] rounded-xl opacity-30">
               <Utensils size={48} strokeWidth={1} className="mb-4" />
-              <p className="text-[10px] font-bold uppercase tracking-normal text-center">Zero transmissions detected in this sector</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-center">No orders found here</p>
             </div>
           )}
         </div>
@@ -415,7 +415,7 @@ export default function StaffOrdersPage() {
         <Modal
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
-          title={`Order Dossier #${selectedOrder?._id.slice(-6).toUpperCase()}`}
+          title={`Order Details #${selectedOrder?._id.slice(-6).toUpperCase()}`}
           maxWidth="max-w-4xl"
         >
           {selectedOrder && (
@@ -457,15 +457,15 @@ export default function StaffOrdersPage() {
                 <div className="w-full md:w-80 space-y-4">
                    <div className="p-6 bg-[var(--color-text-primary)] text-[var(--color-surface)] rounded-xl shadow-sm space-y-4 relative overflow-hidden">
                       <Receipt className="absolute -right-4 -bottom-4 opacity-10" size={100} />
-                      <h4 className="text-[10px] font-bold uppercase tracking-normal opacity-60">Fulfillment Metadata</h4>
+                      <h4 className="text-[10px] font-bold uppercase tracking-normal opacity-60">Order Info</h4>
                       <div className="space-y-3 relative z-10">
                         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-normal">
-                           <span className="opacity-60 flex items-center gap-2"><User size={12} /> Steward</span>
-                           <span>{selectedOrder.createdBy?.name || 'Automated'}</span>
+                           <span className="opacity-60 flex items-center gap-2"><User size={12} /> Staff</span>
+                           <span>{selectedOrder.createdBy?.name || 'Automatic'}</span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-normal">
                            <span className="opacity-60 flex items-center gap-2"><Utensils size={12} /> Chef</span>
-                           <span>{selectedOrder.assignedChef?.name || 'Awaiting'}</span>
+                           <span>{selectedOrder.assignedChef?.name || 'Not assigned yet'}</span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-normal">
                            <span className="opacity-60 flex items-center gap-2"><MapPin size={12} /> Branch</span>
@@ -477,7 +477,7 @@ export default function StaffOrdersPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Culinary Specifications</h3>
+                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Order Items</h3>
                 <div className="space-y-3">
                   {selectedOrder.items.map((item, idx) => (
                     <div key={idx} className="bg-[var(--color-surface-soft)] p-5 rounded-xl border border-[var(--color-border)] flex justify-between items-center group">
@@ -504,13 +504,13 @@ export default function StaffOrdersPage() {
         <Modal 
           isOpen={showCreateModal} 
           onClose={() => setShowCreateModal(false)}
-          title="Culinary Dispatch"
+          title="New Order"
           maxWidth="max-w-7xl"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 h-[85vh] overflow-hidden p-4">
             <div className="lg:col-span-5 flex flex-col h-full bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-inner">
               <div className="p-8 border-b border-[var(--color-border)]">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-6">Table Matrix</h3>
+                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-6">Select Table</h3>
                 <div className="grid grid-cols-4 gap-4">
                   {tables.map(table => (
                     <button
@@ -525,7 +525,7 @@ export default function StaffOrdersPage() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-4 custom-scrollbar">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Service Queue</h3>
+                <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-4">Items Added</h3>
                 <AnimatePresence>
                   {stagedItems.map((item, idx) => (
                     <motion.div 
@@ -579,7 +579,7 @@ export default function StaffOrdersPage() {
                   onClick={(e) => { e.stopPropagation(); handleCreateOrder(); }}
                   className="w-full py-6 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white font-bold text-xs uppercase tracking-normal rounded-xl shadow-sm  transition-all active:scale-95 flex items-center justify-center gap-4"
                 >
-                  <Play size={16} fill="currentColor" /> Dispatch Transmission
+                  <Play size={16} fill="currentColor" /> Send to Kitchen
                 </button>
               </div>
             </div>
@@ -589,7 +589,7 @@ export default function StaffOrdersPage() {
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={22} />
                 <input 
                   type="text"
-                  placeholder="Scan menu items..."
+                  placeholder="Search menu items..."
                   className="w-full pl-16 pr-8 py-5 bg-[var(--color-surface)] border border-[var(--color-border)] focus:ring-4 focus:ring-[var(--color-primary)]/10 rounded-xl text-xs font-bold uppercase tracking-normal outline-none transition-all shadow-sm"
                   value={menuSearch}
                   onChange={(e) => setMenuSearch(e.target.value)}
@@ -630,12 +630,12 @@ export default function StaffOrdersPage() {
 function StaffOrderCard({ order, onRefresh }) {
   const [isServing, setIsServing] = useState(false);
   const statusConfig = {
-    'PLACED': { color: 'amber', icon: AlertCircle, label: 'Kitchen Pending' },
+    'PLACED': { color: 'amber', icon: AlertCircle, label: 'Waiting for Kitchen' },
     'ACCEPTED': { color: 'blue', icon: Play, label: 'Order Accepted' },
-    'PREPARING': { color: 'indigo', icon: Utensils, label: 'In Preparation' },
-    'READY': { color: 'emerald', icon: CheckCircle2, label: 'Ready for Service' },
-    'SERVED': { color: 'zinc', icon: CheckCircle2, label: 'Fulfilled' },
-    'CANCELLED': { color: 'rose', icon: XCircle, label: 'Canceled' },
+    'PREPARING': { color: 'indigo', icon: Utensils, label: 'Being Prepared' },
+    'READY': { color: 'emerald', icon: CheckCircle2, label: 'Ready to Serve' },
+    'SERVED': { color: 'zinc', icon: CheckCircle2, label: 'Served' },
+    'CANCELLED': { color: 'rose', icon: XCircle, label: 'Cancelled' },
     'REJECTED': { color: 'rose', icon: XCircle, label: 'Rejected by Chef' }
   };
 
@@ -682,14 +682,14 @@ function StaffOrderCard({ order, onRefresh }) {
             setIsServing(true);
             try {
               await api.patch(`/orders/${order._id}/serve`);
-              toast.success('Service Completed');
+              toast.success('Order served');
               onRefresh();
-            } catch (err) { toast.error('Fulfillment Failed'); }
+            } catch (err) { toast.error('Could not mark as served. Please try again.'); }
             finally { setIsServing(false); }
           }}
           className="w-full py-5 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-bold text-[10px] uppercase tracking-normal rounded-xl shadow-sm  transition-all active:scale-95 relative z-20"
         >
-          Complete Service
+          Mark as Served
         </button>
       )}
     </div>
@@ -699,7 +699,7 @@ function StaffOrderCard({ order, onRefresh }) {
 function StaffOrderListRow({ order, onRefresh }) {
   const [isServing, setIsServing] = useState(false);
   const statusConfig = {
-    'PLACED': { color: 'amber', icon: AlertCircle, label: 'PENDING' },
+    'PLACED': { color: 'amber', icon: AlertCircle, label: 'WAITING' },
     'ACCEPTED': { color: 'blue', icon: Play, label: 'ACCEPTED' },
     'PREPARING': { color: 'indigo', icon: Utensils, label: 'PREPARING' },
     'READY': { color: 'emerald', icon: CheckCircle2, label: 'READY' },
@@ -754,14 +754,14 @@ function StaffOrderListRow({ order, onRefresh }) {
               setIsServing(true);
               try {
                 await api.patch(`/orders/${order._id}/serve`);
-                toast.success('Service Completed');
+                toast.success('Order served');
                 onRefresh();
-              } catch (err) { toast.error('Fulfillment Failed'); }
+              } catch (err) { toast.error('Could not mark as served. Please try again.'); }
               finally { setIsServing(false); }
             }}
             className="h-12 px-8 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-bold text-[9px] uppercase tracking-normal rounded-xl shadow-lg  flex items-center gap-2 transition-all active:scale-95 relative z-20"
           >
-            <CheckCircle2 size={14} /> Complete
+            <CheckCircle2 size={14} /> Mark Served
           </button>
         ) : (
           <div className="h-12 w-12 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">

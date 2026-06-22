@@ -42,10 +42,10 @@ export function ThemeProvider({ children }) {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
         const forbiddenKeys = {
-          '-': 'Negative values are strictly prohibited',
-          '.': 'Decimals are not permitted in this field',
-          'e': 'Scientific notation is disabled',
-          'E': 'Scientific notation is disabled'
+          '-': 'Negative numbers are not allowed here',
+          '.': 'Please enter a whole number',
+          'e': 'Only numbers are allowed here',
+          'E': 'Only numbers are allowed here'
         };
 
         if (forbiddenKeys[e.key]) {
@@ -63,7 +63,7 @@ export function ThemeProvider({ children }) {
         const paste = e.clipboardData.getData('text');
         if (/[-.eE]/.test(paste)) {
           e.preventDefault();
-          toast.error('Only positive integers are acceptable', {
+          toast.error('Please enter a whole number greater than zero', {
             id: 'global-input-lock',
             duration: 2000
           });

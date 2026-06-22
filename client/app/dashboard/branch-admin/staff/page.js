@@ -41,7 +41,7 @@ export default function BranchStaffPage() {
       setStaff(res.data.data);
       setTotalPages(res.data.pagination.pages);
     } catch (error) {
-      toast.error('Failed to load staff list');
+      toast.error('Could not load staff. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -77,40 +77,40 @@ export default function BranchStaffPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Saving updates...');
+    const loadToast = toast.loading('Saving changes...');
     try {
       await api.put(`/users/${editingStaff._id}`, formData);
-      toast.success('Staff profile updated', { id: loadToast });
+      toast.success('Staff details updated', { id: loadToast });
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not save changes', { id: loadToast });
     }
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading('Creating staff account...');
+    const loadToast = toast.loading('Adding staff member...');
     try {
       await api.post('/auth/register', { ...createForm, role: 'staff' });
-      toast.success('Staff account created', { id: loadToast });
+      toast.success('Staff member added', { id: loadToast });
       setShowCreateModal(false);
       setCreateForm({ name: '', email: '', password: '', phone: '', monthlySalary: '' });
       fetchStaff();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Creation failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not add staff member', { id: loadToast });
     }
   };
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) return;
-    const loadToast = toast.loading('Deleting staff...');
+    const loadToast = toast.loading('Removing staff member...');
     try {
       await api.delete(`/users/${showDeleteConfirm}`);
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Staff record removed', { id: loadToast });
+      toast.success('Staff member removed', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Delete failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not remove staff member', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
@@ -228,7 +228,7 @@ export default function BranchStaffPage() {
           {staff.length === 0 && (
             <div className="p-20 text-center text-[var(--color-text-muted)]">
               <Users size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-bold uppercase tracking-normal">Staff list is empty</p>
+              <p className="text-sm font-bold uppercase tracking-normal">No staff added yet</p>
             </div>
           )}
         </div>
@@ -238,7 +238,7 @@ export default function BranchStaffPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl mt-10 shadow-sm">
             <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-              System Rule Page {currentPage} of {totalPages}
+              Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
@@ -300,7 +300,7 @@ export default function BranchStaffPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Base Operations Address</label>
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Address</label>
               <input required className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
@@ -318,7 +318,7 @@ export default function BranchStaffPage() {
                 <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Monthly Yield (₹)</label>
+                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Monthly Salary (₹)</label>
                 <input required type="number" className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all text-sm font-bold dark:text-[var(--color-text-primary)] outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
@@ -337,8 +337,8 @@ export default function BranchStaffPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDelete}
-          title="Remove Details?"
-          message="This staff member will be permanently deleted from the system."
+          title="Remove Staff Member?"
+          message="This staff member will be permanently deleted."
         />
 
         {/* Detailed Staff Details Modal */}
@@ -380,7 +380,7 @@ export default function BranchStaffPage() {
                 </div>
 
                 <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] text-right min-w-[180px]">
-                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Yield</p>
+                  <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Salary</p>
                   <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
@@ -397,8 +397,8 @@ export default function BranchStaffPage() {
                       <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                         <Hash className="text-[var(--color-primary)]" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Index</p>
-                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Number</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not added'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
@@ -411,7 +411,7 @@ export default function BranchStaffPage() {
                       <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                         <Award className="text-[var(--color-primary)]" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Academic Standing</p>
+                          <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Qualification</p>
                           <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
@@ -421,7 +421,7 @@ export default function BranchStaffPage() {
                   {/* Demographic Section */}
                   <div>
                     <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                      <Globe size={14} className="text-[var(--color-primary)]" /> Demographic Information
+                      <Globe size={14} className="text-[var(--color-primary)]" /> Personal Information
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
@@ -440,7 +440,7 @@ export default function BranchStaffPage() {
                   {/* Address Section */}
                   <div>
                     <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                      <MapPin size={14} className="text-[var(--color-primary)]" /> Operational Base
+                      <MapPin size={14} className="text-[var(--color-primary)]" /> Address
                     </h3>
                     <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] leading-relaxed">
@@ -470,13 +470,13 @@ export default function BranchStaffPage() {
                           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                         >
                           <Globe size={24} className="text-[var(--color-primary)]" />
-                          <span className="font-bold text-[10px] uppercase tracking-normal">Verify Original Scan</span>
+                          <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
                         </a>
                       </div>
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] p-10 flex flex-col items-center justify-center text-[var(--color-text-muted)] aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">Aadhar Scan Missing</p>
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar image uploaded</p>
                       </div>
                     )}
                   </div>

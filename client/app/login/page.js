@@ -62,14 +62,14 @@ export default function LoginPage() {
     const res = await login(email, QUICK_LOGIN_PASSWORD);
 
     if (!res.success) {
-      const message = res.message || 'Quick login failed. Please check deployment settings.';
+      const message = res.message || 'Quick login failed. Please try again.';
       setServerError(message);
       toast.error(message);
     }
   };
 
   if (loading) {
-    return <LoadingScreen message="Loading System" />;
+    return <LoadingScreen message="Loading" />;
   }
 
   return (
@@ -90,7 +90,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight leading-none">CafeOS</h1>
-              <p className="text-xs text-white/70 mt-1">Smart Cafe Management</p>
+              <p className="text-xs text-white/70 mt-1">Cafe Management</p>
             </div>
           </div>
 

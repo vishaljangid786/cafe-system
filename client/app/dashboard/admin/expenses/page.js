@@ -203,7 +203,7 @@ export default function ExpensesPage() {
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
-      toast.error('Authorization failed', { id: loadToast });
+      toast.error('Could not approve. Please try again.', { id: loadToast });
     }
   };
 
@@ -215,7 +215,7 @@ export default function ExpensesPage() {
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
-      toast.error('Revocation failed', { id: loadToast });
+      toast.error('Could not reject. Please try again.', { id: loadToast });
     }
   };
 
@@ -354,7 +354,7 @@ export default function ExpensesPage() {
                   onClick={() => setShowFilters(!showFilters)}
                   className={`!py-4 px-6 rounded-xl border-none transition-all shadow-sm font-bold uppercase text-[9px] tracking-normal shrink-0 ${showFilters ? 'bg-[var(--color-danger)] text-[var(--color-bg-base)]' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)]'}`}
                 >
-                  <Filter size={16} className="mr-2" /> Refine
+                  <Filter size={16} className="mr-2" /> Filters
                 </Button>
                 <ExportActions
                   data={paginatedData}
@@ -700,7 +700,7 @@ export default function ExpensesPage() {
                     className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                     onClick={() => handleReject(selectedExpense._id)}
                   >
-                    Cancel
+                    Reject
                   </Button>
                 </div>
               ) : (
@@ -710,7 +710,7 @@ export default function ExpensesPage() {
                     className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs shadow-sm  bg-[var(--color-danger)] text-[var(--color-bg-base)]"
                     icon={Download}
                   >
-                    Download Evidence
+                    Download Receipt
                   </Button>
                   <Button
                     variant="secondary"

@@ -26,7 +26,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (user && !['super_admin', 'admin'].includes(user.role)) {
-      toast.error('Access Denied: Admin permission required');
+      toast.error('Access denied. Admin permission required.');
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -72,7 +72,7 @@ export default function UsersPage() {
       setUsers(data);
       setTotalPages(res.data.pagination?.pages || 1);
     } catch (err) {
-      toast.error('Failed to sync staff database');
+      toast.error('Could not load users');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -112,7 +112,7 @@ export default function UsersPage() {
       toast.success(`User settings saved`);
       fetchUsers();
     } catch (err) {
-      toast.error('System Rule modification failed');
+      toast.error('Could not update user. Please try again.');
     }
   };
 
@@ -129,12 +129,12 @@ export default function UsersPage() {
     try {
       setSaving(true);
       await api.put(`/users/${editingUser._id}`, data);
-      toast.success('Staff record updated successfully');
+      toast.success('User updated successfully');
       setShowEditModal(false);
       setEditingUser(null);
       fetchUsers();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Update failed');
+      toast.error(err.response?.data?.message || 'Could not update user. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -145,12 +145,12 @@ export default function UsersPage() {
     try {
       setSaving(true);
       await api.delete(`/users/${userToDelete._id}`);
-      toast.success('Staff record erased');
+      toast.success('User deleted');
       setShowDeleteConfirm(false);
       setUserToDelete(null);
       fetchUsers();
     } catch (err) {
-      toast.error('Erasure failed');
+      toast.error('Could not delete user. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -178,7 +178,7 @@ export default function UsersPage() {
               Role: ADMIN
             </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Staff Management List</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">User Management</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
               <Users className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-" />
@@ -245,7 +245,7 @@ export default function UsersPage() {
             options={[
               { label: 'All Status', value: 'all' },
               { label: 'Active', value: 'active' },
-              { label: 'Suspended', value: 'blocked' }
+              { label: 'Blocked', value: 'blocked' }
             ]}
           />
         </div>
@@ -286,7 +286,7 @@ export default function UsersPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[var(--color-text-primary)] truncate">{u.name}</p>
-                      <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
+                      <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">ID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
                     </div>
                   </div>
                   <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${getRoleStyle(u.role)}`}>
@@ -314,11 +314,11 @@ export default function UsersPage() {
                         ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white'
                         : 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 hover:bg-[var(--color-success)] hover:text-white'
                     }`}
-                    title={!u.isBlocked ? 'Deactivate System Rule' : 'Activate System Rule'}
+                    title={!u.isBlocked ? 'Block user' : 'Unblock user'}
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       {!u.isBlocked ? <UserX size={14} /> : <UserCheck size={14} />}
-                      {!u.isBlocked ? 'Deactivate' : 'Activate'}
+                      {!u.isBlocked ? 'Block' : 'Unblock'}
                     </span>
                   </button>
                   <button 
@@ -338,10 +338,10 @@ export default function UsersPage() {
             <table className="w-full min-w-[760px] text-left border-separate border-spacing-0 bg-[var(--color-surface)]">
               <thead>
                 <tr className="bg-[var(--color-surface-soft)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                  <th className="px-4 sm:px-10 py-4 sm:py-6">Entity</th>
-                  <th className="px-4 sm:px-10 py-4 sm:py-6">Credentials</th>
+                  <th className="px-4 sm:px-10 py-4 sm:py-6">Name</th>
+                  <th className="px-4 sm:px-10 py-4 sm:py-6">Contact</th>
                   <th className="px-4 sm:px-10 py-4 sm:py-6">Location</th>
-                  <th className="px-4 sm:px-10 py-4 sm:py-6">Security Role</th>
+                  <th className="px-4 sm:px-10 py-4 sm:py-6">Role</th>
                   <th className="px-4 sm:px-10 py-4 sm:py-6 text-right">Action</th>
                 </tr>
               </thead>
@@ -366,7 +366,7 @@ export default function UsersPage() {
                         </div>
                         <div>
                           <p className="text-base font-bold text-[var(--color-text-primary)] italic tracking-tight">{u.name}</p>
-                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">UID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
+                          <p className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-0.5">ID: {u._id.substring(u._id.length - 8).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
@@ -403,7 +403,7 @@ export default function UsersPage() {
                             ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)] hover:text-white' 
                             : 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 hover:bg-[var(--color-success)] hover:text-white'
                           }`}
-                          title={!u.isBlocked ? 'Deactivate System Rule' : 'Activate System Rule'}
+                          title={!u.isBlocked ? 'Block user' : 'Unblock user'}
                         >
                           {!u.isBlocked ? <UserX size={18} /> : <UserCheck size={18} />}
                         </button>
@@ -456,7 +456,7 @@ export default function UsersPage() {
         <Modal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          title={`Modify Staff: ${editingUser?.name}`}
+          title={`Edit User: ${editingUser?.name}`}
         >
           {editingUser && (
             <form onSubmit={handleUpdate} className="space-y-6">
@@ -488,10 +488,10 @@ export default function UsersPage() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Staff Role</label>
                   <select name="role" defaultValue={editingUser.role} className="w-full px-5 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] appearance-none">
-                    <option value="staff">Field Operator (Staff)</option>
-                    <option value="chef">Culinary Specialist (Chef)</option>
+                    <option value="staff">Staff</option>
+                    <option value="chef">Chef</option>
                     <option value="branch_admin">Branch Manager</option>
-                    <option value="admin">System Admin</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -520,12 +520,12 @@ export default function UsersPage() {
                     setShowEditModal(false);
                   }}
                 >
-                  Erase Record
+                  Delete User
                 </Button>
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
                   <Button type="submit" variant="primary" disabled={saving}>
-                    {saving ? 'Updating...' : 'Commit Changes'}
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
@@ -538,9 +538,9 @@ export default function UsersPage() {
           isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={handleDelete}
-          title="Erase Staff Record"
-          message={`Are you absolutely sure you want to permanently erase ${userToDelete?.name}'s record from the system? This action is irreversible.`}
-          confirmLabel="Erase Permanently"
+          title="Delete User"
+          message={`Are you sure you want to permanently delete ${userToDelete?.name}? This cannot be undone.`}
+          confirmLabel="Delete Permanently"
           cancelLabel="Cancel"
           variant="danger"
           loading={saving}

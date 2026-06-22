@@ -14,10 +14,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Coffee } from 'lucide-react';
 
 const DEFAULT_STAGES = [
-  'Establishing secure link',
-  'Authenticating session',
-  'Loading workspace',
-  'Syncing live data',
+  'Connecting securely',
+  'Signing you in',
+  'Loading your workspace',
+  'Getting the latest data',
   'Almost there',
 ];
 

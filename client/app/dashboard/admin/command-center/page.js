@@ -31,7 +31,7 @@ export default function CommandCenterPage() {
       const res = await api.get('/locations');
       setLocations(res.data.data || []);
     } catch (error) {
-      toast.error('Failed to initialize location models');
+      toast.error('Could not load branches. Please try again.');
     }
   };
 
@@ -91,7 +91,7 @@ export default function CommandCenterPage() {
     socket.on('order:ready', (data) => {
       handleRealTimeEvent();
       setAlerts(prev => [
-        { id: Date.now(), title: 'Order Ready', message: data.message || 'Fulfillment Ready', type: 'success' },
+        { id: Date.now(), title: 'Order Ready', message: data.message || 'An order is ready to serve', type: 'success' },
         ...prev.slice(0, 4)
       ]);
     });
@@ -113,11 +113,11 @@ export default function CommandCenterPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
-                Operations <span className="text-[var(--color-primary)]">Command Center</span>
+                Live <span className="text-[var(--color-primary)]">Control Panel</span>
               </h1>
               <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal flex items-center gap-2">
                 <span className="w-2 h-2 bg-[var(--color-success)] rounded-full animate-ping" />
-                Live Operational Signals Monitoring
+                Live updates from your cafe
               </p>
             </div>
 
@@ -156,10 +156,10 @@ export default function CommandCenterPage() {
         {/* Real-Time Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
-            { label: 'Orders Incoming Now', value: stats?.ordersIncomingNow || 0, icon: ShoppingBag, color: 'from-[var(--color-primary)] to-[var(--color-secondary)]', anim: stats?.ordersIncomingNow > 0 },
+            { label: 'New Orders Now', value: stats?.ordersIncomingNow || 0, icon: ShoppingBag, color: 'from-[var(--color-primary)] to-[var(--color-secondary)]', anim: stats?.ordersIncomingNow > 0 },
             { label: 'Kitchen Busy Level', value: stats?.kitchenBusyLevel || 0, icon: Flame, color: 'from-[var(--color-danger)] to-[var(--color-danger-dark)]', anim: stats?.kitchenBusyLevel > 5 },
             { label: 'Tables Occupied', value: stats?.tablesOccupied || 0, icon: Users, color: 'from-[var(--color-primary-dark)] to-[var(--color-primary)]' },
-            { label: 'Revenue Today Live', value: `₹${stats?.revenueTodayLive?.toLocaleString() || 0}`, icon: DollarSign, color: 'from-[var(--color-success)] to-[var(--color-success-dark)]' }
+            { label: "Today's Revenue", value: `₹${stats?.revenueTodayLive?.toLocaleString() || 0}`, icon: DollarSign, color: 'from-[var(--color-success)] to-[var(--color-success-dark)]' }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.1}>
               <div className={`p-8 bg-gradient-to-br ${stat.color} rounded-xl text-white shadow-sm relative overflow-hidden group`}>
@@ -186,7 +186,7 @@ export default function CommandCenterPage() {
           {/* Active Online Staff */}
           <div className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff Synchronized</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Staff Online</p>
               <h3 className="text-3xl font-bold mt-2 text-[var(--color-text-primary)]">{stats?.activeStaffOnline || 0}</h3>
             </div>
             <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center border border-[var(--color-primary)]/20 shadow-sm">
@@ -197,7 +197,7 @@ export default function CommandCenterPage() {
           {/* Pending Orders > 10 Min */}
           <div className={`p-8 bg-[var(--color-surface)] border rounded-xl flex items-center justify-between shadow-sm transition-all ${stats?.pendingOrdersOver10Min > 0 ? 'border-[var(--color-danger)]/30' : 'border-[var(--color-border)]'}`}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Bottlenecks &gt; 10 Mins</p>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Orders Waiting &gt; 10 Mins</p>
               <h3 className={`text-3xl font-bold mt-2 ${stats?.pendingOrdersOver10Min > 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-primary)]'}`}>{stats?.pendingOrdersOver10Min || 0}</h3>
             </div>
             <div className={`h-14 w-14 rounded-xl flex items-center justify-center border shadow-sm ${stats?.pendingOrdersOver10Min > 0 ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20' : 'bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>
@@ -226,8 +226,8 @@ export default function CommandCenterPage() {
               <Bell size={18} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">System Operational Alerts</h3>
-              <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Direct sync data</p>
+              <h3 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">Live Alerts</h3>
+              <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mt-1">Updated in real time</p>
             </div>
           </div>
 
@@ -249,7 +249,7 @@ export default function CommandCenterPage() {
             </AnimatePresence>
 
             {alerts.length === 0 && (
-              <div className="text-xs italic font-bold text-[var(--color-text-muted)] opacity-50 text-center py-6">No emergency stops recorded.</div>
+              <div className="text-xs italic font-bold text-[var(--color-text-muted)] opacity-50 text-center py-6">No alerts right now.</div>
             )}
           </div>
         </div>

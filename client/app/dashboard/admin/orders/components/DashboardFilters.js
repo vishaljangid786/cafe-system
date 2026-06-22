@@ -18,7 +18,7 @@ export default function DashboardFilters({
 }) {
   return (
     <div className="bg-[var(--color-surface)] p-2 rounded-xl border border-[var(--color-border)] shadow-sm space-y-2">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
         {/* Sector Selector */}
         <div className="lg:col-span-3 ">
           {user?.role === 'branch_admin' ? (

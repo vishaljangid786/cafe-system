@@ -206,17 +206,17 @@ export default function MonthlySummaryPage() {
                             ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20' 
                             : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20'
                         }`}>
-                          {percentage.toFixed(1)}% PERF
+                          {percentage.toFixed(1)}% Present
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mb-6">
                         <div className="bg-[var(--color-surface-soft)] p-4 rounded-xl border border-[var(--color-border)]">
-                          <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Presents</p>
+                          <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Present Days</p>
                           <p className="text-2xl font-bold text-[var(--color-success)]">{loc.totalPresentDays}</p>
                         </div>
                         <div className="bg-[var(--color-surface-soft)] p-4 rounded-xl border border-[var(--color-border)]">
-                          <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Absents</p>
+                          <p className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Absent Days</p>
                           <p className="text-2xl font-bold text-[var(--color-danger)]">{loc.totalAbsentDays}</p>
                         </div>
                       </div>

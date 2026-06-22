@@ -54,22 +54,22 @@ export default function StaffMenuPage() {
       setTotalPages(itemsRes.data.pagination.pages);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Failed to load menu items');
+      toast.error('Could not load menu items. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const toggleAvailability = async (id) => {
-    const loadToast = toast.loading('Syncing status...');
+    const loadToast = toast.loading('Updating status...');
     try {
       await api.put(`/menu/${id}/availability`);
-      setMenuItems(items => items.map(item => 
+      setMenuItems(items => items.map(item =>
         item._id === id ? { ...item, isAvailable: !item.isAvailable } : item
       ));
-      toast.success('Status synchronized', { id: loadToast });
+      toast.success('Status updated', { id: loadToast });
     } catch (error) {
-      toast.error('Sync failed', { id: loadToast });
+      toast.error('Could not update status. Please try again.', { id: loadToast });
     }
   };
 
@@ -83,7 +83,7 @@ export default function StaffMenuPage() {
       toast.success('Stock updated', { id: loadToast });
       setShowStockModal(false);
     } catch (error) {
-      toast.error('Stock update failed', { id: loadToast });
+      toast.error('Could not update stock. Please try again.', { id: loadToast });
     }
   };
 
@@ -125,7 +125,7 @@ export default function StaffMenuPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-text-primary)] dark:text-white leading-none">
-                    Menu <span className="text-[var(--color-primary)]">Vault</span>
+                    Menu <span className="text-[var(--color-primary)]">Items</span>
                   </h1>
                   <p className="text-[var(--color-text-muted)] font-bold mt-2 flex items-center gap-2 text-sm">
                     <Sparkles size={14} className="text-[var(--color-warning)]" />
@@ -143,7 +143,7 @@ export default function StaffMenuPage() {
                 </div>
                 <div className="flex items-center gap-2 px-3">
                   <CheckCircle2 size={14} className="text-[var(--color-success)]" />
-                  <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{filteredItems.filter(i => i.isAvailable).length} Active</span>
+                  <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">{filteredItems.filter(i => i.isAvailable).length} Available</span>
                 </div>
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function StaffMenuPage() {
                 <UtensilsCrossed size={40} strokeWidth={1} />
               </div>
               <p className="text-[var(--color-text-muted)] font-bold text-lg tracking-tight">No food items match your current selection.</p>
-              <button onClick={() => {setSearchTerm(''); setSelectedCategory('All'); setDietaryFilter('All');}} className="mt-4 text-[var(--color-primary)] text-xs font-bold uppercase tracking-normal hover:underline">Reset Filters</button>
+              <button onClick={() => {setSearchTerm(''); setSelectedCategory('All'); setDietaryFilter('All');}} className="mt-4 text-[var(--color-primary)] text-xs font-bold uppercase tracking-normal hover:underline">Clear Filters</button>
             </div>
           ) : (
             <AnimatePresence mode='popLayout'>
@@ -248,7 +248,7 @@ export default function StaffMenuPage() {
                           </div>
 
                           <div className={`absolute bottom-4 right-4 px-4 py-1.5 rounded-full  border text-[8px] font-bold uppercase tracking-normal shadow-sm ${item.isAvailable ? 'bg-[var(--color-success)] text-white border-[var(--color-success)]' : 'bg-[var(--color-danger)] text-white border-[var(--color-danger)]'}`}>
-                            {item.isAvailable ? 'Active' : 'Offline'}
+                            {item.isAvailable ? 'Available' : 'Not Available'}
                           </div>
                         </div>
                       </div>
@@ -270,7 +270,7 @@ export default function StaffMenuPage() {
                         </div>
 
                         <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] line-clamp-2 font-medium mb-8 leading-relaxed">
-                          {item.description || 'Gourmet selection prepared with premium ingredients for the ultimate cafe experience.'}
+                          {item.description || 'Tasty dish made with fresh ingredients.'}
                         </p>
 
                         <div className="mt-auto flex items-center justify-between border-t border-[var(--color-border)] dark:border-[var(--color-border)] pt-6">
@@ -288,7 +288,7 @@ export default function StaffMenuPage() {
                             <button
                               onClick={() => toggleAvailability(item._id)}
                               className={`p-3 rounded-xl border transition-all active:scale-90 ${item.isAvailable ? 'bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-success)] hover:border-[var(--color-success)]/50' : 'bg-[var(--color-success)] border-[var(--color-success)] text-white shadow-lg '}`}
-                              title={item.isAvailable ? 'Go Offline' : 'Go Online'}
+                              title={item.isAvailable ? 'Mark as not available' : 'Mark as available'}
                             >
                               <Zap size={16} fill={item.isAvailable ? 'none' : 'currentColor'} />
                             </button>
@@ -299,7 +299,7 @@ export default function StaffMenuPage() {
                                 setShowStockModal(true);
                               }}
                               className="p-3 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 transition-all active:scale-90"
-                              title="Inventory Management"
+                              title="Update stock"
                             >
                               <Layers size={16} />
                             </button>
@@ -343,7 +343,7 @@ export default function StaffMenuPage() {
         <Modal
           isOpen={showStockModal}
           onClose={() => setShowStockModal(false)}
-          title="Inventory Node Update"
+          title="Update Stock"
           maxWidth="max-w-md"
         >
           <div className="p-8 space-y-10">

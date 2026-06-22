@@ -158,7 +158,7 @@ export default function StaffReportsAnalytics({ user }) {
             </div>
             Staff Reports & Analytics
           </h1>
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">Evaluate team efficiency, sales contributions, and service delivery.</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">See how your team is doing on sales and service.</p>
         </div>
 
         <div className="flex gap-4">
@@ -194,7 +194,7 @@ export default function StaffReportsAnalytics({ user }) {
             onClick={resetFilters}
             className="px-4 py-2 bg-[var(--color-surface-soft)] hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] rounded-xl text-[9px] font-bold uppercase tracking-normal transition-all border border-[var(--color-border)] active:scale-95 flex items-center gap-2 group"
           >
-            <CheckCircle2 size={12} className="group-hover:rotate-12 transition-transform" /> Reset Terminal
+            <CheckCircle2 size={12} className="group-hover:rotate-12 transition-transform" /> Reset Filters
           </button>
         </div>
         
@@ -346,7 +346,7 @@ export default function StaffReportsAnalytics({ user }) {
           {/* Detailed Performance Table */}
           <div className="bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8 print:p-0 print:border-0 print:shadow-none">
             <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3 print:hidden">
-              <Award size={16} className="text-[var(--color-primary)]" /> Performance Analysis List
+              <Award size={16} className="text-[var(--color-primary)]" /> Staff Performance List
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -383,7 +383,7 @@ export default function StaffReportsAnalytics({ user }) {
                   ))}
                   {data.length === 0 && (
                     <tr>
-                      <td colSpan="11" className="py-10 text-center italic text-xs font-bold text-[var(--color-text-muted)] opacity-40">No staff interactions tracked for this sector.</td>
+                      <td colSpan="11" className="py-10 text-center italic text-xs font-bold text-[var(--color-text-muted)] opacity-40">No staff records found for the selected filters.</td>
                     </tr>
                   )}
                 </tbody>

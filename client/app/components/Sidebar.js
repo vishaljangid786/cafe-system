@@ -69,7 +69,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       }
 
       if (role === 'super_admin') {
-        adminItems.push({ name: 'Impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
+        adminItems.push({ name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
       }
 
       if (role === 'super_admin' || role === 'admin') {
@@ -141,9 +141,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         analyticsItems.push({ name: 'Staff Reports', href: `${prefix}/staff-reports`, icon: TrendingUp });
 
         if (role === 'super_admin' || role === 'admin') {
-          analyticsItems.push({ name: 'Payment Intel', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
-          analyticsItems.push({ name: 'Command Center', href: '/dashboard/admin/command-center', icon: AlertCircle });
-          analyticsItems.push({ name: 'Smart Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+          analyticsItems.push({ name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+          analyticsItems.push({ name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle });
+          analyticsItems.push({ name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
         }
       }
 
@@ -378,7 +378,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden space-y-1 mt-1 pl-4 pr-1 bg-gray-600 "
+                      className="mt-1 ml-4 mr-1 overflow-hidden rounded-xl border border-[rgba(var(--color-primary-rgb),0.18)] bg-[var(--color-primary-soft)] p-1.5 space-y-1"
                     >
                       {group.items.map((link) => {
                         const Icon = link.icon;

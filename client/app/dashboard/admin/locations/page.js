@@ -20,7 +20,7 @@ export default function BranchesPage() {
 
   useEffect(() => {
     if (user && !['super_admin', 'admin'].includes(user.role)) {
-      toast.error('Access Denied: Administrative clearance required');
+      toast.error('Access denied. Admin permission required.');
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -70,7 +70,7 @@ export default function BranchesPage() {
       const res = await api.get(`/users?locationId=${locationId}`);
       setStaff(res.data.data);
     } catch (error) {
-      toast.error("Failed to retrieve staff ");
+      toast.error("Could not load staff");
     } finally {
       setFetchingStaff(false);
     }
@@ -104,7 +104,7 @@ export default function BranchesPage() {
       toast.success(`Staff ${action}d successfully`, { id: loadToast });
       if (selectedLocation) fetchStaff(selectedLocation._id);
     } catch (error) {
-      toast.error("Action restricted or rule failed", { id: loadToast });
+      toast.error("Something went wrong. Please try again.", { id: loadToast });
     }
   };
 
@@ -125,11 +125,11 @@ export default function BranchesPage() {
     const loadToast = toast.loading("Saving staff details...");
     try {
       await api.put(`/users/${selectedStaff._id}`, staffFormData);
-      toast.success("Staff detials updated", { id: loadToast });
+      toast.success("Staff details updated", { id: loadToast });
       setSelectedStaff(null);
       if (selectedLocation) fetchStaff(selectedLocation._id);
     } catch (error) {
-      toast.error("Update failed", { id: loadToast });
+      toast.error("Could not update. Please try again.", { id: loadToast });
     }
   };
 
@@ -181,7 +181,7 @@ export default function BranchesPage() {
       fetchLocations();
       toast.success(`Branch ${editingId ? 'updated' : 'created'} successfully!`, { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -191,7 +191,7 @@ export default function BranchesPage() {
       toast.success(`Branch status updated to ${status}`);
       fetchLocations();
     } catch (error) {
-      toast.error('Failed to update branch status');
+      toast.error('Could not update branch status. Please try again.');
     }
   };
 
@@ -427,7 +427,7 @@ export default function BranchesPage() {
                         options={[
                           { label: 'Veg & Non-Veg', value: 'both' },
                           { label: 'Pure Veg', value: 'veg' },
-                          { label: 'Non-Veg Specialty', value: 'non-veg' }
+                          { label: 'Non-Veg', value: 'non-veg' }
                         ]}
                       />
                     </div>
@@ -449,7 +449,7 @@ export default function BranchesPage() {
                       type="submit"
                       className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] bg-[var(--color-primary)] hover:opacity-90 shadow-sm  transition-all"
                     >
-                      {editingId ? 'Update Branch' : 'Confirm Branch'}
+                      {editingId ? 'Update Branch' : 'Add Branch'}
                     </motion.button>
                   </div>
                 </form>
@@ -678,7 +678,7 @@ export default function BranchesPage() {
                         value={staffFormData.role}
                         onChange={(val) => setStaffFormData({ ...staffFormData, role: val })}
                         options={[
-                          { label: 'Operational Staff', value: 'staff' },
+                          { label: 'Staff', value: 'staff' },
                           { label: 'Branch Admin', value: 'branch_admin' }
                         ]}
                       />

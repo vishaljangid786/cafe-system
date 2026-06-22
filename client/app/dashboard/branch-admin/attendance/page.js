@@ -36,7 +36,7 @@ export default function AttendancePage() {
         setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         setAttendance(attRes.data.data);
       } catch (error) {
-        toast.error('Failed to load list');
+        toast.error('Could not load staff. Please try again.');
       } finally {
         didInitRef.current = true;
         setLoading(false);
@@ -53,14 +53,14 @@ export default function AttendancePage() {
   };
 
   const handleMarkAttendance = async (userId, status) => {
-    const loadToast = toast.loading(`Authorizing status: ${status}...`);
+    const loadToast = toast.loading(`Marking as ${status}...`);
     try {
       await api.post('/attendance/mark', { userId, date, status });
       const attRes = await api.get(`/attendance/location?date=${date}`);
       setAttendance(attRes.data.data);
       toast.success('Attendance updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -80,7 +80,7 @@ export default function AttendancePage() {
               <h1 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
                 <CalendarCheck className="mr-4 text-[var(--color-primary)]" size={36} /> Daily <span className="ml-3 text-[var(--color-primary)]">Attendance</span>
               </h1>
-              <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Synchronize staff presence and operational availability.</p>
+              <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Mark daily attendance for your staff.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -88,7 +88,7 @@ export default function AttendancePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                 <input
                   type="text"
-                  placeholder="Filter Staff..."
+                  placeholder="Search staff..."
                   className="w-full pl-11 pr-4 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] text-xs font-bold dark:text-[var(--color-text-primary)] outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -119,8 +119,8 @@ export default function AttendancePage() {
               <thead>
                 <tr className="bg-[var(--color-surface-soft)]/50 dark:bg-[var(--color-surface)]/50 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                   <th className="px-8 py-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Staff Member</th>
-                  <th className="px-8 py-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal text-center">Status List</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Action Command</th>
+                  <th className="px-8 py-6 text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal text-center">Status</th>
+                  <th className="px-8 py-6 text-right text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]">
@@ -135,7 +135,7 @@ export default function AttendancePage() {
                     <td colSpan="3" className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <UserX size={48} className="mb-4" />
-                        <p className="font-bold text-xs uppercase tracking-normal">No staff matching search</p>
+                        <p className="font-bold text-xs uppercase tracking-normal">No staff found</p>
                       </div>
                     </td>
                   </tr>
@@ -239,13 +239,13 @@ export default function AttendancePage() {
                     ID: {viewingStaff._id.slice(-6).toUpperCase()}
                   </span>
                   <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
-                    Active Deployment
+                    Active
                   </span>
                 </div>
               </div>
 
               <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] text-right min-w-[180px]">
-                <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Base</p>
+                <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-1">Monthly Salary</p>
                 <p className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
               </div>
             </div>
@@ -254,27 +254,27 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                    <CreditCard size={14} className="text-[var(--color-primary)]" /> Staff Details
+                    <CreditCard size={14} className="text-[var(--color-primary)]" /> Contact Details
                   </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <Hash className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Index</p>
-                        <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Number</p>
+                        <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <Phone className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Primary Contact</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Phone Number</p>
                         <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.phone}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <Award className="text-[var(--color-primary)]" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Academic Standing</p>
+                        <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Qualification</p>
                         <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.highestQualification}</p>
                       </div>
                     </div>
@@ -283,12 +283,12 @@ export default function AttendancePage() {
 
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                    <Globe size={14} className="text-[var(--color-primary)]" /> Demographic Information
+                    <Globe size={14} className="text-[var(--color-primary)]" /> Personal Information
                   </h3>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
-                      <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Temporal Age</p>
-                      <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.age} Solar Years</p>
+                      <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Age</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{viewingStaff.age} Years</p>
                     </div>
                     <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-1">Gender</p>
@@ -301,7 +301,7 @@ export default function AttendancePage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
-                    <MapPin size={14} className="text-[var(--color-primary)]" /> Operational Base
+                    <MapPin size={14} className="text-[var(--color-primary)]" /> Address
                   </h3>
                   <div className="bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
                     <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] leading-relaxed">
@@ -330,13 +330,13 @@ export default function AttendancePage() {
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                       >
                         <Globe size={24} className="text-[var(--color-primary)]" />
-                        <span className="font-bold text-[10px] uppercase tracking-normal">Verify Original Scan</span>
+                        <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
                       </a>
                     </div>
                   ) : (
                     <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] p-10 flex flex-col items-center justify-center text-[var(--color-text-muted)] aspect-video">
                       <ShieldAlert size={32} className="mb-2 opacity-20" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-center">Aadhar Scan Missing</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar Image</p>
                     </div>
                   )}
                 </div>
@@ -349,7 +349,7 @@ export default function AttendancePage() {
                 className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
                 onClick={() => setViewingStaff(null)}
               >
-                Return to Attendance
+                Back to Attendance
               </Button>
             </div>
           </div>

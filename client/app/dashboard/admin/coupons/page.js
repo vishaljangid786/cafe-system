@@ -98,7 +98,7 @@ export default function CouponsManagementPage() {
       if (catsRes.data.success) setCategories(catsRes.data.data);
     } catch (error) {
       console.error('Failed to fetch menu items:', error);
-      toast.error('Failed to sync menu inventory');
+      toast.error('Could not load menu items. Please try again.');
     } finally {
       setItemsLoading(false);
     }
@@ -277,7 +277,7 @@ export default function CouponsManagementPage() {
           </Card>
         </div>
 
-        {/* Search & Filter System Rule */}
+        {/* Search & Filter */}
         <div className="bg-[var(--color-surface)]/60  p-4 rounded-xl border border-[var(--color-border)] flex flex-col md:flex-row gap-4 shadow-sm">
           <div className="relative flex-1">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
@@ -394,7 +394,7 @@ export default function CouponsManagementPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface-soft)] border-t border-[var(--color-border)]">
               <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                System Rule Page {currentPage} of {totalPages}
+                Page {currentPage} of {totalPages}
               </p>
               <div className="flex gap-2">
                 <button
@@ -402,14 +402,14 @@ export default function CouponsManagementPage() {
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
                 >
-                  Prev Branch
+                  Previous
                 </button>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   className="px-4 py-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface-soft)] text-[var(--color-text-primary)]"
                 >
-                  Next Branch
+                  Next
                 </button>
               </div>
             </div>
@@ -456,7 +456,7 @@ export default function CouponsManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Discount Magnitude</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Discount Amount</label>
                       <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)] gap-4">
                         <div className="relative flex-1">
                           <input
@@ -492,7 +492,7 @@ export default function CouponsManagementPage() {
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-secondary)]/10 flex items-center justify-center text-[var(--color-secondary)]">
                       <DollarSign size={18} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Fiscal Constraints</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Limits</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -531,12 +531,12 @@ export default function CouponsManagementPage() {
                     <div className="h-8 w-8 rounded-xl bg-[var(--color-danger)]/10 flex items-center justify-center text-[var(--color-danger)]">
                       <Clock size={18} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Temporal & Volume Limits</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Expiry & Usage Limits</h4>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Expiry Horizon</label>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Expiry Date</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                         <input
@@ -582,7 +582,7 @@ export default function CouponsManagementPage() {
                         <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] border border-[var(--color-primary)]/30">
                           <Zap size={20} />
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)]">Active Branch</span>
+                        <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)]">Active Coupon</span>
                       </div>
                       <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight italic">
                         {previewData.code || (editingCoupon?.code || 'WELCOME50')}
@@ -591,7 +591,7 @@ export default function CouponsManagementPage() {
 
                     <div className="relative flex justify-between items-end">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Benefit Magnitude</p>
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-1">Discount</p>
                         <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                           {previewData.discountType === 'fixed' ? '₹' : ''}
                           {previewData.discountValue || (editingCoupon?.discountValue || '0')}
@@ -611,9 +611,9 @@ export default function CouponsManagementPage() {
                   </div>
                 </div>
 
-                {/* Applicability System Rule */}
+                {/* Applicability */}
                  <div className="space-y-6">
-                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">Applicability System Rule</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-success)]">Applies To</h4>
                   <div className="flex p-1.5 bg-[var(--color-surface-soft)] rounded-xl border border-[var(--color-border)]">
                     {[
                       { id: 'full_order', label: 'Entire Order', icon: Layers },
@@ -641,7 +641,7 @@ export default function CouponsManagementPage() {
                         className="space-y-4 overflow-hidden"
                       >
                         <PremiumSelect
-                          label="Inventory Selection"
+                          label="Select Items"
                           disabled={itemsLoading}
                           value=""
                           onChange={val => {
@@ -650,7 +650,7 @@ export default function CouponsManagementPage() {
                             }
                           }}
                           options={[
-                            { label: itemsLoading ? 'Syncing items...' : 'Search & Select Items...', value: '' },
+                            { label: itemsLoading ? 'Loading items...' : 'Search & select items...', value: '' },
                             ...(menuItems.map(item => ({ label: item.name, value: item._id })))
                           ]}
                         />
@@ -712,7 +712,7 @@ export default function CouponsManagementPage() {
                       <div className="h-10 w-10 rounded-xl bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)]">
                         <CheckCircle2 size={20} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status System Rule</span>
+                      <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer select-none">
                       <input type="checkbox" name="isActive" defaultChecked={editingCoupon ? editingCoupon.isActive : true} className="peer hidden" />
@@ -738,7 +738,7 @@ export default function CouponsManagementPage() {
                 variant="primary"
                 className="!py-6 !px-16 !rounded-xl shadow-sm  text-xs font-bold uppercase tracking-normal bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-dark)] active:scale-95 transition-all"
               >
-                {editingCoupon ? 'Synchronize Updates' : 'Add Coupon'}
+                {editingCoupon ? 'Save Changes' : 'Add Coupon'}
               </Button>
             </div>
           </form>

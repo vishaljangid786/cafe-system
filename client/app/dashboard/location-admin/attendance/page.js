@@ -36,7 +36,7 @@ export default function AttendancePage() {
         setStaff(staffRes.data.data.filter(u => u.role === 'staff'));
         setAttendance(attRes.data.data);
       } catch (error) {
-        toast.error('Failed to load staff');
+        toast.error('Could not load staff. Please try again.');
       } finally {
         didInitRef.current = true;
         setLoading(false);
@@ -53,14 +53,14 @@ export default function AttendancePage() {
   };
 
   const handleMarkAttendance = async (userId, status) => {
-    const loadToast = toast.loading(`Setting status: ${status}...`);
+    const loadToast = toast.loading(`Marking as ${status}...`);
     try {
       await api.post('/attendance/mark', { userId, date, status });
       const attRes = await api.get(`/attendance/location?date=${date}`);
       setAttendance(attRes.data.data);
       toast.success('Attendance updated', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -88,7 +88,7 @@ export default function AttendancePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
                 <input
                   type="text"
-                  placeholder="Search Staff..."
+                  placeholder="Search staff..."
                   className="w-full pl-11 pr-4 py-4 rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 border-none focus:ring-2 focus:ring-[var(--color-primary)] text-xs font-bold dark:text-[var(--color-text-primary)] outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

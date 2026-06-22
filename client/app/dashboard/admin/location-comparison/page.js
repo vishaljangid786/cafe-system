@@ -50,7 +50,7 @@ export default function LocationComparisonPage() {
         setLoc1(locs[0]._id);
       }
     } catch (error) {
-      toast.error('Failed to initialize branches');
+      toast.error('Could not load branches. Please try again.');
     } finally {
       setLoading(false);
       progress.done();
@@ -70,7 +70,7 @@ export default function LocationComparisonPage() {
       setComparisonData(compRes.data.data);
       setDetailedData(detailRes.data.data);
     } catch (error) {
-      toast.error('List sync failed');
+      toast.error('Could not load comparison. Please try again.');
     } finally {
       didInitRef.current = true;
       setRefetching(false);
@@ -85,7 +85,7 @@ export default function LocationComparisonPage() {
       const res = await api.get(`/analytics/branch-comparison-suite?period=${dateRange}`);
       setSuiteData(res.data.data);
     } catch (error) {
-      toast.error('Performance benchmarking sync failed');
+      toast.error('Could not load branch comparison. Please try again.');
     } finally {
       setSuiteLoading(false);
       progress.done();
@@ -162,9 +162,9 @@ export default function LocationComparisonPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">
-                  Branch <span className="text-[var(--color-primary)]">Benchmarking</span>
+                  Branch <span className="text-[var(--color-primary)]">Comparison</span>
                 </h1>
-                <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Compare metrics globally across operations</p>
+                <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Compare how your branches are performing</p>
               </div>
             </div>
 
@@ -222,10 +222,10 @@ export default function LocationComparisonPage() {
               {/* Tab Selector */}
               <div className="flex bg-[var(--color-surface-soft)] p-1.5 rounded-xl border border-[var(--color-border)]">
                 <button onClick={() => setActiveTab('dual')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'dual' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
-                  Dual Compare
+                  Compare Two
                 </button>
                 <button onClick={() => setActiveTab('advanced')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'advanced' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
-                  Benchmarking Suite
+                  All Branches
                 </button>
               </div>
 
@@ -272,11 +272,11 @@ export default function LocationComparisonPage() {
                      </div>
                      <div className="flex flex-col gap-4 mt-6">
                        <div className="flex justify-between items-center">
-                         <span className="text-xs font-bold text-[var(--color-text-muted)]">{l1Data?.name || 'Center A'}</span>
+                         <span className="text-xs font-bold text-[var(--color-text-muted)]">{l1Data?.name || 'Branch A'}</span>
                          <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{l1Data?.[item.field] || 0}</span>
                        </div>
                        <div className="flex justify-between items-center">
-                         <span className="text-xs font-bold text-[var(--color-text-muted)]">{l2Data?.name || 'Center B'}</span>
+                         <span className="text-xs font-bold text-[var(--color-text-muted)]">{l2Data?.name || 'Branch B'}</span>
                          <span className="text-xs font-bold text-[var(--color-text-primary)]">₹{l2Data?.[item.field] || 0}</span>
                        </div>
                        <div className="pt-3 border-t border-[var(--color-border)] flex justify-between items-center">
@@ -368,7 +368,7 @@ export default function LocationComparisonPage() {
                 {/* Advanced Comparison List Table */}
                 <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] p-8 rounded-xl shadow-sm">
                   <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                    <Target size={16} className="text-[var(--color-primary)]" /> Advanced Benchmarking Array
+                    <Target size={16} className="text-[var(--color-primary)]" /> All Branches Comparison
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">

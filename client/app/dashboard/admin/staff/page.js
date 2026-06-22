@@ -104,7 +104,7 @@ export default function LocationStaffPage() {
         setPagination(res.data.pagination);
       }
     } catch (error) {
-      toast.error('Failed to load staff list');
+      toast.error('Could not load staff list');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -135,11 +135,11 @@ export default function LocationStaffPage() {
     const loadToast = toast.loading('Saving changes...');
     try {
       await api.put(`/users/${editingStaff._id}`, formData);
-      toast.success('Staff profile updated', { id: loadToast });
+      toast.success('Staff details updated', { id: loadToast });
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not update. Please try again.', { id: loadToast });
     }
   };
 
@@ -159,7 +159,7 @@ export default function LocationStaffPage() {
       };
 
       await api.post('/auth/register', data);
-      toast.success('Staff member added successfully', { id: loadToast });
+      toast.success('Staff member has been added', { id: loadToast });
       setShowAddModal(false);
       fetchStaff();
       // Reset form
@@ -169,7 +169,7 @@ export default function LocationStaffPage() {
         role: 'staff', assignedLocation: '', aadharNumber: '', highestQualification: '12th Pass'
       });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add staff', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not add staff. Please try again.', { id: loadToast });
     } finally {
       setIsSubmitting(false);
     }
@@ -183,10 +183,10 @@ export default function LocationStaffPage() {
         date: attendanceDate,
         status: attendanceStatus
       });
-      toast.success('Attendance rule synchronized', { id: loadToast });
+      toast.success('Attendance saved', { id: loadToast });
       setShowAttendanceModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to sync attendance', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not save attendance. Please try again.', { id: loadToast });
     }
   };
 
@@ -196,9 +196,9 @@ export default function LocationStaffPage() {
     try {
       await api.delete(`/users/${showDeleteConfirm}`);
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Staff details removed', { id: loadToast });
+      toast.success('Staff member deleted', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Delete failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not delete. Please try again.', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
@@ -415,7 +415,7 @@ export default function LocationStaffPage() {
         )) : (
           <div className="py-32 bg-[var(--color-surface)] rounded-xl border-4 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center opacity-30">
             <ShieldAlert size={64} className="mb-6" />
-            <p className="font-bold text-sm uppercase tracking-normal">No staff data linked</p>
+            <p className="font-bold text-sm uppercase tracking-normal">No staff to show</p>
           </div>
         )}
       </div>
@@ -577,7 +577,7 @@ export default function LocationStaffPage() {
                   options={[
                     { label: 'All Status', value: '' },
                     { label: 'Active', value: 'active' },
-                    { label: 'Suspended', value: 'blocked' }
+                    { label: 'Blocked', value: 'blocked' }
                   ]}
                   className="min-w-[130px] max-w-[150px]"
                 />
@@ -907,7 +907,7 @@ export default function LocationStaffPage() {
               disabled={isSubmitting}
               className="w-full py-5 bg-[var(--color-primary)] text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  mt-4 disabled:opacity-50"
             >
-              {showAddModal ? "Confirm Deployment" : "Update Record"}
+              {showAddModal ? "Add Staff" : "Save Changes"}
             </motion.button>
           </form>
         </Modal>
@@ -916,8 +916,8 @@ export default function LocationStaffPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDelete}
-          title="Delete Record?"
-          message="This record will be permanently deleted from the system."
+          title="Delete this staff member?"
+          message="This staff member will be permanently deleted. This cannot be undone."
         />
 
         {/* Detailed Staff Details Modal */}
@@ -953,7 +953,7 @@ export default function LocationStaffPage() {
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
                     <span className="px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase tracking-normal rounded-full">
-                      Active Deployment
+                      Active
                     </span>
                   </div>
                 </div>
@@ -1049,13 +1049,13 @@ export default function LocationStaffPage() {
                           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                         >
                           <Globe size={24} className="text-[var(--color-primary)]" />
-                          <span className="font-bold text-[10px] uppercase tracking-normal">Verify Original Scan</span>
+                          <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
                         </a>
                       </div>
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] p-10 flex flex-col items-center justify-center text-[var(--color-text-muted)] aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">Aadhar Scan Missing</p>
+                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar Card Uploaded</p>
                       </div>
                     )}
                   </div>
@@ -1105,7 +1105,7 @@ export default function LocationStaffPage() {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Service Date</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Date</label>
                   <input 
                     type="date" 
                     className="w-full px-5 py-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-sm font-bold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1115,7 +1115,7 @@ export default function LocationStaffPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Status System Rule</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 ml-1">Status</label>
                   <div className="grid grid-cols-3 gap-3">
                     {['present', 'absent', 'half-day'].map(status => (
                       <button
@@ -1136,7 +1136,7 @@ export default function LocationStaffPage() {
                 onClick={handleMarkAttendance}
                 className="w-full py-5 bg-[var(--color-primary)] text-[var(--color-on-primary)] dark:text-[var(--color-on-primary)] rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm "
               >
-                Sync Attendance
+                Save Attendance
               </motion.button>
             </div>
           )}

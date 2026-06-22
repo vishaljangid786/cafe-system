@@ -48,7 +48,7 @@ export default function ImpersonatePage() {
 
       setUsers(filtered);
     } catch (err) {
-      toast.error('Failed to sync user database');
+      toast.error('Could not load users');
     } finally {
       setLoading(false);
       progress.done();
@@ -57,7 +57,7 @@ export default function ImpersonatePage() {
 
   useEffect(() => {
     if (user && !['super_admin', 'admin', 'branch_admin'].includes(user.role) && !user?.impersonatedBy) {
-      toast.error('Access Denied: Insufficient permission for staff login');
+      toast.error('You do not have permission to log in as other users');
       router.push('/dashboard');
       return;
     }
@@ -77,10 +77,10 @@ export default function ImpersonatePage() {
       if (res.success) {
         toast.success(`Logged in as: ${userName}`, { id: 'impersonate' });
       } else {
-        toast.error(res.message || 'Impersonation sequence failed', { id: 'impersonate' });
+        toast.error(res.message || 'Could not log in as this user', { id: 'impersonate' });
       }
     } catch (err) {
-      toast.error('Failed to switch user', { id: 'impersonate' });
+      toast.error('Could not log in as this user', { id: 'impersonate' });
     } finally {
       setImpersonating(false);
     }
@@ -94,10 +94,10 @@ export default function ImpersonatePage() {
       if (res.success) {
         toast.success('Successfully switched back', { id: 'exit-impersonate' });
       } else {
-        toast.error(res.message || 'Failed to switch back', { id: 'exit-impersonate' });
+        toast.error(res.message || 'Could not switch back', { id: 'exit-impersonate' });
       }
     } catch (err) {
-      toast.error('Critical failure in account switching', { id: 'exit-impersonate' });
+      toast.error('Could not switch back to your account', { id: 'exit-impersonate' });
     } finally {
       setImpersonating(false);
     }
@@ -110,11 +110,11 @@ export default function ImpersonatePage() {
   );
 
   const getSecurityLabel = () => {
-    if (user?.isImpersonating) return 'ACTIVE SESSION: LOGGED IN AS STAFF';
-    if (user?.role === 'super_admin') return 'Security Level: SUPER ADMIN';
-    if (user?.role === 'admin') return 'Security Level: ADMIN';
-    if (user?.role === 'branch_admin') return 'Security Level: BRANCH MANAGER';
-    return 'Security Level: UNKNOWN';
+    if (user?.isImpersonating) return 'Logged in as another user';
+    if (user?.role === 'super_admin') return 'Role: Super Admin';
+    if (user?.role === 'admin') return 'Role: Admin';
+    if (user?.role === 'branch_admin') return 'Role: Branch Manager';
+    return 'Role: Unknown';
   };
 
   if (loading && users.length === 0) return <LoadingScreen fullScreen={false} />;
@@ -131,15 +131,15 @@ export default function ImpersonatePage() {
                 {getSecurityLabel()}
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" />
-              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Staff Login Control</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Log in as a user</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-3 sm:gap-4 italic uppercase">
               <ShieldAlert className={`${user?.isImpersonating ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 drop-`} />
-              Login As <span className="text-[var(--color-text-muted)] not-italic">Member</span>
+              Login As <span className="text-[var(--color-text-muted)] not-italic">User</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-[var(--color-text-muted)] leading-relaxed">
-              Login as any staff member to help them or check issues. 
-              {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">Limited to your current branch staff.</span>}
+              Login as any user to help them or check issues.
+              {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">You can only log in as staff from your own branch.</span>}
               <span className="text-[var(--color-danger)] font-bold ml-1 italic">Exercise caution: all actions are logged.</span>
             </p>
           </div>
@@ -152,7 +152,7 @@ export default function ImpersonatePage() {
               onClick={handleExitImpersonation}
               disabled={impersonating}
             >
-              Logout from Member
+              Back to My Account
             </Button>
           )}
         </div>
@@ -242,7 +242,7 @@ export default function ImpersonatePage() {
         {filteredUsers.length === 0 && (
           <div className="py-20 text-center space-y-4">
             <Users className="mx-auto h-16 w-16 text-[var(--color-text-muted)]/30" />
-            <p className="text-sm font-bold text-[var(--color-text-muted)]">No identities found matching your criteria</p>
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">No users found matching your search</p>
           </div>
         )}
       </div>

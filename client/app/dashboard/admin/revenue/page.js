@@ -141,8 +141,8 @@ export default function RevenuePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <TrendingUp size={60} className="text-[var(--color-danger)] opacity-20" />
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Entry Restricted</h2>
-        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">Permission Denied: REVENUE_VIEW_RESTRICTED</p>
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] italic uppercase">Access Restricted</h2>
+        <p className="text-[var(--color-text-muted)] font-bold text-sm tracking-normal uppercase">You do not have permission to view revenue.</p>
       </div>
     );
   }
@@ -476,7 +476,7 @@ export default function RevenuePage() {
                       </p>
                       <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedTransaction.customerName}</p>
                       {selectedTransaction.tableNumber && (
-                        <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Table Assignment: {selectedTransaction.tableNumber}</p>
+                        <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Table: {selectedTransaction.tableNumber}</p>
                       )}
                     </div>
                   )}
@@ -486,7 +486,7 @@ export default function RevenuePage() {
                         <User size={10} /> Staff Member
                       </p>
                       <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedTransaction.staffId.name || 'Staff'}</p>
-                      <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Service Execution</p>
+                      <p className="text-xs font-bold text-[var(--color-text-muted)] mt-1">Served the order</p>
                     </div>
                   )}
                 </div>
@@ -525,7 +525,7 @@ export default function RevenuePage() {
               {selectedTransaction.description && (
                 <div className="p-4 rounded-xl bg-[var(--color-surface-soft)]/50 border border-[var(--color-border)]">
                   <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-2 flex items-center gap-2">
-                    <Info size={10} /> Context / Notes
+                    <Info size={10} /> Notes
                   </p>
                   <p className="text-sm font-medium text-[var(--color-text-secondary)] italic">
                     &ldquo;{selectedTransaction.description}&rdquo;

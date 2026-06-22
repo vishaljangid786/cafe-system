@@ -41,7 +41,7 @@ export default function ForecastingDashboard() {
       const res = await api.get(`/analytics/forecasting?branchId=${selectedBranch}&period=${selectedPeriod}`);
       setForecast(res.data.data);
     } catch (err) {
-      toast.error('Forecasting data mapping failed');
+      toast.error('Could not load forecast. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -76,10 +76,10 @@ export default function ForecastingDashboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-4">
-                <TrendingUp className="text-[var(--color-primary)]" size={36} /> 
-                Smart <span className="text-[var(--color-primary)]">Forecasting</span>
+                <TrendingUp className="text-[var(--color-primary)]" size={36} />
+                Sales <span className="text-[var(--color-primary)]">Forecast</span>
               </h1>
-              <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Predictions based on past data</p>
+              <p className="text-[var(--color-text-secondary)] text-sm font-medium mt-1 uppercase tracking-normal">Estimates based on your past sales</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -87,7 +87,7 @@ export default function ForecastingDashboard() {
                 value={selectedBranch}
                 onChange={(val) => setSelectedBranch(val)}
                 options={[
-                  { label: 'Global Network', value: 'all' },
+                  { label: 'All Branches', value: 'all' },
                   ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                 ]}
                 className="min-w-[180px]"
@@ -136,7 +136,7 @@ export default function ForecastingDashboard() {
             <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Weekly Revenue Estimate</p>
             <h2 className="text-4xl font-bold mt-2 tracking-tight">₹{forecast?.weeklyRevenueEstimate?.toLocaleString() || 0}</h2>
             <div className="mt-4 flex items-center gap-2 text-xs font-bold opacity-90">
-              <Percent size={14} /> Standard Deviation Checked
+              <Percent size={14} /> Based on recent sales
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export default function ForecastingDashboard() {
             <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Best Category Forecast</p>
             <h2 className="text-4xl font-bold mt-2 tracking-tight">{forecast?.bestCategoryForecast || 'N/A'}</h2>
             <div className="mt-4 flex items-center gap-2 text-xs font-bold opacity-90">
-              Leading high volume transactions.
+              Your top-selling category.
             </div>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function ForecastingDashboard() {
             <div>
               <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Peak Hours Forecast</p>
               <h3 className="text-2xl font-bold mt-2 text-[var(--color-text-primary)]">{forecast?.peakHoursForecast || 'N/A'}</h3>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Deploy additional staff to limit throughput queue</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Add extra staff to keep wait times low</p>
             </div>
             <div className="h-14 w-14 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center border border-[var(--color-primary)]/20">
               <Clock size={24} />
@@ -177,7 +177,7 @@ export default function ForecastingDashboard() {
 
         {/* Monthly Projection Chart */}
         <div className="bg-[var(--color-surface)]/80  border border-[var(--color-border)] p-10 rounded-xl shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-8">Next Month Revenue Trends (Extrapolated)</h3>
+          <h3 className="text-sm font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-8">Expected Revenue Next Month</h3>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={forecast?.nextMonthSalesTrend || []}>

@@ -36,7 +36,7 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Assign Terminal T${table?.tableNumber}`}
+      title={`Assign Table T${table?.tableNumber}`}
       maxWidth="max-w-md"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -85,7 +85,7 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
             className="flex-1 !rounded-xl shadow-lg "
             icon={ArrowRight}
           >
-            Start Session
+            Start Order
           </Button>
         </div>
       </form>

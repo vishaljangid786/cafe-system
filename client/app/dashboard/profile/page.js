@@ -259,7 +259,7 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="label">Branch</p>
-                        <p className="text-lg font-semibold text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Global HQ'}</p>
+                        <p className="text-lg font-semibold text-[var(--color-text-secondary)] mt-1 tracking-tight">{user.assignedLocation?.name || 'Head Office'}</p>
                       </div>
                     </div>
                   </div>
@@ -282,12 +282,12 @@ export default function ProfilePage() {
                   const newPassword = e.target.newPassword.value;
                   const confirmPassword = e.target.confirmPassword.value;
 
-                  if (newPassword !== confirmPassword) return toast.error('Error: Passwords do not match');
+                  if (newPassword !== confirmPassword) return toast.error('Passwords do not match');
 
                   const loadToast = toast.loading('Updating your password...');
                   try {
                     await api.put('/users/change-password', { currentPassword, newPassword });
-                    toast.success('Access credentials updated', { id: loadToast });
+                    toast.success('Password updated successfully', { id: loadToast });
                     e.target.reset();
                   } catch (err) {
                     toast.error(err.response?.data?.message || 'Password update failed', { id: loadToast });
@@ -297,7 +297,7 @@ export default function ProfilePage() {
                     <DetailsField label="Current Password" name="currentPassword" icon={Shield} isEditing={true} type="password" />
                     <div className="h-px bg-[var(--color-border)] my-4" />
                     <DetailsField label="New Password" name="newPassword" icon={Zap} isEditing={true} type="password" />
-                    <DetailsField label="Verify New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
+                    <DetailsField label="Confirm New Password" name="confirmPassword" icon={CheckCircle2} isEditing={true} type="password" />
                   </div>
 
                   <div className="pt-6">
@@ -329,7 +329,7 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
           onChange={onChange}
           maxLength={maxLength}
           className="w-full pl-16 pr-6 py-5 rounded-xl bg-[var(--color-bg-soft)] border-2 border-transparent focus:border-[var(--color-primary)]/30 focus:bg-[var(--color-surface)] outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-[var(--color-text-primary)]"
-          placeholder={`Input ${label}...`}
+          placeholder={`Enter ${label}...`}
         />
       </div>
     </div>

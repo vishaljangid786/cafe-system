@@ -93,7 +93,7 @@ export default function PayrollRecordsPage() {
                 <div className="min-w-0 2xl:flex-1">
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary-dark)] dark:text-[var(--color-primary)]">
                     <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] " />
-                    Salary Control Center
+                    Salary Management
                   </div>
 
                   <div className="flex items-center gap-4">
@@ -228,14 +228,14 @@ export default function PayrollRecordsPage() {
                 <div className="flex shrink-0 items-center gap-4">
                   <button
                     onClick={async () => {
-                      const loadToast = toast.loading("Processing payroll list...");
+                      const loadToast = toast.loading("Calculating salaries...");
                       try {
                         const locObj = locations.find(l => l.name === selectedLocation);
                         await api.post('/salary/generate', { month, locationId: locObj?._id || 'all' });
                         toast.success("Salary details saved successfully", { id: loadToast });
                         setTimeout(() => window.location.reload(), 1000);
                       } catch (e) {
-                        toast.error("Process constraints mapped", { id: loadToast });
+                        toast.error("Something went wrong. Please try again.", { id: loadToast });
                       }
                     }}
                     className="h-[54px] px-6 py-3 bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-md "
@@ -269,7 +269,7 @@ export default function PayrollRecordsPage() {
               <p className="text-xs font-bold uppercase tracking-normal opacity-80">Total Salary Payout</p>
               <p className="text-3xl font-bold mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
               <div className="mt-4 flex items-center text-xs font-medium opacity-90">
-                <Receipt size={14} className="mr-1" /> {selectedLocation === 'All' ? 'Total Network Cost' : `${selectedLocation} Total`}
+                <Receipt size={14} className="mr-1" /> {selectedLocation === 'All' ? 'All Branches Total' : `${selectedLocation} Total`}
               </div>
             </div>
           </SlideIn>
@@ -430,13 +430,13 @@ export default function PayrollRecordsPage() {
                          {s.payrollRecord && (
                             <button
                               onClick={async () => {
-                                const loadToast = toast.loading("Approving salary details...");
+                                const loadToast = toast.loading("Approving salary...");
                                 try {
                                   await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
-                                  toast.success("Tier Approval Locked", { id: loadToast });
+                                  toast.success("Salary approved", { id: loadToast });
                                   setTimeout(() => window.location.reload(), 1000);
                                 } catch (e) {
-                                  toast.error(e.response?.data?.message || "Constraint hit", { id: loadToast });
+                                  toast.error(e.response?.data?.message || "Something went wrong. Please try again.", { id: loadToast });
                                 }
                               }}
                               className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-[var(--color-success)] text-[var(--color-bg-base)] hover:bg-[var(--color-success)]/90 rounded-xl transition-all text-center"
@@ -614,7 +614,7 @@ export default function PayrollRecordsPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight leading-none">{editingUser.name}</h2>
-                      <p className="text-[10px] font-bold uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] tracking-normal mt-2">Update Credentials</p>
+                      <p className="text-[10px] font-bold uppercase text-[var(--color-primary-dark)] dark:text-[var(--color-primary)] tracking-normal mt-2">Edit Details</p>
                     </div>
                  </div>
                  <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-[var(--color-surface-soft)] text-[var(--color-text-muted)] transition-colors">

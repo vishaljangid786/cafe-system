@@ -36,7 +36,7 @@ export default function InventoryDashboard() {
     { header: 'Quantity', key: (item) => `${item.stock} ${item.ingredient?.unit}` },
     { header: 'Category', key: 'ingredient.category' },
     { header: 'Cost Per Unit', key: 'costPerUnit' },
-    { header: 'Min Threshold', key: 'minThreshold' }
+    { header: 'Low Stock Alert', key: 'minThreshold' }
   ];
 
   // Modal states
@@ -75,7 +75,7 @@ export default function InventoryDashboard() {
 
       await fetchData({ initial: true });
     } catch (err) {
-      toast.error('Failed to initialize dashboard');
+      toast.error('Could not load the page. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -102,7 +102,7 @@ export default function InventoryDashboard() {
       setSuggestions(sugRes.data.data);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to refresh data');
+      toast.error('Could not refresh the data. Please try again.');
     } finally {
       if (!initial) {
         setRefetching(false);
@@ -132,12 +132,12 @@ export default function InventoryDashboard() {
     try {
       setSubmitting(true);
       await api.post('/inventory/update', formData);
-      toast.success('Inventory updated successfully');
+      toast.success('Stock updated');
       setIsAddModalOpen(false);
       setIsUpdateModalOpen(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update inventory');
+      toast.error(err.response?.data?.message || 'Could not update the stock. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -148,11 +148,11 @@ export default function InventoryDashboard() {
     try {
       setSubmitting(true);
       await api.post('/inventory/waste', formData);
-      toast.success('Waste recorded successfully');
+      toast.success('Waste recorded');
       setIsWasteModalOpen(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to record waste');
+      toast.error(err.response?.data?.message || 'Could not record the waste. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -168,13 +168,13 @@ export default function InventoryDashboard() {
         category: formData.category,
         baseCost: formData.baseCost
       });
-      toast.success('Ingredient created successfully');
+      toast.success('Ingredient added');
       setIsNewIngredientModalOpen(false);
       // Refresh ingredients list
       const ingRes = await api.get('/inventory/ingredients');
       setIngredients(ingRes.data.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create ingredient');
+      toast.error(err.response?.data?.message || 'Could not add the ingredient. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -215,7 +215,7 @@ export default function InventoryDashboard() {
                   value={selectedBranch}
                   onChange={(val) => setSelectedBranch(val)}
                   options={[
-                    { label: 'Network Overview', value: 'All' },
+                    { label: 'All Branches', value: 'All' },
                     ...locations.map(loc => ({ label: loc.name, value: loc._id }))
                   ]}
                   className="min-w-[200px]"
@@ -232,10 +232,10 @@ export default function InventoryDashboard() {
               <div className="absolute -right-4 -bottom-4 opacity-5">
                 <AlertTriangle size={120} />
               </div>
-              <p className="label">Critical Alerts</p>
+              <p className="label">Low Stock Alerts</p>
               <p className="text-3xl font-bold text-[var(--color-danger)] mt-2">{alerts.length}</p>
               <p className="text-xs font-medium text-[var(--color-text-muted)] mt-2 flex items-center gap-1">
-                Items below safety threshold
+                Items running low
               </p>
             </div>
           </SlideIn>
@@ -245,10 +245,10 @@ export default function InventoryDashboard() {
               <div className="absolute -right-4 -bottom-4 opacity-20">
                 <ShoppingCart size={120} />
               </div>
-              <p className="text-xs font-semibold opacity-80">Procurement Items</p>
+              <p className="text-xs font-semibold opacity-80">Items to Buy</p>
               <p className="text-3xl font-bold mt-2">{suggestions.length}</p>
               <p className="text-xs font-medium opacity-90 mt-2 flex items-center gap-1">
-                Recommended to purchase now
+                Suggested to buy now
               </p>
             </div>
           </SlideIn>
@@ -261,7 +261,7 @@ export default function InventoryDashboard() {
               <p className="label">Total Ingredients</p>
               <p className="text-3xl font-bold text-[var(--color-text-primary)] mt-2">{inventory.length}</p>
               <p className="text-xs font-medium text-[var(--color-success)] mt-2 flex items-center gap-1">
-                Active tracked components
+                Items being tracked
               </p>
             </div>
           </SlideIn>
@@ -373,7 +373,7 @@ export default function InventoryDashboard() {
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold uppercase rounded-lg">
-                                  Optimal
+                                  In Stock
                                 </span>
                               )}
                             </td>
@@ -431,12 +431,12 @@ export default function InventoryDashboard() {
                 ) : suggestions.map((sug, i) => (
                   <div key={i} className="p-8 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex items-center justify-between group hover:border-[var(--color-primary)]/50 transition-colors shadow-sm">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] mb-1">Procurement Suggestion</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-primary)] mb-1">Buying Suggestion</p>
                       <h3 className="text-2xl font-bold text-[var(--color-text-primary)]">{sug.ingredient}</h3>
-                      <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Current: <span className="font-bold">{sug.currentStock} {sug.unit}</span> | Deficit: <span className="text-[var(--color-danger)] font-bold">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2">Current: <span className="font-bold">{sug.currentStock} {sug.unit}</span> | Shortfall: <span className="text-[var(--color-danger)] font-bold">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-[var(--color-text-muted)] mb-1 uppercase tracking-normal">Recommended Order</p>
+                      <p className="text-xs font-bold text-[var(--color-text-muted)] mb-1 uppercase tracking-normal">Suggested Order</p>
                       <p className="text-3xl font-bold text-[var(--color-text-primary)]">{sug.suggestedOrder} {sug.unit}</p>
                     </div>
                   </div>
@@ -454,13 +454,13 @@ export default function InventoryDashboard() {
                 <div className="h-20 w-20 bg-[var(--color-danger)]/10 text-[var(--color-danger)] rounded-full flex items-center justify-center mx-auto mb-6">
                   <Trash2 size={40} />
                 </div>
-                <h3 className="text-2xl font-bold text-[var(--color-text-primary)]">Waste Tracking Ready</h3>
-                <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto mt-2">Record spillage, expiry, and damages to maintain precise inventory capital.</p>
+                <h3 className="text-2xl font-bold text-[var(--color-text-primary)]">Record Waste</h3>
+                <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto mt-2">Record spillage, expiry, and damage to keep your stock counts accurate.</p>
                 <button 
                   onClick={() => setIsWasteModalOpen(true)}
                   className="mt-8 px-8 py-4 bg-[var(--color-danger)] text-[var(--color-bg-base)] rounded-xl text-xs font-bold uppercase tracking-normal  transition-transform shadow-sm "
                 >
-                  Log Waste Record
+                  Record Waste
                 </button>
               </motion.div>
             )}
@@ -522,7 +522,7 @@ export default function InventoryDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Min Threshold (Alert)</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Low Stock Alert Level</label>
               <input 
                 type="number"
                 value={formData.minThreshold}
@@ -537,15 +537,15 @@ export default function InventoryDashboard() {
               loading={submitting} 
               className="w-full py-4 rounded-xl font-bold uppercase tracking-normal"
             >
-              {isUpdateModalOpen ? 'Update Stock' : 'Add to Inventory'}
+              {isUpdateModalOpen ? 'Update Stock' : 'Add Stock'}
             </Button>
           </form>
         </Modal>
 
         <Modal 
-          isOpen={isWasteModalOpen} 
+          isOpen={isWasteModalOpen}
           onClose={() => setIsWasteModalOpen(false)}
-          title="Log Waste Record"
+          title="Record Waste"
         >
           <form onSubmit={handleLogWaste} className="space-y-6">
             <PremiumSelect 
@@ -594,7 +594,7 @@ export default function InventoryDashboard() {
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                 className="w-full px-5 py-4 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary)]/20 outline-none min-h-[100px] resize-none"
-                placeholder="Details about the waste..."
+                placeholder="Details about the waste"
               />
             </div>
 
@@ -604,7 +604,7 @@ export default function InventoryDashboard() {
               loading={submitting} 
               className="w-full py-4 rounded-xl font-bold uppercase tracking-normal shadow-sm "
             >
-              Confirm Waste Log
+              Save Waste Record
             </Button>
           </form>
         </Modal>

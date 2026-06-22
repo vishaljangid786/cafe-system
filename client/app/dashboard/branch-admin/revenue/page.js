@@ -99,7 +99,7 @@ export default function BranchRevenuePage() {
             <h1 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] flex items-center tracking-tight leading-none">
               <TrendingUp className="mr-4 text-[var(--color-success)]" size={36} /> Branch <span className="ml-3 text-[var(--color-success)]">Revenue</span>
             </h1>
-            <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Monitoring local financial inflow and sales velocity.</p>
+            <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-sm mt-2 font-medium">Track your branch sales and earnings.</p>
           </div>
           <div className="flex items-center gap-3 bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] p-1.5 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)] shadow-inner">
             {['7d', '1m', 'all'].map(t => (
@@ -121,10 +121,10 @@ export default function BranchRevenuePage() {
               <Activity size={120} className="text-[var(--color-success)]" />
             </div>
             <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">Sales Speed</h2>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">Sales Trend</h2>
               <div className="flex gap-10">
                 <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Yield</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Total Earnings</p>
                   <p className="text-2xl font-bold text-[var(--color-success)] tracking-tight">₹{totalRevenue.toLocaleString()}</p>
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function BranchRevenuePage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={20} />
             <input 
               type="text" 
-              placeholder="Filter revenue stream..."
+              placeholder="Search sales..."
               className="w-full pl-12 pr-4 py-4 bg-white/40 dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-success)]/20 outline-none transition-all font-bold text-sm text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -177,14 +177,14 @@ export default function BranchRevenuePage() {
 
         {/* Data List */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Latest Local Inflow</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] ml-1">Recent Sales</h3>
           {refetching ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
             </div>
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-white/40 dark:bg-[var(--color-bg)]/40 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border)]">
-              <p className="text-[var(--color-text-muted)] font-bold">No revenue nodes detected.</p>
+              <p className="text-[var(--color-text-muted)] font-bold">No sales found.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
@@ -206,7 +206,7 @@ export default function BranchRevenuePage() {
                             </span>
                           </div>
                           <p className="text-[8px] font-bold uppercase tracking-normal text-[var(--color-success)] mt-2 bg-[var(--color-success)]/5 w-fit px-2 py-0.5 rounded">
-                            {t.type === 'POS_REVENUE' ? 'Terminal POS' : 'Manual Entry'}
+                            {t.type === 'POS_REVENUE' ? 'Billing Counter' : 'Manual Entry'}
                           </p>
                         </div>
                       </div>

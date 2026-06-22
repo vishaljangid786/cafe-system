@@ -73,7 +73,7 @@ export default function LocationStaffPage() {
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not save changes. Please try again.', { id: loadToast });
     }
   };
 
@@ -85,7 +85,7 @@ export default function LocationStaffPage() {
       setStaff(staff.filter(s => s._id !== showDeleteConfirm));
       toast.success('Staff member removed', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error removing staff', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not remove staff member. Please try again.', { id: loadToast });
     } finally {
       setShowDeleteConfirm(null);
     }
@@ -253,7 +253,7 @@ export default function LocationStaffPage() {
               whileTap={{ scale: 0.98 }}
               className="w-full py-5 bg-[var(--color-primary)] text-[var(--color-on-primary)] rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  mt-4"
             >
-              Update Staff Records
+              Save Changes
             </motion.button>
           </form>
         </Modal>
@@ -263,7 +263,7 @@ export default function LocationStaffPage() {
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDelete}
           title="Remove Staff Member?"
-          message="This staff member will be permanently removed from the system."
+          message="This staff member will be permanently removed."
         />
 
         {/* Detailed Staff Details Modal */}
@@ -323,7 +323,7 @@ export default function LocationStaffPage() {
                         <Hash className="text-[var(--color-primary)]" size={20} />
                         <div>
                           <p className="text-[8px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal">Aadhar Number</p>
-                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not Indexed'}</p>
+                          <p className="text-sm font-bold text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{viewingStaff.aadharNumber || 'Not provided'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)]/50 p-4 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">

@@ -82,7 +82,7 @@ export default function PaymentInformationPage() {
       const res = await api.get('/analytics/payment-intelligence', { params });
       setStats(res.data.data);
     } catch (error) {
-      toast.error('Failed to load payment info metrics');
+      toast.error('Could not load payment details. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -122,25 +122,25 @@ export default function PaymentInformationPage() {
           </div>
           Payment Information Dashboard
         </h1>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">Analyze Cash vs UPI metrics effortlessly.</p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-medium ml-13">Compare Cash and UPI payments easily.</p>
       </div>
 
       {/* Advanced Filters */}
       <div className="bg-[var(--color-surface)]/80  p-8 rounded-xl border border-[var(--color-border)] shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border)]">
           <Filter size={16} className="text-[var(--color-primary)]" />
-          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-secondary)]">Payment Analytics Filters</span>
+          <span className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-secondary)]">Payment Filters</span>
         </div>
         
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-1.5 ml-2">
-              <Building size={12} /> Branch Center
+              <Building size={12} /> Branch
             </label>
             <PremiumSelect
               value={filters.branchId}
               onChange={(val) => handleFilterChange('branchId', val)}
               options={[
-                { label: 'Global Network', value: 'all' },
+                { label: 'All Branches', value: 'all' },
                 ...locations.map(loc => ({ label: loc.name, value: loc._id }))
               ]}
               className="w-full"
@@ -225,20 +225,20 @@ export default function PaymentInformationPage() {
         <>
           {/* Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard label="Total UPI Orders" value={stats?.totalUPIOrders || 0} sub="Successful direct transfers" icon={ShoppingBag} color="violet" />
-            <MetricCard label="Total Cash Orders" value={stats?.totalCashOrders || 0} sub="Successful physical transactions" icon={ShoppingBag} color="amber" />
-            <MetricCard label="UPI Revenue" value={`₹${stats?.upiRevenue || 0}`} sub="Direct digital quota" icon={Zap} color="violet" />
-            <MetricCard label="Cash Revenue" value={`₹${stats?.cashRevenue || 0}`} sub="Direct physical quota" icon={DollarSign} color="amber" />
+            <MetricCard label="Total UPI Orders" value={stats?.totalUPIOrders || 0} sub="Paid by UPI" icon={ShoppingBag} color="violet" />
+            <MetricCard label="Total Cash Orders" value={stats?.totalCashOrders || 0} sub="Paid by cash" icon={ShoppingBag} color="amber" />
+            <MetricCard label="UPI Revenue" value={`₹${stats?.upiRevenue || 0}`} sub="Total from UPI payments" icon={Zap} color="violet" />
+            <MetricCard label="Cash Revenue" value={`₹${stats?.cashRevenue || 0}`} sub="Total from cash payments" icon={DollarSign} color="amber" />
           </div>
 
           {stats?.highestUPIBranch && (
             <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] p-6 rounded-xl text-white flex items-center justify-between shadow-lg">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80 flex items-center gap-1"><Award size={14} /> Peak digital hub</span>
+                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80 flex items-center gap-1"><Award size={14} /> Top UPI Branch</span>
                 <p className="text-2xl font-bold mt-1">{stats.highestUPIBranch.name}</p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">UPI Quota</span>
+                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">UPI Revenue</span>
                 <p className="text-2xl font-bold mt-1">₹{stats.highestUPIBranch.revenue}</p>
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function PaymentInformationPage() {
             {/* Trend Graph */}
             <div className="lg:col-span-12 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
               <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Payment Trend Timeline (₹)
+                <TrendingUp size={16} className="text-[var(--color-primary)]" /> Payment Trend Over Time (₹)
               </h3>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -279,7 +279,7 @@ export default function PaymentInformationPage() {
             {/* Branch Wise Mode Comparison */}
             <div className="lg:col-span-12 bg-[var(--color-surface)]/80  rounded-xl border border-[var(--color-border)] p-8">
               <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] mb-6 flex items-center gap-3">
-                <BarChart2 size={16} className="text-[var(--color-primary)]" /> Allocation by payment mode (₹)
+                <BarChart2 size={16} className="text-[var(--color-primary)]" /> Branch-wise Payment Split (₹)
               </h3>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">

@@ -147,7 +147,7 @@ function SignupContent() {
 
     const isStepValid = await trigger(fieldsToValidate);
     if (isStepValid) setActiveStep(prev => prev + 1);
-    else toast.error('Resolve validation errors to proceed.');
+    else toast.error('Please fix the errors before continuing.');
   };
 
   const onSubmit = async (formData) => {
@@ -167,7 +167,7 @@ function SignupContent() {
       toast.success('Account created successfully.', { id: loadToast });
       router.push('/login');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create account. Please check your data.', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not create account. Please check your details.', { id: loadToast });
     }
   };
 
@@ -320,7 +320,7 @@ function SignupContent() {
                   {!isSetup && selectedRole === 'admin' && (
                     <Controller name="accessibleLocations" control={control} render={({ field }) => (
                       <div className="space-y-2">
-                        <label className="label block ml-0.5">Linked Branches (Multi-Control)</label>
+                        <label className="label block ml-0.5">Branches This Admin Can Manage</label>
                         <PremiumSelect value={field.value} onChange={field.onChange} options={locations.map(loc => ({ label: `${loc.city} - ${loc.name}`, value: loc._id }))} multiple={true} placeholder="Select multiple branches" />
                       </div>
                     )} />

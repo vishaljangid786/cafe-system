@@ -82,7 +82,7 @@ export default function AdminTablesPage() {
       const res = await api.get(url);
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync floor plan');
+      toast.error('Could not load tables. Please try again.');
     } finally {
       didInitRef.current = true;
       if (!silent) {
@@ -183,7 +183,7 @@ export default function AdminTablesPage() {
       setNewTableCapacity('4');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Action failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -204,7 +204,7 @@ export default function AdminTablesPage() {
       setShowDeleteConfirm(null);
       toast.success('Table deleted', { id: loadToast });
     } catch (error) {
-      toast.error('Delete failed', { id: loadToast });
+      toast.error('Could not delete the table. Please try again.', { id: loadToast });
     }
   };
 
@@ -219,7 +219,7 @@ export default function AdminTablesPage() {
       handleOpenOrder(res.data.data);
       toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Booking failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not book the table. Please try again.', { id: loadToast });
     }
   };
 
@@ -296,12 +296,12 @@ export default function AdminTablesPage() {
       setDiscountAmount(res.data.data.discount);
       toast.success('Discount applied', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid code', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Invalid coupon code', { id: loadToast });
     }
   };
 
   const handleFinalizeSession = async (file) => {
-    const loadToast = toast.loading('Closing session...');
+    const loadToast = toast.loading('Finishing the bill...');
     if (!selectedTable.customerName) {
       toast.error('Customer name required', { id: loadToast });
       return;
@@ -316,9 +316,9 @@ export default function AdminTablesPage() {
       setShowOrderModal(false);
       setSelectedTable(null);
       fetchTables();
-      toast.success('Session closed', { id: loadToast });
+      toast.success('Bill finished and table cleared', { id: loadToast });
     } catch (error) {
-      toast.error('Failed to close session', { id: loadToast });
+      toast.error('Could not finish the bill. Please try again.', { id: loadToast });
     }
   };
 
@@ -348,9 +348,9 @@ export default function AdminTablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Order sent successfully', { id: loadToast });
+      toast.success('Order sent to kitchen', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send order', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not send the order. Please try again.', { id: loadToast });
     }
   };
 
@@ -390,7 +390,7 @@ export default function AdminTablesPage() {
               <div className="h-10 w-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg ">
                 <Globe size={24} className="text-[var(--color-bg-base)]" />
               </div>
-              Table Management
+              Tables
             </h1>
             <p className="text-xs text-[var(--color-text-muted)] font-medium ml-13">Manage all tables across all branches</p>
           </div>
@@ -415,7 +415,7 @@ export default function AdminTablesPage() {
                 setShowAddModal(true);
               }}
             >
-              Register Table
+              Add Table
             </Button>
           </div>
         </div>
@@ -466,10 +466,10 @@ export default function AdminTablesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Table Info</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Table</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Capacity</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">State</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
             </thead>
@@ -505,7 +505,7 @@ export default function AdminTablesPage() {
                     <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
                         <Users size={14} className="text-[var(--color-text-muted)]" />
-                        <span className="text-sm font-bold">{table.capacity} Guests</span>
+                        <span className="text-sm font-bold">{table.capacity} People</span>
                       </div>
                     </td>
                     <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
@@ -554,7 +554,7 @@ export default function AdminTablesPage() {
           <form onSubmit={handleAddTable} className="space-y-4">
             {!isEditing && (
               <PremiumSelect 
-                label="Target Location"
+                label="Branch"
                 options={locations.map(l => ({ value: l._id, label: l.name }))} 
                 value={newTableLocation} 
                 onChange={setNewTableLocation} 
@@ -562,11 +562,11 @@ export default function AdminTablesPage() {
               />
             )}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table ID</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table Number</label>
               <input required type="number" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-4 text-sm font-bold text-[var(--color-text-primary)]" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Designation</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table Name</label>
               <input type="text" className="w-full rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-4 text-sm font-bold text-[var(--color-text-primary)]" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
             </div>
             <div className="space-y-1">
@@ -587,7 +587,7 @@ export default function AdminTablesPage() {
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Current Order</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Current order</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
@@ -604,7 +604,7 @@ export default function AdminTablesPage() {
                       </label>
                       <input 
                         type="text"
-                        placeholder="ENTER NAME"
+                        placeholder="Enter name"
                         className="w-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)]/30 text-[var(--color-text-primary)]"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
@@ -612,11 +612,11 @@ export default function AdminTablesPage() {
                     </div>
                     <div>
                       <PremiumSelect
-                        label="Number of Guests"
-                        placeholder="Select Guests"
+                        label="Number of People"
+                        placeholder="Select people"
                         options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
                           value: i + 1,
-                          label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
+                          label: `${i + 1} ${i + 1 === 1 ? 'Person' : 'People'}`
                         }))}
                         value={selectedTable.numberOfPeople || 1}
                         onChange={(val) => handleSyncOrders(pendingOrders, { numberOfPeople: val })}
@@ -684,7 +684,7 @@ export default function AdminTablesPage() {
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-[var(--color-border)]">
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-4 flex items-center gap-2">
-                        <Zap size={14} /> Kitchen Queue
+                        <Zap size={14} /> Kitchen Orders
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
@@ -718,10 +718,10 @@ export default function AdminTablesPage() {
                                       const loadToast = toast.loading('Generating bill...');
                                       try {
                                         await api.post(`/orders/${order._id}/generate-bill`);
-                                        toast.success('Bill generated successfully', { id: loadToast });
+                                        toast.success('Bill generated', { id: loadToast });
                                         fetchSystemOrders(selectedTable._id);
                                       } catch (err) {
-                                        toast.error('Failed to generate bill', { id: loadToast });
+                                        toast.error('Could not generate the bill. Please try again.', { id: loadToast });
                                       }
                                     }}
                                     className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-[var(--color-bg-base)] text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
@@ -784,11 +784,11 @@ export default function AdminTablesPage() {
                           icon={Receipt}
                           onClick={() => {
                             const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                            if (!allReady) return toast.error('Note: All orders must be SERVED before finalization');
+                            if (!allReady) return toast.error('All orders must be served before you can finish the bill');
                             setIsBillPreviewOpen(true);
                           }}
                         >
-                          Finalize & Bill
+                          Finish & Bill
                         </Button>
                       )}
                     </div>
@@ -834,7 +834,7 @@ export default function AdminTablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
-                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Popular Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
@@ -883,7 +883,7 @@ export default function AdminTablesPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
                         <div
@@ -920,7 +920,7 @@ export default function AdminTablesPage() {
                             )}
                             <div className="absolute top-2 left-2">
                               <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-[var(--color-bg-base)] ${item.dietaryType === 'veg' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]'}`}>
-                                {item.dietaryType || 'Cuisine'}
+                                {item.dietaryType || 'Food'}
                               </div>
                             </div>
                             <div className="absolute inset-0 bg-[var(--color-primary)]/20  flex items-center justify-center transition-all">
@@ -952,7 +952,7 @@ export default function AdminTablesPage() {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="ENTER CODE"
+                          placeholder="Enter code"
                           className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all text-[var(--color-text-primary)]"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
@@ -968,14 +968,14 @@ export default function AdminTablesPage() {
                     {appliedCoupon && (
                       <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-[10px] font-bold text-[var(--color-success)] flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Check size={12} /> {appliedCoupon.code} Activated
+                          <Check size={12} /> {appliedCoupon.code} applied
                         </div>
                         <button 
                           onClick={() => {
                             setAppliedCoupon(null);
                             setDiscountAmount(0);
                             setCouponCode('');
-                            toast.success('Coupon removed - Order unlocked');
+                            toast.success('Coupon removed');
                           }}
                           className="text-[var(--color-danger)] hover:opacity-80 uppercase text-[9px] font-bold"
                         >
@@ -990,7 +990,7 @@ export default function AdminTablesPage() {
           )}
         </Modal>
 
-        <ConfirmDialog isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} onConfirm={handleDeleteTable} title="Decommission Table?" message="This table will be permanently removed from the global floor grid." />
+        <ConfirmDialog isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} onConfirm={handleDeleteTable} title="Delete Table?" message="This table will be permanently removed. This cannot be undone." />
         <BillPreview isOpen={isBillPreviewOpen} onClose={() => setIsBillPreviewOpen(false)} onComplete={handleFinalizeSession} table={selectedTable} systemOrders={systemOrders} />
       </div>
     </PageTransition>

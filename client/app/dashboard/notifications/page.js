@@ -55,7 +55,7 @@ const NotificationsPage = () => {
       setNotifications(res?.data?.data || []);
       setPagination(res?.data?.pagination || { page: 1, pages: 1 });
     } catch (err) {
-      toast.error('Failed to sync archival records');
+      toast.error('Could not load notifications');
       console.error('Failed to sync archival records:', err.response?.data || err.message);
     } finally {
       didInitRef.current = true;
@@ -167,7 +167,7 @@ const NotificationsPage = () => {
                     Notifications
                   </h1>
                   <p className="text-[var(--color-text-muted)] font-medium mt-1 text-sm">
-                    Track and manage your system alerts and communications.
+                    See and manage all your alerts and messages.
                   </p>
                 </div>
               </div>
@@ -222,7 +222,7 @@ const NotificationsPage = () => {
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
             }`}
           >
-            System Logs
+            Activity
             {filters.activeTab === 'system' && (
               <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-full" />
             )}

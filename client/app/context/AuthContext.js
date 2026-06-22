@@ -201,8 +201,8 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       const message = error.response?.data?.message ||
         (error.request
-          ? 'Cannot reach the API from this browser. Check the deployed API URL and CORS origin.'
-          : 'Login failed');
+          ? 'Could not connect to the server. Please check your internet and try again.'
+          : 'Login failed. Please try again.');
 
       return {
         success: false,

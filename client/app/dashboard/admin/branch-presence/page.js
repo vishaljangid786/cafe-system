@@ -32,7 +32,7 @@ export default function BranchPresencePage() {
       const res = await api.get('/locations');
       setLocations(res.data.data);
     } catch (err) {
-      toast.error('Failed to load branches');
+      toast.error('Could not load branches. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -51,7 +51,7 @@ export default function BranchPresencePage() {
       setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
       setAttendance(attRes.data.data);
     } catch (err) {
-      toast.error('Failed to load branch records');
+      toast.error('Could not load branch details. Please try again.');
     } finally {
       setRefetching(false);
       progress.done();
@@ -85,7 +85,7 @@ export default function BranchPresencePage() {
       
       toast.success('Attendance recorded', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update status', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not update attendance. Please try again.', { id: loadToast });
     } finally {
       setMarkingLoading(false);
     }
@@ -129,7 +129,7 @@ export default function BranchPresencePage() {
                     Branch <span className="text-[var(--color-primary)]">Presence</span>
                   </h1>
                   <p className="text-[var(--color-text-muted)] font-bold mt-2 tracking-normal uppercase text-[10px]">
-                    {selectedLocation ? `Managing ${selectedLocation.name} Operations` : 'Select a branch to control staff attendance'}
+                    {selectedLocation ? `Managing ${selectedLocation.name}` : 'Select a branch to mark staff attendance'}
                   </p>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function BranchPresencePage() {
                           <MapPin size={24} />
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Control ID</span>
+                          <span className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch ID</span>
                           <p className="text-xs font-bold text-[var(--color-text-primary)]">#{loc._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
@@ -249,8 +249,8 @@ export default function BranchPresencePage() {
                     <thead>
                       <tr className="bg-[var(--color-surface-soft)] text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] border-b border-[var(--color-border)]">
                         <th className="px-10 py-7">Staff Member</th>
-                        <th className="px-10 py-7 text-center">Marking Status</th>
-                        <th className="px-10 py-7 text-right">Command Actions</th>
+                        <th className="px-10 py-7 text-center">Status</th>
+                        <th className="px-10 py-7 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-border)]">

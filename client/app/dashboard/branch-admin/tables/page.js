@@ -60,7 +60,7 @@ export default function TablesPage() {
       const res = await api.get('/tables');
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Failed to sync floor plan');
+      toast.error('Could not load tables. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -129,7 +129,7 @@ export default function TablesPage() {
 
   const handleAddTable = async (e) => {
     e.preventDefault();
-    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Initializing table...');
+    const loadToast = toast.loading(isEditing ? 'Updating table...' : 'Adding table...');
     try {
       if (isEditing) {
         await api.put(`/tables/${selectedTable._id}`, {
@@ -145,7 +145,7 @@ export default function TablesPage() {
           capacity: Number(newTableCapacity),
           locationId: user.assignedLocation?._id
         });
-        toast.success('Table initialized', { id: loadToast });
+        toast.success('Table added', { id: loadToast });
       }
       setShowAddModal(false);
       setIsEditing(false);
@@ -154,7 +154,7 @@ export default function TablesPage() {
       setNewTableCapacity('1');
       fetchTables();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'System Rule failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -173,16 +173,16 @@ export default function TablesPage() {
   };
 
   const handleAssignConfirm = async (data) => {
-    const loadToast = toast.loading('Securing table...');
+    const loadToast = toast.loading('Booking table...');
     try {
       await api.put(`/tables/${selectedTable._id}/book`, {
         numberOfPeople: Number(data.numberOfPeople),
         customerName: data.customerName
       });
       fetchTables();
-      toast.success('Table secured', { id: loadToast });
+      toast.success('Table booked', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Encryption error', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -198,7 +198,7 @@ export default function TablesPage() {
 
   const handleStageOrder = (e) => {
     e.preventDefault();
-    if (!orderItem.itemName || !orderItem.price) return toast.error('Designation & Yield required');
+    if (!orderItem.itemName || !orderItem.price) return toast.error('Item name and price are required');
 
     const newItem = {
       ...orderItem,
@@ -212,13 +212,13 @@ export default function TablesPage() {
     setPendingOrders(prev => [...prev, newItem]);
     setOrderItem({ itemName: '', quantity: 1, price: '', menuItemId: '', categoryId: '' });
     setShowMenuGrid(false);
-    toast.success('Added to local staging');
+    toast.success('Item added');
   };
 
   const handleApplyCoupon = async () => {
     if (pendingOrders.length === 0) return toast.error('Please add items before applying coupon');
     if (!couponCode) return;
-    const loadToast = toast.loading('Validating offer code...');
+    const loadToast = toast.loading('Checking coupon code...');
     try {
       const subtotal = pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
       const res = await api.post('/coupons/apply', {
@@ -233,9 +233,9 @@ export default function TablesPage() {
       });
       setAppliedCoupon(res.data.data);
       setDiscountAmount(res.data.data.discount);
-      toast.success('Offer code applied', { id: loadToast });
+      toast.success('Coupon applied', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid offer code', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Invalid coupon code', { id: loadToast });
     }
   };
 
@@ -284,10 +284,10 @@ export default function TablesPage() {
   };
 
   const handleSendToKitchen = async () => {
-    if (pendingOrders.length === 0) return toast.error('No items staged for production');
-    if (!selectedTable.customerName) return toast.error('Guest name required');
+    if (pendingOrders.length === 0) return toast.error('Please add items before sending to kitchen');
+    if (!selectedTable.customerName) return toast.error('Guest name is required');
 
-    const loadToast = toast.loading('Transmitting to kitchen...');
+    const loadToast = toast.loading('Sending to kitchen...');
     try {
       const payload = {
         branch: selectedTable.locationId?._id || selectedTable.locationId,
@@ -310,9 +310,9 @@ export default function TablesPage() {
       setPendingOrders([]);
       fetchTables();
       fetchSystemOrders(selectedTable._id);
-      toast.success('Update Successful', { id: loadToast });
+      toast.success('Order sent to kitchen', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failure', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -331,7 +331,7 @@ export default function TablesPage() {
   };
 
   const handleFinalizeSession = async (file, finalTotal) => {
-    const loadToast = toast.loading('Archiving session...');
+    const loadToast = toast.loading('Saving bill...');
     const data = new FormData();
     data.append('billImage', file);
     try {
@@ -342,9 +342,9 @@ export default function TablesPage() {
       setShowOrderModal(false);
       setSelectedTable(null);
       fetchTables();
-      toast.success('Bill saved to history', { id: loadToast });
+      toast.success('Bill saved', { id: loadToast });
     } catch (error) {
-      toast.error('Archival rule failed', { id: loadToast });
+      toast.error('Could not save the bill. Please try again.', { id: loadToast });
     }
   };
 
@@ -357,13 +357,13 @@ export default function TablesPage() {
 
 
   const handleDeleteTable = async () => {
-    const loadToast = toast.loading('Purging table...');
+    const loadToast = toast.loading('Deleting table...');
     try {
       await api.delete(`/tables/${showDeleteConfirm}`);
       fetchTables();
-      toast.success('Table finished', { id: loadToast });
+      toast.success('Table deleted', { id: loadToast });
     } catch (error) {
-      toast.error('System Rule error', { id: loadToast });
+      toast.error('Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
@@ -382,7 +382,7 @@ export default function TablesPage() {
               </div>
               Tables
             </h1>
-            <p className="text-xs text-[var(--color-text-muted)] font-medium ml-13">Manage tables and live sessions</p>
+            <p className="text-xs text-[var(--color-text-muted)] font-medium ml-13">Manage your tables and live orders</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] p-1 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border)]">
@@ -453,7 +453,7 @@ export default function TablesPage() {
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Table Info</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">State</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Status</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Capacity</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
               </tr>
@@ -548,7 +548,7 @@ export default function TablesPage() {
           {tables.length === 0 && (
             <div className="p-20 text-center text-[var(--color-text-muted)]">
               <Globe size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-bold uppercase tracking-normal">No tables discovered in this sector</p>
+              <p className="text-sm font-bold uppercase tracking-normal">No tables found</p>
             </div>
           )}
         </div>
@@ -573,12 +573,12 @@ export default function TablesPage() {
         <Modal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          title={isEditing ? 'Refine Table Configuration' : 'Initialize New Table'}
+          title={isEditing ? 'Edit Table' : 'Add New Table'}
           maxWidth="max-w-md"
         >
           <form onSubmit={handleAddTable} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table System Rule Number</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table Number</label>
               <input
                 required
                 type="number"
@@ -589,7 +589,7 @@ export default function TablesPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table Name / Designation</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Table Name</label>
               <input
                 type="text"
                 className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] focus:ring-2 focus:ring-[var(--color-primary)] p-5 text-sm font-bold dark:text-[var(--color-text-primary)] outline-none transition-all"
@@ -599,7 +599,7 @@ export default function TablesPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Seating Capacity (Members)</label>
+              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal ml-1">Seating Capacity</label>
               <input
                 required
                 type="number"
@@ -616,7 +616,7 @@ export default function TablesPage() {
               className="w-full !rounded-xl !py-5 shadow-sm "
               icon={isEditing ? Edit3 : Plus}
             >
-              {isEditing ? 'Update Configuration' : 'Confirm Initialization'}
+              {isEditing ? 'Update Table' : 'Add Table'}
             </Button>
           </form>
         </Modal>
@@ -624,7 +624,7 @@ export default function TablesPage() {
         <Modal
           isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          title={`Session List: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
+          title={`Order: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` — ${selectedTable.tableName}` : ''}`}
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
@@ -635,15 +635,15 @@ export default function TablesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal flex items-center mb-1">
-                        <ShoppingBag size={14} className="mr-2" /> Session Details
+                        <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Active Order Registry</p>
+                      <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Current Order</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Units Staged</span>
+                      <span className="text-[8px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Items Added</span>
                     </div>
                   </div>
 
@@ -654,7 +654,7 @@ export default function TablesPage() {
                       </label>
                       <input 
                         type="text"
-                        placeholder="ENTER NAME"
+                        placeholder="Enter name"
                         className="w-full bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)] dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
@@ -662,8 +662,8 @@ export default function TablesPage() {
                     </div>
                     <div>
                       <PremiumSelect
-                        label="Table Party"
-                        placeholder="Select Guests"
+                        label="Number of Guests"
+                        placeholder="Select guests"
                         options={Array.from({ length: Number(selectedTable.capacity) || 4 }, (_, i) => ({
                           value: i + 1,
                           label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`
@@ -733,7 +733,7 @@ export default function TablesPage() {
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-[var(--color-text-muted)]" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Registry is Empty</p>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No items added yet</p>
                     </div>
                   )}
 
@@ -741,7 +741,7 @@ export default function TablesPage() {
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <h3 className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-normal mb-4 flex items-center gap-2">
-                        <Zap size={14} /> Production Queue (OMS)
+                        <Zap size={14} /> Kitchen Queue
                       </h3>
                       <div className="space-y-3">
                         {systemOrders.length > 0 ? (
@@ -775,7 +775,7 @@ export default function TablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No active production units</div>
+                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">No orders in the kitchen</div>
                         )}
                       </div>
                     </div>
@@ -785,7 +785,7 @@ export default function TablesPage() {
                 <div className="p-8 border-t border-[var(--color-border)] dark:border-[var(--color-border)] bg-white/50 dark:bg-[var(--color-surface)]/50 space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-                      <span>Production Subtotal</span>
+                      <span>Subtotal</span>
                       <span>₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
@@ -796,7 +796,7 @@ export default function TablesPage() {
                     )}
                     <div className="h-px bg-[var(--color-surface-soft)] dark:bg-[var(--color-surface)] my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Billed Total</span>
+                      <span className="text-[10px] font-bold uppercase text-[var(--color-text-muted)] tracking-normal mb-2">Total</span>
                       <span className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] tracking-tight">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
@@ -821,11 +821,11 @@ export default function TablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('Culinary System Rule: All orders must be SERVED before finalization');
+                          if (!allReady) return toast.error('All orders must be served before you can finish the bill');
                           setIsBillPreviewOpen(true);
                         }}
                       >
-                        Finalize & Bill
+                        Finish & Bill
                       </Button>
                     )}
                   </div>
@@ -841,7 +841,7 @@ export default function TablesPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search the menu list..."
+                    placeholder="Search the menu..."
                     className="w-full rounded-xl bg-[var(--color-surface-soft)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
@@ -852,7 +852,7 @@ export default function TablesPage() {
                 {!menuSearch && (
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center">
-                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Top Performing Items
+                      <Zap size={12} className="mr-2 text-[var(--color-primary)]" /> Best Selling Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                       {menuItems.slice(0, 4).map((item) => (
@@ -905,7 +905,7 @@ export default function TablesPage() {
 
                 {/* Main Menu Grid */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu Grid</h3>
+                  <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {menuItems
                       .filter(m => m.name.toLowerCase().includes(menuSearch.toLowerCase()))
@@ -968,7 +968,7 @@ export default function TablesPage() {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="ENTER CODE"
+                          placeholder="Enter code"
                           className="flex-1 bg-[var(--color-surface)] dark:bg-[var(--color-bg)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
@@ -984,14 +984,14 @@ export default function TablesPage() {
                     {appliedCoupon && (
                       <div className="mt-4 p-3 bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-xl text-[10px] font-bold text-[var(--color-success)] flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Check size={12} /> {appliedCoupon.code} Activated
+                          <Check size={12} /> {appliedCoupon.code} Applied
                         </div>
                         <button 
                           onClick={() => {
                             setAppliedCoupon(null);
                             setDiscountAmount(0);
                             setCouponCode('');
-                            toast.success('Coupon removed - Order unlocked');
+                            toast.success('Coupon removed');
                           }}
                           className="text-[var(--color-danger)] hover:text-[var(--color-danger)] uppercase text-[9px] font-bold"
                         >
@@ -1010,8 +1010,8 @@ export default function TablesPage() {
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={handleDeleteTable}
-          title="Decommission Table?"
-          message="This table will be permanently removed from the floor grid."
+          title="Delete Table?"
+          message="This table will be permanently removed."
         />
 
         <BillPreview

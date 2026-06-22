@@ -56,7 +56,7 @@ export default function BookingsManagementPage() {
       setBookings(res.data.data);
       setTotalPages(res.data.pagination.pages);
     } catch (error) {
-      toast.error('Failed to load bookings');
+      toast.error('Could not load bookings. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -81,7 +81,7 @@ export default function BookingsManagementPage() {
       fetchBookings();
       setShowDetailModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not update the booking. Please try again.', { id: loadToast });
     }
   };
 
@@ -214,7 +214,7 @@ export default function BookingsManagementPage() {
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-text-primary)]">
                           <Users size={16} className="text-[var(--color-text-muted)]" />
-                          {booking.numberOfGuests} Persons
+                          {booking.numberOfGuests} People
                         </div>
                       </td>
                       <td className="px-8 py-6">
@@ -285,7 +285,7 @@ export default function BookingsManagementPage() {
                       </div>
                       <div className="flex items-center gap-3 text-[var(--color-text-muted)]">
                         <Users size={16} className="text-[var(--color-primary)]" />
-                        <span className="text-xs font-bold text-[var(--color-text-primary)]">{booking.numberOfGuests} Persons</span>
+                        <span className="text-xs font-bold text-[var(--color-text-primary)]">{booking.numberOfGuests} People</span>
                       </div>
                       <div className="flex items-center gap-3 text-[var(--color-text-muted)]">
                         <MapPin size={16} className="text-[var(--color-primary)]" />
@@ -353,7 +353,7 @@ export default function BookingsManagementPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Phone size={18} className="text-[var(--color-primary)]" />
-                      <p className="text-xs text-[var(--color-text-muted)] font-bold">{selectedBooking.userId?.phone || 'No contact provided'}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] font-bold">{selectedBooking.userId?.phone || 'No phone number provided'}</p>
                     </div>
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export default function BookingsManagementPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Users size={18} className="text-[var(--color-primary)]" />
-                      <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedBooking.numberOfGuests} Persons</p>
+                      <p className="text-sm font-bold text-[var(--color-text-primary)]">{selectedBooking.numberOfGuests} People</p>
                     </div>
                   </div>
                 </div>
@@ -437,7 +437,7 @@ export default function BookingsManagementPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-8 py-6 bg-[var(--color-surface)]/40 rounded-xl border border-[var(--color-border)] mt-10 shadow-sm  transition-colors">
             <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">
-              System Rule Page {currentPage} of {totalPages}
+              Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
@@ -445,14 +445,14 @@ export default function BookingsManagementPage() {
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface)] text-[var(--color-text-primary)]"
               >
-                Prev Branch
+                Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 className="px-4 py-2 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-[var(--color-surface)] text-[var(--color-text-primary)]"
               >
-                Next Branch
+                Next
               </button>
             </div>
           </div>

@@ -79,7 +79,7 @@ export default function AdminOrdersDashboard() {
       setAnalytics(analyticsRes.data.data);
       setLocations(locRes.data.data);
     } catch (error) {
-      toast.error('Strategic sync failed');
+      toast.error('Could not load orders. Please try again.');
     } finally {
       didInitRef.current = true;
       if (!silent) {
@@ -122,12 +122,12 @@ export default function AdminOrdersDashboard() {
   const handleForceComplete = async (id) => {
     try {
       await api.patch(`/orders/${id}/force-complete`);
-      toast.success('Order force-completed');
+      toast.success('Order marked as completed');
       setSelectedOrder(null);
       fetchData();
     } catch (error) {
       console.error('Finalization Failure:', error);
-      const msg = error.response?.data?.message || 'Override rule failed';
+      const msg = error.response?.data?.message || 'Could not complete the order. Please try again.';
       toast.error(msg);
     }
   };
@@ -170,7 +170,7 @@ export default function AdminOrdersDashboard() {
     setStatusFilter('');
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
-    toast.success('Terminal reset to defaults');
+    toast.success('Filters cleared');
   };
 
   const handleOrderSignalProbe = async (id) => {
@@ -180,7 +180,7 @@ export default function AdminOrdersDashboard() {
       setSelectedOrder(res.data.data);
       setIsWatchlistModalOpen(false);
     } catch (error) {
-      toast.error('Failed to intercept signal details');
+      toast.error('Could not load order details. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -201,7 +201,7 @@ export default function AdminOrdersDashboard() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success('Orders dataset exported');
+      toast.success('Orders exported');
     } catch {
       toast.error('Export failed');
     }
@@ -226,7 +226,7 @@ export default function AdminOrdersDashboard() {
             </div>
             <div>
               <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] leading-none mb-2">
-                Operational <span className="text-[var(--color-primary)]">Oversight</span>
+                All <span className="text-[var(--color-primary)]">Orders</span>
               </h1>
               <div className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-normal flex items-center gap-2 mt-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
@@ -274,10 +274,10 @@ export default function AdminOrdersDashboard() {
           <>
             {/* Tactical Metrics Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              <MetricCard label="Avg Fulfillment" value={`${analytics?.metrics?.avgPrepTime || 0}m`} icon={Timer} color="primary" sub="ACCEPTED → READY" />
-              <MetricCard label="Live Signals" value={(analytics?.charts?.ordersByStatus || []).filter(s => ['ACCEPTED', 'PREPARING'].includes(s.name)).reduce((acc, curr) => acc + curr.value, 0)} icon={Activity} color="primary" sub="Active Processing" />
-              <MetricCard label="Critical Delays" value={analytics?.delayedOrders?.length || 0} icon={AlertCircle} color="rose" sub="Threshold Breached" />
-              <MetricCard label="Global Efficiency" value={`${(((analytics?.charts?.ordersByStatus?.find(s => s.name === 'SERVED')?.value || 0) / (analytics?.metrics?.totalOrders || 1)) * 100).toFixed(0)}%`} icon={CheckCircle2} color="emerald" sub="Success Ratio" />
+              <MetricCard label="Avg Prep Time" value={`${analytics?.metrics?.avgPrepTime || 0}m`} icon={Timer} color="primary" sub="Accepted to ready" />
+              <MetricCard label="In Progress" value={(analytics?.charts?.ordersByStatus || []).filter(s => ['ACCEPTED', 'PREPARING'].includes(s.name)).reduce((acc, curr) => acc + curr.value, 0)} icon={Activity} color="primary" sub="Being prepared" />
+              <MetricCard label="Delayed Orders" value={analytics?.delayedOrders?.length || 0} icon={AlertCircle} color="rose" sub="Taking too long" />
+              <MetricCard label="Completion Rate" value={`${(((analytics?.charts?.ordersByStatus?.find(s => s.name === 'SERVED')?.value || 0) / (analytics?.metrics?.totalOrders || 1)) * 100).toFixed(0)}%`} icon={CheckCircle2} color="emerald" sub="Orders served" />
             </div>
 
             {/* Efficiency Chart & Watchlist */}
@@ -289,7 +289,7 @@ export default function AdminOrdersDashboard() {
                   <ChefHat size={180} />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-text-muted)] flex items-center gap-3 mb-10">
-                  <BarChart3 size={18} className="text-primary" /> Kitchen Efficiency Analysis
+                  <BarChart3 size={18} className="text-primary" /> Kitchen Performance
                 </h3>
                 <div className="h-[300px] w-full relative z-10">
                   <ResponsiveContainer width="100%" height="100%">
@@ -311,7 +311,7 @@ export default function AdminOrdersDashboard() {
               <div className="lg:col-span-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-10 shadow-sm flex flex-col relative overflow-hidden group">
                 <div className="flex items-center justify-between mb-10">
                   <h3 className="text-xs font-bold uppercase tracking-normal text-[var(--color-danger)] flex items-center gap-3">
-                    <AlertCircle size={18} /> Critical Watchlist
+                    <AlertCircle size={18} /> Delayed Orders
                   </h3>
                   {analytics?.delayedOrders?.length > 5 && (
                     <button onClick={() => setIsWatchlistModalOpen(true)} className="text-[9px] font-bold uppercase tracking-normal text-[var(--color-danger)]/60 hover:text-[var(--color-danger)] transition-colors">
@@ -351,13 +351,13 @@ export default function AdminOrdersDashboard() {
                     <div className="h-1 w-8 bg-primary rounded-full" />
                     Live Orders
                   </h3>
-                  <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">Live Monitor <span className="text-[var(--color-text-muted)]">Matrix</span></h2>
+                  <h2 className="text-4xl font-bold text-[var(--color-text-primary)] tracking-tight">Order <span className="text-[var(--color-text-muted)]">List</span></h2>
                 </div>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
                   <input
                     type="text"
-                    placeholder="Filter active signals..."
+                    placeholder="Search orders..."
                     className="w-full h-14 pl-14 pr-6 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-xs font-bold focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -371,11 +371,11 @@ export default function AdminOrdersDashboard() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-soft)]/50">
-                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Signal</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order ID</th>
                           <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Order Status</th>
                           <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Branch / Table</th>
-                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Payload Detail</th>
-                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Value</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Items</th>
+                          <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Amount</th>
                           <th className="py-6 px-8 text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)] text-right">Actions</th>
                         </tr>
                       </thead>
@@ -447,10 +447,10 @@ export default function AdminOrdersDashboard() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-10 py-8 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Matrix Segment {currentPage} / {totalPages}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-[var(--color-text-muted)]">Page {currentPage} / {totalPages}</p>
                   <div className="flex gap-4">
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Prev Segment</button>
-                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Next Segment</button>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Previous</button>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="px-8 py-4 rounded-xl bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-primary hover:text-[var(--color-on-primary)] hover:shadow-sm hover:shadow-primary/20 active:scale-95">Next</button>
                   </div>
                 </div>
               )}
