@@ -51,7 +51,7 @@ export default function BranchRevenuePage() {
       if (start) query.append('startDate', start);
 
       const res = await api.get(`/transactions?${query.toString()}`);
-      const revenueOnly = res.data.data.filter(t => t.type !== 'expense');
+      const revenueOnly = res.data.data.filter(t => t.type !== 'EXPENSE');
       setTransactions(revenueOnly);
     } catch (err) {
       console.error('Revenue sync failed');

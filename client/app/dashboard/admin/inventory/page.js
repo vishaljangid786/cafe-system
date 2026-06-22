@@ -581,8 +581,8 @@ export default function InventoryDashboard() {
                 onChange={(val) => setFormData({...formData, reason: val})}
                 options={[
                   { label: 'Spillage', value: 'spillage' },
-                  { label: 'Expiry', value: 'expiry' },
-                  { label: 'Damage', value: 'damage' },
+                  { label: 'Expiry', value: 'expired' },
+                  { label: 'Damage', value: 'damaged' },
                   { label: 'Other', value: 'other' }
                 ]}
               />

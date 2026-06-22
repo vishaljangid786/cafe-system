@@ -102,7 +102,7 @@ export default function RevenuePage() {
       const res = await api.get(`/transactions?${query.toString()}`);
 
       // Filter only revenue types (we can also do this in backend, but keep it safe here)
-      const revenueOnly = (res.data.data || []).filter(t => t.type !== 'expense');
+      const revenueOnly = (res.data.data || []).filter(t => t.type !== 'EXPENSE');
       setTransactions(revenueOnly);
 
       // Set pagination

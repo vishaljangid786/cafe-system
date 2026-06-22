@@ -17,7 +17,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       Cookies.remove('selectedLocation');
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      const publicPaths = ['/login', '/signup'];
+      if (typeof window !== 'undefined' && !publicPaths.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
     }
