@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.route('/')
-  .get(getExpenses)
+  .get(checkPermissions('viewRevenue'), getExpenses)
   .post(checkPermissions('editRevenue'), upload.single('proofImage'), addExpense);
 
 router.route('/:id')

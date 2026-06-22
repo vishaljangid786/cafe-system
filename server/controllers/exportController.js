@@ -40,10 +40,13 @@ const exportData = asyncHandler(async (req, res) => {
   } else if (branchId && branchId !== 'all') {
     enforceLocationAccess(req, res, branchId);
     finalBranchId = branchId;
-  } else if (req.user.role === 'admin' || req.user.role === 'branch_admin') {
+  } else if (['admin', 'branch_admin', 'location_admin'].includes(req.user.role)) {
     finalBranchId = { $in: userLocationIds(req.user) };
   } else if (req.user.role === 'staff' || req.user.role === 'chef') {
     finalBranchId = req.user.assignedLocation;
+  } else if (req.user.role !== 'super_admin') {
+    // Fail closed for any other non-super role rather than exporting all branches.
+    finalBranchId = req.user.assignedLocation || { $in: [] };
   }
   
   if (finalBranchId) {

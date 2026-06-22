@@ -179,7 +179,7 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
   const scopedIds = locationIds ? scopedLocationIds(req, locationIds) : null;
   const ids = scopedIds ? scopedIds.$in.map(id => new mongoose.Types.ObjectId(id)) : [];
 
-  const dateMatch = getDateMatchCriteria(startDate, endDate, period || 30, 'date');
+  const dateMatch = AnalyticsService.getDateMatchCriteria(startDate, endDate, period || 30, 'date');
   if (ids.length > 0) {
     dateMatch.locationId = { $in: ids };
   }
@@ -287,7 +287,7 @@ const getComparisonDetails = asyncHandler(async (req, res) => {
     throw new Error('Access denied to one or more requested locations');
   }
   const ids = rawIds.map(id => new mongoose.Types.ObjectId(id));
-  const dateMatch = getDateMatchCriteria(startDate, endDate, period, 'date');
+  const dateMatch = AnalyticsService.getDateMatchCriteria(startDate, endDate, period, 'date');
 
   // 1. Staff-Item Breakdown for each location
   const detailedAgg = await Transaction.aggregate([

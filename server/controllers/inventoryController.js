@@ -33,17 +33,17 @@ const updateInventory = asyncHandler(async (req, res) => {
   // Authorization check
   enforceLocationAccess(req, res, branch, 'You do not have permission to update this branch inventory');
 
-  if (Number(quantity) <= 0) {
+  if (!Number.isFinite(Number(quantity)) || Number(quantity) <= 0) {
     res.status(400);
-    throw new Error('Quantity must be greater than zero');
+    throw new Error('Quantity must be a number greater than zero');
   }
 
   let item = await BranchInventory.findOne({ branch, ingredient });
 
   if (item) {
     item.stock += Number(quantity);
-    if (costPerUnit) item.costPerUnit = costPerUnit;
-    if (minThreshold) item.minThreshold = minThreshold;
+    if (costPerUnit !== undefined) item.costPerUnit = Number(costPerUnit);
+    if (minThreshold !== undefined) item.minThreshold = Number(minThreshold);
     item.lastRestocked = new Date();
     await item.save();
   } else {
