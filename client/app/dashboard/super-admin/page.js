@@ -59,8 +59,8 @@ export default function SuperAdminDashboard() {
 
         {/* Global Control Header */}
         <SlideIn>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 relative z-10">
-            <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 relative z-10">
+            <div className="space-y-5 min-w-0">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-4 py-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-bold uppercase tracking-normal rounded-full border border-[var(--color-primary)]/30 ">
                   <Cpu size={12} className="animate-pulse" /> Admin Dashboard
@@ -68,8 +68,8 @@ export default function SuperAdminDashboard() {
                 <div className="h-1 w-1 bg-[var(--color-border)] rounded-full" />
                 <div className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-normal">Version 4.2.0</div>
               </div>
-              <h1 className="text-8xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center gap-6 italic leading-none">
-                <Crown className="text-[var(--color-primary)] h-20 w-20 " />
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[var(--color-text-primary)] flex items-center flex-wrap gap-x-4 gap-y-1 italic leading-none break-words">
+                <Crown className="text-[var(--color-primary)] h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 shrink-0" />
                 ADMIN <span className="text-[var(--color-text-muted)]">DASHBOARD</span>
               </h1>
               <div className="flex items-center gap-4 text-[var(--color-text-secondary)] font-bold italic text-sm">
@@ -78,19 +78,19 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 bg-[var(--color-surface)]/40  p-10 rounded-xl border border-[var(--color-border)] shadow-sm relative overflow-hidden group">
+            <div className="grid grid-cols-2 gap-6 sm:gap-10 bg-[var(--color-surface)]/40 p-6 sm:p-8 rounded-xl border border-[var(--color-border)] shadow-sm relative overflow-hidden group w-full md:w-auto shrink-0">
               <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <div className="relative z-10">
                 <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 flex items-center gap-2">
                   <Globe size={10} /> Active Branches
                 </p>
-                <p className="text-5xl font-bold text-[var(--color-text-primary)] tracking-tight italic">{data?.totalBranches}</p>
+                <p className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] tracking-tight italic">{data?.totalBranches}</p>
               </div>
               <div className="relative z-10 text-right">
                 <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-normal mb-2 flex items-center justify-end gap-2">
                   <Zap size={10} /> Uptime
                 </p>
-                <p className="text-5xl font-bold text-[var(--color-success)] tracking-tight italic">99.8%</p>
+                <p className="text-4xl sm:text-5xl font-bold text-[var(--color-success)] tracking-tight italic">99.8%</p>
               </div>
             </div>
           </div>
