@@ -21,11 +21,11 @@ router.get('/', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 
 router.post('/ingredients', checkRoles('admin', 'super_admin'), createIngredient);
 router.get('/ingredients', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getIngredients);
 
-// Shared/Branch Admin routes
-router.get('/branch/:branchId', checkRoles('admin', 'super_admin', 'branch_admin'), getBranchInventory);
+// Shared/Branch routes — reads match the list route (any manageOrders holder).
+router.get('/branch/:branchId', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getBranchInventory);
 router.post('/update', checkRoles('admin', 'super_admin', 'branch_admin'), updateInventory);
 router.post('/waste', checkRoles('admin', 'super_admin', 'branch_admin'), logWaste);
-router.get('/alerts', checkRoles('admin', 'super_admin', 'branch_admin'), getInventoryAlerts);
-router.get('/suggestions', checkRoles('admin', 'super_admin', 'branch_admin'), getPurchaseSuggestions);
+router.get('/alerts', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getInventoryAlerts);
+router.get('/suggestions', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getPurchaseSuggestions);
 
 module.exports = router;

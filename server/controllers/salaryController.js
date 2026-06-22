@@ -113,15 +113,15 @@ const getAllSalary = asyncHandler(async (req, res) => {
   // 1. Build User Filter Query for Search/Role/Location
   let userQuery = {};
   
-  // Hierarchy Visibility Logic
-  // Hierarchy Visibility Logic
-  if (req.user.role === 'admin') {
-    userQuery.role = { $in: ['branch_admin', 'staff'] };
-  } else if (req.user.role === 'super_admin') {
-    userQuery.role = { $in: ['admin', 'branch_admin', 'staff'] };
-  }
-
-  if (role) userQuery.role = role;
+  // Hierarchy visibility: which roles this actor may see salaries for (never peers
+  // or superiors). A requested ?role filter is intersected with this — otherwise an
+  // admin could pass ?role=admin to view peer admins' salaries.
+  const visibleRoles = req.user.role === 'super_admin'
+    ? ['admin', 'branch_admin', 'location_admin', 'staff', 'chef']
+    : req.user.role === 'admin'
+      ? ['branch_admin', 'location_admin', 'staff', 'chef']
+      : ['staff', 'chef'];
+  userQuery.role = (role && visibleRoles.includes(role)) ? role : { $in: visibleRoles };
 
   const branchScope = scopedLocationId(req, locationId);
   if (branchScope) userQuery.assignedLocation = branchScope;
@@ -297,7 +297,9 @@ const generatePayroll = asyncHandler(async (req, res) => {
 
     // Deterministic Calculation Stage (Replaces enterprise-risk randomness)
     const latePenalties = 0; // Should be pulled from late-clock-in logs in future Phase
-    const absentPenalties = (raw.totalAbsent || 0) * dailyRate;
+    // Absent days are ALREADY excluded from payableDays (so baseSalary doesn't pay
+    // for them). Subtracting them again was a double penalty — keep this at 0.
+    const absentPenalties = 0;
 
     const topSellerBonus = 0; // Should be pulled from sales volume in future Phase
     const performanceBonus = 0;
@@ -346,7 +348,9 @@ const approvePayroll = asyncHandler(async (req, res) => {
   } else if (role === 'admin' && payroll.status === 'PENDING_ADMIN_APPROVAL') {
     payroll.status = 'FINAL_APPROVED';
     payroll.approvedByAdminAt = new Date();
-  } else if (role === 'super_admin') {
+  } else if (role === 'super_admin' && payroll.status === 'FINAL_APPROVED') {
+    // Only finalize an admin-approved payroll — don't skip stages, and (since PAID
+    // no longer matches any branch) a paid payroll can't be re-run/re-paid.
     payroll.status = 'PAID';
     payroll.approvedBySuperAdminAt = new Date();
   } else {
