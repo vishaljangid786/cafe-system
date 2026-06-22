@@ -16,8 +16,6 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-const QUICK_LOGIN_PASSWORD = '123456'; 
-
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -52,17 +50,6 @@ export default function LoginPage() {
       toast.error(res.message || 'Login failed. Please check your details.');
     }
     // Success toast ("Welcome back, <name>") is shown by AuthContext — no duplicate here.
-  };
-
-  const handleQuickLogin = async (email) => {
-    setServerError('');
-    const res = await login(email, QUICK_LOGIN_PASSWORD);
-
-    if (!res.success) {
-      const message = res.message || 'Quick login failed. Please try again.';
-      setServerError(message);
-      toast.error(message);
-    }
   };
 
   if (loading) {
@@ -185,43 +172,10 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick Login (Testing) */}
-          <div className="mt-10 space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-(--color-border)" />
-              <p className="text-xs font-medium text-(--color-text-muted)">Quick Login (Testing Only)</p>
-              <div className="h-px flex-1 bg-(--color-border)" />
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {[
-                { label: 'Super', email: 'superadmin@cafe.com' },
-                { label: 'Admin', email: 'admin@cafeos.com' },
-                { label: 'Branch', email: 'branch1@cafeos.com' },
-                { label: 'Chef', email: 'chef1@cafeos.com' },
-                { label: 'Staff', email: 'staff1@cafeos.com' },
-              ].map((testUser) => (
-                <button
-                  key={testUser.label}
-                  type="button"
-                  onClick={() => handleQuickLogin(testUser.email)}
-                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-(--color-border) hover:border-primary hover:bg-(--color-primary-soft) transition-colors group"
-                >
-                  <span className="text-sm font-medium text-(--color-text-secondary) group-hover:text-primary transition-colors">
-                    {testUser.label}
-                  </span>
-                  <span className="text-[10px] text-(--color-text-muted) mt-0.5">
-                    pass: {QUICK_LOGIN_PASSWORD}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex justify-center pt-2">
-              <div className="flex items-center gap-2 px-3 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-full">
-                <Lock size={11} className="text-primary" />
-                <span className="text-xs text-(--color-text-muted)">Secure connection</span>
-              </div>
+          <div className="mt-10 flex justify-center">
+            <div className="flex items-center gap-2 px-3 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-full">
+              <Lock size={11} className="text-primary" />
+              <span className="text-xs text-(--color-text-muted)">Secure connection</span>
             </div>
           </div>
         </motion.div>

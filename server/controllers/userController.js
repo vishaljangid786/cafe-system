@@ -674,7 +674,14 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
     }
   }
 
-  user.permissions = req.body.permissions;
+  // Validate + merge so a partial/empty body can't silently wipe existing
+  // permissions (explicit false still unsets a key).
+  if (!req.body.permissions || typeof req.body.permissions !== 'object' || Array.isArray(req.body.permissions)) {
+    res.status(400);
+    throw new Error('A permissions object is required');
+  }
+  const existingPerms = user.permissions?.toObject ? user.permissions.toObject() : (user.permissions || {});
+  user.permissions = { ...existingPerms, ...req.body.permissions };
   await user.save();
 
   res.json({

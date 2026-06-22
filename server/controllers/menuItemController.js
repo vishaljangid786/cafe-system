@@ -86,16 +86,24 @@ const getMenuItems = asyncHandler(async (req, res) => {
     });
   }
 
+  // Hide the internal cost price from staff/chef (margin data).
+  const canSeeCost = !['staff', 'chef'].includes(req.user.role);
+  const data = mergedItems.map((it) => {
+    const o = it.toObject ? it.toObject() : it;
+    if (!canSeeCost) delete o.costPrice;
+    return o;
+  });
+
   res.json({
     success: true,
-    count: mergedItems.length,
+    count: data.length,
     pagination: {
       total,
       page,
       pages: Math.ceil(total / limit),
       limit
     },
-    data: mergedItems,
+    data,
   });
 });
 
@@ -119,13 +127,9 @@ const getMenuItem = asyncHandler(async (req, res) => {
   }
   const branchStocks = await BranchStock.find(stockQuery);
 
-  res.json({
-    success: true,
-    data: {
-      ...item.toObject(),
-      branchStocks,
-    },
-  });
+  const data = { ...item.toObject(), branchStocks };
+  if (['staff', 'chef'].includes(req.user.role)) delete data.costPrice;
+  res.json({ success: true, data });
 });
 
 // @desc    Create a menu item
@@ -249,6 +253,16 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
   if (item.isGlobal && !canManageGlobal) {
     res.status(403);
     throw new Error('Only users who can manage the global menu may edit a global item');
+  }
+
+  // A non-super actor must own the item's CURRENT branch to edit it — otherwise
+  // they could hijack another branch's item (e.g. by reassigning it to their own).
+  if (req.user.role !== 'super_admin' && !item.isGlobal) {
+    const owns = (item.availableBranches || []).some((b) => canAccessLocation(req.user, b.toString()));
+    if (!owns) {
+      res.status(403);
+      throw new Error('You can only edit menu items for your own branch');
+    }
   }
 
   const {
