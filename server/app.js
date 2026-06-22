@@ -91,6 +91,26 @@ app.use(mongoSanitize());
 app.use(hpp());
 app.use(cookieParser());
 
+// CSRF mitigation for cookie auth: a state-changing request that carries the
+// auth cookie must come from an allowed origin. Cross-site <form>/<img> attacks
+// can't forge the Origin/Referer, and Bearer-token clients (no cookie) are exempt
+// since they aren't CSRF-able.
+app.use((req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  if (!req.cookies?.token) return next();
+  if (allowAnyOrigin && process.env.NODE_ENV !== 'production') return next();
+  const origin = req.headers.origin?.replace(/\/+$/, '');
+  let ok = !!origin && allowedOrigins.has(origin);
+  if (!ok && !origin && req.headers.referer) {
+    try { ok = allowedOrigins.has(new URL(req.headers.referer).origin.replace(/\/+$/, '')); } catch (e) { /* invalid referer */ }
+  }
+  if (!ok) {
+    res.status(403);
+    return next(new Error('Cross-site request blocked (CSRF protection)'));
+  }
+  next();
+});
+
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
