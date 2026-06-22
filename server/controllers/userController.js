@@ -177,6 +177,11 @@ const promoteUser = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('You do not have permission to promote this user');
   }
+  // Branch admins can only act on Staff/Chef in their own branch.
+  if (req.user.role === 'branch_admin' && !['staff', 'chef'].includes(user.role)) {
+    res.status(403);
+    throw new Error('Branch Admins can only promote their own Staff or Chef');
+  }
 
   const oldRole = user.role;
   let nextRole = user.role;
@@ -224,6 +229,11 @@ const demoteUser = asyncHandler(async (req, res) => {
   if (req.user.role === 'admin' && (user.role === 'admin' || user.role === 'super_admin')) {
     res.status(403);
     throw new Error('You do not have permission to demote this user');
+  }
+  // Branch admins can only act on Staff/Chef in their own branch.
+  if (req.user.role === 'branch_admin' && !['staff', 'chef'].includes(user.role)) {
+    res.status(403);
+    throw new Error('Branch Admins can only manage their own Staff or Chef');
   }
 
   const oldRole = user.role;
@@ -290,11 +300,16 @@ const updateUser = asyncHandler(async (req, res) => {
     updateData.aadharNumber = encrypt(updateData.aadharNumber);
   }
 
-  // Only Super Admin can change roles to 'admin' or 'super_admin'
+  // Role-change rules by actor:
+  //  - super_admin: any role
+  //  - admin: any role except admin/super_admin
+  //  - branch_admin: only switch their own staff/chef between staff and chef
   if (req.body.role) {
     if (req.user.role === 'super_admin') {
       updateData.role = req.body.role;
     } else if (req.user.role === 'admin' && !['admin', 'super_admin'].includes(req.body.role)) {
+      updateData.role = req.body.role;
+    } else if (req.user.role === 'branch_admin' && ['staff', 'chef'].includes(req.body.role)) {
       updateData.role = req.body.role;
     }
   }

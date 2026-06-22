@@ -36,10 +36,10 @@ router.route('/:id/permissions')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUserPermissions);
 
 router.route('/:id/promote')
-  .patch(checkRoles('super_admin', 'admin'), promoteUser);
+  .patch(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin'], 'manageStaff'), promoteUser);
 
 router.route('/:id/demote')
-  .patch(checkRoles('super_admin', 'admin'), demoteUser);
+  .patch(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin'], 'manageStaff'), demoteUser);
 
 router.patch('/:id/toggle-block', checkRoleOrPermission(['super_admin', 'admin'], 'manageStaff'), toggleBlocklist);
 
