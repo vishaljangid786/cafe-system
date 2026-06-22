@@ -136,7 +136,7 @@ export default function BranchStaffPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/signup')}
+                onClick={() => router.push('/dashboard/add-member')}
                 className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
               >
                 <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff

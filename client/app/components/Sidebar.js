@@ -78,8 +78,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       const adminItems = [];
       const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
 
-      // Add Member -> full /signup page (super_admin, admin, branch_admin)
-      adminItems.push({ name: 'Add Member', href: '/signup', icon: UserPlus });
+      // Add Member -> in-dashboard single-page member form
+      adminItems.push({ name: 'Add Member', href: '/dashboard/add-member', icon: UserPlus });
 
       if (role === 'super_admin') {
         adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });

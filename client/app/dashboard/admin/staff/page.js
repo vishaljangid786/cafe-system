@@ -345,7 +345,7 @@ export default function LocationStaffPage() {
       </div>
     );
   };
-
+  
   const renderHierarchy = () => {
     const admins = staff.filter(u => u.role === 'admin');
     const branchAdmins = staff.filter(u => u.role === 'branch_admin');
@@ -527,7 +527,7 @@ export default function LocationStaffPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push('/signup')}
+                    onClick={() => router.push('/dashboard/add-member')}
                     className="flex items-center gap-2 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-normal shadow-lg "
                   >
                     <Plus size={16} />
