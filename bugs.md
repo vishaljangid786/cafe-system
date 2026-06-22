@@ -10,7 +10,16 @@ _Last updated: 2026-06-22._
 
 A full-stack senior-inspector pass is running across all 14 feature areas (auth, users, orders, menu, tables/reservations, money, payroll, analytics, inventory, notifications/realtime, locations/customers, super-admin, + cross-cutting data-correctness and frontend-UX). Each endpoint/page/flow is traced end-to-end and every finding is adversarially verified against the already-patched code. **Confirmed new findings will be written here** (by severity) as they land; CRITICAL/HIGH/MEDIUM will then be fixed and removed.
 
-### Pass 3 findings — _populating…_
+### Pass 3 findings
+
+**Manual deep-inspection so far** (the code is testing well-hardened after passes 1–2):
+- ✅ **Notifications:** mark-read / mark-unread are user-scoped (`recipients.user`) — no IDOR. Fixed an **unclamped pagination `limit`** in `getNotifications` (was an unbounded query). _(LOW — fixed)_
+- ✅ **File uploads** (`uploadMiddleware`): 5 MB size cap + image/PDF type filter — OK.
+- ✅ **Pagination:** every list endpoint clamps its limit (`clampLimit`); notifications was the only gap (now fixed).
+- ✅ **Mutation routes:** all POST/PUT/PATCH/DELETE endpoints are role/permission-gated — no unprotected mutations.
+- ✅ **Frontend `api.js`:** 401 → redirect to `/login` (session expiry handled), no redirect loop on the login page.
+
+**Systematic 14-area inspector workflow** is still running; any additional confirmed findings will be appended here by severity and then fixed.
 
 ---
 
