@@ -1298,7 +1298,7 @@ export default function MenuManagementPage() {
                       />
                     </label>
 
-                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                    {(user?.role === 'admin' || user?.role === 'super_admin' || user?.permissions?.manageGlobalMenu === true) && (
                       <div className="space-y-4">
                         <label className="flex items-center justify-between p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border) cursor-pointer group">
                           <div>

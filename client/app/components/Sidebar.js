@@ -18,16 +18,41 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Pages that are normally role-locked but can be delegated to a user via a
 // permission. `defaultRoles` = roles that already see the page through their
 // normal menu; for everyone else we surface it under a "Granted Access" group.
+// Every permission-gated page, with the roles that already see it in their
+// normal menu (defaultRoles). For ANY other role, if the user holds one of the
+// page's `perms`, it is surfaced under a "Granted Access" group — so a granted
+// permission is actually usable for staff/chef/location_admin too, not just
+// branch_admin/admin. Keep this in sync with PAGE_PERMISSIONS in dashboard/layout.js.
 const GRANTABLE_PAGES = [
-  { name: 'Users', href: '/dashboard/admin/users', icon: Users, perm: 'manageStaff', defaultRoles: ['super_admin'] },
-  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity, perm: 'viewAuditLogs', defaultRoles: ['super_admin'] },
-  { name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert, perm: 'impersonateUsers', defaultRoles: ['super_admin'] },
-  { name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin, perm: 'manageBranches', defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap, perm: 'viewAdminCenter', defaultRoles: ['super_admin'] },
+  // Staff management (manageStaff)
+  { name: 'Users', href: '/dashboard/admin/users', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin'] },
+  { name: 'Staff', href: '/dashboard/admin/staff', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Salaries', href: '/dashboard/admin/payroll', icon: Wallet, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  // Orders & operations
+  { name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt, perms: ['viewOrders', 'forceComplete'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag, perms: ['manageCoupons'], defaultRoles: ['super_admin', 'admin'] },
+  // Revenue (viewRevenue / editRevenue)
+  { name: 'Revenue', href: '/dashboard/admin/revenue', icon: TrendingUp, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  // Analytics (viewAnalytics)
+  { name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
+  // Exports
+  { name: 'Export Center', href: '/dashboard/admin/exports', icon: Download, perms: ['exportReports'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  // Role-locked page-access permissions
+  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity, perms: ['viewAuditLogs'], defaultRoles: ['super_admin'] },
+  { name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert, perms: ['impersonateUsers'], defaultRoles: ['super_admin'] },
+  { name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin, perms: ['manageBranches'], defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap, perms: ['viewAdminCenter'], defaultRoles: ['super_admin'] },
 ];
 
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
@@ -197,7 +222,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     // Granted Access: role-locked pages delegated to this user via a permission
     // that their role wouldn't normally surface in the menu.
     const grantedItems = GRANTABLE_PAGES
-      .filter(p => !isSuper && !p.defaultRoles.includes(role) && permissions[p.perm] === true)
+      .filter(p => !isSuper && !p.defaultRoles.includes(role) && p.perms.some(k => permissions[k] === true))
       .map(({ name, href, icon }) => ({ name, href, icon }));
     if (grantedItems.length > 0) {
       groupsList.push({ title: 'Granted Access', items: grantedItems });

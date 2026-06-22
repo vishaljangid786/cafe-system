@@ -34,16 +34,32 @@ const SHARED_PREFIXES = [
 // Pages that are normally role-locked but can be delegated to ANY user via a
 // permission. If the user holds the mapped permission, they may open the path
 // even if it falls outside their role's prefix.
+// Every permission-gated page a non-default-role user may open if they hold one
+// of `perms`. Keep in sync with GRANTABLE_PAGES in components/Sidebar.js.
 const PAGE_PERMISSIONS = [
-  { path: '/dashboard/admin/users', perm: 'manageStaff' },
-  { path: '/dashboard/admin/locations', perm: 'manageBranches' },
-  { path: '/dashboard/admin/audit-logs', perm: 'viewAuditLogs' },
-  { path: '/dashboard/admin/impersonate', perm: 'impersonateUsers' },
-  { path: '/dashboard/admin/location-comparison', perm: 'viewAnalytics' },
-  { path: '/dashboard/admin/payment-intelligence', perm: 'viewAnalytics' },
-  { path: '/dashboard/admin/command-center', perm: 'viewAnalytics' },
-  { path: '/dashboard/admin/forecasting', perm: 'viewAnalytics' },
-  { path: '/dashboard/super-admin', perm: 'viewAdminCenter' },
+  { path: '/dashboard/admin/users', perms: ['manageStaff'] },
+  { path: '/dashboard/admin/staff-reports', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/staff', perms: ['manageStaff'] },
+  { path: '/dashboard/admin/attendance', perms: ['manageStaff'] },
+  { path: '/dashboard/admin/payroll', perms: ['manageStaff'] },
+  { path: '/dashboard/admin/orders/analytics', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/orders', perms: ['viewOrders', 'forceComplete'] },
+  { path: '/dashboard/admin/tables', perms: ['manageOrders'] },
+  { path: '/dashboard/admin/menu', perms: ['manageOrders'] },
+  { path: '/dashboard/admin/inventory', perms: ['manageOrders'] },
+  { path: '/dashboard/admin/coupons', perms: ['manageCoupons'] },
+  { path: '/dashboard/admin/revenue', perms: ['viewRevenue', 'editRevenue'] },
+  { path: '/dashboard/admin/expenses', perms: ['viewRevenue', 'editRevenue'] },
+  { path: '/dashboard/admin/customers', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/location-comparison', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/payment-intelligence', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/command-center', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/forecasting', perms: ['viewAnalytics'] },
+  { path: '/dashboard/admin/exports', perms: ['exportReports'] },
+  { path: '/dashboard/admin/locations', perms: ['manageBranches'] },
+  { path: '/dashboard/admin/audit-logs', perms: ['viewAuditLogs'] },
+  { path: '/dashboard/admin/impersonate', perms: ['impersonateUsers'] },
+  { path: '/dashboard/super-admin', perms: ['viewAdminCenter'] },
 ];
 
 export default function DashboardLayout({ children }) {
@@ -83,8 +99,12 @@ export default function DashboardLayout({ children }) {
       const isShared = SHARED_PREFIXES.some(p => pathname.startsWith(p));
       if (allowed && !isShared) {
         const canAccess = allowed.some(p => pathname.startsWith(p));
-        const grantedPage = PAGE_PERMISSIONS.find(pp => pathname.startsWith(pp.path));
-        const hasPagePerm = !!grantedPage && user.permissions?.[grantedPage.perm] === true;
+        // Longest-prefix match so e.g. /orders/analytics resolves to its own
+        // entry rather than the shorter /orders one.
+        const grantedPage = PAGE_PERMISSIONS
+          .filter(pp => pathname.startsWith(pp.path))
+          .sort((a, b) => b.path.length - a.path.length)[0];
+        const hasPagePerm = !!grantedPage && grantedPage.perms.some(k => user.permissions?.[k] === true);
         if (!canAccess && !hasPagePerm) {
           router.replace(allowed[0]);
         }

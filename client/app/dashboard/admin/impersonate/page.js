@@ -51,8 +51,8 @@ export default function ImpersonatePage() {
       } else if (user?.role === 'admin') {
         // Admin can impersonate everyone except Super Admins and themselves
         filtered = allUsers.filter(u => u.role !== 'super_admin' && u._id !== user?._id);
-      } else if (user?.role === 'branch_admin') {
-        // Branch Admin can only impersonate staff and chefs of their branch
+      } else if (user?.role === 'branch_admin' || user?.role === 'location_admin') {
+        // Branch/Location Admin can only impersonate staff and chefs of their branch
         const branchIds = [
           user.assignedLocation?._id || user.assignedLocation,
           ...(user.accessibleLocations || []).map((loc) => loc._id || loc)

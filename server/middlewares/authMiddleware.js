@@ -112,4 +112,15 @@ const checkRoleOrPermission = (roles = [], ...permissions) => {
   };
 };
 
-module.exports = { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission };
+// Allow if super_admin OR the user holds ANY ONE of the given permissions.
+const checkAnyPermission = (...permissions) => {
+  return (req, res, next) => {
+    if (req.user.role === 'super_admin') return next();
+    const userPermissions = req.user.permissions || {};
+    if (permissions.some((p) => userPermissions[p])) return next();
+    res.status(403);
+    throw new Error('You do not have permission to do this');
+  };
+};
+
+module.exports = { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission };
