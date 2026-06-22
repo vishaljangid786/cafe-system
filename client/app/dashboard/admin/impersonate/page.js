@@ -117,7 +117,7 @@ export default function ImpersonatePage() {
     if (user?.isImpersonating) return 'Logged in as another user';
     if (user?.role === 'super_admin') return 'Role: Super Admin';
     if (user?.role === 'admin') return 'Role: Admin';
-    if (user?.role === 'branch_admin') return 'Role: Branch Manager';
+    if (user?.role === 'branch_admin') return 'Role: Branch Admin';
     return 'Role: Unknown';
   };
 

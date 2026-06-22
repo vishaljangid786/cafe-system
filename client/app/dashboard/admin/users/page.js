@@ -299,7 +299,7 @@ export default function UsersPage() {
             options={[
               { label: 'All Roles', value: 'all' },
               { label: 'Admin', value: 'admin' },
-              { label: 'Branch Manager', value: 'branch_admin' },
+              { label: 'Branch Admin', value: 'branch_admin' },
               { label: 'Chef', value: 'chef' },
               { label: 'Staff', value: 'staff' }
             ]}
@@ -595,7 +595,7 @@ export default function UsersPage() {
                   >
                     <option value="staff">Staff</option>
                     <option value="chef">Chef</option>
-                    <option value="branch_admin">Branch Manager</option>
+                    <option value="branch_admin">Branch Admin</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
