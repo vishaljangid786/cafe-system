@@ -105,7 +105,8 @@ exports.checkAvailability = async (req, res) => {
 
     res.status(200).json({ available: true, message: 'Time slot is available' });
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };
 
@@ -218,7 +219,8 @@ exports.createReservation = async (req, res) => {
 
     res.status(201).json(reservation);
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };
 
@@ -271,7 +273,8 @@ exports.getReservations = async (req, res) => {
       data: reservations 
     });
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };
 
@@ -293,7 +296,8 @@ exports.getReservationById = async (req, res) => {
 
     res.status(200).json(reservation);
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };
 
@@ -360,7 +364,8 @@ exports.updateReservation = async (req, res) => {
 
     res.status(200).json(reservation);
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };
 
@@ -380,6 +385,7 @@ exports.deleteReservation = async (req, res) => {
     await reservation.deleteOne();
     res.status(200).json({ message: 'Reservation removed' });
   } catch (error) {
-    res.status(res.statusCode === 200 ? 500 : res.statusCode).json({ message: error.message });
+    const status = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(status).json({ message: status >= 500 ? 'Something went wrong. Please try again.' : error.message });
   }
 };

@@ -272,9 +272,26 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
 
+  // Per-account lockout after repeated failures (independent of the IP throttle).
+  const MAX_ATTEMPTS = 5;
+  const LOCK_MS = 15 * 60 * 1000;
+  if (user && user.lockUntil && user.lockUntil.getTime() > Date.now()) {
+    res.status(429);
+    throw new Error('Account temporarily locked due to too many failed login attempts. Please try again later.');
+  }
+
   if (user && (await user.matchPassword(password))) {
+    if (user.failedLoginAttempts) {
+      await User.updateOne({ _id: user._id }, { $set: { failedLoginAttempts: 0, lockUntil: null } });
+    }
     sendTokenResponse(user, 200, res);
   } else {
+    if (user) {
+      const attempts = (user.failedLoginAttempts || 0) + 1;
+      const update = { failedLoginAttempts: attempts };
+      if (attempts >= MAX_ATTEMPTS) update.lockUntil = new Date(Date.now() + LOCK_MS);
+      await User.updateOne({ _id: user._id }, { $set: update });
+    }
     res.status(401);
     throw new Error('Invalid email or password');
   }
@@ -349,6 +366,17 @@ const exitImpersonation = asyncHandler(async (req, res, next) => {
 // @route   GET /api/auth/logout
 // @access  Private
 const logoutUser = asyncHandler(async (req, res, next) => {
+  // Best-effort server-side revocation: bump sessionVersion so the just-cleared
+  // token can't be replayed if it was captured. Always clears the cookie below.
+  try {
+    const token = req.cookies?.token
+      || (req.headers.authorization?.startsWith('Bearer') ? req.headers.authorization.split(' ')[1] : null);
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded?.id) await User.updateOne({ _id: decoded.id }, { $inc: { sessionVersion: 1 } });
+    }
+  } catch (e) { /* ignore — still clear the cookie */ }
+
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProductionRuntime(),
