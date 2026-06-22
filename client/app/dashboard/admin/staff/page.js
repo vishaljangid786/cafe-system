@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, Mail, Phone, MapPin, Edit3, Trash2, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -18,6 +19,7 @@ import { TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 
 
 export default function LocationStaffPage() {
+  const router = useRouter();
   const { user: currentUser } = useAuth();
   const canManageStaff = currentUser?.role === 'super_admin' || currentUser?.permissions?.manageStaff === true;
 
@@ -507,14 +509,7 @@ export default function LocationStaffPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setFormData({
-                        name: '', email: '', phone: '', age: '', gender: 'Male',
-                        address1: '', city: '', state: '', country: 'India', pincode: '', monthlySalary: '',
-                        role: 'staff', assignedLocation: locationFilter || '', accessibleLocations: [], aadharNumber: '', highestQualification: '12th Pass'
-                      });
-                      setShowAddModal(true);
-                    }}
+                    onClick={() => router.push('/signup')}
                     className="flex items-center gap-2 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-normal shadow-lg "
                   >
                     <Plus size={16} />
