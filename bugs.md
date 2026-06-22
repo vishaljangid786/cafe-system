@@ -6,6 +6,14 @@ _Last updated: 2026-06-22._
 
 ---
 
+## 🔄 Pass 3 — A-to-Z inspection (in progress)
+
+A full-stack senior-inspector pass is running across all 14 feature areas (auth, users, orders, menu, tables/reservations, money, payroll, analytics, inventory, notifications/realtime, locations/customers, super-admin, + cross-cutting data-correctness and frontend-UX). Each endpoint/page/flow is traced end-to-end and every finding is adversarially verified against the already-patched code. **Confirmed new findings will be written here** (by severity) as they land; CRITICAL/HIGH/MEDIUM will then be fixed and removed.
+
+### Pass 3 findings — _populating…_
+
+---
+
 ## ⚠️ Operational action items — only you can do these (before next deploy)
 
 _Done for you locally:_ a **fresh strong `JWT_SECRET` and `ENCRYPTION_KEY` are now in `server/.env`** (gitignored), `server/.env.example` documents every required var, and the old `.env` is untracked. Remaining steps need your dashboards / host:
