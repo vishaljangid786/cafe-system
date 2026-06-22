@@ -1,18 +1,28 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
-import { 
-  Users, Search, Shield, ShieldAlert, 
-  ArrowRightLeft, UserCircle, LogOut 
+import {
+  Users, Search, Shield, ShieldAlert,
+  ArrowRightLeft, UserCircle, LogOut, Filter
 } from 'lucide-react';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Button } from '@/app/components/ui/Button';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+
+const ROLE_LABELS = {
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  branch_admin: 'Branch Admin',
+  location_admin: 'Location Admin',
+  staff: 'Staff',
+  chef: 'Chef',
+};
 
 export default function ImpersonatePage() {
   const router = useRouter();
@@ -20,6 +30,9 @@ export default function ImpersonatePage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [impersonating, setImpersonating] = useState(false);
 
   const fetchUsers = async () => {
@@ -31,7 +44,7 @@ export default function ImpersonatePage() {
 
       // Hierarchical Filtering Logic
       let filtered = [];
-      
+
       if (user?.role === 'super_admin') {
         // Super Admin can impersonate everyone except themselves
         filtered = allUsers.filter(u => u._id !== user?._id);
@@ -44,8 +57,8 @@ export default function ImpersonatePage() {
           user.assignedLocation?._id || user.assignedLocation,
           ...(user.accessibleLocations || []).map((loc) => loc._id || loc)
         ].filter(Boolean).map((id) => id.toString());
-        filtered = allUsers.filter(u => 
-          ['staff', 'chef'].includes(u.role) && 
+        filtered = allUsers.filter(u =>
+          ['staff', 'chef'].includes(u.role) &&
           branchIds.includes((u.assignedLocation?._id || u.assignedLocation)?.toString())
         );
       }
@@ -107,11 +120,47 @@ export default function ImpersonatePage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter dropdown options derived from the users this person may impersonate.
+  const roleOptions = useMemo(() => {
+    const roles = [...new Set(users.map((u) => u.role))];
+    return [{ label: 'All Roles', value: 'all' }, ...roles.map((r) => ({ label: ROLE_LABELS[r] || r, value: r }))];
+  }, [users]);
+
+  const branchOptions = useMemo(() => {
+    const map = new Map();
+    users.forEach((u) => {
+      const loc = u.assignedLocation;
+      const id = (loc?._id || loc)?.toString();
+      if (id && !map.has(id)) {
+        map.set(id, loc?.name ? `${loc.name}${loc.city ? ' · ' + loc.city : ''}` : 'Branch');
+      }
+    });
+    return [{ label: 'All Branches', value: 'all' }, ...[...map].map(([value, label]) => ({ label, value }))];
+  }, [users]);
+
+  const statusOptions = [
+    { label: 'All Status', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Restricted', value: 'restricted' },
+  ];
+
+  const filteredUsers = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return users.filter((u) => {
+      const matchesSearch = !q ||
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q);
+      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? !u.isBlocked : !!u.isBlocked);
+      const branchId = (u.assignedLocation?._id || u.assignedLocation)?.toString();
+      const matchesBranch = branchFilter === 'all' || branchId === branchFilter;
+      return matchesSearch && matchesRole && matchesStatus && matchesBranch;
+    });
+  }, [users, searchTerm, roleFilter, statusFilter, branchFilter]);
+
+  const activeFilterCount = [roleFilter, statusFilter, branchFilter].filter((v) => v !== 'all').length;
+  const resetFilters = () => { setRoleFilter('all'); setStatusFilter('all'); setBranchFilter('all'); setSearchTerm(''); };
 
   const getSecurityLabel = () => {
     if (user?.isImpersonating) return 'Logged in as another user';
@@ -125,8 +174,8 @@ export default function ImpersonatePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20">
-        
+      <div className="space-y-8 pb-20">
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
@@ -137,21 +186,21 @@ export default function ImpersonatePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-(--color-text-muted)" />
               <span className="text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">Log in as a user</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-3 sm:gap-4 italic uppercase">
-              <ShieldAlert className={`${user?.isImpersonating ? 'text-danger' : 'text-primary'} h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 `} />
-              Login As <span className="text-(--color-text-muted) not-italic">User</span>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-3 sm:gap-4">
+              <ShieldAlert className={`${user?.isImpersonating ? 'text-danger' : 'text-primary'} h-9 w-9 sm:h-12 sm:w-12`} />
+              Login As <span className="text-(--color-text-muted)">User</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-(--color-text-muted) leading-relaxed">
               Login as any user to help them or check issues.
               {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">You can only log in as staff from your own branch.</span>}
-              <span className="text-danger font-bold ml-1 italic">Exercise caution: all actions are logged.</span>
+              <span className="text-danger font-bold ml-1">Exercise caution: all actions are logged.</span>
             </p>
           </div>
 
           {user?.isImpersonating && (
-            <Button 
-              variant="danger" 
-              className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-xl shadow-sm "
+            <Button
+              variant="danger"
+              className="h-12 w-full md:w-auto px-6 !rounded-xl shadow-sm"
               icon={LogOut}
               onClick={handleExitImpersonation}
               disabled={impersonating}
@@ -161,92 +210,121 @@ export default function ImpersonatePage() {
           )}
         </div>
 
-        {/* Quick Search */}
-        <div className="relative group max-w-2xl">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search by name, email or role..."
-            className="w-full pl-14 pr-6 py-5 bg-(--color-surface) border border-(--color-border) rounded-xl text-sm font-bold text-(--color-text-primary) focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Search + Filters */}
+        <div className="card rounded-xl p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-3">
+            <div className="relative group flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
+              <input
+                type="text"
+                placeholder="Search by name, email or role..."
+                className="w-full pl-11 pr-4 py-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm font-bold text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:w-auto">
+              <div className="sm:w-44">
+                <PremiumSelect value={roleFilter} onChange={setRoleFilter} options={roleOptions} placeholder="Role" />
+              </div>
+              <div className="sm:w-44">
+                <PremiumSelect value={statusFilter} onChange={setStatusFilter} options={statusOptions} placeholder="Status" />
+              </div>
+              <div className="sm:w-52">
+                <PremiumSelect value={branchFilter} onChange={setBranchFilter} options={branchOptions} placeholder="Branch" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-bold text-(--color-text-muted) flex items-center gap-2">
+              <Filter size={13} />
+              Showing {filteredUsers.length} of {users.length} {users.length === 1 ? 'user' : 'users'}
+            </span>
+            {(activeFilterCount > 0 || searchTerm) && (
+              <button onClick={resetFilters} className="text-xs font-bold text-primary hover:underline">
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Identity Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredUsers.map((u, idx) => (
-            <motion.div
-              key={u._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="group relative overflow-hidden bg-(--color-surface) border border-(--color-border) rounded-xl p-6 hover:shadow-sm transition-all duration-500"
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-16 w-16 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex items-center justify-center relative transition-transform overflow-hidden shadow-lg">
-                  {u.profileImageUrl ? (
-                    <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <UserCircle size={32} className="text-primary" />
-                  )}
-                  <div className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-(--color-surface) ${!u.isBlocked ? 'bg-success' : 'bg-danger'}`} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-(--color-text-primary) truncate italic uppercase tracking-tight">{u.name}</h3>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal truncate">{u.email}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Role</span>
-                  <div className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[9px] font-bold uppercase tracking-normal">
-                    {u.role.replace('_', ' ')}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Status</span>
-                  <span className={`text-[9px] font-bold uppercase tracking-normal ${u.isBlocked ? 'text-danger' : 'text-success'}`}>
-                    {u.isBlocked ? 'Restricted' : 'Active'}
-                  </span>
-                </div>
-
-                {u.assignedLocation && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Branch</span>
-                    <span className="text-[9px] font-bold text-primary uppercase truncate max-w-[150px]">
-                      {u.assignedLocation.name || 'Assigned'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-8">
-                <Button 
-                  variant="primary" 
-                  className="w-full !rounded-xl h-12 shadow-lg  group-hover:bg-(--color-primary-hover) group-hover:text-primary transition-colors"
-                  icon={ArrowRightLeft}
-                  onClick={() => handleImpersonate(u._id, u.name)}
-                  disabled={impersonating || u.isBlocked}
-                >
-                  Login As
-                </Button>
-              </div>
-
-              {/* Decorative Background Elements */}
-              <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
-                <Shield size={120} />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {filteredUsers.length === 0 && (
-          <div className="py-20 text-center space-y-4">
+        {/* Users Table */}
+        {filteredUsers.length === 0 ? (
+          <div className="card rounded-xl py-20 text-center space-y-4">
             <Users className="mx-auto h-16 w-16 text-(--color-text-muted)/30" />
-            <p className="text-sm font-bold text-(--color-text-muted)">No users found matching your search</p>
+            <p className="text-sm font-bold text-(--color-text-muted)">No users match your filters</p>
+          </div>
+        ) : (
+          <div className="card rounded-xl overflow-hidden">
+            <div className="responsive-table-container">
+              <table className="w-full min-w-200 text-left border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-(--color-surface-soft) text-xs font-semibold text-(--color-text-muted)">
+                    <th className="px-6 py-3.5">Member</th>
+                    <th className="px-6 py-3.5">Role</th>
+                    <th className="px-6 py-3.5">Branch</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-(--color-border)">
+                  {filteredUsers.map((u, idx) => (
+                    <motion.tr
+                      key={u._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: Math.min(idx * 0.025, 0.3) }}
+                      className="group hover:bg-(--color-surface-soft) transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-11 w-11 rounded-lg bg-(--color-surface-soft) border border-(--color-border) flex items-center justify-center overflow-hidden relative shrink-0">
+                            {u.profileImageUrl ? (
+                              <img src={u.profileImageUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <UserCircle size={22} className="text-primary" />
+                            )}
+                            <span className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-(--color-surface) ${!u.isBlocked ? 'bg-success' : 'bg-danger'}`} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-(--color-text-primary) truncate">{u.name}</div>
+                            <div className="text-xs text-(--color-text-muted) truncate">{u.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="chip bg-primary/10 text-primary border border-primary/20 capitalize">
+                          {ROLE_LABELS[u.role] || u.role.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium text-(--color-text-secondary)">
+                          {u.assignedLocation?.name || '—'}
+                          {u.assignedLocation?.city && <span className="text-(--color-text-muted)"> · {u.assignedLocation.city}</span>}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${u.isBlocked ? 'text-danger' : 'text-success'}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${u.isBlocked ? 'bg-danger' : 'bg-success'}`} />
+                          {u.isBlocked ? 'Restricted' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          variant="primary"
+                          className="!rounded-lg h-10 px-5 text-xs whitespace-nowrap"
+                          icon={ArrowRightLeft}
+                          onClick={() => handleImpersonate(u._id, u.name)}
+                          disabled={impersonating || u.isBlocked}
+                        >
+                          Login As
+                        </Button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
