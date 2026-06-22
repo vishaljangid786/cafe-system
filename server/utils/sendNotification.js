@@ -59,20 +59,13 @@ const sendNotification = async ({ title, message, type, performedByUser, locatio
     // Populate sender for the real-time payload
     await notification.populate('sender', 'name email role');
 
-    // Emit via Socket.io efficiently using pre-defined rooms
     const io = getIO();
-    
-    // 1. Emit to Global Admins and Super Admins
-    roleTarget.forEach(role => {
-      if (role !== 'branch_admin') {
-        io.to(`role_${role}`).emit('new_notification', notification);
-      }
-    });
 
-    // 2. Emit to Branch Admins of specific location
-    if (roleTarget.includes('branch_admin') && targetLocationId) {
-      io.to(`branch_${targetLocationId}_branch_admin`).emit('new_notification', notification);
-    }
+    // Emit ONLY to the actual recipients — each socket joins a room named after
+    // its own user id (see server.js). Previously this broadcast to the global
+    // role_admin / role_super_admin rooms, so non-recipient admins in OTHER
+    // branches also received the notification payload (a tenant-isolation leak).
+    users.forEach((u) => io.to(u._id.toString()).emit('new_notification', notification));
 
   } catch (error) {
     console.error('Error sending notification:', error);

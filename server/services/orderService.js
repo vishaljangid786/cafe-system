@@ -207,7 +207,10 @@ class OrderService {
       // Real-time signals
       const io = getIO();
       io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
-      io.to('role_admin').to('role_super_admin').emit('order:new', { orderId: createdOrder._id, branchId: branch });
+      // Scope to THIS branch's admins/branch-admins (+ super_admins who oversee
+      // all branches). Previously emitted to global role_admin, leaking other
+      // branches' order activity to every admin.
+      io.to(`branch_${branch}_admin`).to(`branch_${branch}_branch_admin`).to('role_super_admin').emit('order:new', { orderId: createdOrder._id, branchId: branch });
 
       return createdOrder;
     } catch (error) {
