@@ -230,6 +230,29 @@
     box-shadow: 0 0 0 3px var(--color-primary-soft);
   }
 
+  /* Browser autofill fix: Chrome/Safari force a white/yellow background and dark
+     text on autofilled inputs, which is unreadable on the dark theme. We can't
+     override the autofill background directly, so we repaint it with the theme
+     colour using a large inset box-shadow, and set the text fill colour. Uses
+     CSS variables so it adapts to light/dark automatically. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-bg-soft) inset !important;
+    box-shadow: 0 0 0 1000px var(--color-bg-soft) inset !important;
+    caret-color: var(--color-text-primary);
+    /* Keep the autofilled background from re-appearing after a delay. */
+    transition: background-color 600000s 0s, color 600000s 0s;
+  }
+
   /* Covers every native date/time input used across the app's filters:
      date, month, time and datetime-local. */
   :where(
