@@ -1,5 +1,6 @@
 const Transaction = require('../models/Transaction');
 const Table = require('../models/Table');
+const Order = require('../models/Order');
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 
 /**
@@ -9,18 +10,25 @@ const { deductIngredientsFromRecipe } = require('../services/inventoryService');
  * @returns {Promise<Object>} - The finalized order.
  */
 const finalizeOrder = async (order, user) => {
-  if (order.isBilled) {
+  // Atomically claim the order so two concurrent /complete (or serve+complete)
+  // calls can't both finalize it and record REVENUE twice — only the request
+  // that flips isBilled false->true proceeds.
+  const now = new Date();
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, isBilled: { $ne: true } },
+    {
+      $set: { isBilled: true, status: 'COMPLETED', completedAt: now },
+      $push: { statusHistory: { status: 'COMPLETED', timestamp: now, updatedBy: user._id } },
+    },
+    { new: true }
+  );
+  if (!claimed) {
     throw new Error('This order has already been finalized and billed.');
   }
 
   order.status = 'COMPLETED';
-  order.completedAt = new Date();
+  order.completedAt = now;
   order.isBilled = true;
-  order.statusHistory.push({
-    status: 'COMPLETED',
-    timestamp: new Date(),
-    updatedBy: user._id
-  });
 
   // Calculate gross profit from items
   const grossProfit = order.items.reduce((acc, item) => {
@@ -74,7 +82,7 @@ const finalizeOrder = async (order, user) => {
     await updatedTable.save();
   }
 
-  await order.save();
+  // status/isBilled were persisted atomically above — no second save needed.
   return order;
 };
 

@@ -51,7 +51,14 @@ const verifyToken = asyncHandler(async (req, res, next) => {
 
     if (decoded.impersonatedBy) {
       req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
-      
+
+      // Re-validate the impersonator on every request: if their own account was
+      // suspended/deactivated after the session started, end the impersonation.
+      if (!req.impersonator || req.impersonator.isBlocked || req.impersonator.active === false) {
+        res.status(403);
+        throw new Error('Impersonation ended: the original account is no longer active. Please log in again.');
+      }
+
       if (decoded.isViewOnly && req.method !== 'GET') {
         res.status(403);
         throw new Error('Action restricted: View-only impersonation mode is active');
