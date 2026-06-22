@@ -108,8 +108,10 @@ export default function CommandPalette() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
+      if (!results.length) return; // avoid % 0 -> NaN
       setSelectedIndex(prev => (prev + 1) % results.length);
     } else if (e.key === 'ArrowUp') {
+      if (!results.length) return; // avoid % 0 -> NaN
       setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
     } else if (e.key === 'Enter') {
       if (results[selectedIndex]) {

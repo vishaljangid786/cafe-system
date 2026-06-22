@@ -307,7 +307,9 @@ export const AuthProvider = ({ children }) => {
       }
       initializeSocket(userData, initialLoc);
       setLoading(false);
-      router.push('/dashboard/admin/users');
+      // Role-routed home — a non-admin delegated impersonator can't open
+      // /dashboard/admin/users and would be bounced by the layout guard.
+      router.push('/dashboard');
 
       return { success: true };
     } catch (error) {

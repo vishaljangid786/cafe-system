@@ -29,6 +29,7 @@ const SHARED_PREFIXES = [
   '/dashboard/bookings',
   '/dashboard/profile',
   '/dashboard/add-member',
+  '/dashboard/admin/branch-presence',
 ];
 
 // Pages that are normally role-locked but can be delegated to ANY user via a

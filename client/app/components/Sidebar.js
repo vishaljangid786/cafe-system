@@ -131,7 +131,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     }
 
     // Operations Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const opsItems = [];
 
       if (hasPermission('viewOrders')) {
@@ -165,7 +165,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     }
 
     // Analytics Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const analyticsItems = [];
       const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
 
@@ -212,7 +212,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     }
 
     // Loyalty Group
-    if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin') && hasPermission('viewAnalytics')) {
+    if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') && hasPermission('viewAnalytics')) {
       groupsList.push({
         title: 'Rewards',
         items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }]

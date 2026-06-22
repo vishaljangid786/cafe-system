@@ -123,6 +123,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
   // Check availability when core fields change
   useEffect(() => {
+    let cancelled = false; // guard against an out-of-order (stale) response winning
     const checkAvailability = async () => {
       try {
         setCheckingAvailability(true);
@@ -137,11 +138,11 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
             excludeId: editData?._id
           }
         });
-        setAvailabilityStatus(data);
+        if (!cancelled) setAvailabilityStatus(data);
       } catch (error) {
-        console.error('Error checking availability:', error);
+        if (!cancelled) console.error('Error checking availability:', error);
       } finally {
-        setCheckingAvailability(false);
+        if (!cancelled) setCheckingAvailability(false);
       }
     };
 
@@ -151,7 +152,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
         checkAvailability();
       }, 0);
 
-      return () => clearTimeout(timer);
+      return () => { cancelled = true; clearTimeout(timer); };
     }
   }, [formData.locationId, formData.date, formData.startTime, formData.endTime, formData.reservationType, formData.tableIds, editData?._id]);
 
