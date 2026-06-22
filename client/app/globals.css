@@ -230,38 +230,84 @@
     box-shadow: 0 0 0 3px var(--color-primary-soft);
   }
 
-  :where(input[type="date"]) {
+  /* Covers every native date/time input used across the app's filters:
+     date, month, time and datetime-local. */
+  :where(
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"]
+  ) {
     color-scheme: light;
     accent-color: var(--color-primary);
     cursor: pointer;
   }
 
-  .dark :where(input[type="date"]) {
+  /* In dark mode, color-scheme: dark makes the browser render the calendar/
+     clock picker icon in a light colour so it is visible on dark backgrounds. */
+  .dark :where(
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"]
+  ) {
     color-scheme: dark;
   }
 
-  :where(input[type="date"]:disabled),
-  :where(input[type="date"][readonly]) {
+  :where(
+    input[type="date"]:disabled, input[type="date"][readonly],
+    input[type="month"]:disabled, input[type="month"][readonly],
+    input[type="time"]:disabled, input[type="time"][readonly],
+    input[type="datetime-local"]:disabled, input[type="datetime-local"][readonly]
+  ) {
     cursor: not-allowed;
   }
 
-  :where(input[type="date"])::-webkit-date-and-time-value {
+  :where(
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"]
+  )::-webkit-date-and-time-value {
     min-height: 1.25rem;
     text-align: left;
   }
 
-  :where(input[type="date"])::-webkit-calendar-picker-indicator {
+  :where(
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"]
+  )::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.72;
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
-  .dark :where(input[type="date"])::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.35);
+  /* IMPORTANT: do NOT invert the icon in dark mode. color-scheme: dark already
+     renders it light; inverting would turn it dark again and make it invisible
+     (the original bug). Just keep it bright. */
+  .dark :where(
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="datetime-local"]
+  )::-webkit-calendar-picker-indicator {
+    opacity: 0.9;
   }
 
-  :where(input[type="date"]:not(:disabled):not([readonly])):hover::-webkit-calendar-picker-indicator,
-  :where(input[type="date"]:not(:disabled):not([readonly])):focus::-webkit-calendar-picker-indicator {
+  :where(
+    input[type="date"]:not(:disabled):not([readonly]),
+    input[type="month"]:not(:disabled):not([readonly]),
+    input[type="time"]:not(:disabled):not([readonly]),
+    input[type="datetime-local"]:not(:disabled):not([readonly])
+  ):hover::-webkit-calendar-picker-indicator,
+  :where(
+    input[type="date"]:not(:disabled):not([readonly]),
+    input[type="month"]:not(:disabled):not([readonly]),
+    input[type="time"]:not(:disabled):not([readonly]),
+    input[type="datetime-local"]:not(:disabled):not([readonly])
+  ):focus::-webkit-calendar-picker-indicator {
     opacity: 1;
     transform: scale(1.05);
   }
