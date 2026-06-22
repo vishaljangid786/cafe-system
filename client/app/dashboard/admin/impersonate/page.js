@@ -26,7 +26,7 @@ export default function ImpersonatePage() {
     try {
       setLoading(true);
       progress.start();
-      const res = await api.get('/users');
+      const res = await api.get('/users', { params: { limit: 1000 } });
       let allUsers = res.data.data;
 
       // Hierarchical Filtering Logic

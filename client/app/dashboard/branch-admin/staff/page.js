@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
 import { Skeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function BranchStaffPage() {
+  const router = useRouter();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -134,7 +136,7 @@ export default function BranchStaffPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => router.push('/signup')}
                 className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
               >
                 <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
