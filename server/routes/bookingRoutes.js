@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const {
   checkAvailability,
@@ -10,9 +11,19 @@ const {
 const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 const { bookingSchema, validate } = require('../middlewares/validateMiddleware');
 
+// These endpoints are public (guests can book). A dedicated low-ceiling limiter
+// prevents a single IP from exhausting a location's capacity or scraping
+// availability with automated requests. Keyed per IP, well below the global
+// /api/ limiter.
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 15, // 15 booking-related requests per IP per hour
+  message: 'Too many booking requests from this IP, please try again later.'
+});
+
 // Public endpoints — no auth required for guests
-router.get('/check-availability', checkAvailability);
-router.post('/', ...bookingSchema, validate, createBooking);
+router.get('/check-availability', bookingLimiter, checkAvailability);
+router.post('/', bookingLimiter, ...bookingSchema, validate, createBooking);
 
 // Get user's own bookings
 router.get('/my', verifyToken, getUserBookings);

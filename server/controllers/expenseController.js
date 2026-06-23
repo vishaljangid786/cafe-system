@@ -90,12 +90,22 @@ const updateExpense = asyncHandler(async (req, res) => {
 
   const allowedUpdates = ['title', 'description', 'amount', 'date', 'category'];
   const updateData = {};
-  
+
   allowedUpdates.forEach(field => {
     if (req.body[field] !== undefined) {
       updateData[field] = req.body[field];
     }
   });
+
+  // Revalidate amount on update — a negative/zero amount would corrupt the ledger.
+  if (updateData.amount !== undefined) {
+    const numAmount = Number(updateData.amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+      res.status(400);
+      throw new Error('Amount must be a positive number');
+    }
+    updateData.amount = numAmount;
+  }
 
   if (req.file) {
     updateData.proofImage = req.file.path;

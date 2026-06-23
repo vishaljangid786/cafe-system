@@ -390,7 +390,8 @@ const getLocationInfo = asyncHandler(async (req, res) => {
       $match: {
         locationId: new mongoose.Types.ObjectId(id),
         date: { $gte: startOfMonth },
-        status: 'completed'
+        type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+        status: 'approved'
       }
     },
     {
@@ -741,10 +742,13 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
     previousEnd = currentStart;
     previousStart = new Date(currentStart.getTime() - 365 * 24 * 60 * 60 * 1000);
   } else if (period === 'FY') {
-    currentStart = new Date(2025, 3, 1); // 1-April-2025
-    currentEnd = new Date(2026, 2, 31, 23, 59, 59, 999);
-    previousStart = new Date(2024, 3, 1);
-    previousEnd = new Date(2025, 2, 31, 23, 59, 59, 999);
+    // Indian financial year runs Apr 1 - Mar 31. Months 0-2 (Jan-Mar) fall in the
+    // FY that started the previous calendar year.
+    const fyStartYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    currentStart = new Date(fyStartYear, 3, 1); // 1-April
+    currentEnd = new Date(fyStartYear + 1, 2, 31, 23, 59, 59, 999); // 31-March
+    previousStart = new Date(fyStartYear - 1, 3, 1);
+    previousEnd = new Date(fyStartYear, 2, 31, 23, 59, 59, 999);
   } else {
     // Default to week
     currentEnd = now;

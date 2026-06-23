@@ -158,7 +158,11 @@ export default function UsersPage() {
     }
   };
 
+  // A non-super-admin can only grant permissions they themselves hold.
+  const actorCanGrant = (key) => user?.role === 'super_admin' || !!user?.permissions?.[key];
+
   const togglePerm = (key) => {
+    if (!actorCanGrant(key)) return;
     setEditPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -208,8 +212,13 @@ export default function UsersPage() {
       setSaving(true);
       // 1) Core profile fields (name, role, branch, salary, Aadhaar, etc.)
       await api.put(`/users/${editingUser._id}`, data);
-      // 2) Permissions are saved through their dedicated endpoint.
-      await api.put(`/users/${editingUser._id}/permissions`, { permissions: editPermissions });
+      // 2) Permissions are saved through their dedicated endpoint. Only send
+      // permissions the current actor is actually allowed to grant.
+      const safePermissions = {};
+      Object.keys(editPermissions).forEach((key) => {
+        if (actorCanGrant(key)) safePermissions[key] = editPermissions[key];
+      });
+      await api.put(`/users/${editingUser._id}/permissions`, { permissions: safePermissions });
       toast.success('User updated successfully');
       setShowEditModal(false);
       setEditingUser(null);
@@ -687,19 +696,26 @@ export default function UsersPage() {
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {PERMISSION_LIST.map((p) => (
+                  {PERMISSION_LIST.map((p) => {
+                    const allowed = actorCanGrant(p.key);
+                    return (
                     <button
                       type="button"
                       key={p.key}
                       onClick={() => togglePerm(p.key)}
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl border text-xs font-bold text-left transition-all ${editPermissions[p.key] ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-(--color-surface-soft) border-(--color-border) text-(--color-text-muted) hover:border-primary/30'}`}
+                      disabled={!allowed}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border text-xs font-bold text-left transition-all ${editPermissions[p.key] ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-(--color-surface-soft) border-(--color-border) text-(--color-text-muted) hover:border-primary/30'} ${!allowed ? 'opacity-50 cursor-not-allowed hover:border-(--color-border)' : ''}`}
                     >
-                      {p.label}
+                      <span className="flex flex-col">
+                        {p.label}
+                        {!allowed && <span className="text-[9px] text-danger normal-case">You don&apos;t have this</span>}
+                      </span>
                       <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${editPermissions[p.key] ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
                         {editPermissions[p.key] && <Check size={12} />}
                       </span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
                 <p className="text-[9px] font-bold text-(--color-text-muted) ml-1">Note: a super-admin always has every permission, regardless of these toggles.</p>
               </div>

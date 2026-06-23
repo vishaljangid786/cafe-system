@@ -14,7 +14,9 @@ const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = f
     payload.isViewOnly = isViewOnly;
   }
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    // Never sign a token with no expiry — a missing/blank JWT_EXPIRE would
+    // otherwise produce a token that never expires. Fall back to 30 days.
+    expiresIn: process.env.JWT_EXPIRE || '30d',
   });
 };
 
@@ -286,8 +288,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const MAX_ATTEMPTS = 5;
   const LOCK_MS = 15 * 60 * 1000;
   if (user && user.lockUntil && user.lockUntil.getTime() > Date.now()) {
+    // Keep the lockout (429 + Retry-After), but use a message that does NOT
+    // reveal whether this specific account exists/is locked — preventing the
+    // 429 from being used as a username-enumeration oracle.
     res.status(429);
-    throw new Error('Account temporarily locked due to too many failed login attempts. Please try again later.');
+    res.set('Retry-After', String(Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000)));
+    throw new Error('Too many failed login attempts. Please try again later.');
   }
 
   if (user && (await user.matchPassword(password))) {
@@ -333,6 +339,17 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     throw new Error('You can only log in as users below your own role');
   }
 
+  // Branch scoping: a delegated (non-super) impersonator may only become a user
+  // inside a branch they manage. Reject location-less/global targets (admins
+  // have no assignedLocation) so the rank guard above can't be sidestepped by
+  // impersonating a branch-less account.
+  if (req.user.role !== 'super_admin') {
+    if (!targetUser.assignedLocation || !canAccessLocation(req.user, targetUser.assignedLocation)) {
+      res.status(403);
+      throw new Error('You can only log in as users within branches you manage');
+    }
+  }
+
   const { viewOnly } = req.body;
 
   await AuditLog.create({
@@ -376,16 +393,12 @@ const exitImpersonation = asyncHandler(async (req, res, next) => {
 // @route   GET /api/auth/logout
 // @access  Private
 const logoutUser = asyncHandler(async (req, res, next) => {
-  // Best-effort server-side revocation: bump sessionVersion so the just-cleared
-  // token can't be replayed if it was captured. Always clears the cookie below.
-  try {
-    const token = req.cookies?.token
-      || (req.headers.authorization?.startsWith('Bearer') ? req.headers.authorization.split(' ')[1] : null);
-    if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      if (decoded?.id) await User.updateOne({ _id: decoded.id }, { $inc: { sessionVersion: 1 } });
-    }
-  } catch (e) { /* ignore — still clear the cookie */ }
+  // Route is gated behind verifyToken, so req.user is the authenticated caller.
+  // Revoke ONLY their own sessions (bump sessionVersion so the just-cleared token
+  // can't be replayed) — never an arbitrary user id decoded from the request.
+  if (req.user?._id) {
+    await User.updateOne({ _id: req.user._id }, { $inc: { sessionVersion: 1 } });
+  }
 
   res.clearCookie('token', {
     httpOnly: true,

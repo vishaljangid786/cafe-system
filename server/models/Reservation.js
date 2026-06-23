@@ -57,10 +57,12 @@ const reservationSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 0,
+      min: [0, 'Total amount cannot be negative'],
     },
     advancePayment: {
       type: Number,
       default: 0,
+      min: [0, 'Advance payment cannot be negative'],
     },
     paymentStatus: {
       type: String,

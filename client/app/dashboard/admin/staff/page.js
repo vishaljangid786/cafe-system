@@ -36,7 +36,7 @@ export default function LocationStaffPage() {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'tree'
   const [expandedBranchs, setExpandedBranchs] = useState({});
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', age: '', gender: 'Male',
+    name: '', email: '', password: '', phone: '', age: '', gender: 'Male',
     address1: '', city: '', state: '', pincode: '', monthlySalary: '',
     accessibleLocations: []
   });
@@ -125,6 +125,7 @@ export default function LocationStaffPage() {
     const fill = (m) => setFormData({
       name: m.name || '',
       email: m.email || '',
+      password: '',
       phone: m.phone || '',
       age: m.age || '',
       gender: m.gender || 'Male',
@@ -166,18 +167,26 @@ export default function LocationStaffPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    // The backend requires a real password (min 10 chars). Previously a default
+    // 'Staff@123' was posted silently — it failed validation and, if it hadn't,
+    // would have created accounts with a shared, guessable password.
+    if (!formData.password || formData.password.length < 10) {
+      toast.error('Password must be at least 10 characters.');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(formData.phone || '')) {
+      toast.error('Please enter a valid 10-digit phone number.');
+      return;
+    }
     setIsSubmitting(true);
     const loadToast = toast.loading('Adding new staff member...');
     try {
-      // In a real scenario, we might want to generate a temporary password 
-      // or send an invite. For now, we'll use a default password 'Staff@123'
       const selectedBranchIds = formData.role === 'branch_admin'
         ? (formData.accessibleLocations?.length ? formData.accessibleLocations : (formData.assignedLocation ? [formData.assignedLocation] : []))
         : [];
       const data = {
         ...formData,
-        password: 'Staff@123',
-        confirmPassword: 'Staff@123',
+        confirmPassword: formData.password,
         role: formData.role || 'staff',
         assignedLocation: formData.role === 'branch_admin'
           ? (selectedBranchIds[0] || locationFilter || '')
@@ -191,7 +200,7 @@ export default function LocationStaffPage() {
       fetchStaff();
       // Reset form
       setFormData({
-        name: '', email: '', phone: '', age: '', gender: 'Male',
+        name: '', email: '', password: '', phone: '', age: '', gender: 'Male',
         address1: '', city: '', state: '', country: 'India', pincode: '', monthlySalary: '',
         role: 'staff', assignedLocation: '', accessibleLocations: [], aadharNumber: '', highestQualification: '12th Pass'
       });
@@ -895,6 +904,13 @@ export default function LocationStaffPage() {
                     }))}
                   />
                 )}
+              </div>
+            )}
+
+            {showAddModal && (
+              <div>
+                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Password</label>
+                <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="At least 10 characters" />
               </div>
             )}
 

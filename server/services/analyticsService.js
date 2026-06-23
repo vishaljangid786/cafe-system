@@ -14,15 +14,29 @@ const Attendance = require('../models/Attendance');
  */
 class AnalyticsService {
   /**
+   * Returns the start-of-day Date (UTC instant) for "today" in Asia/Kolkata (IST, UTC+5:30),
+   * so day-based reports bucket on the business calendar rather than the server timezone.
+   */
+  istStartOfToday() {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIst = new Date(Date.now() + IST_OFFSET_MS);
+    // Midnight IST for the current IST calendar day, expressed as a UTC instant.
+    const istMidnightUtcMs = Date.UTC(
+      nowIst.getUTCFullYear(),
+      nowIst.getUTCMonth(),
+      nowIst.getUTCDate()
+    ) - IST_OFFSET_MS;
+    return new Date(istMidnightUtcMs);
+  }
+
+  /**
    * Helper to get match criteria based on time filters
    */
   getDateMatchCriteria(startDate, endDate, period, field = 'createdAt') {
     const match = {};
     if (period && period !== 'all') {
       if (period === 'today') {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        match[field] = { $gte: today };
+        match[field] = { $gte: this.istStartOfToday() };
       } else {
         let days;
         if (period === 'week' || period === '7d') days = 7;
@@ -55,7 +69,7 @@ class AnalyticsService {
 
     const [revenueAgg, expenseAgg, payrollAgg] = await Promise.all([
       Transaction.aggregate([
-        { $match: { locationId: targetObjectId, type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...dateMatch, status: { $ne: 'rejected' } } },
+        { $match: { locationId: targetObjectId, type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...dateMatch, status: 'approved' } },
         { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
       ]),
       Transaction.aggregate([
@@ -91,7 +105,7 @@ class AnalyticsService {
 
     const [revenueAgg, expenseAgg, payrollAgg] = await Promise.all([
       Transaction.aggregate([
-        { $match: { type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...match, status: { $ne: 'rejected' } } },
+        { $match: { type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...match, status: 'approved' } },
         { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
       ]),
       Transaction.aggregate([
@@ -125,7 +139,11 @@ class AnalyticsService {
     if (adminId) {
       try {
         match.createdBy = new mongoose.Types.ObjectId(adminId);
-      } catch (e) {}
+      } catch (e) {
+        // A malformed adminId must NOT silently widen scope to all admins.
+        // Force an impossible match so the result set is empty.
+        match.createdBy = new mongoose.Types.ObjectId('000000000000000000000000');
+      }
     }
 
     const dateMatch = this.getDateMatchCriteria(startDate, endDate, null, 'date');
@@ -134,7 +152,6 @@ class AnalyticsService {
     // Parallel Aggregations
     const [
       transactionAgg,
-      expenseAgg,
       manualExpenseAgg,
       payrollAgg,
       personnelStats,
@@ -145,7 +162,7 @@ class AnalyticsService {
       forecastAgg
     ] = await Promise.all([
       Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
@@ -156,17 +173,8 @@ class AnalyticsService {
         },
         { $sort: { "_id": 1 } }
       ]),
-      Transaction.aggregate([
-        { $match: { ...transactionMatch, type: 'EXPENSE' } },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-            expenses: { $sum: "$totalAmount" }
-          }
-        }
-      ]),
       Expense.aggregate([
-        { $match: { ...match, status: { $in: ['approved', 'completed'] }, ...dateMatch } },
+        { $match: { ...match, type: 'EXPENSE', status: { $in: ['approved', 'completed'] }, ...dateMatch } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
@@ -251,16 +259,17 @@ class AnalyticsService {
     ]);
 
     // Processing Results
-    const allExpenseDates = [...expenseAgg.map(e => e._id), ...manualExpenseAgg.map(m => m._id), ...payrollAgg.map(p => `${p._id}-01`)];
+    const allExpenseDates = [...manualExpenseAgg.map(m => m._id), ...payrollAgg.map(p => `${p._id}-01`)];
     const dates = Array.from(new Set([...transactionAgg.map(t => t._id), ...allExpenseDates])).filter(d => d && typeof d === 'string').sort();
 
     const timeSeries = dates.map(date => {
       const t = transactionAgg.find(item => item._id === date) || { revenue: 0, profit: 0, orders: 0 };
-      const e1 = expenseAgg.find(item => item._id === date)?.expenses || 0;
-      const e2 = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
+      // Expenses are sourced from the Expense collection only (Transaction EXPENSE rows
+      // are mirrors of these and would double-count if added again).
+      const e = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
       const monthStr = date.substring(0, 7);
       const p = date.endsWith('-01') ? (payrollAgg.find(item => item._id === monthStr)?.expenses || 0) : 0;
-      return { date, revenue: t.revenue, profit: t.profit, expenses: e1 + e2 + p, orders: t.orders };
+      return { date, revenue: t.revenue, profit: t.profit, expenses: e + p, orders: t.orders };
     });
 
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -275,7 +284,7 @@ class AnalyticsService {
     const expectedTodayRevenue = todayEntry ? Math.round(todayEntry.totalSales / Math.max(todayEntry.count, 1)) : 0;
 
     const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
-    const totalExpenses = expenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
+    const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
     const totalOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
 
     const [staffAgg, categoryAgg, recentTransactions, recentManualExpenses, recentRevenues] = await Promise.all([
@@ -433,8 +442,7 @@ class AnalyticsService {
   async getLiveStats(branchScope) {
     const orderFilter = branchScope ? { branch: branchScope } : {};
     const tableFilter = branchScope ? { locationId: branchScope } : {};
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = this.istStartOfToday();
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     const [

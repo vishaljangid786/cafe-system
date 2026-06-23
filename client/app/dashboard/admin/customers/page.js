@@ -52,6 +52,14 @@ export default function CustomersDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Show only the last 4 digits of a phone number in the UI (e.g. ******7890).
+  const maskPhone = (phone) => {
+    if (!phone) return 'N/A';
+    const digits = String(phone).replace(/\D/g, '');
+    if (digits.length < 4) return '****';
+    return `${'*'.repeat(Math.max(0, digits.length - 4))}${digits.slice(-4)}`;
+  };
+
   const getPointsTier = (points) => {
     if (points >= 500) return { label: 'Platinum', color: 'text-secondary', bg: 'bg-secondary/10' };
     if (points >= 200) return { label: 'Gold', color: 'text-primary', bg: 'bg-primary/10' };
@@ -176,7 +184,7 @@ export default function CustomersDashboard() {
                           </td>
                           <td className="p-6">
                             <p className="font-bold text-(--color-text-primary)">{cust.name}</p>
-                            <p className="text-xs font-medium text-(--color-text-secondary)">{cust.phone}</p>
+                            <p className="text-xs font-medium text-(--color-text-secondary)">{maskPhone(cust.phone)}</p>
                           </td>
                           <td className="p-6">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-normal ${tier.bg} ${tier.color}`}>
@@ -264,7 +272,7 @@ export default function CustomersDashboard() {
                 <div>
                   <p className="font-bold text-xl text-(--color-text-primary)">{viewingCustomer.name}</p>
                   <p className="text-sm font-bold text-(--color-text-secondary) flex items-center gap-1 mt-1">
-                    <Phone size={14}/> {viewingCustomer.phone}
+                    <Phone size={14}/> {maskPhone(viewingCustomer.phone)}
                   </p>
                 </div>
               </div>

@@ -25,7 +25,7 @@ const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/au
 
 const { validateOrderTransition } = require('../middlewares/omsMiddleware');
 const validate = require('../middlewares/validatorMiddleware');
-const { createOrderValidator, updateOrderStatusValidator } = require('../validators/orderValidator');
+const { createOrderValidator, updateOrderItemsValidator, updateOrderStatusValidator } = require('../validators/orderValidator');
 
 router.use(verifyToken);
 
@@ -46,7 +46,7 @@ router
 
 // Specialized updates with strict OMS validation
 router.patch('/:id/status', checkPermissions('manageOrders'), updateOrderStatusValidator, validate, validateOrderTransition, updateOrderStatus);
-router.patch('/:id/items', checkPermissions('manageOrders'), updateOrderItems);
+router.patch('/:id/items', checkPermissions('manageOrders'), updateOrderItemsValidator, validate, updateOrderItems);
 router.patch('/:id/reject', checkPermissions('manageOrders'), validateOrderTransition, rejectOrder);
 router.patch('/:id/cancel', checkPermissions('manageOrders'), validateOrderTransition, cancelOrder);
 router.patch('/:id/note', checkPermissions('manageOrders'), addChefNote);

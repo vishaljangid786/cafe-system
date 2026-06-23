@@ -15,6 +15,8 @@ router.route('/:id')
   .put(checkPermissions('editRevenue'), upload.single('proofImage'), updateExpense)
   .delete(checkPermissions('editRevenue'), deleteExpense);
 
-router.patch('/:id/status', checkRoles('super_admin', 'admin', 'branch_admin'), updateExpenseStatus);
+// Approvers must also hold the editRevenue permission so financial approvals
+// can't be bypassed by a role that lacks editRevenue.
+router.patch('/:id/status', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('editRevenue'), updateExpenseStatus);
 
 module.exports = router;

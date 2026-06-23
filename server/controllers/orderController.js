@@ -25,7 +25,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Only staff can create orders');
   }
 
-  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount, couponId } = req.body;
+  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount, couponId, paymentType } = req.body;
   const branch = ['staff', 'chef'].includes(req.user.role)
     ? req.user.assignedLocation
     : (requestedBranch || (req.user.role === 'branch_admin' ? req.user.assignedLocation : null));
@@ -51,6 +51,7 @@ const createOrder = asyncHandler(async (req, res) => {
     customerName,
     discountAmount: Number(discountAmount) || 0,
     couponId: couponId || null,
+    paymentType: paymentType || 'CASH',
     userId: req.user._id
   });
 
@@ -62,7 +63,8 @@ const getOrders = asyncHandler(async (req, res) => {
   const { status, branchId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
   const filter = {};
 
-  if (status) filter.status = status;
+  const VALID_ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
+  if (status && VALID_ORDER_STATUSES.includes(status)) filter.status = status;
   if (search) {
     const re = new RegExp(escapeRegex(search), 'i');
     filter.$or = [{ customerName: re }, { customerPhone: re }];
@@ -307,13 +309,18 @@ const generateOrderBill = asyncHandler(async (req, res) => {
   const taxes = Number((taxableAmount * 0.05).toFixed(2)); // 5% GST
   const finalAmount = taxableAmount + taxes;
 
-  // Record billing in history
-  order.statusHistory.push({
-    status: 'BILLED',
-    timestamp: new Date(),
-    updatedBy: req.user._id
-  });
-  await order.save();
+  // Idempotency guard: only record BILLED history the first time. Repeat calls
+  // (re-print / double-click) re-compute and return the bill but must not append
+  // duplicate BILLED history entries.
+  const alreadyBilled = order.statusHistory.some(h => h.status === 'BILLED');
+  if (!alreadyBilled) {
+    order.statusHistory.push({
+      status: 'BILLED',
+      timestamp: new Date(),
+      updatedBy: req.user._id
+    });
+    await order.save();
+  }
 
   res.json({
     success: true,
@@ -846,9 +853,9 @@ module.exports = {
       throw new Error('Order not found');
     }
     ensureOrderAccess(req, res, order);
-    order.servedBy = req.user._id;
-    await order.save();
-    
+
+    // servedBy is now persisted inside updateStatus('SERVED'), avoiding a
+    // separate save + a second status write.
     const updatedOrder = await OrderService.updateStatus(orderId, 'SERVED', req.user._id, req.user.role);
     res.json({ success: true, data: updatedOrder });
   }),

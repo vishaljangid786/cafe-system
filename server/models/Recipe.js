@@ -15,7 +15,11 @@ const recipeSchema = new mongoose.Schema(
           ref: 'Ingredient',
         },
         name: { type: String, required: true },
-        quantity: { type: Number, required: true },
+        quantity: {
+          type: Number,
+          required: [true, 'Ingredient quantity is required'],
+          min: [0, 'Ingredient quantity cannot be negative'],
+        },
         unit: { type: String, required: true }, // e.g., grams, ml, pcs
       }
     ],

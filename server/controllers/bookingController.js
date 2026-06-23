@@ -5,6 +5,17 @@ const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
 const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
 
+// Returns true when both are valid HH:mm times and end is strictly after start.
+const isValidTimeRange = (startTime, endTime) => {
+  const re = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (!re.test(startTime) || !re.test(endTime)) return false;
+  const toMinutes = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+  return toMinutes(endTime) > toMinutes(startTime);
+};
+
 // Helper to calculate total guests booked for a specific time range
 const getBookedGuests = async (locationId, date, startTime, endTime, excludeBookingId = null) => {
   const query = {
@@ -35,6 +46,10 @@ const checkAvailability = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Please provide all required fields' });
   }
 
+  if (!isValidTimeRange(startTime, endTime)) {
+    return res.status(400).json({ success: false, message: 'End time must be after start time' });
+  }
+
   const location = await Location.findById(locationId);
   if (!location) {
     return res.status(404).json({ success: false, message: 'Location not found' });
@@ -60,6 +75,10 @@ const checkAvailability = asyncHandler(async (req, res) => {
 // @access  Private
 const createBooking = asyncHandler(async (req, res) => {
   const { locationId, date, startTime, endTime, numberOfGuests, specialRequests, guestName, guestEmail, guestPhone } = req.body;
+
+  if (!isValidTimeRange(startTime, endTime)) {
+    return res.status(400).json({ success: false, message: 'End time must be after start time' });
+  }
 
   const location = await Location.findById(locationId);
   if (!location) {

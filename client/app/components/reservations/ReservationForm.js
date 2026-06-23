@@ -373,7 +373,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                         >
                           <Users size={16} className={isSelected ? 'text-(--color-on-primary)' : 'text-(--color-text-muted)'} />
                           <span className={`text-base font-bold leading-none ${isSelected ? 'text-(--color-on-primary)' : ''}`}>T{table.tableNumber}</span>
-                          <span className={`text-[9px] font-bold uppercase tracking-tight ${isSelected ? 'text-(--color-on-primary)/60' : 'text-(--color-text-muted)'}`}>{table.seats || 2} SEATS</span>
+                          <span className={`text-[9px] font-bold uppercase tracking-tight ${isSelected ? 'text-(--color-on-primary)/60' : 'text-(--color-text-muted)'}`}>{table.capacity ?? table.seats ?? 0} SEATS</span>
                           {isSelected && (
                             <div className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-black rounded-full flex items-center justify-center text-primary shadow-lg ring-4 ring-primary">
                               <CheckCircle2 size={12} strokeWidth={3} />

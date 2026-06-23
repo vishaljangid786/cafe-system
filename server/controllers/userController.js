@@ -661,27 +661,46 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
     throw new Error(`As a ${actorRole}, you cannot assign permissions to a ${targetRole}`);
   }
 
-  // Superior cannot assign permissions above own level
-  if (actorRole !== 'super_admin') {
-    const actorPermissions = req.user.permissions || {};
-    const requestedPermissions = req.body.permissions || {};
-    
-    for (const key in requestedPermissions) {
-      if (requestedPermissions[key] === true && !actorPermissions[key]) {
-        res.status(403);
-        throw new Error(`You cannot assign the permission '${key}' because you do not have it`);
-      }
-    }
-  }
-
   // Validate + merge so a partial/empty body can't silently wipe existing
   // permissions (explicit false still unsets a key).
   if (!req.body.permissions || typeof req.body.permissions !== 'object' || Array.isArray(req.body.permissions)) {
     res.status(400);
     throw new Error('A permissions object is required');
   }
+
+  // Known permission keys only — never merge arbitrary req.body keys into the
+  // permissions object (mirrors registerUser's whitelist).
+  const ALL_PERMISSION_KEYS = [
+    'viewRevenue', 'editRevenue', 'viewOrders', 'manageOrders', 'forceComplete',
+    'exportReports', 'manageStaff', 'manageNotifications', 'viewAnalytics', 'manageCoupons',
+    'manageBranches', 'viewAuditLogs', 'impersonateUsers', 'viewAdminCenter',
+    'manageGlobalMenu', 'sendGlobalNotifications', 'sendMessages', 'messageSuperAdmin',
+  ];
+
+  const actorIsSuper = actorRole === 'super_admin';
+  const actorPermissions = req.user.permissions || {};
+  const requestedPermissions = req.body.permissions;
+
+  // Build the merged object key-by-key from existing perms, applying the
+  // actor-grant gate WHILE building. Requested values are coerced to strict
+  // booleans (=== true) so a truthy non-boolean like "false" or 1 can't bypass
+  // the cast. A non-super actor may only set a key to true if the actor holds it.
   const existingPerms = user.permissions?.toObject ? user.permissions.toObject() : (user.permissions || {});
-  user.permissions = { ...existingPerms, ...req.body.permissions };
+  const mergedPerms = {};
+  ALL_PERMISSION_KEYS.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(requestedPermissions, key)) {
+      const wantsTrue = requestedPermissions[key] === true;
+      if (wantsTrue && !actorIsSuper && actorPermissions[key] !== true) {
+        res.status(403);
+        throw new Error(`You cannot assign the permission '${key}' because you do not have it`);
+      }
+      mergedPerms[key] = wantsTrue;
+    } else if (existingPerms[key] !== undefined) {
+      mergedPerms[key] = existingPerms[key] === true;
+    }
+  });
+
+  user.permissions = mergedPerms;
   await user.save();
 
   res.json({

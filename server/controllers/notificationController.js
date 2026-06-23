@@ -60,7 +60,8 @@ const getNotifications = asyncHandler(async (req, res) => {
   }
 
   const limitNum = clampLimit(limit, 20);
-  const skip = (page - 1) * limitNum;
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const skip = (pageNum - 1) * limitNum;
 
   const notifications = await Notification.find(query)
     .populate('sender', 'name role profileImageUrl')
@@ -89,8 +90,8 @@ const getNotifications = asyncHandler(async (req, res) => {
     data: processedNotifications || [],
     pagination: {
       total: total || 0,
-      page: parseInt(page),
-      pages: Math.ceil((total || 0) / limit),
+      page: pageNum,
+      pages: Math.ceil((total || 0) / limitNum),
       unreadCount: unreadCount || 0
     }
   });

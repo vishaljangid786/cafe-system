@@ -71,23 +71,28 @@ export default function ChefDashboard() {
     }, 0);
 
     if (socket && selectedLocation) {
-      // Listeners are now attached to rooms joined in AuthContext
-      socket.on('order:new', (data) => {
+      // Listeners are now attached to rooms joined in AuthContext.
+      // Keep stable handler references so we only remove OUR listeners on cleanup
+      // (socket.off('event') with no handler would wipe every listener for that event).
+      const handleOrderNew = (data) => {
         toast.success('New Order!', { icon: '🔥', duration: 4000 });
         fetchOrders(true);
-      });
-
-      socket.on('order:update', () => fetchOrders(true));
-      socket.on('order:cancel', () => {
+      };
+      const handleOrderUpdate = () => fetchOrders(true);
+      const handleOrderCancel = () => {
         toast.error('Order cancelled by admin');
         fetchOrders(true);
-      });
+      };
+
+      socket.on('order:new', handleOrderNew);
+      socket.on('order:update', handleOrderUpdate);
+      socket.on('order:cancel', handleOrderCancel);
 
       return () => {
         clearTimeout(timer);
-        socket.off('order:new');
-        socket.off('order:update');
-        socket.off('order:cancel');
+        socket.off('order:new', handleOrderNew);
+        socket.off('order:update', handleOrderUpdate);
+        socket.off('order:cancel', handleOrderCancel);
       };
     }
 

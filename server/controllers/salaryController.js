@@ -6,10 +6,27 @@ const asyncHandler = require('../utils/asyncHandler');
 const { scopedLocationId, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
 const mongoose = require('mongoose');
 
-// Helper to get days in a month (format: YYYY-MM)
+// Validate a month string is exactly YYYY-MM with a real month (01-12).
+const isValidMonth = (monthString) =>
+  typeof monthString === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthString);
+
+// Helper to get days in a month (format: YYYY-MM). Caller must validate format
+// first (an out-of-range month would otherwise roll over and miscount days).
 const getDaysInMonth = (monthString) => {
   const [year, month] = monthString.split('-');
   return new Date(year, month, 0).getDate();
+};
+
+// Standard guard for endpoints that take a ?month=YYYY-MM param.
+const requireValidMonth = (res, month) => {
+  if (!month) {
+    res.status(400);
+    throw new Error('Month parameter (YYYY-MM) is required');
+  }
+  if (!isValidMonth(month)) {
+    res.status(400);
+    throw new Error('Month must be in YYYY-MM format');
+  }
 };
 
 // Roles whose salaries a given actor may view — never peers or superiors.
@@ -84,10 +101,7 @@ const getSalaryAggregation = async (userIds, month, daysInMonth) => {
 // @access  Private (Branch Admin, Admin, Super Admin)
 const getLocationSalary = asyncHandler(async (req, res) => {
   const { month, locationId } = req.query; // YYYY-MM
-  if (!month) {
-    res.status(400);
-    throw new Error('Month parameter (YYYY-MM) is required');
-  }
+  requireValidMonth(res, month);
 
   const targetLocationId = scopedLocationId(req, locationId);
   if (!targetLocationId) {
@@ -120,10 +134,7 @@ const getLocationSalary = asyncHandler(async (req, res) => {
 // @access  Private (Admin, Super Admin)
 const getAllSalary = asyncHandler(async (req, res) => {
   const { month, search, role, locationId, page = 1, limit = 10 } = req.query; // YYYY-MM
-  if (!month) {
-    res.status(400);
-    throw new Error('Month parameter (YYYY-MM) is required');
-  }
+  requireValidMonth(res, month);
 
   // 1. Build User Filter Query for Search/Role/Location
   let userQuery = {};
@@ -177,8 +188,8 @@ const getAllSalary = asyncHandler(async (req, res) => {
     pagination: {
       total: allSalaries.length,
       page: parseInt(page),
-      pages: Math.ceil(allSalaries.length / limit),
-      limit: parseInt(limit)
+      pages: Math.ceil(allSalaries.length / lim),
+      limit: lim
     },
     data: paginatedSalaries,
   });
@@ -189,15 +200,20 @@ const getAllSalary = asyncHandler(async (req, res) => {
 // @access  Private (Branch Admin, Admin, Super Admin)
 const getUserSalary = asyncHandler(async (req, res) => {
   const { month } = req.query; // YYYY-MM
-  if (!month) {
-    res.status(400);
-    throw new Error('Month parameter (YYYY-MM) is required');
-  }
+  requireValidMonth(res, month);
 
   const user = await User.findById(req.params.id);
   if (!user) {
     res.status(404);
     throw new Error('User not found');
+  }
+
+  // RBAC: respect the same salary role hierarchy as the list endpoints — a
+  // non-super actor can never view a peer's or superior's salary (e.g. an admin
+  // viewing another admin, or a branch_admin viewing themselves/an admin).
+  if (req.user.role !== 'super_admin' && !salaryVisibleRoles(req.user.role).includes(user.role)) {
+    res.status(403);
+    throw new Error('You do not have permission to view this user salary');
   }
 
   // RBAC: Branch admin / Admin can only check their authorized location staff
@@ -254,10 +270,7 @@ const getMySalaryHistory = asyncHandler(async (req, res) => {
 
 const getMySalary = asyncHandler(async (req, res) => {
   const { month } = req.query; // YYYY-MM
-  if (!month) {
-    res.status(400);
-    throw new Error('Month parameter (YYYY-MM) is required');
-  }
+  requireValidMonth(res, month);
 
   const userId = req.user._id;
   const daysInMonth = getDaysInMonth(month);
@@ -284,6 +297,10 @@ const generatePayroll = asyncHandler(async (req, res) => {
   if (!month) {
     res.status(400);
     throw new Error('Month (YYYY-MM) is required');
+  }
+  if (!isValidMonth(month)) {
+    res.status(400);
+    throw new Error('Month must be in YYYY-MM format');
   }
 
   const targetLocation = scopedLocationId(req, locationId);

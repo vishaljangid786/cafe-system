@@ -38,6 +38,16 @@ const updateInventory = asyncHandler(async (req, res) => {
     throw new Error('Quantity must be a number greater than zero');
   }
 
+  if (costPerUnit !== undefined && (!Number.isFinite(Number(costPerUnit)) || Number(costPerUnit) < 0)) {
+    res.status(400);
+    throw new Error('Cost per unit must be a number of 0 or more');
+  }
+
+  if (minThreshold !== undefined && (!Number.isFinite(Number(minThreshold)) || Number(minThreshold) < 0)) {
+    res.status(400);
+    throw new Error('Minimum threshold must be a number of 0 or more');
+  }
+
   let item = await BranchInventory.findOne({ branch, ingredient });
 
   if (item) {
@@ -67,9 +77,9 @@ const logWaste = asyncHandler(async (req, res) => {
   // Authorization check
   enforceLocationAccess(req, res, branch, 'You do not have permission to log waste for this branch');
 
-  if (Number(quantity) <= 0) {
+  if (!Number.isFinite(Number(quantity)) || Number(quantity) <= 0) {
     res.status(400);
-    throw new Error('Quantity must be greater than zero');
+    throw new Error('Quantity must be a number greater than zero');
   }
 
   const updated = await BranchInventory.findOneAndUpdate(
@@ -130,7 +140,7 @@ const getPurchaseSuggestions = asyncHandler(async (req, res) => {
     .lean();
 
   const data = suggestions
-    .filter(item => item.stock <= item.minThreshold)
+    .filter(item => item.ingredient && item.stock <= item.minThreshold)
     .map(item => ({
       ingredient: item.ingredient.name,
       currentStock: item.stock,
@@ -144,7 +154,16 @@ const getPurchaseSuggestions = asyncHandler(async (req, res) => {
 
 // @desc    Manage Global Ingredients (CRUD)
 const createIngredient = asyncHandler(async (req, res) => {
-  const ingredient = await Ingredient.create(req.body);
+  const { name, unit, category, baseCost, isActive } = req.body;
+
+  const data = { name, unit };
+  if (category !== undefined) data.category = category;
+  if (baseCost !== undefined) data.baseCost = Number(baseCost);
+  if (isActive !== undefined) {
+    data.isActive = isActive === 'on' || isActive === 'true' || isActive === true;
+  }
+
+  const ingredient = await Ingredient.create(data);
   res.status(201).json({ success: true, data: ingredient });
 });
 

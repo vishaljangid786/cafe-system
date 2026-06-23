@@ -41,7 +41,18 @@ const finalizeOrder = async (order, user) => {
   // Net Profit = Gross Profit - Discount
   const totalProfit = grossProfit - (Number(order.discountAmount) || 0);
 
-  // Create Transaction
+  // Deduct ingredients FIRST so a deduction failure surfaces before we record
+  // revenue. Previously the false return was swallowed, which could leave a
+  // REVENUE transaction recorded with no corresponding inventory deduction.
+  // The isBilled claim above is already committed, so a thrown error here will
+  // not double-bill on retry — it just prevents recording unbacked revenue.
+  const deducted = await deductIngredientsFromRecipe(order, order.branch);
+  if (!deducted) {
+    console.error(`[orderFinalizer] Ingredient deduction failed for order ${order._id}; aborting revenue record.`);
+    throw new Error('Failed to deduct ingredients for this order. Revenue was not recorded.');
+  }
+
+  // Create Transaction (only after ingredients are successfully deducted)
   const transaction = await Transaction.create({
     locationId: order.branch,
     type: 'REVENUE',
@@ -64,9 +75,6 @@ const finalizeOrder = async (order, user) => {
       costPrice: Number(i.costPrice || 0)
     }))
   });
-
-  // Deduct ingredients
-  await deductIngredientsFromRecipe(order, order.branch);
 
   // Decrement active orders count on table
   const updatedTable = await Table.findByIdAndUpdate(

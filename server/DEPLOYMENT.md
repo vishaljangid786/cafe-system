@@ -27,9 +27,12 @@ JWT_EXPIRE=30d
 JWT_COOKIE_EXPIRE=30
 NODE_ENV=production
 ENCRYPTION_KEY=your_encryption_key
+CRON_SECRET=your_long_random_cron_secret
 CORS_ORIGIN=http://localhost:3000,http://127.0.0.1:3000,https://your-client-domain.vercel.app
 CLIENT_URL=http://localhost:3000,http://127.0.0.1:3000,https://your-client-domain.vercel.app
 ```
+
+`CRON_SECRET` guards the daily-report endpoint. `node-cron` cannot run on serverless, so the daily report is triggered by a Vercel Cron (configured in `vercel.json`) that calls `GET /api/cron/daily-report` with `Authorization: Bearer <CRON_SECRET>`. Set the same value in Vercel's Cron settings.
 
 `ENCRYPTION_KEY` is **mandatory in production** — the server refuses to start (throws at load time) without it, so the Vercel function will crash on every request if it is missing. Use the **same value** across every environment that shares a database, or existing encrypted Aadhaar PII will fail to decrypt.
 
@@ -45,3 +48,12 @@ NEXT_PUBLIC_ENABLE_SOCKET=false
 ```
 
 Socket.IO works for the local long-running server (`npm run dev`). Vercel serverless functions do not keep Socket.IO connections alive, so keep `NEXT_PUBLIC_ENABLE_SOCKET=false` when the API is deployed on Vercel unless you move realtime to a long-running host.
+
+## Secrets & security (one-time)
+
+`server/.env` is gitignored now, but it was committed earlier in git history (commit `cfad6ae`). Treat every credential that ever lived there as exposed:
+
+1. **Rotate** the MongoDB Atlas DB-user password (stop using `demo`) and regenerate the Cloudinary API secret.
+2. **Re-issue** `JWT_SECRET` and `ENCRYPTION_KEY` (keep `ENCRYPTION_KEY` constant once data is encrypted with it).
+3. **Purge** the old file from history with `git filter-repo --path server/.env --invert-paths` (or BFG) and force-push. This rewrites history — coordinate with anyone who has cloned the repo.
+4. Set all of the above (plus `CRON_SECRET`) on the Vercel backend project's environment variables.

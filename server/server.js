@@ -103,25 +103,34 @@ io.on('connection', (socket) => {
 
   socket.on('join_room', (room) => {
     if (!allow('join_room')) return;
-    const branchMatch = typeof room === 'string' && room.match(/^branch_([^_]+)(?:_.+)?$/);
-    if (!branchMatch) return;
-    const branchId = branchMatch[1];
-    if (canAccessLocation(user, branchId)) {
-      // Role-Suffix Security Check: Prevent staff from joining _admin or _chef rooms
-      const isRoleSpecific = room.includes('_admin') || room.includes('_chef') || room.includes('_staff');
-      const roomSuffix = room.split('_').pop();
-      
-      const isAuthorizedRole = 
-        ['super_admin', 'admin'].includes(user.role) || 
-        user.role === roomSuffix || 
-        !isRoleSpecific;
+    if (typeof room !== 'string') return;
 
-      if (isAuthorizedRole) {
-        socket.join(room);
-      } else {
+    // Explicit room grammar: either `branch_<branchId>` or
+    // `branch_<branchId>_<role>` where <role> is a known role enum value.
+    // No substring/suffix heuristics — anything that doesn't match is rejected.
+    const KNOWN_ROLES = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'];
+    const roleAlt = KNOWN_ROLES.join('|');
+    const branchMatch = room.match(new RegExp(`^branch_([0-9a-fA-F]{24})(?:_(${roleAlt}))?$`));
+    if (!branchMatch) {
+      console.warn(`[SOCKET_AUTH_VIOLATION] User ${user.email} (${user.role}) attempted to join malformed room: ${room}`);
+      return;
+    }
+
+    const branchId = branchMatch[1];
+    const roomRole = branchMatch[2]; // undefined for the branch-wide room
+    if (!canAccessLocation(user, branchId)) return;
+
+    // Role-scoped room: only super_admin/admin (cross-role visibility) or a user
+    // whose own role exactly equals the room's role may join.
+    if (roomRole) {
+      const allowed = ['super_admin', 'admin'].includes(user.role) || user.role === roomRole;
+      if (!allowed) {
         console.warn(`[SOCKET_AUTH_VIOLATION] User ${user.email} (${user.role}) attempted to join unauthorized room: ${room}`);
+        return;
       }
     }
+
+    socket.join(room);
   });
 
   socket.on('disconnect', () => {
@@ -132,9 +141,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+// Handle unhandled promise rejections.
+// Do NOT tear down the whole server on a single stray rejection — one rejected
+// promise (e.g. a background email/report failure) must not take the entire API
+// offline. Log/alert and keep serving; let a process supervisor restart on a
+// genuine fatal (uncaughtException) instead.
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection]', err && err.stack ? err.stack : err);
 });

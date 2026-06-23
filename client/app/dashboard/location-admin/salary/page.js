@@ -22,6 +22,7 @@ export default function SalaryPage() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingUser, setViewingUser] = useState(null);
+  const [error, setError] = useState('');
 
   const fetchSalaries = async () => {
     const isInitial = !didInitRef.current;
@@ -30,9 +31,12 @@ export default function SalaryPage() {
     progress.start();
     try {
       const res = await api.get(`/salary/location?month=${month}`);
-      setSalaries(res.data.data);
+      setSalaries(Array.isArray(res.data.data) ? res.data.data : []);
+      setError('');
     } catch (error) {
       console.error('Failed to fetch salaries:', error);
+      setSalaries([]);
+      setError('Could not load salary records. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -50,10 +54,10 @@ export default function SalaryPage() {
   }, [month]);
 
   const filteredSalaries = salaries.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (s?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPayout = salaries.reduce((acc, curr) => acc + curr.calculatedSalary, 0);
+  const totalPayout = salaries.reduce((acc, curr) => acc + (Number(curr?.calculatedSalary) || 0), 0);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -121,12 +125,12 @@ export default function SalaryPage() {
             <div className="bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
               <p className="text-[10px] font-bold text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal mb-4">Average Attendance</p>
               <div className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
-                {salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100).toFixed(1) : 0}%
+                {salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + (Number(curr?.payableDays) || 0), 0) / (salaries.length * 30) * 100).toFixed(1) : 0}%
               </div>
               <div className="mt-6 h-1.5 w-full bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + curr.payableDays, 0) / (salaries.length * 30) * 100) : 0}%` }}
+                  animate={{ width: `${salaries.length > 0 ? (salaries.reduce((acc, curr) => acc + (Number(curr?.payableDays) || 0), 0) / (salaries.length * 30) * 100) : 0}%` }}
                   className="h-full bg-success rounded-full"
                 />
               </div>
@@ -181,6 +185,15 @@ export default function SalaryPage() {
                         <TableSkeleton rows={6} cols={3} />
                       </td>
                     </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="4" className="px-10 py-32 text-center">
+                        <div className="flex flex-col items-center text-danger">
+                          <AlertCircle size={64} className="mb-4 opacity-60" />
+                          <p className="text-sm font-bold uppercase tracking-normal">{error}</p>
+                        </div>
+                      </td>
+                    </tr>
                   ) : filteredSalaries.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-10 py-32 text-center">
@@ -203,7 +216,7 @@ export default function SalaryPage() {
                         <div className="flex items-center">
                           <div className="relative">
                             <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-primary dark:text-primary font-bold text-2xl border border-[rgba(var(--color-primary-rgb),0.2)] shadow-lg">
-                              {item.name.charAt(0)}
+                              {item.name?.charAt(0) || '?'}
                             </div>
                             <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full"></div>
                           </div>
@@ -262,7 +275,7 @@ export default function SalaryPage() {
               <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-(--color-border) dark:border-(--color-border) pb-8">
                 <div className="flex items-center gap-6">
                   <div className="h-20 w-20 rounded-xl bg-primary text-white flex items-center justify-center text-3xl font-bold shadow-sm ">
-                    {viewingUser.name.charAt(0)}
+                    {viewingUser.name?.charAt(0) || '?'}
                   </div>
                   <div>
                     <h2 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none">{viewingUser.name}</h2>
@@ -280,7 +293,7 @@ export default function SalaryPage() {
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
                   <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
-                    ₹{viewingUser.monthlySalary.toLocaleString()}
+                    ₹{(Number(viewingUser.monthlySalary) || 0).toLocaleString()}
                   </p>
                   <p className="text-[10px] font-bold text-primary uppercase mt-1">Per Month</p>
                 </div>
@@ -317,7 +330,7 @@ export default function SalaryPage() {
                       <Wallet size={80} />
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-normal opacity-60 mb-4">Net Salary to Pay</p>
-                    <div className="text-4xl font-bold tracking-tight mb-2">₹{Math.round(viewingUser.calculatedSalary).toLocaleString()}</div>
+                    <div className="text-4xl font-bold tracking-tight mb-2">₹{Math.round(Number(viewingUser.calculatedSalary) || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold uppercase tracking-normal opacity-60">
                       Based on {viewingUser.payableDays} Effective Days
                     </p>

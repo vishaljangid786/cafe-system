@@ -498,7 +498,7 @@ function SignupContent() {
                           {Object.values(permissions).filter(Boolean).length} selected
                         </span>
                       </div>
-                      <p className="text-[11px] text-(--color-text-muted) ml-0.5">This role's defaults are pre-selected. Add more if needed — you can only grant permissions you have.</p>
+                      <p className="text-[11px] text-(--color-text-muted) ml-0.5">This role&apos;s defaults are pre-selected. Add more if needed — you can only grant permissions you have.</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {PERMISSION_LIST.map(({ key, label }) => {
                           const checked = !!permissions[key];
@@ -512,7 +512,7 @@ function SignupContent() {
                             >
                               <span className="flex flex-col">
                                 {label}
-                                {!allowed && <span className="text-[9px] text-danger normal-case">You don't have this</span>}
+                                {!allowed && <span className="text-[9px] text-danger normal-case">You don&apos;t have this</span>}
                               </span>
                               <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
                                 {checked && <CheckCircle2 size={12} />}

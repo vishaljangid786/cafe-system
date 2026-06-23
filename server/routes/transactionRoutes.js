@@ -17,7 +17,9 @@ router.get('/stats', checkPermissions('viewRevenue'), getTransactionStats);
 router.post('/', checkPermissions('editRevenue'), upload.single('image'), createTransaction);
 
 // Approval Workflow
-router.patch('/:id/approve', checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), approveTransaction);
-router.patch('/:id/reject', checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), rejectTransaction);
+// location_admin removed (its default editRevenue is false); approvers must also
+// hold the editRevenue permission so financial approvals can't be bypassed.
+router.patch('/:id/approve', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('editRevenue'), approveTransaction);
+router.patch('/:id/reject', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('editRevenue'), rejectTransaction);
 
 module.exports = router;

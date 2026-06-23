@@ -29,7 +29,7 @@ export default function BranchStaffPage() {
     name: '', email: '', phone: '', age: '', gender: 'Male',
     address1: '', city: '', state: '', pincode: '', monthlySalary: ''
   });
-  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phone: '', monthlySalary: '' });
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phone: '', gender: 'Male', address1: '', city: '', monthlySalary: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 12;
@@ -92,12 +92,25 @@ export default function BranchStaffPage() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    // Match the backend register requirements so we fail fast with a clear message.
+    if (createForm.password.length < 10) {
+      toast.error('Password must be at least 10 characters.');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(createForm.phone || '')) {
+      toast.error('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    if (!createForm.address1 || !createForm.city) {
+      toast.error('Please fill the address and city.');
+      return;
+    }
     const loadToast = toast.loading('Adding staff member...');
     try {
       await api.post('/auth/register', { ...createForm, role: 'staff' });
       toast.success('Staff member added', { id: loadToast });
       setShowCreateModal(false);
-      setCreateForm({ name: '', email: '', password: '', phone: '', monthlySalary: '' });
+      setCreateForm({ name: '', email: '', password: '', phone: '', gender: 'Male', address1: '', city: '', monthlySalary: '' });
       fetchStaff();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not add staff member', { id: loadToast });
@@ -521,11 +534,27 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Password</label>
-              <input required type="password" minLength={6} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" />
+              <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 10 characters" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Phone</label>
-              <input type="tel" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value }))} placeholder="Contact number" />
+              <input required type="tel" maxLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="10-digit number" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Gender</label>
+              <select required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.gender} onChange={e => setCreateForm(p => ({ ...p, gender: e.target.value }))}>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Address</label>
+              <input required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.address1} onChange={e => setCreateForm(p => ({ ...p, address1: e.target.value }))} placeholder="Street address" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">City</label>
+              <input required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.city} onChange={e => setCreateForm(p => ({ ...p, city: e.target.value }))} placeholder="City" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Monthly Salary</label>

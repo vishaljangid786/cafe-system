@@ -79,7 +79,14 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   const mongoose = require('mongoose');
   const aggregateQuery = { ...query };
-  
+
+  // Totals/footer must never include pending/rejected rows unless the caller
+  // explicitly asked for a specific status. Default to approved for ALL roles
+  // (the list query above only defaults this for admin roles).
+  if (!status) {
+    aggregateQuery.status = 'approved';
+  }
+
   if (aggregateQuery.locationId) {
     if (typeof aggregateQuery.locationId === 'string') {
       aggregateQuery.locationId = new mongoose.Types.ObjectId(aggregateQuery.locationId);
@@ -166,10 +173,24 @@ const createTransaction = asyncHandler(async (req, res) => {
   // Handle billImage if uploaded (assuming multer is used in routes)
   const billImage = req.file ? req.file.path : undefined;
 
-  // Determine initial status - Only Super Admin auto-approves their own manual entries
+  // Determine initial status.
+  //
+  // DESIGN NOTE (intentional overlap): this manual /transactions path coexists
+  // with the Expense approval+proof model (POST /api/expenses). Both can post an
+  // EXPENSE to the ledger; the Expense path additionally enforces a proof image
+  // and a richer approval workflow. We deliberately do NOT delete this path, but
+  // we harden it for parity: anyone WITHOUT editRevenue (and who is not an admin
+  // role) must land as 'pending' so it goes through approval. Only super_admin
+  // auto-approves their own entries (segregation of duties for everyone else).
+  const isAdminRole = ['admin', 'branch_admin'].includes(req.user.role);
+  const hasEditRevenue = !!(req.user.permissions && req.user.permissions.editRevenue);
   let status = 'pending';
   if (req.user.role === 'super_admin') {
     status = 'approved';
+  } else if (!isAdminRole && !hasEditRevenue) {
+    // Non-admin without editRevenue: force pending (defense-in-depth; the route
+    // already requires editRevenue, but this guarantees safety if that changes).
+    status = 'pending';
   }
 
   const transaction = await Transaction.create({

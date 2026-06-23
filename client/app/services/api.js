@@ -17,8 +17,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       Cookies.remove('selectedLocation');
-      const publicPaths = ['/login'];
-      if (typeof window !== 'undefined' && !publicPaths.includes(window.location.pathname)) {
+      // Public pages must never be bounced to /login on a 401. The /auth/profile
+      // probe legitimately 401s for logged-out visitors browsing these pages.
+      const publicPaths = ['/login', '/signup', '/bookings'];
+      const onPublicPath = typeof window !== 'undefined' &&
+        publicPaths.some((p) => window.location.pathname === p || window.location.pathname.startsWith(`${p}/`));
+      const isProfileProbe = error.config?.url?.includes('/auth/profile');
+      if (typeof window !== 'undefined' && !onPublicPath && !isProfileProbe) {
         window.location.href = '/login';
       }
     }

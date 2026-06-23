@@ -21,6 +21,11 @@ const overlapQuery = (startTime, endTime) => ([
   { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
 ]);
 
+// Times are zero-padded "HH:mm" strings, so lexicographic comparison is valid.
+// Returns true when the range is invalid (start not strictly before end).
+const isInvalidTimeRange = (startTime, endTime) =>
+  typeof startTime === 'string' && typeof endTime === 'string' && startTime >= endTime;
+
 // @desc    Check availability for a date/time
 // @route   GET /api/reservations/availability
 // @access  Private
@@ -30,6 +35,10 @@ exports.checkAvailability = async (req, res) => {
 
     if (!locationId || !date || !startTime || !endTime || !reservationType) {
       return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    if (isInvalidTimeRange(startTime, endTime)) {
+      return res.status(400).json({ message: 'Start time must be before end time' });
     }
 
     if (req.user.role !== 'super_admin') {
@@ -140,6 +149,21 @@ exports.createReservation = async (req, res) => {
       return res.status(400).json({ message: 'Location is required' });
     }
 
+    if (isInvalidTimeRange(startTime, endTime)) {
+      return res.status(400).json({ message: 'Start time must be before end time' });
+    }
+
+    // Financial validation: amounts must be finite, totalAmount positive, and
+    // advancePayment within [0, totalAmount]. Prevents bogus/negative ledger income.
+    const numTotal = Number(totalAmount);
+    const numAdvance = Number(advancePayment ?? 0);
+    if (!Number.isFinite(numTotal) || numTotal <= 0) {
+      return res.status(400).json({ message: 'Total amount must be a positive number' });
+    }
+    if (!Number.isFinite(numAdvance) || numAdvance < 0 || numAdvance > numTotal) {
+      return res.status(400).json({ message: 'Advance payment must be between 0 and the total amount' });
+    }
+
     if (reservationType === 'table' && tableIds?.length) {
       const selectedTableIds = Array.isArray(tableIds) ? tableIds : [tableIds];
       const tables = await Table.find({ _id: { $in: selectedTableIds }, locationId }).select('_id');
@@ -190,9 +214,12 @@ exports.createReservation = async (req, res) => {
       notes
     });
 
-    // 2. Create Expense + sync to Transaction ledger if payment received
-    if (advancePayment > 0 || paymentStatus === 'paid') {
-      const amount = paymentStatus === 'paid' ? totalAmount : advancePayment;
+    // 2. Create Expense + sync to Transaction ledger if payment received.
+    //    The income Expense is created as 'pending' so it flows through the same
+    //    approval workflow as any other ledger entry — staff can record a booking
+    //    payment but it does not auto-post as approved revenue without review.
+    if (numAdvance > 0 || paymentStatus === 'paid') {
+      const amount = paymentStatus === 'paid' ? numTotal : numAdvance;
       const expense = await Expense.create({
         title: `Reservation Income - ${eventName}`,
         description: `Booking income for ${customerName} (${reservationType})`,
@@ -203,7 +230,7 @@ exports.createReservation = async (req, res) => {
         locationId,
         createdBy: req.user._id,
         proofImage: req.body.proofImage || 'reservation-payment',
-        status: 'approved'
+        status: 'pending'
       });
       await TransactionService.syncExpenseToTransaction(expense);
     }

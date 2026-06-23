@@ -51,6 +51,9 @@ export default function AdminOrdersDashboard() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const itemsPerPage = 24;
+  // Monotonic request id: only the latest request is allowed to commit state,
+  // so out-of-order (stale) responses from fast typing/filtering are ignored.
+  const reqIdRef = useRef(0);
   const fetchData = useCallback(async ({ silent = false } = {}) => {
     const isInitial = !didInitRef.current;
     if (!silent) {
@@ -58,6 +61,7 @@ export default function AdminOrdersDashboard() {
       else setRefetching(true);
       progress.start();
     }
+    const reqId = ++reqIdRef.current;
     try {
       const params = new URLSearchParams();
       params.append('page', currentPage);
@@ -73,15 +77,17 @@ export default function AdminOrdersDashboard() {
         api.get(`/orders/analytics?${params.toString().replace(/&?page=\d+|&?limit=\d+/g, '')}`),
         api.get('/locations')
       ]);
+      // Drop the result if a newer request has since started.
+      if (reqId !== reqIdRef.current) return;
       setOrders(orderRes.data.data);
       setTotalPages(orderRes.data.pagination.pages);
       setAnalytics(analyticsRes.data.data);
       setLocations(locRes.data.data);
     } catch (error) {
-      toast.error('Could not load orders. Please try again.');
+      if (reqId === reqIdRef.current) toast.error('Could not load orders. Please try again.');
     } finally {
       didInitRef.current = true;
-      if (!silent) {
+      if (!silent && reqId === reqIdRef.current) {
         setLoading(false);
         setRefetching(false);
         progress.done();
@@ -89,9 +95,20 @@ export default function AdminOrdersDashboard() {
     }
   }, [branchFilter, statusFilter, dateRange, currentPage, searchTerm]);
 
+  // Debounce data fetches so each keystroke/filter change doesn't fire its own
+  // request burst; the stale-response guard above handles any overlap.
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => fetchData(), 300);
+    return () => clearTimeout(timer);
   }, [fetchData]);
+
+  // Any filter or search change must return to page 1, otherwise the user can be
+  // stranded on a page number that no longer exists for the new result set.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) { didMountRef.current = true; return; }
+    setCurrentPage(1);
+  }, [branchFilter, statusFilter, dateRange, searchTerm]);
 
   // Attach real-time listeners to the shared socket from AuthContext.
   // No new connection is created — this eliminates the duplicate socket bug.

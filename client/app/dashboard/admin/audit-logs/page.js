@@ -140,7 +140,8 @@ export default function AuditLogsPage() {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
             <input
               type="text"
-              placeholder="Search activity..."
+              placeholder="Filter by user ID..."
+              aria-label="Filter audit logs by user ID"
               className="w-full pl-12 pr-5 py-3.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl text-sm font-bold text-(--color-text-primary) focus:ring-4 focus:ring-primary/10 transition-all outline-none"
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}

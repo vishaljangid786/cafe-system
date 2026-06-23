@@ -24,12 +24,27 @@ const maybeVerifyToken = async (req, res, next) => {
   return verifyToken(req, res, next);
 };
 
-router.post('/register', authLimiter, maybeVerifyToken, upload.fields([{ name: 'aadharImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]), ...signupSchema, validate, registerUser);
+// Coarse role gate that runs BEFORE the Cloudinary upload, using only req.user
+// (the body/role isn't parsed yet — that's multer's job). Rejects creators who
+// can never register anyone (staff/chef/location_admin), so unauthorized callers
+// don't trigger a wasteful file upload. The fine-grained per-role gate (which
+// needs the parsed body) still runs inside registerUser. Skipped during initial
+// setup when there is no authenticated creator yet.
+const CREATOR_ROLES = ['super_admin', 'admin', 'branch_admin'];
+const gateCanCreateUser = (req, res, next) => {
+  if (req.user && !CREATOR_ROLES.includes(req.user.role)) {
+    res.status(403);
+    return next(new Error('You do not have permission to add new staff'));
+  }
+  return next();
+};
+
+router.post('/register', authLimiter, maybeVerifyToken, gateCanCreateUser, upload.fields([{ name: 'aadharImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]), ...signupSchema, validate, registerUser);
 router.post('/login', authLimiter, ...loginSchema, validate, loginUser);
 router.get('/profile', verifyToken, getProfile);
 
 router.post('/impersonate/:userId', verifyToken, checkRoleOrPermission(['super_admin'], 'impersonateUsers'), impersonateUser);
 router.post('/exit-impersonation', verifyToken, exitImpersonation);
-router.post('/logout', logoutUser);
+router.post('/logout', verifyToken, logoutUser);
 
 module.exports = router;

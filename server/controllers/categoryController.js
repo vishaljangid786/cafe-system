@@ -1,4 +1,5 @@
 const Category = require('../models/Category');
+const MenuItem = require('../models/MenuItem');
 const asyncHandler = require('../utils/asyncHandler');
 const { escapeRegex } = require('../utils/accessControl');
 
@@ -109,6 +110,16 @@ const deleteCategory = asyncHandler(async (req, res) => {
   if (!category) {
     res.status(404);
     throw new Error('Category not found');
+  }
+
+  // Block deactivation while menu items still reference this category —
+  // otherwise those items would point at an inactive category.
+  const referencingCount = await MenuItem.countDocuments({ category: category._id });
+  if (referencingCount > 0) {
+    res.status(400);
+    throw new Error(
+      `Cannot delete this category — ${referencingCount} menu item(s) still use it. Reassign or remove those items first.`
+    );
   }
 
   // Soft-delete

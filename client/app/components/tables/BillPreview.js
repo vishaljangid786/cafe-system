@@ -27,8 +27,11 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
   const subtotal = allBillableItems.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0);
   const discount = table?.discountAmount || 0;
-  const taxes = Number((subtotal * 0.05).toFixed(2)); // 5% GST
-  const total = Math.max(0, subtotal + taxes - discount);
+  // GST is charged on the post-discount taxable amount, matching the server bill
+  // calculation (orderController.generateOrderBill) so the displayed total agrees.
+  const taxableAmount = Math.max(0, subtotal - discount);
+  const taxes = Number((taxableAmount * 0.05).toFixed(2)); // 5% GST
+  const total = taxableAmount + taxes;
   const [billId] = useState(() => `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
   const [dateTime] = useState(() => new Date().toLocaleString());
 

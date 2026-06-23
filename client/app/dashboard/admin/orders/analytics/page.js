@@ -840,7 +840,7 @@ export default function OrderAnalyticsDashboard() {
                   }}
                   className="w-full py-6 bg-primary hover:bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-normal  active:scale-95 transition-all shadow-sm  flex items-center justify-center gap-4"
                 >
-                  <Layers size={18} /> View This Branch's Analytics
+                  <Layers size={18} /> View This Branch&apos;s Analytics
                 </button>
                 <p className="text-center text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal opacity-40">
                   Admin access only

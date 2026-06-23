@@ -20,10 +20,12 @@ const branchInventorySchema = new mongoose.Schema(
     minThreshold: {
       type: Number,
       default: 10, // Default alert threshold
+      min: [0, 'Minimum threshold cannot be negative'],
     },
     costPerUnit: {
       type: Number,
       default: 0,
+      min: [0, 'Cost per unit cannot be negative'],
     },
     lastRestocked: {
       type: Date,

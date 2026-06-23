@@ -33,6 +33,13 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
+  // In production, never leak internal error details for server-side (>=500)
+  // failures — these are typically unexpected/non-operational. Known 4xx errors
+  // (validation, not-found, etc.) keep their specific, user-safe messages.
+  if (process.env.NODE_ENV === 'production' && statusCode >= 500) {
+    message = 'Something went wrong. Please try again later.';
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

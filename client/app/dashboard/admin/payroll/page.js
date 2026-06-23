@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Wallet, Filter, MapPin, ChevronRight, Download, Receipt, PieChart as PieIcon, Activity, FileText, Target, X } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
@@ -35,7 +37,18 @@ export default function PayrollRecordsPage() {
   const [editFormData, setEditFormData] = useState({
     name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
   });
-  const { user: currentUser } = api; 
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
+
+  // Only admins/super-admins (or staff explicitly granted payroll/staff access)
+  // may view payroll records. A dead `const { user } = api` previously made this
+  // guard a no-op.
+  useEffect(() => {
+    if (currentUser && !['super_admin', 'admin'].includes(currentUser.role) && !currentUser.permissions?.manageStaff) {
+      toast.error('Access denied. Admin permission required.');
+      router.push('/dashboard');
+    }
+  }, [currentUser, router]);
 
 
   useEffect(() => {

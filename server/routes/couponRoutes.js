@@ -20,7 +20,7 @@ router.route('/')
   .get(checkPermissions('manageCoupons'), getCoupons)
   .post(checkPermissions('manageCoupons'), ...couponSchema, validate, createCoupon);
 
-router.post('/apply', applyCoupon);
+router.post('/apply', checkPermissions('manageOrders'), applyCoupon);
 
 router.route('/:id')
   .get(checkPermissions('manageCoupons'), getCoupon)

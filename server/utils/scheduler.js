@@ -93,12 +93,44 @@ const generateDailyReport = async () => {
   }
 };
 
-// Schedule for 11:59 PM every day
+// Schedule for 11:59 PM every day.
+// node-cron relies on a long-lived process, which does NOT exist on serverless
+// (Vercel) — the function is torn down after each request, so the timer never
+// fires. On serverless we skip the in-process cron entirely and rely on a Vercel
+// Cron hitting the secret-guarded /api/cron/daily-report route (see vercel.json).
+const isServerless = () => process.env.VERCEL === '1' || !!process.env.VERCEL;
+
 const initScheduler = () => {
+  if (isServerless()) {
+    console.log('[SCHEDULER] Serverless runtime detected — skipping in-process cron. Use Vercel Cron -> /api/cron/daily-report.');
+    return;
+  }
   cron.schedule('59 23 * * *', () => {
     generateDailyReport();
   });
   console.log('[SCHEDULER] Daily report cron job initialized.');
 };
 
-module.exports = { initScheduler, generateDailyReport };
+// Secret-guarded HTTP trigger for serverless cron. Vercel Cron invocations carry
+// the project's CRON_SECRET as `Authorization: Bearer <secret>`. We require it so
+// the daily-report endpoint can't be triggered by arbitrary clients.
+const handleCronDailyReport = async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers?.authorization || '';
+  const provided = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  if (!secret || provided !== secret) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    await generateDailyReport();
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[SCHEDULER] Cron daily report failed:', err);
+    res.status(500).json({ success: false });
+  }
+};
+
+module.exports = { initScheduler, generateDailyReport, handleCronDailyReport };

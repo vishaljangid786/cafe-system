@@ -242,7 +242,7 @@ export default function GlobalAttendancePage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-lg font-bold text-(--color-text-primary) tracking-tight">Daily Distribution</h2>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">Today's status breakdown</p>
+                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">Today&apos;s status breakdown</p>
                 </div>
                 <PieIcon size={20} className="text-primary" />
               </div>

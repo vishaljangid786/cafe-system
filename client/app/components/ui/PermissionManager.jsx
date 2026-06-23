@@ -162,8 +162,14 @@ export default function PermissionManager({ className = "" }) {
     try {
       setSaving(true);
       setError('');
+      // Never send a permission the actor isn't allowed to grant — otherwise a
+      // pre-existing (or preset-applied) flag the actor lacks could be persisted.
+      const safePermissions = {};
+      Object.keys(editedPermissions).forEach((key) => {
+        if (actorCanGrant(key)) safePermissions[key] = editedPermissions[key];
+      });
       await api.put(`/users/${selectedUser._id}/permissions`, {
-        permissions: editedPermissions
+        permissions: safePermissions
       });
       toast.success('Permissions updated');
       setIsModalOpen(false);
@@ -530,7 +536,7 @@ export default function PermissionManager({ className = "" }) {
                       <span className="text-sm font-medium text-(--color-text-primary)">{label}</span>
                       {!allowed && (
                         <span className="text-xs text-danger flex items-center gap-1">
-                          <X size={10} /> You don't have this
+                          <X size={10} /> You don&apos;t have this
                         </span>
                       )}
                     </div>

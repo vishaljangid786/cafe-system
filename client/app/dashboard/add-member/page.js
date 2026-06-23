@@ -199,6 +199,18 @@ export default function AddMemberPage() {
       toast.error('Please fill name, email, password and phone.');
       return;
     }
+    if (form.password.length < 10) {
+      toast.error('Password must be at least 10 characters.');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(form.phone || '')) {
+      toast.error('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    if (!form.address1 || !form.city) {
+      toast.error('Please fill the address and city.');
+      return;
+    }
     if (form.role === 'branch_admin' && (form.accessibleLocations || []).length === 0) {
       toast.error('Please assign at least one branch to the branch admin.');
       return;
@@ -278,7 +290,7 @@ export default function AddMemberPage() {
               <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="rahul@cafe.com" />
             </Field>
             <Field label="Password" hint="The member can change it after first login.">
-              <input required type="text" className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 6 characters" />
+              <input required type="text" minLength={10} className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 10 characters" />
             </Field>
             <Field label="Phone Number">
               <input required className={inputCls} value={form.phone} maxLength={10} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" />
@@ -373,7 +385,7 @@ export default function AddMemberPage() {
                 >
                   <span className="flex flex-col">
                     {label}
-                    {!allowed && <span className="text-[9px] text-danger normal-case">You don't have this</span>}
+                    {!allowed && <span className="text-[9px] text-danger normal-case">You don&apos;t have this</span>}
                   </span>
                   <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
                     {checked && <Check size={12} strokeWidth={3} />}

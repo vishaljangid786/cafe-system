@@ -25,6 +25,23 @@ const createOrderValidator = [
     .withMessage('Invalid payment type')
 ];
 
+// Reuses the create-order item shape for the modify-items endpoint.
+const updateOrderItemsValidator = [
+  body('items')
+    .isArray({ min: 1 })
+    .withMessage('Order must contain at least one item'),
+  body('items.*.menuItem')
+    .notEmpty()
+    .withMessage('Menu Item ID is required')
+    .isMongoId()
+    .withMessage('Invalid Menu Item ID format'),
+  body('items.*.quantity')
+    .notEmpty()
+    .withMessage('Quantity is required')
+    .isInt({ min: 1, max: 999 })
+    .withMessage('Quantity must be between 1 and 999')
+];
+
 const updateOrderStatusValidator = [
   body('status')
     .notEmpty()
@@ -35,5 +52,6 @@ const updateOrderStatusValidator = [
 
 module.exports = {
   createOrderValidator,
+  updateOrderItemsValidator,
   updateOrderStatusValidator
 };

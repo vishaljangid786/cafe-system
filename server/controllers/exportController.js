@@ -55,9 +55,12 @@ const exportData = asyncHandler(async (req, res) => {
 
   // 2. Date Filtering
   if (startDate || endDate) {
-    const dateField = exportType === 'attendance' ? 'date' : 'createdAt';
+    // attendance stores a string `date`; ledger collections (revenue/expenses) use the
+    // economic `date` field rather than the row's createdAt timestamp.
+    const usesDateField = ['attendance', 'revenue', 'expenses'].includes(exportType);
+    const dateField = usesDateField ? 'date' : 'createdAt';
     query[dateField] = {};
-    
+
     if (exportType === 'attendance') {
       if (startDate) query[dateField].$gte = startDate;
       if (endDate) query[dateField].$lte = endDate;
@@ -91,8 +94,15 @@ const exportData = asyncHandler(async (req, res) => {
       }));
       break;
 
-    case 'revenue':
-      const txs = await Transaction.find(query).populate('locationId', 'name').lean();
+    case 'revenue': {
+      // Revenue export must only contain approved revenue rows — exclude EXPENSE
+      // transactions and pending/rejected entries.
+      const revenueQuery = {
+        ...query,
+        type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+        status: 'approved'
+      };
+      const txs = await Transaction.find(revenueQuery).populate('locationId', 'name').lean();
       data = txs.map(t => ({
         Date: t.date,
         Branch: t.locationId?.name || 'Main',
@@ -103,6 +113,7 @@ const exportData = asyncHandler(async (req, res) => {
         Status: t.status
       }));
       break;
+    }
 
     case 'staff':
       const staffQuery = query.assignedLocation ? { assignedLocation: query.assignedLocation } : {};
@@ -151,6 +162,9 @@ const exportData = asyncHandler(async (req, res) => {
       break;
 
     case 'coupons':
+      // NOTE: The Coupon model has no branch/location field (coupons are global by design),
+      // so there is no branch attribute to scope by. Left unscoped intentionally. If coupons
+      // become branch-scoped, add the scope filter here. (See finding C4-5, deferred.)
       const coupons = await Coupon.find({}).lean();
       data = coupons.map(c => ({
         Code: c.code,
@@ -223,14 +237,14 @@ const exportData = asyncHandler(async (req, res) => {
     }
 
     case 'expenses': {
-      // Expenses use `locationId`, not `branch`
+      // Expenses use `locationId`, not `branch`, and filter on the economic `date` field.
       const expQuery = {};
       if (finalBranchId) expQuery.locationId = finalBranchId;
-      if (query.createdAt) expQuery.createdAt = query.createdAt;
+      if (query.date) expQuery.date = query.date;
       const expenses = await Expense.find(expQuery).lean();
       data = expenses.map(e => ({
         ID: e._id.toString().slice(-6),
-        Date: e.createdAt,
+        Date: e.date,
         Category: e.category,
         Amount: e.amount,
         Description: e.description,

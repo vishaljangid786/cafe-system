@@ -120,6 +120,16 @@ const getMenuItem = asyncHandler(async (req, res) => {
     throw new Error('Menu item not found');
   }
 
+  // Non-super users may only view global items or items available to one of
+  // their branches — otherwise cross-branch metadata/costs would leak.
+  if (req.user.role !== 'super_admin' && !item.isGlobal) {
+    const owns = (item.availableBranches || []).some((b) => canAccessLocation(req.user, b.toString()));
+    if (!owns) {
+      res.status(403);
+      throw new Error('You do not have permission to view this menu item');
+    }
+  }
+
   const stockQuery = { menuItem: item._id };
   if (req.user.role !== 'super_admin') {
     const ids = userLocationIds(req.user);
@@ -376,16 +386,21 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
       for (const branchId of updates.availableBranches) {
         const specificStock = req.body[`branchStock_${branchId}`];
         const stockToSet = specificStock !== undefined ? Number(specificStock) : (stock ? Number(stock) : 0);
-        
+
+        if (!Number.isFinite(stockToSet) || stockToSet < 0) {
+          res.status(400);
+          throw new Error('Branch stock must be a number of 0 or more');
+        }
+
         await BranchStock.findOneAndUpdate(
           { menuItem: updated._id, branch: branchId },
-          { 
-            $set: { 
+          {
+            $set: {
               stock: stockToSet,
               isAvailable: stockToSet > 0
-            } 
+            }
           },
-          { upsert: true, new: true }
+          { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
         );
       }
     }

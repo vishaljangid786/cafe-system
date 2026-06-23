@@ -37,6 +37,7 @@ export default function ReservationsPage() {
   const [locations, setLocations] = useState([]);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [stats, setStats] = useState({ total: 0, confirmedToday: 0, pending: 0, cancelled: 0 });
   const { user } = useAuth();
 
   const fetchReservations = async () => {
@@ -75,10 +76,35 @@ export default function ReservationsPage() {
     }
   };
 
+  // Stats must reflect ALL matching reservations, not just the current page.
+  // We read pagination.total from cheap count queries (limit=1) for each metric,
+  // scoped to the same location filter the user has chosen.
+  const fetchStats = async () => {
+    try {
+      const base = { locationId: filters.locationId, limit: 1 };
+      const today = new Date().toISOString().split('T')[0];
+      const [allRes, confirmedTodayRes, pendingRes, cancelledRes] = await Promise.all([
+        api.get('/reservations', { params: { ...base } }),
+        api.get('/reservations', { params: { ...base, status: 'confirmed', date: today } }),
+        api.get('/reservations', { params: { ...base, status: 'pending' } }),
+        api.get('/reservations', { params: { ...base, status: 'cancelled' } }),
+      ]);
+      setStats({
+        total: allRes.data.pagination?.total || 0,
+        confirmedToday: confirmedTodayRes.data.pagination?.total || 0,
+        pending: pendingRes.data.pagination?.total || 0,
+        cancelled: cancelledRes.data.pagination?.total || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching reservation stats:', error);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchReservations();
       fetchLocations();
+      fetchStats();
     }, 0);
 
     return () => clearTimeout(timer);
@@ -141,10 +167,10 @@ export default function ReservationsPage() {
       {/* Stats Quick View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Bookings', value: reservations.length, icon: CalendarDays, color: 'var(--color-secondary)' },
-          { label: 'Confirmed Today', value: reservations.filter(r => r.status === 'confirmed').length, icon: CheckCircle2, color: 'var(--color-success)' },
-          { label: 'Pending Requests', value: reservations.filter(r => r.status === 'pending').length, icon: AlertCircle, color: 'var(--color-primary)' },
-          { label: 'Cancelled', value: reservations.filter(r => r.status === 'cancelled').length, icon: XCircle, color: 'var(--color-danger)' },
+          { label: 'Total Bookings', value: stats.total, icon: CalendarDays, color: 'var(--color-secondary)' },
+          { label: 'Confirmed Today', value: stats.confirmedToday, icon: CheckCircle2, color: 'var(--color-success)' },
+          { label: 'Pending Requests', value: stats.pending, icon: AlertCircle, color: 'var(--color-primary)' },
+          { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'var(--color-danger)' },
         ].map((stat, i) => (
           <div key={i} className="glass-card p-4 rounded-xl border border-(--color-border)">
             <div className="flex items-center justify-between">
@@ -279,7 +305,7 @@ export default function ReservationsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-bold">${res.totalAmount}</div>
+                      <div className="text-sm font-bold">₹{res.totalAmount}</div>
                       <span className={`text-[10px] font-bold uppercase tracking-tight ${res.paymentStatus === 'paid' ? 'text-success' : res.paymentStatus === 'partial' ? 'text-primary' : 'text-(--color-text-muted)'}`}>
                         {res.paymentStatus}
                       </span>

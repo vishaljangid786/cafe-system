@@ -16,40 +16,41 @@ class OrderService {
   /**
    * Create a new order with stock deduction and table update
    */
-  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, userId }) {
+  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', userId }) {
     const Reservation = require('../models/Reservation');
-
-    // 1. Pre-checks (Rate limiting, Reservations)
-    const tenSecondsAgo = new Date(Date.now() - 10000);
-    const recentOrder = await Order.findOne({ table: tableId, createdAt: { $gte: tenSecondsAgo } });
-    if (recentOrder) {
-      throw new Error('Please wait 10 seconds before placing another order for this table.');
-    }
-
-    const now = new Date();
-    const today = new Date(now.setHours(0, 0, 0, 0));
-    const currentTimeStr = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
-
-    const activeReservation = await Reservation.findOne({
-      locationId: branch,
-      date: today,
-      status: 'confirmed',
-      $or: [
-        { reservationType: 'full-location' },
-        { tableIds: tableId }
-      ],
-      startTime: { $lte: currentTimeStr },
-      endTime: { $gte: currentTimeStr }
-    });
-
-    if (activeReservation) {
-      throw new Error(`This table is currently reserved for "${activeReservation.eventName}".`);
-    }
 
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+      // 1. Pre-checks (Rate limiting, Reservations) — run INSIDE the transaction
+      // so they're not subject to a TOCTOU race against the order insert below.
+      const tenSecondsAgo = new Date(Date.now() - 10000);
+      const recentOrder = await Order.findOne({ table: tableId, createdAt: { $gte: tenSecondsAgo } }).session(session);
+      if (recentOrder) {
+        throw new Error('Please wait 10 seconds before placing another order for this table.');
+      }
+
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      const currentTimeStr = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+
+      const activeReservation = await Reservation.findOne({
+        locationId: branch,
+        date: today,
+        status: 'confirmed',
+        $or: [
+          { reservationType: 'full-location' },
+          { tableIds: tableId }
+        ],
+        startTime: { $lte: currentTimeStr },
+        endTime: { $gte: currentTimeStr }
+      }).session(session);
+
+      if (activeReservation) {
+        throw new Error(`This table is currently reserved for "${activeReservation.eventName}".`);
+      }
+
       // 2. Stock Validation & Deduction
       const menuItemIds = items.map(i => i.menuItem);
       const [branchStocks, menuItems, recipes] = await Promise.all([
@@ -87,20 +88,45 @@ class OrderService {
             if (branchStock.stock <= 0) branchStock.isAvailable = false;
             await branchStock.save({ session });
           } else if (menuItem.isGlobal) {
-            if (menuItem.stock < item.quantity) {
-              throw new Error(`Insufficient global stock for ${menuItem.name}.`);
-            }
             if (!menuItem.isAvailable) {
               throw new Error(`Item ${menuItem.name} is currently unavailable.`);
             }
-            await MenuItem.findByIdAndUpdate(menuItem._id, { $inc: { stock: -item.quantity } }, { session });
+            // Guarded conditional decrement: only succeeds if enough stock
+            // remains, so concurrent orders can never drive global stock negative.
+            const updatedGlobal = await MenuItem.findOneAndUpdate(
+              { _id: menuItem._id, stock: { $gte: item.quantity } },
+              { $inc: { stock: -item.quantity } },
+              { new: true, session }
+            );
+            if (!updatedGlobal) {
+              throw new Error(`Insufficient global stock for ${menuItem.name}.`);
+            }
           } else {
             throw new Error(`Item ${menuItem.name} has no stock record in this branch.`);
           }
         } else {
-          // For recipe items, we just verify MenuItem is marked available
+          // For recipe items, verify MenuItem is marked available...
           if (!menuItem.isAvailable) {
             throw new Error(`Item ${menuItem.name} is currently deactivated.`);
+          }
+
+          // ...and best-effort precheck that there is enough raw-ingredient stock
+          // to fulfil the requested quantity. Recipe items aren't unit-deducted at
+          // order time (ingredients are deducted on completion), so without this a
+          // shortage would silently be clamped to 0 later. Block the sale instead.
+          const BranchInventory = require('../models/BranchInventory');
+          for (const ingredientInfo of recipe.ingredients) {
+            if (!ingredientInfo.ingredient) continue;
+            const needed = (ingredientInfo.quantity || 0) * item.quantity;
+            if (needed <= 0) continue;
+            const inv = await BranchInventory.findOne({
+              branch,
+              ingredient: ingredientInfo.ingredient
+            }).session(session);
+            const available = inv ? (inv.stock || 0) : 0;
+            if (available < needed) {
+              throw new Error(`Insufficient ingredients to prepare ${menuItem.name}.`);
+            }
           }
         }
 
@@ -184,6 +210,7 @@ class OrderService {
         totalAmount: subtotal,
         discountAmount: finalDiscount,
         coupon: appliedCoupon,
+        paymentType,
         createdBy: userId,
         status: 'PLACED',
         statusHistory: [{
@@ -227,9 +254,31 @@ class OrderService {
     const order = await Order.findById(orderId);
     if (!order) throw new Error('Order not found');
 
+    const branchId = order.branch.toString();
+    const io = getIO();
+
+    // COMPLETED is finalized atomically by finalizeOrder (it claims isBilled and
+    // sets status/completedAt/history in a single update). Do NOT pre-write the
+    // status/history here, or the order gets a duplicate COMPLETED history entry
+    // and the loser of a concurrent double-complete persists a phantom COMPLETED.
+    if (status === 'COMPLETED') {
+      const { finalizeOrder } = require('../utils/orderFinalizer');
+      const user = await User.findById(userId);
+      await finalizeOrder(order, user);
+      await this._handleCustomerCRM(order, userId);
+      io.to(`branch_${branchId}`).emit('order:update', { orderId: order._id, status: 'COMPLETED' });
+      return order;
+    }
+
     // Auto-assign chef if transitioning to ACCEPTED
     if (status === 'ACCEPTED' && userRole === 'chef') {
       order.assignedChef = userId;
+    }
+
+    // Record who served the order on the SERVED transition so we avoid a
+    // separate save()+updateStatus() double status write in the controller.
+    if (status === 'SERVED') {
+      order.servedBy = userId;
     }
 
     order.status = status;
@@ -239,29 +288,13 @@ class OrderService {
       updatedBy: userId
     });
 
-    if (status === 'COMPLETED') {
-      order.completedAt = new Date();
-    }
-
     await order.save();
-
-    const io = getIO();
-    const branchId = order.branch.toString();
 
     // Real-time notifications
     io.to(`branch_${branchId}`).emit('order:update', { orderId: order._id, status: order.status });
 
     if (status === 'READY') {
       io.to(`branch_${branchId}_staff`).emit('order:ready', { orderId: order._id, message: 'Order Ready!' });
-    }
-
-    if (status === 'COMPLETED') {
-      const { finalizeOrder } = require('../utils/orderFinalizer');
-      // Note: passing dummy user if not provided, but userId is available
-      const user = await User.findById(userId);
-      await finalizeOrder(order, user);
-      
-      await this._handleCustomerCRM(order, userId);
     }
 
     return order;
@@ -273,116 +306,128 @@ class OrderService {
   async _handleCustomerCRM(order, userId) {
     if (!order.customerPhone) return;
 
-    const Customer = require('../models/Customer');
-    const Coupon = require('../models/Coupon');
-    const io = getIO();
-    const branchId = order.branch.toString();
-    
-    let customer = await Customer.findOne({ phone: order.customerPhone });
-    if (!customer) {
-      customer = new Customer({
-        phone: order.customerPhone,
-        name: order.customerName || 'Valued Customer',
-        branch: order.branch
+    // A CRM failure must NEVER fail an order that is already finalized/billed.
+    // The whole helper is best-effort: errors are logged and swallowed.
+    try {
+      const Customer = require('../models/Customer');
+      const Coupon = require('../models/Coupon');
+      const io = getIO();
+      const branchId = order.branch.toString();
+
+      const pointsEarned = Math.floor(order.totalAmount / 100);
+
+      // Build atomic $inc payload: visits/spend/points plus per-item favourites.
+      const inc = {
+        visits: 1,
+        totalSpend: order.totalAmount,
+        loyaltyPoints: pointsEarned
+      };
+      order.items.forEach(item => {
+        const itemId = item.menuItem?._id?.toString() || item.menuItem?.toString();
+        if (itemId) {
+          inc[`favoriteItems.${itemId}`] = (inc[`favoriteItems.${itemId}`] || 0) + item.quantity;
+        }
       });
-    }
 
-    customer.visits += 1;
-    customer.totalSpend += order.totalAmount;
-    customer.lastVisit = new Date();
-    
-    const pointsEarned = Math.floor(order.totalAmount / 100);
-    customer.loyaltyPoints += pointsEarned;
+      // Atomic upsert — eliminates the findOne -> new -> save race that could
+      // lose concurrent visit/spend/point updates or violate the unique phone index.
+      const customer = await Customer.findOneAndUpdate(
+        { phone: order.customerPhone },
+        {
+          $inc: inc,
+          $set: { lastVisit: new Date() },
+          $setOnInsert: {
+            name: order.customerName || 'Valued Customer',
+            branch: order.branch
+          }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
 
-    order.items.forEach(item => {
-      const itemId = item.menuItem?._id?.toString() || item.menuItem?.toString();
-      if (itemId) {
-        const currentCount = customer.favoriteItems.get(itemId) || 0;
-        customer.favoriteItems.set(itemId, currentCount + item.quantity);
+      // Atomically claim 100 points for a reward only if the balance is >= 100.
+      // The conditional filter guarantees a single concurrent finalize can mint
+      // the coupon, never double-spending the points.
+      if (customer && customer.loyaltyPoints >= 100) {
+        const claimed = await Customer.findOneAndUpdate(
+          { phone: order.customerPhone, loyaltyPoints: { $gte: 100 } },
+          { $inc: { loyaltyPoints: -100 } },
+          { new: true }
+        );
+
+        if (claimed) {
+          const couponCode = `REWARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          const expiry = new Date();
+          expiry.setDate(expiry.getDate() + 30);
+
+          await Coupon.create({
+            code: couponCode,
+            discountType: 'fixed',
+            discountValue: 100,
+            minOrderAmount: 300,
+            expiryDate: expiry,
+            usageLimit: 1,
+            createdBy: userId,
+            isActive: true
+          });
+
+          io.to(`branch_${branchId}`).emit('customer:reward_unlocked', { phone: claimed.phone, couponCode });
+        }
       }
-    });
-
-    if (customer.loyaltyPoints >= 100) {
-      customer.loyaltyPoints -= 100;
-      const couponCode = `REWARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + 30);
-
-      await Coupon.create({
-        code: couponCode,
-        discountType: 'fixed',
-        discountValue: 100,
-        minOrderAmount: 300,
-        expiryDate: expiry,
-        usageLimit: 1,
-        createdBy: userId,
-        isActive: true
-      });
-      
-      io.to(`branch_${branchId}`).emit('customer:reward_unlocked', { phone: customer.phone, couponCode });
+    } catch (error) {
+      console.error('[OrderService] CRM/loyalty update failed (order already finalized):', error);
     }
-
-    await customer.save();
   }
 
   /**
    * Modify order items with stock delta logic
    */
   async updateItems(orderId, items, userId) {
-    const order = await Order.findById(orderId);
-    if (!order) throw new Error('Order not found');
+    const Recipe = require('../models/Recipe');
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const lockedStatuses = ['PREPARING', 'READY', 'SERVED', 'CANCELLED', 'REJECTED'];
-    if (lockedStatuses.includes(order.status)) {
-      throw new Error(`Cannot modify order in ${order.status} status`);
-    }
+    try {
+      const order = await Order.findById(orderId).session(session);
+      if (!order) throw new Error('Order not found');
 
-    // Stock Adjustment Logic
-    const oldItems = order.items;
-    const newItems = items;
-    const itemMap = {};
-
-    oldItems.forEach(item => {
-      const id = item.menuItem.toString();
-      itemMap[id] = (itemMap[id] || 0) + item.quantity;
-    });
-
-    newItems.forEach(item => {
-      const id = item.menuItem.toString();
-      itemMap[id] = (itemMap[id] || 0) - item.quantity;
-    });
-
-    for (const [menuItemId, delta] of Object.entries(itemMap)) {
-      if (delta < 0) {
-        const needed = Math.abs(delta);
-        const branchStock = await BranchStock.findOne({ menuItem: menuItemId, branch: order.branch });
-        if (branchStock && branchStock.stock < needed) {
-          throw new Error(`Insufficient stock for one or more items. Adjustment failed.`);
-        }
+      const lockedStatuses = ['PREPARING', 'READY', 'SERVED', 'CANCELLED', 'REJECTED'];
+      if (lockedStatuses.includes(order.status)) {
+        throw new Error(`Cannot modify order in ${order.status} status`);
       }
-    }
 
-    for (const [menuItemId, delta] of Object.entries(itemMap)) {
-      if (delta !== 0) {
-        const updatedStock = await BranchStock.findOneAndUpdate(
-          { menuItem: menuItemId, branch: order.branch },
-          { $inc: { stock: delta } },
-          { new: true, upsert: true }
-        );
+      // Compute per-menuItem delta. Convention: positive = quantity removed from
+      // the order (restore stock); negative = quantity added (deduct |delta|).
+      const itemMap = {};
+      order.items.forEach(item => {
+        const id = item.menuItem.toString();
+        itemMap[id] = (itemMap[id] || 0) + item.quantity;
+      });
+      items.forEach(item => {
+        const id = item.menuItem.toString();
+        itemMap[id] = (itemMap[id] || 0) - item.quantity;
+      });
 
-        if (updatedStock) {
-          updatedStock.isAvailable = updatedStock.stock > 0;
-          await updatedStock.save();
+      const menuItemIds = Object.keys(itemMap);
+
+      // Recipe items are not unit-deducted at order time, so their stock must
+      // never be adjusted here (consistent with create/teardown logic).
+      const recipes = await Recipe.find({ menuItemId: { $in: menuItemIds } })
+        .select('menuItemId')
+        .session(session);
+      const recipeSet = new Set(recipes.map(r => r.menuItemId.toString()));
+
+      // Build the rebuilt order snapshots up front (before mutating stock) so a
+      // missing menu item aborts cleanly without partial stock changes.
+      const menuItems = await MenuItem.find({ _id: { $in: items.map(i => i.menuItem) } }).session(session);
+      const menuMap = new Map(menuItems.map(m => [m._id.toString(), m]));
+
+      const updatedItemsWithSnapshots = [];
+      let recalculatedTotal = 0;
+      for (const item of items) {
+        const menuItem = menuMap.get(item.menuItem.toString());
+        if (!menuItem) {
+          throw new Error(`Item ${item.menuItem} not found.`);
         }
-      }
-    }
-
-    const updatedItemsWithSnapshots = [];
-    let recalculatedTotal = 0;
-
-    for (const item of items) {
-      const menuItem = await MenuItem.findById(item.menuItem);
-      if (menuItem) {
         updatedItemsWithSnapshots.push({
           menuItem: menuItem._id,
           itemName: menuItem.name,
@@ -393,22 +438,104 @@ class OrderService {
         });
         recalculatedTotal += menuItem.price * item.quantity;
       }
+
+      // Apply guarded stock deltas inside the transaction.
+      for (const [menuItemId, delta] of Object.entries(itemMap)) {
+        if (delta === 0) continue;
+        if (recipeSet.has(menuItemId)) continue; // recipe items: no unit stock
+
+        if (delta < 0) {
+          // Quantity increased -> deduct. Guard with stock:{$gte:needed} so we
+          // can never drive stock negative; no upsert (a missing record means
+          // the item isn't stocked at this branch and the deduction must fail).
+          const needed = -delta;
+          const updated = await BranchStock.findOneAndUpdate(
+            { menuItem: menuItemId, branch: order.branch, stock: { $gte: needed } },
+            { $inc: { stock: -needed } },
+            { new: true, session, runValidators: true }
+          );
+          if (!updated) {
+            throw new Error('Insufficient stock for one or more items. Adjustment failed.');
+          }
+          updated.isAvailable = updated.stock > 0;
+          await updated.save({ session });
+        } else {
+          // Quantity reduced -> restore. Only touch an existing record (no upsert).
+          const updated = await BranchStock.findOneAndUpdate(
+            { menuItem: menuItemId, branch: order.branch },
+            { $inc: { stock: delta }, $set: { isAvailable: true } },
+            { new: true, session, runValidators: true }
+          );
+          // If no branch record exists the original deduction was global/none —
+          // leave it untouched rather than fabricating a branch stock row.
+        }
+      }
+
+      order.items = updatedItemsWithSnapshots;
+      order.totalAmount = recalculatedTotal;
+      // Re-clamp any previously applied discount so it can never exceed the new
+      // (possibly smaller) total — otherwise reducing items leaves a stale coupon
+      // discount that pushes the payable amount negative.
+      if (order.discountAmount) {
+        order.discountAmount = Math.min(order.discountAmount, recalculatedTotal);
+      }
+      await order.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      const io = getIO();
+      io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
+  }
 
-    order.items = updatedItemsWithSnapshots;
-    order.totalAmount = recalculatedTotal;
-    // Re-clamp any previously applied discount so it can never exceed the new
-    // (possibly smaller) total — otherwise reducing items leaves a stale coupon
-    // discount that pushes the payable amount negative.
-    if (order.discountAmount) {
-      order.discountAmount = Math.min(order.discountAmount, recalculatedTotal);
+  /**
+   * Restore unit stock for an order's items on teardown (reject/cancel/delete).
+   *
+   * IMPORTANT: recipe items are NOT unit-deducted at order time (their raw
+   * ingredients are only deducted on completion), so we must NOT inflate stock
+   * for them here. We only restore items that were actually deducted at create:
+   *   - non-recipe items with a BranchStock record -> restore BranchStock
+   *   - non-recipe global items (no BranchStock record) -> restore MenuItem.stock
+   */
+  async _restoreStockForItems(order, session = null) {
+    const Recipe = require('../models/Recipe');
+    const menuItemIds = order.items.map(i => i.menuItem);
+
+    const recipeQuery = Recipe.find({ menuItemId: { $in: menuItemIds } }).select('menuItemId');
+    const menuQuery = MenuItem.find({ _id: { $in: menuItemIds } }).select('_id isGlobal');
+    if (session) { recipeQuery.session(session); menuQuery.session(session); }
+    const [recipes, menuItems] = await Promise.all([recipeQuery, menuQuery]);
+
+    const recipeSet = new Set(recipes.map(r => r.menuItemId.toString()));
+    const globalSet = new Set(menuItems.filter(m => m.isGlobal).map(m => m._id.toString()));
+
+    for (const item of order.items) {
+      const idStr = item.menuItem.toString();
+      // Recipe items were never unit-deducted — skip.
+      if (recipeSet.has(idStr)) continue;
+
+      const branchStock = await BranchStock.findOneAndUpdate(
+        { menuItem: item.menuItem, branch: order.branch },
+        { $inc: { stock: item.quantity }, $set: { isAvailable: true } },
+        session ? { session } : {}
+      );
+
+      // No branch stock record but global -> it was deducted from MenuItem.stock.
+      if (!branchStock && globalSet.has(idStr)) {
+        await MenuItem.findByIdAndUpdate(
+          item.menuItem,
+          { $inc: { stock: item.quantity } },
+          session ? { session } : {}
+        );
+      }
     }
-    await order.save();
-
-    const io = getIO();
-    io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
-
-    return order;
   }
 
   /**
@@ -422,12 +549,7 @@ class OrderService {
     order.rejectReason = rejectReason;
     order.assignedChef = userId;
 
-    for (const item of order.items) {
-      await BranchStock.findOneAndUpdate(
-        { menuItem: item.menuItem, branch: order.branch },
-        { $inc: { stock: item.quantity }, isAvailable: true }
-      );
-    }
+    await this._restoreStockForItems(order);
 
     order.statusHistory.push({
       status: 'REJECTED',
@@ -452,12 +574,7 @@ class OrderService {
     if (!order) throw new Error('Order not found');
 
     order.status = 'CANCELLED';
-    for (const item of order.items) {
-      await BranchStock.findOneAndUpdate(
-        { menuItem: item.menuItem, branch: order.branch },
-        { $inc: { stock: item.quantity }, isAvailable: true }
-      );
-    }
+    await this._restoreStockForItems(order);
     order.statusHistory.push({
       status: 'CANCELLED',
       timestamp: new Date(),
@@ -485,12 +602,7 @@ class OrderService {
     }
 
     if (!['CANCELLED', 'REJECTED', 'COMPLETED'].includes(order.status)) {
-      for (const item of order.items) {
-        await BranchStock.findOneAndUpdate(
-          { menuItem: item.menuItem, branch: order.branch },
-          { $inc: { stock: item.quantity }, isAvailable: true }
-        );
-      }
+      await this._restoreStockForItems(order);
       await Table.findByIdAndUpdate(order.table, { $inc: { activeOrdersCount: -1 } }, { runValidators: false });
     }
 
