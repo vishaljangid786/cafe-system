@@ -91,7 +91,8 @@ const NotificationsPage = () => {
         type: 'message',
         priority: 'medium',
         targetType: 'individual',
-        targetId: replyingTo.sender._id
+        targetId: replyingTo.sender._id,
+        replyTo: replyingTo._id
       });
       
       toast.success('Reply sent successfully');

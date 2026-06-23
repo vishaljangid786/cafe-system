@@ -340,9 +340,31 @@ exports.updateReservation = async (req, res) => {
 
     enforceLocationAccess(req, res, getReservationLocationId(existing));
 
-    const updateData = { ...req.body };
-    // Never let the client over-post ownership/identity fields (e.g. forge userId).
-    ['userId', 'user', 'createdBy', '_id'].forEach((k) => delete updateData[k]);
+    // Whitelist editable fields only — never spread req.body (blocks over-posting
+    // of ownership/identity fields and any unknown keys).
+    const EDITABLE = [
+      'eventName', 'reservationType', 'tableIds', 'date', 'startTime', 'endTime',
+      'isFullDay', 'customerName', 'customerPhone', 'totalAmount', 'advancePayment',
+      'paymentStatus', 'status', 'notes', 'locationId',
+    ];
+    const updateData = {};
+    EDITABLE.forEach((k) => { if (req.body[k] !== undefined) updateData[k] = req.body[k]; });
+
+    // Validate money fields the same way createReservation does (no negatives /
+    // advance > total), so the update path can't write bogus amounts either.
+    if (updateData.totalAmount !== undefined || updateData.advancePayment !== undefined) {
+      const numTotal = Number(updateData.totalAmount ?? existing.totalAmount ?? 0);
+      const numAdvance = Number(updateData.advancePayment ?? existing.advancePayment ?? 0);
+      if (!Number.isFinite(numTotal) || numTotal < 0) {
+        return res.status(400).json({ message: 'Total amount must be a non-negative number' });
+      }
+      if (!Number.isFinite(numAdvance) || numAdvance < 0 || numAdvance > numTotal) {
+        return res.status(400).json({ message: 'Advance payment must be between 0 and the total amount' });
+      }
+    }
+    if (updateData.status !== undefined && !['pending', 'confirmed', 'cancelled'].includes(updateData.status)) {
+      return res.status(400).json({ message: 'Invalid reservation status' });
+    }
     const locationId = updateData.locationId
       ? resolveReservationLocation(req, res, updateData.locationId)
       : getReservationLocationId(existing);

@@ -17,14 +17,17 @@ const customerSchema = new mongoose.Schema(
     visits: {
       type: Number,
       default: 0,
+      min: 0,
     },
     totalSpend: {
       type: Number,
       default: 0,
+      min: 0,
     },
     loyaltyPoints: {
       type: Number,
       default: 0,
+      min: 0,
     },
     lastVisit: {
       type: Date,

@@ -18,12 +18,14 @@ import { Card, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
+import useConfirm from '@/app/components/ui/useConfirm';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function CouponsManagementPage() {
   const { selectedLocation } = useAuth();
+  const { confirm, confirmDialog } = useConfirm();
   const [coupons, setCoupons] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function CouponsManagementPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this coupon? This cannot be undone.')) return;
+    if (!(await confirm({ title: 'Delete coupon?', message: 'This cannot be undone.', confirmText: 'Delete' }))) return;
     const loadToast = toast.loading('Deleting coupon...');
     try {
       await api.delete(`/coupons/${id}`);
@@ -745,6 +747,7 @@ export default function CouponsManagementPage() {
           </form>
         </Modal>
       </div>
+      {confirmDialog}
     </PageTransition>
   );
 }

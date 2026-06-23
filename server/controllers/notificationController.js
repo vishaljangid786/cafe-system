@@ -160,7 +160,7 @@ const markAllAsRead = asyncHandler(async (req, res) => {
 // @route   POST /api/notifications
 // @access  Private
 const createNotification = asyncHandler(async (req, res) => {
-  const { title, message, type, priority, targetType, targetId } = req.body;
+  const { title, message, type, priority, targetType, targetId, replyTo } = req.body;
 
   if (!title || !message || !targetType) {
     res.status(400);
@@ -188,7 +188,21 @@ const createNotification = asyncHandler(async (req, res) => {
       throw new Error('Target user not found');
     }
 
-    if (!validateHierarchy(req.user, targetUser)) {
+    // Normal rule: the target must be in the sender's allowed set. EXCEPTION:
+    // you may always reply to someone who actually messaged you — even a superior
+    // outside your default targets (e.g. staff replying to a super-admin). We
+    // confirm the reply is genuine by checking replyTo points at a notification
+    // that this target sent and that the current user received.
+    let allowed = validateHierarchy(req.user, targetUser);
+    if (!allowed && replyTo) {
+      const original = await Notification.findOne({
+        _id: replyTo,
+        sender: targetUser._id,
+        'recipients.user': req.user._id,
+      }).select('_id');
+      allowed = !!original;
+    }
+    if (!allowed) {
       res.status(403);
       throw new Error('You cannot send a message to this user');
     }

@@ -8,8 +8,10 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import useConfirm from './useConfirm';
 
 export default function CommandPalette() {
+  const { confirm, confirmDialog } = useConfirm();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
@@ -99,7 +101,7 @@ export default function CommandPalette() {
     if (item.type === 'nav') {
       router.push(item.path);
     } else if (item.type === 'user') {
-      if (confirm(`Log in as ${item.name} with ${item.fullAccess ? 'full access' : 'view-only access'}?`)) {
+      if (await confirm({ title: 'Log in as user?', message: `Log in as ${item.name} with ${item.fullAccess ? 'full access' : 'view-only access'}?`, confirmText: 'Log In', type: 'primary' })) {
         await impersonate(item.id, !item.fullAccess);
       }
     }
@@ -121,6 +123,8 @@ export default function CommandPalette() {
   };
 
   return (
+    <>
+    {confirmDialog}
     <AnimatePresence>
       {isOpen && (
         <>
@@ -232,5 +236,6 @@ export default function CommandPalette() {
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }

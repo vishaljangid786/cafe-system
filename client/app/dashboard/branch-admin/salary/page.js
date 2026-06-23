@@ -67,6 +67,24 @@ export default function SalaryPage() {
 
   const totalPayout = salaries.reduce((acc, curr) => acc + (Number(curr?.calculatedSalary) || 0), 0);
 
+  // Real client-side CSV export (no backend salary-export endpoint exists).
+  const downloadCsv = (rows, filename) => {
+    if (!rows || rows.length === 0) { toast.error('Nothing to export'); return; }
+    const headers = ['Name', 'Email', 'Role', 'Present', 'Half Days', 'Absent', 'Payable Days', 'Monthly Salary', 'Calculated Salary'];
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [headers.join(',')];
+    rows.forEach((r) => lines.push([
+      r.name, r.email, r.role, r.totalPresent, r.totalHalfDay, r.totalAbsent,
+      r.payableDays, r.monthlySalary, Math.round(Number(r.calculatedSalary) || 0),
+    ].map(esc).join(',')));
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
@@ -106,8 +124,11 @@ export default function SalaryPage() {
                     onChange={(e) => setMonth(e.target.value)}
                   />
                 </div>
-                <button className="px-8 py-4 bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) rounded-xl font-bold text-xs uppercase tracking-normal  transition-all shadow-sm flex items-center justify-center">
-                  <Download size={16} className="mr-2" /> Export PDF
+                <button
+                  onClick={() => downloadCsv(filteredSalaries, `salary-${month}.csv`)}
+                  className="px-8 py-4 bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) rounded-xl font-bold text-xs uppercase tracking-normal  transition-all shadow-sm flex items-center justify-center"
+                >
+                  <Download size={16} className="mr-2" /> Export CSV
                 </button>
               </div>
             </div>
@@ -124,7 +145,7 @@ export default function SalaryPage() {
               <p className="text-[10px] font-bold uppercase tracking-normal opacity-70 mb-4">Total Salary Payout</p>
               <div className="text-4xl font-bold tracking-tight">₹{totalPayout.toLocaleString()}</div>
               <div className="mt-6 flex items-center text-[10px] font-bold uppercase bg-white/10 w-fit px-3 py-1 rounded-full border border-(--color-border)">
-                <TrendingUp size={12} className="mr-2" /> +4.2% vs last month
+                <TrendingUp size={12} className="mr-2" /> {salaries.length} staff this month
               </div>
             </div>
           </SlideIn>
@@ -325,8 +346,8 @@ export default function SalaryPage() {
                         <p className="text-2xl font-bold text-danger dark:text-danger">{viewingUser.totalAbsent} Days</p>
                       </div>
                       <div className="bg-primary/10 p-4 rounded-xl border border-primary/10">
-                        <p className="text-[10px] font-bold uppercase text-primary mb-1">Late Marks</p>
-                        <p className="text-2xl font-bold text-primary dark:text-primary">{viewingUser.totalLate} Days</p>
+                        <p className="text-[10px] font-bold uppercase text-primary mb-1">Payable Days</p>
+                        <p className="text-2xl font-bold text-primary dark:text-primary">{viewingUser.payableDays ?? 0} Days</p>
                       </div>
                     </div>
                   </div>
@@ -363,9 +384,7 @@ export default function SalaryPage() {
                 </Button>
                 <Button
                   className="flex-1 py-4 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) shadow-sm"
-                  onClick={() => {
-                    toast.success('Salary slip downloaded');
-                  }}
+                  onClick={() => downloadCsv([viewingUser], `salary-slip-${(viewingUser.name || 'staff').replace(/\s+/g, '-')}-${month}.csv`)}
                 >
                   Download Salary Slip
                 </Button>

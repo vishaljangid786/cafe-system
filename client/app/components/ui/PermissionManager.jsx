@@ -5,6 +5,7 @@ import { Shield, Check, X, Search, ShieldCheck, Plus, Trash2, Pencil, Layers } f
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Modal from './Modal';
+import useConfirm from './useConfirm';
 import { Button } from './Button';
 import { Spinner } from './Spinner';
 import { motion } from 'framer-motion';
@@ -44,6 +45,7 @@ const ROLE_FILTERS = [
 const emptyPerms = () => permissionList.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
 
 export default function PermissionManager({ className = "" }) {
+  const { confirm, confirmDialog } = useConfirm();
   const { user: currentUser, selectedLocation } = useAuth();
   const [subordinates, setSubordinates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -229,7 +231,7 @@ export default function PermissionManager({ className = "" }) {
   };
 
   const handleDeleteRole = async (preset) => {
-    if (!confirm(`Delete role "${preset.name}"? This will not change any user who already has these permissions.`)) return;
+    if (!(await confirm({ title: 'Delete role?', message: `Delete role "${preset.name}"? This will not change any user who already has these permissions.`, confirmText: 'Delete' }))) return;
     try {
       await api.delete(`/permission-presets/${preset._id}`);
       toast.success('Role deleted');
@@ -569,6 +571,7 @@ export default function PermissionManager({ className = "" }) {
           </div>
         </div>
       </Modal>
+      {confirmDialog}
     </div>
   );
 }

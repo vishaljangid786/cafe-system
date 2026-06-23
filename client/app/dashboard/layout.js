@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import BottomNav from '../components/BottomNav';
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from '../components/ui/PageTransition';
 import { useAuth } from '../context/AuthContext';
@@ -159,7 +160,7 @@ export default function DashboardLayout({ children }) {
           isMobile={isMobile}
         />
 
-        <main className="flex-1 overflow-x-auto overflow-y-auto bg-transparent p-3 sm:p-4 md:p-8 custom-scrollbar relative">
+        <main className="flex-1 overflow-x-auto overflow-y-auto bg-transparent p-3 sm:p-4 md:p-8 pb-28 lg:pb-8 custom-scrollbar relative">
           <PageTransition>
             <div className="max-w-400 mx-auto dashboard-content min-w-0">
               {children}
@@ -169,6 +170,9 @@ export default function DashboardLayout({ children }) {
       </div>
 
       <CommandPalette />
+
+      {/* Mobile/tablet bottom tab bar — role-based shortcuts + "More" opens the full menu */}
+      <BottomNav onMore={() => setIsMobileMenuOpen(true)} />
     </div>
   );
 }

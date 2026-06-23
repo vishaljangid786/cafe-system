@@ -32,6 +32,7 @@ import { LoaderBlock } from '@/app/components/ui/Spinner';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
+import useConfirm from '@/app/components/ui/useConfirm';
 
 const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 const SUGGESTED_ICONS = [
@@ -40,6 +41,7 @@ const SUGGESTED_ICONS = [
 ];
 
 export default function MenuManagementPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
   const { selectedLocation, switchLocation, user } = useAuth();
   const [activeTab, setActiveTab] = useState('items'); // 'items' or 'categories'
@@ -275,7 +277,7 @@ export default function MenuManagementPage() {
   };
 
   const deleteCategory = async (id) => {
-    if (!confirm('Turn off this category? All items in this category will be unassigned.')) return;
+    if (!(await confirm({ title: 'Turn off category?', message: 'All items in this category will be unassigned.', confirmText: 'Turn Off' }))) return;
     const loadToast = toast.loading('Turning off category...');
     try {
       await api.delete(`/categories/${id}`);
@@ -367,7 +369,7 @@ export default function MenuManagementPage() {
   };
 
   const deleteItem = async (id) => {
-    if (!confirm('Delete this item permanently?')) return;
+    if (!(await confirm({ title: 'Delete item?', message: 'This permanently deletes the menu item.', confirmText: 'Delete' }))) return;
     const loadToast = toast.loading('Deleting item...');
     try {
       await api.delete(`/menu/${id}`);
@@ -1712,6 +1714,7 @@ export default function MenuManagementPage() {
           </div>
         )}
       </div>
+      {confirmDialog}
     </PageTransition>
   );
 }
