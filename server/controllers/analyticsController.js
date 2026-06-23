@@ -478,7 +478,12 @@ const getStaffReports = asyncHandler(async (req, res) => {
     orderQuery.createdAt = { $gte: start, $lte: end };
   }
 
-  let userQuery = { role: { $in: ['staff', 'chef', 'branch_admin'] } };
+  // A branch_admin's staff report covers only their staff/chef — never peer
+  // branch_admins or themselves. Admin/super_admin keep the fuller hierarchy view.
+  const reportRoles = req.user.role === 'branch_admin'
+    ? ['staff', 'chef']
+    : ['staff', 'chef', 'branch_admin'];
+  let userQuery = { role: { $in: reportRoles } };
   if (staffName) {
     userQuery.name = { $regex: escapeRegex(staffName), $options: 'i' };
   }

@@ -68,15 +68,18 @@ const PERMISSION_LIST = [
   { key: 'viewAdminCenter', label: 'Open Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
+  { key: 'sendMessages', label: 'Send Messages' },
+  { key: 'messageSuperAdmin', label: 'Message Super Admin' },
 ];
 
 // Default permissions each role gets (mirrors the backend). Keys not listed default to false.
+// sendMessages is ON for everyone so the messaging hierarchy works out of the box.
 const ROLE_DEFAULTS = {
-  admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
-  branch_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, viewAnalytics: true },
-  location_admin: { viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true, viewAnalytics: true },
-  staff: { viewOrders: true, manageOrders: true },
-  chef: { viewOrders: true, manageOrders: true },
+  admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
+  branch_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, viewAnalytics: true, sendMessages: true },
+  location_admin: { viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true, viewAnalytics: true, sendMessages: true },
+  staff: { viewOrders: true, manageOrders: true, sendMessages: true },
+  chef: { viewOrders: true, manageOrders: true, sendMessages: true },
 };
 
 const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});

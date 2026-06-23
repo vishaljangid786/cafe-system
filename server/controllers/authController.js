@@ -179,13 +179,16 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 
   // Default permissions per role so core features work out-of-the-box
+  // sendMessages defaults ON for every role so the role-based messaging hierarchy
+  // works out of the box. messageSuperAdmin defaults OFF (schema default) — it is
+  // an opt-in that lets a branch admin / staff / chef also reach the super admin.
   const DEFAULT_PERMISSIONS = {
-    super_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
-    admin:       { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true },
-    branch_admin:   { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: false, viewAnalytics: true, manageCoupons: false },
-    location_admin: { viewRevenue: true, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: true, manageStaff: false, manageNotifications: false, viewAnalytics: true, manageCoupons: false },
-    staff: { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false },
-    chef:  { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false },
+    super_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
+    admin:       { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
+    branch_admin:   { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: false, viewAnalytics: true, manageCoupons: false, sendMessages: true },
+    location_admin: { viewRevenue: true, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: true, manageStaff: false, manageNotifications: false, viewAnalytics: true, manageCoupons: false, sendMessages: true },
+    staff: { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false, sendMessages: true },
+    chef:  { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false, sendMessages: true },
   };
   const defaultPerms = DEFAULT_PERMISSIONS[finalRole] || {};
 
@@ -212,6 +215,13 @@ const registerUser = asyncHandler(async (req, res, next) => {
       ALL_PERMISSION_KEYS.forEach((k) => {
         finalPermissions[k] = requested[k] === true && (actorIsSuper || actorPerms[k] === true);
       });
+
+      // Messaging permissions have their own defaults (master switch is ON unless
+      // explicitly turned off). They sit outside the "actor must already hold it"
+      // rule so existing accounts that pre-date these fields can still grant them.
+      finalPermissions.sendMessages = requested.sendMessages !== false;
+      finalPermissions.messageSuperAdmin = requested.messageSuperAdmin === true
+        && (actorIsSuper || req.user.role === 'admin' || actorPerms.messageSuperAdmin === true);
     }
   }
 
@@ -225,10 +235,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
   if (user) {
     await sendNotification({
-      title: 'New Staff Synced',
-      message: `User ${user.name} (${user.role}) has been added to the matrix.`,
+      title: 'New Member Added',
+      message: `${user.name} (${user.role.replace('_', ' ')}) has been added to the team.`,
       type: 'user_action',
-      performedByUser: user,
+      performedByUser: req.user || user,
       locationId: user.assignedLocation,
     });
 

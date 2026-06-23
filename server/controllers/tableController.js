@@ -79,8 +79,8 @@ const addTable = asyncHandler(async (req, res) => {
   });
 
   await sendNotification({
-    title: 'New Table Operational',
-    message: `Table ${table.tableName || table.tableNumber} added to the grid by ${req.user.name}.`,
+    title: 'New Table Added',
+    message: `Table ${table.tableName || table.tableNumber} was added by ${req.user.name}.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -123,7 +123,7 @@ const bookTable = asyncHandler(async (req, res) => {
 
   await sendNotification({
     title: 'Table Occupied',
-    message: `Table ${table.tableNumber} engaged for ${numberOfPeople} souls by ${req.user.name}.`,
+    message: `Table ${table.tableNumber} was seated with ${numberOfPeople} guests by ${req.user.name}.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -163,8 +163,8 @@ const updateOrders = asyncHandler(async (req, res) => {
   await table.save();
 
   await sendNotification({
-    title: 'Orders Synchronized',
-    message: `Table ${table.tableNumber} orders updated. Fiscal impact: ₹${table.totalAmount}.`,
+    title: 'Table Order Updated',
+    message: `Table ${table.tableNumber} order was updated. Total bill: ₹${table.totalAmount}.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -217,7 +217,7 @@ const uploadBill = asyncHandler(async (req, res) => {
 
   if (!req.file) {
     res.status(400);
-    throw new Error('Fiscal proof (bill image) is required');
+    throw new Error('A bill image is required');
   }
 
   table.billImage = req.file.path;
@@ -251,8 +251,8 @@ const uploadBill = asyncHandler(async (req, res) => {
   await table.save();
 
   await sendNotification({
-    title: 'Session Saved',
-    message: `Table ${table.tableNumber} session closed. Bill saved to history.`,
+    title: 'Table Closed',
+    message: `Table ${table.tableNumber} was closed and the bill saved.`,
     type: 'table_action',
     performedByUser: req.user,
     locationId: table.locationId,
@@ -287,7 +287,7 @@ const deleteTable = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Table removed from the matrix',
+    message: 'Table removed successfully',
   });
 });
 

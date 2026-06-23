@@ -92,6 +92,14 @@ const userSchema = new mongoose.Schema(
       viewAdminCenter: { type: Boolean, default: false },
       manageGlobalMenu: { type: Boolean, default: false },
       sendGlobalNotifications: { type: Boolean, default: false },
+      // Messaging permissions.
+      // sendMessages: master switch — can this user send messages at all. ON by
+      //   default so the role-based hierarchy works out of the box; turn it OFF to
+      //   make the account receive-only.
+      // messageSuperAdmin: lets a branch admin / staff / chef also message the
+      //   super admin directly (their default target list does not include them).
+      sendMessages: { type: Boolean, default: true },
+      messageSuperAdmin: { type: Boolean, default: false },
     },
     // Primary/default branch for Staff, Chef, Location Admin, and Branch Admin
     assignedLocation: {

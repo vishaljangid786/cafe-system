@@ -6,6 +6,37 @@ const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { canAccessLocation, userLocationIds, clampLimit } = require('../utils/accessControl');
 
+// Single source of truth for who each role may message.
+//  - super_admin: anyone
+//  - admin: the super admin + everyone in their branches (branch admin/staff/chef/location admin)
+//  - branch_admin: their admin + their staff/chef/location admin (super admin only with permission)
+//  - staff/chef/location_admin: their branch admin + their admin (super admin only with permission)
+// getTargetOptions and validateHierarchy both derive from this so the dropdown and
+// the server-side check can never drift apart.
+const allowedTargetRoles = (user) => {
+  const canSuper = user.permissions?.messageSuperAdmin === true;
+  switch (user.role) {
+    case 'super_admin':
+      return ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'];
+    case 'admin':
+      return ['super_admin', 'branch_admin', 'location_admin', 'staff', 'chef'];
+    case 'branch_admin':
+      return [...(canSuper ? ['super_admin'] : []), 'admin', 'location_admin', 'staff', 'chef'];
+    case 'location_admin':
+    case 'staff':
+    case 'chef':
+      return [...(canSuper ? ['super_admin'] : []), 'admin', 'branch_admin'];
+    default:
+      return [];
+  }
+};
+
+// Has this user been switched to receive-only (sendMessages explicitly false)?
+// Undefined is treated as allowed so accounts created before this field existed
+// keep working. super_admin always bypasses.
+const canSendMessages = (user) =>
+  user.role === 'super_admin' || user.permissions?.sendMessages !== false;
+
 // @desc    Get user notifications
 // @route   GET /api/notifications
 // @access  Private
@@ -136,54 +167,70 @@ const createNotification = asyncHandler(async (req, res) => {
   }
 
   const senderRole = req.user.role;
+
+  // Receive-only accounts cannot send messages.
+  if (!canSendMessages(req.user)) {
+    res.status(403);
+    throw new Error('You do not have permission to send messages');
+  }
+
+  // A role / whole-system broadcast stays limited to the super admin (or anyone
+  // explicitly granted sendGlobalNotifications).
+  const canBroadcast = senderRole === 'super_admin' || req.user.permissions?.sendGlobalNotifications === true;
   let recipients = [];
 
   // HIERARCHY VALIDATION & RECIPIENT RESOLUTION
   if (targetType === 'individual') {
     const targetUser = await User.findById(targetId);
-    if (!targetUser) throw new Error('Target user not found');
+    if (!targetUser) {
+      res.status(404);
+      throw new Error('Target user not found');
+    }
 
-    // Validation
-    const canSend = validateHierarchy(req.user, targetUser);
-    if (!canSend) {
+    if (!validateHierarchy(req.user, targetUser)) {
       res.status(403);
-      throw new Error('Communication hierarchy violation: You cannot send notifications to this user');
+      throw new Error('You cannot send a message to this user');
     }
     recipients = [{ user: targetUser._id }];
-  } 
+  }
   else if (targetType === 'role') {
-    if (senderRole !== 'super_admin' && req.user.permissions?.sendGlobalNotifications !== true && targetId !== 'super_admin') {
-       // Only super admin can broadcast to roles, except others can message super admin role? 
-       // User said: Admin -> Super Admin. Branch Admin -> Their Admin.
-       // Let's simplify: only super admin can do bulk role broadcast.
-       res.status(403);
-       throw new Error('Only Super Admins can broadcast to entire roles');
+    if (!canBroadcast) {
+      res.status(403);
+      throw new Error('Only super admins can message a whole role');
     }
     const users = await User.find({ role: targetId });
     recipients = users.map(u => ({ user: u._id }));
-  } 
+  }
   else if (targetType === 'branch') {
-    const isAllowed = senderRole === 'super_admin' || canAccessLocation(req.user, targetId);
+    // Branch broadcast is for the super admin and for admins over their own branches.
+    const isAllowed = canBroadcast || (senderRole === 'admin' && canAccessLocation(req.user, targetId));
     if (!isAllowed) {
       res.status(403);
-      throw new Error('You do not have access to broadcast to this branch');
+      throw new Error('You do not have access to message this branch');
     }
-    const users = await User.find({
+    const branchUsers = await User.find({
       $or: [
         { assignedLocation: targetId },
         { accessibleLocations: targetId }
       ]
-    });
-    recipients = users.map(u => ({ user: u._id }));
+    }).select('_id role');
+    // A broadcast must never reach a role the sender isn't allowed to message.
+    const allowedRoles = allowedTargetRoles(req.user);
+    recipients = branchUsers
+      .filter(u => canBroadcast || allowedRoles.includes(u.role))
+      .map(u => ({ user: u._id }));
   }
   else if (targetType === 'system') {
-    if (senderRole !== 'super_admin' && req.user.permissions?.sendGlobalNotifications !== true) {
+    if (!canBroadcast) {
       res.status(403);
-      throw new Error('Only Super Admins can broadcast to the entire system');
+      throw new Error('Only super admins can message everyone');
     }
     const users = await User.find({});
     recipients = users.map(u => ({ user: u._id }));
   }
+
+  // Never notify yourself.
+  recipients = recipients.filter(r => r.user.toString() !== req.user._id.toString());
 
   if (recipients.length === 0) {
     res.status(400);
@@ -237,37 +284,23 @@ const createNotification = asyncHandler(async (req, res) => {
   });
 });
 
-// Helper for Hierarchy Validation
+// Helper for Hierarchy Validation. Derives from allowedTargetRoles so the rule is
+// in one place: the receiver's role must be allowed AND they must share a branch
+// with the sender (the super admin is reachable only via the messageSuperAdmin
+// permission, which is already baked into allowedTargetRoles).
 function validateHierarchy(sender, receiver) {
-  const sRole = sender.role;
-  const rRole = receiver.role;
+  if (sender.role === 'super_admin') return true;
+
+  if (!allowedTargetRoles(sender).includes(receiver.role)) return false;
+
+  // The super admin has no branch, so a branch match isn't required — being in the
+  // allowed-roles set (permission granted) is enough.
+  if (receiver.role === 'super_admin') return true;
+
+  // Everyone else (up or down the chain) must share at least one branch with the
+  // sender. canAccessLocation checks the receiver holds that branch.
   const senderBranches = userLocationIds(sender);
-  const sBranch = senderBranches[0];
-
-  if (sRole === 'super_admin') return true;
-
-  // Any lower role can notify higher role
-  const roleOrder = ['staff', 'chef', 'branch_admin', 'location_admin', 'admin', 'super_admin'];
-  const sIndex = roleOrder.indexOf(sRole);
-  const rIndex = roleOrder.indexOf(rRole);
-
-  if (rIndex > sIndex) {
-    if (rRole === 'super_admin') return true;
-    if (rRole === 'admin') {
-      if (!sBranch) return true;
-      return senderBranches.some(branchId => receiver.accessibleLocations?.some(loc => loc.toString() === branchId));
-    }
-    if (rRole === 'branch_admin' || rRole === 'location_admin') {
-      return senderBranches.some(branchId => canAccessLocation(receiver, branchId));
-    }
-    return false;
-  }
-
-  // Same level or higher to lower
-  if (sRole === 'admin' && canAccessLocation(sender, receiver.assignedLocation)) return true;
-  if (sRole === 'branch_admin' && canAccessLocation(sender, receiver.assignedLocation)) return true;
-
-  return false;
+  return senderBranches.some(branchId => canAccessLocation(receiver, branchId));
 }
 
 // @desc    Get allowable notification targets based on hierarchy
@@ -277,57 +310,63 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   const user = req.user;
   const role = user.role;
   const branchIds = userLocationIds(user);
-  const branchId = branchIds[0];
+  const canSuper = user.permissions?.messageSuperAdmin === true;
+  const canBroadcast = role === 'super_admin' || user.permissions?.sendGlobalNotifications === true;
+
+  // Receive-only accounts have nobody to send to.
+  if (!canSendMessages(user)) {
+    return res.json({ success: true, data: { users: [], roles: [], branches: [] } });
+  }
 
   let users = [];
   let roles = [];
   let branches = [];
 
-  if (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) {
+  if (canBroadcast) {
     users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
     roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
     branches = await Location.find().select('name city');
   }
   else if (role === 'admin') {
+    // Super admin (up) + everyone in this admin's branches (down).
     const supers = await User.find({ role: 'super_admin' }).select('name role');
-    const accessibleBranches = user.accessibleLocations || [];
-    const branchUsers = await User.find({ 
-      assignedLocation: { $in: accessibleBranches }, 
-      _id: { $ne: user._id } 
+    const branchUsers = await User.find({
+      assignedLocation: { $in: branchIds },
+      role: { $in: ['branch_admin', 'location_admin', 'staff', 'chef'] },
+      _id: { $ne: user._id },
     }).select('name role');
     users = [...supers, ...branchUsers];
-    
-    branches = await Location.find({ _id: { $in: accessibleBranches } }).select('name');
+    // Admins may also broadcast to a whole branch they manage.
+    branches = await Location.find({ _id: { $in: branchIds } }).select('name city');
   }
   else if (role === 'branch_admin') {
+    // Their admin (up) + their staff/chef/location admin (down). Super admin only
+    // when the messageSuperAdmin permission is granted.
     const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds } }).select('name role');
-    const staff = await User.find({ 
+    const staff = await User.find({
       assignedLocation: { $in: branchIds },
-      role: { $in: ['staff', 'chef', 'location_admin'] } 
+      role: { $in: ['staff', 'chef', 'location_admin'] },
+      _id: { $ne: user._id },
     }).select('name role');
-    const supers = await User.find({ role: 'super_admin' }).select('name role');
-    
+    const supers = canSuper ? await User.find({ role: 'super_admin' }).select('name role') : [];
     users = [...supers, ...admins, ...staff];
   }
-  else if (role === 'staff' || role === 'chef') {
+  else {
+    // staff / chef / location_admin: their branch admin + their admin. Super admin
+    // only with the messageSuperAdmin permission.
     const branchAdmins = await User.find({
       role: 'branch_admin',
-      $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }]
+      $or: [{ assignedLocation: { $in: branchIds } }, { accessibleLocations: { $in: branchIds } }],
+      _id: { $ne: user._id },
     }).select('name role');
-    const admins = await User.find({ role: 'admin', accessibleLocations: branchId }).select('name role');
-    const supers = await User.find({ role: 'super_admin' }).select('name role');
-    
+    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds } }).select('name role');
+    const supers = canSuper ? await User.find({ role: 'super_admin' }).select('name role') : [];
     users = [...supers, ...admins, ...branchAdmins];
   }
 
   res.json({
     success: true,
-    data: {
-      users,
-      roles: (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) ? roles : [],
-      // Admins get their accessible branches; super_admin / global-notify gets all; others get none
-      branches: (role === 'super_admin' || user.permissions?.sendGlobalNotifications === true) ? branches : (role === 'admin' ? branches : [])
-    }
+    data: { users, roles, branches }
   });
 });
 

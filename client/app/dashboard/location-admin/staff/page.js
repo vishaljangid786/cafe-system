@@ -106,7 +106,7 @@ export default function LocationStaffPage() {
             </div>
             <div className="flex items-center space-x-6">
 
-              <Link href="/signup">
+              <Link href="/dashboard/add-member">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

@@ -8,13 +8,15 @@ const {
   getTargetOptions,
   markAsUnread
 } = require('../controllers/notificationController');
-const { verifyToken, checkAnyPermission } = require('../middlewares/authMiddleware');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
 router.get('/', getNotifications);
-router.get('/targets', checkAnyPermission('manageNotifications', 'sendGlobalNotifications'), getTargetOptions);
-router.post('/', checkAnyPermission('manageNotifications', 'sendGlobalNotifications'), createNotification);
+// Sending is governed inside the controller by the per-user sendMessages permission
+// and the role-based target rules, so these only need an authenticated user.
+router.get('/targets', getTargetOptions);
+router.post('/', createNotification);
 router.patch('/read-all', markAllAsRead);
 router.patch('/:id/read', markAsRead);
 router.patch('/:id/unread', markAsUnread);

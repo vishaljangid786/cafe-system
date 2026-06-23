@@ -9,7 +9,10 @@ const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, clampLimit, scopedLocationId, endOfDay, escapeRegex } = require('../utils/accessControl');
 const { logActivity } = require('../utils/auditLogger');
+const sendNotification = require('../utils/sendNotification');
 const OrderService = require('../services/orderService');
+
+const shortOrderId = (id) => id.toString().slice(-6).toUpperCase();
 
 const ensureOrderAccess = (req, res, order, message = 'Permission denied to this order') => {
   enforceLocationAccess(req, res, order.branch, message);
@@ -170,6 +173,15 @@ const rejectOrder = asyncHandler(async (req, res) => {
   const { rejectReason } = req.body || {};
   const updatedOrder = await OrderService.rejectOrder(orderId, rejectReason, req.user._id);
 
+  // Let the seniors know an order was rejected (routes up the hierarchy).
+  await sendNotification({
+    title: 'Order Rejected',
+    message: `Order #${shortOrderId(order._id)} was rejected by ${req.user.name}${rejectReason ? `: "${rejectReason}"` : ''}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: updatedOrder });
 });
 
@@ -189,6 +201,16 @@ const cancelOrder = asyncHandler(async (req, res) => {
   }
 
   const updatedOrder = await OrderService.cancelOrder(orderId, req.user._id);
+
+  // Notify the seniors that an order was cancelled (routes up the hierarchy).
+  await sendNotification({
+    title: 'Order Cancelled',
+    message: `Order #${shortOrderId(order._id)} was cancelled by ${req.user.name}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: updatedOrder });
 });
 

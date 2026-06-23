@@ -74,7 +74,7 @@ const generateDailyReport = async () => {
     }
 
     const mailOptions = {
-      from: `"Cafe Matrix Scheduler" <${process.env.MAIL_FROM || 'scheduler@cafematrix.io'}>`,
+      from: `"Cafe Daily Report" <${process.env.MAIL_FROM || 'scheduler@cafematrix.io'}>`,
       to: recipientEmails,
       subject: `Enterprise Daily Report - ${new Date().toLocaleDateString()}`,
       text: `Please find attached the daily operational report for ${new Date().toDateString()}.`,

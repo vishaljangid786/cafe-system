@@ -38,6 +38,8 @@ const PERMISSION_LIST = [
   { key: 'viewAdminCenter', label: 'Open Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
+  { key: 'sendMessages', label: 'Send Messages' },
+  { key: 'messageSuperAdmin', label: 'Message Super Admin' },
 ];
 
 export default function UsersPage() {
@@ -269,7 +271,7 @@ export default function UsersPage() {
             variant="primary" 
             className="h-12 sm:h-16 w-full md:w-auto px-6 sm:px-10 !rounded-xl shadow-sm "
             icon={UserPlus}
-            onClick={() => router.push('/signup')}
+            onClick={() => router.push('/dashboard/add-member')}
           >
             Add New Staff
           </Button>

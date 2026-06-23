@@ -150,6 +150,46 @@ export default function LocationComparisonPage() {
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
+  if (locations.length < 2) {
+    const onlyBranch = locations[0];
+
+    return (
+      <PageTransition>
+        <div className="space-y-10 pb-20">
+          <SlideIn direction="down">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
+                  <ArrowRightLeft size={32} />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                    Branch <span className="text-primary">Comparison</span>
+                  </h1>
+                  <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal">Compare how your branches are performing</p>
+                </div>
+              </div>
+            </div>
+          </SlideIn>
+
+          <div className="min-h-[42vh] flex items-center justify-center">
+            <div className="w-full max-w-2xl bg-(--color-surface)/80 border border-(--color-border) rounded-xl p-10 text-center shadow-sm">
+              <div className="mx-auto h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <MapPin size={26} />
+              </div>
+              <h2 className="mt-6 text-2xl font-bold text-(--color-text-primary)">Branch comparison is unavailable</h2>
+              <p className="mt-3 text-sm font-medium text-(--color-text-secondary) leading-6">
+                {onlyBranch
+                  ? `${onlyBranch.name || onlyBranch.city || 'Your assigned branch'} is the only branch assigned to this account. A second assigned branch is required before comparisons are available.`
+                  : 'No branches are assigned to this account yet. At least two assigned branches are required before comparisons are available.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
       <div className="space-y-10 pb-20">

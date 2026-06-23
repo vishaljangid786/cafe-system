@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import { Wallet, Calendar, Download, User, Info, Receipt, ArrowRight, TrendingUp, DollarSign, FileText, Search, Filter } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 
 
 export default function SalaryPage() {
+  const { selectedLocation } = useAuth();
   const monthInputRef = useRef(null);
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,13 @@ export default function SalaryPage() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/salary/location?month=${month}`);
+      // Scope to the branch chosen in the global Navbar switcher. When "all
+      // assigned branches" is active (selectedLocation null) we omit locationId
+      // and the backend aggregates across every branch this admin manages.
+      const params = new URLSearchParams({ month });
+      const branchId = selectedLocation?._id || selectedLocation;
+      if (branchId && branchId !== 'all') params.append('locationId', branchId);
+      const res = await api.get(`/salary/location?${params.toString()}`);
       setSalaries(res.data.data);
     } catch (error) {
       console.error('Failed to fetch salaries:', error);
@@ -47,7 +55,7 @@ export default function SalaryPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [month]);
+  }, [month, selectedLocation]);
 
   const filteredSalaries = salaries.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())

@@ -26,9 +26,12 @@ JWT_SECRET=your_jwt_secret
 JWT_EXPIRE=30d
 JWT_COOKIE_EXPIRE=30
 NODE_ENV=production
+ENCRYPTION_KEY=your_encryption_key
 CORS_ORIGIN=http://localhost:3000,http://127.0.0.1:3000,https://your-client-domain.vercel.app
 CLIENT_URL=http://localhost:3000,http://127.0.0.1:3000,https://your-client-domain.vercel.app
 ```
+
+`ENCRYPTION_KEY` is **mandatory in production** — the server refuses to start (throws at load time) without it, so the Vercel function will crash on every request if it is missing. Use the **same value** across every environment that shares a database, or existing encrypted Aadhaar PII will fail to decrypt.
 
 `CORS_ORIGIN` must include the exact deployed frontend origin. If the frontend and API are served from the same Vercel project, include that same `https://your-project.vercel.app` URL too. The server also auto-allows Vercel's `VERCEL_URL` for same-project deployments.
 

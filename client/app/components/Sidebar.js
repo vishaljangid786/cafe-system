@@ -42,7 +42,7 @@ const GRANTABLE_PAGES = [
   { name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
   { name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
   { name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'], requiresMultipleBranches: true },
   { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
   { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
   { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
@@ -55,14 +55,36 @@ const GRANTABLE_PAGES = [
   { name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap, perms: ['viewAdminCenter'], defaultRoles: ['super_admin'] },
 ];
 
+const getBranchId = (branch) => {
+  if (!branch) return '';
+  return (branch._id || branch).toString();
+};
+
+const getUserBranchIds = (account) => {
+  const ids = [];
+  const addBranch = (branch) => {
+    const id = getBranchId(branch);
+    if (id && !ids.includes(id)) ids.push(id);
+  };
+
+  addBranch(account?.assignedLocation);
+  (account?.accessibleLocations || []).forEach(addBranch);
+
+  return ids;
+};
+
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, locations = [] } = useAuth();
   const { unreadCount } = useNotifications();
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [openGroup, setOpenGroup] = useState(null);
   const [flyoutTop, setFlyoutTop] = useState(0);
+
+  // Receive-only accounts (sendMessages explicitly false) don't get the composer.
+  // Undefined is treated as allowed so accounts predating this field still work.
+  const canSendMessages = !!user && (user.role === 'super_admin' || user.permissions?.sendMessages !== false);
 
   const groups = useMemo(() => {
     if (!user) return [];
@@ -70,6 +92,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     const permissions = user.permissions || {};
     const isSuper = role === 'super_admin';
     const hasPermission = (key) => isSuper || permissions[key] === true;
+    const comparableBranchCount = role === 'super_admin'
+      ? (locations.length > 0 ? locations.length : 2)
+      : getUserBranchIds(user).length;
+    const hasMultipleComparableBranches = comparableBranchCount > 1;
 
     const groupsList = [];
 
@@ -177,7 +203,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       if (hasPermission('viewAnalytics')) {
         analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
 
-        if (role === 'super_admin' || role === 'admin') {
+        if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin') && hasMultipleComparableBranches) {
           analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
         }
 
@@ -223,6 +249,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     // that their role wouldn't normally surface in the menu.
     const grantedItems = GRANTABLE_PAGES
       .filter(p => !isSuper && !p.defaultRoles.includes(role) && p.perms.some(k => permissions[k] === true))
+      .filter(p => !p.requiresMultipleBranches || hasMultipleComparableBranches)
       .map(({ name, href, icon }) => ({ name, href, icon }));
     if (grantedItems.length > 0) {
       groupsList.push({ title: 'Granted Access', items: grantedItems });
@@ -238,7 +265,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     });
 
     return groupsList;
-  }, [user, unreadCount]);
+  }, [user, unreadCount, locations]);
 
   const allLinks = useMemo(() => groups.flatMap(g => g.items), [groups]);
 
@@ -470,7 +497,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         </div>
       </div>
 
-      {/* Update Center Action */}
+      {/* Send Message Action */}
+      {canSendMessages && (
       <div className="px-3 mb-4">
         <button
           onClick={() => setShowNotifModal(true)}
@@ -487,6 +515,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           )}
         </button>
       </div>
+      )}
 
       {/* User Footer */}
       <div className={`p-4 mt-auto border-t border-(--color-border) bg-(--color-bg-soft)/70`}>

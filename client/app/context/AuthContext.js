@@ -206,6 +206,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       initializeSocket(userData, initialLoc);
+      await fetchLocations();
       toast.success(`Welcome back, ${userData.name}`);
       setLoading(false);
       router.push(getRoleDashboard(userData.role));
@@ -237,6 +238,7 @@ export const AuthProvider = ({ children }) => {
     
     setUser(null);
     setSelectedLocation(null);
+    setLocations([]);
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
@@ -272,6 +274,7 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
+      await fetchLocations();
       setLoading(false);
       router.push(getRoleDashboard(userData.role));
 
@@ -306,6 +309,7 @@ export const AuthProvider = ({ children }) => {
         setSocket(null);
       }
       initializeSocket(userData, initialLoc);
+      await fetchLocations();
       setLoading(false);
       // Role-routed home — a non-admin delegated impersonator can't open
       // /dashboard/admin/users and would be bounced by the layout guard.

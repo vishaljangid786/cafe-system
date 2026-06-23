@@ -28,6 +28,9 @@ const permissionList = [
   { key: 'viewAdminCenter', label: 'Open Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
+  // Messaging
+  { key: 'sendMessages', label: 'Send Messages' },
+  { key: 'messageSuperAdmin', label: 'Message Super Admin' },
 ];
 
 const ROLE_FILTERS = [
@@ -127,7 +130,10 @@ export default function PermissionManager({ className = "" }) {
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    setEditedPermissions(user.permissions || {});
+    const perms = user.permissions || {};
+    // sendMessages is ON unless explicitly turned off, so show it checked for
+    // accounts that pre-date the field rather than misleadingly unchecked.
+    setEditedPermissions({ ...perms, sendMessages: perms.sendMessages !== false });
     setIsModalOpen(true);
     setError('');
   };

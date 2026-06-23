@@ -12,6 +12,16 @@ const getDaysInMonth = (monthString) => {
   return new Date(year, month, 0).getDate();
 };
 
+// Roles whose salaries a given actor may view — never peers or superiors.
+// A branch_admin therefore sees only staff/chef (not themselves, not admins),
+// matching the hierarchy visibility enforced by GET /api/users.
+const salaryVisibleRoles = (actorRole) =>
+  actorRole === 'super_admin'
+    ? ['admin', 'branch_admin', 'location_admin', 'staff', 'chef']
+    : actorRole === 'admin'
+      ? ['branch_admin', 'location_admin', 'staff', 'chef']
+      : ['staff', 'chef'];
+
 // Internal helper for aggregation pipeline
 const getSalaryAggregation = async (userIds, month, daysInMonth) => {
   return await User.aggregate([
@@ -86,7 +96,12 @@ const getLocationSalary = asyncHandler(async (req, res) => {
   }
 
   const daysInMonth = getDaysInMonth(month);
-  const users = await User.find({ assignedLocation: targetLocationId }).select('_id');
+  // Only list users this actor is allowed to see (branch_admin → staff/chef only,
+  // i.e. never themselves or admins).
+  const users = await User.find({
+    assignedLocation: targetLocationId,
+    role: { $in: salaryVisibleRoles(req.user.role) },
+  }).select('_id');
   const userIds = users.map(u => u._id);
   
   const salaries = await getSalaryAggregation(userIds, month, daysInMonth);
@@ -116,11 +131,7 @@ const getAllSalary = asyncHandler(async (req, res) => {
   // Hierarchy visibility: which roles this actor may see salaries for (never peers
   // or superiors). A requested ?role filter is intersected with this — otherwise an
   // admin could pass ?role=admin to view peer admins' salaries.
-  const visibleRoles = req.user.role === 'super_admin'
-    ? ['admin', 'branch_admin', 'location_admin', 'staff', 'chef']
-    : req.user.role === 'admin'
-      ? ['branch_admin', 'location_admin', 'staff', 'chef']
-      : ['staff', 'chef'];
+  const visibleRoles = salaryVisibleRoles(req.user.role);
   userQuery.role = (role && visibleRoles.includes(role)) ? role : { $in: visibleRoles };
 
   const branchScope = scopedLocationId(req, locationId);
@@ -369,7 +380,10 @@ const getPayrollHistory = asyncHandler(async (req, res) => {
 
   const branchScope = scopedLocationId(req, locationId);
   if (branchScope) {
-    const users = await User.find({ assignedLocation: branchScope }).select('_id');
+    const users = await User.find({
+      assignedLocation: branchScope,
+      role: { $in: salaryVisibleRoles(req.user.role) },
+    }).select('_id');
     filter.user = { $in: users.map(u => u._id) };
   }
 
