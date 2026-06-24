@@ -71,7 +71,9 @@ const reservationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'cancelled'],
+      // 'no-show' = the party never arrived: the slot is freed and the advance is
+      // forfeited (kept as income — never reconciled against an order).
+      enum: ['pending', 'confirmed', 'cancelled', 'no-show'],
       default: 'pending',
     },
     // Link to the advance-income Expense (so the advance can be reconciled against

@@ -52,7 +52,7 @@ exports.checkAvailability = async (req, res) => {
     const baseConflictQuery = {
       locationId,
       date: queryDate,
-      status: { $ne: 'cancelled' }
+      status: { $nin: ['cancelled', 'no-show'] }
     };
 
     if (excludeId) {
@@ -81,7 +81,7 @@ exports.checkAvailability = async (req, res) => {
       const overlappingTableBookings = await Reservation.find({
         locationId,
         date: queryDate,
-        status: { $ne: 'cancelled' },
+        status: { $nin: ['cancelled', 'no-show'] },
         tableIds: { $in: selectedTableIds },
         $or: overlapQuery(startTime, endTime)
       });
@@ -100,7 +100,7 @@ exports.checkAvailability = async (req, res) => {
         const anyTableBooking = await Reservation.findOne({
             locationId,
             date: queryDate,
-            status: { $ne: 'cancelled' },
+            status: { $nin: ['cancelled', 'no-show'] },
             $or: overlapQuery(startTime, endTime)
         });
 
@@ -179,7 +179,7 @@ exports.createReservation = async (req, res) => {
         locationId,
         date: queryDate,
         reservationType: 'full-location',
-        status: { $ne: 'cancelled' },
+        status: { $nin: ['cancelled', 'no-show'] },
         $or: overlapQuery(startTime, endTime)
     });
 
@@ -189,7 +189,7 @@ exports.createReservation = async (req, res) => {
         const tableCheck = await Reservation.findOne({
             locationId,
             date: queryDate,
-            status: { $ne: 'cancelled' },
+            status: { $nin: ['cancelled', 'no-show'] },
             tableIds: { $in: tableIds },
             $or: overlapQuery(startTime, endTime)
         });
@@ -372,7 +372,7 @@ exports.updateReservation = async (req, res) => {
         return res.status(400).json({ message: 'Advance payment must be between 0 and the total amount' });
       }
     }
-    if (updateData.status !== undefined && !['pending', 'confirmed', 'cancelled'].includes(updateData.status)) {
+    if (updateData.status !== undefined && !['pending', 'confirmed', 'cancelled', 'no-show'].includes(updateData.status)) {
       return res.status(400).json({ message: 'Invalid reservation status' });
     }
     const locationId = updateData.locationId
@@ -398,7 +398,7 @@ exports.updateReservation = async (req, res) => {
         const tableCheck = await Reservation.findOne({
           locationId,
           date: queryDate,
-          status: { $ne: 'cancelled' },
+          status: { $nin: ['cancelled', 'no-show'] },
           tableIds: { $in: selectedTableIds },
           _id: { $ne: existing._id },
           $or: overlapQuery(startTime, endTime)
@@ -410,7 +410,7 @@ exports.updateReservation = async (req, res) => {
         locationId,
         date: queryDate,
         reservationType: 'full-location',
-        status: { $ne: 'cancelled' },
+        status: { $nin: ['cancelled', 'no-show'] },
         _id: { $ne: existing._id },
         $or: overlapQuery(startTime, endTime)
       });

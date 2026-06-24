@@ -99,6 +99,19 @@ const updateWaitlistEntry = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error(`This party was already ${entry.status}`);
   }
+
+  // Seating a party onto a table marks that table occupied so the floor map /
+  // table list no longer shows it free (preventing a double walk-in seating).
+  if (updated.status === 'seated' && updated.tableId) {
+    const Table = require('../models/Table');
+    await Table.findByIdAndUpdate(updated.tableId, {
+      status: 'booked',
+      isBooked: true,
+      numberOfPeople: updated.partySize,
+      customerName: updated.customerName,
+    }).catch(() => {});
+  }
+
   res.json({ success: true, data: updated });
 });
 

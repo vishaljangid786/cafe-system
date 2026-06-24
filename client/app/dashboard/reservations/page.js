@@ -115,6 +115,7 @@ export default function ReservationsPage() {
       case 'confirmed': return 'bg-success/10 text-success border-success/20';
       case 'pending': return 'bg-primary/10 text-primary border-primary/20';
       case 'cancelled': return 'bg-danger/10 text-danger border-danger/20';
+      case 'no-show': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
       default: return 'bg-(--color-text-muted)/10 text-(--color-text-muted) border-(--color-text-muted)/20';
     }
   };
@@ -217,7 +218,8 @@ export default function ReservationsPage() {
                 { label: 'All Statuses', value: '' },
                 { label: 'Pending', value: 'pending' },
                 { label: 'Confirmed', value: 'confirmed' },
-                { label: 'Cancelled', value: 'cancelled' }
+                { label: 'Cancelled', value: 'cancelled' },
+                { label: 'No-show', value: 'no-show' }
               ]}
             />
           </div>

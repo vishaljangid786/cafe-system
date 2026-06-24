@@ -16,14 +16,10 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
 import toast from 'react-hot-toast';
-import io from 'socket.io-client';
-import getSocketUrl from '../../../services/socketUrl';
 import Modal from '../../../components/ui/Modal';
 import { formatDistanceToNow } from 'date-fns';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
-
-const SOCKET_URL = getSocketUrl();
 
 function StatCard({ label, value, icon: Icon, color }) {
   const colors = {
@@ -47,7 +43,7 @@ function StatCard({ label, value, icon: Icon, color }) {
 }
 
 export default function StaffOrdersPage() {
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('branch'); // 'my' or 'branch'
@@ -148,23 +144,25 @@ export default function StaffOrdersPage() {
     if (showCreateModal) fetchDataForCreation();
   }, [showCreateModal, fetchDataForCreation]);
 
+  // Reuse the shared AuthContext socket — do NOT open a new connection per page.
   useEffect(() => {
-    if (!user) return;
-    if (!SOCKET_URL) return;
-
-    const socket = io(SOCKET_URL, { withCredentials: true });
-    socket.on('connect', () => {
-      socket.emit('join_session', { branchId: user.assignedLocation?._id || user.assignedLocation });
-    });
-    socket.on('order:ready', (data) => {
+    if (!socket) return;
+    const onReady = (data) => {
       toast.success(data.message, { icon: '🚀', duration: 8000 });
       fetchOrders();
-    });
-    socket.on('order:update', () => fetchOrders());
-    socket.on('order:cancel', () => fetchOrders());
-    socket.on('order:note', () => fetchOrders());
-    return () => socket.close();
-  }, [user, fetchOrders]);
+    };
+    const onRefresh = () => fetchOrders();
+    socket.on('order:ready', onReady);
+    socket.on('order:update', onRefresh);
+    socket.on('order:cancel', onRefresh);
+    socket.on('order:note', onRefresh);
+    return () => {
+      socket.off('order:ready', onReady);
+      socket.off('order:update', onRefresh);
+      socket.off('order:cancel', onRefresh);
+      socket.off('order:note', onRefresh);
+    };
+  }, [socket, fetchOrders]);
 
   const handleCreateOrder = async () => {
     if (orderType === 'dine-in' && !selectedTable) return toast.error('Please select a table');

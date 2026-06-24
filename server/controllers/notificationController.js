@@ -213,7 +213,9 @@ const createNotification = asyncHandler(async (req, res) => {
       res.status(403);
       throw new Error('Only super admins can message a whole role');
     }
-    const users = await User.find({ role: targetId });
+    // 'all' is the everyone-pseudo-role surfaced in the targets list — treat it as
+    // a system broadcast rather than a (non-existent) role lookup.
+    const users = targetId === 'all' ? await User.find({}) : await User.find({ role: targetId });
     recipients = users.map(u => ({ user: u._id }));
   }
   else if (targetType === 'branch') {

@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const Location = require('../models/Location');
+const Reservation = require('../models/Reservation');
+const Table = require('../models/Table');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
@@ -61,7 +63,33 @@ const getBookedGuests = async (locationId, date, startTime, endTime, excludeBook
   }
 
   const overlappingBookings = await Booking.find(query);
-  return overlappingBookings.reduce((total, booking) => total + booking.numberOfGuests, 0);
+  let total = overlappingBookings.reduce((sum, booking) => sum + (booking.numberOfGuests || 0), 0);
+
+  // Also count capacity held by INTERNAL reservations in the same window, so public
+  // bookings + reservations can't over-allocate the same physical room/tables.
+  const reservations = await Reservation.find({
+    locationId,
+    date: new Date(date),
+    status: { $nin: ['cancelled', 'no-show'] },
+    $or: [
+      { isFullDay: true },
+      { startTime: { $lt: endTime }, endTime: { $gt: startTime } },
+    ],
+  });
+  if (reservations.length) {
+    // A full-location (or full-day) reservation holds the entire room.
+    if (reservations.some((r) => r.reservationType === 'full-location' || r.isFullDay)) {
+      const loc = await Location.findById(locationId).select('maxCapacity');
+      return loc?.maxCapacity || 20;
+    }
+    // Otherwise subtract the seating capacity of the specific reserved tables.
+    const reservedTableIds = reservations.flatMap((r) => r.tableIds || []);
+    if (reservedTableIds.length) {
+      const tables = await Table.find({ _id: { $in: reservedTableIds } }).select('capacity');
+      total += tables.reduce((sum, t) => sum + (t.capacity || 0), 0);
+    }
+  }
+  return total;
 };
 
 // @desc    Check availability for a slot

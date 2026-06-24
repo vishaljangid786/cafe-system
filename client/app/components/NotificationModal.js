@@ -132,7 +132,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
             options={[
               { label: 'Choose recipient...', value: '', disabled: true },
               ...(formData.targetType === 'individual' ? targets.users.map(u => ({ label: `${u.name} (${u.role.replace('_', ' ')})`, value: u._id })) : []),
-              ...(formData.targetType === 'role' ? targets.roles.map(r => ({ label: r.replace('_', ' ').toUpperCase(), value: r })) : []),
+              ...(formData.targetType === 'role' ? targets.roles.filter(r => r !== 'all').map(r => ({ label: r.replace('_', ' ').toUpperCase(), value: r })) : []),
               ...(formData.targetType === 'branch' ? targets.branches.map(b => ({ label: `${b.name} - ${b.city}`, value: b._id })) : []),
               ...(formData.targetType === 'system' ? [{ label: 'Everyone', value: 'all' }] : [])
             ]}
