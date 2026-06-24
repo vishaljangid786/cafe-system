@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import LoadingScreen from '../components/ui/LoadingScreen';
+import QuickLogin from './QuickLogin';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -171,6 +172,8 @@ export default function LoginPage() {
               Log In
             </Button>
           </form>
+
+          {process.env.NODE_ENV !== 'production' && <QuickLogin />}
 
           <div className="mt-10 flex justify-center">
             <div className="flex items-center gap-2 px-3 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-full">
