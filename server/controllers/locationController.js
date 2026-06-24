@@ -1,17 +1,19 @@
 const Location = require('../models/Location');
 const User = require('../models/User');
+const Cafe = require('../models/Cafe');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const mongoose = require('mongoose');
 const { userLocationIds } = require('../utils/accessControl');
+const { grantBranchToCafeAdmins } = require('../utils/cafeSync');
 
 // @desc    Get all locations
 // @route   GET /api/locations
 // @access  Private
 const getLocations = asyncHandler(async (req, res) => {
-  const { status, city } = req.query;
-  
+  const { status, city, cafeId } = req.query;
+
   let query = { isPermanentlyDeleted: false };
   if (status) query.status = status;
   if (city) query.city = city;
@@ -30,8 +32,18 @@ const getLocations = asyncHandler(async (req, res) => {
     // super_admin: no filter — can see all
   }
 
+  // Optional cafe filter (the super-admin cafe view, or an admin focusing one of
+  // their cafes). Combined with the access scope above via $and so it can only
+  // narrow what the user is already allowed to see.
+  if (cafeId && mongoose.isValidObjectId(cafeId)) {
+    query.cafe = new mongoose.Types.ObjectId(cafeId);
+  }
+
   // 1. Fetch Locations
-  const locations = await Location.find(query).populate('createdBy', 'name email').lean();
+  const locations = await Location.find(query)
+    .populate('createdBy', 'name email')
+    .populate('cafe', 'name logo')
+    .lean();
 
   // 2. Fetch Staff Counts for these locations
   const locationIds = locations.map(l => l._id);
@@ -72,14 +84,55 @@ const getLocations = asyncHandler(async (req, res) => {
 // @access  Private (Admin, Super Admin)
 const createLocation = asyncHandler(async (req, res) => {
   const { name, city, state, country, pincode, geoCoordinates, dietaryType } = req.body;
+  const requestedCafe = req.body.cafe || req.body.cafeId;
 
-  const locationExists = await Location.findOne({ city, name });
+  // Resolve which cafe this branch belongs to.
+  //  - admin:        their own cafe. One cafe → implicit; multiple → must choose one
+  //                  they administer; none → they aren't set up to own branches yet.
+  //  - super_admin:  must specify the target cafe explicitly.
+  let cafeId;
+  if (req.user.role === 'admin') {
+    const ownCafes = (req.user.cafes || []).map((c) => c.toString());
+    if (ownCafes.length === 0) {
+      res.status(400);
+      throw new Error('You are not assigned to any cafe yet. Ask a super-admin to set one up.');
+    }
+    if (requestedCafe) {
+      if (!ownCafes.includes(requestedCafe.toString())) {
+        res.status(403);
+        throw new Error('You can only create branches inside a cafe you administer');
+      }
+      cafeId = requestedCafe;
+    } else if (ownCafes.length === 1) {
+      cafeId = ownCafes[0];
+    } else {
+      res.status(400);
+      throw new Error('You administer multiple cafes — choose which cafe this branch belongs to');
+    }
+  } else {
+    // super_admin
+    if (!requestedCafe) {
+      res.status(400);
+      throw new Error('Select the cafe this branch belongs to');
+    }
+    cafeId = requestedCafe;
+  }
+
+  const cafe = await Cafe.findOne({ _id: cafeId, status: { $ne: 'deleted' } });
+  if (!cafe) {
+    res.status(404);
+    throw new Error('Cafe not found');
+  }
+
+  // Branch name is unique within a cafe (per city).
+  const locationExists = await Location.findOne({ cafe: cafeId, city, name, isPermanentlyDeleted: { $ne: true } });
   if (locationExists) {
     res.status(400);
-    throw new Error('Location with this name in this city already exists');
+    throw new Error('A branch with this name in this city already exists for this cafe');
   }
 
   const location = await Location.create({
+    cafe: cafeId,
     name,
     city,
     state,
@@ -90,19 +143,16 @@ const createLocation = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  // If an Admin creates a location, automatically add it to their accessible list
-  if (req.user.role === 'admin') {
-    await User.findByIdAndUpdate(req.user._id, {
-      $addToSet: { accessibleLocations: location._id }
-    });
-  }
+  // Mirror the new branch into the accessibleLocations of EVERY admin of this cafe
+  // (covers the creating admin and any co-admins), so existing branch scoping works.
+  await grantBranchToCafeAdmins(cafeId, location._id);
 
   await logActivity(
     req.user,
     'LOCATION_CREATE',
-    `Created new branch: ${location.city} - ${location.name}`,
+    `Created new branch: ${location.city} - ${location.name} (cafe: ${cafe.name})`,
     req,
-    { locationId: location._id }
+    { locationId: location._id, cafeId }
   );
 
   res.status(201).json({

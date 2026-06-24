@@ -53,6 +53,17 @@ export default function PremiumSelect({
     }
   };
 
+  // Open/close the menu. When opening we measure the trigger synchronously and
+  // set the coords in the SAME render pass as `isOpen`, so the portal never
+  // paints its first frame at (0,0)/width:0 and then jumps — which read as a
+  // flash / "loading" glitch.
+  const toggleOpen = () => {
+    setIsOpen((prev) => {
+      if (!prev) updateCoords();
+      return !prev;
+    });
+  };
+
   useEffect(() => {
     if (isOpen) {
       updateCoords();
@@ -145,7 +156,7 @@ export default function PremiumSelect({
 
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200 text-left relative ${isOpen
             ? 'bg-(--color-surface) border-primary'
             : 'bg-(--color-surface) border-(--color-border) hover:border-(--color-border-strong)'

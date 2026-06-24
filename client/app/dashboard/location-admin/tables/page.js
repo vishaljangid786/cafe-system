@@ -55,15 +55,20 @@ export default function TablesPage() {
 
   useEffect(() => {
     const fetchResources = async () => {
+      // location_admin lacks manageCoupons, so /coupons 403s. Tolerate it so the
+      // menu (which the order flow needs) still loads instead of the whole batch
+      // rejecting and leaving the table-ordering screen empty.
       try {
-        const [menuRes, couponRes] = await Promise.all([
-          api.get('/menu'),
-          api.get('/coupons?active=true')
-        ]);
+        const menuRes = await api.get('/menu');
         setMenuItems(menuRes.data.data);
-        setCoupons(couponRes.data.data);
       } catch (error) {
-        console.error("Load failed");
+        console.error('Menu load failed');
+      }
+      try {
+        const couponRes = await api.get('/coupons?active=true');
+        setCoupons(couponRes.data.data || []);
+      } catch (error) {
+        setCoupons([]);
       }
     };
     const timer = setTimeout(() => {

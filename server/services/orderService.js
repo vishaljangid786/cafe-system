@@ -8,20 +8,53 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { getIO } = require('../config/socket');
 
+// True only when a write failed specifically because the MongoDB deployment
+// can't run transactions (standalone server, not a replica set / mongos). Used
+// to fall back to a non-atomic order create instead of failing every order.
+const isTransactionUnsupportedError = (error) => {
+  const msg = (error && error.message ? error.message : '').toLowerCase();
+  return (
+    msg.includes('transaction numbers are only allowed') ||
+    msg.includes('replica set member or mongos') ||
+    msg.includes('does not support transactions') ||
+    msg.includes('does not support sessions') ||
+    msg.includes('transactions are not supported')
+  );
+};
+
 /**
  * Order Service
  * Handles business logic for orders to keep controllers thin.
  */
 class OrderService {
   /**
-   * Create a new order with stock deduction and table update
+   * Create a new order with stock deduction and table update.
+   *
+   * The work spans several writes (stock, order doc, table) so it runs inside a
+   * MongoDB transaction for atomicity. Transactions require a replica set /
+   * mongos — on a STANDALONE MongoDB the transaction throws and NO order can ever
+   * be placed (staff just see "Something went wrong"). Detect that single case
+   * and transparently retry the same logic non-atomically, so orders still work.
    */
-  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff' }) {
+  async createOrder(params) {
+    try {
+      return await this._createOrder(params, true);
+    } catch (error) {
+      if (isTransactionUnsupportedError(error)) {
+        return await this._createOrder(params, false);
+      }
+      throw error;
+    }
+  }
+
+  async _createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff' }, useTransaction = true) {
     const Reservation = require('../models/Reservation');
     const isDineIn = orderType === 'dine-in';
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // session === null → every `.session(session)` / `{ session }` below is a
+    // harmless no-op, so the exact same logic runs without a transaction.
+    const session = useTransaction ? await mongoose.startSession() : null;
+    if (session) session.startTransaction();
     let linkedReservationId = null;
 
     try {
@@ -282,11 +315,13 @@ class OrderService {
         }, { session, runValidators: false });
       }
 
-      await session.commitTransaction();
-      session.endSession();
+      if (session) {
+        await session.commitTransaction();
+        session.endSession();
+      }
 
       const createdOrder = order[0];
-      
+
       // Real-time signals
       const io = getIO();
       io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
@@ -297,8 +332,10 @@ class OrderService {
 
       return createdOrder;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
       throw error;
     }
   }

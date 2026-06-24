@@ -73,7 +73,8 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
         role: user.role,
         assignedLocation: user.assignedLocation,
         accessibleLocations: user.accessibleLocations,
-        permissions: user.permissions
+        permissions: user.permissions,
+        cafes: user.cafes || [],
       }
     });
 };
@@ -282,26 +283,18 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   const cleanEmail = email.trim().toLowerCase();
 
-  console.log('[LOGIN] email received (raw):', email);
-  console.log('[LOGIN] email after trim+lower:', cleanEmail);
-
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
 
   if (!user) {
-    console.log('[LOGIN] FAIL — no user found in DB for email:', cleanEmail);
     res.status(401);
     throw new Error('Invalid email or password');
   }
-
-  console.log('[LOGIN] user found:', user.name, '| role:', user.role, '| isBlocked:', user.isBlocked, '| active:', user.active);
-  console.log('[LOGIN] failedLoginAttempts:', user.failedLoginAttempts, '| lockUntil:', user.lockUntil);
 
   // Per-account lockout after repeated failures (independent of the IP throttle).
   const MAX_ATTEMPTS = 5;
   const LOCK_MS = 15 * 60 * 1000;
   if (user.lockUntil && user.lockUntil.getTime() > Date.now()) {
     const secsLeft = Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000);
-    console.log('[LOGIN] FAIL — account locked, retry in', secsLeft, 'seconds');
     // Keep the lockout (429 + Retry-After), but use a message that does NOT
     // reveal whether this specific account exists/is locked — preventing the
     // 429 from being used as a username-enumeration oracle.
@@ -311,19 +304,33 @@ const loginUser = asyncHandler(async (req, res, next) => {
   }
 
   const passwordMatch = await user.matchPassword(password);
-  console.log('[LOGIN] password match result:', passwordMatch);
 
   if (passwordMatch) {
-    if (user.failedLoginAttempts) {
+    // A suspended/deactivated account must never receive a session token, even
+    // with the correct password — otherwise the auth cookie is planted and the
+    // "account suspended" state is bypassed at the login boundary.
+    if (user.isBlocked) {
+      res.status(403);
+      throw new Error('Account suspended. Please contact administrator.');
+    }
+    if (user.active === false) {
+      res.status(403);
+      throw new Error('Account inactive. Permission denied.');
+    }
+    if (user.failedLoginAttempts || user.lockUntil) {
       await User.updateOne({ _id: user._id }, { $set: { failedLoginAttempts: 0, lockUntil: null } });
     }
-    console.log('[LOGIN] SUCCESS — sending token for', cleanEmail);
     sendTokenResponse(user, 200, res);
   } else {
-    const attempts = (user.failedLoginAttempts || 0) + 1;
-    const update = { failedLoginAttempts: attempts };
-    if (attempts >= MAX_ATTEMPTS) update.lockUntil = new Date(Date.now() + LOCK_MS);
-    console.log('[LOGIN] FAIL — wrong password, failedAttempts now:', attempts);
+    // An expired lock resets the counter first, so a single late wrong attempt
+    // can't immediately re-lock the account (which would let anyone keep a
+    // victim locked out indefinitely with one failed try per window).
+    const lockExpired = user.lockUntil && user.lockUntil.getTime() <= Date.now();
+    const attempts = (lockExpired ? 0 : (user.failedLoginAttempts || 0)) + 1;
+    const update = {
+      failedLoginAttempts: attempts,
+      lockUntil: attempts >= MAX_ATTEMPTS ? new Date(Date.now() + LOCK_MS) : null,
+    };
     await User.updateOne({ _id: user._id }, { $set: update });
     res.status(401);
     throw new Error('Invalid email or password');
@@ -435,7 +442,7 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 const getProfile = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user._id)
     .select('-password')
-    .populate('assignedLocation accessibleLocations');
+    .populate('assignedLocation accessibleLocations cafes');
 
   if (user) {
     const userData = user.toObject();

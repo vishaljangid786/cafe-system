@@ -472,7 +472,7 @@ export default function StaffOrdersPage() {
         <Modal
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
-          title={`Order Details #${selectedOrder?._id.slice(-6).toUpperCase()}`}
+          title={selectedOrder ? `Order Details #${selectedOrder._id.slice(-6).toUpperCase()}` : 'Order Details'}
           maxWidth="max-w-4xl"
         >
           {selectedOrder && (

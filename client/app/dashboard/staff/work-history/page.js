@@ -89,7 +89,7 @@ export default function WorkHistoryPage() {
             />
           </div>
           <button
-            onClick={fetchData}
+            onClick={() => fetchData(1)}
             className="px-8 py-4 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-normal shadow-lg   active:scale-95 transition-all"
           >
             Apply Filter

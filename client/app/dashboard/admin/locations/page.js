@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
-import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target } from 'lucide-react';
+import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -27,9 +27,10 @@ export default function BranchesPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [cafes, setCafes] = useState([]);
   const [formData, setFormData] = useState({
     name: '', city: '', state: '', country: 'India',
-    pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both'
+    pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both', cafe: ''
   });
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [staff, setStaff] = useState([]);
@@ -56,9 +57,21 @@ export default function BranchesPage() {
     }
   };
 
+  // Cafes (brands) this user can create branches under. super_admin: all cafes;
+  // admin: only the cafe(s) they administer.
+  const fetchCafes = async () => {
+    try {
+      const res = await api.get('/cafes');
+      setCafes(res.data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch cafes');
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchLocations();
+      fetchCafes();
     }, 0);
 
     return () => clearTimeout(timer);
@@ -154,6 +167,12 @@ export default function BranchesPage() {
     const action = editingId ? 'Updating' : 'Creating';
     const loadToast = toast.loading(`${action} branch...`);
 
+    // A cafe is required when creating a new branch (the branch's brand owner).
+    if (!editingId && !formData.cafe) {
+      toast.error('Please choose which cafe this branch belongs to', { id: loadToast });
+      return;
+    }
+
     try {
       const payload = {
         name: formData.name,
@@ -172,12 +191,12 @@ export default function BranchesPage() {
       if (editingId) {
         await api.patch(`/locations/${editingId}`, payload);
       } else {
-        await api.post('/locations', payload);
+        await api.post('/locations', { ...payload, cafe: formData.cafe });
       }
 
       setShowModal(false);
       setEditingId(null);
-      setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both' });
+      setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both', cafe: '' });
       fetchLocations();
       toast.success(`Branch ${editingId ? 'updated' : 'created'} successfully!`, { id: loadToast });
     } catch (error) {
@@ -230,7 +249,7 @@ export default function BranchesPage() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   setEditingId(null);
-                  setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both' });
+                  setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both', cafe: cafes.length === 1 ? cafes[0]._id : '' });
                   setShowModal(true);
                 }}
                 className="flex items-center justify-center px-8 py-4 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-bold uppercase tracking-normal text-[10px] shadow-sm  hover:opacity-90 transition-all whitespace-nowrap"
@@ -246,6 +265,7 @@ export default function BranchesPage() {
             <thead>
               <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Info</th>
+                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Location</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Type</th>
                 <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Status</th>
@@ -278,6 +298,15 @@ export default function BranchesPage() {
                           <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {loc._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      {loc.cafe ? (
+                        <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-normal px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          <Store size={12} /> {loc.cafe.name || 'Cafe'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-(--color-text-muted) italic">Unassigned</span>
+                      )}
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col">
@@ -367,6 +396,15 @@ export default function BranchesPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
+                  {!editingId && (
+                    <PremiumSelect
+                      label="Cafe (Brand)"
+                      placeholder={cafes.length === 0 ? 'No cafe available — ask a super-admin' : 'Select the cafe this branch belongs to'}
+                      value={formData.cafe}
+                      onChange={(val) => setFormData({ ...formData, cafe: val })}
+                      options={cafes.map((c) => ({ label: c.name, value: c._id }))}
+                    />
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div>

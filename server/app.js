@@ -14,6 +14,7 @@ const expenseRoutes = require('./routes/expenseRoutes');
 const tableRoutes = require('./routes/tableRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const locationRoutes = require('./routes/locationRoutes'); // Renamed
+const cafeRoutes = require('./routes/cafeRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const salaryRoutes = require('./routes/salaryRoutes');
@@ -146,6 +147,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/cafes', cafeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/expenses', expenseRoutes);

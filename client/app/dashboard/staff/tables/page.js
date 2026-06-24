@@ -223,7 +223,7 @@ export default function StaffTablesPage() {
     }
   };
 
-  const handleFinalizeSession = async (file, finalTotal) => {
+  const handleFinalizeSession = async (file, finalTotal, paymentType = 'CASH') => {
     const loadToast = toast.loading('Saving bill...');
     if (!selectedTable.customerName) {
       toast.error('Please enter the customer name', { id: loadToast });
@@ -232,6 +232,7 @@ export default function StaffTablesPage() {
 
     const data = new FormData();
     data.append('billImage', file);
+    data.append('paymentType', paymentType);
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -656,8 +657,10 @@ export default function StaffTablesPage() {
                   </div>
                 </div>             </div>
 
-              {/* Right Side: Menu Selection & Discovery */}
-              <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
+              {/* Right Side: Menu Selection & Discovery — the whole column scrolls
+                  as one unit (search, top-selling, full menu, coupon) rather than
+                  trapping the scroll inside just the menu grid. */}
+              <div className="lg:col-span-7 flex flex-col h-full overflow-y-auto custom-scrollbar pr-2 space-y-6">
                 {/* Search & Top Filters */}
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors">
@@ -746,8 +749,8 @@ export default function StaffTablesPage() {
                   </div>
                 )}
 
-                {/* Main Menu Grid */}
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                {/* Main Menu Grid — flows in the column scroll (no inner scrollbar) */}
+                <div className="space-y-6">
                   <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
@@ -875,14 +878,6 @@ export default function StaffTablesPage() {
             </div>
           )}
         </Modal>
-
-        <BillPreview
-          isOpen={isBillPreviewOpen}
-          onClose={() => setIsBillPreviewOpen(false)}
-          onComplete={handleFinalizeSession}
-          table={selectedTable}
-          systemOrders={systemOrders}
-        />
       </div>
     </PageTransition>
   );

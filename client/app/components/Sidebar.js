@@ -11,7 +11,7 @@ import {
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
   Target, TrendingUp, Crown, Package, Truck,
   Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download,
-  Activity, ShieldAlert, ChevronDown, ShieldCheck, UserPlus, Star, Gift
+  Activity, ShieldAlert, ChevronDown, ShieldCheck, UserPlus, Star, Gift, Store
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -155,6 +155,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       }
 
       if (role === 'super_admin' || role === 'admin') {
+        // Cafes (brands) sit ABOVE branches. Super-admins manage every cafe;
+        // admins manage the branding of the cafe(s) they own.
+        adminItems.push({ name: 'Cafes', href: '/dashboard/admin/cafes', icon: Store });
         adminItems.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
       }
 

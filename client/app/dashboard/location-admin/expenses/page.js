@@ -141,14 +141,20 @@ export default function LocationExpensesPage() {
                 </button>
               ))}
             </div>
-            <Button 
-              variant="primary" 
-              icon={Plus}
-              onClick={() => setShowAddModal(true)}
-              className="!rounded-xl !py-4 px-6 bg-danger hover:bg-danger shadow-lg "
-            >
-              Add Expense
-            </Button>
+            {/* Recording an expense hits POST /transactions, which the server
+                gates on the editRevenue permission. A location_admin without it
+                would only ever get a 403, so only surface the action when the
+                user actually holds the permission. */}
+            {user?.permissions?.editRevenue && (
+              <Button
+                variant="primary"
+                icon={Plus}
+                onClick={() => setShowAddModal(true)}
+                className="!rounded-xl !py-4 px-6 bg-danger hover:bg-danger shadow-lg "
+              >
+                Add Expense
+              </Button>
+            )}
           </div>
         </div>
 

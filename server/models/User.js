@@ -114,6 +114,18 @@ const userSchema = new mongoose.Schema(
         ref: 'Location',
       }
     ],
+    // Cafes (brands/organizations) this user administers. Many-to-many: an admin
+    // may run several cafes, and a cafe may have several admins. Only meaningful
+    // for the `admin` role — super_admin sees all cafes platform-wide, and
+    // branch-level roles derive their cafe from assignedLocation.cafe. The branches
+    // of every cafe listed here are kept mirrored into `accessibleLocations`, so
+    // all existing per-branch scoping keeps working unchanged.
+    cafes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cafe',
+      }
+    ],
     aadharNumber: {
       type: String,
       set: (val) => encrypt(val),
@@ -201,6 +213,8 @@ userSchema.index({ isBlocked: 1 });
 userSchema.index({ role: 1, assignedLocation: 1 });
 // Hot path: admin lookups by accessibleLocations array
 userSchema.index({ accessibleLocations: 1 });
+// Cafe membership lookups ("who administers this cafe").
+userSchema.index({ cafes: 1 });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

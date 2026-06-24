@@ -54,18 +54,34 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  const order = await OrderService.createOrder({
-    branch,
-    tableId: orderType === 'dine-in' ? tableId : null,
-    items,
-    customerPhone,
-    customerName,
-    discountAmount: Number(discountAmount) || 0,
-    couponId: couponId || null,
-    paymentType: paymentType || 'CASH',
-    orderType,
-    userId: req.user._id
-  });
+  let order;
+  try {
+    order = await OrderService.createOrder({
+      branch,
+      tableId: orderType === 'dine-in' ? tableId : null,
+      items,
+      customerPhone,
+      customerName,
+      discountAmount: Number(discountAmount) || 0,
+      couponId: couponId || null,
+      paymentType: paymentType || 'CASH',
+      orderType,
+      userId: req.user._id
+    });
+  } catch (err) {
+    // Business-rule violations from the service (insufficient stock, item
+    // unavailable, "no stock record in this branch", coupon invalid, missing
+    // required modifier, the 10-second per-table guard, …) are thrown as plain
+    // `Error`s with no statusCode, so they default to 500 and get masked as the
+    // generic "Something went wrong. Please try again later." in production.
+    // Re-tag those as 400 so the real, actionable reason reaches the staff member.
+    // Genuine system faults (TypeError, MongoServerError, ValidationError, …)
+    // keep their own name and stay 500 / their specific handling.
+    if (!err.statusCode && err.name === 'Error') {
+      err.statusCode = 400;
+    }
+    throw err;
+  }
 
   res.status(201).json({ success: true, data: order });
 });
@@ -733,11 +749,36 @@ const generateOrderBill = asyncHandler(async (req, res) => {
     }
   }
 
+  // Receipt branding comes from the CAFE that owns this order's branch (name, logo,
+  // GSTIN, address, contact), with the branch shown as the specific outlet. Fetched
+  // separately so we never replace `order.branch` (still used as an id above).
+  const Location = require('../models/Location');
+  const branchDoc = await Location.findById(order.branch)
+    .select('name city state country pincode cafe')
+    .populate('cafe', 'name logo gstin address contact')
+    .lean();
+  const cafeBranding = branchDoc?.cafe || null;
+
   res.json({
     success: true,
     data: {
       orderId: order._id,
       invoiceNumber: order.invoiceNumber,
+      // Brand/organization header for the receipt.
+      cafe: cafeBranding ? {
+        name: cafeBranding.name,
+        logo: cafeBranding.logo || '',
+        gstin: cafeBranding.gstin || '',
+        address: cafeBranding.address || {},
+        contact: cafeBranding.contact || {},
+      } : null,
+      // The specific outlet (branch) the order was placed at.
+      branch: branchDoc ? {
+        name: branchDoc.name || '',
+        city: branchDoc.city || '',
+        state: branchDoc.state || '',
+        pincode: branchDoc.pincode || '',
+      } : null,
       items: order.items.map(i => ({
         name: i.menuItem?.name || i.itemName,
         quantity: i.quantity,
@@ -754,7 +795,8 @@ const generateOrderBill = asyncHandler(async (req, res) => {
         // CGST/SGST split for a GST-compliant invoice.
         cgst: Number((taxes / 2).toFixed(2)),
         sgst: Number((taxes / 2).toFixed(2)),
-        gstin: settings?.tax?.gstin || '',
+        // Prefer the cafe's GSTIN (brand-level), falling back to branch settings.
+        gstin: cafeBranding?.gstin || settings?.tax?.gstin || '',
         finalAmount
       }
     }

@@ -75,17 +75,22 @@ export default function AdminOrdersDashboard() {
       if (dateRange.end) params.append('endDate', dateRange.end);
       if (searchTerm) params.append('search', searchTerm);
 
-      const [orderRes, analyticsRes, locRes] = await Promise.all([
+      // allSettled so a 403/500 on analytics (a delegated branch_admin may hold
+      // viewOrders but not viewAnalytics) or locations doesn't reject the whole
+      // batch and blank the orders list that otherwise loaded fine.
+      const [orderRes, analyticsRes, locRes] = await Promise.allSettled([
         api.get(`/orders?${params.toString()}`),
         api.get(`/orders/analytics?${params.toString().replace(/&?page=\d+|&?limit=\d+/g, '')}`),
         api.get('/locations')
       ]);
       // Drop the result if a newer request has since started.
       if (reqId !== reqIdRef.current) return;
-      setOrders(orderRes.data.data);
-      setTotalPages(orderRes.data.pagination.pages);
-      setAnalytics(analyticsRes.data.data);
-      setLocations(locRes.data.data);
+      if (orderRes.status === 'fulfilled') {
+        setOrders(orderRes.value.data.data);
+        setTotalPages(orderRes.value.data.pagination?.pages || 1);
+      }
+      if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data.data);
+      if (locRes.status === 'fulfilled') setLocations(locRes.value.data.data);
     } catch (error) {
       if (reqId === reqIdRef.current) toast.error('Could not load orders. Please try again.');
     } finally {

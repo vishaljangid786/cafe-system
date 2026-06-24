@@ -354,6 +354,15 @@ const uploadBill = asyncHandler(async (req, res) => {
     throw new Error('A bill image is required');
   }
 
+  // Payment tender chosen by the cashier (Cash / UPI / …). Recorded on every
+  // order finalized in this bill so the sale lands under the right method in
+  // revenue reporting and cash-drawer reconciliation — a UPI sale must never
+  // inflate expected cash. Unknown/missing values fall back to CASH.
+  const ALLOWED_PAYMENT_TYPES = ['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'];
+  const paymentType = ALLOWED_PAYMENT_TYPES.includes(req.body.paymentType)
+    ? req.body.paymentType
+    : 'CASH';
+
   table.billImage = req.file.path;
   table.status = 'completed';
 
@@ -375,6 +384,23 @@ const uploadBill = asyncHandler(async (req, res) => {
   if (liveOrder) {
     res.status(400);
     throw new Error('This table still has active kitchen orders that have not been served. Serve, complete, or cancel them before billing.');
+  }
+
+  // Stamp the chosen tender on the orders being billed (DB + the in-memory docs
+  // finalizeOrder reads when writing the revenue Transaction). Skip orders that
+  // were already settled by another method — e.g. a gift-card redemption sets
+  // paymentType='GIFT_CARD' + amountPaid but leaves isBilled false; overwriting
+  // it with the cashier's cash/UPI tender would re-tag prepaid money as cash and
+  // inflate the expected cash drawer.
+  const ordersToStamp = sessionOrders.filter(
+    (o) => o.paymentType !== 'GIFT_CARD' && Number(o.amountPaid || 0) <= 0
+  );
+  if (ordersToStamp.length > 0) {
+    await Order.updateMany(
+      { _id: { $in: ordersToStamp.map((o) => o._id) } },
+      { $set: { paymentType } }
+    );
+    ordersToStamp.forEach((o) => { o.paymentType = paymentType; });
   }
 
   const { finalizeOrder } = require('../utils/orderFinalizer');
@@ -411,6 +437,7 @@ const uploadBill = asyncHandler(async (req, res) => {
       })),
       totalAmount: stagedItems.reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
       discountAmount: Number(table.discountAmount) || 0,
+      paymentType,
       createdBy: req.user._id,
       status: 'SERVED',
       statusHistory: [{ status: 'SERVED', timestamp: new Date(), updatedBy: req.user._id }],

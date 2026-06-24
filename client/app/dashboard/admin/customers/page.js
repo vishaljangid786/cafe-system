@@ -25,17 +25,22 @@ export default function CustomersDashboard() {
     else setRefetching(true);
     progress.start();
     try {
-      const [analyticsRes, topRes, inactiveRes, settingsRes] = await Promise.all([
+      // allSettled so one failing sub-request (e.g. /customers/top or /inactive
+      // returning 500) doesn't reject the batch and blank a page where analytics
+      // loaded fine.
+      const [analyticsRes, topRes, inactiveRes, settingsRes] = await Promise.allSettled([
         api.get('/customers/analytics'),
         api.get('/customers/top'),
         api.get('/customers/inactive'),
-        api.get('/settings').catch(() => null)
+        api.get('/settings')
       ]);
 
-      setAnalytics(analyticsRes.data.data);
-      setTopCustomers(topRes.data.data);
-      setInactiveCustomers(inactiveRes.data.data);
-      if (settingsRes?.data?.data?.loyalty) setLoyaltyCfg(settingsRes.data.data.loyalty);
+      if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data.data);
+      if (topRes.status === 'fulfilled') setTopCustomers(topRes.value.data.data);
+      if (inactiveRes.status === 'fulfilled') setInactiveCustomers(inactiveRes.value.data.data);
+      if (settingsRes.status === 'fulfilled' && settingsRes.value?.data?.data?.loyalty) {
+        setLoyaltyCfg(settingsRes.value.data.data.loyalty);
+      }
     } catch (err) {
       console.error('Failed to load CRM data', err);
       toast.error('Could not load customer data. Please try again.');

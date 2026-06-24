@@ -15,13 +15,29 @@ import { useRouter, usePathname } from 'next/navigation';
 // a forbidden path). Only super_admin may enter /dashboard/super-admin; it also
 // keeps /dashboard/admin access because the Command Center links into those
 // admin sub-pages.
+// Admin-area operational pages that branch & location admins reach from their
+// OWN sidebar menu. They live under /dashboard/admin/* but are not admin-only —
+// each page scopes its data to the user's branch server-side. Without these in
+// the allowed list the guard bounced both roles straight back to their Overview
+// the moment they clicked Procurement / Cash Drawer / Waitlist / Gift Cards /
+// Settings / Feedback / Inventory.
+const BRANCH_ADMIN_SHARED_PAGES = [
+  '/dashboard/admin/procurement',
+  '/dashboard/admin/cash-drawer',
+  '/dashboard/admin/waitlist',
+  '/dashboard/admin/gift-cards',
+  '/dashboard/admin/settings',
+  '/dashboard/admin/feedback',
+  '/dashboard/admin/inventory',
+];
+
 const ROLE_PREFIX = {
   super_admin: ['/dashboard/super-admin', '/dashboard/admin'],
   admin: ['/dashboard/admin'],
-  branch_admin: ['/dashboard/branch-admin'],
+  branch_admin: ['/dashboard/branch-admin', ...BRANCH_ADMIN_SHARED_PAGES],
   chef: ['/dashboard/chef'],
   staff: ['/dashboard/staff'],
-  location_admin: ['/dashboard/location-admin'],
+  location_admin: ['/dashboard/location-admin', ...BRANCH_ADMIN_SHARED_PAGES],
 };
 
 const SHARED_PREFIXES = [

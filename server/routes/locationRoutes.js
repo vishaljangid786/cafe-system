@@ -25,7 +25,9 @@ router.get('/public', async (req, res) => {
 
 router.route('/')
   .get(verifyToken, getLocations)
-  .post(verifyToken, checkRoleOrPermission(['super_admin'], 'manageBranches'), ...locationSchema, validate, createLocation);
+  // Admins can create branches inside their own cafe; super_admin / anyone with the
+  // manageBranches permission can too. Cafe ownership is enforced in the controller.
+  .post(verifyToken, checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'), ...locationSchema, validate, createLocation);
 
 router.route('/:id')
   .patch(verifyToken, checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'), ...updateLocationSchema, validate, updateLocation)

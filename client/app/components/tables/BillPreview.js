@@ -1,6 +1,6 @@
 "use client"
 import { useRef, useState, useEffect } from 'react';
-import { Printer, Download, Check, X, Camera, Loader2 } from 'lucide-react';
+import { Printer, Download, Check, X, Camera, Loader2, Banknote, Smartphone } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Button } from '../ui/Button';
 import Modal from '../ui/Modal';
@@ -10,21 +10,38 @@ import api from '../../services/api';
 export default function BillPreview({ isOpen, onClose, onComplete, table, systemOrders = [], cafeName = "CafeOS" }) {
   const billRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [paymentType, setPaymentType] = useState('CASH');
 
   // Pull the branch's configured tax/billing so the receipt matches the books.
   const [cfg, setCfg] = useState(null);
+  // Cafe (brand) that owns this branch — drives the receipt header branding.
+  const [cafe, setCafe] = useState(null);
   useEffect(() => {
     if (!isOpen || !table) return;
+    setPaymentType('CASH'); // fresh default for each table's checkout
     const branchId = table.locationId?._id || table.locationId;
     api.get(`/settings${branchId ? `?locationId=${branchId}` : ''}`)
       .then((res) => setCfg(res.data?.data || null))
       .catch(() => setCfg(null));
+    if (branchId) {
+      api.get(`/cafes?branchId=${branchId}`)
+        .then((res) => setCafe(res.data?.data?.[0] || null))
+        .catch(() => setCafe(null));
+    } else {
+      setCafe(null);
+    }
   }, [isOpen, table]);
 
   const gstRate = Number(cfg?.tax?.gstRate ?? 5);
   const serviceChargeRate = Number(cfg?.billing?.serviceChargeRate ?? 0);
-  const gstin = cfg?.tax?.gstin || '';
+  // Prefer the cafe's GSTIN (brand-level); fall back to the branch's settings GSTIN.
+  const gstin = cafe?.gstin || cfg?.tax?.gstin || '';
   const roundBill = cfg?.billing?.roundBill ?? true; // match server default (true)
+
+  // Receipt header: cafe name/logo/address override the generic prop fallback.
+  const brandName = cafe?.name || cafeName;
+  const brandAddress = [cafe?.address?.line1, cafe?.address?.city, cafe?.address?.state, cafe?.address?.pincode]
+    .filter(Boolean).join(', ');
 
   // Combine staged items and completed/served system orders for the final bill
   const stagedItems = table?.orders || [];
@@ -195,7 +212,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
           // The parent (onComplete) validates + saves and shows its OWN success/
           // error toast. Previously this claimed success even when the parent
           // early-returned (e.g. missing customer name) — so just defer to it.
-          await onComplete(file, total);
+          await onComplete(file, total, paymentType);
           toast.dismiss(loadToast);
         } catch (err) {
           toast.dismiss(loadToast);
@@ -228,10 +245,14 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
             style={{ width: '100%', maxWidth: '350px', fontFamily: "'Courier New', Courier, monospace" }}
           >
             <div className="text-center space-y-1">
-              <h2 className="text-xl font-bold uppercase tracking-tight">{cafeName}</h2>
+              {cafe?.logo && (
+                <img src={cafe.logo} alt={brandName} crossOrigin="anonymous" className="h-12 mx-auto mb-1 object-contain" />
+              )}
+              <h2 className="text-xl font-bold uppercase tracking-tight">{brandName}</h2>
               <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                 {table.locationId?.name || table.locationName || 'Main Branch'}
               </p>
+              {brandAddress && <p className="text-[10px] font-medium opacity-70">{brandAddress}</p>}
               {gstin && <p className="text-[10px] font-medium opacity-70">GSTIN: {gstin}</p>}
               <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
             </div>
@@ -303,15 +324,49 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                 <span>TOTAL PAYABLE:</span>
                 <span>₹{total.toLocaleString()}</span>
               </div>
+              <div className="flex justify-between mt-1">
+                <span>PAID VIA:</span>
+                <span>{paymentType}</span>
+              </div>
             </div>
 
             <div className="border-t border-dashed border-black my-6"></div>
 
             <div className="text-center text-[10px] space-y-1 italic">
-              <p>Thank you for visiting {cafeName}!</p>
+              <p>Thank you for visiting {brandName}!</p>
               <p>Visit again soon!</p>
               <p>*** End of Receipt ***</p>
             </div>
+          </div>
+        </div>
+
+        {/* Payment Method */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Payment Method</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: 'CASH', label: 'Cash', icon: Banknote },
+              { id: 'UPI', label: 'UPI', icon: Smartphone },
+            ].map((m) => {
+              const active = paymentType === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setPaymentType(m.id)}
+                  disabled={isGenerating}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-4 text-xs font-bold uppercase tracking-normal transition-all disabled:opacity-50 ${
+                    active
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted) hover:text-(--color-text-primary) hover:border-primary/40'
+                  }`}
+                >
+                  <m.icon size={16} />
+                  {m.label}
+                  {active && <Check size={14} className="ml-1" />}
+                </button>
+              );
+            })}
           </div>
         </div>
 

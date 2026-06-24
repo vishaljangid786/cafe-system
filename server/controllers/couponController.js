@@ -226,12 +226,16 @@ const applyCoupon = asyncHandler(async (req, res) => {
   let discount = 0;
   if (coupon.discountType === 'percentage') {
     discount = (applicableSubtotal * coupon.discountValue) / 100;
-    if (coupon.maxDiscount !== null && discount > coupon.maxDiscount) {
-      discount = coupon.maxDiscount;
-    }
   } else {
     discount = coupon.discountValue;
     if (discount > applicableSubtotal) discount = applicableSubtotal;
+  }
+  // Cap at maxDiscount for BOTH types — matching the authoritative server path
+  // (orderService._createOrder). Previously only percentage coupons were capped,
+  // so a fixed coupon with a maxDiscount quoted a bigger discount at checkout
+  // than the order was actually granted.
+  if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+    discount = coupon.maxDiscount;
   }
 
   const finalAmount = Math.max(0, orderAmount - discount);

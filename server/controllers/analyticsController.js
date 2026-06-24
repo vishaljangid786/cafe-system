@@ -404,12 +404,16 @@ const getLocationInfo = asyncHandler(async (req, res) => {
   ]);
 
   // 2. Expense Metrics
+  // Exclude INCOME-typed Expense docs (e.g. reservation advances, which are also
+  // counted as revenue via MANUAL_REVENUE). Summing them here as a cost
+  // double-counted booking income against profit.
   const expenseStats = await Expense.aggregate([
     {
       $match: {
         locationId: new mongoose.Types.ObjectId(id),
         date: { $gte: startOfMonth },
-        status: 'approved'
+        status: 'approved',
+        type: { $ne: 'INCOME' }
       }
     },
     {
