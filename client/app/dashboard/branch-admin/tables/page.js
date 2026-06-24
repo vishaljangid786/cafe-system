@@ -330,10 +330,11 @@ export default function TablesPage() {
     }
   };
 
-  const handleFinalizeSession = async (file, finalTotal) => {
+  const handleFinalizeSession = async (file, finalTotal, paymentType = 'CASH') => {
     const loadToast = toast.loading('Saving bill...');
     const data = new FormData();
     data.append('billImage', file);
+    data.append('paymentType', paymentType);
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }

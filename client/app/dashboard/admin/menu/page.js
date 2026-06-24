@@ -222,7 +222,7 @@ export default function MenuManagementPage() {
         api.get('/categories')
       ]);
       setMenuItems(itemsRes.data.data);
-      setTotalPages(itemsRes.data.pagination.pages);
+      setTotalPages(itemsRes.data.pagination?.pages || 1);
       setCategories(catsRes.data.data);
     } catch (error) {
       toast.error('Could not load menu items');

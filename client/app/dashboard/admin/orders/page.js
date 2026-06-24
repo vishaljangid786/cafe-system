@@ -490,7 +490,7 @@ export default function AdminOrdersDashboard() {
                               </td>
                               <td className="py-6 px-8 max-w-75">
                                 <p className="text-[10px] font-bold text-(--color-text-muted) truncate italic">
-                                  {order.items.map(i => `${i.quantity}x ${i.menuItem?.name}`).join(', ')}
+                                  {order.items.map(i => `${i.quantity}x ${i.menuItem?.name || i.itemName || 'Item'}`).join(', ')}
                                 </p>
                               </td>
                               <td className="py-6 px-8 text-right">

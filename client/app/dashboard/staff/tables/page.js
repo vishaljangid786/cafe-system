@@ -109,7 +109,7 @@ export default function StaffTablesPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [user, selectedLocation]);
+  }, [user?._id, selectedLocation?._id || selectedLocation]);
 
   useEffect(() => {
     const locId = selectedLocation?._id || selectedLocation || user?.assignedLocation?._id || user?.assignedLocation;
@@ -133,7 +133,7 @@ export default function StaffTablesPage() {
         socket.off('order:ready');
       };
     }
-  }, [user, socket]);
+  }, [user?._id, socket]);
 
   const handleBookTable = async (table) => {
     const loadToast = toast.loading('Booking table...');
@@ -152,7 +152,7 @@ export default function StaffTablesPage() {
 
   const handleOpenOrder = (table) => {
     setSelectedTable(table);
-    setPendingOrders([...table.orders]);
+    setPendingOrders([...(table.orders || [])]);
     fetchSystemOrders(table._id);
     setShowOrderModal(true);
   };

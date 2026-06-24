@@ -300,7 +300,7 @@ export default function AdminTablesPage() {
     }
   };
 
-  const handleFinalizeSession = async (file) => {
+  const handleFinalizeSession = async (file, finalTotal, paymentType = 'CASH') => {
     const loadToast = toast.loading('Finishing the bill...');
     if (!selectedTable.customerName) {
       toast.error('Customer name required', { id: loadToast });
@@ -308,6 +308,7 @@ export default function AdminTablesPage() {
     }
     const data = new FormData();
     data.append('billImage', file);
+    data.append('paymentType', paymentType);
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }

@@ -592,8 +592,13 @@ export default function PayrollRecordsPage() {
               <div className="p-8 bg-(--color-surface-soft)/30 border-t border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => {
+                    const s = viewingSalary;
+                    const pr = s.payrollRecord;
+                    const bonus = pr ? ((pr.bonuses?.topSeller || 0) + (pr.bonuses?.performance || 0)) : 0;
+                    const penalty = pr ? ((pr.penalties?.lateMark || 0) + (pr.penalties?.absent || 0)) : 0;
+                    const net = (s.monthlySalary || 0) + bonus - penalty;
                     const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`<html>...</html>`);
+                    printWindow.document.write(`<html><head><title>Payslip - ${s.name}</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:600px;margin:auto}h2{margin:0 0 4px}p{margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}.total{font-weight:bold;font-size:1.1em}</style></head><body><h2>Payslip</h2><p><b>Employee:</b> ${s.name}</p><p><b>Role:</b> ${s.role}</p><p><b>Month:</b> ${s.month || ''}</p><p><b>Days:</b> ${s.payableDays || 0} / ${s.daysInMonth || 30}</p><table><tr><th>Component</th><th>Amount</th></tr><tr><td>Base Salary</td><td>₹${(s.monthlySalary || 0).toLocaleString()}</td></tr>${bonus ? `<tr><td>Bonus</td><td>+₹${bonus.toLocaleString()}</td></tr>` : ''}${penalty ? `<tr><td>Deductions</td><td>-₹${penalty.toLocaleString()}</td></tr>` : ''}<tr class="total"><td>Net Payable</td><td>₹${net.toLocaleString()}</td></tr></table></body></html>`);
                     printWindow.document.close();
                     setTimeout(() => printWindow.print(), 500);
                   }}

@@ -45,8 +45,8 @@ export default function AuditLogsPage() {
     try {
       const res = await api.get(`/super-admin/audit-logs?page=${page}&actionType=${actionFilter}&userId=${searchUserId}`);
       setLogs(res.data.data);
-      setTotalPages(res.data.pagination.pages);
-      setTotalLogs(res.data.pagination.total);
+      setTotalPages(res.data.pagination?.pages || 1);
+      setTotalLogs(res.data.pagination?.total || 0);
     } catch (err) {
       toast.error('Could not load activity history. Please try again.');
     } finally {

@@ -54,7 +54,7 @@ export default function BookingsManagementPage() {
 
       const res = await api.get(`/bookings?page=${currentPage}&limit=${itemsPerPage}`, { params });
       setBookings(res.data.data);
-      setTotalPages(res.data.pagination.pages);
+      setTotalPages(res.data.pagination?.pages || 1);
     } catch (error) {
       toast.error('Could not load bookings. Please try again.');
     } finally {

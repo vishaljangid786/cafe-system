@@ -81,7 +81,7 @@ export default function BranchesPage() {
     try {
       setFetchingStaff(true);
       const res = await api.get(`/users?locationId=${locationId}`);
-      setStaff(res.data.data);
+      setStaff(res.data.data || []);
     } catch (error) {
       toast.error("Could not load staff");
     } finally {
@@ -274,10 +274,10 @@ export default function BranchesPage() {
             </thead>
             <tbody>
               {locations
-                .filter(loc => 
-                  loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  loc.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  loc.state.toLowerCase().includes(searchQuery.toLowerCase())
+                .filter(loc =>
+                  (loc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (loc.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (loc.state || '').toLowerCase().includes(searchQuery.toLowerCase())
                 )
                 .map((loc, i) => (
                   <motion.tr 

@@ -3,7 +3,7 @@ const Cafe = require('../models/Cafe');
 const User = require('../models/User');
 const Location = require('../models/Location');
 const { logActivity } = require('../utils/auditLogger');
-const { addAdminToCafe, removeAdminFromCafe, syncCafeAccess } = require('../utils/cafeSync');
+const { addAdminToCafe, removeAdminFromCafe } = require('../utils/cafeSync');
 
 // A cafe owner gets full control over everything inside their cafe (branches,
 // staff, menu, revenue, audit, admin center). Platform-only powers
@@ -126,9 +126,10 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
       city: admin.city || cafe.address?.city || 'N/A',
       state: admin.state || cafe.address?.state || '',
       role: 'admin',
-      cafes: [cafe._id],
       permissions: CAFE_ADMIN_PERMISSIONS,
     });
+    // Mirror cafe membership + all existing branches into accessibleLocations.
+    await addAdminToCafe(cafe._id, created._id);
     return created;
   }
 

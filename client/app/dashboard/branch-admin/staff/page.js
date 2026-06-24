@@ -13,9 +13,11 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function BranchStaffPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -41,7 +43,7 @@ export default function BranchStaffPage() {
     try {
       const res = await api.get(`/users?page=${currentPage}&limit=${itemsPerPage}`);
       setStaff(res.data.data);
-      setTotalPages(res.data.pagination.pages);
+      setTotalPages(res.data.pagination?.pages || 1);
     } catch (error) {
       toast.error('Could not load staff. Please try again.');
     } finally {
@@ -107,7 +109,8 @@ export default function BranchStaffPage() {
     }
     const loadToast = toast.loading('Adding staff member...');
     try {
-      await api.post('/auth/register', { ...createForm, role: 'staff' });
+      const assignedLocation = user?.assignedLocation?._id || user?.assignedLocation || '';
+      await api.post('/auth/register', { ...createForm, role: 'staff', assignedLocation });
       toast.success('Staff member added', { id: loadToast });
       setShowCreateModal(false);
       setCreateForm({ name: '', email: '', password: '', phone: '', gender: 'Male', address1: '', city: '', monthlySalary: '' });
@@ -149,7 +152,7 @@ export default function BranchStaffPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/dashboard/add-member')}
+                onClick={() => setShowCreateModal(true)}
                 className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
               >
                 <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff

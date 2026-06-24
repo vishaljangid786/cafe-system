@@ -97,8 +97,8 @@ export default function BranchPresencePage() {
   };
 
   const filteredStaff = staff.filter(u =>
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) return <LoadingScreen fullScreen={false} />;

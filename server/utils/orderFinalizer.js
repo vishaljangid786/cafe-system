@@ -119,7 +119,7 @@ const finalizeOrder = async (order, user) => {
     paymentType: order.paymentType || 'CASH',
     title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
     category: 'Sales',
-    totalAmount: Number(order.totalAmount || 0),
+    totalAmount: Number(order.grandTotal || order.totalAmount || 0),
     totalProfit: isNaN(totalProfit) ? 0 : totalProfit,
     date: new Date(),
     status: 'approved',

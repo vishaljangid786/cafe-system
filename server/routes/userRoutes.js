@@ -33,7 +33,7 @@ router.route('/:id')
   .delete(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), deleteUser);
 
 router.route('/:id/permissions')
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateUserPermissions);
+  .put(checkRoles('super_admin', 'admin', 'branch_admin'), updateUserPermissions);
 
 router.route('/:id/promote')
   .patch(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin'], 'manageStaff'), promoteUser);

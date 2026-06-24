@@ -26,6 +26,7 @@ const AuditLog = require('../models/AuditLog');
 const WasteRecord = require('../models/WasteRecord');
 const BranchInventory = require('../models/BranchInventory');
 const BranchStock = require('../models/BranchStock');
+const Cafe = require('../models/Cafe');
 
 const seedData = async () => {
   try {
@@ -34,8 +35,8 @@ const seedData = async () => {
 
     console.log('Dropping existing data...');
     const models = [
-      Location, User, Category, MenuItem, Ingredient, Recipe, Table, Customer, 
-      Reservation, Order, Transaction, Expense, Payroll, Attendance, Coupon, 
+      Cafe, Location, User, Category, MenuItem, Ingredient, Recipe, Table, Customer,
+      Reservation, Order, Transaction, Expense, Payroll, Attendance, Coupon,
       Notification, AuditLog, WasteRecord, BranchInventory, BranchStock
     ];
     for (const model of models) {
@@ -54,21 +55,34 @@ const seedData = async () => {
     const adminData = {
       name: 'Admin User', email: 'admin@cafeos.com', password: 'password123', phone: '9999999991', gender: 'Female',
       age: 28, address1: 'HQ', city: 'Mumbai', state: 'MH', country: 'India', role: 'admin', aadharNumber: '111122223334',
-      aadharImage: 'http://example.com/aadhar', highestQualification: 'Graduate', permissions: { viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true, manageStaff: true, viewAnalytics: true }
+      aadharImage: 'http://example.com/aadhar', highestQualification: 'Graduate', permissions: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true }
     };
     const admin = await User.create(adminData);
 
+    console.log('Seeding Demo Cafe...');
+    const demoCafe = await Cafe.create({
+      name: 'CafeOS Demo',
+      gstin: 'GSTIN1234567890',
+      address: { line1: 'HQ Complex', city: 'Mumbai', state: 'MH', pincode: '400001', country: 'India' },
+      contact: { phone: '9999999990', email: 'hello@cafeos.com' },
+      status: 'active',
+      createdBy: superAdmin._id,
+    });
+
     console.log('Seeding Locations...');
     const locationData = [
-      { name: 'Downtown Cafe', city: 'Mumbai', state: 'MH', country: 'India', pincode: '400001', geoCoordinates: { lat: 18.9220, lng: 72.8347 }, status: 'active', createdBy: superAdmin._id },
-      { name: 'Uptown Bistro', city: 'Delhi', state: 'DL', country: 'India', pincode: '110001', geoCoordinates: { lat: 28.6139, lng: 77.2090 }, status: 'active', createdBy: superAdmin._id },
-      { name: 'Airport Lounge', city: 'Bangalore', state: 'KA', country: 'India', pincode: '560001', geoCoordinates: { lat: 12.9716, lng: 77.5946 }, status: 'active', createdBy: superAdmin._id },
+      { name: 'Downtown Cafe', city: 'Mumbai', state: 'MH', country: 'India', pincode: '400001', geoCoordinates: { lat: 18.9220, lng: 72.8347 }, status: 'active', cafe: demoCafe._id, createdBy: superAdmin._id },
+      { name: 'Uptown Bistro', city: 'Delhi', state: 'DL', country: 'India', pincode: '110001', geoCoordinates: { lat: 28.6139, lng: 77.2090 }, status: 'active', cafe: demoCafe._id, createdBy: superAdmin._id },
+      { name: 'Airport Lounge', city: 'Bangalore', state: 'KA', country: 'India', pincode: '560001', geoCoordinates: { lat: 12.9716, lng: 77.5946 }, status: 'active', cafe: demoCafe._id, createdBy: superAdmin._id },
     ];
     const locations = await Location.insertMany(locationData);
 
-    // Update Admins with accessible locations
-    await User.findByIdAndUpdate(superAdmin._id, { accessibleLocations: locations.map(l => l._id) });
-    await User.findByIdAndUpdate(admin._id, { accessibleLocations: locations.map(l => l._id) });
+    // Update Admins with accessible locations and cafe membership
+    await User.findByIdAndUpdate(superAdmin._id, { accessibleLocations: locations.map(l => l._id), cafes: [demoCafe._id] });
+    await User.findByIdAndUpdate(admin._id, {
+      accessibleLocations: locations.map(l => l._id),
+      cafes: [demoCafe._id],
+    });
 
     console.log('Seeding Branch Staff...');
     const branchUsersData = locations.flatMap((loc, i) => [

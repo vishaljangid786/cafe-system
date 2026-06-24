@@ -75,7 +75,7 @@ export default function CouponsManagementPage() {
       else if (statusFilter === 'Inactive') params.append('active', 'false');
       const res = await api.get(`/coupons?${params.toString()}`);
       setCoupons(res.data.data);
-      setTotalPages(res.data.pagination.pages);
+      setTotalPages(res.data.pagination?.pages || 1);
     } catch (error) {
       toast.error('Failed to load coupons');
     } finally {

@@ -19,6 +19,8 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   useEffect(() => {
     if (!isOpen || !table) return;
     setPaymentType('CASH'); // fresh default for each table's checkout
+    setBillId(`BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+    setDateTime(new Date().toLocaleString());
     const branchId = table.locationId?._id || table.locationId;
     api.get(`/settings${branchId ? `?locationId=${branchId}` : ''}`)
       .then((res) => setCfg(res.data?.data || null))
@@ -45,9 +47,8 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
   // Combine staged items and completed/served system orders for the final bill
   const stagedItems = table?.orders || [];
-  // Include SERVED and COMPLETED orders in the bill. 
-  // PENDING items are also usually billable if they were sent to the kitchen.
-  const finalizedOrders = systemOrders.filter(o => ['SERVED', 'COMPLETED', 'PENDING'].includes(o.status));
+  // Include all active (non-cancelled) kitchen orders in the bill.
+  const finalizedOrders = systemOrders.filter(o => ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED'].includes(o.status));
   
   const allBillableItems = [
     ...stagedItems,
@@ -67,8 +68,8 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const taxes = Number(((taxableAmount + serviceCharge) * gstRate / 100).toFixed(2));
   const rawTotal = taxableAmount + serviceCharge + taxes;
   const total = roundBill ? Math.round(rawTotal) : rawTotal;
-  const [billId] = useState(() => `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
-  const [dateTime] = useState(() => new Date().toLocaleString());
+  const [billId, setBillId] = useState('');
+  const [dateTime, setDateTime] = useState('');
 
   const handlePrint = () => {
     const printContent = billRef.current.innerHTML;

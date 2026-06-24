@@ -62,7 +62,7 @@ export default function ReservationsPage() {
         params
       });
       setReservations(data.data);
-      setTotalPages(data.pagination.pages);
+      setTotalPages(data.pagination?.pages || 1);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {

@@ -159,7 +159,7 @@ export default function CafesPage() {
       setForm((f) => ({ ...f, admin: EMPTY_FORM.admin, adminUserId: '' }));
       fetchCafes();
       const fresh = await api.get(`/cafes/${cafe._id}`);
-      setEditing(fresh.data.data);
+      if (fresh.data.data) setEditing(fresh.data.data);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not add admin', { id: loadToast });
     }
@@ -172,7 +172,7 @@ export default function CafesPage() {
       toast.success('Admin removed', { id: loadToast });
       fetchCafes();
       const fresh = await api.get(`/cafes/${cafe._id}`);
-      setEditing(fresh.data.data);
+      if (fresh.data.data) setEditing(fresh.data.data);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not remove admin', { id: loadToast });
     }

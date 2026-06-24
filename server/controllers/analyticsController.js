@@ -180,8 +180,9 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
   const ids = scopedIds ? scopedIds.$in.map(id => new mongoose.Types.ObjectId(id)) : [];
 
   const dateMatch = AnalyticsService.getDateMatchCriteria(startDate, endDate, period || 30, 'date');
-  if (ids.length > 0) {
-    dateMatch.locationId = { $in: ids };
+  const allowedForQuery = ids.length > 0 ? ids : (allowedLocationFilter(req.user) || null);
+  if (allowedForQuery) {
+    dateMatch.locationId = { $in: allowedForQuery };
   }
 
   const transactionAgg = await Transaction.aggregate([
@@ -196,9 +197,7 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
   ]);
 
   const locationFilter = { isPermanentlyDeleted: false };
-  const allowedIds = allowedLocationFilter(req.user);
-  if (allowedIds) locationFilter._id = { $in: ids.length > 0 ? ids : allowedIds };
-  else if (ids.length > 0) locationFilter._id = { $in: ids };
+  if (allowedForQuery) locationFilter._id = { $in: allowedForQuery };
   const locations = await Location.find(locationFilter, 'name city status');
 
   const results = locations.map(loc => {
