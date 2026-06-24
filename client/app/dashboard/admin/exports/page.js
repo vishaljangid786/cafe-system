@@ -35,7 +35,8 @@ export default function ExportCenter() {
     { id: 'payroll', name: 'Salary Records', icon: <FileText size={18} /> },
     { id: 'attendance', name: 'Attendance Records', icon: <FileText size={18} /> },
     { id: 'coupons', name: 'Coupon Reports', icon: <FileText size={18} /> },
-    { id: 'inventory', name: 'Inventory Status', icon: <FileText size={18} /> }
+    { id: 'inventory', name: 'Inventory Status', icon: <FileText size={18} /> },
+    { id: 'gst', name: 'GST Filing Report', icon: <FileText size={18} /> }
   ];
 
   const formats = [

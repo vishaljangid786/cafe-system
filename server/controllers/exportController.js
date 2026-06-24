@@ -253,6 +253,32 @@ const exportData = asyncHandler(async (req, res) => {
       break;
     }
 
+    case 'gst': {
+      // GST filing report: one row per completed (non-refunded) invoice with the
+      // taxable value, CGST/SGST split and grand total. Recognised on the
+      // completion (invoice) date, not the order-placed date.
+      const gstQuery = { ...query, status: 'COMPLETED', isRefunded: { $ne: true } };
+      if (gstQuery.createdAt) { gstQuery.completedAt = gstQuery.createdAt; delete gstQuery.createdAt; }
+      const gstOrders = await Order.find(gstQuery).populate('branch', 'name').sort({ completedAt: 1 }).lean();
+      data = gstOrders.map(o => {
+        const taxable = Math.max(0, (o.totalAmount || 0) - (o.discountAmount || 0));
+        const tax = Number(o.taxAmount || 0);
+        return {
+          Date: o.completedAt,
+          Invoice: o.invoiceNumber || o._id.toString().slice(-6).toUpperCase(),
+          Branch: o.branch?.name || 'Main',
+          Taxable: Number(taxable.toFixed(2)),
+          CGST: Number((tax / 2).toFixed(2)),
+          SGST: Number((tax / 2).toFixed(2)),
+          'Total GST': tax,
+          'Service Charge': Number(o.serviceCharge || 0),
+          'Grand Total': Number(o.grandTotal || (taxable + tax)),
+        };
+      });
+      exportTitle = 'GST REPORT';
+      break;
+    }
+
     default:
       res.status(400);
       throw new Error(`Export type '${type}' is not supported yet.`);
