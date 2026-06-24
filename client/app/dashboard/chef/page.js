@@ -26,8 +26,8 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import api from '@/app/services/api';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../components/ui/AnimatedContainer';
-import Modal from '../..//components/ui/Modal';
-import { Button } from '../..//components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 
 export default function ChefDashboard() {
   const { user, selectedLocation, socket } = useAuth();
