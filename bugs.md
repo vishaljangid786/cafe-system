@@ -16,9 +16,13 @@ critical production bugs that static analysis / the module-load smoke test could
    order made `finalizeOrder` create a REVENUE `Transaction` with `paymentType: 'GIFT_CARD'`, which
    failed model validation → **finalize crashed** for any gift-card order. Fixed in `models/Transaction.js`.
 
-Tests (6/6 pass) cover: settings `num()`/loyalty tiers, order create→finalize money math (GST,
-grandTotal, stock, revenue), discountedPrice honored, modifier pricing + required enforcement +
-anti-tamper/dedupe, and gift-card redeem (true payable, outstanding cap) → refund balance restore.
+Tests (11/11 pass) cover: settings `num()`/loyalty tiers; order create→finalize money math (GST,
+grandTotal, stock, revenue); discountedPrice honored; modifier pricing + required enforcement +
+anti-tamper/dedupe; gift-card redeem (true payable, outstanding cap) → refund balance restore;
+**cash-drawer** open→cash-sale→close (expected cash + variance); **procurement** receive → branch
+stock + COGS expense to ledger; **payroll** PAID approval → Salary expense to ledger; **booking↔
+reservation** capacity cross-check (M1); **waitlist** seat → table marked booked. The last 5 flows
+passed with no new fixes needed — confirming the earlier review/audit fixes hold up at runtime.
 
 > Note: earlier static-audit findings are all resolved (booking↔reservation capacity, waitlist
 > seat→table, reservation no-show, notification "all"-role, duplicate socket). Two flagged theme

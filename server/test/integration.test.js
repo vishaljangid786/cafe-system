@@ -32,7 +32,7 @@ before(async () => {
   const Reservation = require('../models/Reservation');
   await Promise.all([Location, User, Category, MenuItem, BranchStock, Order, Transaction, Table, GiftCard, Reservation].map((M) => M.init()));
 
-  loc = await Location.create({ name: 'Test Cafe', city: 'Pune', state: 'MH', country: 'IN', pincode: '411001', createdBy: new mongoose.Types.ObjectId(), maxCapacity: 20 });
+  loc = await Location.create({ name: 'Test Cafe', city: 'Pune', state: 'MH', country: 'IN', pincode: '411001', createdBy: new mongoose.Types.ObjectId(), maxCapacity: 20, status: 'active' });
   admin = await User.create({ name: 'Admin', email: 'admin@test.com', password: 'Secret123!', phone: '9999999999', gender: 'Male', address1: 'Addr', city: 'Pune', assignedLocation: loc._id, accessibleLocations: [loc._id], role: 'super_admin' });
   category = await Category.create({ name: 'Mains', createdBy: admin._id });
 });
@@ -198,4 +198,86 @@ test('gift card: redeem settles order at true payable (incl GST), refund restore
   await callController(refundOrder, { params: { id: order._id.toString() }, body: { reason: 'test' } });
   const afterRefund = await GiftCard.findById(card._id);
   assert.strictEqual(afterRefund.balance, 500, 'refund restores the redeemed gift-card value');
+});
+
+test('cash drawer: open -> cash sale -> close computes expected cash & variance', async () => {
+  const { openDrawer, getCurrentDrawer, closeDrawer } = require('../controllers/cashDrawerController');
+
+  const open = await callController(openDrawer, { body: { openingFloat: 1000, locationId: loc._id.toString() } });
+  assert.strictEqual(open.statusCode, 201);
+  const sessionId = open.data.data._id.toString();
+
+  // A completed CASH order of 200 -> grandTotal 210 (5% GST) becomes a cash sale.
+  const item = await stockedItem({ price: 200 });
+  const table = await makeTable();
+  const order = await OrderService.createOrder({ branch: loc._id, tableId: table._id, orderType: 'dine-in', items: [{ menuItem: item._id, quantity: 1 }], userId: admin._id, paymentType: 'CASH' });
+  await finalizeOrder(order, admin);
+
+  const cur = await callController(getCurrentDrawer, { query: { locationId: loc._id.toString() } });
+  assert.strictEqual(cur.data.data.live.cashSales, 210, 'cash sale counted = grandTotal');
+  assert.strictEqual(cur.data.data.live.expectedCash, 1210, 'float 1000 + 210');
+
+  const close = await callController(closeDrawer, { params: { id: sessionId }, body: { countedCash: 1210 } });
+  assert.strictEqual(close.data.data.variance, 0, 'counted matches expected -> balanced');
+});
+
+test('procurement: receiving a PO adds branch stock and books COGS to the ledger', async () => {
+  const { createSupplier, createPurchaseOrder, receivePurchaseOrder } = require('../controllers/purchaseController');
+  const Ingredient = require('../models/Ingredient');
+  const BranchInventory = require('../models/BranchInventory');
+  const Expense = require('../models/Expense');
+
+  const ing = await Ingredient.create({ name: 'Milk', unit: 'L' });
+  const sup = await callController(createSupplier, { body: { name: 'Dairy Co', locationId: loc._id.toString() } });
+  const po = await callController(createPurchaseOrder, { body: { supplier: sup.data.data._id.toString(), locationId: loc._id.toString(), items: [{ ingredient: ing._id.toString(), name: 'Milk', unit: 'L', quantity: 10, unitCost: 5 }] } });
+  assert.strictEqual(po.data.data.totalAmount, 50);
+
+  const recv = await callController(receivePurchaseOrder, { params: { id: po.data.data._id.toString() } });
+  assert.strictEqual(recv.data.data.status, 'received');
+
+  const inv = await BranchInventory.findOne({ ingredient: ing._id, branch: loc._id });
+  assert.strictEqual(inv.stock, 10, 'PO stock added to branch inventory');
+  const exp = await Expense.findById(recv.data.data.expenseId);
+  assert.ok(exp && exp.amount === 50 && exp.category === 'Inventory', 'COGS expense booked to ledger');
+});
+
+test('payroll: PAID approval posts a Salary expense to the ledger (once)', async () => {
+  const { approvePayroll } = require('../controllers/salaryController');
+  const Payroll = require('../models/Payroll');
+  const Expense = require('../models/Expense');
+
+  const staff = await User.create({ name: 'Staff1', email: 's1@test.com', password: 'Secret123!', phone: '8888888888', gender: 'Male', address1: 'A', city: 'Pune', assignedLocation: loc._id, role: 'staff', monthlySalary: 30000 });
+  const payroll = await Payroll.create({ user: staff._id, month: '2026-05', dailyRate: 1000, payableDays: 30, baseSalary: 30000, netSalary: 30000, status: 'FINAL_APPROVED' });
+
+  const res = await callController(approvePayroll, { params: { id: payroll._id.toString() } });
+  assert.strictEqual(res.data.data.status, 'PAID');
+  const updated = await Payroll.findById(payroll._id);
+  assert.ok(updated.ledgerExpenseId, 'ledgerExpenseId set');
+  const exp = await Expense.findById(updated.ledgerExpenseId);
+  assert.ok(exp && exp.category === 'Salary' && exp.amount === 30000, 'salary expense posted to ledger');
+});
+
+test('booking availability accounts for a full-location reservation (M1 cross-check)', async () => {
+  const { checkAvailability } = require('../controllers/bookingController');
+  const Reservation = require('../models/Reservation');
+  const date = '2030-03-15';
+
+  await Reservation.create({ eventName: 'Party', reservationType: 'full-location', date: new Date(date), startTime: '18:00', endTime: '22:00', totalAmount: 5000, customerName: 'X', customerPhone: '7777777777', userId: admin._id, locationId: loc._id, status: 'confirmed' });
+
+  const res = await callController(checkAvailability, { query: { locationId: loc._id.toString(), date, startTime: '19:00', endTime: '20:00', numberOfGuests: '2' } });
+  assert.strictEqual(res.data.available, false, 'a full-location reservation blocks public booking capacity');
+});
+
+test('waitlist: seating a party marks the table booked', async () => {
+  const { addToWaitlist, updateWaitlistEntry } = require('../controllers/waitlistController');
+  const Table = require('../models/Table');
+
+  const add = await callController(addToWaitlist, { body: { customerName: 'Walk-in', partySize: 3, locationId: loc._id.toString() } });
+  const table = await makeTable();
+  const upd = await callController(updateWaitlistEntry, { params: { id: add.data.data._id.toString() }, body: { status: 'seated', tableId: table._id.toString() } });
+  assert.strictEqual(upd.data.data.status, 'seated');
+
+  const t = await Table.findById(table._id);
+  assert.strictEqual(t.isBooked, true, 'seated table is marked booked');
+  assert.strictEqual(t.status, 'booked');
 });
