@@ -124,9 +124,9 @@ export default function AdminDashboard() {
       if (end) params.append('endDate', end);
 
       const res = await api.get(`/analytics/advanced?${params.toString()}`);
-      setAnalytics(res.data.data);
+      if (res.data?.data) setAnalytics(res.data.data);
     } catch (error) {
-      console.error("Failed to fetch analytics");
+      console.error("Failed to fetch analytics:", error.response?.data?.message || error.message);
       toast.error("Could not load dashboard. Please try again.");
     } finally {
       didInitRef.current = true;

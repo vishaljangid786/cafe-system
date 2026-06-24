@@ -282,32 +282,49 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   const cleanEmail = email.trim().toLowerCase();
 
+  console.log('[LOGIN] email received (raw):', email);
+  console.log('[LOGIN] email after trim+lower:', cleanEmail);
+
   const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
+
+  if (!user) {
+    console.log('[LOGIN] FAIL — no user found in DB for email:', cleanEmail);
+    res.status(401);
+    throw new Error('Invalid email or password');
+  }
+
+  console.log('[LOGIN] user found:', user.name, '| role:', user.role, '| isBlocked:', user.isBlocked, '| active:', user.active);
+  console.log('[LOGIN] failedLoginAttempts:', user.failedLoginAttempts, '| lockUntil:', user.lockUntil);
 
   // Per-account lockout after repeated failures (independent of the IP throttle).
   const MAX_ATTEMPTS = 5;
   const LOCK_MS = 15 * 60 * 1000;
-  if (user && user.lockUntil && user.lockUntil.getTime() > Date.now()) {
+  if (user.lockUntil && user.lockUntil.getTime() > Date.now()) {
+    const secsLeft = Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000);
+    console.log('[LOGIN] FAIL — account locked, retry in', secsLeft, 'seconds');
     // Keep the lockout (429 + Retry-After), but use a message that does NOT
     // reveal whether this specific account exists/is locked — preventing the
     // 429 from being used as a username-enumeration oracle.
     res.status(429);
-    res.set('Retry-After', String(Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000)));
+    res.set('Retry-After', String(secsLeft));
     throw new Error('Too many failed login attempts. Please try again later.');
   }
 
-  if (user && (await user.matchPassword(password))) {
+  const passwordMatch = await user.matchPassword(password);
+  console.log('[LOGIN] password match result:', passwordMatch);
+
+  if (passwordMatch) {
     if (user.failedLoginAttempts) {
       await User.updateOne({ _id: user._id }, { $set: { failedLoginAttempts: 0, lockUntil: null } });
     }
+    console.log('[LOGIN] SUCCESS — sending token for', cleanEmail);
     sendTokenResponse(user, 200, res);
   } else {
-    if (user) {
-      const attempts = (user.failedLoginAttempts || 0) + 1;
-      const update = { failedLoginAttempts: attempts };
-      if (attempts >= MAX_ATTEMPTS) update.lockUntil = new Date(Date.now() + LOCK_MS);
-      await User.updateOne({ _id: user._id }, { $set: update });
-    }
+    const attempts = (user.failedLoginAttempts || 0) + 1;
+    const update = { failedLoginAttempts: attempts };
+    if (attempts >= MAX_ATTEMPTS) update.lockUntil = new Date(Date.now() + LOCK_MS);
+    console.log('[LOGIN] FAIL — wrong password, failedAttempts now:', attempts);
+    await User.updateOne({ _id: user._id }, { $set: update });
     res.status(401);
     throw new Error('Invalid email or password');
   }
