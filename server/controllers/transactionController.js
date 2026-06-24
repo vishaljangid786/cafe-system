@@ -17,7 +17,7 @@ const getTransactions = asyncHandler(async (req, res) => {
   if (category) query.category = category;
   if (status) {
     query.status = status;
-  } else if (['super_admin', 'admin', 'branch_admin'].includes(req.user.role)) {
+  } else if (['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(req.user.role)) {
     // Default to approved for admins to hide pending entries from "All" view
     query.status = 'approved';
   }
@@ -386,7 +386,7 @@ const getTransactionStats = asyncHandler(async (req, res) => {
   const query = { status: 'approved' }; // ONLY approved transactions in stats
   
   // RBAC Enforcement
-  if (req.user.role === 'branch_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
+  if (req.user.role === 'branch_admin' || req.user.role === 'location_admin' || req.user.role === 'staff' || req.user.role === 'chef') {
     const ids = req.user.role === 'branch_admin'
       ? userLocationIds(req.user)
       : userLocationIds(req.user).slice(0, 1);

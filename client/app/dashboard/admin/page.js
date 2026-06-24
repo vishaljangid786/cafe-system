@@ -36,7 +36,13 @@ export default function AdminDashboard() {
   const { theme } = useTheme();
   const router = useRouter();
   const { user, selectedLocation: authLocation, selectedLocationIds } = useAuth();
-  const dashPrefix = ['admin', 'super_admin'].includes(user?.role) ? '/dashboard/admin' : '/dashboard/branch-admin';
+  const dashPrefix = ['admin', 'super_admin'].includes(user?.role)
+    ? '/dashboard/admin'
+    : user?.role === 'location_admin'
+      ? '/dashboard/location-admin'
+      : '/dashboard/branch-admin';
+  const ordersHref = '/dashboard/admin/orders';
+  const orderAnalyticsHref = '/dashboard/admin/orders/analytics';
   const [locations, setLocations] = useState([]);
   const [filterLocation, setFilterLocation] = useState('all');
   const [analytics, setAnalytics] = useState({
@@ -258,7 +264,7 @@ export default function AdminDashboard() {
       ) : (
       <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        <Link href={`${dashPrefix}/orders`} className="contents">
+        <Link href={ordersHref} className="contents">
           <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
@@ -267,10 +273,10 @@ export default function AdminDashboard() {
         <Link href={`${dashPrefix}/revenue`} className="contents">
           <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
         </Link>
-        <Link href={`${dashPrefix}/orders/analytics`} className="contents">
+        <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
         </Link>
-        <Link href={`${dashPrefix}/orders/analytics`} className="contents">
+        <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
         </Link>
       </div>

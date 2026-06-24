@@ -8,7 +8,7 @@ const {
   getBookings,
   updateBookingStatus
 } = require('../controllers/bookingController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, optionalVerifyToken, checkRoles } = require('../middlewares/authMiddleware');
 const { bookingSchema, validate } = require('../middlewares/validateMiddleware');
 
 // These endpoints are public (guests can book). A dedicated low-ceiling limiter
@@ -23,15 +23,15 @@ const bookingLimiter = rateLimit({
 
 // Public endpoints — no auth required for guests
 router.get('/check-availability', bookingLimiter, checkAvailability);
-router.post('/', bookingLimiter, ...bookingSchema, validate, createBooking);
+router.post('/', bookingLimiter, optionalVerifyToken, ...bookingSchema, validate, createBooking);
 
 // Get user's own bookings
 router.get('/my', verifyToken, getUserBookings);
 
 // Get all bookings (Admin/Location Admin)
-router.get('/', verifyToken, checkRoles('super_admin', 'admin', 'branch_admin'), getBookings);
+router.get('/', verifyToken, checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getBookings);
 
 // Update booking status (Admin/Location Admin)
-router.patch('/:id/status', verifyToken, checkRoles('super_admin', 'admin', 'branch_admin'), updateBookingStatus);
+router.patch('/:id/status', verifyToken, checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateBookingStatus);
 
 module.exports = router;

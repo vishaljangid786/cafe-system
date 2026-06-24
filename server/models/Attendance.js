@@ -18,8 +18,29 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['present', 'absent', 'half-day'],
+      // present/half-day = worked; week-off & leave = PAID non-working days (count
+      // toward salary); absent = unpaid.
+      enum: ['present', 'absent', 'half-day', 'week-off', 'leave'],
       required: [true, 'Status is required'],
+    },
+    // Clock-in/out tracking (self-service). Enables late detection, worked hours,
+    // and downstream overtime/late-penalty payroll rules.
+    checkIn: {
+      type: Date,
+      default: null,
+    },
+    checkOut: {
+      type: Date,
+      default: null,
+    },
+    workedMinutes: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isLate: {
+      type: Boolean,
+      default: false,
     },
     markedBy: {
       type: mongoose.Schema.Types.ObjectId,

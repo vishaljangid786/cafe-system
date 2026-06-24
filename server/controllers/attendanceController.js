@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { enforceLocationAccess, canAccessLocation, clampLimit, escapeRegex, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+const { getSettings, num } = require('../utils/settings');
 
 // Helper to validate date format (YYYY-MM-DD)
 const isValidDate = (dateString) => {
@@ -30,10 +31,10 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('Cannot mark attendance for future dates');
   }
 
-  // Branch Admins can ONLY mark for today (Strict Lockdown)
-  if (req.user.role === 'branch_admin' && date !== today) {
+  // Branch-level operators can ONLY mark for today (Strict Lockdown)
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && date !== today) {
     res.status(403);
-    throw new Error('Attendance Lockdown: Branch Admins can only mark or edit records for the CURRENT DAY. Contact Super Admin for retroactive corrections.');
+    throw new Error('Attendance Lockdown: Branch operators can only mark or edit records for the CURRENT DAY. Contact an administrator for retroactive corrections.');
   }
 
   // Validate user
@@ -43,8 +44,8 @@ const markAttendance = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Ensure branch admin is marking for their own location
-  if (req.user.role === 'branch_admin' && !canAccessLocation(req.user, staff.assignedLocation)) {
+  // Ensure branch-level operators are marking for their own location
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, staff.assignedLocation)) {
     res.status(403);
     throw new Error('You do not have permission to mark attendance for personnel of another location');
   }
@@ -139,7 +140,7 @@ const getAllAttendance = asyncHandler(async (req, res) => {
   if (locationId && locationId !== 'All') {
     enforceLocationAccess(req, res, locationId, 'You do not have permission to view attendance for this location');
     query.locationId = locationId;
-  } else if (['admin', 'branch_admin'].includes(req.user.role)) {
+  } else if (['admin', 'branch_admin', 'location_admin'].includes(req.user.role)) {
     query.locationId = { $in: userLocationIds(req.user) };
   }
   if (date) query.date = date;
@@ -198,7 +199,7 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
       // If invalid ID provided and not "All", return empty result safely
       return res.json({ success: true, data: [] });
     }
-  } else if (['admin', 'branch_admin'].includes(req.user.role)) {
+  } else if (['admin', 'branch_admin', 'location_admin'].includes(req.user.role)) {
     const ids = userLocationIds(req.user);
     userMatch.assignedLocation = { $in: ids };
     attendanceMatch.locationId = { $in: ids };
@@ -284,10 +285,101 @@ const getMyAttendance = asyncHandler(async (req, res) => {
   });
 });
 
+// --- Self-service clock-in / clock-out ---------------------------------------
+// Business timezone for "today" + late detection (cafe runs in IST). Using a
+// fixed zone avoids the UTC-on-serverless day/late drift.
+const BUSINESS_TZ = 'Asia/Kolkata';
+const SHIFT_START = '09:00'; // default shift start
+const GRACE_MINUTES = 10;
+
+const istDateStr = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: BUSINESS_TZ }); // YYYY-MM-DD
+const istTimeStr = (d = new Date()) => d.toLocaleTimeString('en-GB', { timeZone: BUSINESS_TZ, hour12: false }).slice(0, 5); // HH:mm
+const addMinutesToHHMM = (hhmm, mins) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  const nh = Math.floor((total % 1440) / 60);
+  const nm = total % 60;
+  return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
+};
+
+// @desc    Staff/chef clock IN for today
+// @route   POST /api/attendance/check-in
+// @access  Private (self)
+const checkIn = asyncHandler(async (req, res) => {
+  const locationId = req.user.assignedLocation;
+  if (!locationId) {
+    res.status(400);
+    throw new Error('You have no assigned location to mark attendance for');
+  }
+
+  const date = istDateStr();
+  const existing = await Attendance.findOne({ user: req.user._id, date });
+  if (existing && existing.checkIn) {
+    res.status(400);
+    throw new Error('You have already checked in today');
+  }
+
+  const now = new Date();
+  // Configurable shift start + grace for this branch. graceMinutes of 0 (strict
+  // on-time) is a legitimate value, so preserve it via num() rather than `|| 10`.
+  const cfg = (await getSettings(locationId)).payroll;
+  const isLate = istTimeStr(now) > addMinutesToHHMM(cfg.shiftStart || SHIFT_START, num(cfg.graceMinutes, GRACE_MINUTES));
+
+  const attendance = await Attendance.findOneAndUpdate(
+    { user: req.user._id, date },
+    {
+      $set: {
+        user: req.user._id,
+        locationId,
+        date,
+        status: 'present',
+        checkIn: now,
+        isLate,
+        markedBy: req.user._id,
+      },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  res.json({ success: true, data: attendance, late: isLate });
+});
+
+// @desc    Staff/chef clock OUT for today
+// @route   POST /api/attendance/check-out
+// @access  Private (self)
+const checkOut = asyncHandler(async (req, res) => {
+  const date = istDateStr();
+  const attendance = await Attendance.findOne({ user: req.user._id, date });
+  if (!attendance || !attendance.checkIn) {
+    res.status(400);
+    throw new Error('You have not checked in today');
+  }
+  if (attendance.checkOut) {
+    res.status(400);
+    throw new Error('You have already checked out today');
+  }
+
+  const now = new Date();
+  attendance.checkOut = now;
+  attendance.workedMinutes = Math.max(0, Math.round((now.getTime() - new Date(attendance.checkIn).getTime()) / 60000));
+  // Auto-mark half-day if less than the configured threshold was worked (manual
+  // status edits win for absent; we only refine a 'present' record). A threshold
+  // of 0 disables the auto-downgrade, so preserve it via num() rather than `|| 240`.
+  const halfThreshold = num((await getSettings(attendance.locationId)).payroll.halfDayThresholdMinutes, 240);
+  if (attendance.status === 'present' && attendance.workedMinutes > 0 && halfThreshold > 0 && attendance.workedMinutes < halfThreshold) {
+    attendance.status = 'half-day';
+  }
+  await attendance.save();
+
+  res.json({ success: true, data: attendance });
+});
+
 module.exports = {
   markAttendance,
   getLocationAttendance,
   getAllAttendance,
   getMonthlySummary,
-  getMyAttendance
+  getMyAttendance,
+  checkIn,
+  checkOut,
 };

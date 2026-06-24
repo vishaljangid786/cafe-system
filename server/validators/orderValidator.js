@@ -1,9 +1,16 @@
 const { body } = require('express-validator');
 
 const createOrderValidator = [
+  body('orderType')
+    .optional()
+    .isIn(['dine-in', 'takeaway', 'delivery'])
+    .withMessage('Invalid order type'),
+  // Table is required only for dine-in; takeaway/delivery have no table.
   body('table')
+    .if((value, { req }) => (req.body.orderType || 'dine-in') === 'dine-in')
     .notEmpty()
     .withMessage('Table ID is required')
+    .bail()
     .isMongoId()
     .withMessage('Invalid Table ID format'),
   body('items')

@@ -62,7 +62,10 @@ export default function StaffOrdersPage() {
   const [tables, setTables] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [orderType, setOrderType] = useState('dine-in'); // dine-in | takeaway | delivery
   const [stagedItems, setStagedItems] = useState([]);
+  const [modifierItem, setModifierItem] = useState(null); // item being customized
+  const [modSel, setModSel] = useState({}); // { groupName: { label: true } }
   const [menuSearch, setMenuSearch] = useState('');
   const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -164,30 +167,34 @@ export default function StaffOrdersPage() {
   }, [user, fetchOrders]);
 
   const handleCreateOrder = async () => {
-    if (!selectedTable) return toast.error('Please select a table');
+    if (orderType === 'dine-in' && !selectedTable) return toast.error('Please select a table');
     if (stagedItems.length === 0) return toast.error('Please add items to the order');
 
     const loadToast = toast.loading('Sending order to kitchen...');
     try {
       const branchId = user?.assignedLocation?._id || user?.assignedLocation;
       const totalAmount = stagedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       const payload = {
         branch: branchId,
-        table: selectedTable._id,
+        orderType,
         items: stagedItems.map(i => ({
           menuItem: i.menuItemId,
           quantity: i.quantity,
-          notes: i.notes
+          notes: i.notes,
+          modifiers: i.modifiers || []
         })),
         totalAmount
       };
+      // Table only applies to dine-in; takeaway/delivery have no table.
+      if (orderType === 'dine-in') payload.table = selectedTable._id;
 
       await api.post('/orders', payload);
       toast.success('Order placed successfully', { id: loadToast });
       setShowCreateModal(false);
       setStagedItems([]);
       setSelectedTable(null);
+      setOrderType('dine-in');
       fetchOrders();
       fetchStats();
     } catch (error) {
@@ -196,7 +203,14 @@ export default function StaffOrdersPage() {
   };
 
   const addToStage = (item) => {
-    const existing = stagedItems.findIndex(i => i.menuItemId === item._id);
+    // Items with customizations open a picker first; the result is added as its own
+    // line (different option combos are distinct line items).
+    if (Array.isArray(item.modifierGroups) && item.modifierGroups.length > 0) {
+      setModSel({});
+      setModifierItem(item);
+      return;
+    }
+    const existing = stagedItems.findIndex(i => i.menuItemId === item._id && (!i.modifiers || i.modifiers.length === 0));
     if (existing > -1) {
       const newItems = [...stagedItems];
       newItems[existing].quantity += 1;
@@ -207,10 +221,55 @@ export default function StaffOrdersPage() {
         name: item.name,
         price: item.discountedPrice || item.price,
         quantity: 1,
-        notes: ''
+        notes: '',
+        modifiers: []
       }]);
     }
     toast.success(`Added ${item.name}`, { duration: 1000 });
+  };
+
+  const toggleMod = (group, label) => {
+    setModSel(prev => {
+      if (group.selectionType === 'single') {
+        return { ...prev, [group.name]: { [label]: true } };
+      }
+      const cur = { ...(prev[group.name] || {}) };
+      cur[label] = !cur[label];
+      return { ...prev, [group.name]: cur };
+    });
+  };
+
+  const confirmModifiers = () => {
+    const item = modifierItem;
+    if (!item) return;
+    const modifiers = [];
+    let delta = 0;
+    for (const g of item.modifierGroups) {
+      const chosen = Object.entries(modSel[g.name] || {}).filter(([, v]) => v).map(([l]) => l);
+      if (g.required && chosen.length === 0) return toast.error(`Please choose ${g.name}`);
+      if (g.selectionType === 'multiple' && g.maxSelections > 0 && chosen.length > g.maxSelections) {
+        return toast.error(`Pick at most ${g.maxSelections} for ${g.name}`);
+      }
+      for (const label of chosen) {
+        const opt = g.options.find(o => o.label === label);
+        if (!opt) continue;
+        const d = Number(opt.priceDelta) || 0;
+        modifiers.push({ groupName: g.name, label: opt.label, priceDelta: d });
+        delta += d;
+      }
+    }
+    const base = item.discountedPrice || item.price;
+    setStagedItems(prev => [...prev, {
+      menuItemId: item._id,
+      name: item.name,
+      price: Math.max(0, base + delta),
+      quantity: 1,
+      notes: '',
+      modifiers
+    }]);
+    toast.success(`Added ${item.name}`, { duration: 1000 });
+    setModifierItem(null);
+    setModSel({});
   };
 
   const filteredOrders = orders.filter(order => {
@@ -510,18 +569,44 @@ export default function StaffOrdersPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 h-[85vh] overflow-hidden p-4">
             <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-hidden shadow-inner">
               <div className="p-8 border-b border-(--color-border)">
-                <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-6">Select Table</h3>
-                <div className="grid grid-cols-4 gap-4">
-                  {tables.map(table => (
+                {/* Order type: dine-in needs a table; takeaway/delivery don't. */}
+                <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-3">Order Type</h3>
+                <div className="grid grid-cols-3 gap-2 mb-6">
+                  {[
+                    { v: 'dine-in', label: 'Dine-in' },
+                    { v: 'takeaway', label: 'Takeaway' },
+                    { v: 'delivery', label: 'Delivery' },
+                  ].map((t) => (
                     <button
-                      key={table._id}
-                      onClick={(e) => { e.stopPropagation(); setSelectedTable(table); }}
-                      className={`h-14 rounded-xl border-2 font-bold text-xs transition-all shadow-sm ${selectedTable?._id === table._id ? 'border-primary bg-primary/10 text-primary ' : 'border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-primary/30'}`}
+                      key={t.v}
+                      onClick={() => { setOrderType(t.v); if (t.v !== 'dine-in') setSelectedTable(null); }}
+                      className={`py-2.5 rounded-xl border-2 font-bold text-[10px] uppercase tracking-normal transition-all ${orderType === t.v ? 'border-primary bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-primary/30'}`}
                     >
-                      T{table.tableNumber}
+                      {t.label}
                     </button>
                   ))}
                 </div>
+
+                {orderType === 'dine-in' ? (
+                  <>
+                    <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-6">Select Table</h3>
+                    <div className="grid grid-cols-4 gap-4">
+                      {tables.map(table => (
+                        <button
+                          key={table._id}
+                          onClick={(e) => { e.stopPropagation(); setSelectedTable(table); }}
+                          className={`h-14 rounded-xl border-2 font-bold text-xs transition-all shadow-sm ${selectedTable?._id === table._id ? 'border-primary bg-primary/10 text-primary ' : 'border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-primary/30'}`}
+                        >
+                          T{table.tableNumber}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px] font-medium text-(--color-text-muted) bg-(--color-surface) border border-(--color-border) rounded-xl px-4 py-3">
+                    {orderType === 'takeaway' ? 'Takeaway' : 'Delivery'} order — no table needed. Add items and send to kitchen.
+                  </p>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-4 custom-scrollbar">
@@ -537,6 +622,9 @@ export default function StaffOrdersPage() {
                     >
                       <div>
                         <p className="text-xs font-bold text-(--color-text-primary)">{item.name}</p>
+                        {item.modifiers?.length > 0 && (
+                          <p className="text-[9px] font-medium text-(--color-text-muted) mt-0.5">{item.modifiers.map(m => m.label).join(', ')}</p>
+                        )}
                         <p className="text-[10px] font-bold text-success uppercase tracking-normal mt-1">₹{item.price} × {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-4">
@@ -621,6 +709,48 @@ export default function StaffOrdersPage() {
               </div>
             </div>
           </div>
+        </Modal>
+
+        {/* Modifier / customization picker */}
+        <Modal isOpen={!!modifierItem} onClose={() => { setModifierItem(null); setModSel({}); }} title={modifierItem ? `Customize ${modifierItem.name}` : ''} maxWidth="max-w-md">
+          {modifierItem && (
+            <div className="space-y-6">
+              {modifierItem.modifierGroups.map((g, gi) => (
+                <div key={gi} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-normal text-(--color-text-primary)">{g.name}</p>
+                    <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                      {g.required ? 'Required · ' : ''}{g.selectionType === 'single' ? 'Pick one' : `Pick ${g.maxSelections > 0 ? `up to ${g.maxSelections}` : 'any'}`}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {g.options.map((o, oi) => {
+                      const on = !!(modSel[g.name] && modSel[g.name][o.label]);
+                      return (
+                        <button
+                          key={oi}
+                          onClick={() => toggleMod(g, o.label)}
+                          className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-bold transition-all ${on ? 'bg-primary/10 border-primary text-primary' : 'bg-(--color-surface-soft) border-(--color-border) text-(--color-text-primary) hover:border-primary/40'}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {on && <CheckCircle2 size={15} />}
+                            {o.label}
+                          </span>
+                          {o.priceDelta !== 0 && <span className="text-xs">{o.priceDelta > 0 ? '+' : ''}₹{o.priceDelta}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={confirmModifiers}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-(--color-on-primary) text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90"
+              >
+                <Plus size={15} /> Add to order
+              </button>
+            </div>
+          )}
         </Modal>
       </div>
     </PageTransition>

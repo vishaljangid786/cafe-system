@@ -74,6 +74,17 @@ const reservationSchema = new mongoose.Schema(
       enum: ['pending', 'confirmed', 'cancelled'],
       default: 'pending',
     },
+    // Link to the advance-income Expense (so the advance can be reconciled against
+    // the final bill), and a flag so it's only reconciled once.
+    expenseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Expense',
+      default: null,
+    },
+    advanceApplied: {
+      type: Boolean,
+      default: false,
+    },
     notes: {
       type: String,
     },

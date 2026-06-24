@@ -45,6 +45,13 @@ const payrollSchema = new mongoose.Schema(
     approvedByBranchAt: { type: Date },
     approvedByAdminAt: { type: Date },
     approvedBySuperAdminAt: { type: Date },
+    // Link to the Expense posted to the ledger when this payroll was PAID.
+    // Presence also guards against double-posting the salary cost.
+    ledgerExpenseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Expense',
+      default: null,
+    },
   },
   { timestamps: true }
 );

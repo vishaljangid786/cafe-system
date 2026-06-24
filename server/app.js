@@ -30,6 +30,14 @@ const customerRoutes = require('./routes/customerRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const permissionPresetRoutes = require('./routes/permissionPresetRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const cashDrawerRoutes = require('./routes/cashDrawerRoutes');
+const leaveRequestRoutes = require('./routes/leaveRequestRoutes');
+const supplierRoutes = require('./routes/supplierRoutes');
+const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const giftCardRoutes = require('./routes/giftCardRoutes');
+const waitlistRoutes = require('./routes/waitlistRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -154,6 +162,14 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/permission-presets', permissionPresetRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/cash-drawer', cashDrawerRoutes);
+app.use('/api/leave-requests', leaveRequestRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/purchase-orders', purchaseOrderRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/gift-cards', giftCardRoutes);
+app.use('/api/waitlist', waitlistRoutes);
 
 
 // Base route

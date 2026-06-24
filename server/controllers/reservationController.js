@@ -2,6 +2,7 @@ const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
 const Expense = require('../models/Expense');
 const sendNotification = require('../utils/sendNotification');
+const { notifyCustomer } = require('../services/customerNotify');
 const TransactionService = require('../services/transactionService');
 const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
 
@@ -233,6 +234,10 @@ exports.createReservation = async (req, res) => {
         status: 'pending'
       });
       await TransactionService.syncExpenseToTransaction(expense);
+      // Remember the advance-income expense so it can be reconciled against the
+      // final bill when the reserved party dines (avoids double-counting revenue).
+      reservation.expenseId = expense._id;
+      await reservation.save();
     }
 
     // 3. Notify branch admins via sendNotification (persists to history + scoped socket emit)
@@ -243,6 +248,11 @@ exports.createReservation = async (req, res) => {
       performedByUser: req.user,
       locationId
     });
+
+    // Best-effort confirmation SMS/WhatsApp to the guest.
+    if (customerPhone) {
+      notifyCustomer(customerPhone, `Hi${customerName ? ` ${customerName}` : ''}! Your reservation${eventName ? ` for ${eventName}` : ''} on ${new Date(reservation.date).toLocaleDateString('en-IN')}${startTime ? ` at ${startTime}` : ''} is confirmed. See you soon!`, { type: 'reservation-confirmed' });
+    }
 
     res.status(201).json(reservation);
   } catch (error) {

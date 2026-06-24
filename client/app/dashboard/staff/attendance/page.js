@@ -9,6 +9,7 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import toast from 'react-hot-toast';
 
 export default function StaffAttendancePage() {
   const { user } = useAuth();
@@ -19,6 +20,41 @@ export default function StaffAttendancePage() {
   const didInitRef = useRef(false);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [searchTerm, setSearchTerm] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [clocking, setClocking] = useState(false);
+  const [leaves, setLeaves] = useState([]);
+  const [leaveForm, setLeaveForm] = useState({ fromDate: '', toDate: '', type: 'paid', reason: '' });
+  const [submittingLeave, setSubmittingLeave] = useState(false);
+
+  useEffect(() => {
+    api.get('/leave-requests?mine=true').then((r) => setLeaves(r.data.data || [])).catch(() => {});
+  }, [reloadKey]);
+
+  const submitLeave = async () => {
+    if (!leaveForm.fromDate || !leaveForm.toDate) return toast.error('Please pick both dates');
+    if (leaveForm.toDate < leaveForm.fromDate) return toast.error('End date is before start date');
+    setSubmittingLeave(true);
+    try {
+      await api.post('/leave-requests', leaveForm);
+      toast.success('Leave request sent for approval');
+      setLeaveForm({ fromDate: '', toDate: '', type: 'paid', reason: '' });
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not send request');
+    } finally {
+      setSubmittingLeave(false);
+    }
+  };
+
+  const cancelLeave = async (id) => {
+    try {
+      await api.delete(`/leave-requests/${id}`);
+      toast.success('Request cancelled');
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not cancel');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,9 +78,31 @@ export default function StaffAttendancePage() {
       }
     };
     if (user) fetchData();
-  }, [user, month]);
+  }, [user, month, reloadKey]);
 
-  const filteredAttendance = attendance.filter(log => 
+  // Today's record (IST) drives the clock-in/out button state.
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const todayRec = attendance.find((a) => a.date === todayStr);
+  const fmtTime = (d) => d ? new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+  const handleClock = async (action) => {
+    setClocking(true);
+    try {
+      const res = await api.post(`/attendance/${action}`);
+      if (action === 'check-in') {
+        toast.success(res.data?.late ? 'Clocked in (marked late)' : 'Clocked in');
+      } else {
+        toast.success('Clocked out');
+      }
+      setReloadKey((k) => k + 1);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not update attendance');
+    } finally {
+      setClocking(false);
+    }
+  };
+
+  const filteredAttendance = attendance.filter(log =>
     new Date(log.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
       .toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.status.toLowerCase().includes(searchTerm.toLowerCase())
@@ -65,18 +123,103 @@ export default function StaffAttendancePage() {
             <p className="text-(--color-text-secondary) font-medium mt-1">Track your daily attendance and monthly salary.</p>
           </div>
           
-          <div className="flex items-center gap-3 bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border) shadow-sm ">
-            <div className="flex items-center gap-2 px-4 py-2 bg-(--color-surface) rounded-xl border border-(--color-border)">
-              <Calendar size={14} className="text-primary" />
-              <input
-                type="month"
-                className="bg-transparent outline-none text-[10px] font-bold uppercase tracking-normal text-(--color-text-primary)"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-              />
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Clock in / out for today */}
+            {!todayRec?.checkIn ? (
+              <button
+                onClick={() => handleClock('check-in')}
+                disabled={clocking}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-(--color-on-primary) text-xs font-bold uppercase tracking-normal shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <Clock size={14} /> Clock In
+              </button>
+            ) : !todayRec?.checkOut ? (
+              <button
+                onClick={() => handleClock('check-out')}
+                disabled={clocking}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-danger text-white text-xs font-bold uppercase tracking-normal shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <Clock size={14} /> Clock Out · in {fmtTime(todayRec.checkIn)}{todayRec.isLate ? ' (late)' : ''}
+              </button>
+            ) : (
+              <span className="flex items-center gap-2 px-5 py-3 rounded-xl bg-success/10 text-success border border-success/20 text-[10px] font-bold uppercase tracking-normal">
+                <CheckCircle size={14} /> Done · {fmtTime(todayRec.checkIn)}–{fmtTime(todayRec.checkOut)}
+              </span>
+            )}
+
+            <div className="flex items-center gap-3 bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border) shadow-sm ">
+              <div className="flex items-center gap-2 px-4 py-2 bg-(--color-surface) rounded-xl border border-(--color-border)">
+                <Calendar size={14} className="text-primary" />
+                <input
+                  type="month"
+                  className="bg-transparent outline-none text-[10px] font-bold uppercase tracking-normal text-(--color-text-primary)"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Leave requests */}
+        <SlideIn delay={0.05}>
+          <div className="rounded-xl bg-(--color-surface) border border-(--color-border) p-6 shadow-sm space-y-5">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={18} className="text-primary" />
+              <h2 className="text-sm font-bold text-(--color-text-primary)">Request leave</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">From</label>
+                <input type="date" value={leaveForm.fromDate} onChange={(e) => setLeaveForm({ ...leaveForm, fromDate: e.target.value })}
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none" />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">To</label>
+                <input type="date" value={leaveForm.toDate} onChange={(e) => setLeaveForm({ ...leaveForm, toDate: e.target.value })}
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none" />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Type</label>
+                <select value={leaveForm.type} onChange={(e) => setLeaveForm({ ...leaveForm, type: e.target.value })}
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold uppercase text-(--color-text-primary) outline-none">
+                  <option value="paid">Paid</option>
+                  <option value="sick">Sick</option>
+                  <option value="casual">Casual</option>
+                  <option value="unpaid">Unpaid</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Reason (optional)</label>
+                <input type="text" value={leaveForm.reason} onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })} placeholder="e.g. family function"
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none" />
+              </div>
+            </div>
+            <button onClick={submitLeave} disabled={submittingLeave}
+              className="px-6 py-3 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">
+              {submittingLeave ? 'Sending…' : 'Send request'}
+            </button>
+
+            {leaves.length > 0 && (
+              <div className="divide-y divide-(--color-border) pt-2">
+                {leaves.slice(0, 6).map((l) => (
+                  <div key={l._id} className="py-2.5 flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="text-xs font-bold text-(--color-text-primary)">{l.fromDate} → {l.toDate} <span className="text-(--color-text-muted) uppercase text-[9px]">· {l.type}</span></p>
+                      {l.reason && <p className="text-[10px] text-(--color-text-muted)">{l.reason}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] font-bold uppercase tracking-normal px-2.5 py-1 rounded-lg ${l.status === 'approved' ? 'bg-success/10 text-success' : l.status === 'rejected' ? 'bg-danger/10 text-danger' : 'bg-amber-500/10 text-amber-500'}`}>{l.status}</span>
+                      {l.status === 'pending' && (
+                        <button onClick={() => cancelLeave(l._id)} className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-danger">Cancel</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </SlideIn>
 
         {/* Salary High-Yield Card */}
         <SlideIn delay={0.1}>

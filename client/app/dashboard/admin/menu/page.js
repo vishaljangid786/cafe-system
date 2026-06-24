@@ -155,6 +155,7 @@ export default function MenuManagementPage() {
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [isGlobalItem, setIsGlobalItem] = useState(false);
   const [itemDietaryType, setItemDietaryType] = useState('veg');
+  const [modifierGroups, setModifierGroups] = useState([]); // [{name, selectionType, required, maxSelections, options:[{label, priceDelta}]}]
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -163,11 +164,13 @@ export default function MenuManagementPage() {
         setSelectedBranches(editingItem.availableBranches || []);
         setIsGlobalItem(editingItem.isGlobal || false);
         setItemDietaryType(editingItem.dietaryType || 'veg');
+        setModifierGroups(Array.isArray(editingItem.modifierGroups) ? editingItem.modifierGroups.map(g => ({ ...g, options: [...(g.options || [])] })) : []);
       } else {
         setItemCategory('');
         setSelectedBranches(selectedLocation ? [selectedLocation._id || selectedLocation] : []);
         setIsGlobalItem(false);
         setItemDietaryType('veg');
+        setModifierGroups([]);
       }
     }, 0);
     return () => clearTimeout(timer);
@@ -311,6 +314,8 @@ export default function MenuManagementPage() {
       });
     }
     formData.set('dietaryType', itemDietaryType);
+    // Modifier groups are nested — send as JSON (server parses the string).
+    formData.set('modifierGroups', JSON.stringify((modifierGroups || []).filter(g => (g.name || '').trim() && (g.options || []).some(o => (o.label || '').trim()))));
 
     // Validation: discountedPrice < originalPrice
     const originalPrice = formData.get('originalPrice') ? parseFloat(formData.get('originalPrice')) : null;
@@ -1391,6 +1396,82 @@ export default function MenuManagementPage() {
                       </div>
                     </div>
                   </div>
+                </section>
+
+                {/* Customizations / modifiers */}
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Customizations (optional)</p>
+                      <p className="text-[8px] text-(--color-text-muted) uppercase mt-0.5">Sizes, add-ons, sugar / spice level</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModifierGroups((p) => [...p, { name: '', selectionType: 'single', required: false, maxSelections: 0, options: [{ label: '', priceDelta: 0 }] }])}
+                      className="flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all"
+                    >
+                      <Plus size={12} /> Add group
+                    </button>
+                  </div>
+
+                  {modifierGroups.map((g, gi) => (
+                    <div key={gi} className="p-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) space-y-3">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <input
+                          value={g.name}
+                          onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, name: e.target.value } : x)))}
+                          placeholder="Group name (e.g. Size)"
+                          className="flex-1 min-w-32 px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-xs text-(--color-text-primary)"
+                        />
+                        <select
+                          value={g.selectionType}
+                          onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, selectionType: e.target.value } : x)))}
+                          className="px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-[10px] uppercase text-(--color-text-primary)"
+                        >
+                          <option value="single">Pick one</option>
+                          <option value="multiple">Pick many</option>
+                        </select>
+                        <label className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                          <input type="checkbox" checked={g.required} onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, required: e.target.checked } : x)))} /> Required
+                        </label>
+                        <button type="button" onClick={() => setModifierGroups((p) => p.filter((_, i) => i !== gi))} className="p-2 text-danger hover:bg-danger/10 rounded-lg">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      {g.options.map((o, oi) => (
+                        <div key={oi} className="flex gap-2 items-center pl-3">
+                          <input
+                            value={o.label}
+                            onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.map((y, j) => (j === oi ? { ...y, label: e.target.value } : y)) } : x)))}
+                            placeholder="Option (e.g. Large)"
+                            className="flex-1 px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-medium text-xs text-(--color-text-primary)"
+                          />
+                          <div className="relative w-28">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) text-xs">₹</span>
+                            <input
+                              type="number"
+                              value={o.priceDelta}
+                              onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.map((y, j) => (j === oi ? { ...y, priceDelta: Number(e.target.value) || 0 } : y)) } : x)))}
+                              placeholder="+ price"
+                              className="w-full pl-7 pr-2 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-xs text-(--color-text-primary)"
+                            />
+                          </div>
+                          <button type="button" onClick={() => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.filter((_, j) => j !== oi) } : x)))} className="p-2 text-(--color-text-muted) hover:text-danger">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: [...x.options, { label: '', priceDelta: 0 }] } : x)))}
+                        className="ml-3 flex items-center gap-1 text-[9px] font-bold uppercase tracking-normal text-primary hover:opacity-80"
+                      >
+                        <Plus size={11} /> Add option
+                      </button>
+                    </div>
+                  ))}
                 </section>
 
                 {/* Recipe */}

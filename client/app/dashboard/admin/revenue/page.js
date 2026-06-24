@@ -46,6 +46,7 @@ export default function RevenuePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [gst, setGst] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [amountRange, setAmountRange] = useState({ min: '', max: '' });
   const [showFilters, setShowFilters] = useState(false);
@@ -113,6 +114,16 @@ export default function RevenuePage() {
       if (res.data.totalRevenue !== undefined) {
         setTotalRevenue(res.data.totalRevenue);
       }
+
+      // GST collected for the same scope/period (optional — never blocks revenue).
+      try {
+        const gstQ = new URLSearchParams();
+        if (locId && locId !== 'all') gstQ.append('branchId', locId);
+        if (start) gstQ.append('startDate', start);
+        if (end) gstQ.append('endDate', end);
+        const gstRes = await api.get(`/orders/gst-report?${gstQ.toString()}`);
+        setGst(gstRes.data.data);
+      } catch (e) { /* gst widget optional */ }
 
     } catch (err) {
       console.error('Failed to load revenue data:', err);
@@ -216,6 +227,12 @@ export default function RevenuePage() {
                   <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Average Order</p>
                   <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight">₹{avgOrder.toFixed(0)}</p>
                 </div>
+                {gst && (
+                  <div title={`5% GST on ${gst.orders} completed orders (taxable ₹${Number(gst.taxableRevenue || 0).toLocaleString()})`}>
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">GST Collected</p>
+                    <p className="text-2xl font-bold text-primary tracking-tight">₹{Number(gst.gstCollected || 0).toLocaleString()}</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="h-75 w-full relative z-10">

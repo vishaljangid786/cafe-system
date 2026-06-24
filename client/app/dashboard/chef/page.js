@@ -16,7 +16,8 @@ import {
   Timer,
   UtensilsCrossed,
   ArrowRight,
-  RefreshCcw
+  RefreshCcw,
+  Check
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
@@ -37,6 +38,12 @@ export default function ChefDashboard() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeLaneTab, setActiveLaneTab] = useState('incoming');
+  // Ticking clock so KDS aging timers update live without a refetch.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!selectedLocation) { setLoading(false); return; }
@@ -107,6 +114,16 @@ export default function ChefDashboard() {
       toast.success('Status updated', { id: loadToast });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not update status. Please try again.', { id: loadToast });
+    }
+  };
+
+  // Per-item kitchen status (KOT): mark a single dish ready/preparing.
+  const handleItemStatus = async (orderId, itemId, status) => {
+    try {
+      await api.patch(`/orders/${orderId}/item-status`, { itemId, status });
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not update item');
     }
   };
 
@@ -279,25 +296,52 @@ export default function ChefDashboard() {
                               ID: #{order._id.slice(-6)} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                          {order.status === 'PREPARING' && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary animate-pulse">
-                              <Timer size={10} />
-                              <span className="text-[8px] font-bold uppercase">Cooking</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {order.status === 'PREPARING' && (
+                              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary animate-pulse">
+                                <Timer size={10} />
+                                <span className="text-[8px] font-bold uppercase">Cooking</span>
+                              </div>
+                            )}
+                            {(() => {
+                              // KDS aging: minutes since the order was placed, colour-coded
+                              // so the kitchen can prioritise overdue tickets.
+                              const mins = Math.max(0, Math.floor((now - new Date(order.createdAt).getTime()) / 60000));
+                              const tone = mins >= 20 ? 'bg-danger/15 text-danger' : mins >= 10 ? 'bg-amber-500/15 text-amber-500' : 'bg-success/15 text-success';
+                              return (
+                                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${tone}`} title="Time since placed">
+                                  <Timer size={10} />
+                                  <span className="text-[8px] font-bold uppercase tracking-normal">{mins}m</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
                         </div>
 
                         <div className="space-y-3">
-                          {order.items.map((item, i) => (
-                            <div key={i} className="flex justify-between items-center bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-2.5 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                          {order.items.map((item, i) => {
+                            const isReady = item.status === 'ready' || item.status === 'served';
+                            const canToggle = !['COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status);
+                            return (
+                            <div key={item._id || i} className={`flex justify-between items-center p-2.5 rounded-xl border transition-colors ${isReady ? 'bg-success/10 border-success/20' : 'bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-(--color-border) dark:border-(--color-border)'}`}>
                               <div className="flex items-center gap-3">
                                 <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) flex items-center justify-center text-[10px] font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">
                                   {item.quantity}
                                 </div>
-                                <span className="text-[11px] font-bold text-(--color-text-primary) dark:text-(--color-text-muted)">{item.menuItem?.name || 'Custom Item'}</span>
+                                <span className={`text-[11px] font-bold ${isReady ? 'text-success line-through' : 'text-(--color-text-primary) dark:text-(--color-text-muted)'}`}>{item.menuItem?.name || 'Custom Item'}</span>
                               </div>
+                              {canToggle && item._id && (
+                                <button
+                                  onClick={() => handleItemStatus(order._id, item._id, isReady ? 'pending' : 'ready')}
+                                  title={isReady ? 'Mark not ready' : 'Mark item ready'}
+                                  className={`h-6 w-6 rounded-lg flex items-center justify-center border transition-all shrink-0 ${isReady ? 'bg-success text-white border-success' : 'border-(--color-border) text-(--color-text-muted) hover:border-success hover:text-success'}`}
+                                >
+                                  <Check size={12} strokeWidth={3} />
+                                </button>
+                              )}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         {order.chefNote && (

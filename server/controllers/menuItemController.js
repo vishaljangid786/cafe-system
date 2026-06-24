@@ -5,6 +5,30 @@ const asyncHandler = require('../utils/asyncHandler');
 const { logAction } = require('../utils/auditLogger');
 const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds } = require('../utils/accessControl');
 
+// Parse + sanitize modifier groups (sent as JSON, or a JSON string via FormData).
+// Drops malformed entries so a bad payload can't corrupt the menu item.
+const parseModifierGroups = (raw) => {
+  if (raw === undefined || raw === null || raw === '') return undefined; // untouched
+  let groups = raw;
+  if (typeof raw === 'string') {
+    try { groups = JSON.parse(raw); } catch { return []; }
+  }
+  if (!Array.isArray(groups)) return [];
+  return groups
+    .map((g) => ({
+      name: (g?.name || '').toString().trim(),
+      selectionType: g?.selectionType === 'multiple' ? 'multiple' : 'single',
+      required: !!g?.required,
+      maxSelections: Math.max(0, Number(g?.maxSelections) || 0),
+      options: Array.isArray(g?.options)
+        ? g.options
+            .map((o) => ({ label: (o?.label || '').toString().trim(), priceDelta: Number(o?.priceDelta) || 0 }))
+            .filter((o) => o.label)
+        : [],
+    }))
+    .filter((g) => g.name && g.options.length > 0);
+};
+
 // @desc    Get all menu items with filters
 // @route   GET /api/menu
 // @access  Private
@@ -217,6 +241,9 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
   if (originalPrice !== undefined) itemData.originalPrice = Number(originalPrice);
   if (discountedPrice !== undefined) itemData.discountedPrice = Number(discountedPrice);
 
+  const parsedModifiers = parseModifierGroups(req.body.modifierGroups);
+  if (parsedModifiers !== undefined) itemData.modifierGroups = parsedModifiers;
+
   // Cloudinary image uploaded via multer middleware
   if (req.file) {
     itemData.image = req.file.path;
@@ -306,7 +333,9 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     updates.isAvailable = isAvailable === 'on' || isAvailable === 'true' || isAvailable === true;
   }
   if (preparationTime !== undefined) updates.preparationTime = Number(preparationTime);
-  
+  const parsedModifiers = parseModifierGroups(req.body.modifierGroups);
+  if (parsedModifiers !== undefined) updates.modifierGroups = parsedModifiers;
+
   // Non-super_admin cannot make items global (or keep them global)
   const canBeGlobal = req.user.role === 'super_admin' || req.user.permissions?.manageGlobalMenu === true;
   const isGlobalItem = isGlobal !== undefined
@@ -509,7 +538,7 @@ const toggleAvailability = asyncHandler(async (req, res) => {
 const updateStock = asyncHandler(async (req, res) => {
   const { stock } = req.body;
   const branchId = req.body.branchId ||
-    (['staff', 'branch_admin', 'chef'].includes(req.user.role)
+    (['staff', 'branch_admin', 'location_admin', 'chef'].includes(req.user.role)
       ? req.user.assignedLocation?.toString()
       : null);
 

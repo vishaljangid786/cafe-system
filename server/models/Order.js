@@ -8,10 +8,24 @@ const orderSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    orderType: {
+      type: String,
+      enum: ['dine-in', 'takeaway', 'delivery'],
+      default: 'dine-in',
+      index: true,
+    },
+    // Table is only required for dine-in orders; takeaway/delivery have no table.
     table: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Table',
-      required: true,
+      required: function () { return (this.orderType || 'dine-in') === 'dine-in'; },
+    },
+    // Set when an order is placed on a table that has an active reservation, so the
+    // reservation's advance can be reconciled against this bill.
+    reservationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Reservation',
+      default: null,
     },
     customerPhone: {
       type: String,
@@ -54,6 +68,20 @@ const orderSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
+        // Selected customizations (size, add-ons, etc.) snapshotted at order time.
+        // priceDelta is the SERVER-validated value (never trusted from the client);
+        // `price` above already includes the sum of these deltas.
+        modifiers: {
+          type: [
+            {
+              groupName: String,
+              label: String,
+              priceDelta: { type: Number, default: 0 },
+              _id: false,
+            },
+          ],
+          default: [],
+        },
         quantity: {
           type: Number,
           required: true,
@@ -61,6 +89,13 @@ const orderSchema = new mongoose.Schema(
         },
         notes: {
           type: String,
+        },
+        // Per-item kitchen status (KOT). Lets the kitchen prepare/ready items of an
+        // order independently; the order-level status remains the billing source.
+        status: {
+          type: String,
+          enum: ['pending', 'preparing', 'ready', 'served'],
+          default: 'pending',
         },
       },
     ],
@@ -83,6 +118,16 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isRefunded: {
+      type: Boolean,
+      default: false,
+    },
+    refundReason: {
+      type: String,
+    },
+    refundedAt: {
+      type: Date,
+    },
     completedAt: {
       type: Date,
     },
@@ -99,13 +144,52 @@ const orderSchema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
-      enum: ['CASH', 'CARD', 'UPI', 'ONLINE', 'OTHER'],
+      enum: ['CASH', 'CARD', 'UPI', 'ONLINE', 'GIFT_CARD', 'OTHER'],
       default: 'CASH',
+    },
+    // Payment settlement, separate from the kitchen lifecycle. An order can be
+    // COMPLETED but still unpaid (running tab / credit), or partially paid.
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'partial', 'paid'],
+      default: 'unpaid',
+      index: true,
+    },
+    amountPaid: {
+      type: Number,
+      default: 0,
+      min: [0, 'Amount paid cannot be negative'],
     },
     discountAmount: {
       type: Number,
       default: 0,
       min: [0, 'Discount cannot be negative'],
+    },
+    // GST collected on this order (5% of the post-discount taxable amount),
+    // captured at completion so it can be reported for tax filing. Revenue itself
+    // stays GST-exclusive (GST is a pass-through liability, not income).
+    taxAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // Service charge applied on the bill (₹), from branch settings.
+    serviceCharge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // The actual amount the customer pays = (subtotal - discount) + service + GST.
+    // Distinct from totalAmount (GST-exclusive sales value used for revenue).
+    grandTotal: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // Sequential, GST-compliant invoice number assigned at bill generation.
+    invoiceNumber: {
+      type: String,
+      default: null,
     },
     coupon: {
       type: mongoose.Schema.Types.ObjectId,

@@ -25,6 +25,29 @@ const getTables = asyncHandler(async (req, res) => {
     .populate('locationId', 'name city')
     .populate('orders.menuItemId', 'name image price category');
 
+  // Today's confirmed reservations, so the table grid can show which tables are
+  // reserved (previously a reservation only surfaced as an error at order time).
+  const Reservation = require('../models/Reservation');
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+  const locationIds = [...new Set(tables.map((t) => (t.locationId?._id || t.locationId)?.toString()).filter(Boolean))];
+  const todaysReservations = locationIds.length
+    ? await Reservation.find({
+        locationId: { $in: locationIds },
+        status: 'confirmed',
+        date: { $gte: startOfToday, $lte: endOfToday },
+      }).select('reservationType tableIds locationId eventName startTime endTime customerName').lean()
+    : [];
+
+  const reservationFor = (table) => {
+    const locId = (table.locationId?._id || table.locationId)?.toString();
+    const tableId = table._id.toString();
+    return todaysReservations.find((r) =>
+      r.locationId?.toString() === locId &&
+      (r.reservationType === 'full-location' || (r.tableIds || []).some((tid) => tid.toString() === tableId))
+    );
+  };
+
   // Aggregated data for frontend indicators
   const tablesWithIndicators = await Promise.all(tables.map(async (table) => {
     const tableObj = table.toObject();
@@ -35,6 +58,17 @@ const getTables = asyncHandler(async (req, res) => {
       chefNote: { $exists: true, $ne: '' }
     });
     tableObj.hasActiveNotes = !!activeOrdersWithNotes;
+
+    // Reservation indicator for today.
+    const r = reservationFor(table);
+    tableObj.reservation = r ? {
+      eventName: r.eventName,
+      startTime: r.startTime,
+      endTime: r.endTime,
+      customerName: r.customerName,
+      fullLocation: r.reservationType === 'full-location',
+    } : null;
+
     return tableObj;
   }));
 
@@ -53,7 +87,7 @@ const addTable = asyncHandler(async (req, res) => {
   
   let finalLocationId = locationId;
 
-  if (!finalLocationId && (req.user.role === 'branch_admin' || req.user.role === 'staff')) {
+  if (!finalLocationId && ['branch_admin', 'location_admin', 'staff'].includes(req.user.role)) {
     finalLocationId = req.user.assignedLocation;
   }
 
@@ -445,6 +479,61 @@ const deleteTable = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Merge a table into another (move its orders + staged cart, free it)
+// @route   PUT /api/tables/:id/merge
+// @access  Private
+const mergeTable = asyncHandler(async (req, res) => {
+  const { targetTableId } = req.body || {};
+  const source = await Table.findById(req.params.id);
+  if (!source) {
+    res.status(404);
+    throw new Error('Source table not found');
+  }
+  enforceLocationAccess(req, res, source.locationId, 'You do not have permission to manage this table');
+
+  if (String(req.params.id) === String(targetTableId)) {
+    res.status(400);
+    throw new Error('Cannot merge a table into itself');
+  }
+  const target = await Table.findOne({ _id: targetTableId, locationId: source.locationId });
+  if (!target) {
+    res.status(404);
+    throw new Error('Target table not found in this branch');
+  }
+
+  // Move all live (kitchen) orders from source -> target.
+  const ACTIVE = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED'];
+  const moved = await Order.updateMany(
+    { table: source._id, status: { $in: ACTIVE } },
+    { $set: { table: target._id } }
+  );
+  const movedCount = moved.modifiedCount || moved.nModified || 0;
+
+  // Move the embedded "staged cart" too.
+  if (Array.isArray(source.orders) && source.orders.length) {
+    target.orders = [...(target.orders || []), ...source.orders];
+    target.totalAmount = (Number(target.totalAmount) || 0) + (Number(source.totalAmount) || 0);
+  }
+  target.activeOrdersCount = (Number(target.activeOrdersCount) || 0) + movedCount;
+  if (movedCount > 0 || (target.orders || []).length) target.status = 'ongoing';
+  await target.save();
+
+  // Free the source table.
+  source.orders = [];
+  source.totalAmount = 0;
+  source.activeOrdersCount = 0;
+  source.isBooked = false;
+  source.numberOfPeople = 0;
+  source.customerName = '';
+  source.status = 'available';
+  await source.save();
+
+  const io = getIO();
+  io.to(`branch_${source.locationId}`).emit('table:update', { tableId: target._id, action: 'merge' });
+
+  res.json({ success: true, data: { source, target, movedOrders: movedCount } });
+});
+
 // @desc    Complete order manually
 // @route   PUT /api/tables/:id/complete
 // @access  Private
@@ -526,5 +615,6 @@ module.exports = {
   uploadBill,
   deleteTable,
   completeOrder,
+  mergeTable,
   updateTable,
 };

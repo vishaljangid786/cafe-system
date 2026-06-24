@@ -25,7 +25,7 @@ router.use(verifyToken);
 router.use(checkPermissions('viewAnalytics'));
 
 router.route('/advanced')
-  .get(checkRoles('admin', 'super_admin', 'branch_admin'), getAdvancedAnalytics);
+  .get(checkRoles('admin', 'super_admin', 'branch_admin', 'location_admin'), getAdvancedAnalytics);
 
 // Analytics pages are governed by the blanket viewAnalytics permission above,
 // so any user granted viewAnalytics (not just admins) can open them.
@@ -33,7 +33,7 @@ router.route('/location-comparison')
   .get(getLocationComparison);
 
 router.route('/staff-reports')
-  .get(checkRoles('branch_admin', 'admin', 'super_admin'), getStaffReports);
+  .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), getStaffReports);
 
 router.route('/payment-intelligence')
   .get(getPaymentInfo);

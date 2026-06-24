@@ -9,7 +9,7 @@ const {
 const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
-router.use(checkRoles('admin', 'super_admin', 'branch_admin'));
+router.use(checkRoles('admin', 'super_admin', 'branch_admin', 'location_admin'));
 
 router.route('/analytics').get(getCustomerAnalytics);
 router.route('/top').get(getTopCustomers);

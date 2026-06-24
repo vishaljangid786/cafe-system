@@ -38,6 +38,7 @@ export default function AdminOrdersDashboard() {
   // Reuse the socket from AuthContext — do NOT create a new connection here.
   const { user, socket } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [tables, setTables] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -177,6 +178,72 @@ export default function AdminOrdersDashboard() {
       toast.error(error.response?.data?.message || 'Delete failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefund = async (id) => {
+    if (!(await confirm({ title: 'Refund this order?', message: 'The recorded revenue for this order will be reversed. This cannot be undone.', confirmText: 'Refund' }))) return;
+    try {
+      await api.patch(`/orders/${id}/refund`, {});
+      toast.success('Order refunded');
+      setSelectedOrder(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Refund failed');
+    }
+  };
+
+  const handleReorder = async (id) => {
+    if (!(await confirm({ title: 'Re-order?', message: 'Place a fresh order with the same items.', confirmText: 'Re-order', type: 'primary' }))) return;
+    try {
+      await api.post(`/orders/${id}/reorder`, {});
+      toast.success('New order placed');
+      setSelectedOrder(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not re-order');
+    }
+  };
+
+  // Tables for the "move order to table" picker (loaded once).
+  useEffect(() => {
+    let ignore = false;
+    api.get('/tables').then((res) => { if (!ignore) setTables(res.data?.data || []); }).catch(() => {});
+    return () => { ignore = true; };
+  }, []);
+
+  const handleMoveTable = async (id, tableId) => {
+    try {
+      await api.patch(`/orders/${id}/move-table`, { tableId });
+      toast.success('Order moved to the new table');
+      setSelectedOrder(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not move the order');
+    }
+  };
+
+  const handleRedeemGiftCard = async (id, code, amount) => {
+    if (!code || !amount || Number(amount) <= 0) { toast.error('Enter a card code and amount'); return; }
+    try {
+      const res = await api.post('/gift-cards/redeem', { orderId: id, code, amount: Number(amount) });
+      toast.success(`Redeemed ₹${res.data.data.redeemed} · card balance ₹${res.data.data.balance}`);
+      setSelectedOrder(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not redeem gift card');
+    }
+  };
+
+  const handleSplit = async (id, items) => {
+    if (!items || items.length === 0) return;
+    try {
+      await api.post(`/orders/${id}/split`, { items });
+      toast.success('Order split into a new bill');
+      setSelectedOrder(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not split the order');
     }
   };
 
@@ -480,6 +547,12 @@ export default function AdminOrdersDashboard() {
           handleCancel={handleCancel}
           handleForceComplete={handleForceComplete}
           handleDeleteOrder={handleDeleteOrder}
+          handleRefund={handleRefund}
+          handleReorder={handleReorder}
+          handleMoveTable={handleMoveTable}
+          handleSplit={handleSplit}
+          handleRedeemGiftCard={handleRedeemGiftCard}
+          tables={tables}
           userRole={user?.role}
         />
 

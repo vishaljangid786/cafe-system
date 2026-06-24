@@ -2,8 +2,11 @@ const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const Location = require('../models/Location');
 const Payroll = require('../models/Payroll');
+const Expense = require('../models/Expense');
+const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const { scopedLocationId, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
+const { getSettings, num } = require('../utils/settings');
 const mongoose = require('mongoose');
 
 // Validate a month string is exactly YYYY-MM with a real month (01-12).
@@ -40,7 +43,7 @@ const salaryVisibleRoles = (actorRole) =>
       : ['staff', 'chef'];
 
 // Internal helper for aggregation pipeline
-const getSalaryAggregation = async (userIds, month, daysInMonth) => {
+const getSalaryAggregation = async (userIds, month, daysInMonth, stdDayMin = 480) => {
   return await User.aggregate([
     { $match: { _id: { $in: userIds } } },
     { $lookup: {
@@ -72,6 +75,32 @@ const getSalaryAggregation = async (userIds, month, daysInMonth) => {
         totalPresent: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.status', 'present'] } } } },
         totalAbsent: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.status', 'absent'] } } } },
         totalHalfDay: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.status', 'half-day'] } } } },
+        // Paid non-working days + late count.
+        totalWeekOff: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.status', 'week-off'] } } } },
+        totalLeave: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.status', 'leave'] } } } },
+        totalLate: { $size: { $filter: { input: '$attendance', as: 'a', cond: { $eq: ['$$a.isLate', true] } } } },
+        // Overtime = minutes worked beyond a standard 8h (480 min) day, summed.
+        totalOvertimeMinutes: {
+          $sum: {
+            $map: {
+              input: '$attendance',
+              as: 'a',
+              in: { $max: [0, { $subtract: [{ $ifNull: ['$$a.workedMinutes', 0] }, stdDayMin] }] },
+            },
+          },
+        },
+      }
+    },
+    { $addFields: {
+        // Paid days = worked (present + half) + paid non-working (week-off + leave).
+        payableDays: {
+          $add: [
+            '$totalPresent',
+            { $multiply: ['$totalHalfDay', 0.5] },
+            '$totalWeekOff',
+            '$totalLeave',
+          ],
+        },
       }
     },
     { $project: {
@@ -84,16 +113,27 @@ const getSalaryAggregation = async (userIds, month, daysInMonth) => {
         totalPresent: 1,
         totalAbsent: 1,
         totalHalfDay: 1,
-        payableDays: { $add: ['$totalPresent', { $multiply: ['$totalHalfDay', 0.5] }] },
-        calculatedSalary: { 
+        totalWeekOff: 1,
+        totalLeave: 1,
+        totalLate: 1,
+        totalOvertimeMinutes: 1,
+        payableDays: 1,
+        calculatedSalary: {
           $multiply: [
-            { $divide: [{ $ifNull: ['$monthlySalary', 0] }, daysInMonth] }, 
-            { $add: ['$totalPresent', { $multiply: ['$totalHalfDay', 0.5] }] }
+            { $divide: [{ $ifNull: ['$monthlySalary', 0] }, daysInMonth] },
+            '$payableDays',
           ]
         }
       }
     }
   ]);
+};
+
+// Resolve a branch's configured standard-day length (for overtime display); a
+// multi-branch/$in scope falls back to global so display matches generation.
+const stdMinFor = async (branchId) => {
+  const loc = branchId && typeof branchId !== 'object' ? branchId : null;
+  return num((await getSettings(loc)).payroll.standardDayMinutes, 480) || 480;
 };
 
 // @desc    Get salary of staff in a location
@@ -118,7 +158,7 @@ const getLocationSalary = asyncHandler(async (req, res) => {
   }).select('_id');
   const userIds = users.map(u => u._id);
   
-  const salaries = await getSalaryAggregation(userIds, month, daysInMonth);
+  const salaries = await getSalaryAggregation(userIds, month, daysInMonth, await stdMinFor(targetLocationId));
 
   res.json({
     success: true,
@@ -220,8 +260,8 @@ const getUserSalary = asyncHandler(async (req, res) => {
   enforceLocationAccess(req, res, user.assignedLocation, 'You do not have permission to view this user salary');
 
   const daysInMonth = getDaysInMonth(month);
-  
-  const salaryData = await getSalaryAggregation([user._id], month, daysInMonth);
+
+  const salaryData = await getSalaryAggregation([user._id], month, daysInMonth, await stdMinFor(user.assignedLocation));
 
   res.json({
     success: true,
@@ -241,6 +281,7 @@ const getUserSalary = asyncHandler(async (req, res) => {
 
 const getMySalaryHistory = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+  const myStdMin = await stdMinFor(req.user.assignedLocation);
   const last6Months = [];
   const now = new Date();
   
@@ -252,7 +293,7 @@ const getMySalaryHistory = asyncHandler(async (req, res) => {
 
   const history = await Promise.all(last6Months.map(async month => {
     const daysInMonth = getDaysInMonth(month);
-    const salaryData = await getSalaryAggregation([userId], month, daysInMonth);
+    const salaryData = await getSalaryAggregation([userId], month, daysInMonth, myStdMin);
     return {
       month,
       ...(salaryData.length > 0 ? salaryData[0] : { 
@@ -274,7 +315,7 @@ const getMySalary = asyncHandler(async (req, res) => {
 
   const userId = req.user._id;
   const daysInMonth = getDaysInMonth(month);
-  const salaryData = await getSalaryAggregation([userId], month, daysInMonth);
+  const salaryData = await getSalaryAggregation([userId], month, daysInMonth, await stdMinFor(req.user.assignedLocation));
 
   res.json({
     success: true,
@@ -310,29 +351,62 @@ const generatePayroll = asyncHandler(async (req, res) => {
   }
 
   const users = await User.find({ assignedLocation: targetLocation, role: { $in: ['staff', 'chef'] } }).lean();
-  const userIds = users.map(u => u._id);
   const daysInMonth = getDaysInMonth(month);
 
-  const rawSalaries = await getSalaryAggregation(userIds, month, daysInMonth);
+  // Resolve payroll config PER BRANCH (a multi-branch run must not collapse every
+  // branch to the global config), and run the overtime aggregation per branch so
+  // overtime-minutes use each branch's own standard-day length. (review #15)
+  const usersByBranch = new Map();
+  for (const u of users) {
+    const key = (u.assignedLocation || 'global').toString();
+    if (!usersByBranch.has(key)) usersByBranch.set(key, { branchId: u.assignedLocation || null, ids: [] });
+    usersByBranch.get(key).ids.push(u._id);
+  }
+
+  const rawSalaries = [];
+  for (const { branchId, ids } of usersByBranch.values()) {
+    const payCfg = (await getSettings(branchId)).payroll;
+    const stdDayMin = num(payCfg.standardDayMinutes, 480) || 480; // guard div-by-zero
+    const raws = await getSalaryAggregation(ids, month, daysInMonth, stdDayMin);
+    raws.forEach((r) => rawSalaries.push({ ...r, _payCfg: payCfg, _stdDayMin: stdDayMin }));
+  }
+
   const processedPayrolls = [];
 
   for (const raw of rawSalaries) {
+    const payCfg = raw._payCfg;
+    // Preserve a legitimate 0 (e.g. penalties disabled); `Number(x) || d` wrongly
+    // discards 0. latePenaltyGroup/overtimeMultiplier have schema min 1. (review #4/#10)
+    const LATE_GROUP = num(payCfg.latePenaltyGroup, 3) || 3;
+    const LATE_DAY_UNIT = num(payCfg.latePenaltyDayUnit, 0.5);
+    const OT_MULTIPLIER = num(payCfg.overtimeMultiplier, 1.5) || 1.5;
+    const STD_DAY_MIN = raw._stdDayMin;
+
     // No phantom wage: a staff/chef with an unset (0) monthlySalary gets 0, not a
     // silent ₹300/day default that would fabricate payroll.
     const dailyRate = Math.round((raw.monthlySalary || 0) / daysInMonth) || 0;
     const payableDays = raw.payableDays || 0;
     const baseSalary = dailyRate * payableDays;
 
-    // Deterministic Calculation Stage (Replaces enterprise-risk randomness)
-    const latePenalties = 0; // Should be pulled from late-clock-in logs in future Phase
+    // Late penalty from real clock-in data (Attendance.isLate -> raw.totalLate).
+    // Policy is configurable per branch (Settings.payroll): every LATE_GROUP late
+    // marks deducts LATE_DAY_UNIT days of pay.
+    const lateCount = raw.totalLate || 0;
+    const latePenalties = Math.round(dailyRate * Math.floor(lateCount / LATE_GROUP) * LATE_DAY_UNIT);
     // Absent days are ALREADY excluded from payableDays (so baseSalary doesn't pay
     // for them). Subtracting them again was a double penalty — keep this at 0.
     const absentPenalties = 0;
 
-    const topSellerBonus = 0; // Should be pulled from sales volume in future Phase
+    // Overtime pay from clock-in/out data: minutes beyond the standard day, paid
+    // at the configured multiplier of the hourly rate (dailyRate / standard hours).
+    const standardHours = (STD_DAY_MIN / 60) || 8;
+    const hourlyRate = dailyRate / standardHours;
+    const overtimePay = Math.round((Number(raw.totalOvertimeMinutes || 0) / 60) * hourlyRate * OT_MULTIPLIER);
+
+    const topSellerBonus = 0; // Sales-volume bonus — needs a defined policy + sales link
     const performanceBonus = 0;
 
-    const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus - latePenalties - absentPenalties);
+    const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus + overtimePay - latePenalties - absentPenalties);
 
     const existingPayroll = await Payroll.findOne({ user: raw._id, month });
     if (existingPayroll && !['PENDING_BRANCH_APPROVAL', 'REJECTED'].includes(existingPayroll.status)) {
@@ -347,7 +421,7 @@ const generatePayroll = asyncHandler(async (req, res) => {
         payableDays,
         baseSalary,
         penalties: { lateMark: latePenalties, absent: absentPenalties, leave: 0 },
-        bonuses: { topSeller: topSellerBonus, performance: performanceBonus, extraShifts: 0 },
+        bonuses: { topSeller: topSellerBonus, performance: performanceBonus, extraShifts: overtimePay },
         netSalary,
         status: 'PENDING_BRANCH_APPROVAL'
       },
@@ -381,6 +455,28 @@ const approvePayroll = asyncHandler(async (req, res) => {
     // no longer matches any branch) a paid payroll can't be re-run/re-paid.
     payroll.status = 'PAID';
     payroll.approvedBySuperAdminAt = new Date();
+
+    // Post the salary cost to the ledger so it shows up as a real expense in
+    // P&L (previously payroll never hit the books, overstating profit). Guard with
+    // ledgerExpenseId so a salary is never double-posted.
+    if (!payroll.ledgerExpenseId && payroll.user?.assignedLocation) {
+      const [year, mon] = String(payroll.month).split('-');
+      const expenseDate = (year && mon) ? new Date(Number(year), Number(mon) - 1, 28) : new Date();
+      const expense = await Expense.create({
+        title: `Salary — ${payroll.user.name} (${payroll.month})`,
+        description: `Payroll for ${payroll.user.name} (${payroll.user.role}) — ${payroll.payableDays} payable days`,
+        amount: Number(payroll.netSalary) || 0,
+        type: 'EXPENSE',
+        category: 'Salary',
+        status: 'approved',
+        date: expenseDate,
+        locationId: payroll.user.assignedLocation,
+        createdBy: req.user._id,
+        proofImage: 'payroll-auto',
+      });
+      await TransactionService.syncExpenseToTransaction(expense);
+      payroll.ledgerExpenseId = expense._id;
+    }
   } else {
     res.status(403);
     throw new Error('Approval workflow level not allowed or out of sequence');

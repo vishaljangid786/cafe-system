@@ -19,6 +19,13 @@ const {
   markReady,
   markServed,
   generateOrderBill,
+  recordPayment,
+  refundOrder,
+  getGstReport,
+  updateItemStatus,
+  moveOrderTable,
+  splitOrder,
+  reorderOrder,
   deleteOrder
 } = require('../controllers/orderController');
 const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
@@ -38,6 +45,7 @@ router
   .post(checkPermissions('manageOrders'), createOrderValidator, validate, createOrder);
 
 router.get('/analytics', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('viewAnalytics'), getOrderAnalytics);
+router.get('/gst-report', checkPermissions('viewRevenue'), getGstReport);
 
 router
   .route('/:id')
@@ -56,6 +64,12 @@ router.patch('/:id/ready', checkPermissions('manageOrders'), validateOrderTransi
 router.patch('/:id/serve', checkPermissions('manageOrders'), validateOrderTransition, markServed);
 router.patch('/:id/complete', checkPermissions('manageOrders'), validateOrderTransition, completeOrder);
 router.patch('/:id/force-complete', checkPermissions('forceComplete'), validateOrderTransition, forceCompleteOrder);
+router.patch('/:id/item-status', checkPermissions('manageOrders'), updateItemStatus);
+router.patch('/:id/move-table', checkPermissions('manageOrders'), moveOrderTable);
+router.post('/:id/split', checkPermissions('manageOrders'), splitOrder);
+router.post('/:id/reorder', checkPermissions('manageOrders'), reorderOrder);
+router.patch('/:id/payment', checkPermissions('manageOrders'), recordPayment);
+router.patch('/:id/refund', checkRoles('super_admin', 'admin', 'branch_admin'), checkPermissions('editRevenue'), refundOrder);
 router.post('/:id/generate-bill', checkPermissions('manageOrders'), generateOrderBill);
 
 module.exports = router;

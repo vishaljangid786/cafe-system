@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { CalendarCheck, UserCheck, UserX, CheckCircle2, XCircle, Clock, Calendar, Search, Mail, Phone, MapPin, CreditCard, Hash, Globe, Info, Award, ShieldAlert } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
+import LeaveApprovals from '../../../components/attendance/LeaveApprovals';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Modal from '../../../components/ui/Modal';
@@ -74,6 +75,7 @@ export default function AttendancePage() {
   return (
     <PageTransition>
       <div className="space-y-8">
+        <LeaveApprovals />
         <SlideIn direction="down">
           <div className="flex flex-col md:flex-row justify-between md:items-center bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) gap-6">
             <div>
@@ -182,6 +184,8 @@ export default function AttendancePage() {
                             {[
                               { id: 'present', icon: CheckCircle2, label: 'Present', active: 'bg-success text-white border-success', inactive: 'text-success bg-[rgba(var(--color-success-rgb),0.12)] hover:bg-success hover:text-white' },
                               { id: 'half-day', icon: Clock, label: 'Half', active: 'bg-primary text-white border-primary', inactive: 'text-primary bg-(--color-primary-soft) hover:bg-primary hover:text-white' },
+                              { id: 'week-off', icon: Calendar, label: 'Off', active: 'bg-secondary text-white border-secondary', inactive: 'text-secondary bg-secondary/10 hover:bg-secondary hover:text-white' },
+                              { id: 'leave', icon: CalendarCheck, label: 'Leave', active: 'bg-secondary text-white border-secondary', inactive: 'text-secondary bg-secondary/10 hover:bg-secondary hover:text-white' },
                               { id: 'absent', icon: XCircle, label: 'Absent', active: 'bg-danger text-white border-danger', inactive: 'text-danger bg-[rgba(var(--color-danger-rgb),0.12)] hover:bg-danger hover:text-white' },
                             ].map(btn => (
                               <motion.button

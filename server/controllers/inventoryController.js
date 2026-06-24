@@ -4,6 +4,8 @@ const BranchInventory = require('../models/BranchInventory');
 const WasteRecord = require('../models/WasteRecord');
 const Recipe = require('../models/Recipe');
 const BranchStock = require('../models/BranchStock');
+const Expense = require('../models/Expense');
+const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, scopedLocationId, userLocationIds } = require('../utils/accessControl');
@@ -50,6 +52,10 @@ const updateInventory = asyncHandler(async (req, res) => {
 
   let item = await BranchInventory.findOne({ branch, ingredient });
 
+  // Effective unit cost for this purchase (use the provided value, else fall back
+  // to the ingredient's existing recorded cost). Used to book the purchase expense.
+  const effectiveCost = costPerUnit !== undefined ? Number(costPerUnit) : Number(item?.costPerUnit || 0);
+
   if (item) {
     item.stock += Number(quantity);
     if (costPerUnit !== undefined) item.costPerUnit = Number(costPerUnit);
@@ -64,6 +70,26 @@ const updateInventory = asyncHandler(async (req, res) => {
       costPerUnit,
       minThreshold: minThreshold || 10,
     });
+  }
+
+  // Book the restock as a real purchase expense in the ledger so COGS shows in
+  // P&L (previously inventory purchases were invisible, overstating profit).
+  const purchaseCost = Number(quantity) * effectiveCost;
+  if (purchaseCost > 0) {
+    const ing = await Ingredient.findById(ingredient).select('name unit');
+    const expense = await Expense.create({
+      title: `Inventory purchase — ${ing?.name || 'ingredient'}`,
+      description: `Restocked ${quantity} ${ing?.unit || 'units'} of ${ing?.name || 'ingredient'} @ ₹${effectiveCost}/unit`,
+      amount: purchaseCost,
+      type: 'EXPENSE',
+      category: 'Inventory',
+      status: 'approved',
+      date: new Date(),
+      locationId: branch,
+      createdBy: req.user._id,
+      proofImage: 'inventory-auto',
+    });
+    await TransactionService.syncExpenseToTransaction(expense);
   }
 
   res.json({ success: true, data: item });

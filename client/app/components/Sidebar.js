@@ -9,9 +9,9 @@ import {
   Coffee, LayoutDashboard, Users, MapPin,
   Receipt, CalendarCheck, Wallet,
   Settings, LogOut, UtensilsCrossed, Tag, CalendarDays,
-  Target, TrendingUp, Crown, Package,
+  Target, TrendingUp, Crown, Package, Truck,
   Calendar, Bell, Send, History, CreditCard, AlertCircle, Zap, Download,
-  Activity, ShieldAlert, ChevronDown, ShieldCheck, UserPlus
+  Activity, ShieldAlert, ChevronDown, ShieldCheck, UserPlus, Star, Gift
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,28 +26,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 const GRANTABLE_PAGES = [
   // Staff management (manageStaff)
   { name: 'Users', href: '/dashboard/admin/users', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin'] },
-  { name: 'Staff', href: '/dashboard/admin/staff', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Salaries', href: '/dashboard/admin/payroll', icon: Wallet, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Staff', href: '/dashboard/admin/staff', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Salaries', href: '/dashboard/admin/payroll', icon: Wallet, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   // Orders & operations
-  { name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt, perms: ['viewOrders', 'forceComplete'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt, perms: ['viewOrders', 'forceComplete'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag, perms: ['manageCoupons'], defaultRoles: ['super_admin', 'admin'] },
   // Revenue (viewRevenue / editRevenue)
-  { name: 'Revenue', href: '/dashboard/admin/revenue', icon: TrendingUp, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Revenue', href: '/dashboard/admin/revenue', icon: TrendingUp, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   // Analytics (viewAnalytics)
-  { name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
-  { name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'], requiresMultipleBranches: true },
   { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
   { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
   { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
   // Exports
-  { name: 'Export Center', href: '/dashboard/admin/exports', icon: Download, perms: ['exportReports'], defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
+  { name: 'Export Center', href: '/dashboard/admin/exports', icon: Download, perms: ['exportReports'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   // Role-locked page-access permissions
   { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity, perms: ['viewAuditLogs'], defaultRoles: ['super_admin'] },
   { name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert, perms: ['impersonateUsers'], defaultRoles: ['super_admin'] },
@@ -73,6 +73,18 @@ const getUserBranchIds = (account) => {
   return ids;
 };
 
+const getRoleBasePath = (role) => {
+  if (role === 'super_admin' || role === 'admin') return '/dashboard/admin';
+  if (role === 'location_admin') return '/dashboard/location-admin';
+  return '/dashboard/branch-admin';
+};
+
+const getSalaryPath = (role) => {
+  if (role === 'branch_admin') return '/dashboard/branch-admin/salary';
+  if (role === 'location_admin') return '/dashboard/location-admin/salary';
+  return '/dashboard/admin/payroll';
+};
+
 const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -92,6 +104,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     const permissions = user.permissions || {};
     const isSuper = role === 'super_admin';
     const hasPermission = (key) => isSuper || permissions[key] === true;
+    const roleBasePath = getRoleBasePath(role);
     const comparableBranchCount = role === 'super_admin'
       ? (locations.length > 0 ? locations.length : 2)
       : getUserBranchIds(user).length;
@@ -102,10 +115,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     // Main Group
     const mainItems = [];
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
-      const isGlobal = role === 'super_admin' || role === 'admin';
       mainItems.push({ 
         name: 'Overview', 
-        href: isGlobal ? '/dashboard/admin' : '/dashboard/branch-admin', 
+        href: roleBasePath,
         icon: LayoutDashboard 
       });
       mainItems.push({ 
@@ -125,12 +137,13 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     groupsList.push({ title: 'Main', items: mainItems });
 
     // Administration Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin') {
+    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const adminItems = [];
-      const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
 
       // Add Member -> in-dashboard single-page member form
-      adminItems.push({ name: 'Add Member', href: '/dashboard/add-member', icon: UserPlus });
+      if (role !== 'location_admin') {
+        adminItems.push({ name: 'Add Member', href: '/dashboard/add-member', icon: UserPlus });
+      }
 
       if (role === 'super_admin') {
         adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
@@ -146,14 +159,21 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       }
 
       if (hasPermission('manageStaff')) {
-        adminItems.push({ name: 'Staff', href: `${prefix}/staff`, icon: Users });
-        adminItems.push({ name: 'Attendance', href: `${prefix}/attendance`, icon: CalendarCheck });
-        adminItems.push({ name: 'Salaries', href: role === 'branch_admin' ? '/dashboard/branch-admin/salary' : '/dashboard/admin/payroll', icon: Wallet });
+        adminItems.push({ name: 'Staff', href: `${roleBasePath}/staff`, icon: Users });
+        adminItems.push({ name: 'Attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
+        adminItems.push({ name: 'Salaries', href: getSalaryPath(role), icon: Wallet });
       }
 
-      adminItems.push({ name: 'Permissions', href: `${prefix}/permissions`, icon: ShieldCheck });
+      if (role !== 'location_admin') {
+        adminItems.push({ name: 'Permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
+      }
 
-      groupsList.push({ title: 'Administration', items: adminItems });
+      // Settings — tax/billing/payroll/loyalty config (page itself scopes branch access).
+      adminItems.push({ name: 'Settings', href: '/dashboard/admin/settings', icon: Settings });
+
+      if (adminItems.length > 0) {
+        groupsList.push({ title: 'Administration', items: adminItems });
+      }
     }
 
     // Operations Group
@@ -166,14 +186,21 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       }
 
       if (hasPermission('manageOrders')) {
-        opsItems.push({ name: 'Tables', href: role === 'branch_admin' ? '/dashboard/branch-admin/tables' : '/dashboard/admin/tables', icon: Coffee });
-        opsItems.push({ name: 'Menu', href: role === 'branch_admin' ? '/dashboard/branch-admin/menu' : '/dashboard/admin/menu', icon: UtensilsCrossed });
-        opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
+        opsItems.push({ name: 'Tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
+        opsItems.push({ name: 'Menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
+        if (role !== 'location_admin') {
+          opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
+        }
+        opsItems.push({ name: 'Procurement', href: '/dashboard/admin/procurement', icon: Truck });
+        opsItems.push({ name: 'Cash Drawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
+        opsItems.push({ name: 'Waitlist', href: '/dashboard/admin/waitlist', icon: Users });
       }
 
       if ((role === 'super_admin' || role === 'admin') && hasPermission('manageCoupons')) {
         opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
       }
+
+      opsItems.push({ name: 'Gift Cards', href: '/dashboard/admin/gift-cards', icon: Gift });
 
       if (opsItems.length > 0) {
         groupsList.push({ title: 'Operations', items: opsItems });
@@ -184,6 +211,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         opsItems.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
         opsItems.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
         opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+        opsItems.push({ name: 'Cash Drawer', href: '/dashboard/staff/cash-drawer', icon: Wallet });
+        opsItems.push({ name: 'Waitlist', href: '/dashboard/staff/waitlist', icon: Users });
       } else {
         opsItems.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
       }
@@ -193,11 +222,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     // Analytics Group
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const analyticsItems = [];
-      const prefix = (role === 'super_admin' || role === 'admin') ? '/dashboard/admin' : '/dashboard/branch-admin';
 
       if (hasPermission('viewRevenue')) {
-        analyticsItems.push({ name: 'Revenue', href: `${prefix}/revenue`, icon: TrendingUp });
-        analyticsItems.push({ name: 'Expenses', href: `${prefix}/expenses`, icon: Receipt });
+        analyticsItems.push({ name: 'Revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
+        analyticsItems.push({ name: 'Expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
       }
 
       if (hasPermission('viewAnalytics')) {
@@ -207,7 +235,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
         }
 
-        analyticsItems.push({ name: 'Staff Reports', href: `${prefix}/staff-reports`, icon: TrendingUp });
+        analyticsItems.push({ name: 'Staff Reports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
+        analyticsItems.push({ name: 'Feedback', href: '/dashboard/admin/feedback', icon: Star });
 
         if (role === 'super_admin' || role === 'admin') {
           analyticsItems.push({ name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
@@ -273,7 +302,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     const matches = allLinks
       .filter(link => {
         // Special case for root-ish dashboards to avoid matching everything
-        if (link.href === '/dashboard/admin' || link.href === '/dashboard/branch-admin' || link.href === '/dashboard/staff') {
+        if (link.href === '/dashboard/admin' || link.href === '/dashboard/branch-admin' || link.href === '/dashboard/location-admin' || link.href === '/dashboard/staff') {
           return pathname === link.href;
         }
         return pathname === link.href || pathname.startsWith(link.href + '/');
@@ -531,7 +560,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           {showLabels && (
             <Link href="/dashboard/profile" className="min-w-0 flex-1 group">
               <p className="text-xs font-bold text-(--color-text-primary) truncate leading-none group-hover:text-primary transition-colors">{user.name}</p>
-              <p className="text-[10px] font-medium text-(--color-text-muted) uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
+              <p className="text-[10px] font-medium text-(--color-text-muted) uppercase tracking-wider mt-1 truncate">{user.role === 'branch_admin' || user.role === 'location_admin' ? 'branch admin' : user.role.replace('_', ' ')}</p>
             </Link>
           )}
           {showLabels && (

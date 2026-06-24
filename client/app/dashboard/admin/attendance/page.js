@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import LeaveApprovals from '../../../components/attendance/LeaveApprovals';
 import { CalendarCheck, Calendar, Filter, MapPin, CheckCircle2, XCircle, PieChart as PieIcon, Activity } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
@@ -118,6 +119,7 @@ export default function GlobalAttendancePage() {
   return (
     <PageTransition>
       <div className="space-y-6">
+        <LeaveApprovals />
         {/* Header & Controls */}
 <SlideIn direction="down">
   <div className="relative overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)/60  p-5 md:p-7 shadow-[var(--shadow-premium)] transition-all">

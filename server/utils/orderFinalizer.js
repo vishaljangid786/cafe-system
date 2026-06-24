@@ -2,6 +2,7 @@ const Transaction = require('../models/Transaction');
 const Table = require('../models/Table');
 const Order = require('../models/Order');
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
+const { getSettings } = require('./settings');
 
 /**
  * Finalizes an order, records revenue, and deducts ingredients.
@@ -14,12 +15,62 @@ const finalizeOrder = async (order, user) => {
   // calls can't both finalize it and record REVENUE twice — only the request
   // that flips isBilled false->true proceeds.
   const now = new Date();
+  // Configurable tax/billing for this branch (falls back to defaults).
+  const settings = await getSettings(order.branch);
+  const gstFraction = (Number(settings?.tax?.gstRate) || 0) / 100;
+  const svcFraction = (Number(settings?.billing?.serviceChargeRate) || 0) / 100;
+  const roundBill = settings?.billing?.roundBill !== false;
+  // Multi-stage pipeline: derive the bill the same way generateOrderBill does so
+  // the stored taxAmount / serviceCharge / grandTotal agree with the printed bill,
+  // and a still-unpaid order is settled at the real amount the customer pays
+  // (subtotal - discount + service + GST) — not the GST-exclusive sales value.
   const claimed = await Order.findOneAndUpdate(
     { _id: order._id, isBilled: { $ne: true } },
-    {
-      $set: { isBilled: true, status: 'COMPLETED', completedAt: now },
-      $push: { statusHistory: { status: 'COMPLETED', timestamp: now, updatedBy: user._id } },
-    },
+    [
+      {
+        $set: {
+          isBilled: true,
+          status: 'COMPLETED',
+          completedAt: now,
+          statusHistory: { $concatArrays: [{ $ifNull: ['$statusHistory', []] }, [{ status: 'COMPLETED', timestamp: now, updatedBy: user._id }]] },
+          _taxable: { $max: [0, { $subtract: ['$totalAmount', { $ifNull: ['$discountAmount', 0] }] }] },
+        },
+      },
+      { $set: { serviceCharge: { $round: [{ $multiply: ['$_taxable', svcFraction] }, 2] } } },
+      { $set: { taxAmount: { $round: [{ $multiply: [{ $add: ['$_taxable', '$serviceCharge'] }, gstFraction] }, 2] } } },
+      {
+        $set: {
+          grandTotal: {
+            $let: {
+              vars: { gt: { $add: ['$_taxable', '$serviceCharge', '$taxAmount'] } },
+              in: roundBill ? { $round: ['$$gt', 0] } : '$$gt',
+            },
+          },
+        },
+      },
+      {
+        // A still-unpaid order is assumed settled at completion (amountPaid =
+        // grandTotal). An order already partly settled (e.g. a gift card tendered
+        // before completion) keeps its amountPaid.
+        $set: {
+          amountPaid: { $cond: [{ $eq: ['$paymentStatus', 'unpaid'] }, '$grandTotal', '$amountPaid'] },
+        },
+      },
+      {
+        // Derive the real payment status from what's actually paid vs the true
+        // grandTotal — so a gift card that only covered the subtotal correctly
+        // reads 'partial' (GST/service still owed), never a false 'paid'.
+        $set: {
+          paymentStatus: {
+            $cond: [
+              { $gte: ['$amountPaid', '$grandTotal'] }, 'paid',
+              { $cond: [{ $gt: ['$amountPaid', 0] }, 'partial', 'unpaid'] },
+            ],
+          },
+        },
+      },
+      { $unset: '_taxable' },
+    ],
     { new: true }
   );
   if (!claimed) {
@@ -29,6 +80,11 @@ const finalizeOrder = async (order, user) => {
   order.status = 'COMPLETED';
   order.completedAt = now;
   order.isBilled = true;
+  order.paymentStatus = claimed.paymentStatus;
+  order.amountPaid = claimed.amountPaid;
+  order.serviceCharge = claimed.serviceCharge;
+  order.taxAmount = claimed.taxAmount;
+  order.grandTotal = claimed.grandTotal;
 
   // Calculate gross profit from items
   const grossProfit = order.items.reduce((acc, item) => {
@@ -76,17 +132,44 @@ const finalizeOrder = async (order, user) => {
     }))
   });
 
-  // Decrement active orders count on table
-  const updatedTable = await Table.findByIdAndUpdate(
-    order.table,
-    { $inc: { activeOrdersCount: -1 } },
-    { new: true, runValidators: false }
-  );
+  // Reconcile a reservation advance against this bill. The advance was a
+  // pre-payment toward the meal; now that the full bill is recorded as revenue,
+  // reverse the advance-income entry so the same money isn't counted twice. Done
+  // once per reservation.
+  if (order.reservationId) {
+    try {
+      const Reservation = require('../models/Reservation');
+      const reservation = await Reservation.findById(order.reservationId);
+      if (reservation && !reservation.advanceApplied && reservation.expenseId) {
+        await Transaction.updateOne({ expenseId: reservation.expenseId }, { $set: { status: 'rejected' } });
+        reservation.advanceApplied = true;
+        await reservation.save();
+      }
+    } catch (e) {
+      console.error('[orderFinalizer] reservation advance reconcile failed:', e.message);
+    }
+  }
 
-  // Auto-clear table if no more active orders
+  // Decrement active orders count on table (dine-in only; takeaway/delivery
+  // have no table).
+  const updatedTable = order.table
+    ? await Table.findByIdAndUpdate(
+        order.table,
+        { $inc: { activeOrdersCount: -1 } },
+        { new: true, runValidators: false }
+      )
+    : null;
+
+  // Auto-clear the table when no active orders remain. Fully reset occupancy so a
+  // freed table doesn't linger as "booked"/occupied with stale guest details
+  // (previously only uploadBill reset isBooked, so completing the last order via
+  // the kitchen flow left the table stuck on "booked").
   if (updatedTable && updatedTable.activeOrdersCount <= 0) {
     updatedTable.status = 'available';
     updatedTable.activeOrdersCount = 0; // Guard against negative numbers
+    updatedTable.isBooked = false;
+    updatedTable.numberOfPeople = 0;
+    updatedTable.customerName = '';
     await updatedTable.save();
   }
 

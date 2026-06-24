@@ -1,5 +1,26 @@
 const mongoose = require('mongoose');
 
+// A choosable option within a modifier group, e.g. "Large" (+₹40), "Extra cheese" (+₹20).
+const modifierOptionSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true, trim: true },
+    priceDelta: { type: Number, default: 0 }, // added to the base price (can be 0 / negative)
+  },
+  { _id: false }
+);
+
+// A group of related choices, e.g. "Size" (pick one, required) or "Add-ons" (pick many).
+const modifierGroupSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    selectionType: { type: String, enum: ['single', 'multiple'], default: 'single' },
+    required: { type: Boolean, default: false },
+    maxSelections: { type: Number, default: 0, min: 0 }, // 0 = unlimited (multiple only)
+    options: { type: [modifierOptionSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const menuItemSchema = new mongoose.Schema(
   {
     name: {
@@ -78,6 +99,11 @@ const menuItemSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, 'Stock cannot be negative'],
+    },
+    // Optional customizations: sizes, add-ons, sugar/spice level, etc.
+    modifierGroups: {
+      type: [modifierGroupSchema],
+      default: [],
     },
   },
   {

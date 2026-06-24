@@ -1,14 +1,30 @@
 "use client"
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Printer, Download, Check, X, Camera, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Button } from '../ui/Button';
 import Modal from '../ui/Modal';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 
 export default function BillPreview({ isOpen, onClose, onComplete, table, systemOrders = [], cafeName = "CafeOS" }) {
   const billRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Pull the branch's configured tax/billing so the receipt matches the books.
+  const [cfg, setCfg] = useState(null);
+  useEffect(() => {
+    if (!isOpen || !table) return;
+    const branchId = table.locationId?._id || table.locationId;
+    api.get(`/settings${branchId ? `?locationId=${branchId}` : ''}`)
+      .then((res) => setCfg(res.data?.data || null))
+      .catch(() => setCfg(null));
+  }, [isOpen, table]);
+
+  const gstRate = Number(cfg?.tax?.gstRate ?? 5);
+  const serviceChargeRate = Number(cfg?.billing?.serviceChargeRate ?? 0);
+  const gstin = cfg?.tax?.gstin || '';
+  const roundBill = cfg?.billing?.roundBill ?? true; // match server default (true)
 
   // Combine staged items and completed/served system orders for the final bill
   const stagedItems = table?.orders || [];
@@ -30,8 +46,10 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   // GST is charged on the post-discount taxable amount, matching the server bill
   // calculation (orderController.generateOrderBill) so the displayed total agrees.
   const taxableAmount = Math.max(0, subtotal - discount);
-  const taxes = Number((taxableAmount * 0.05).toFixed(2)); // 5% GST
-  const total = taxableAmount + taxes;
+  const serviceCharge = Number((taxableAmount * serviceChargeRate / 100).toFixed(2));
+  const taxes = Number(((taxableAmount + serviceCharge) * gstRate / 100).toFixed(2));
+  const rawTotal = taxableAmount + serviceCharge + taxes;
+  const total = roundBill ? Math.round(rawTotal) : rawTotal;
   const [billId] = useState(() => `BILL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
   const [dateTime] = useState(() => new Date().toLocaleString());
 
@@ -214,6 +232,7 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
               <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                 {table.locationId?.name || table.locationName || 'Main Branch'}
               </p>
+              {gstin && <p className="text-[10px] font-medium opacity-70">GSTIN: {gstin}</p>}
               <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
             </div>
 
@@ -258,14 +277,26 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                 <span>SUBTOTAL:</span>
                 <span>₹{subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between">
-                <span>TAX (GST 5%):</span>
-                <span>₹{taxes.toLocaleString()}</span>
-              </div>
               {discount > 0 && (
                 <div className="flex justify-between text-danger">
                   <span>DISCOUNT:</span>
                   <span>-₹{discount.toLocaleString()}</span>
+                </div>
+              )}
+              {serviceCharge > 0 && (
+                <div className="flex justify-between">
+                  <span>SERVICE CHARGE ({serviceChargeRate}%):</span>
+                  <span>₹{serviceCharge.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>GST ({gstRate}%):</span>
+                <span>₹{taxes.toLocaleString()}</span>
+              </div>
+              {gstRate > 0 && (
+                <div className="flex justify-between text-[10px] opacity-70">
+                  <span>(CGST {(gstRate / 2)}% + SGST {(gstRate / 2)}%)</span>
+                  <span>₹{(taxes / 2).toLocaleString()} + ₹{(taxes / 2).toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-black">

@@ -19,13 +19,13 @@ router.route('/my').get(getMySalary);
 router.route('/my-history').get(getMySalaryHistory);
 
 router.route('/location')
-  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getLocationSalary);
+  .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getLocationSalary);
 
 router.route('/all')
   .get(checkRoles('admin', 'super_admin'), checkPermissions('manageStaff'), getAllSalary);
 
 router.route('/user/:id')
-  .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getUserSalary);
+  .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getUserSalary);
 
 router.route('/generate')
   .post(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), generatePayroll);

@@ -21,7 +21,7 @@ const ROLE_PREFIX = {
   branch_admin: ['/dashboard/branch-admin'],
   chef: ['/dashboard/chef'],
   staff: ['/dashboard/staff'],
-  location_admin: ['/dashboard/branch-admin'],
+  location_admin: ['/dashboard/location-admin'],
 };
 
 const SHARED_PREFIXES = [

@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       super_admin: '/dashboard/admin',
       admin: '/dashboard/admin',
       branch_admin: '/dashboard/branch-admin',
-      location_admin: '/dashboard/branch-admin',
+      location_admin: '/dashboard/location-admin',
       chef: '/dashboard/chef',
       staff: '/dashboard/staff',
     };

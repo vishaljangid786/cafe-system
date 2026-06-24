@@ -322,6 +322,20 @@ export default function AdminTablesPage() {
     }
   };
 
+  const handleMerge = async (sourceId, targetTableId) => {
+    if (!targetTableId) return;
+    const loadToast = toast.loading('Merging tables...');
+    try {
+      await api.put(`/tables/${sourceId}/merge`, { targetTableId });
+      toast.success('Tables merged', { id: loadToast });
+      setShowOrderModal(false);
+      setSelectedTable(null);
+      fetchTables();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not merge tables', { id: loadToast });
+    }
+  };
+
   const handleSendToKitchen = async () => {
     if (pendingOrders.length === 0) return toast.error('No items added to order');
     if (!selectedTable.customerName) return toast.error('Customer name required');
@@ -461,6 +475,42 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
+        {/* Floor map — at-a-glance status overview (click a table to manage it) */}
+        {!refetching && filteredTables.length > 0 && (
+          <div className="mb-6 p-5 rounded-xl border border-(--color-border) bg-(--color-surface)/40 shadow-sm">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Floor map</h3>
+              <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-normal">
+                <span className="flex items-center gap-1 text-success"><span className="h-2 w-2 rounded-full bg-success" /> Free</span>
+                <span className="flex items-center gap-1 text-primary"><span className="h-2 w-2 rounded-full bg-primary" /> Occupied</span>
+                <span className="flex items-center gap-1 text-amber-500"><span className="h-2 w-2 rounded-full bg-amber-500" /> Reserved</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {filteredTables.map((t) => {
+                const reserved = !!t.reservation;
+                const free = t.status === 'available' && !t.isBooked;
+                const tone = free
+                  ? 'bg-success/10 text-success border-success/30'
+                  : reserved
+                    ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                    : 'bg-primary/10 text-primary border-primary/30';
+                return (
+                  <button
+                    key={t._id}
+                    onClick={() => handleOpenOrder(t)}
+                    title={`${t.tableName || `Table ${t.tableNumber}`} · ${free ? 'free' : reserved ? 'reserved' : 'occupied'}`}
+                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center font-bold transition-transform hover:scale-105 ${tone}`}
+                  >
+                    <span className="text-sm">T{t.tableNumber}</span>
+                    <span className="text-[7px] uppercase tracking-normal opacity-70">{free ? 'free' : reserved ? 'resv' : 'busy'}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {refetching ? <TableSkeleton rows={6} cols={5} /> : (
         <div className="overflow-x-auto rounded-xl border border-(--color-border) bg-(--color-surface)/40  shadow-sm">
           <table className="w-full text-left border-collapse">
@@ -596,6 +646,24 @@ export default function AdminTablesPage() {
                       <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal">Items</span>
                     </div>
                   </div>
+
+                  {(() => {
+                    const branchId = (selectedTable.locationId?._id || selectedTable.locationId)?.toString();
+                    const mergeTargets = tables.filter((t) => ((t.locationId?._id || t.locationId)?.toString() === branchId) && t._id !== selectedTable._id);
+                    if (mergeTargets.length === 0) return null;
+                    return (
+                      <select
+                        defaultValue=""
+                        onChange={(e) => { if (e.target.value) handleMerge(selectedTable._id, e.target.value); }}
+                        className="w-full px-3 py-2 rounded-lg bg-(--color-surface) border border-(--color-border) text-[10px] font-bold uppercase tracking-normal text-(--color-text-primary) outline-none"
+                      >
+                        <option value="" disabled>Merge this table into…</option>
+                        {mergeTargets.map((t) => (
+                          <option key={t._id} value={t._id}>T{t.tableNumber}{t.tableName ? ` · ${t.tableName}` : ''}</option>
+                        ))}
+                      </select>
+                    );
+                  })()}
 
                   <div className="grid grid-cols-2 gap-6 p-5 bg-(--color-surface) rounded-xl border border-(--color-border) shadow-sm">
                     <div className="space-y-2">

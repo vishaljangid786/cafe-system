@@ -55,11 +55,11 @@ export default function BottomNav({ onMore }) {
       break;
     case 'location_admin':
       candidates = [
-        { name: 'Home', href: '/dashboard/branch-admin', icon: LayoutDashboard, exact: true },
-        { name: 'Tables', href: '/dashboard/branch-admin/tables', icon: Coffee, perm: 'manageOrders' },
-        { name: 'Menu', href: '/dashboard/branch-admin/menu', icon: UtensilsCrossed, perm: 'manageOrders' },
-        { name: 'Revenue', href: '/dashboard/branch-admin/revenue', icon: TrendingUp, perm: 'viewRevenue' },
-        { name: 'Bookings', href: '/dashboard/reservations', icon: CalendarDays },
+        { name: 'Home', href: '/dashboard/location-admin', icon: LayoutDashboard, exact: true },
+        { name: 'Tables', href: '/dashboard/location-admin/tables', icon: Coffee, perm: 'manageOrders' },
+        { name: 'Menu', href: '/dashboard/location-admin/menu', icon: UtensilsCrossed, perm: 'manageOrders' },
+        { name: 'Revenue', href: '/dashboard/location-admin/revenue', icon: TrendingUp, perm: 'viewRevenue' },
+        { name: 'Bookings', href: '/dashboard/location-admin/bookings', icon: CalendarDays },
       ];
       break;
     case 'admin':

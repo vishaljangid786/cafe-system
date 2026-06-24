@@ -16,39 +16,46 @@ class OrderService {
   /**
    * Create a new order with stock deduction and table update
    */
-  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', userId }) {
+  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId }) {
     const Reservation = require('../models/Reservation');
+    const isDineIn = orderType === 'dine-in';
 
     const session = await mongoose.startSession();
     session.startTransaction();
+    let linkedReservationId = null;
 
     try {
-      // 1. Pre-checks (Rate limiting, Reservations) — run INSIDE the transaction
-      // so they're not subject to a TOCTOU race against the order insert below.
-      const tenSecondsAgo = new Date(Date.now() - 10000);
-      const recentOrder = await Order.findOne({ table: tableId, createdAt: { $gte: tenSecondsAgo } }).session(session);
-      if (recentOrder) {
-        throw new Error('Please wait 10 seconds before placing another order for this table.');
-      }
+      // 1. Pre-checks (Rate limiting, Reservations) — only for dine-in (table) orders.
+      // Takeaway/delivery have no table, so they skip the per-table guards.
+      if (isDineIn && tableId) {
+        const tenSecondsAgo = new Date(Date.now() - 10000);
+        const recentOrder = await Order.findOne({ table: tableId, createdAt: { $gte: tenSecondsAgo } }).session(session);
+        if (recentOrder) {
+          throw new Error('Please wait 10 seconds before placing another order for this table.');
+        }
 
-      const now = new Date();
-      const today = new Date(now.setHours(0, 0, 0, 0));
-      const currentTimeStr = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+        const now = new Date();
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const currentTimeStr = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
 
-      const activeReservation = await Reservation.findOne({
-        locationId: branch,
-        date: today,
-        status: 'confirmed',
-        $or: [
-          { reservationType: 'full-location' },
-          { tableIds: tableId }
-        ],
-        startTime: { $lte: currentTimeStr },
-        endTime: { $gte: currentTimeStr }
-      }).session(session);
+        const activeReservation = await Reservation.findOne({
+          locationId: branch,
+          date: today,
+          status: 'confirmed',
+          $or: [
+            { reservationType: 'full-location' },
+            { tableIds: tableId }
+          ],
+          startTime: { $lte: currentTimeStr },
+          endTime: { $gte: currentTimeStr }
+        }).session(session);
 
-      if (activeReservation) {
-        throw new Error(`This table is currently reserved for "${activeReservation.eventName}".`);
+        // The reserved party themselves must be able to order on their table, so
+        // we don't block — we LINK the order to the reservation. The advance is
+        // then reconciled against this order's bill at completion.
+        if (activeReservation) {
+          linkedReservationId = activeReservation._id;
+        }
       }
 
       // 2. Stock Validation & Deduction
@@ -130,13 +137,32 @@ class OrderService {
           }
         }
 
+        // Validate selected modifiers against the item's defined groups and fold the
+        // SERVER-side priceDelta into the unit price. Client-sent prices are ignored
+        // (anti-tamper) — the delta always comes from the stored menu definition.
+        const modSnapshot = [];
+        let modDelta = 0;
+        if (Array.isArray(item.modifiers) && Array.isArray(menuItem.modifierGroups) && menuItem.modifierGroups.length) {
+          for (const sel of item.modifiers) {
+            const grp = menuItem.modifierGroups.find(g => g.name === (sel.groupName || sel.group));
+            if (!grp) continue;
+            const opt = grp.options.find(o => o.label === sel.label);
+            if (!opt) continue;
+            const delta = Number(opt.priceDelta) || 0;
+            modSnapshot.push({ groupName: grp.name, label: opt.label, priceDelta: delta });
+            modDelta += delta;
+          }
+        }
+        const effectivePrice = Math.max(0, (menuItem.price || 0) + modDelta);
+
         itemsWithSnapshots.push({
           menuItem: menuItem._id,
           itemName: menuItem.name,
-          price: menuItem.price,
+          price: effectivePrice,
           costPrice: menuItem.costPrice || 0,
           quantity: item.quantity,
-          notes: item.notes
+          notes: item.notes,
+          modifiers: modSnapshot,
         });
       }
 
@@ -203,7 +229,9 @@ class OrderService {
       // 4. Order Creation
       const order = await Order.create([{
         branch,
-        table: tableId,
+        table: tableId || undefined,
+        orderType,
+        reservationId: linkedReservationId,
         customerPhone,
         customerName,
         items: itemsWithSnapshots,
@@ -220,11 +248,13 @@ class OrderService {
         }]
       }], { session });
 
-      // 5. Table Update
-      await Table.findByIdAndUpdate(tableId, {
-        status: 'ongoing',
-        $inc: { activeOrdersCount: 1 }
-      }, { session, runValidators: false });
+      // 5. Table Update — dine-in only (takeaway/delivery have no table).
+      if (tableId) {
+        await Table.findByIdAndUpdate(tableId, {
+          status: 'ongoing',
+          $inc: { activeOrdersCount: 1 }
+        }, { session, runValidators: false });
+      }
 
       await session.commitTransaction();
       session.endSession();
@@ -311,10 +341,13 @@ class OrderService {
     try {
       const Customer = require('../models/Customer');
       const Coupon = require('../models/Coupon');
+      const { getSettings } = require('../utils/settings');
       const io = getIO();
       const branchId = order.branch.toString();
 
-      const pointsEarned = Math.floor(order.totalAmount / 100);
+      // Configurable loyalty rules for this branch.
+      const L = (await getSettings(order.branch)).loyalty;
+      const pointsEarned = Math.floor(order.totalAmount / 100) * (Number(L.pointsPer100) || 0);
 
       // Build atomic $inc payload: visits/spend/points plus per-item favourites.
       const inc = {
@@ -344,26 +377,27 @@ class OrderService {
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
-      // Atomically claim 100 points for a reward only if the balance is >= 100.
-      // The conditional filter guarantees a single concurrent finalize can mint
-      // the coupon, never double-spending the points.
-      if (customer && customer.loyaltyPoints >= 100) {
+      // Atomically claim the reward threshold worth of points only if the balance
+      // is high enough. The conditional filter guarantees a single concurrent
+      // finalize can mint the coupon, never double-spending the points.
+      const threshold = Number(L.rewardThresholdPoints) || 100;
+      if (customer && customer.loyaltyPoints >= threshold) {
         const claimed = await Customer.findOneAndUpdate(
-          { phone: order.customerPhone, loyaltyPoints: { $gte: 100 } },
-          { $inc: { loyaltyPoints: -100 } },
+          { phone: order.customerPhone, loyaltyPoints: { $gte: threshold } },
+          { $inc: { loyaltyPoints: -threshold } },
           { new: true }
         );
 
         if (claimed) {
           const couponCode = `REWARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
           const expiry = new Date();
-          expiry.setDate(expiry.getDate() + 30);
+          expiry.setDate(expiry.getDate() + (Number(L.rewardExpiryDays) || 30));
 
           await Coupon.create({
             code: couponCode,
             discountType: 'fixed',
-            discountValue: 100,
-            minOrderAmount: 300,
+            discountValue: Number(L.rewardCouponValue) || 100,
+            minOrderAmount: Number(L.rewardMinOrder) || 300,
             expiryDate: expiry,
             usageLimit: 1,
             createdBy: userId,

@@ -3,7 +3,10 @@ const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const sendNotification = require('../utils/sendNotification');
+const { notifyCustomer } = require('../services/customerNotify');
 const { enforceLocationAccess, clampLimit, escapeRegex, scopedLocationId } = require('../utils/accessControl');
+
+const BOOKING_STATUSES = new Set(['pending', 'confirmed', 'cancelled', 'completed']);
 
 // Returns true when both are valid HH:mm times and end is strictly after start.
 const isValidTimeRange = (startTime, endTime) => {
@@ -14,6 +17,31 @@ const isValidTimeRange = (startTime, endTime) => {
     return h * 60 + m;
   };
   return toMinutes(endTime) > toMinutes(startTime);
+};
+
+const isTodayOrFuture = (date) => {
+  const bookingDay = new Date(date);
+  if (Number.isNaN(bookingDay.getTime())) return false;
+  bookingDay.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return bookingDay >= today;
+};
+
+const getBookableLocation = async (res, locationId) => {
+  const location = await Location.findById(locationId);
+  if (!location || location.isPermanentlyDeleted) {
+    res.status(404);
+    throw new Error('Location not found');
+  }
+
+  if (location.status !== 'active') {
+    res.status(400);
+    throw new Error('This location is not accepting bookings right now');
+  }
+
+  return location;
 };
 
 // Helper to calculate total guests booked for a specific time range
@@ -50,14 +78,18 @@ const checkAvailability = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'End time must be after start time' });
   }
 
-  const location = await Location.findById(locationId);
-  if (!location) {
-    return res.status(404).json({ success: false, message: 'Location not found' });
+  if (!isTodayOrFuture(date)) {
+    return res.status(400).json({ success: false, message: 'Booking date cannot be in the past' });
   }
 
+  const requestedGuests = Number(numberOfGuests);
+  if (!Number.isInteger(requestedGuests) || requestedGuests < 1) {
+    return res.status(400).json({ success: false, message: 'At least 1 guest is required' });
+  }
+
+  const location = await getBookableLocation(res, locationId);
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
-  const requestedGuests = parseInt(numberOfGuests, 10);
 
   if (bookedGuests + requestedGuests > maxCapacity) {
     return res.status(200).json({ 
@@ -80,15 +112,20 @@ const createBooking = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'End time must be after start time' });
   }
 
-  const location = await Location.findById(locationId);
-  if (!location) {
-    return res.status(404).json({ success: false, message: 'Location not found' });
+  if (!isTodayOrFuture(date)) {
+    return res.status(400).json({ success: false, message: 'Booking date cannot be in the past' });
   }
 
+  const guestCount = Number(numberOfGuests);
+  if (!Number.isInteger(guestCount) || guestCount < 1) {
+    return res.status(400).json({ success: false, message: 'At least 1 guest is required' });
+  }
+
+  const location = await getBookableLocation(res, locationId);
   const maxCapacity = location.maxCapacity || 20;
   const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
 
-  if (bookedGuests + numberOfGuests > maxCapacity) {
+  if (bookedGuests + guestCount > maxCapacity) {
     return res.status(400).json({
       success: false,
       message: `Cannot book. Only ${Math.max(0, maxCapacity - bookedGuests)} slots available.`
@@ -109,7 +146,7 @@ const createBooking = asyncHandler(async (req, res) => {
     date: new Date(date),
     startTime,
     endTime,
-    numberOfGuests,
+    numberOfGuests: guestCount,
     specialRequests
   });
 
@@ -120,7 +157,7 @@ const createBooking = asyncHandler(async (req, res) => {
   if (isAuthenticated) {
     await sendNotification({
       title: 'New Booking Request',
-      message: `${bookerName} requested a booking for ${numberOfGuests} guests at ${location.name} on ${date} (${startTime} - ${endTime}).`,
+      message: `${bookerName} requested a booking for ${guestCount} guests at ${location.name} on ${date} (${startTime} - ${endTime}).`,
       type: 'user_action',
       performedByUser: req.user,
       locationId
@@ -189,6 +226,10 @@ const getBookings = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const updateBookingStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
+  if (!BOOKING_STATUSES.has(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid booking status' });
+  }
+
   const booking = await Booking.findById(req.params.id)
     .populate('userId', 'name email')
     .populate('locationId', 'name');
@@ -215,6 +256,12 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
 
   booking.status = status;
   await booking.save();
+
+  // Best-effort SMS/WhatsApp to a guest who booked without an account.
+  if (status === 'confirmed' && booking.guestPhone) {
+    const when = `${new Date(booking.date).toLocaleDateString('en-IN')}${booking.startTime ? ` ${booking.startTime}` : ''}`;
+    notifyCustomer(booking.guestPhone, `Hi${booking.guestName ? ` ${booking.guestName}` : ''}! Your booking at ${booking.locationId?.name || 'our cafe'} for ${when} is confirmed. See you soon!`, { type: 'booking-confirmed' });
+  }
 
   // Notify the user via socket (only if an authenticated user made the booking)
   if (booking.userId) {

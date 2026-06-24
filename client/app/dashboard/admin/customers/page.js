@@ -17,6 +17,7 @@ export default function CustomersDashboard() {
   const [topCustomers, setTopCustomers] = useState([]);
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [viewingCustomer, setViewingCustomer] = useState(null);
+  const [loyaltyCfg, setLoyaltyCfg] = useState(null);
 
   const fetchCRMData = async () => {
     const isInitial = !didInitRef.current;
@@ -24,15 +25,17 @@ export default function CustomersDashboard() {
     else setRefetching(true);
     progress.start();
     try {
-      const [analyticsRes, topRes, inactiveRes] = await Promise.all([
+      const [analyticsRes, topRes, inactiveRes, settingsRes] = await Promise.all([
         api.get('/customers/analytics'),
         api.get('/customers/top'),
-        api.get('/customers/inactive')
+        api.get('/customers/inactive'),
+        api.get('/settings').catch(() => null)
       ]);
 
       setAnalytics(analyticsRes.data.data);
       setTopCustomers(topRes.data.data);
       setInactiveCustomers(inactiveRes.data.data);
+      if (settingsRes?.data?.data?.loyalty) setLoyaltyCfg(settingsRes.data.data.loyalty);
     } catch (err) {
       console.error('Failed to load CRM data', err);
       toast.error('Could not load customer data. Please try again.');
@@ -60,11 +63,17 @@ export default function CustomersDashboard() {
     return `${'*'.repeat(Math.max(0, digits.length - 4))}${digits.slice(-4)}`;
   };
 
-  const getPointsTier = (points) => {
-    if (points >= 500) return { label: 'Platinum', color: 'text-secondary', bg: 'bg-secondary/10' };
-    if (points >= 200) return { label: 'Gold', color: 'text-primary', bg: 'bg-primary/10' };
-    if (points >= 50) return { label: 'Silver', color: 'text-(--color-text-muted)', bg: 'bg-(--color-surface-soft)' };
-    return { label: 'Member', color: 'text-success', bg: 'bg-success/10' };
+  // Membership tier from LIFETIME SPEND using the branch's configured thresholds
+  // (falls back to sensible defaults until settings load).
+  const getTier = (totalSpend = 0) => {
+    const spend = Number(totalSpend) || 0;
+    const silver = Number(loyaltyCfg?.tierSilver ?? 5000);
+    const gold = Number(loyaltyCfg?.tierGold ?? 20000);
+    const platinum = Number(loyaltyCfg?.tierPlatinum ?? 50000);
+    if (spend >= platinum) return { label: 'Platinum', color: 'text-secondary', bg: 'bg-secondary/10' };
+    if (spend >= gold) return { label: 'Gold', color: 'text-primary', bg: 'bg-primary/10' };
+    if (spend >= silver) return { label: 'Silver', color: 'text-(--color-text-muted)', bg: 'bg-(--color-surface-soft)' };
+    return { label: 'Bronze', color: 'text-success', bg: 'bg-success/10' };
   };
 
   if (loading) return <LoadingScreen fullScreen={false} />;
@@ -174,7 +183,7 @@ export default function CustomersDashboard() {
                   </thead>
                   <tbody className="divide-y divide-(--color-border)">
                     {topCustomers.map((cust, idx) => {
-                      const tier = getPointsTier(cust.loyaltyPoints);
+                      const tier = getTier(cust.totalSpend);
                       return (
                         <tr key={cust._id} className="hover:bg-primary/[0.02] transition-colors group">
                           <td className="p-6">

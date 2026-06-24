@@ -1,5 +1,5 @@
 "use client"
-import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash, Trash2 } from 'lucide-react';
+import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash, Trash2, CalendarClock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CardHover } from '../ui/AnimatedContainer';
 import { Button } from '../ui/Button';
@@ -89,6 +89,15 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             <span className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal bg-(--color-bg-soft) text-(--color-text-muted) flex items-center gap-1.5">
               <Users size={10} /> {table.capacity || 1} Seater
             </span>
+            {table.reservation && (
+              <span
+                title={`Reserved${table.reservation.customerName ? ` by ${table.reservation.customerName}` : ''}${table.reservation.eventName ? ` — ${table.reservation.eventName}` : ''}`}
+                className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal bg-primary/10 text-primary border border-primary/20 flex items-center gap-1.5"
+              >
+                <CalendarClock size={10} />
+                {table.reservation.fullLocation ? 'Full Venue' : 'Reserved'} {table.reservation.startTime}–{table.reservation.endTime}
+              </span>
+            )}
           </div>
 
           {(isOccupied || table.status === 'ongoing') && table.activeOrdersCount > 0 && (

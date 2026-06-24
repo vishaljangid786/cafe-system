@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('../utils/asyncHandler');
 const User = require('../models/User');
 
-const verifyToken = asyncHandler(async (req, res, next) => {
+const getRequestToken = (req) => {
   let token;
 
   if (
@@ -14,57 +14,68 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     token = req.cookies.token;
   }
 
+  return token;
+};
+
+const attachUserFromToken = async (req, res, token) => {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+  req.user = await User.findById(decoded.id).select('-password');
+
+  if (!req.user) {
+    res.status(401);
+    throw new Error('User not found. Please login again.');
+  }
+
+  // Enterprise Session Revocation Check
+  const tokenVersion = decoded.sessionVersion || 1; // Graceful migration for legacy tokens
+  const userVersion = req.user.sessionVersion || 1;
+
+  if (tokenVersion !== userVersion) {
+    res.status(401);
+    throw new Error('Session expired due to security update. Please log in again.');
+  }
+
+  // Security Check: Blocked/Inactive Users
+  if (req.user.isBlocked) {
+    res.status(403);
+    throw new Error('Account suspended. Please contact administrator.');
+  }
+
+  if (req.user.active === false) {
+    res.status(403);
+    throw new Error('Account inactive. Permission denied.');
+  }
+
+  if (decoded.impersonatedBy) {
+    req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
+
+    // Re-validate the impersonator on every request: if their own account was
+    // suspended/deactivated after the session started, end the impersonation.
+    if (!req.impersonator || req.impersonator.isBlocked || req.impersonator.active === false) {
+      res.status(403);
+      throw new Error('Impersonation ended: the original account is no longer active. Please log in again.');
+    }
+
+    if (decoded.isViewOnly && req.method !== 'GET') {
+      res.status(403);
+      throw new Error('Action restricted: View-only impersonation mode is active');
+    }
+  }
+
+  return decoded;
+};
+
+const verifyToken = asyncHandler(async (req, res, next) => {
+  const token = getRequestToken(req);
+
   if (!token) {
     res.status(401);
     throw new Error('Please login to continue');
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    req.user = await User.findById(decoded.id).select('-password');
-    
-    if (!req.user) {
-      res.status(401);
-      throw new Error('User not found. Please login again.');
-    }
-
-    // Enterprise Session Revocation Check
-    const tokenVersion = decoded.sessionVersion || 1; // Graceful migration for legacy tokens
-    const userVersion = req.user.sessionVersion || 1;
-
-    if (tokenVersion !== userVersion) {
-      res.status(401);
-      throw new Error('Session expired due to security update. Please log in again.');
-    }
-
-    // Security Check: Blocked/Inactive Users
-    if (req.user.isBlocked) {
-      res.status(403);
-      throw new Error('Account suspended. Please contact administrator.');
-    }
-
-    if (req.user.active === false) {
-      res.status(403);
-      throw new Error('Account inactive. Permission denied.');
-    }
-
-    if (decoded.impersonatedBy) {
-      req.impersonator = await User.findById(decoded.impersonatedBy).select('-password');
-
-      // Re-validate the impersonator on every request: if their own account was
-      // suspended/deactivated after the session started, end the impersonation.
-      if (!req.impersonator || req.impersonator.isBlocked || req.impersonator.active === false) {
-        res.status(403);
-        throw new Error('Impersonation ended: the original account is no longer active. Please log in again.');
-      }
-
-      if (decoded.isViewOnly && req.method !== 'GET') {
-        res.status(403);
-        throw new Error('Action restricted: View-only impersonation mode is active');
-      }
-    }
-
+    await attachUserFromToken(req, res, token);
     next();
   } catch (error) {
     if (res.statusCode === 200) {
@@ -72,6 +83,19 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     }
     throw new Error(error.message || 'Login failed. Please try again.');
   }
+});
+
+const optionalVerifyToken = asyncHandler(async (req, res, next) => {
+  const token = getRequestToken(req);
+  if (!token) return next();
+
+  try {
+    await attachUserFromToken(req, res, token);
+  } catch (error) {
+    req.user = null;
+  }
+
+  next();
 });
 
 const checkRoles = (...roles) => {
@@ -130,4 +154,4 @@ const checkAnyPermission = (...permissions) => {
   };
 };
 
-module.exports = { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission };
+module.exports = { verifyToken, optionalVerifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission };
