@@ -71,7 +71,7 @@ const ROLE_GROUPS = [
 
 export default function QuickLogin() {
   const { login } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [pendingEmail, setPendingEmail] = useState(null);
 
   const handleQuickLogin = async (email) => {

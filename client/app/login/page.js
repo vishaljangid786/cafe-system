@@ -173,7 +173,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {process.env.NODE_ENV !== 'production' && <QuickLogin />}
+          <QuickLogin />
 
           <div className="mt-10 flex justify-center">
             <div className="flex items-center gap-2 px-3 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-full">
