@@ -333,8 +333,14 @@ class OrderService {
       return createdOrder;
     } catch (error) {
       if (session) {
-        await session.abortTransaction();
-        session.endSession();
+        // Guard the abort/end so they can NEVER mask the ORIGINAL error. On a
+        // standalone MongoDB the first session write throws "Transaction numbers
+        // are only allowed on a replica set member or mongos"; if abortTransaction()
+        // then throws its own (different) error, it replaced that original — so the
+        // standalone fallback in createOrder() failed to recognize it and EVERY
+        // order 500'd. Preserve and rethrow the original error instead.
+        try { await session.abortTransaction(); } catch (_) { /* keep original error */ }
+        try { session.endSession(); } catch (_) { /* keep original error */ }
       }
       throw error;
     }
