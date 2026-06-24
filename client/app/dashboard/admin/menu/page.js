@@ -1423,14 +1423,13 @@ export default function MenuManagementPage() {
                           placeholder="Group name (e.g. Size)"
                           className="flex-1 min-w-32 px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-xs text-(--color-text-primary)"
                         />
-                        <select
-                          value={g.selectionType}
-                          onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, selectionType: e.target.value } : x)))}
-                          className="px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-[10px] uppercase text-(--color-text-primary)"
-                        >
-                          <option value="single">Pick one</option>
-                          <option value="multiple">Pick many</option>
-                        </select>
+                        <div className="w-32">
+                          <PremiumSelect
+                            value={g.selectionType}
+                            onChange={(v) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, selectionType: v } : x)))}
+                            options={[{ label: 'Pick one', value: 'single' }, { label: 'Pick many', value: 'multiple' }]}
+                          />
+                        </div>
                         <label className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                           <input type="checkbox" checked={g.required} onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, required: e.target.checked } : x)))} /> Required
                         </label>

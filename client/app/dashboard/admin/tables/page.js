@@ -653,16 +653,12 @@ export default function AdminTablesPage() {
                     const mergeTargets = tables.filter((t) => ((t.locationId?._id || t.locationId)?.toString() === branchId) && t._id !== selectedTable._id);
                     if (mergeTargets.length === 0) return null;
                     return (
-                      <select
-                        defaultValue=""
-                        onChange={(e) => { if (e.target.value) handleMerge(selectedTable._id, e.target.value); }}
-                        className="w-full px-3 py-2 rounded-lg bg-(--color-surface) border border-(--color-border) text-[10px] font-bold uppercase tracking-normal text-(--color-text-primary) outline-none"
-                      >
-                        <option value="" disabled>Merge this table into…</option>
-                        {mergeTargets.map((t) => (
-                          <option key={t._id} value={t._id}>T{t.tableNumber}{t.tableName ? ` · ${t.tableName}` : ''}</option>
-                        ))}
-                      </select>
+                      <PremiumSelect
+                        value=""
+                        onChange={(v) => { if (v) handleMerge(selectedTable._id, v); }}
+                        options={mergeTargets.map((t) => ({ label: `T${t.tableNumber}${t.tableName ? ` · ${t.tableName}` : ''}`, value: t._id }))}
+                        placeholder="Merge this table into…"
+                      />
                     );
                   })()}
 

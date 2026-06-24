@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Wallet, LockOpen, Lock, ArrowDownCircle, ArrowUpCircle, Plus, Minus, IndianRupee, History } from 'lucide-react';
 
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -119,13 +120,14 @@ export default function CashDrawerPage() {
               </div>
             </div>
             {!isBranchScoped && (
-              <select
-                value={scope}
-                onChange={(e) => setScope(e.target.value)}
-                className="px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold uppercase tracking-normal text-(--color-text-primary) outline-none"
-              >
-                {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
-              </select>
+              <div className="w-48">
+                <PremiumSelect
+                  value={scope}
+                  onChange={setScope}
+                  options={locations.map((l) => ({ label: l.name, value: l._id }))}
+                  placeholder="Select branch"
+                />
+              </div>
             )}
           </div>
         </SlideIn>

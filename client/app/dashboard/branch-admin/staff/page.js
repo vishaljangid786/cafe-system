@@ -545,11 +545,12 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Gender</label>
-              <select required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.gender} onChange={e => setCreateForm(p => ({ ...p, gender: e.target.value }))}>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
+              <PremiumSelect
+                value={createForm.gender}
+                onChange={(v) => setCreateForm(p => ({ ...p, gender: v }))}
+                options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]}
+                placeholder="Select gender"
+              />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Address</label>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Modal from '../../../../components/ui/Modal';
+import PremiumSelect from '../../../../components/ui/PremiumSelect';
 import { Zap, Printer, RotateCcw, Scissors } from 'lucide-react';
 
 const PAYMENT_CHIP = {
@@ -88,16 +89,12 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
             const moveOptions = tables.filter((t) => ((t.locationId?._id || t.locationId)?.toString() === branchId) && (t._id?.toString() !== currentTableId));
             if (moveOptions.length === 0) return null;
             return (
-              <select
-                defaultValue=""
-                onChange={(e) => { if (e.target.value) handleMoveTable(selectedOrder._id, e.target.value); }}
-                className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold uppercase tracking-normal text-(--color-text-primary) outline-none"
-              >
-                <option value="" disabled>Move to table…</option>
-                {moveOptions.map((t) => (
-                  <option key={t._id} value={t._id}>T{t.tableNumber}{t.tableName ? ` · ${t.tableName}` : ''}</option>
-                ))}
-              </select>
+              <PremiumSelect
+                value=""
+                onChange={(v) => { if (v) handleMoveTable(selectedOrder._id, v); }}
+                options={moveOptions.map((t) => ({ label: `T${t.tableNumber}${t.tableName ? ` · ${t.tableName}` : ''}`, value: t._id }))}
+                placeholder="Move to table…"
+              />
             );
           })()}
           {!['COMPLETED', 'CANCELLED', 'REJECTED'].includes(selectedOrder.status) && handleSplit && selectedOrder.items.length > 0 && (

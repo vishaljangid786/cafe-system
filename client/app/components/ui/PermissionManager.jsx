@@ -8,6 +8,7 @@ import Modal from './Modal';
 import useConfirm from './useConfirm';
 import { Button } from './Button';
 import { Spinner } from './Spinner';
+import PremiumSelect from './PremiumSelect';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 
@@ -333,15 +334,13 @@ export default function PermissionManager({ className = "" }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="input sm:w-56 appearance-none cursor-pointer"
-        >
-          {ROLE_FILTERS.map((r) => (
-            <option key={r.value} value={r.value}>{r.label}</option>
-          ))}
-        </select>
+        <div className="sm:w-56">
+          <PremiumSelect
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={ROLE_FILTERS}
+          />
+        </div>
       </div>
 
       {filteredUsers.length === 0 ? (
@@ -429,16 +428,12 @@ export default function PermissionManager({ className = "" }) {
           {presets.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-(--color-text-muted)">Apply a saved role</label>
-              <select
-                defaultValue=""
-                onChange={(e) => { applyPresetToEdit(e.target.value); e.target.value = ''; }}
-                className="input appearance-none cursor-pointer"
-              >
-                <option value="" disabled>Choose a role to fill the permissions below…</option>
-                {presets.map((p) => (
-                  <option key={p._id} value={p._id}>{p.name}</option>
-                ))}
-              </select>
+              <PremiumSelect
+                value=""
+                onChange={(v) => { if (v) applyPresetToEdit(v); }}
+                options={presets.map((p) => ({ label: p.name, value: p._id }))}
+                placeholder="Choose a role to fill the permissions below…"
+              />
             </div>
           )}
 

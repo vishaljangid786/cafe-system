@@ -181,13 +181,14 @@ export default function StaffAttendancePage() {
               </div>
               <div>
                 <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Type</label>
-                <select value={leaveForm.type} onChange={(e) => setLeaveForm({ ...leaveForm, type: e.target.value })}
-                  className="w-full mt-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold uppercase text-(--color-text-primary) outline-none">
-                  <option value="paid">Paid</option>
-                  <option value="sick">Sick</option>
-                  <option value="casual">Casual</option>
-                  <option value="unpaid">Unpaid</option>
-                </select>
+                <div className="mt-1">
+                  <PremiumSelect
+                    value={leaveForm.type}
+                    onChange={(v) => setLeaveForm({ ...leaveForm, type: v })}
+                    options={[{ label: 'Paid', value: 'paid' }, { label: 'Sick', value: 'sick' }, { label: 'Casual', value: 'casual' }, { label: 'Unpaid', value: 'unpaid' }]}
+                    placeholder="Leave type"
+                  />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Reason (optional)</label>

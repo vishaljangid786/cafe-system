@@ -76,6 +76,8 @@ export default function UsersPage() {
   const [editingName, setEditingName] = useState('');
   const [editRole, setEditRole] = useState('');
   const [editBranchIds, setEditBranchIds] = useState([]);
+  const [editGender, setEditGender] = useState('Male');
+  const [editAssignedLocation, setEditAssignedLocation] = useState('');
 
   const getLocationIds = (record) => {
     const ids = [];
@@ -172,6 +174,8 @@ export default function UsersPage() {
     setEditPermissions(u.permissions || {});
     setEditRole(u.role || '');
     setEditBranchIds(getLocationIds(u));
+    setEditGender(u.gender || 'Male');
+    setEditAssignedLocation(u.assignedLocation?._id || u.assignedLocation || '');
     setLoadingEdit(true);
     setShowEditModal(true);
     try {
@@ -183,6 +187,8 @@ export default function UsersPage() {
       setEditPermissions(full.permissions || {});
       setEditRole(full.role || '');
       setEditBranchIds(getLocationIds(full));
+      setEditGender(full.gender || 'Male');
+      setEditAssignedLocation(full.assignedLocation?._id || full.assignedLocation || '');
     } catch (err) {
       toast.error('Could not load user details');
       setShowEditModal(false);
@@ -196,13 +202,16 @@ export default function UsersPage() {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     data.role = editRole || data.role;
+    data.gender = editGender;
     if (data.role === 'branch_admin') {
-      const branchIds = editBranchIds.length > 0 ? editBranchIds : (data.assignedLocation ? [data.assignedLocation] : []);
+      const branchIds = editBranchIds.length > 0 ? editBranchIds : (editAssignedLocation ? [editAssignedLocation] : []);
       data.assignedLocation = branchIds[0] || '';
       data.accessibleLocations = branchIds;
     } else if (data.role === 'admin') {
       data.accessibleLocations = editBranchIds;
       delete data.assignedLocation;
+    } else {
+      data.assignedLocation = editAssignedLocation;
     }
     // Don't send empty optional fields (avoids ObjectId / Number cast errors on the backend).
     if (data.assignedLocation === '') delete data.assignedLocation;
@@ -586,29 +595,22 @@ export default function UsersPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Gender</label>
-                  <select name="gender" defaultValue={editingUser.gender || 'Male'} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary appearance-none">
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <PremiumSelect
+                    value={editGender}
+                    onChange={setEditGender}
+                    options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Staff Role</label>
-                  <select
-                    name="role"
+                  <PremiumSelect
                     value={editRole || editingUser.role}
-                    onChange={(e) => {
-                      const nextRole = e.target.value;
-                      setEditRole(nextRole);
-                      setEditBranchIds(['branch_admin', 'admin'].includes(nextRole) ? getLocationIds(editingUser) : []);
+                    onChange={(v) => {
+                      setEditRole(v);
+                      setEditBranchIds(['branch_admin', 'admin'].includes(v) ? getLocationIds(editingUser) : []);
                     }}
-                    className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary appearance-none"
-                  >
-                    <option value="staff">Staff</option>
-                    <option value="chef">Chef</option>
-                    <option value="branch_admin">Branch Admin</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                    options={[{ label: 'Staff', value: 'staff' }, { label: 'Chef', value: 'chef' }, { label: 'Branch Admin', value: 'branch_admin' }, { label: 'Admin', value: 'admin' }]}
+                  />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Address Details</label>
@@ -654,12 +656,12 @@ export default function UsersPage() {
                 ) : (
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Assigned Branch</label>
-                    <select name="assignedLocation" defaultValue={editingUser.assignedLocation?._id || editingUser.assignedLocation || ''} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary appearance-none">
-                      <option value="">No branch (Global)</option>
-                      {locations.map((loc) => (
-                        <option key={loc._id} value={loc._id}>{loc.name} ({loc.city})</option>
-                      ))}
-                    </select>
+                    <PremiumSelect
+                      value={editAssignedLocation}
+                      onChange={setEditAssignedLocation}
+                      options={[{ label: 'No branch (Global)', value: '' }, ...locations.map((loc) => ({ label: `${loc.name} (${loc.city})`, value: loc._id }))]}
+                      placeholder="Select branch"
+                    />
                   </div>
                 )}
                 <div className="space-y-2">

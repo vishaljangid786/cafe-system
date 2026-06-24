@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Truck, Package, Plus, Trash2, Check, X, Building2 } from 'lucide-react';
 
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -151,24 +152,22 @@ export default function ProcurementPage() {
               <div className="glass-card p-6 rounded-xl premium-shadow space-y-4">
                 <h2 className="text-sm font-bold text-(--color-text-primary)">New purchase order</h2>
                 <div className="flex flex-wrap gap-3">
-                  <select value={poSupplier} onChange={(e) => setPoSupplier(e.target.value)} className={inputCls}>
-                    <option value="">Select supplier…</option>
-                    {suppliers.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                  </select>
+                  <div className="w-56">
+                    <PremiumSelect value={poSupplier} onChange={setPoSupplier} options={suppliers.map((s) => ({ label: s.name, value: s._id }))} placeholder="Select supplier…" />
+                  </div>
                   {!branchScoped && (
-                    <select value={branch} onChange={(e) => setBranch(e.target.value)} className={inputCls}>
-                      {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
-                    </select>
+                    <div className="w-44">
+                      <PremiumSelect value={branch} onChange={setBranch} options={locations.map((l) => ({ label: l.name, value: l._id }))} placeholder="Select branch" />
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   {poItems.map((it, idx) => (
                     <div key={idx} className="flex flex-wrap gap-2 items-center">
-                      <select value={it.ingredient} onChange={(e) => onPickIngredient(idx, e.target.value)} className={`${inputCls} flex-1 min-w-40`}>
-                        <option value="">Ingredient (links to stock)…</option>
-                        {ingredients.map((ing) => <option key={ing._id} value={ing._id}>{ing.name}</option>)}
-                      </select>
+                      <div className="flex-1 min-w-40">
+                        <PremiumSelect value={it.ingredient} onChange={(v) => onPickIngredient(idx, v)} options={ingredients.map((ing) => ({ label: ing.name, value: ing._id }))} placeholder="Ingredient (links to stock)…" />
+                      </div>
                       <input value={it.name} onChange={(e) => setItem(idx, { name: e.target.value })} placeholder="or item name" className={`${inputCls} w-36`} />
                       <input type="number" value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} placeholder="Qty" className={`${inputCls} w-20`} />
                       <span className="text-[10px] text-(--color-text-muted) uppercase">{it.unit}</span>
