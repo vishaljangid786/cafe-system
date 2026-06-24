@@ -127,7 +127,7 @@ export default function CommandCenterPage() {
                 onChange={(val) => setSelectedBranch(val)}
                 options={[
                   { label: 'All Locations', value: 'all' },
-                  ...locations.map(loc => ({ label: loc.name, value: loc._id }))
+                  ...locations.map(loc => ({ label: loc.cafe?.name ? `${loc.name} · ${loc.cafe.name}` : loc.name, value: loc._id }))
                 ]}
                 className="min-w-50"
               />

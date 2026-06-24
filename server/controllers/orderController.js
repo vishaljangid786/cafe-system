@@ -88,7 +88,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
 // @desc    Get orders
 const getOrders = asyncHandler(async (req, res) => {
-  const { status, branchId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
+  const { status, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
   const filter = {};
 
   const VALID_ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
@@ -110,6 +110,22 @@ const getOrders = asyncHandler(async (req, res) => {
   const branch = scopedLocationId(req, branchId);
   if (branch) filter.branch = branch;
 
+  // Optional cafe filter: narrow to the branches owned by that cafe, intersected
+  // with the access scope above so it can only ever NARROW what the user may see.
+  if (cafeId && mongoose.isValidObjectId(cafeId)) {
+    const Location = require('../models/Location');
+    const cafeBranches = (await Location.find({ cafe: cafeId }).select('_id').lean())
+      .map((b) => b._id.toString());
+    let allowed = cafeBranches;
+    if (branch && branch.$in) {
+      const set = new Set(branch.$in.map((x) => x.toString()));
+      allowed = cafeBranches.filter((b) => set.has(b));
+    } else if (branch) {
+      allowed = cafeBranches.filter((b) => b === branch.toString());
+    }
+    filter.branch = { $in: allowed };
+  }
+
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = clampLimit(req.query.limit, 20);
@@ -118,7 +134,7 @@ const getOrders = asyncHandler(async (req, res) => {
   const total = await Order.countDocuments(filter);
 
   const orders = await Order.find(filter)
-    .populate('branch', 'name city')
+    .populate({ path: 'branch', select: 'name city cafe', populate: { path: 'cafe', select: 'name' } })
     .populate('table', 'tableNumber')
     .populate('createdBy', 'name')
     .populate('assignedChef', 'name')
@@ -805,7 +821,7 @@ const generateOrderBill = asyncHandler(async (req, res) => {
 
 // @desc    Get Order Analytics (Deep)
 const getOrderAnalytics = asyncHandler(async (req, res) => {
-  const { branchId, startDate, endDate } = req.query;
+  const { branchId, cafeId, startDate, endDate } = req.query;
   const query = {};
 
   if (startDate && endDate) {
@@ -814,6 +830,21 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
 
   const branch = scopedLocationId(req, branchId);
   if (branch) query.branch = branch;
+
+  // Honour the cafe filter so the metric cards/charts narrow with the order list.
+  if (cafeId && mongoose.isValidObjectId(cafeId)) {
+    const Location = require('../models/Location');
+    const cafeBranches = (await Location.find({ cafe: cafeId }).select('_id').lean())
+      .map((b) => b._id.toString());
+    let allowed = cafeBranches;
+    if (branch && branch.$in) {
+      const set = new Set(branch.$in.map((x) => x.toString()));
+      allowed = cafeBranches.filter((b) => set.has(b));
+    } else if (branch) {
+      allowed = cafeBranches.filter((b) => b === branch.toString());
+    }
+    query.branch = { $in: allowed };
+  }
 
   // Fetch all orders within the authorized scope
   const allOrders = await Order.find(query)

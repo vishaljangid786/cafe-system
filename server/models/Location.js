@@ -12,7 +12,11 @@ const locationSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      // name is now optional as per requirement
+      // Required: the create validator already requires it and it is part of the
+      // {cafe, city, name} unique key — leaving it optional risked null-name
+      // collisions within a cafe+city.
+      required: [true, 'Branch name is required'],
+      trim: true,
     },
     city: {
       type: String,
@@ -70,9 +74,12 @@ const locationSchema = new mongoose.Schema(
 locationSchema.index({ status: 1 });
 locationSchema.index({ cafe: 1 });
 // A branch name is unique WITHIN a cafe (per city), so two different cafes may each
-// have e.g. a "Mumbai - Downtown" branch. Legacy branches with no cafe yet still
-// fall under a single (null) bucket until the migration backfills `cafe`.
-locationSchema.index({ cafe: 1, city: 1, name: 1 }, { unique: true });
+// have e.g. a "Mumbai - Downtown" branch. Partial so legacy/in-flight rows that
+// don't yet have BOTH a cafe and a name can't collide on a {null,city,null} key.
+locationSchema.index(
+  { cafe: 1, city: 1, name: 1 },
+  { unique: true, partialFilterExpression: { cafe: { $exists: true }, name: { $exists: true } } }
+);
 
 const Location = mongoose.model('Location', locationSchema);
 module.exports = Location;

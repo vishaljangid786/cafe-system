@@ -53,6 +53,38 @@ const addAdminToCafe = async (cafeId, userId) => {
   await User.updateOne({ _id: userId }, { $addToSet: add });
 };
 
+// Revoke ONE branch from a cafe's admins' accessibleLocations — but keep it for
+// any admin who can still reach it through ANOTHER cafe they administer. Used when
+// a branch leaves a cafe (reassignment) so its old admins lose access cleanly.
+const revokeBranchFromCafeAdmins = async (cafeId, branchId) => {
+  if (!cafeId || !branchId) return;
+  const adminIds = await adminIdsForCafe(cafeId);
+  if (adminIds.length === 0) return;
+  const bid = branchId.toString();
+  for (const adminId of adminIds) {
+    const admin = await User.findById(adminId).select('cafes').lean();
+    const otherCafes = (admin?.cafes || []).filter((c) => c.toString() !== cafeId.toString());
+    let stillReachable = false;
+    if (otherCafes.length) {
+      const shared = await Location.findOne({ _id: branchId, cafe: { $in: otherCafes } }).select('_id').lean();
+      stillReachable = !!shared;
+    }
+    if (!stillReachable) {
+      await User.updateOne({ _id: adminId }, { $pull: { accessibleLocations: branchId } });
+    }
+  }
+};
+
+// Move a branch from one cafe to another: revoke from the old cafe's admins and
+// grant to the new cafe's admins. The caller is responsible for setting
+// Location.cafe = newCafeId BEFORE calling this (so the new grant resolves).
+const moveBranchToCafe = async (oldCafeId, newCafeId, branchId) => {
+  if (oldCafeId && oldCafeId.toString() !== (newCafeId || '').toString()) {
+    await revokeBranchFromCafeAdmins(oldCafeId, branchId);
+  }
+  await grantBranchToCafeAdmins(newCafeId, branchId);
+};
+
 // Remove an admin from a cafe: drop the membership and revoke access to its
 // branches — but KEEP any branch that also belongs to another cafe the admin
 // still administers, so multi-cafe admins don't lose unrelated access.
@@ -86,6 +118,8 @@ module.exports = {
   adminIdsForCafe,
   syncCafeAccess,
   grantBranchToCafeAdmins,
+  revokeBranchFromCafeAdmins,
+  moveBranchToCafe,
   addAdminToCafe,
   removeAdminFromCafe,
 };

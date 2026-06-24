@@ -767,7 +767,7 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
     locQuery._id = { $in: compAllowed };
     staffQuery.assignedLocation = { $in: compAllowed };
   }
-  const locations = await Location.find(locQuery);
+  const locations = await Location.find(locQuery).populate('cafe', 'name');
   const users = await User.find(staffQuery);
 
   const branchScope = scopedLocationId(req, null);
@@ -791,6 +791,7 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
       _id: loc._id,
       name: loc.name,
       city: loc.city,
+      cafeName: loc.cafe?.name || '',
       revenue: 0,
       previousRevenue: 0,
       orders: 0,
@@ -873,6 +874,7 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
     return {
       _id: stats._id,
       name: stats.name,
+      cafeName: stats.cafeName,
       city: stats.city,
       revenue: stats.revenue.toFixed(2),
       orders: stats.orders,

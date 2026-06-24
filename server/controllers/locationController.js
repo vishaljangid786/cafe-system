@@ -109,13 +109,37 @@ const createLocation = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('You administer multiple cafes — choose which cafe this branch belongs to');
     }
-  } else {
-    // super_admin
+  } else if (req.user.role === 'super_admin') {
+    // Platform owner — may place a branch in any cafe, but must name it.
     if (!requestedCafe) {
       res.status(400);
       throw new Error('Select the cafe this branch belongs to');
     }
     cafeId = requestedCafe;
+  } else {
+    // Any other role that reached here holds the manageBranches permission but is
+    // NOT an admin/super_admin (e.g. a delegated branch_admin). Scope them to the
+    // cafe(s) they actually belong to — never trust an arbitrary cafe id.
+    const { resolveUserCafeIds } = require('./cafeController');
+    const allowed = (await resolveUserCafeIds(req.user)).map((c) => c.toString());
+    if (allowed.length === 0) {
+      res.status(403);
+      throw new Error('You are not associated with any cafe');
+    }
+    if (!requestedCafe) {
+      if (allowed.length === 1) {
+        cafeId = allowed[0];
+      } else {
+        res.status(400);
+        throw new Error('Select the cafe this branch belongs to');
+      }
+    } else {
+      if (!allowed.includes(requestedCafe.toString())) {
+        res.status(403);
+        throw new Error('You can only create branches inside a cafe you belong to');
+      }
+      cafeId = requestedCafe;
+    }
   }
 
   const cafe = await Cafe.findOne({ _id: cafeId, status: { $ne: 'deleted' } });
@@ -188,6 +212,43 @@ const updateLocation = asyncHandler(async (req, res) => {
     throw new Error('Only administrators can update location details');
   }
 
+  // --- Cafe reassignment (move a branch to a different cafe/brand) ---
+  // super_admin: may move to any cafe. admin: only between two cafes they BOTH
+  // administer. We capture the old cafe so we can re-sync branch access after.
+  const requestedCafe = req.body.cafe || req.body.cafeId;
+  let oldCafeId = location.cafe;
+  let reassigning = false;
+  if (requestedCafe && String(requestedCafe) !== String(location.cafe || '')) {
+    if (req.user.role !== 'super_admin') {
+      const own = (req.user.cafes || []).map((c) => c.toString());
+      const ownsSource = location.cafe && own.includes(location.cafe.toString());
+      const ownsDest = own.includes(requestedCafe.toString());
+      if (!ownsSource || !ownsDest) {
+        res.status(403);
+        throw new Error('You can only move a branch between cafes you administer');
+      }
+    }
+    const destCafe = await Cafe.findOne({ _id: requestedCafe, status: { $ne: 'deleted' } });
+    if (!destCafe) {
+      res.status(404);
+      throw new Error('Destination cafe not found');
+    }
+    // Enforce per-cafe name+city uniqueness in the destination cafe.
+    const clash = await Location.findOne({
+      cafe: requestedCafe,
+      city: city || location.city,
+      name: name || location.name,
+      _id: { $ne: location._id },
+      isPermanentlyDeleted: { $ne: true },
+    });
+    if (clash) {
+      res.status(400);
+      throw new Error('A branch with this name in this city already exists in the destination cafe');
+    }
+    location.cafe = requestedCafe;
+    reassigning = true;
+  }
+
   if (name) location.name = name;
   if (city) location.city = city;
   if (state) location.state = state;
@@ -195,7 +256,7 @@ const updateLocation = asyncHandler(async (req, res) => {
   if (pincode) location.pincode = pincode;
   if (geoCoordinates) location.geoCoordinates = geoCoordinates;
   if (dietaryType) location.dietaryType = dietaryType;
-  
+
   if (status) {
     location.status = status;
     if (status === 'hold') {
@@ -206,6 +267,13 @@ const updateLocation = asyncHandler(async (req, res) => {
   }
 
   await location.save();
+
+  // Re-mirror branch access after a cafe move: revoke from the old cafe's admins
+  // (unless still reachable elsewhere) and grant to the new cafe's admins.
+  if (reassigning) {
+    const { moveBranchToCafe } = require('../utils/cafeSync');
+    await moveBranchToCafe(oldCafeId, location.cafe, location._id);
+  }
 
   await logActivity(
     req.user,

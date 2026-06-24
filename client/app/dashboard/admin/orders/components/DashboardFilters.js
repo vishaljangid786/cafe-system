@@ -2,22 +2,39 @@ import PremiumSelect from '../../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../../components/ui/UniversalDateFilter';
 import { Globe, LayoutGrid, List, FilterX } from 'lucide-react';
 
-export default function DashboardFilters({ 
-  user, 
-  locations, 
-  branchFilter, 
-  setBranchFilter, 
-  statusFilter, 
-  setStatusFilter, 
-  dateRange, 
-  setDateRange, 
-  viewMode, 
-  setViewMode, 
-  resetFilters, 
-  loading 
+export default function DashboardFilters({
+  user,
+  locations,
+  branchFilter,
+  setBranchFilter,
+  statusFilter,
+  setStatusFilter,
+  dateRange,
+  setDateRange,
+  viewMode,
+  setViewMode,
+  resetFilters,
+  loading,
+  cafes = [],
+  cafeFilter = 'all',
+  setCafeFilter,
 }) {
+  // Multi-cafe operators (super_admin, or an admin owning >1 cafe) get a brand
+  // filter so they can focus a single cafe's orders.
+  const showCafeFilter = cafes.length > 1 && typeof setCafeFilter === 'function';
   return (
     <div className="bg-(--color-surface) p-2 rounded-xl border border-(--color-border) shadow-sm space-y-2">
+      {showCafeFilter && (
+        <div className="px-1">
+          <PremiumSelect
+            value={cafeFilter}
+            onChange={setCafeFilter}
+            placeholder="All Cafes"
+            options={[{ label: 'All Cafes (Brands)', value: 'all' }, ...cafes.map((c) => ({ label: c.name, value: c._id }))]}
+            className="h-11"
+          />
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
         {/* Sector Selector */}
         <div className="lg:col-span-3 ">

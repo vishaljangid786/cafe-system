@@ -19,7 +19,7 @@ const { userLocationIds, enforceLocationAccess, scopedLocationIds } = require('.
  * @access  Private
  */
 const exportData = asyncHandler(async (req, res) => {
-  const { type, format, startDate, endDate, branchId, locationIds } = req.query;
+  const { type, format, startDate, endDate, branchId, locationIds, cafeId } = req.query;
 
   if (!type || !format) {
     res.status(400);
@@ -49,6 +49,25 @@ const exportData = asyncHandler(async (req, res) => {
     finalBranchId = req.user.assignedLocation || { $in: [] };
   }
   
+  // Narrow to a single cafe's branches when a cafe filter is supplied, intersected
+  // with the access scope above so it can only narrow what the user may export.
+  if (cafeId) {
+    const mongoose = require('mongoose');
+    if (mongoose.isValidObjectId(cafeId)) {
+      const Location = require('../models/Location');
+      const cafeBranches = (await Location.find({ cafe: cafeId }).select('_id').lean())
+        .map((b) => b._id.toString());
+      let allowed = cafeBranches;
+      if (finalBranchId && finalBranchId.$in) {
+        const set = new Set(finalBranchId.$in.map((x) => x.toString()));
+        allowed = cafeBranches.filter((b) => set.has(b));
+      } else if (finalBranchId) {
+        allowed = cafeBranches.filter((b) => b === finalBranchId.toString());
+      }
+      finalBranchId = { $in: allowed };
+    }
+  }
+
   if (finalBranchId) {
     query[branchField] = finalBranchId;
   }
@@ -297,7 +316,30 @@ const exportData = asyncHandler(async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}.xlsx`);
     return res.send(buffer);
   } else if (format === 'pdf') {
-    const buffer = await generatePDF(data, exportTitle);
+    // Brand the PDF with the owning cafe when the export resolves to a single
+    // cafe (specific branch, or a single-cafe admin); otherwise the platform brand.
+    let branding = null;
+    try {
+      const Location = require('../models/Location');
+      const Cafe = require('../models/Cafe');
+      let cafeId = null;
+      // A specific single branch (string id) → use that branch's cafe.
+      if (typeof finalBranchId === 'string' && finalBranchId && finalBranchId !== 'all') {
+        const b = await Location.findById(finalBranchId).select('cafe').lean();
+        cafeId = b?.cafe || null;
+      } else {
+        // Otherwise brand only when the caller resolves to exactly one cafe.
+        const { resolveUserCafeIds } = require('./cafeController');
+        const ids = await resolveUserCafeIds(req.user);
+        if (ids.length === 1) cafeId = ids[0];
+      }
+      if (cafeId) {
+        const c = await Cafe.findById(cafeId).select('name gstin').lean();
+        if (c) branding = { name: c.name, gstin: c.gstin };
+      }
+    } catch (e) { /* fall back to platform branding */ }
+
+    const buffer = await generatePDF(data, exportTitle, branding);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
     return res.send(buffer);

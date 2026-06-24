@@ -23,7 +23,33 @@ const backfillCafes = async () => {
   const User = require('../models/User');
   const Location = require('../models/Location');
 
-  if ((await Cafe.estimatedDocumentCount()) > 0) return; // already migrated
+  // Fast no-op once migrated.
+  if ((await Cafe.countDocuments()) > 0) return;
+
+  // Cross-instance lock: on serverless, several instances can boot at once and
+  // each see 0 cafes. A unique-_id upsert is an atomic gate — only the instance
+  // that INSERTS the lock proceeds; the rest see the existing doc and bail. This
+  // prevents a duplicate set of cafes from a concurrent double-run.
+  const db = require('mongoose').connection.db;
+  if (db) {
+    try {
+      const prior = await db.collection('migrations').findOneAndUpdate(
+        { _id: 'cafe-backfill' },
+        { $setOnInsert: { startedAt: new Date() } },
+        { upsert: true, returnDocument: 'before' }
+      );
+      // findOneAndUpdate returns the pre-existing doc (or null when we inserted).
+      const existed = prior && (prior.value !== undefined ? prior.value : prior);
+      if (existed) return; // another instance already claimed it
+    } catch (e) {
+      // A concurrent upsert on the unique _id can make the race-loser throw a
+      // duplicate-key error instead of matching the existing doc — that means
+      // another instance won, so BAIL (don't double-run the backfill).
+      if (e && (e.code === 11000 || e.code === 11001)) return;
+      // Any other error (e.g. lock collection unavailable) → fall through; the
+      // countDocuments guard above still prevents re-runs single-instance.
+    }
+  }
 
   const locations = await Location.find({ isPermanentlyDeleted: { $ne: true } })
     .select('_id cafe city state').lean();
@@ -98,6 +124,15 @@ const backfillCafes = async () => {
         { $addToSet: { cafes: { $each: [...cafeIds].map((id) => new mongoose.Types.ObjectId(id)) } } }
       );
     }
+  }
+
+  if (db) {
+    try {
+      await db.collection('migrations').updateOne(
+        { _id: 'cafe-backfill' },
+        { $set: { completedAt: new Date() } }
+      );
+    } catch (e) { /* observability only */ }
   }
 
   console.log(

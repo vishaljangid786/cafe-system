@@ -147,6 +147,9 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
     }
     user.role = 'admin';
     user.permissions = { ...(user.permissions || {}), ...CAFE_ADMIN_PERMISSIONS };
+    // Admins are CAFE-scoped, not single-branch — drop any stale single-branch
+    // pointer so their access derives purely from cafes/accessibleLocations.
+    user.assignedLocation = undefined;
     await user.save();
     // Record membership + mirror the cafe's branches into accessibleLocations.
     await addAdminToCafe(cafe._id, user._id);
@@ -264,7 +267,24 @@ const removeCafeAdmin = asyncHandler(async (req, res) => {
     throw new Error('Cafe not found');
   }
 
+  // Verify the target is actually an admin of THIS cafe before removing.
+  const target = await User.findById(req.params.userId).select('role cafes');
+  if (!target) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  const isMember = (target.cafes || []).some((c) => c.toString() === cafe._id.toString());
+  if (!isMember) {
+    res.status(400);
+    throw new Error('This user is not an admin of this cafe');
+  }
+
   await removeAdminFromCafe(cafe._id, req.params.userId);
+  // Note: a user left administering NO cafe stays role 'admin' with empty cafes[]
+  // (they simply see nothing) — we don't auto-downgrade, since 'staff' would
+  // require an assignedLocation the user may not have. A super-admin can reassign
+  // or delete them explicitly.
+
   await logActivity(req.user, 'CAFE_ADMIN_REMOVE', `Removed an admin from cafe ${cafe.name}`, req, { cafeId: cafe._id, targetUserId: req.params.userId });
 
   res.json({ success: true, message: 'Admin removed from cafe' });
@@ -291,11 +311,27 @@ const deleteCafe = asyncHandler(async (req, res) => {
 
   cafe.status = 'deleted';
   await cafe.save();
-  await User.updateMany({ cafes: cafe._id }, { $pull: { cafes: cafe._id } });
+  // Detach every admin AND prune the cafe's branch ids from their
+  // accessibleLocations (keeping branches still reachable via another cafe).
+  const affected = await User.find({ cafes: cafe._id }).select('_id').lean();
+  for (const u of affected) {
+    await removeAdminFromCafe(cafe._id, u._id);
+  }
 
   await logActivity(req.user, 'CAFE_DELETE', `Deleted cafe: ${cafe.name}`, req, { cafeId: cafe._id });
 
   res.json({ success: true, message: 'Cafe deleted' });
+});
+
+// @desc    Upload a cafe logo image → returns the hosted URL (used by the
+//          create/edit forms; keeps the JSON create/update endpoints simple).
+// @route   POST /api/cafes/upload-logo   (super_admin or admin)
+const uploadCafeLogo = asyncHandler(async (req, res) => {
+  if (!req.file || !req.file.path) {
+    res.status(400);
+    throw new Error('No image uploaded');
+  }
+  res.status(201).json({ success: true, url: req.file.path });
 });
 
 module.exports = {
@@ -306,6 +342,7 @@ module.exports = {
   addCafeAdmin,
   removeCafeAdmin,
   deleteCafe,
+  uploadCafeLogo,
   canAccessCafe,
   resolveUserCafeIds,
   CAFE_ADMIN_PERMISSIONS,

@@ -64,10 +64,12 @@ const cafeSchema = new mongoose.Schema(
 );
 
 // Cafe names must be unique among non-deleted cafes. A partial unique index lets a
-// soft-deleted cafe's name be reused.
+// soft-deleted cafe's name be reused. NOTE: MongoDB partial indexes do NOT support
+// $ne, so we enumerate the live statuses with $in (a $ne filter silently fails to
+// build the index, dropping the uniqueness guarantee entirely).
 cafeSchema.index(
   { name: 1 },
-  { unique: true, partialFilterExpression: { status: { $ne: 'deleted' } } }
+  { unique: true, partialFilterExpression: { status: { $in: ['active', 'inactive'] } } }
 );
 
 const slugify = (value = '') =>

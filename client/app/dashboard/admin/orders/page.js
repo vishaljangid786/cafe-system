@@ -45,6 +45,8 @@ export default function AdminOrdersDashboard() {
   const didInitRef = useRef(false);
   const [viewMode, setViewMode] = useState('list'); // Default to list view
   const [branchFilter, setBranchFilter] = useState('all');
+  const [cafeFilter, setCafeFilter] = useState('all');
+  const [cafes, setCafes] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [locations, setLocations] = useState([]);
@@ -70,6 +72,7 @@ export default function AdminOrdersDashboard() {
       params.append('page', currentPage);
       params.append('limit', itemsPerPage);
       if (branchFilter !== 'all') params.append('branchId', branchFilter);
+      if (cafeFilter !== 'all') params.append('cafeId', cafeFilter);
       if (statusFilter) params.append('status', statusFilter);
       if (dateRange.start) params.append('startDate', dateRange.start);
       if (dateRange.end) params.append('endDate', dateRange.end);
@@ -78,10 +81,11 @@ export default function AdminOrdersDashboard() {
       // allSettled so a 403/500 on analytics (a delegated branch_admin may hold
       // viewOrders but not viewAnalytics) or locations doesn't reject the whole
       // batch and blank the orders list that otherwise loaded fine.
-      const [orderRes, analyticsRes, locRes] = await Promise.allSettled([
+      const [orderRes, analyticsRes, locRes, cafeRes] = await Promise.allSettled([
         api.get(`/orders?${params.toString()}`),
         api.get(`/orders/analytics?${params.toString().replace(/&?page=\d+|&?limit=\d+/g, '')}`),
-        api.get('/locations')
+        api.get('/locations'),
+        api.get('/cafes')
       ]);
       // Drop the result if a newer request has since started.
       if (reqId !== reqIdRef.current) return;
@@ -91,6 +95,7 @@ export default function AdminOrdersDashboard() {
       }
       if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data.data);
       if (locRes.status === 'fulfilled') setLocations(locRes.value.data.data);
+      if (cafeRes.status === 'fulfilled') setCafes(cafeRes.value.data.data || []);
     } catch (error) {
       if (reqId === reqIdRef.current) toast.error('Could not load orders. Please try again.');
     } finally {
@@ -101,7 +106,7 @@ export default function AdminOrdersDashboard() {
         progress.done();
       }
     }
-  }, [branchFilter, statusFilter, dateRange, currentPage, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, dateRange, currentPage, searchTerm]);
 
   // Debounce data fetches so each keystroke/filter change doesn't fire its own
   // request burst; the stale-response guard above handles any overlap.
@@ -116,7 +121,7 @@ export default function AdminOrdersDashboard() {
   useEffect(() => {
     if (!didMountRef.current) { didMountRef.current = true; return; }
     setCurrentPage(1);
-  }, [branchFilter, statusFilter, dateRange, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, dateRange, searchTerm]);
 
   // Attach real-time listeners to the shared socket from AuthContext.
   // No new connection is created — this eliminates the duplicate socket bug.
@@ -254,6 +259,7 @@ export default function AdminOrdersDashboard() {
 
   const resetFilters = () => {
     setBranchFilter('all');
+    setCafeFilter('all');
     setStatusFilter('');
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
@@ -277,6 +283,7 @@ export default function AdminOrdersDashboard() {
     try {
       const params = new URLSearchParams({ type: 'orders', format: 'csv' });
       if (branchFilter !== 'all') params.append('branchId', branchFilter);
+      if (cafeFilter !== 'all') params.append('cafeId', cafeFilter);
       if (dateRange.start) params.append('startDate', dateRange.start);
       if (dateRange.end) params.append('endDate', dateRange.end);
       const res = await api.get(`/export?${params.toString()}`, { responseType: 'blob' });
@@ -352,6 +359,9 @@ export default function AdminOrdersDashboard() {
           setViewMode={setViewMode}
           resetFilters={resetFilters}
           loading={loading}
+          cafes={cafes}
+          cafeFilter={cafeFilter}
+          setCafeFilter={setCafeFilter}
         />
 
 
@@ -484,6 +494,9 @@ export default function AdminOrdersDashboard() {
                               </td>
                               <td className="py-6 px-8">
                                 <div className="flex flex-col">
+                                  {order.branch?.cafe?.name && (
+                                    <span className="text-[9px] font-bold text-primary uppercase tracking-normal mb-0.5">{order.branch.cafe.name}</span>
+                                  )}
                                   <span className="text-xs font-bold text-(--color-text-primary)">{order.branch?.name}</span>
                                   <span className="text-[10px] font-bold text-(--color-text-muted) mt-1 uppercase tracking-normal">Table {order.table?.tableNumber}</span>
                                 </div>

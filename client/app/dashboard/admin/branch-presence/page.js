@@ -178,6 +178,9 @@ export default function BranchPresencePage() {
                       </div>
 
                       <div>
+                        {loc.cafe?.name && (
+                          <span className="inline-block text-[9px] font-bold uppercase tracking-normal text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full mb-1">{loc.cafe.name}</span>
+                        )}
                         <h3 className="text-3xl font-bold text-(--color-text-primary) tracking-tight italic uppercase">{loc.name}</h3>
                         <p className="text-xs font-medium text-(--color-text-muted) mt-1">{loc.city}, {loc.state}</p>
                       </div>

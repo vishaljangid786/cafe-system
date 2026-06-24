@@ -34,6 +34,7 @@ export default function CafesPage() {
   const [editing, setEditing] = useState(null); // cafe being edited (or null = create)
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Gate: only super_admin and admins (cafe owners) may open this page.
   useEffect(() => {
@@ -99,6 +100,24 @@ export default function CafesPage() {
   const setAddress = (k, v) => setForm((f) => ({ ...f, address: { ...f.address, [k]: v } }));
   const setContact = (k, v) => setForm((f) => ({ ...f, contact: { ...f.contact, [k]: v } }));
   const setAdmin = (k, v) => setForm((f) => ({ ...f, admin: { ...f.admin, [k]: v } }));
+
+  // Upload the chosen logo/icon image → store the returned hosted URL in form.logo.
+  const handleLogoFile = async (file) => {
+    if (!file) return;
+    setUploadingLogo(true);
+    const t = toast.loading('Uploading logo…');
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      const res = await api.post('/cafes/upload-logo', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setField('logo', res.data.url);
+      toast.success('Logo uploaded', { id: t });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Logo upload failed', { id: t });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -305,8 +324,24 @@ export default function CafesPage() {
                           <input className={inputCls} value={form.gstin} onChange={(e) => setField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
                         </div>
                         <div className="md:col-span-2">
-                          <label className={labelCls}><ImageIcon size={11} className="inline mr-1" /> Logo URL</label>
-                          <input className={inputCls} value={form.logo} onChange={(e) => setField('logo', e.target.value)} placeholder="https://… (shown on receipts)" />
+                          <label className={labelCls}><ImageIcon size={11} className="inline mr-1" /> Logo / Icon (shown on receipts)</label>
+                          <div className="flex items-center gap-4">
+                            <label className="relative h-20 w-20 shrink-0 rounded-xl border border-dashed border-(--color-border) bg-(--color-bg-soft) flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-all">
+                              {form.logo ? (
+                                <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
+                              ) : (
+                                <ImageIcon size={22} className="text-(--color-text-muted)" />
+                              )}
+                              {uploadingLogo && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[9px] font-bold uppercase">…</div>
+                              )}
+                              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleLogoFile(e.target.files?.[0])} disabled={uploadingLogo} />
+                            </label>
+                            <div className="flex-1">
+                              <input className={inputCls} value={form.logo} onChange={(e) => setField('logo', e.target.value)} placeholder="Click the tile to upload, or paste an image URL" />
+                              <p className="text-[9px] text-(--color-text-muted) mt-1.5 ml-1">PNG/JPG up to 5MB. Upload replaces the URL automatically.</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </section>

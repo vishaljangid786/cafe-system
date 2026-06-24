@@ -8,12 +8,23 @@ const {
   addCafeAdmin,
   removeCafeAdmin,
   deleteCafe,
+  uploadCafeLogo,
 } = require('../controllers/cafeController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validatorMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 const { createCafeValidator, updateCafeValidator, addAdminValidator } = require('../validators/cafeValidator');
 
 router.use(verifyToken);
+
+// Upload a cafe logo image and get back a hosted URL. Available to super_admins
+// and admins (the roles that can edit cafe branding).
+router.post(
+  '/upload-logo',
+  checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'),
+  upload.single('image'),
+  uploadCafeLogo
+);
 
 router
   .route('/')

@@ -21,7 +21,7 @@ const TABS = [
 const FIELDS = {
   tax: [
     ['tax', 'gstRate', 'GST rate (%)', 'number', '5 / 12 / 18'],
-    ['tax', 'gstin', 'GSTIN (for invoices)', 'text', '15-digit GSTIN'],
+    ['tax', 'gstin', 'GSTIN (for invoices)', 'text', 'Fallback only — receipts use the cafe’s GSTIN when set (edit it on the Cafes page)'],
   ],
   billing: [
     ['billing', 'serviceChargeRate', 'Service charge (%)', 'number', '0 to disable'],

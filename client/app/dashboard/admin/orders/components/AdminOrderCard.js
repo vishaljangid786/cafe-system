@@ -27,7 +27,7 @@ export default function AdminOrderCard({ order, onCancel, onForceComplete, userR
             <h4 className="text-xl font-bold text-(--color-text-primary) mt-3">
               Table {order.table?.tableNumber || '??'}
             </h4>
-            <p className="text-xs font-medium text-(--color-text-muted) mt-1">Branch: {order.branch?.name}</p>
+            <p className="text-xs font-medium text-(--color-text-muted) mt-1">{order.branch?.cafe?.name ? `${order.branch.cafe.name} · ` : ''}Branch: {order.branch?.name}</p>
           </div>
           {isDelayed && (
             <div className="bg-[rgba(var(--color-danger-rgb),0.1)] p-2 rounded-lg border border-(--color-border) text-danger">

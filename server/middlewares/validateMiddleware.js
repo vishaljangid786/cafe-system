@@ -52,6 +52,8 @@ const locationSchema = [
   body('city').trim().notEmpty().withMessage('City is required'),
   body('state').trim().notEmpty().withMessage('State is required'),
   body('pincode').isString().bail().isPostalCode('IN').withMessage('Please provide a valid Indian pincode'),
+  // The owning cafe (brand). Required-ness/ownership is enforced in the controller.
+  body('cafe').optional({ checkFalsy: true }).isMongoId().withMessage('Invalid cafe'),
 ];
 
 const updateLocationSchema = [
@@ -60,6 +62,8 @@ const updateLocationSchema = [
   body('state').optional().trim().notEmpty().withMessage('State cannot be empty'),
   body('pincode').optional().isString().bail().isPostalCode('IN').withMessage('Please provide a valid Indian pincode'),
   body('status').optional().isIn(['active', 'inactive', 'hold']).withMessage('Invalid status'),
+  // Optional cafe reassignment target.
+  body('cafe').optional({ checkFalsy: true }).isMongoId().withMessage('Invalid cafe'),
 ];
 
 // Convert an "HH:mm" string into minutes-since-midnight for safe ordering.

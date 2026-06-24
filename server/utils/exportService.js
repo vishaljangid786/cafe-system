@@ -37,7 +37,7 @@ const generateExcel = async (data, title = 'Export Report') => {
   return await workbook.xlsx.writeBuffer();
 };
 
-const generatePDF = (data, title = 'Export Report') => {
+const generatePDF = (data, title = 'Export Report', branding = null) => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 40, size: 'A4' });
@@ -46,13 +46,19 @@ const generatePDF = (data, title = 'Export Report') => {
       doc.on('data', buffers.push.bind(buffers));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-      // Branding / Header
+      // Branding / Header — use the owning cafe's brand when the export resolves to
+      // a single cafe; otherwise fall back to the platform (CafeOS) header.
       doc.rect(0, 0, 600, 80).fill('#18181b'); // Zinc-900
-      doc.fillColor('#fbbf24').fontSize(24).font('Helvetica-Bold').text('CAFE', 40, 25, { continued: true });
-      doc.fillColor('#ffffff').text('OS');
-      
-      doc.fillColor('#ffffff').fontSize(10).font('Helvetica').text('Advanced Analytics & Export Engine', 40, 50);
-      doc.text(new Date().toLocaleString(), 400, 35, { align: 'right' });
+      if (branding && branding.name) {
+        doc.fillColor('#fbbf24').fontSize(22).font('Helvetica-Bold').text(branding.name, 40, 25);
+        doc.fillColor('#ffffff').fontSize(10).font('Helvetica')
+          .text(branding.gstin ? `GSTIN: ${branding.gstin}` : 'Cafe Report', 40, 52);
+      } else {
+        doc.fillColor('#fbbf24').fontSize(24).font('Helvetica-Bold').text('CAFE', 40, 25, { continued: true });
+        doc.fillColor('#ffffff').text('OS');
+        doc.fillColor('#ffffff').fontSize(10).font('Helvetica').text('Advanced Analytics & Export Engine', 40, 50);
+      }
+      doc.fillColor('#ffffff').fontSize(10).font('Helvetica').text(new Date().toLocaleString(), 400, 35, { align: 'right' });
 
       doc.moveDown(4);
       doc.fillColor('#18181b').fontSize(18).font('Helvetica-Bold').text(title, { align: 'center' });
@@ -109,7 +115,7 @@ const generatePDF = (data, title = 'Export Report') => {
       for (let i = 0; i < pages.count; i++) {
         doc.switchToPage(i);
         doc.fillColor('#a1a1aa').fontSize(8).text(
-          `Page ${i + 1} of ${pages.count} - CafeOS Generated Info`,
+          `Page ${i + 1} of ${pages.count} - ${branding && branding.name ? branding.name : 'CafeOS'} Generated Info`,
           0,
           doc.page.height - 20,
           { align: 'center' }

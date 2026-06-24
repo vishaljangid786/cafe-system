@@ -157,7 +157,8 @@ export default function BranchesPage() {
       lat: loc.geoCoordinates?.lat || '',
       lng: loc.geoCoordinates?.lng || '',
       status: loc.status,
-      dietaryType: loc.dietaryType || 'both'
+      dietaryType: loc.dietaryType || 'both',
+      cafe: loc.cafe?._id || loc.cafe || ''
     });
     setShowModal(true);
   };
@@ -189,7 +190,8 @@ export default function BranchesPage() {
       };
 
       if (editingId) {
-        await api.patch(`/locations/${editingId}`, payload);
+        // Include cafe so a super-admin / multi-cafe admin can reassign the branch.
+        await api.patch(`/locations/${editingId}`, { ...payload, cafe: formData.cafe });
       } else {
         await api.post('/locations', { ...payload, cafe: formData.cafe });
       }
@@ -396,9 +398,11 @@ export default function BranchesPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  {!editingId && (
+                  {/* Cafe picker: always on create; on edit only when more than one
+                      cafe is available (i.e. a reassignment is actually possible). */}
+                  {(!editingId || cafes.length > 1) && (
                     <PremiumSelect
-                      label="Cafe (Brand)"
+                      label={editingId ? 'Cafe (Brand) — reassign' : 'Cafe (Brand)'}
                       placeholder={cafes.length === 0 ? 'No cafe available — ask a super-admin' : 'Select the cafe this branch belongs to'}
                       value={formData.cafe}
                       onChange={(val) => setFormData({ ...formData, cafe: val })}
@@ -520,7 +524,9 @@ export default function BranchesPage() {
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold text-(--color-text-primary) tracking-tight leading-none">{selectedLocation.name}</h2>
-                        <p className="text-[10px] font-bold uppercase text-primary tracking-normal mt-2">Branch Overview</p>
+                        <p className="text-[10px] font-bold uppercase text-primary tracking-normal mt-2">
+                          {selectedLocation.cafe?.name ? `${selectedLocation.cafe.name} · Branch Overview` : 'Branch Overview'}
+                        </p>
                       </div>
                    </div>
                    <button 

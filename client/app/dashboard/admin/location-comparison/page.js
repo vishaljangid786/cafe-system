@@ -227,7 +227,7 @@ export default function LocationComparisonPage() {
                       <div className="absolute top-full left-0 mt-3 w-full bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc2).map(loc => (
                           <button key={loc._id} onClick={() => { setLoc1(loc._id); setIsLoc1Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-bold transition-colors">
-                            {loc.name}
+                            {loc.name}{loc.cafe?.name ? <span className="text-[10px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
                           </button>
                         ))}
                       </div>
@@ -250,7 +250,7 @@ export default function LocationComparisonPage() {
                       <div className="absolute top-full left-0 mt-3 w-full bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc1).map(loc => (
                           <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-bold transition-colors">
-                            {loc.name}
+                            {loc.name}{loc.cafe?.name ? <span className="text-[10px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
                           </button>
                         ))}
                       </div>
@@ -415,6 +415,7 @@ export default function LocationComparisonPage() {
                       <thead>
                         <tr className="border-b border-(--color-border)">
                           <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Name</th>
+                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
                           <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Revenue</th>
                           <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Orders</th>
                           <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Growth</th>
@@ -430,6 +431,7 @@ export default function LocationComparisonPage() {
                         {suiteData?.branches?.map((branch) => (
                           <tr key={branch._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/50 transition-all font-bold text-xs">
                             <td className="py-4 text-(--color-text-primary)">{branch.name}</td>
+                            <td className="py-4 text-primary">{branch.cafeName || '—'}</td>
                             <td className="py-4 text-(--color-text-primary)">₹{branch.revenue}</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.orders}</td>
                             <td className={`py-4 font-bold ${Number(branch.growthPercent) >= 0 ? 'text-success' : 'text-danger'}`}>{branch.growthPercent}%</td>

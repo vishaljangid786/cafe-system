@@ -16,6 +16,10 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const [cfg, setCfg] = useState(null);
   // Cafe (brand) that owns this branch — drives the receipt header branding.
   const [cafe, setCafe] = useState(null);
+  // Bill id + timestamp are (re)generated per checkout inside the effect below, so
+  // they must be declared BEFORE it (avoids a use-before-declaration TDZ).
+  const [billId, setBillId] = useState('');
+  const [dateTime, setDateTime] = useState('');
   useEffect(() => {
     if (!isOpen || !table) return;
     setPaymentType('CASH'); // fresh default for each table's checkout
@@ -44,6 +48,8 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const brandName = cafe?.name || cafeName;
   const brandAddress = [cafe?.address?.line1, cafe?.address?.city, cafe?.address?.state, cafe?.address?.pincode]
     .filter(Boolean).join(', ');
+  const brandPhone = cafe?.contact?.phone || '';
+  const brandEmail = cafe?.contact?.email || '';
 
   // Combine staged items and completed/served system orders for the final bill
   const stagedItems = table?.orders || [];
@@ -68,8 +74,6 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
   const taxes = Number(((taxableAmount + serviceCharge) * gstRate / 100).toFixed(2));
   const rawTotal = taxableAmount + serviceCharge + taxes;
   const total = roundBill ? Math.round(rawTotal) : rawTotal;
-  const [billId, setBillId] = useState('');
-  const [dateTime, setDateTime] = useState('');
 
   const handlePrint = () => {
     const printContent = billRef.current.innerHTML;
@@ -254,6 +258,11 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
                 {table.locationId?.name || table.locationName || 'Main Branch'}
               </p>
               {brandAddress && <p className="text-[10px] font-medium opacity-70">{brandAddress}</p>}
+              {(brandPhone || brandEmail) && (
+                <p className="text-[10px] font-medium opacity-70">
+                  {[brandPhone && `Tel: ${brandPhone}`, brandEmail].filter(Boolean).join('  •  ')}
+                </p>
+              )}
               {gstin && <p className="text-[10px] font-medium opacity-70">GSTIN: {gstin}</p>}
               <p className="text-[10px] font-medium opacity-70 mt-1">{dateTime}</p>
             </div>
