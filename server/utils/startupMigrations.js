@@ -141,7 +141,29 @@ const backfillCafes = async () => {
   );
 };
 
+// Auto-seeds demo data when the database is completely empty (first deploy / fresh DB).
+// Fully idempotent: skips immediately if any User document exists.
+const bootstrapSeedIfEmpty = async () => {
+  const User = require('../models/User');
+  const count = await User.estimatedDocumentCount();
+  if (count > 0) return; // already has data
+
+  console.log('[startup] Empty database detected — running demo seed...');
+  try {
+    const { seedData } = require('../seed/data');
+    await seedData();
+    console.log('[startup] Demo seed complete.');
+  } catch (err) {
+    console.error('[startup] Demo seed failed (non-fatal):', err.message);
+  }
+};
+
 const runStartupMigrations = async (connection) => {
+  try {
+    await bootstrapSeedIfEmpty();
+  } catch (err) {
+    console.error('[migration] Bootstrap seed failed (non-fatal):', err.message);
+  }
   try {
     await backfillCafes();
   } catch (err) {

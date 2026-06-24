@@ -102,8 +102,8 @@ export default function OrderAnalyticsDashboard() {
         api.get(`/orders/analytics?${branchQuery}${dateQuery}`),
         api.get("/locations"),
       ]);
-      setData(analyticsRes.data.data);
-      setLocations(locRes.data.data);
+      setData(analyticsRes.data?.data || analyticsRes.data);
+      setLocations(locRes.data?.data || locRes.data || []);
     } catch (error) {
       toast.error("Could not load analytics. Please try again.");
     } finally {
@@ -391,9 +391,7 @@ export default function OrderAnalyticsDashboard() {
               </div>
               <div className="px-4 py-1 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-full border border-primary/20">
                 Busiest Hour:{" "}
-                {Math.max(
-                  ...(data?.charts?.ordersPerHour?.map((d) => d.count) || [0]),
-                )}{" "}
+                {Math.max(0, ...(data?.charts?.ordersPerHour?.map((d) => d.count) || [0]))}{" "}
                 Orders
               </div>
             </div>
@@ -470,7 +468,7 @@ export default function OrderAnalyticsDashboard() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {data?.charts?.ordersByStatus.map((entry, index) => (
+                    {(data?.charts?.ordersByStatus || []).map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
@@ -505,7 +503,7 @@ export default function OrderAnalyticsDashboard() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-8 relative z-10">
-              {data?.charts?.ordersByStatus.map((s, i) => (
+              {(data?.charts?.ordersByStatus || []).map((s, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-3 p-3 bg-(--color-surface-soft) rounded-xl border border-(--color-border)"
@@ -609,7 +607,7 @@ export default function OrderAnalyticsDashboard() {
               )}
 
               {/* Individual Sector Cards - Filtered for Branch Admin */}
-              {data?.charts?.branchPerformance
+              {(data?.charts?.branchPerformance || [])
                 .filter(
                   (b) =>
                     user?.role !== "branch_admin" ||
@@ -709,7 +707,7 @@ export default function OrderAnalyticsDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-              {data?.charts?.chefPerformance
+              {(data?.charts?.chefPerformance || [])
                 .sort((a, b) => a.avgTime - b.avgTime)
                 .map((chef, i) => (
                   <div
@@ -797,7 +795,7 @@ export default function OrderAnalyticsDashboard() {
                   </h3>
                   <p className="text-sm font-medium text-white/60 flex items-center gap-2">
                     <MapPin size={16} className="text-primary" />{" "}
-                    {selectedBranchDetails.address}
+                    {[selectedBranchDetails.city, selectedBranchDetails.state, selectedBranchDetails.pincode].filter(Boolean).join(', ')}
                   </p>
                 </div>
               </div>
@@ -812,8 +810,7 @@ export default function OrderAnalyticsDashboard() {
                       Email
                     </p>
                     <p className="text-lg font-bold text-(--color-text-primary) tracking-tight">
-                      {selectedBranchDetails.contactEmail ||
-                        "Not added"}
+                      {selectedBranchDetails.email || selectedBranchDetails.contactEmail || "Not added"}
                     </p>
                   </div>
                 </div>
@@ -826,7 +823,7 @@ export default function OrderAnalyticsDashboard() {
                       Phone
                     </p>
                     <p className="text-lg font-bold text-(--color-text-primary) tracking-tight">
-                      {selectedBranchDetails.contactPhone || "Not added"}
+                      {selectedBranchDetails.phone || selectedBranchDetails.contactPhone || "Not added"}
                     </p>
                   </div>
                 </div>

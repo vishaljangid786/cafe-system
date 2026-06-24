@@ -1,12 +1,15 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
-import { Star, MessageSquare, Link2, Copy } from 'lucide-react';
+import Modal from '../../../components/ui/Modal';
+import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import { Star, MessageSquare, Link2, Copy, QrCode, Download } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 export default function FeedbackPage() {
   const { user } = useAuth();
@@ -17,6 +20,8 @@ export default function FeedbackPage() {
   const [scope, setScope] = useState('');
   const [list, setList] = useState([]);
   const [stats, setStats] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const qrRef = useRef(null);
 
   useEffect(() => {
     if (!user || branchScoped) return;
@@ -44,13 +49,45 @@ export default function FeedbackPage() {
   useEffect(() => { if (user) load(); }, [user, load]);
 
   const branchForLink = branchScoped ? (user?.assignedLocation?._id || user?.assignedLocation) : scope;
-  const feedbackLink = branchForLink && typeof window !== 'undefined' ? `${window.location.origin}/feedback?branch=${branchForLink}` : '';
+  const feedbackLink = branchForLink && typeof window !== 'undefined'
+    ? `${window.location.origin}/feedback?branch=${branchForLink}`
+    : '';
 
   const copyLink = () => {
     if (!feedbackLink) return;
     navigator.clipboard?.writeText(feedbackLink);
     toast.success('Feedback link copied');
   };
+
+  const downloadQR = () => {
+    const svg = qrRef.current?.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const size = 400;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.download = 'feedback-qr.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = url;
+  };
+
+  const selectedLocationName = branchScoped
+    ? (user?.assignedLocation?.name || 'Your Branch')
+    : (locations.find(l => l._id === scope)?.name || '');
 
   if (loading) return <LoadingScreen />;
 
@@ -69,23 +106,32 @@ export default function FeedbackPage() {
               </div>
             </div>
             {!branchScoped && (
-              <select value={scope} onChange={(e) => setScope(e.target.value)}
-                className="px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold uppercase tracking-normal text-(--color-text-primary) outline-none">
-                {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
-              </select>
+              <div className="w-48">
+                <PremiumSelect
+                  value={scope}
+                  onChange={setScope}
+                  options={locations.map((l) => ({ label: l.name, value: l._id }))}
+                  placeholder="Select branch"
+                />
+              </div>
             )}
           </div>
         </SlideIn>
 
-        {/* Shareable link */}
+        {/* Shareable link + QR */}
         {feedbackLink && (
           <SlideIn delay={0.05}>
             <div className="glass-card p-4 rounded-xl flex items-center gap-3 flex-wrap">
-              <Link2 size={16} className="text-primary" />
+              <Link2 size={16} className="text-primary shrink-0" />
               <span className="text-[11px] font-medium text-(--color-text-muted) flex-1 min-w-40 truncate">{feedbackLink}</span>
-              <button onClick={copyLink} className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary)">
-                <Copy size={12} /> Copy link / make QR
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={copyLink} className="flex items-center gap-1.5 px-3 py-2 bg-(--color-surface-soft) text-(--color-text-secondary) text-[9px] font-bold uppercase tracking-normal rounded-lg border border-(--color-border) hover:text-primary hover:border-primary/30 transition-all">
+                  <Copy size={12} /> Copy Link
+                </button>
+                <button onClick={() => setQrOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all">
+                  <QrCode size={12} /> Show QR
+                </button>
+              </div>
             </div>
           </SlideIn>
         )}
@@ -141,6 +187,39 @@ export default function FeedbackPage() {
           </div>
         </SlideIn>
       </div>
+
+      {/* QR Code Modal */}
+      <Modal isOpen={qrOpen} onClose={() => setQrOpen(false)} title="Feedback QR Code" maxWidth="max-w-sm">
+        <div className="flex flex-col items-center gap-6 p-4">
+          <p className="text-xs text-(--color-text-muted) text-center">
+            Customers scan this to leave feedback for{' '}
+            <span className="font-bold text-(--color-text-primary)">{selectedLocationName}</span>.
+          </p>
+          <div ref={qrRef} className="p-5 bg-white rounded-2xl shadow-sm">
+            <QRCode
+              value={feedbackLink}
+              size={200}
+              level="H"
+              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+            />
+          </div>
+          <p className="text-[10px] text-(--color-text-muted) text-center break-all px-2">{feedbackLink}</p>
+          <div className="flex w-full gap-3">
+            <button
+              onClick={copyLink}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-(--color-border) bg-(--color-surface-soft) text-xs font-bold text-(--color-text-secondary) hover:text-primary hover:border-primary/30 transition-all"
+            >
+              <Copy size={14} /> Copy Link
+            </button>
+            <button
+              onClick={downloadQR}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-(--color-on-primary) text-xs font-bold hover:opacity-90 transition-all"
+            >
+              <Download size={14} /> Download PNG
+            </button>
+          </div>
+        </div>
+      </Modal>
     </PageTransition>
   );
 }
