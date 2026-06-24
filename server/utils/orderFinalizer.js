@@ -71,7 +71,7 @@ const finalizeOrder = async (order, user) => {
       },
       { $unset: '_taxable' },
     ],
-    { new: true }
+    { new: true, updatePipeline: true }
   );
   if (!claimed) {
     throw new Error('This order has already been finalized and billed.');

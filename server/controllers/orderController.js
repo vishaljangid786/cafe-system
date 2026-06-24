@@ -717,7 +717,7 @@ const generateOrderBill = asyncHandler(async (req, res) => {
       const seq = await Settings.findOneAndUpdate(
         { locationId: order.branch },
         [{ $set: { 'invoice.nextNumber': { $add: [{ $max: [{ $ifNull: ['$invoice.nextNumber', effectiveStart] }, effectiveStart] }, 1] } } }],
-        { new: true, upsert: true }
+        { new: true, upsert: true, updatePipeline: true }
       );
       const reserved = (Number(seq?.invoice?.nextNumber) || (effectiveStart + 1)) - 1;
       const prefix = settings?.invoice?.prefix || 'INV';

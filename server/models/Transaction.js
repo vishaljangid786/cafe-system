@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
-      enum: ['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'],
+      enum: ['CASH', 'UPI', 'CARD', 'ONLINE', 'GIFT_CARD', 'OTHER'],
       default: 'CASH',
     },
     orderId: {
