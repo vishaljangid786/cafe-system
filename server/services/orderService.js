@@ -16,7 +16,7 @@ class OrderService {
   /**
    * Create a new order with stock deduction and table update
    */
-  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId }) {
+  async createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff' }) {
     const Reservation = require('../models/Reservation');
     const isDineIn = orderType === 'dine-in';
 
@@ -79,6 +79,11 @@ class OrderService {
         if (!menuItem) {
           throw new Error(`Item ${item.menuItem} not found.`);
         }
+        // A globally-disabled item is never orderable on ANY path (the branch-stock
+        // branch below otherwise skipped this check).
+        if (menuItem.isAvailable === false) {
+          throw new Error(`Item ${menuItem.name} is currently unavailable.`);
+        }
 
         // Logic Change: If it's a Recipe Item, we don't deduct unit stock now.
         // It will be deducted from ingredients on completion.
@@ -137,23 +142,43 @@ class OrderService {
           }
         }
 
-        // Validate selected modifiers against the item's defined groups and fold the
-        // SERVER-side priceDelta into the unit price. Client-sent prices are ignored
-        // (anti-tamper) — the delta always comes from the stored menu definition.
+        // Validate selected modifiers against the item's DEFINED groups (iterate the
+        // authoritative groups, not the client list) and fold the SERVER-side
+        // priceDelta into the unit price. Enforces required / single-select /
+        // maxSelections and dedupes labels so a client can't stack repeated or
+        // extra (negative-delta) options to underpay. Client prices are ignored.
         const modSnapshot = [];
         let modDelta = 0;
-        if (Array.isArray(item.modifiers) && Array.isArray(menuItem.modifierGroups) && menuItem.modifierGroups.length) {
-          for (const sel of item.modifiers) {
-            const grp = menuItem.modifierGroups.find(g => g.name === (sel.groupName || sel.group));
-            if (!grp) continue;
-            const opt = grp.options.find(o => o.label === sel.label);
-            if (!opt) continue;
-            const delta = Number(opt.priceDelta) || 0;
-            modSnapshot.push({ groupName: grp.name, label: opt.label, priceDelta: delta });
-            modDelta += delta;
+        if (Array.isArray(menuItem.modifierGroups) && menuItem.modifierGroups.length) {
+          const clientByGroup = {};
+          if (Array.isArray(item.modifiers)) {
+            for (const sel of item.modifiers) {
+              const gname = sel?.groupName || sel?.group;
+              if (!gname || !sel?.label) continue;
+              (clientByGroup[gname] = clientByGroup[gname] || new Set()).add(sel.label);
+            }
+          }
+          for (const grp of menuItem.modifierGroups) {
+            const wanted = clientByGroup[grp.name] ? [...clientByGroup[grp.name]] : []; // deduped
+            let chosen = wanted.map(l => grp.options.find(o => o.label === l)).filter(Boolean);
+            if (grp.required && chosen.length === 0) {
+              throw new Error(`Please choose ${grp.name} for ${menuItem.name}.`);
+            }
+            if (grp.selectionType === 'single') chosen = chosen.slice(0, 1);
+            else if (grp.maxSelections > 0) chosen = chosen.slice(0, grp.maxSelections);
+            for (const opt of chosen) {
+              const delta = Number(opt.priceDelta) || 0;
+              modSnapshot.push({ groupName: grp.name, label: opt.label, priceDelta: delta });
+              modDelta += delta;
+            }
           }
         }
-        const effectivePrice = Math.max(0, (menuItem.price || 0) + modDelta);
+        // Honour an active discount (discountedPrice when set below price), matching
+        // what the menu/cart shows everywhere else — the server is the price authority.
+        const base = (menuItem.discountedPrice != null && menuItem.discountedPrice < menuItem.price)
+          ? menuItem.discountedPrice
+          : (menuItem.price || 0);
+        const effectivePrice = Math.max(0, base + modDelta);
 
         itemsWithSnapshots.push({
           menuItem: menuItem._id,
@@ -239,12 +264,13 @@ class OrderService {
         discountAmount: finalDiscount,
         coupon: appliedCoupon,
         paymentType,
-        createdBy: userId,
+        createdBy: userId || undefined,
+        source,
         status: 'PLACED',
         statusHistory: [{
           status: 'PLACED',
           timestamp: new Date(),
-          updatedBy: userId
+          updatedBy: userId || undefined
         }]
       }], { session });
 
@@ -462,15 +488,19 @@ class OrderService {
         if (!menuItem) {
           throw new Error(`Item ${item.menuItem} not found.`);
         }
+        // Honour an active discount (matches the create path + what the menu shows).
+        const unitPrice = (menuItem.discountedPrice != null && menuItem.discountedPrice < menuItem.price)
+          ? menuItem.discountedPrice
+          : (menuItem.price || 0);
         updatedItemsWithSnapshots.push({
           menuItem: menuItem._id,
           itemName: menuItem.name,
-          price: menuItem.price,
+          price: unitPrice,
           costPrice: menuItem.costPrice || 0,
           quantity: item.quantity,
           notes: item.notes
         });
-        recalculatedTotal += menuItem.price * item.quantity;
+        recalculatedTotal += unitPrice * item.quantity;
       }
 
       // Apply guarded stock deltas inside the transaction.

@@ -39,7 +39,14 @@ const orderSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // Required for staff-placed orders; null for customer self-orders (QR/online).
+      required: function () { return (this.source || 'staff') === 'staff'; },
+    },
+    // How the order was placed: staff (POS), or a customer self-order via QR/online.
+    source: {
+      type: String,
+      enum: ['staff', 'qr', 'online'],
+      default: 'staff',
     },
     assignedChef: {
       type: mongoose.Schema.Types.ObjectId,

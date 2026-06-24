@@ -1129,7 +1129,7 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
     .populate({ path: 'items.menuItem', populate: { path: 'category', select: 'name' } })
     .lean();
 
-  const createdCount = allOrders.filter(o => o.createdBy.toString() === userId.toString()).length;
+  const createdCount = allOrders.filter(o => o.createdBy?.toString() === userId.toString()).length;
   const servedCount = allOrders.filter(o => o.servedBy?.toString() === userId.toString()).length;
 
   let totalSales = 0;

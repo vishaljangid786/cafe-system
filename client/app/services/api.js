@@ -19,7 +19,7 @@ api.interceptors.response.use(
       Cookies.remove('selectedLocation');
       // Public pages must never be bounced to /login on a 401. The /auth/profile
       // probe legitimately 401s for logged-out visitors browsing these pages.
-      const publicPaths = ['/login', '/signup', '/bookings'];
+      const publicPaths = ['/login', '/signup', '/bookings', '/order', '/feedback'];
       const onPublicPath = typeof window !== 'undefined' &&
         publicPaths.some((p) => window.location.pathname === p || window.location.pathname.startsWith(`${p}/`));
       const isProfileProbe = error.config?.url?.includes('/auth/profile');

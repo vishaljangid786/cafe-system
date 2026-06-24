@@ -38,6 +38,7 @@ const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const waitlistRoutes = require('./routes/waitlistRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -170,6 +171,7 @@ app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/public', publicRoutes);
 
 
 // Base route
