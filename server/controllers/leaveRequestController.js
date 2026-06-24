@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const LeaveRequest = require('../models/LeaveRequest');
 const Attendance = require('../models/Attendance');
+const User = require('../models/User');
 const sendNotification = require('../utils/sendNotification');
 const { canAccessLocation, scopedLocationId, clampLimit } = require('../utils/accessControl');
 
@@ -38,6 +39,20 @@ const createLeaveRequest = asyncHandler(async (req, res) => {
   if (!locationId) {
     res.status(400);
     throw new Error('You have no assigned branch to request leave for');
+  }
+
+  // Reject overlapping requests for the same user. Dates are zero-padded YYYY-MM-DD
+  // strings, so lexical comparison matches chronological order. Two inclusive ranges
+  // overlap iff existing.fromDate <= toDate && existing.toDate >= fromDate.
+  const overlap = await LeaveRequest.findOne({
+    user: req.user._id,
+    status: { $in: ['pending', 'approved'] },
+    fromDate: { $lte: toDate },
+    toDate: { $gte: fromDate },
+  }).select('fromDate toDate status');
+  if (overlap) {
+    res.status(409);
+    throw new Error(`You already have a ${overlap.status} leave request overlapping ${overlap.fromDate} to ${overlap.toDate}`);
   }
 
   const leave = await LeaveRequest.create({
@@ -118,20 +133,49 @@ const reviewLeaveRequest = asyncHandler(async (req, res) => {
   }
 
   // On approval, stamp attendance for the range so payroll reflects it:
-  // paid/sick/casual -> 'leave' (counts toward salary); unpaid -> 'absent'.
+  // paid/sick/casual -> 'leave' (counts toward salary, drawn from the user's
+  // leaveBalance quota); unpaid -> 'absent'. Days that overflow the remaining
+  // quota are stamped 'absent' instead of 'leave' so we never grant unlimited
+  // paid leave.
   if (decision === 'approved') {
-    const attStatus = leave.type === 'unpaid' ? 'absent' : 'leave';
+    const isPaidType = leave.type !== 'unpaid';
     const dates = enumerateDates(leave.fromDate, leave.toDate);
+
+    // Remaining paid-leave quota for this user (only relevant for paid types).
+    let remaining = Infinity;
+    if (isPaidType) {
+      const owner = await User.findById(leave.user._id).select('leaveBalance');
+      remaining = Number(owner?.leaveBalance ?? 0);
+    }
+    let paidGranted = 0; // paid 'leave' days actually stamped (to decrement the quota)
+
     for (const date of dates) {
       // Never overwrite a day the employee actually worked (present/half-day or
       // a real clock-in) — only stamp empty / non-worked days.
       const existing = await Attendance.findOne({ user: leave.user._id, date }).select('status checkIn');
       if (existing && (['present', 'half-day'].includes(existing.status) || existing.checkIn)) continue;
+      // Skip days already stamped 'leave' (e.g. by another approved request) so we
+      // neither double-count them nor double-charge the quota.
+      if (existing && existing.status === 'leave') continue;
+
+      // Paid type: stamp 'leave' while quota remains, otherwise overflow to 'absent'.
+      // Unpaid type always stamps 'absent'.
+      let attStatus = 'absent';
+      if (isPaidType && remaining > 0) {
+        attStatus = 'leave';
+        remaining -= 1;
+        paidGranted += 1;
+      }
       await Attendance.findOneAndUpdate(
         { user: leave.user._id, date },
         { $set: { status: attStatus, locationId: leave.locationId, markedBy: req.user._id }, $setOnInsert: { user: leave.user._id, date } },
         { upsert: true, setDefaultsOnInsert: true }
       );
+    }
+
+    // Decrement the quota by the paid days actually granted ($inc keeps it atomic).
+    if (paidGranted > 0) {
+      await User.updateOne({ _id: leave.user._id }, { $inc: { leaveBalance: -paidGranted } });
     }
   }
 

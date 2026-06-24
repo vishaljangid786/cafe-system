@@ -43,7 +43,9 @@ const generateDailyReport = async () => {
     ]);
 
     const totalRevenue = await Transaction.aggregate([
-      { $match: { createdAt: { $gte: startOfDay, $lte: endOfDay }, status: 'completed' } },
+      // Revenue transactions use status 'approved' (not 'completed') and the `date`
+      // field. The old filter matched nothing, so the report always showed ₹0.
+      { $match: { type: 'REVENUE', status: 'approved', date: { $gte: startOfDay, $lte: endOfDay } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 

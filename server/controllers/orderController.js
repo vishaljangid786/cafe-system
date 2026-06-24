@@ -88,11 +88,15 @@ const createOrder = asyncHandler(async (req, res) => {
 
 // @desc    Get orders
 const getOrders = asyncHandler(async (req, res) => {
-  const { status, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
+  const { status, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search, activeOnly } = req.query;
   const filter = {};
 
   const VALID_ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
   if (status && VALID_ORDER_STATUSES.includes(status)) filter.status = status;
+  // activeOnly: the Kitchen Display needs EVERY open ticket, not just the newest
+  // page. Filter to live statuses server-side and return them all (below), so no
+  // active order is silently dropped by pagination.
+  else if (activeOnly === 'true') filter.status = { $in: ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'] };
   if (search) {
     const re = new RegExp(escapeRegex(search), 'i');
     filter.$or = [{ customerName: re }, { customerPhone: re }];
@@ -560,14 +564,34 @@ const updateItemStatus = asyncHandler(async (req, res) => {
   item.status = status;
 
   const now = new Date();
+  const isPromotion = ['preparing', 'ready', 'served'].includes(status);
+
+  // A chef touching the KDS owns this order — mirror the accept/start/ready button
+  // path so chef attribution (and prep-time-by-chef analytics) is consistent.
+  if (req.user.role === 'chef' && !order.assignedChef && isPromotion) {
+    order.assignedChef = req.user._id;
+  }
+
   // Derive the order-level status from item progress so staff still get a single
-  // "order ready" signal. First item into prep moves an ACCEPTED order to PREPARING;
-  // once every item is ready/served the order becomes READY.
+  // "order ready" signal. The KDS per-item toggle bypasses the OMS endpoints, so
+  // when it promotes an item out of a PLACED order we must replay the intermediate
+  // lifecycle states it skipped (ACCEPTED → PREPARING) — otherwise prep-time
+  // analytics (which read the ACCEPTED→READY timestamps) and the OMS history break.
+  if (isPromotion && order.status === 'PLACED') {
+    order.status = 'ACCEPTED';
+    order.statusHistory.push({ status: 'ACCEPTED', timestamp: now, updatedBy: req.user._id });
+  }
+
   const allDone = order.items.every((i) => ['ready', 'served'].includes(i.status));
-  if (allDone && ['PLACED', 'ACCEPTED', 'PREPARING'].includes(order.status)) {
+  if (allDone && ['ACCEPTED', 'PREPARING'].includes(order.status)) {
+    // Ensure PREPARING was recorded before READY so the lifecycle stays ordered.
+    if (order.status === 'ACCEPTED') {
+      order.status = 'PREPARING';
+      order.statusHistory.push({ status: 'PREPARING', timestamp: now, updatedBy: req.user._id });
+    }
     order.status = 'READY';
     order.statusHistory.push({ status: 'READY', timestamp: now, updatedBy: req.user._id });
-  } else if (status === 'preparing' && ['PLACED', 'ACCEPTED'].includes(order.status)) {
+  } else if (status === 'preparing' && order.status === 'ACCEPTED') {
     order.status = 'PREPARING';
     order.statusHistory.push({ status: 'PREPARING', timestamp: now, updatedBy: req.user._id });
   }

@@ -12,8 +12,11 @@ if (missingEnv.length) {
 const app = require('./app');
 const connectDB = require('./config/db');
 
-// Connect to database
-connectDB();
+// Connect to database. Log a clear message on failure instead of leaking an
+// unhandled rejection; requests will surface a DB error until it reconnects.
+connectDB().catch((err) => {
+  console.error('[startup] MongoDB connection failed:', err.message);
+});
 
 const { initScheduler } = require('./utils/scheduler');
 initScheduler();
@@ -25,6 +28,17 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📡 Control Center: http://localhost:${PORT}`);
   console.log(`🌐 Server Live: http://127.0.0.1:${PORT}`);
   console.log(`🛠️  Mode: ${process.env.NODE_ENV || 'development'}\n`);
+});
+
+// Without an 'error' listener, a port clash (EADDRINUSE) throws as an unhandled
+// 'error' event and crashes the process with a confusing stack. Fail clearly.
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[startup] Port ${PORT} is already in use — is the server already running?`);
+  } else {
+    console.error('[startup] HTTP server error:', err.message);
+  }
+  process.exit(1);
 });
 
 // Initialize Socket.io

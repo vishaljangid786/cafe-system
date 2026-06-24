@@ -176,14 +176,15 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     isGlobal, availableBranches
   } = req.body;
 
-  // Validate discountedPrice < originalPrice before creating
+  // Validate discountedPrice against the actual billing basis (price) — the same
+  // reference order pricing uses — so a discount can never exceed what's billed.
   if (
     discountedPrice !== undefined &&
-    originalPrice !== undefined &&
-    Number(discountedPrice) >= Number(originalPrice)
+    price !== undefined &&
+    Number(discountedPrice) >= Number(price)
   ) {
     res.status(400);
-    throw new Error('Discounted price must be less than original price');
+    throw new Error('Discounted price must be less than price');
   }
 
   // Only super_admin can create global menu items
@@ -308,17 +309,18 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     isGlobal, availableBranches
   } = req.body;
 
-  // Validate discountedPrice < originalPrice
-  const newOriginal = originalPrice !== undefined ? Number(originalPrice) : item.originalPrice;
+  // Validate discountedPrice against the actual billing basis (price) — the same
+  // reference order pricing uses — so a discount can never exceed what's billed.
+  const newPrice = price !== undefined ? Number(price) : item.price;
   const newDiscounted = discountedPrice !== undefined ? Number(discountedPrice) : item.discountedPrice;
 
   if (
     newDiscounted !== undefined &&
-    newOriginal !== undefined &&
-    newDiscounted >= newOriginal
+    newPrice !== undefined &&
+    newDiscounted >= newPrice
   ) {
     res.status(400);
-    throw new Error('Discounted price must be less than original price');
+    throw new Error('Discounted price must be less than price');
   }
 
   const updates = {};
@@ -495,9 +497,22 @@ const toggleAvailability = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('No assigned branch found for this user');
     }
+    // Toggle the existing branch flag. On upsert-insert there is no prior
+    // isAvailable to flip, so couple it to stock (avoids creating an
+    // available row with 0 stock) — mirrors updateStock's stock→isAvailable rule.
     const branchStock = await BranchStock.findOneAndUpdate(
       { menuItem: item._id, branch: branchId },
-      [{ $set: { isAvailable: { $not: '$isAvailable' } } }],
+      [{
+        $set: {
+          isAvailable: {
+            $cond: [
+              { $eq: [{ $type: '$isAvailable' }, 'missing'] },
+              { $gt: [{ $ifNull: ['$stock', 0] }, 0] },
+              { $not: '$isAvailable' },
+            ],
+          },
+        },
+      }],
       { new: true, upsert: true }
     );
     return res.json({

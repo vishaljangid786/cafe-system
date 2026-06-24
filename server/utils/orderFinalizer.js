@@ -119,7 +119,10 @@ const finalizeOrder = async (order, user) => {
     paymentType: order.paymentType || 'CASH',
     title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
     category: 'Sales',
-    totalAmount: Number(order.grandTotal || order.totalAmount || 0),
+    // Revenue is the GST-EXCLUSIVE sales value (order.totalAmount). GST and the
+    // service charge are pass-through liabilities, NOT income — recording
+    // grandTotal here overstated revenue/analytics by tax+service on every order.
+    totalAmount: Number(order.totalAmount || 0),
     totalProfit: isNaN(totalProfit) ? 0 : totalProfit,
     date: new Date(),
     status: 'approved',

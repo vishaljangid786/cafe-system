@@ -17,7 +17,9 @@ const movementSchema = new mongoose.Schema(
 
 const cashSessionSchema = new mongoose.Schema(
   {
-    locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true, index: true },
+    // locationId is indexed by the partial-unique index below (and the history
+    // index); a field-level `index: true` here would duplicate it (Mongoose warns).
+    locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },
     status: { type: String, enum: ['open', 'closed'], default: 'open' },
 
     openedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -43,5 +45,7 @@ cashSessionSchema.index(
   { locationId: 1 },
   { unique: true, partialFilterExpression: { status: 'open' } }
 );
+// History/Z-report lookups: list a branch's sessions by status, newest first.
+cashSessionSchema.index({ locationId: 1, status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('CashSession', cashSessionSchema);

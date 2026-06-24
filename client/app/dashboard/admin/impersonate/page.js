@@ -73,7 +73,11 @@ export default function ImpersonatePage() {
   };
 
   useEffect(() => {
-    if (user && !['super_admin', 'admin', 'branch_admin'].includes(user.role) && !user.permissions?.impersonateUsers && !user?.impersonatedBy) {
+    // Mirror the server gate exactly: POST /auth/impersonate allows super_admin by
+    // role OR anyone holding the impersonateUsers permission. Gating the page by a
+    // broader role list (admin/branch_admin without the permission) made the buttons
+    // visible but every click 403'd.
+    if (user && user.role !== 'super_admin' && !user.permissions?.impersonateUsers && !user?.impersonatedBy) {
       toast.error('You do not have permission to log in as other users');
       router.push('/dashboard');
       return;
@@ -163,7 +167,7 @@ export default function ImpersonatePage() {
   const resetFilters = () => { setRoleFilter('all'); setStatusFilter('all'); setBranchFilter('all'); setSearchTerm(''); };
 
   const getSecurityLabel = () => {
-    if (user?.isImpersonating) return 'Logged in as another user';
+    if (user?.impersonatedBy) return 'Logged in as another user';
     if (user?.role === 'super_admin') return 'Role: Super Admin';
     if (user?.role === 'admin') return 'Role: Admin';
     if (user?.role === 'branch_admin') return 'Role: Branch Admin';
@@ -180,14 +184,14 @@ export default function ImpersonatePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className={`px-4 py-1.5 ${user?.isImpersonating ? 'bg-danger/10 text-danger border-danger/20' : 'bg-primary/10 text-primary border-primary/20'} text-[10px] font-bold uppercase tracking-normal rounded-full border `}>
+              <span className={`px-4 py-1.5 ${user?.impersonatedBy ? 'bg-danger/10 text-danger border-danger/20' : 'bg-primary/10 text-primary border-primary/20'} text-[10px] font-bold uppercase tracking-normal rounded-full border `}>
                 {getSecurityLabel()}
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-(--color-text-muted)" />
               <span className="text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">Log in as a user</span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-3 sm:gap-4">
-              <ShieldAlert className={`${user?.isImpersonating ? 'text-danger' : 'text-primary'} h-9 w-9 sm:h-12 sm:w-12`} />
+              <ShieldAlert className={`${user?.impersonatedBy ? 'text-danger' : 'text-primary'} h-9 w-9 sm:h-12 sm:w-12`} />
               Login As <span className="text-(--color-text-muted)">User</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-(--color-text-muted) leading-relaxed">
@@ -197,7 +201,7 @@ export default function ImpersonatePage() {
             </p>
           </div>
 
-          {user?.isImpersonating && (
+          {user?.impersonatedBy && (
             <Button
               variant="danger"
               className="h-12 w-full md:w-auto px-6 !rounded-xl shadow-sm"

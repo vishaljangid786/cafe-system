@@ -43,7 +43,7 @@ export function ThemeProvider({ children }) {
       if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
         const forbiddenKeys = {
           '-': 'Negative numbers are not allowed here',
-          '.': 'Please enter a whole number',
+          '+': 'Only numbers are allowed here',
           'e': 'Only numbers are allowed here',
           'E': 'Only numbers are allowed here'
         };
@@ -61,9 +61,9 @@ export function ThemeProvider({ children }) {
     const handlePaste = (e) => {
       if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
         const paste = e.clipboardData.getData('text');
-        if (/[-.eE]/.test(paste)) {
+        if (/[-+eE]/.test(paste)) {
           e.preventDefault();
-          toast.error('Please enter a whole number greater than zero', {
+          toast.error('Please enter a valid positive number', {
             id: 'global-input-lock',
             duration: 2000
           });

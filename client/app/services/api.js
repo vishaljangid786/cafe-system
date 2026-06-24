@@ -17,7 +17,9 @@ import Cookies from 'js-cookie';
 // A direct localhost API (local full-stack dev) is left untouched: localhost
 // ports are the same *site*, so SameSite=Lax cookies already work there.
 const resolveBaseURL = () => {
-  const configured = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  // Accept both the correct key and the legacy/typo'd NEXT_PUBLIC_API_URI so a
+  // stray env-var name can't silently fall back to localhost in a deployment.
+  const configured = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URI || 'http://localhost:5000/api';
 
   // SSR / non-browser: nothing to proxy against — use the configured value.
   if (typeof window === 'undefined') return configured;

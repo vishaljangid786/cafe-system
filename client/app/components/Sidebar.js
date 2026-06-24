@@ -256,8 +256,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         groupsList.push({ title: 'Analytics', items: analyticsItems });
       }
     } else {
+      // Chef has its own performance page (/dashboard/chef/performance); work
+      // history & attendance are shared staff pages the chef is allowed to open.
       const performanceItems = [
-        { name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp },
+        { name: 'My Performance', href: role === 'chef' ? '/dashboard/chef/performance' : '/dashboard/staff/performance', icon: TrendingUp },
         { name: 'Work History', href: '/dashboard/staff/work-history', icon: History },
         { name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar },
       ];
@@ -381,7 +383,6 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   // Close the mobile drawer whenever the route changes (tap a link → drawer closes).
   useEffect(() => {
     if (isMobile && isMobileOpen) setIsMobileOpen(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   // Lock background scroll while the mobile drawer is open.

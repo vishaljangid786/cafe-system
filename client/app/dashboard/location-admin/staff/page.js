@@ -13,8 +13,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function LocationStaffPage() {
+  const { user } = useAuth();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
@@ -106,15 +108,20 @@ export default function LocationStaffPage() {
             </div>
             <div className="flex items-center space-x-6">
 
-              <Link href="/dashboard/add-member">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
-                >
-                  <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
-                </motion.button>
-              </Link>
+              {/* Add-member creation is only available to roles the add-member page
+                  permits (super_admin / admin / branch_admin). A location_admin is
+                  bounced by that page's guard, so hide the dead control for them. */}
+              {['super_admin', 'admin', 'branch_admin'].includes(user?.role) && (
+                <Link href="/dashboard/add-member">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
+                  >
+                    <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
+                  </motion.button>
+                </Link>
+              )}
             </div>
           </div>
         </SlideIn>

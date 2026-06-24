@@ -35,6 +35,12 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: null, // null means unlimited
     },
+    // Optional per-customer cap: how many times a single customer (by phone) may
+    // use this coupon. null = unlimited (backward-compatible default).
+    maxPerCustomer: {
+      type: Number,
+      default: null,
+    },
     usedCount: {
       type: Number,
       default: 0,

@@ -106,6 +106,12 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Cannot redeem against a refunded order');
   }
+  // A voided order has no payable bill — redeeming against it would silently drain
+  // the prepaid card balance for a sale that never happened.
+  if (['CANCELLED', 'REJECTED'].includes(order.status)) {
+    res.status(400);
+    throw new Error('Cannot redeem a gift card against a cancelled or rejected order');
+  }
   const orderTotal = await orderPayable(order);
   const outstanding = Math.max(0, orderTotal - Number(order.amountPaid || 0));
   if (outstanding <= 0) {
@@ -143,15 +149,22 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     throw new Error(`Insufficient balance (available ₹${existing.balance})`);
   }
 
-  // Settle the order: record the gift card as the tender so it can't be double-paid.
-  // The card debit and order write aren't one DB transaction, so if the order
-  // write fails we COMPENSATE by re-crediting the card (no money lost / orphaned).
-  const newPaid = Number(order.amountPaid || 0) + redeemValue;
+  // Settle the order with an ATOMIC $inc (not read-modify-write): two concurrent
+  // redemptions against the same order each debit their card, and both increments
+  // land — previously the second save() overwrote the first, crediting the order
+  // once while both cards were debited. The card debit and order write aren't one
+  // DB transaction, so if the order write fails we COMPENSATE by re-crediting card.
+  let settled;
   try {
-    order.amountPaid = newPaid;
-    order.paymentType = 'GIFT_CARD';
-    order.paymentStatus = newPaid >= orderTotal ? 'paid' : 'partial';
-    await order.save();
+    settled = await Order.findOneAndUpdate(
+      { _id: order._id },
+      [
+        { $set: { amountPaid: { $add: [{ $ifNull: ['$amountPaid', 0] }, redeemValue] }, paymentType: 'GIFT_CARD' } },
+        { $set: { paymentStatus: { $cond: [{ $gte: ['$amountPaid', orderTotal] }, 'paid', 'partial'] } } },
+      ],
+      { new: true, updatePipeline: true }
+    );
+    if (!settled) throw new Error('Order vanished during settlement');
   } catch (err) {
     await GiftCard.updateOne(
       { _id: card._id },
@@ -160,7 +173,7 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  res.json({ success: true, data: { code: card.code, redeemed: redeemValue, balance: card.balance, orderPaid: newPaid, orderStatus: order.paymentStatus } });
+  res.json({ success: true, data: { code: card.code, redeemed: redeemValue, balance: card.balance, orderPaid: settled.amountPaid, orderStatus: settled.paymentStatus } });
 });
 
 // @desc    Top up a gift card

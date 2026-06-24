@@ -21,6 +21,23 @@ export default function CommandPalette() {
   const router = useRouter();
   const inputRef = useRef(null);
 
+  // Mirror Sidebar's role/permission gating so staff/chef aren't shown admin
+  // routes that would bounce/403. super_admin bypasses; otherwise the user must
+  // hold the listed permission AND be one of the roles that normally sees the page.
+  const role = currentUser?.role;
+  const isSuper = role === 'super_admin';
+  const adminRoles = ['super_admin', 'admin', 'branch_admin', 'location_admin'];
+  const hasPermission = (key) => isSuper || currentUser?.permissions?.[key] === true;
+  const allQuickNav = [
+    { name: 'Go to Dashboard', shortName: 'Dashboard', path: '/dashboard/admin', icon: Navigation, roles: ['super_admin', 'admin'] },
+    { name: 'Staff List', shortName: 'Staff List', path: '/dashboard/admin/users', icon: User, roles: ['super_admin'], perm: 'manageStaff' },
+    { name: 'Menu & Items', shortName: 'Menu & Items', path: '/dashboard/admin/menu', icon: FileSpreadsheet, roles: adminRoles, perm: 'manageOrders' },
+    { name: 'Expenses', shortName: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield, roles: adminRoles, perm: 'viewRevenue' },
+  ];
+  const visibleQuickNav = allQuickNav.filter(
+    (item) => adminRoles.includes(role) && (isSuper || item.roles.includes(role)) && (!item.perm || hasPermission(item.perm))
+  );
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -54,13 +71,10 @@ export default function CommandPalette() {
       }
       setLoading(true);
       try {
-        // Search local navigation and users
-        const navItems = [
-          { type: 'nav', name: 'Go to Dashboard', path: '/dashboard/admin', icon: Navigation },
-          { type: 'nav', name: 'Staff List', path: '/dashboard/admin/users', icon: User },
-          { type: 'nav', name: 'Menu & Items', path: '/dashboard/admin/menu', icon: FileSpreadsheet },
-          { type: 'nav', name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
-        ].filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+        // Search local navigation (role/permission-gated) and users
+        const navItems = visibleQuickNav
+          .map(item => ({ type: 'nav', name: item.name, path: item.path, icon: item.icon }))
+          .filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
 
         let userResults = [];
         if (currentUser?.role === 'super_admin' && !currentUser.impersonatedBy) {
@@ -171,15 +185,11 @@ export default function CommandPalette() {
                   </div>
                 )}
  
-                {!loading && !search && (
+                {!loading && !search && visibleQuickNav.length > 0 && (
                   <div className="p-2 space-y-3">
                     <div className="label px-2">Quick Navigation</div>
                     <div className="grid grid-cols-1 gap-1">
-                      {[
-                        { name: 'Staff List', path: '/dashboard/admin/users', icon: User },
-                        { name: 'Dashboard', path: '/dashboard/admin', icon: Navigation },
-                        { name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
-                      ].map((item, idx) => (
+                      {visibleQuickNav.map((item, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleSelect({ type: 'nav', path: item.path })}
@@ -188,7 +198,7 @@ export default function CommandPalette() {
                           <div className="w-9 h-9 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted)">
                             <item.icon size={18} />
                           </div>
-                          <span className="text-sm font-medium text-(--color-text-secondary)">{item.name}</span>
+                          <span className="text-sm font-medium text-(--color-text-secondary)">{item.shortName}</span>
                         </button>
                       ))}
                     </div>

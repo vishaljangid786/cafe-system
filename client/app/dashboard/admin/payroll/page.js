@@ -594,11 +594,15 @@ export default function PayrollRecordsPage() {
                   onClick={() => {
                     const s = viewingSalary;
                     const pr = s.payrollRecord;
-                    const bonus = pr ? ((pr.bonuses?.topSeller || 0) + (pr.bonuses?.performance || 0)) : 0;
-                    const penalty = pr ? ((pr.penalties?.lateMark || 0) + (pr.penalties?.absent || 0)) : 0;
-                    const net = (s.monthlySalary || 0) + bonus - penalty;
+                    const bonus = pr ? ((pr.bonuses?.topSeller || 0) + (pr.bonuses?.performance || 0) + (pr.bonuses?.extraShifts || 0)) : 0;
+                    const penalty = pr ? ((pr.penalties?.lateMark || 0) + (pr.penalties?.absent || 0) + (pr.penalties?.leave || 0)) : 0;
+                    // Use the PRORATED base (dailyRate × payableDays) and the actual
+                    // netSalary posted to the ledger — NOT full monthlySalary, which
+                    // would overpay absent/half-day staff on the official document.
+                    const base = pr ? Math.round(pr.baseSalary || 0) : Math.round(s.calculatedSalary || 0);
+                    const net = pr ? Math.round(pr.netSalary || 0) : Math.round(s.calculatedSalary || 0);
                     const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`<html><head><title>Payslip - ${s.name}</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:600px;margin:auto}h2{margin:0 0 4px}p{margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}.total{font-weight:bold;font-size:1.1em}</style></head><body><h2>Payslip</h2><p><b>Employee:</b> ${s.name}</p><p><b>Role:</b> ${s.role}</p><p><b>Month:</b> ${s.month || ''}</p><p><b>Days:</b> ${s.payableDays || 0} / ${s.daysInMonth || 30}</p><table><tr><th>Component</th><th>Amount</th></tr><tr><td>Base Salary</td><td>₹${(s.monthlySalary || 0).toLocaleString()}</td></tr>${bonus ? `<tr><td>Bonus</td><td>+₹${bonus.toLocaleString()}</td></tr>` : ''}${penalty ? `<tr><td>Deductions</td><td>-₹${penalty.toLocaleString()}</td></tr>` : ''}<tr class="total"><td>Net Payable</td><td>₹${net.toLocaleString()}</td></tr></table></body></html>`);
+                    printWindow.document.write(`<html><head><title>Payslip - ${s.name}</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:600px;margin:auto}h2{margin:0 0 4px}p{margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}.total{font-weight:bold;font-size:1.1em}</style></head><body><h2>Payslip</h2><p><b>Employee:</b> ${s.name}</p><p><b>Role:</b> ${s.role}</p><p><b>Month:</b> ${s.month || ''}</p><p><b>Days:</b> ${s.payableDays || 0} / ${s.daysInMonth || 30}</p><table><tr><th>Component</th><th>Amount</th></tr><tr><td>Base Salary (prorated)</td><td>₹${base.toLocaleString()}</td></tr>${bonus ? `<tr><td>Bonus</td><td>+₹${bonus.toLocaleString()}</td></tr>` : ''}${penalty ? `<tr><td>Deductions</td><td>-₹${penalty.toLocaleString()}</td></tr>` : ''}<tr class="total"><td>Net Payable</td><td>₹${net.toLocaleString()}</td></tr></table></body></html>`);
                     printWindow.document.close();
                     setTimeout(() => printWindow.print(), 500);
                   }}

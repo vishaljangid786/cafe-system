@@ -52,12 +52,22 @@ module.exports = {
       },
     });
 
-    // Redis Adapter for scaling
-    if (process.env.REDIS_URL || process.env.NODE_ENV === 'production') {
-      const pubClient = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
-      const subClient = pubClient.duplicate();
-      io.adapter(createAdapter(pubClient, subClient));
-      console.log('Socket.io Redis Adapter initialized');
+    // Redis Adapter for horizontal scaling — only when a REDIS_URL is actually
+    // configured. Previously this also turned on in ANY production deploy and
+    // hard-defaulted to redis://127.0.0.1:6379, so a prod box without Redis spent
+    // every emit retrying a dead localhost connection. Attach error listeners so a
+    // Redis outage degrades to the in-memory adapter instead of crashing/spamming.
+    if (process.env.REDIS_URL) {
+      try {
+        const pubClient = new Redis(process.env.REDIS_URL);
+        const subClient = pubClient.duplicate();
+        pubClient.on('error', (e) => console.error('[redis:pub]', e.message));
+        subClient.on('error', (e) => console.error('[redis:sub]', e.message));
+        io.adapter(createAdapter(pubClient, subClient));
+        console.log('Socket.io Redis Adapter initialized');
+      } catch (e) {
+        console.error('[redis] Adapter init failed, falling back to in-memory:', e.message);
+      }
     }
 
     io.use(async (socket, next) => {

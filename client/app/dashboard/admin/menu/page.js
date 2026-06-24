@@ -1255,7 +1255,7 @@ export default function MenuManagementPage() {
                   >
                     {imagePreview ? (
                       <>
-                        <img src={imagePreview} className="w-full h-full object-cover transition-transform duration-700" />
+                        <img src={imagePreview} alt="Menu item preview" className="w-full h-full object-cover transition-transform duration-700" />
                         <div className="absolute inset-0 bg-(--color-bg-deep)/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-(--color-bg-base) p-6 text-center">
                           <div className="h-12 w-12 rounded-full bg-(--color-bg-base)/20  flex items-center justify-center mb-3">
                             <ImageIcon size={20} />

@@ -12,7 +12,9 @@ export default function RootPage() {
     if (!loading) {
       if (user) {
         if (user.role === 'super_admin' || user.role === 'admin') router.push('/dashboard/admin');
-        else if (user.role === 'location_admin' || user.role === 'branch_admin') router.push('/dashboard/branch-admin');
+        else if (user.role === 'branch_admin') router.push('/dashboard/branch-admin');
+        else if (user.role === 'location_admin') router.push('/dashboard/location-admin');
+        else if (user.role === 'chef') router.push('/dashboard/chef');
         else router.push('/dashboard/staff');
       } else {
         router.push('/login');

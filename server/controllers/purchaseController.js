@@ -197,14 +197,24 @@ const receivePurchaseOrder = asyncHandler(async (req, res) => {
   try {
     for (const item of po.items) {
       if (!item.ingredient) continue;
-      // Capture prior cost basis so a rollback can restore it (the $inc below also
+      // Capture prior cost basis so a rollback can restore it (the $set below also
       // overwrites costPerUnit/lastRestocked on an existing doc).
       const before = await BranchInventory.findOne(
         { ingredient: item.ingredient, branch: po.locationId }
-      ).select('costPerUnit lastRestocked');
+      ).select('stock costPerUnit lastRestocked');
+      // Weighted-average cost basis: blend prior stock's cost with the incoming
+      // purchase price instead of overwriting with the latest unit cost. (This is
+      // the per-unit basis only; the PO total / COGS expense below is unchanged.)
+      const oldStock = before ? (Number(before.stock) || 0) : 0;
+      const oldCost = before ? (Number(before.costPerUnit) || 0) : 0;
+      const addedQty = Number(item.quantity) || 0;
+      const totalQty = oldStock + addedQty;
+      const newCost = totalQty > 0
+        ? (oldStock * oldCost + addedQty * Number(item.unitCost)) / totalQty
+        : Number(item.unitCost);
       await BranchInventory.findOneAndUpdate(
         { ingredient: item.ingredient, branch: po.locationId },
-        { $inc: { stock: item.quantity }, $set: { costPerUnit: item.unitCost, lastRestocked: new Date() } },
+        { $inc: { stock: item.quantity }, $set: { costPerUnit: newCost, lastRestocked: new Date() } },
         { upsert: true, setDefaultsOnInsert: true }
       );
       appliedStock.push({ item, before });

@@ -79,11 +79,14 @@ const slugify = (value = '') =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-cafeSchema.pre('validate', function (next) {
+// Mongoose 9 no longer passes a `next` callback to document middleware — a
+// `function (next) { … next(); }` hook throws "next is not a function" and breaks
+// EVERY Cafe.create() (cafe creation + the startup cafe-backfill migration). Use
+// the synchronous (no-arg) form, matching the rest of the models in this codebase.
+cafeSchema.pre('validate', function () {
   if (this.name && (!this.slug || this.isModified('name'))) {
     this.slug = slugify(this.name);
   }
-  next();
 });
 
 const Cafe = mongoose.model('Cafe', cafeSchema);

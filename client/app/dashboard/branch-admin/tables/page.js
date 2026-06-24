@@ -18,7 +18,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function TablesPage() {
-  const { user, socket } = useAuth();
+  const { user, socket, selectedLocation } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,12 @@ export default function TablesPage() {
       progress.start();
     }
     try {
-      const res = await api.get('/tables');
+      // Scope tables to the branch admin's selected branch. When "all assigned
+      // branches" is active (selectedLocation null) we omit locationId so the
+      // backend returns tables across all branches this admin can access.
+      const branchId = selectedLocation?._id || selectedLocation;
+      const query = branchId && branchId !== 'all' ? `?locationId=${branchId}` : '';
+      const res = await api.get(`/tables${query}`);
       setTables(res.data.data);
     } catch (error) {
       toast.error('Could not load tables. Please try again.');
@@ -101,7 +106,7 @@ export default function TablesPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, selectedLocation]);
 
   useEffect(() => {
     if (socket && user?.assignedLocation) {
@@ -143,7 +148,9 @@ export default function TablesPage() {
           tableNumber: Number(newTableNumber),
           tableName: newTableName,
           capacity: Number(newTableCapacity),
-          locationId: user.assignedLocation?._id
+          // Create in the selected branch (multi-branch admin); fall back to the
+          // single assigned branch when no specific branch is selected.
+          locationId: selectedLocation?._id || selectedLocation || user.assignedLocation?._id
         });
         toast.success('Table added', { id: loadToast });
       }

@@ -185,12 +185,16 @@ exports.createReservation = async (req, res) => {
 
     if (fullLocCheck) return res.status(400).json({ message: 'Location is already booked for this time' });
 
+    // Normalize to an array so a single id (string) doesn't crash the $in cast,
+    // matching the validation block above and updateReservation.
+    const selectedTableIds = Array.isArray(tableIds) ? tableIds : (tableIds ? [tableIds] : []);
+
     if (reservationType === 'table') {
         const tableCheck = await Reservation.findOne({
             locationId,
             date: queryDate,
             status: { $nin: ['cancelled', 'no-show'] },
-            tableIds: { $in: tableIds },
+            tableIds: { $in: selectedTableIds },
             $or: overlapQuery(startTime, endTime)
         });
         if (tableCheck) return res.status(400).json({ message: 'Some tables are already booked for this time' });
@@ -214,6 +218,48 @@ exports.createReservation = async (req, res) => {
       status: 'confirmed', // Auto confirm if available
       notes
     });
+
+    // Close the read-then-write race: re-run the overlap checks now that the
+    // document exists (excluding itself). If a concurrent request slipped a
+    // conflicting reservation into the same slot between our checks and this
+    // create, roll back and reject rather than double-book the location/tables.
+    let conflictMessage = null;
+    if (reservationType === 'full-location') {
+      // Any overlapping (non-cancelled) reservation conflicts with a full-location hold.
+      const fullConflict = await Reservation.findOne({
+        locationId,
+        date: queryDate,
+        status: { $nin: ['cancelled', 'no-show'] },
+        _id: { $ne: reservation._id },
+        $or: overlapQuery(startTime, endTime),
+      });
+      if (fullConflict) conflictMessage = 'Location is already booked for this time';
+    } else {
+      // A table reservation conflicts with an overlapping full-location hold OR
+      // any overlapping reservation that shares one of our selected tables.
+      const tableConflict = await Reservation.findOne({
+        locationId,
+        date: queryDate,
+        status: { $nin: ['cancelled', 'no-show'] },
+        _id: { $ne: reservation._id },
+        $and: [
+          { $or: overlapQuery(startTime, endTime) },
+          { $or: [
+            { reservationType: 'full-location' },
+            { tableIds: { $in: selectedTableIds } },
+          ] },
+        ],
+      });
+      if (tableConflict) {
+        conflictMessage = tableConflict.reservationType === 'full-location'
+          ? 'Location is already booked for this time'
+          : 'Some tables are already booked for this time';
+      }
+    }
+    if (conflictMessage) {
+      await reservation.deleteOne();
+      return res.status(400).json({ message: conflictMessage });
+    }
 
     // 2. Create Expense + sync to Transaction ledger if payment received.
     //    The income Expense is created as 'pending' so it flows through the same

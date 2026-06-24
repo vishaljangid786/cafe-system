@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Feedback = require('../models/Feedback');
 const Location = require('../models/Location');
+const Order = require('../models/Order');
 const mongoose = require('mongoose');
 const { scopedLocationId, clampLimit } = require('../utils/accessControl');
 
@@ -29,9 +30,26 @@ const submitFeedback = asyncHandler(async (req, res) => {
     throw new Error('Branch not found');
   }
 
+  // When an orderId is supplied, only keep it if it genuinely belongs to this
+  // branch (prevents attaching feedback to another branch's order), and reject a
+  // second submission for the same order. A mismatched orderId is dropped so the
+  // feedback still records as anonymous rather than being silently mis-attributed.
+  let resolvedOrderId = null;
+  if (mongoose.isValidObjectId(orderId)) {
+    const order = await Order.findById(orderId).select('branch');
+    if (order && order.branch?.toString() === locationId.toString()) {
+      const existing = await Feedback.findOne({ orderId }).select('_id');
+      if (existing) {
+        res.status(409);
+        throw new Error('Feedback has already been submitted for this order');
+      }
+      resolvedOrderId = orderId;
+    }
+  }
+
   const fb = await Feedback.create({
     locationId,
-    orderId: mongoose.isValidObjectId(orderId) ? orderId : null,
+    orderId: resolvedOrderId,
     customerName: (customerName || '').toString().slice(0, 120),
     customerPhone: (customerPhone || '').toString().slice(0, 20),
     rating: r,

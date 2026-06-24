@@ -72,7 +72,8 @@ const locationSchema = new mongoose.Schema(
 );
 
 locationSchema.index({ status: 1 });
-locationSchema.index({ cafe: 1 });
+// NOTE: `cafe` is already indexed via `index: true` on the field above; a second
+// standalone index here triggers a Mongoose "duplicate index" warning on boot.
 // A branch name is unique WITHIN a cafe (per city), so two different cafes may each
 // have e.g. a "Mumbai - Downtown" branch. Partial so legacy/in-flight rows that
 // don't yet have BOTH a cafe and a name can't collide on a {null,city,null} key.

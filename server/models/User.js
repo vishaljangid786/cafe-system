@@ -151,6 +151,15 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Annual/period paid-leave quota. Approving paid/sick/casual leave decrements
+    // this; days beyond the remaining balance are stamped 'absent' (unpaid) rather
+    // than 'leave'. Unpaid leave never touches this. Default 12 keeps existing
+    // accounts backward-compatible.
+    leaveBalance: {
+      type: Number,
+      default: 12,
+      min: 0,
+    },
     profileImageUrl: {
       type: String,
       default: "",

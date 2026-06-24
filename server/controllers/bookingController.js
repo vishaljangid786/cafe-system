@@ -270,7 +270,12 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
 
   // If changing to confirmed, check capacity again just in case
   if (status === 'confirmed' && booking.status !== 'confirmed') {
-    const location = await Location.findById(booking.locationId);
+    // booking.locationId is populated (name only), so fetch the full doc for
+    // maxCapacity. Guard against a since-deleted location instead of crashing.
+    const location = await Location.findById(booking.locationId._id || booking.locationId);
+    if (!location) {
+      return res.status(404).json({ success: false, message: 'The location for this booking no longer exists' });
+    }
     const maxCapacity = location.maxCapacity || 20;
     const bookedGuests = await getBookedGuests(booking.locationId._id, booking.date, booking.startTime, booking.endTime, booking._id);
 

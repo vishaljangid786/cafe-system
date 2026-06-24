@@ -38,8 +38,12 @@ export default function BranchRevenuePage() {
     progress.start();
     try {
       const query = new URLSearchParams();
-      // Branch Admin only sees their location data
-      
+      // Scope to the branch admin's selected/assigned branch. When "all assigned
+      // branches" is active (selectedLocation null) we omit locationId so the
+      // backend returns data across all branches this admin can access.
+      const branchId = selectedLocation?._id || selectedLocation;
+      if (branchId && branchId !== 'all') query.append('locationId', branchId);
+
       const now = new Date();
       let start = '';
       if (timeRange !== 'all') {
@@ -69,7 +73,7 @@ export default function BranchRevenuePage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [timeRange]);
+  }, [timeRange, selectedLocation]);
 
   const filteredData = transactions.filter(t => 
     t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 

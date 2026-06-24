@@ -9,7 +9,7 @@
     "test:int": "node --test test/integration.test.js",
     "seed": "node seed/data.js",
     "seed:clear": "node seed/data.js --clear",
-    "seed:attendance": "node seed_attendance.js"
+    "seed:attendance": "node seed/seed_attendance.js"
   },
   "keywords": [],
   "author": "",

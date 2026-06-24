@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const CashSession = require('../models/CashSession');
 const Order = require('../models/Order');
 const { canAccessLocation, endOfDay, clampLimit, userLocationIds } = require('../utils/accessControl');
+const { logActivity } = require('../utils/auditLogger');
 
 // Resolve which branch the request acts on. Branch-scoped roles always use their
 // assigned location; admins/super admins must pass a locationId they can access.
@@ -80,6 +81,8 @@ const openDrawer = asyncHandler(async (req, res) => {
       openingFloat,
       status: 'open',
     });
+    // logActivity swallows its own errors, so a logging failure never breaks the open.
+    await logActivity(req.user, 'CASH_DRAWER_OPEN', `Opened cash drawer with float ${openingFloat}`, req, { locationId, openingFloat });
     res.status(201).json({ success: true, data: session });
   } catch (err) {
     // Unique partial index lost the race — another open drawer was just created.
@@ -172,6 +175,14 @@ const closeDrawer = asyncHandler(async (req, res) => {
   session.variance = Number((countedCash - expectedCash).toFixed(2));
   session.notes = (req.body.notes || '').toString().slice(0, 500);
   await session.save();
+
+  // logActivity swallows its own errors, so a logging failure never breaks the close.
+  await logActivity(req.user, 'CASH_DRAWER_CLOSE', `Closed cash drawer (variance ${session.variance})`, req, {
+    locationId: session.locationId,
+    expectedCash,
+    countedCash,
+    variance: session.variance,
+  });
 
   res.json({ success: true, data: session });
 });

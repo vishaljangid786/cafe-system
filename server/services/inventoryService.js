@@ -27,6 +27,10 @@ const deductIngredientsFromRecipe = async (order, branchId) => {
       if (!recipe) continue;
 
       for (const ingredientInfo of recipe.ingredients) {
+        // A recipe line that never resolved to a real Ingredient id must be
+        // skipped — otherwise findOneAndUpdate({ ingredient: undefined }) matches
+        // an arbitrary BranchInventory row and drains the WRONG ingredient's stock.
+        if (!ingredientInfo.ingredient) continue;
         const deductionQuantity = ingredientInfo.quantity * item.quantity;
         // Clamp at 0 — physical stock can't go negative even if an order exceeds it.
         await BranchInventory.findOneAndUpdate(

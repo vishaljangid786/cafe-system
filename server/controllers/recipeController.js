@@ -1,7 +1,30 @@
 const Recipe = require('../models/Recipe');
 const MenuItem = require('../models/MenuItem');
+const Ingredient = require('../models/Ingredient');
 const asyncHandler = require('../utils/asyncHandler');
 const { canAccessLocation } = require('../utils/accessControl');
+
+// Resolve each recipe line to a real Ingredient _id. The kitchen UI may submit a
+// free-text ingredient name without an id; without a resolved id, stock deduction
+// at order completion would target the wrong BranchInventory row. We match an
+// existing Ingredient by (case-insensitive) name, creating one if needed, so every
+// stored line carries a definitive `ingredient` reference.
+const resolveRecipeIngredients = async (lines = []) => {
+  const resolved = [];
+  for (const line of lines) {
+    if (!line || (!line.name && !line.ingredient)) continue;
+    let ingredientId = line.ingredient || null;
+    if (!ingredientId && line.name) {
+      let ing = await Ingredient.findOne({ name: new RegExp(`^${String(line.name).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+      if (!ing) {
+        ing = await Ingredient.create({ name: String(line.name).trim(), unit: line.unit || 'unit' });
+      }
+      ingredientId = ing._id;
+    }
+    resolved.push({ ingredient: ingredientId, name: line.name, quantity: line.quantity, unit: line.unit });
+  }
+  return resolved;
+};
 
 // A menu item is reachable by a non-super actor only if it is global, or it
 // belongs to (locationId / one of availableBranches) a branch the actor manages.
@@ -57,17 +80,19 @@ const upsertRecipe = asyncHandler(async (req, res) => {
   }
   ensureMenuItemAccess(req, res, item);
 
+  const resolvedIngredients = await resolveRecipeIngredients(ingredients);
+
   let recipe = await Recipe.findOne({ menuItemId });
 
   if (recipe) {
-    recipe.ingredients = ingredients;
+    recipe.ingredients = resolvedIngredients;
     recipe.instructions = instructions;
     recipe.notes = notes;
     await recipe.save();
   } else {
     recipe = await Recipe.create({
       menuItemId,
-      ingredients,
+      ingredients: resolvedIngredients,
       instructions,
       notes,
       createdBy: req.user._id,

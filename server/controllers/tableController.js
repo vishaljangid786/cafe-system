@@ -143,9 +143,40 @@ const bookTable = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, table.locationId, 'You do not have permission to book tables from other locations');
 
-  if (table.isBooked) {
+  // Guard on operational state, not just the isBooked flag: a table that is
+  // 'ongoing' (live orders) or still has active orders must not be re-seated —
+  // otherwise the running tab's guest/customer details get clobbered.
+  if (table.isBooked || ['booked', 'ongoing'].includes(table.status) || (table.activeOrdersCount || 0) > 0) {
     res.status(400);
     throw new Error('Table is already occupied');
+  }
+
+  // Reject walk-in seating that collides with a CONFIRMED reservation active
+  // right now — either a full-location hold on this branch or a table-level hold
+  // that includes this table. Mirrors the active-reservation lookup in
+  // orderService so the two seating paths agree.
+  const Reservation = require('../models/Reservation');
+  const now = new Date();
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+  const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const activeReservation = await Reservation.findOne({
+    locationId: table.locationId,
+    date: today,
+    status: 'confirmed',
+    $or: [
+      { reservationType: 'full-location' },
+      { tableIds: table._id },
+    ],
+    startTime: { $lte: currentTimeStr },
+    endTime: { $gte: currentTimeStr },
+  });
+  if (activeReservation) {
+    res.status(400);
+    throw new Error(
+      activeReservation.reservationType === 'full-location'
+        ? 'This location is reserved right now and cannot be seated as a walk-in'
+        : 'This table is reserved right now and cannot be seated as a walk-in'
+    );
   }
 
   // Validate guest count: must be a positive integer within the table's capacity.

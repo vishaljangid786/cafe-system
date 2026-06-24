@@ -550,7 +550,7 @@ export default function TablesPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
                       <span>Subtotal</span>
-                      <span>₹{pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0).toLocaleString()}</span>
+                      <span>₹{(Number(selectedTable.totalAmount) || (selectedTable.orders || []).reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0)).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-success">
@@ -563,7 +563,7 @@ export default function TablesPage() {
                       <span className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Grand Total</span>
                       <span className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
                         ₹{Math.max(0,
-                          pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0) - Number(discountAmount || 0)
+                          (Number(selectedTable.totalAmount) || (selectedTable.orders || []).reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0)) - Number(discountAmount || 0)
                         ).toLocaleString()}
                       </span>
                     </div>

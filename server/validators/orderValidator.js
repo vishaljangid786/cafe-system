@@ -28,7 +28,7 @@ const createOrderValidator = [
     .withMessage('Quantity must be between 1 and 999'),
   body('paymentType')
     .optional()
-    .isIn(['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'])
+    .isIn(['CASH', 'UPI', 'CARD', 'ONLINE', 'GIFT_CARD', 'OTHER'])
     .withMessage('Invalid payment type')
 ];
 

@@ -27,7 +27,14 @@ function OrderApp() {
   useEffect(() => {
     if (!branch) { setLoading(false); return; }
     api.get(`/public/menu?branchId=${branch}`)
-      .then((r) => { setBranchName(r.data?.data?.branch?.name || ''); setItems(r.data?.data?.items || []); })
+      .then((r) => {
+        // The axios interceptor turns a GET 404 ("Branch not found") into
+        // {data:null}, so an invalid/stale branchId would otherwise render a blank
+        // menu with no error. Treat a missing branch as an explicit failure.
+        if (!r.data?.data?.branch) { setError('Could not load the menu. Please check the link.'); return; }
+        setBranchName(r.data.data.branch.name || '');
+        setItems(r.data.data.items || []);
+      })
       .catch(() => setError('Could not load the menu. Please check the link.'))
       .finally(() => setLoading(false));
   }, [branch]);

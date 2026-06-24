@@ -189,7 +189,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     super_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
     admin:       { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
     branch_admin:   { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: false, viewAnalytics: true, manageCoupons: false, sendMessages: true },
-    location_admin: { viewRevenue: true, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: true, manageStaff: false, manageNotifications: false, viewAnalytics: true, manageCoupons: false, sendMessages: true },
+    location_admin: { viewRevenue: true, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: true, manageStaff: true, manageNotifications: false, viewAnalytics: true, manageCoupons: false, sendMessages: true },
     staff: { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false, sendMessages: true },
     chef:  { viewRevenue: false, editRevenue: false, viewOrders: true, manageOrders: true, forceComplete: false, exportReports: false, manageStaff: false, manageNotifications: false, viewAnalytics: false, manageCoupons: false, sendMessages: true },
   };
@@ -420,7 +420,11 @@ const logoutUser = asyncHandler(async (req, res, next) => {
   // Route is gated behind verifyToken, so req.user is the authenticated caller.
   // Revoke ONLY their own sessions (bump sessionVersion so the just-cleared token
   // can't be replayed) — never an arbitrary user id decoded from the request.
-  if (req.user?._id) {
+  //
+  // While IMPERSONATING, req.user is the impersonated TARGET (req.impersonator is
+  // the operator). Bumping here would revoke the innocent target's real sessions,
+  // not the operator's — so just clear the ephemeral impersonation cookie instead.
+  if (req.user?._id && !req.impersonator) {
     await User.updateOne({ _id: req.user._id }, { $inc: { sessionVersion: 1 } });
   }
 

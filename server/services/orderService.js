@@ -244,6 +244,19 @@ class OrderService {
         if (!coupon) throw new Error('Coupon is no longer valid or usage limit reached');
         appliedCoupon = coupon._id;
 
+        // Enforce per-customer usage cap (null = unlimited). Count this customer's
+        // PRIOR orders that already used this coupon (by phone + coupon id); the
+        // new order isn't created yet, so it isn't double-counted here.
+        if (coupon.maxPerCustomer != null && customerPhone) {
+          const priorUses = await Order.countDocuments({
+            customerPhone,
+            coupon: coupon._id
+          }).session(session);
+          if (priorUses >= coupon.maxPerCustomer) {
+            throw new Error('You have reached the usage limit for this coupon');
+          }
+        }
+
         // Enforce min order amount
         if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
           throw new Error(`Order minimum of ${coupon.minOrderAmount} not met for this coupon`);
@@ -482,12 +495,31 @@ class OrderService {
   }
 
   /**
-   * Modify order items with stock delta logic
+   * Modify order items with stock delta logic.
+   *
+   * Like createOrder, the work spans several writes (stock deltas + the order
+   * doc) so it runs inside a MongoDB transaction for atomicity. Transactions
+   * require a replica set / mongos — on a STANDALONE MongoDB the transaction
+   * throws and the modify-items endpoint 500s. Detect that single case and
+   * transparently retry the same logic non-atomically, so item edits still work.
    */
   async updateItems(orderId, items, userId) {
+    try {
+      return await this._updateItems(orderId, items, userId, true);
+    } catch (error) {
+      if (isTransactionUnsupportedError(error)) {
+        return await this._updateItems(orderId, items, userId, false);
+      }
+      throw error;
+    }
+  }
+
+  async _updateItems(orderId, items, userId, useTransaction = true) {
     const Recipe = require('../models/Recipe');
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // session === null → every `.session(session)` / `{ session }` below is a
+    // harmless no-op, so the exact same logic runs without a transaction.
+    const session = useTransaction ? await mongoose.startSession() : null;
+    if (session) session.startTransaction();
 
     try {
       const order = await Order.findById(orderId).session(session);
@@ -588,16 +620,23 @@ class OrderService {
       }
       await order.save({ session });
 
-      await session.commitTransaction();
-      session.endSession();
+      if (session) {
+        await session.commitTransaction();
+        session.endSession();
+      }
 
       const io = getIO();
       io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
 
       return order;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (session) {
+        // Guard the abort/end so they can NEVER mask the ORIGINAL error — on a
+        // standalone MongoDB the first session write throws and the fallback in
+        // updateItems() must still recognize it (see _createOrder for details).
+        try { await session.abortTransaction(); } catch (_) { /* keep original error */ }
+        try { session.endSession(); } catch (_) { /* keep original error */ }
+      }
       throw error;
     }
   }
@@ -680,8 +719,15 @@ class OrderService {
     const order = await Order.findById(orderId);
     if (!order) throw new Error('Order not found');
 
+    // Only restore stock for cancellations BEFORE the food is consumed. Once an
+    // order reaches READY/SERVED the items have been prepared/handed over, so
+    // restoring stock would fabricate inventory that was actually used up.
+    const stockNotYetConsumed = ['PLACED', 'ACCEPTED', 'PREPARING'].includes(order.status);
+
     order.status = 'CANCELLED';
-    await this._restoreStockForItems(order);
+    if (stockNotYetConsumed) {
+      await this._restoreStockForItems(order);
+    }
     order.statusHistory.push({
       status: 'CANCELLED',
       timestamp: new Date(),

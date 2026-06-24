@@ -17,8 +17,8 @@ const logActivity = async (user, action, description, req, metadata = {}) => {
       details: description,
       metadata: {
         ...metadata,
-        ip: req.ip || req.headers['x-forwarded-for'],
-        userAgent: req.headers['user-agent']
+        ip: req?.ip || req?.headers?.['x-forwarded-for'],
+        userAgent: req?.headers?.['user-agent']
       },
       locationId: metadata.locationId || user?.assignedLocation || req?.body?.locationId || req?.params?.locationId || null,
       timestamp: new Date()
@@ -41,10 +41,10 @@ const logSecurityAction = async (req, action, details = {}, targetId = null, tar
       metadata: {
         targetId,
         targetModel,
-        ip: req.ip || req.headers['x-forwarded-for'],
-        userAgent: req.headers['user-agent']
+        ip: req?.ip || req?.headers?.['x-forwarded-for'],
+        userAgent: req?.headers?.['user-agent']
       },
-      locationId: details.locationId || req.body.locationId || req.user?.assignedLocation || null,
+      locationId: details.locationId || req?.body?.locationId || req.user?.assignedLocation || null,
       timestamp: new Date()
     });
   } catch (error) {

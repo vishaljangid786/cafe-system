@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const Settings = require('../models/Settings');
 const { getSettings } = require('../utils/settings');
 const { canAccessLocation } = require('../utils/accessControl');
+const { logActivity } = require('../utils/auditLogger');
 
 const GROUPS = ['tax', 'payroll', 'loyalty', 'invoice', 'billing', 'general'];
 
@@ -82,6 +83,9 @@ const updateSettings = asyncHandler(async (req, res) => {
       throw err;
     }
   }
+
+  // logActivity swallows its own errors, so a logging failure never breaks the update.
+  await logActivity(req.user, 'SETTINGS_UPDATE', `Updated ${locationId ? 'branch' : 'global'} settings`, req, { locationId: locationId || null });
 
   res.json({ success: true, data: doc });
 });

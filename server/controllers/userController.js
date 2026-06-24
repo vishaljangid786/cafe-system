@@ -315,6 +315,13 @@ const updateUser = asyncHandler(async (req, res) => {
     }
   });
 
+  // Normalize email the same way login/signup do, so the stored value always
+  // matches the (lowercased) login lookup — otherwise a mixed-case update would
+  // lock the user out.
+  if (updateData.email !== undefined) {
+    updateData.email = String(updateData.email).trim().toLowerCase();
+  }
+
   if (updateData.accessibleLocations !== undefined) {
     updateData.accessibleLocations = normalizeIdList(updateData.accessibleLocations);
   }

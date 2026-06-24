@@ -57,8 +57,18 @@ const updateInventory = asyncHandler(async (req, res) => {
   const effectiveCost = costPerUnit !== undefined ? Number(costPerUnit) : Number(item?.costPerUnit || 0);
 
   if (item) {
+    // Weighted-average cost basis: blend the existing stock's cost with the
+    // incoming purchase price instead of overwriting with the latest cost.
+    if (costPerUnit !== undefined) {
+      const oldStock = Number(item.stock) || 0;
+      const oldCost = Number(item.costPerUnit) || 0;
+      const addedQty = Number(quantity);
+      const totalQty = oldStock + addedQty;
+      item.costPerUnit = totalQty > 0
+        ? (oldStock * oldCost + addedQty * Number(costPerUnit)) / totalQty
+        : Number(costPerUnit);
+    }
     item.stock += Number(quantity);
-    if (costPerUnit !== undefined) item.costPerUnit = Number(costPerUnit);
     if (minThreshold !== undefined) item.minThreshold = Number(minThreshold);
     item.lastRestocked = new Date();
     await item.save();

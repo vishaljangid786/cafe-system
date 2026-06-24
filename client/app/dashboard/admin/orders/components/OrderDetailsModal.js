@@ -230,7 +230,10 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
               Delete Order
             </button>
           )}
-          <button className="w-full py-4 text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="w-full py-4 text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2"
+          >
             <Printer size={14} /> Print Order
           </button>
         </div>

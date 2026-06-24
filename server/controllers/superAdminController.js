@@ -10,9 +10,17 @@ const mongoose = require('mongoose');
 // @route   GET /api/super-admin/executive-summary
 // @access  Private (Super Admin)
 const getExecutiveSummary = asyncHandler(async (req, res) => {
+  // Data isolation: this endpoint is reachable via the delegable `viewAdminCenter`
+  // permission, so a non-super-admin must only ever see THEIR accessible branches'
+  // financials — never the whole platform. super_admin sees everything (empty scope).
+  const { userLocationIds } = require('../utils/accessControl');
+  const isSuper = req.user.role === 'super_admin';
+  const branchIds = isSuper ? null : (userLocationIds(req.user) || []);
+  const scope = isSuper ? {} : { branch: { $in: branchIds } };
+
   // 1. Core Metrics
   const totalRevenueData = await Order.aggregate([
-    { $match: { status: 'COMPLETED' } },
+    { $match: { ...scope, status: 'COMPLETED' } },
     { $group: { _id: null, total: { $sum: '$totalAmount' } } }
   ]);
   const totalRevenue = totalRevenueData[0]?.total || 0;
@@ -20,19 +28,21 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayRevenueData = await Order.aggregate([
-    { $match: { status: 'COMPLETED', createdAt: { $gte: today } } },
+    { $match: { ...scope, status: 'COMPLETED', createdAt: { $gte: today } } },
     { $group: { _id: null, total: { $sum: '$totalAmount' } } }
   ]);
   const todayRevenue = todayRevenueData[0]?.total || 0;
 
-  const totalBranches = await Location.countDocuments();
+  const totalBranches = isSuper
+    ? await Location.countDocuments()
+    : (branchIds ? branchIds.length : 0);
   
   // Approximate net profit (revenue - costs, simplified for demo)
   const netProfit = totalRevenue * 0.4; 
 
   // 2. Branch Ranking
   const branchRanking = await Order.aggregate([
-    { $match: { status: 'COMPLETED' } },
+    { $match: { ...scope, status: 'COMPLETED' } },
     {
       $group: {
         _id: '$branch',
@@ -60,6 +70,7 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
 
   // 3. Top Performers
   const topChefs = await Order.aggregate([
+    { $match: scope },
     { $group: { _id: '$assignedChef', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
     { $limit: 1 },
@@ -69,6 +80,7 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
   ]);
 
   const topStaff = await Order.aggregate([
+    { $match: scope },
     { $group: { _id: '$createdBy', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
     { $limit: 1 },
@@ -77,9 +89,10 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
     { $project: { name: '$userDetails.name', orderCount: 1 } }
   ]);
 
-  // 4. Alerts & Anomalies
-  const lowStockCount = await MenuItem.countDocuments({ status: 'Out of Stock' });
-  const recentCancellations = await Order.countDocuments({ 
+  // 4. Alerts & Anomalies (branch-scoped for non-super-admins)
+  const lowStockCount = await MenuItem.countDocuments(isSuper ? {} : { availableBranches: { $in: branchIds } });
+  const recentCancellations = await Order.countDocuments({
+    ...scope,
     status: 'CANCELLED',
     createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
   });

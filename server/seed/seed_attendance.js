@@ -27,7 +27,9 @@ async function seed() {
     for (let i = 0; i < 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      // Use IST (Asia/Kolkata) date keys to match live clock-in (attendanceController
+      // istDateStr) and the UI — toISOString() yields a UTC day that can be off-by-one.
+      const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
       users.filter(u => ['staff', 'chef', 'branch_admin'].includes(u.role)).forEach(user => {
         const rand = Math.random();

@@ -705,13 +705,16 @@ export default function ExpensesPage() {
                 </div>
               ) : (
                 <div className="flex gap-4 pt-4">
-                  <Button
-                    variant="primary"
-                    className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs shadow-sm  bg-danger text-(--color-bg-base)"
-                    icon={Download}
-                  >
-                    Download Receipt
-                  </Button>
+                  {(selectedExpense.proofImage || selectedExpense.billImage) && (
+                    <Button
+                      variant="primary"
+                      className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs shadow-sm  bg-danger text-(--color-bg-base)"
+                      icon={Download}
+                      onClick={() => window.open(selectedExpense.proofImage || selectedExpense.billImage, '_blank')}
+                    >
+                      Download Receipt
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
                     className="flex-1 !rounded-xl !py-6 font-bold uppercase tracking-normal text-xs border-none bg-(--color-surface-soft)"

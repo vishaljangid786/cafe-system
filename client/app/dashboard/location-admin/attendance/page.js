@@ -34,7 +34,7 @@ export default function AttendancePage() {
           api.get('/users'),
           api.get(`/attendance/location?date=${date}`)
         ]);
-        setStaff(staffRes.data.data.filter(u => u.role === 'staff'));
+        setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         setAttendance(attRes.data.data);
       } catch (error) {
         toast.error('Could not load staff. Please try again.');

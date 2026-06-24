@@ -216,7 +216,9 @@ class AnalyticsService {
         return stats;
       })(),
       Attendance.aggregate([
-        { $match: { ...match, ...(dateMatch.date ? { date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } : {}) } },
+        // Attendance only supports locationId + date; spreading the full `match`
+        // would carry a `createdBy` filter Attendance has no field for, zeroing results.
+        { $match: { ...(match.locationId ? { locationId: match.locationId } : {}), ...(dateMatch.date ? { date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } : {}) } },
         {
           $group: {
             _id: "$date",
@@ -229,11 +231,11 @@ class AnalyticsService {
         { $limit: 30 }
       ]),
       Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         { $group: { _id: "$source", count: { $sum: 1 }, revenue: { $sum: "$totalAmount" } } }
       ]),
       Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         {
           $group: {
             _id: null,
@@ -287,7 +289,7 @@ class AnalyticsService {
     const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
     const totalOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
 
-    const [staffAgg, categoryAgg, recentTransactions, recentManualExpenses, recentRevenues] = await Promise.all([
+    const [staffAgg, categoryAgg, recentExpenses, recentRevenues] = await Promise.all([
       Transaction.aggregate([
         { $match: transactionMatch },
         { $lookup: { from: 'users', localField: 'staffId', foreignField: '_id', as: 'staff' } },
@@ -320,8 +322,6 @@ class AnalyticsService {
       Transaction.find({ ...transactionMatch, type: 'EXPENSE', status: 'approved' }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('createdBy', 'name').lean(),
       Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('staffId', 'name').populate('createdBy', 'name').lean()
     ]);
-
-    const recentExpenses = recentTransactions;
 
     return {
       timeSeries,

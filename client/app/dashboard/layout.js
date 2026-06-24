@@ -31,11 +31,20 @@ const BRANCH_ADMIN_SHARED_PAGES = [
   '/dashboard/admin/inventory',
 ];
 
+// Staff pages a CHEF legitimately reaches from its own sidebar/bottom-nav (branch
+// menu view, personal work history & attendance). These are user/branch-scoped and
+// render correctly for a chef; without them the chef nav bounced back to Kitchen.
+const CHEF_SHARED_PAGES = [
+  '/dashboard/staff/menu',
+  '/dashboard/staff/work-history',
+  '/dashboard/staff/attendance',
+];
+
 const ROLE_PREFIX = {
   super_admin: ['/dashboard/super-admin', '/dashboard/admin'],
   admin: ['/dashboard/admin'],
   branch_admin: ['/dashboard/branch-admin', ...BRANCH_ADMIN_SHARED_PAGES],
-  chef: ['/dashboard/chef'],
+  chef: ['/dashboard/chef', ...CHEF_SHARED_PAGES],
   staff: ['/dashboard/staff'],
   location_admin: ['/dashboard/location-admin', ...BRANCH_ADMIN_SHARED_PAGES],
 };

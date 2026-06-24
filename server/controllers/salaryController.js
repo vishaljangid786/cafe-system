@@ -129,6 +129,36 @@ const getSalaryAggregation = async (userIds, month, daysInMonth, stdDayMin = 480
   ]);
 };
 
+// Merge generated Payroll figures onto the aggregated salary rows. When a Payroll
+// record exists for a user+month, its netSalary (and components) is the source of
+// truth — it's what gets posted to the ledger on approval — so we surface it as
+// `netSalary` and expose the payroll status/components. `calculatedSalary` is kept
+// as the pre-generation estimate; before a payroll exists, netSalary mirrors it so
+// dashboards/totals have a single consistent figure to read.
+const mergePayrollNet = async (salaries, month) => {
+  if (!salaries.length) return salaries;
+  const ids = salaries.map((s) => s._id).filter(Boolean);
+  const payrolls = await Payroll.find({ user: { $in: ids }, month }).lean();
+  const byUser = new Map(payrolls.map((p) => [String(p.user), p]));
+  return salaries.map((s) => {
+    const p = byUser.get(String(s._id));
+    if (!p) {
+      // No generated payroll yet → net is the live estimate.
+      return { ...s, netSalary: s.calculatedSalary || 0, payrollStatus: null };
+    }
+    return {
+      ...s,
+      netSalary: Number(p.netSalary) || 0,
+      baseSalary: p.baseSalary,
+      penalties: p.penalties,
+      bonuses: p.bonuses,
+      dailyRate: p.dailyRate,
+      payrollStatus: p.status,
+      payrollId: p._id,
+    };
+  });
+};
+
 // Resolve a branch's configured standard-day length (for overtime display); a
 // multi-branch/$in scope falls back to global so display matches generation.
 const stdMinFor = async (branchId) => {
@@ -158,7 +188,8 @@ const getLocationSalary = asyncHandler(async (req, res) => {
   }).select('_id');
   const userIds = users.map(u => u._id);
   
-  const salaries = await getSalaryAggregation(userIds, month, daysInMonth, await stdMinFor(targetLocationId));
+  const rawSalaries = await getSalaryAggregation(userIds, month, daysInMonth, await stdMinFor(targetLocationId));
+  const salaries = await mergePayrollNet(rawSalaries, month);
 
   res.json({
     success: true,
@@ -201,23 +232,27 @@ const getAllSalary = asyncHandler(async (req, res) => {
 
   const daysInMonth = getDaysInMonth(month);
   
-  // Get all matching salaries for totals (before pagination)
-  const allSalaries = await getSalaryAggregation(userIds, month, daysInMonth);
+  // Get all matching salaries for totals (before pagination). Surface the generated
+  // Payroll.netSalary where it exists (the figure posted to the ledger), falling
+  // back to the calculatedSalary estimate before generation.
+  const rawSalaries = await getSalaryAggregation(userIds, month, daysInMonth);
+  const allSalaries = await mergePayrollNet(rawSalaries, month);
 
   // Pagination logic
   const lim = clampLimit(limit, 20);
   const skip = (parseInt(page) - 1) * lim;
   const paginatedSalaries = allSalaries.slice(skip, skip + lim);
 
-  // Group by location for expense overview
+  // Group by location for expense overview. Use netSalary so the overview matches
+  // what is (or will be) posted to the ledger, not the raw estimate.
   const locationTotals = allSalaries.reduce((acc, curr) => {
     const locName = curr.locationName || 'Unassigned';
     if (!acc[locName]) acc[locName] = 0;
-    acc[locName] += curr.calculatedSalary || 0;
+    acc[locName] += curr.netSalary || 0;
     return acc;
   }, {});
 
-  const totalPayrollCost = allSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0);
+  const totalPayrollCost = allSalaries.reduce((acc, curr) => acc + (curr.netSalary || 0), 0);
 
   res.json({
     success: true,
@@ -261,7 +296,8 @@ const getUserSalary = asyncHandler(async (req, res) => {
 
   const daysInMonth = getDaysInMonth(month);
 
-  const salaryData = await getSalaryAggregation([user._id], month, daysInMonth, await stdMinFor(user.assignedLocation));
+  const rawSalary = await getSalaryAggregation([user._id], month, daysInMonth, await stdMinFor(user.assignedLocation));
+  const salaryData = await mergePayrollNet(rawSalary, month);
 
   res.json({
     success: true,
@@ -274,7 +310,9 @@ const getUserSalary = asyncHandler(async (req, res) => {
       totalAbsent: 0,
       totalHalfDay: 0,
       payableDays: 0,
-      calculatedSalary: 0
+      calculatedSalary: 0,
+      netSalary: 0,
+      payrollStatus: null,
     },
   });
 });
@@ -293,12 +331,15 @@ const getMySalaryHistory = asyncHandler(async (req, res) => {
 
   const history = await Promise.all(last6Months.map(async month => {
     const daysInMonth = getDaysInMonth(month);
-    const salaryData = await getSalaryAggregation([userId], month, daysInMonth, myStdMin);
+    const rawSalary = await getSalaryAggregation([userId], month, daysInMonth, myStdMin);
+    const salaryData = await mergePayrollNet(rawSalary, month);
     return {
       month,
-      ...(salaryData.length > 0 ? salaryData[0] : { 
-        calculatedSalary: 0, 
-        totalPresent: 0, 
+      ...(salaryData.length > 0 ? salaryData[0] : {
+        calculatedSalary: 0,
+        netSalary: 0,
+        payrollStatus: null,
+        totalPresent: 0,
         totalAbsent: 0,
         totalHalfDay: 0,
         payableDays: 0
@@ -315,7 +356,8 @@ const getMySalary = asyncHandler(async (req, res) => {
 
   const userId = req.user._id;
   const daysInMonth = getDaysInMonth(month);
-  const salaryData = await getSalaryAggregation([userId], month, daysInMonth, await stdMinFor(req.user.assignedLocation));
+  const rawSalary = await getSalaryAggregation([userId], month, daysInMonth, await stdMinFor(req.user.assignedLocation));
+  const salaryData = await mergePayrollNet(rawSalary, month);
 
   res.json({
     success: true,
@@ -328,7 +370,9 @@ const getMySalary = asyncHandler(async (req, res) => {
       totalAbsent: 0,
       totalHalfDay: 0,
       payableDays: 0,
-      calculatedSalary: 0
+      calculatedSalary: 0,
+      netSalary: 0,
+      payrollStatus: null,
     }
   });
 });

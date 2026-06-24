@@ -2,11 +2,25 @@ const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 
+// Neutralize CSV/formula injection: a cell beginning with = + - @ (or a control
+// char) is interpreted as a formula by Excel/Sheets. Prefix such values with a
+// single quote so attacker-controlled names/items/notes can't execute on open.
+const sanitizeCell = (v) => {
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(v)) return `'${v}`;
+  return v;
+};
+const sanitizeRows = (data) => data.map((row) => {
+  const out = {};
+  for (const [k, v] of Object.entries(row)) out[k] = sanitizeCell(v);
+  return out;
+});
+
 const generateCSV = (data) => {
   if (!data || data.length === 0) return '';
-  const fields = Object.keys(data[0]);
+  const safe = sanitizeRows(data);
+  const fields = Object.keys(safe[0]);
   const json2csvParser = new Parser({ fields });
-  return json2csvParser.parse(data);
+  return json2csvParser.parse(safe);
 };
 
 const generateExcel = async (data, title = 'Export Report') => {
@@ -26,7 +40,7 @@ const generateExcel = async (data, title = 'Export Report') => {
     };
 
     data.forEach(item => {
-      worksheet.addRow(Object.values(item));
+      worksheet.addRow(Object.values(item).map(sanitizeCell));
     });
 
     worksheet.columns.forEach(column => {

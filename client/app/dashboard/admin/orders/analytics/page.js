@@ -703,9 +703,11 @@ export default function OrderAnalyticsDashboard() {
                   See how fast each chef prepares orders.
                 </p>
               </div>
-              <button className="h-14 px-10 bg-primary hover:bg-primary text-white text-[10px] font-bold uppercase tracking-normal rounded-[1.5rem] shadow-sm  active:scale-95 transition-all flex items-center gap-4">
-                <Download size={18} strokeWidth={3} /> Download Report
-              </button>
+              <ExportActions
+                data={data?.charts?.chefPerformance || []}
+                columns={chefColumns}
+                filename="Chef_Performance_Report"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">

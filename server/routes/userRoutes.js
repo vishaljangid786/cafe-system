@@ -21,8 +21,10 @@ router.use(verifyToken);
 router.put('/update-profile', upload.single('profileImage'), updateProfile);
 router.put('/change-password', changePassword);
 
-// Staff Management Routes - Require manageStaff permission
-router.use(checkPermissions('manageStaff'));
+// Staff Management Routes — each route below carries its own per-route gate
+// (role OR manageStaff). A blanket router.use(checkPermissions('manageStaff'))
+// here defeated those role-based grants (e.g. branch_admin without the explicit
+// manageStaff permission), so authorization is enforced per route instead.
 
 router.route('/')
   .get(checkRoleOrPermission(['super_admin', 'admin', 'branch_admin', 'location_admin'], 'manageStaff'), getUsers);

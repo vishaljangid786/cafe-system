@@ -53,10 +53,12 @@ export default function ChefDashboard() {
     }
     try {
       const branchId = selectedLocation._id || selectedLocation;
-      const res = await api.get(`/orders?branchId=${branchId}`);
-      // Filter out SERVED, COMPLETED, CANCELLED, REJECTED for the active dashboard
+      // activeOnly=true makes the server return EVERY open ticket (not just the
+      // newest 20-row page), so kitchen tickets never silently disappear under load.
+      const res = await api.get(`/orders?branchId=${branchId}&activeOnly=true&limit=500`);
+      // Server already filters to active statuses; this guard is belt-and-suspenders.
       const activeStatuses = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'];
-      const activeOrders = res.data.data.filter(o => activeStatuses.includes(o.status));
+      const activeOrders = (res.data.data || []).filter(o => activeStatuses.includes(o.status));
       setOrders(activeOrders);
     } catch (error) {
       toast.error('Could not load orders. Please try again.');

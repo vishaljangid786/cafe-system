@@ -39,7 +39,7 @@ const EXPENSE_TITLES = [
 ];
 
 export default function BranchExpensesPage() {
-  const { user } = useAuth();
+  const { user, selectedLocation } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -76,8 +76,14 @@ export default function BranchExpensesPage() {
         query.append('myExpenses', 'true');
       } else if (activeTab === 'pending') {
         query.append('status', 'pending');
+      } else {
+        // Scope to the branch admin's selected branch. When "all assigned
+        // branches" is active (selectedLocation null) we omit locationId so the
+        // backend returns data across all branches this admin can access.
+        const branchId = selectedLocation?._id || selectedLocation;
+        if (branchId && branchId !== 'all') query.append('locationId', branchId);
       }
-      
+
       const now = new Date();
       let start = '';
       if (timeRange !== 'all') {
@@ -105,7 +111,7 @@ export default function BranchExpensesPage() {
       fetchExpenses();
     }, 0);
     return () => clearTimeout(timer);
-  }, [timeRange, activeTab]);
+  }, [timeRange, activeTab, selectedLocation]);
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
