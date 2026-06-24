@@ -39,8 +39,8 @@
     --color-accent-blue: var(--color-primary);
 
     /* Surfaces */
-    --color-bg: #e0e0e0;
-    --color-bg-base: #e0e0e0;
+    --color-bg: #f7f8fa;
+    --color-bg-base: #f7f8fa;
     --color-bg-deep: #eef0f3;
     --color-surface: #ffffff;
     --color-surface-dark: #ffffff;
