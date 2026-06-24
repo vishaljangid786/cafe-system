@@ -7,10 +7,12 @@ import { TableSkeleton } from '@/app/components/ui/Skeleton';
 import { 
   CalendarDays, Plus, Search, Filter, 
   MapPin, Clock, Users, Phone, 
-  MoreVertical, CheckCircle2, XCircle, 
-  AlertCircle, ChevronDown, Download
+  MoreVertical, CheckCircle2, XCircle,
+  AlertCircle, ChevronDown, Download,
+  Eye, Pencil, Trash2, Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import ReservationForm from '../../components/reservations/ReservationForm';
 import ReservationDetails from '../../components/reservations/ReservationDetails';
 import { useAuth } from '../../context/AuthContext';
@@ -38,7 +40,11 @@ export default function ReservationsPage() {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [stats, setStats] = useState({ total: 0, confirmedToday: 0, pending: 0, cancelled: 0 });
+  const [actionMenu, setActionMenu] = useState(null); // { reservation, top, right } — open row action menu
   const { user } = useAuth();
+  // Only these roles may modify reservations (server: reservationRoutes PUT/DELETE).
+  // Staff/chef can view & create only, so they just get "View Details".
+  const canManage = ['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(user?.role);
 
   const fetchReservations = async () => {
     const isInitial = !didInitRef.current;
@@ -109,6 +115,50 @@ export default function ReservationsPage() {
 
     return () => clearTimeout(timer);
   }, [filters, searchTerm, currentPage]);
+
+  // The row action menu is fixed-positioned (to escape the table's overflow
+  // clipping), so close it whenever the page scrolls or the window resizes.
+  useEffect(() => {
+    if (!actionMenu) return;
+    const close = () => setActionMenu(null);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [actionMenu]);
+
+  const updateStatus = async (res, status) => {
+    setActionMenu(null);
+    progress.start();
+    try {
+      await api.put(`/reservations/${res._id}`, { status });
+      toast.success(`Reservation ${status === 'no-show' ? 'marked no-show' : status}.`);
+      fetchReservations();
+      fetchStats();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not update the reservation.');
+    } finally {
+      progress.done();
+    }
+  };
+
+  const removeReservation = async (res) => {
+    setActionMenu(null);
+    if (!window.confirm(`Delete reservation "${res.eventName}"? This cannot be undone.`)) return;
+    progress.start();
+    try {
+      await api.delete(`/reservations/${res._id}`);
+      toast.success('Reservation deleted.');
+      fetchReservations();
+      fetchStats();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not delete the reservation.');
+    } finally {
+      progress.done();
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -318,7 +368,18 @@ export default function ReservationsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button className="p-2 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
+                      <button
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setActionMenu((prev) =>
+                            prev?.reservation._id === res._id
+                              ? null
+                              : { reservation: res, top: rect.bottom + 6, right: window.innerWidth - rect.right }
+                          );
+                        }}
+                        aria-label="Open actions menu"
+                        className={`p-2 rounded-lg transition-all ${actionMenu?.reservation._id === res._id ? 'text-primary bg-primary/10' : 'text-(--color-text-muted) hover:text-primary hover:bg-primary/10'}`}
+                      >
                         <MoreVertical size={18} />
                       </button>
                     </td>
@@ -383,6 +444,7 @@ export default function ReservationsPage() {
               setSelectedReservation(null);
             }}
             reservation={selectedReservation}
+            canModify={canManage}
             onModify={(res) => {
               setSelectedReservation(res);
               setIsFormOpen(true);
@@ -390,6 +452,83 @@ export default function ReservationsPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Row Action Menu — fixed-positioned so it isn't clipped by the table's overflow */}
+      {actionMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setActionMenu(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.12 }}
+            className="fixed z-50 w-48 py-1.5 rounded-xl bg-(--color-surface) border border-(--color-border) shadow-xl overflow-hidden"
+            style={{ top: actionMenu.top, right: actionMenu.right }}
+          >
+            <button
+              onClick={() => {
+                setSelectedReservation(actionMenu.reservation);
+                setIsDetailsOpen(true);
+                setActionMenu(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
+            >
+              <Eye size={15} /> View Details
+            </button>
+
+            {canManage && actionMenu.reservation.status !== 'cancelled' && (
+              <button
+                onClick={() => {
+                  setSelectedReservation(actionMenu.reservation);
+                  setIsFormOpen(true);
+                  setActionMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
+              >
+                <Pencil size={15} /> Edit
+              </button>
+            )}
+
+            {canManage && !['confirmed', 'cancelled'].includes(actionMenu.reservation.status) && (
+              <button
+                onClick={() => updateStatus(actionMenu.reservation, 'confirmed')}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
+              >
+                <CheckCircle2 size={15} /> Confirm
+              </button>
+            )}
+
+            {canManage && !['no-show', 'cancelled'].includes(actionMenu.reservation.status) && (
+              <button
+                onClick={() => updateStatus(actionMenu.reservation, 'no-show')}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
+              >
+                <Ban size={15} /> Mark No-show
+              </button>
+            )}
+
+            {canManage && actionMenu.reservation.status !== 'cancelled' && (
+              <button
+                onClick={() => updateStatus(actionMenu.reservation, 'cancelled')}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
+              >
+                <XCircle size={15} /> Cancel
+              </button>
+            )}
+
+            {canManage && (
+              <>
+                <div className="my-1 border-t border-(--color-border)" />
+                <button
+                  onClick={() => removeReservation(actionMenu.reservation)}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
+                >
+                  <Trash2 size={15} /> Delete
+                </button>
+              </>
+            )}
+          </motion.div>
+        </>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import {
 import Modal from '../ui/Modal';
 import { format } from 'date-fns';
 
-export default function ReservationDetails({ isOpen, onClose, reservation, onModify }) {
+export default function ReservationDetails({ isOpen, onClose, reservation, onModify, canModify = true }) {
   if (!reservation) return null;
 
   const getStatusInfo = (status) => {
@@ -174,7 +174,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
           >
             Close
           </button>
-          {reservation.status !== 'cancelled' && (
+          {canModify && reservation.status !== 'cancelled' && (
             <button
               onClick={() => {
                 onClose();

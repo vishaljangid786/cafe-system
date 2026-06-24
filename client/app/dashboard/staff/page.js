@@ -163,9 +163,18 @@ export default function StaffDashboard() {
       const statsEndpoint = role === 'chef' ? '/orders/my-stats-chef' : '/orders/my-stats-staff';
       const { startDate, endDate } = getTimeframeDates(timeframe);
       
+      // Staff/chef lack the viewRevenue permission, so GET /transactions returns a
+      // 403 for them. That 403 would reject the whole Promise.all and surface the
+      // "Could not load dashboard" toast even though stats & attendance loaded fine.
+      // Only request expense transactions for users allowed to see revenue; everyone
+      // else just shows an empty expenses list.
+      const canViewExpenses = !!user?.permissions?.viewRevenue;
+
       const [statsRes, expenseRes, attendanceRes] = await Promise.all([
         api.get(statsEndpoint, { params: { startDate, endDate } }),
-        api.get('/transactions', { params: { limit: 5, type: 'EXPENSE', startDate, endDate } }),
+        canViewExpenses
+          ? api.get('/transactions', { params: { limit: 5, type: 'EXPENSE', startDate, endDate } })
+          : Promise.resolve({ data: { data: [] } }),
         api.get('/attendance/my', { params: { limit: timeframe === 'all' ? 1000 : timeframe === 'year' ? 365 : 31 } })
       ]);
 
