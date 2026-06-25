@@ -287,8 +287,6 @@ export default function CafesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error('Cafe name is required');
-    if (form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstin))
-      return toast.error('Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)');
     if (form.contact.phone && !/^[0-9]{10}$/.test(form.contact.phone))
       return toast.error('Contact phone must be exactly 10 digits');
     if (form.contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact.email))

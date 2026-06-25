@@ -25,9 +25,7 @@ const newAdminRules = (prefix = 'admin') => [
 // Optional branding-field rules shared by create + update. checkFalsy lets an
 // empty string through (treated as "clear this field" by the controller).
 const brandingRules = [
-  body('gstin').optional({ checkFalsy: true }).trim()
-    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/)
-    .withMessage('Invalid GSTIN format'),
+  body('gstin').optional({ checkFalsy: true }).trim(),
   body('logo').optional({ checkFalsy: true }).trim().isURL().withMessage('Logo must be a valid URL'),
   body('address.pincode').optional({ checkFalsy: true }).matches(/^[0-9]{6}$/).withMessage('Invalid pincode'),
   body('contact.email').optional({ checkFalsy: true }).isEmail().withMessage('Invalid contact email'),
