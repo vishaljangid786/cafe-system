@@ -32,7 +32,6 @@ const cafeSchema = new mongoose.Schema(
     },
     gstin: {
       type: String,
-      default: '',
       trim: true,
     },
     address: {
