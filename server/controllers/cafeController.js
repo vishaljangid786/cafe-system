@@ -225,7 +225,10 @@ const createCafe = asyncHandler(async (req, res) => {
     createdAdmin = await attachAdmin(req, cafe, req.body);
   } catch (err) {
     // Roll back the cafe so a failed admin step doesn't leave an orphan cafe.
-    await Cafe.deleteOne({ _id: cafe._id });
+    try { await Cafe.deleteOne({ _id: cafe._id }); } catch (e) { /* best effort */ }
+    // Surface the real reason (duplicate email, validation, etc.) as a 4xx so the
+    // user sees what's wrong instead of an opaque "Something went wrong" 500.
+    res.status(err.statusCode || 400);
     throw err;
   }
 
@@ -288,7 +291,13 @@ const addCafeAdmin = asyncHandler(async (req, res) => {
     throw new Error('Cafe not found');
   }
 
-  const admin = await attachAdmin(req, cafe, req.body);
+  let admin;
+  try {
+    admin = await attachAdmin(req, cafe, req.body);
+  } catch (err) {
+    res.status(err.statusCode || 400);
+    throw err;
+  }
   if (!admin) {
     res.status(400);
     throw new Error('Provide a new admin (adminMode "new") or an existing user (adminMode "existing")');
