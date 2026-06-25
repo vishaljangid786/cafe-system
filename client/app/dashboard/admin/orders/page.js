@@ -50,6 +50,7 @@ export default function AdminOrdersDashboard() {
   const [cafeFilter, setCafeFilter] = useState('all');
   const [cafes, setCafes] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState(''); // '' | dine-in | takeaway | delivery
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [locations, setLocations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +77,7 @@ export default function AdminOrdersDashboard() {
       if (branchFilter !== 'all') params.append('branchId', branchFilter);
       if (cafeFilter !== 'all') params.append('cafeId', cafeFilter);
       if (statusFilter) params.append('status', statusFilter);
+      if (typeFilter) params.append('orderType', typeFilter);
       if (dateRange.start) params.append('startDate', dateRange.start);
       if (dateRange.end) params.append('endDate', dateRange.end);
       if (searchTerm) params.append('search', searchTerm);
@@ -110,7 +112,7 @@ export default function AdminOrdersDashboard() {
         progress.done();
       }
     }
-  }, [branchFilter, cafeFilter, statusFilter, dateRange, currentPage, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, currentPage, searchTerm]);
 
   // Debounce data fetches so each keystroke/filter change doesn't fire its own
   // request burst; the stale-response guard above handles any overlap.
@@ -125,7 +127,7 @@ export default function AdminOrdersDashboard() {
   useEffect(() => {
     if (!didMountRef.current) { didMountRef.current = true; return; }
     setCurrentPage(1);
-  }, [branchFilter, cafeFilter, statusFilter, dateRange, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, searchTerm]);
 
   // Follow the global top-navbar cafe/branch selector. Changing the cafe or branch in
   // the navbar drives this page's filters too; the local dropdowns can still narrow
@@ -280,6 +282,7 @@ export default function AdminOrdersDashboard() {
     setBranchFilter('all');
     setCafeFilter('all');
     setStatusFilter('');
+    setTypeFilter('');
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
     toast.success('Filters cleared');
@@ -372,6 +375,8 @@ export default function AdminOrdersDashboard() {
           setBranchFilter={setBranchFilter}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
           dateRange={dateRange}
           setDateRange={setDateRange}
           viewMode={viewMode}

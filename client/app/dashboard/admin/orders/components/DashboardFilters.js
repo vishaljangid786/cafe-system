@@ -9,6 +9,8 @@ export default function DashboardFilters({
   setBranchFilter,
   statusFilter,
   setStatusFilter,
+  typeFilter = '',
+  setTypeFilter,
   dateRange,
   setDateRange,
   viewMode,
@@ -37,7 +39,7 @@ export default function DashboardFilters({
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
         {/* Sector Selector */}
-        <div className="lg:col-span-3 ">
+        <div className="lg:col-span-2 ">
           {user?.role === 'branch_admin' && locations.length <= 1 ? (
             <div className="h-11 w-full flex items-center px-6 text-primary gap-3 bg-(--color-surface) rounded-xl border border-primary/20 shadow-inner">
               <Globe size={16} />
@@ -62,7 +64,7 @@ export default function DashboardFilters({
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { label: 'All Types', value: '' },
+              { label: 'All Statuses', value: '' },
               { label: 'Placed', value: 'PLACED' },
               { label: 'Accepted', value: 'ACCEPTED' },
               { label: 'Preparing', value: 'PREPARING' },
@@ -74,8 +76,23 @@ export default function DashboardFilters({
           />
         </div>
 
+        {/* Order Type Selector — Dine-in / Takeaway / Delivery */}
+        <div className="lg:col-span-2 ">
+          <PremiumSelect
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { label: 'All Types', value: '' },
+              { label: 'Dine-in', value: 'dine-in' },
+              { label: 'Takeaway', value: 'takeaway' },
+              { label: 'Delivery', value: 'delivery' },
+            ]}
+            className="h-11"
+          />
+        </div>
+
         {/* Temporal Controller */}
-        <div className="lg:col-span-4 flex items-center">
+        <div className="lg:col-span-3 flex items-center">
           <UniversalDateFilter
             onFilterChange={({ startDate, endDate }) => setDateRange({ start: startDate, end: endDate })}
             loading={loading}

@@ -88,11 +88,14 @@ const createOrder = asyncHandler(async (req, res) => {
 
 // @desc    Get orders
 const getOrders = asyncHandler(async (req, res) => {
-  const { status, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
+  const { status, orderType, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
   const filter = {};
 
   const VALID_ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
   if (status && VALID_ORDER_STATUSES.includes(status)) filter.status = status;
+  // Filter by order type (Dine-in / Takeaway / Delivery).
+  const VALID_ORDER_TYPES = ['dine-in', 'takeaway', 'delivery'];
+  if (orderType && VALID_ORDER_TYPES.includes(orderType)) filter.orderType = orderType;
   if (search) {
     const re = new RegExp(escapeRegex(search), 'i');
     filter.$or = [{ customerName: re }, { customerPhone: re }];
