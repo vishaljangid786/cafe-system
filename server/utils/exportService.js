@@ -40,7 +40,12 @@ const generateExcel = async (data, title = 'Export Report') => {
 const generatePDF = (data, title = 'Export Report', branding = null) => {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 40, size: 'A4' });
+      // bufferPages MUST be true: the footer loop below uses switchToPage() to
+      // stamp page numbers on every page. Without it, multi-page exports (orders,
+      // gst, attendance — anything that overflows one page) throw
+      // "switchToPage() out of bounds" → 500. Single-page exports happened to work,
+      // which is why only large exports were failing.
+      const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
       const buffers = [];
 
       doc.on('data', buffers.push.bind(buffers));
