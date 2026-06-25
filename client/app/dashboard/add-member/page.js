@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
 import {
-  UserPlus, User, Mail, Phone, MapPin, Shield, CreditCard,
-  Image as ImageIcon, Check
+  UserPlus, User, MapPin, Shield, CreditCard,
+  Image as ImageIcon, Check, Building2
 } from 'lucide-react';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
@@ -76,6 +76,8 @@ export default function AddMemberPage() {
   const { user: currentUser } = useAuth();
 
   const [locations, setLocations] = useState([]);
+  const [cafes, setCafes] = useState([]);
+  const [selectedCafeId, setSelectedCafeId] = useState('');
   const [admins, setAdmins] = useState([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
   const [permissions, setPermissions] = useState(emptyPerms());
@@ -101,12 +103,16 @@ export default function AddMemberPage() {
     }
   }, [currentUser, router]);
 
-  // Load branches (+ admins for super admin)
+  // Load branches, cafes and admins
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get('/locations');
-        setLocations(res.data.data || []);
+        const [locRes, cafeRes] = await Promise.all([
+          api.get('/locations'),
+          api.get('/cafes'),
+        ]);
+        setLocations(locRes.data?.data || locRes.data || []);
+        setCafes(cafeRes.data?.data || cafeRes.data || []);
       } catch (e) { /* ignore */ }
       if (currentUser?.role === 'super_admin') {
         try {
@@ -164,13 +170,24 @@ export default function AddMemberPage() {
     return [...new Set(ids.filter(Boolean).map((x) => x.toString()))];
   }, [currentUser]);
 
-  const allBranchOptions = useMemo(() => locations.map((l) => ({ label: `${l.city} - ${l.name}`, value: l._id })), [locations]);
+  const cafeOptions = useMemo(() => cafes.map((c) => ({ label: c.name, value: c._id })), [cafes]);
+
+  // Filter locations by selected cafe (if one is chosen); otherwise show all
+  const locationsInCafe = useMemo(() => {
+    if (!selectedCafeId) return locations;
+    return locations.filter((l) => {
+      const cid = l.cafe?._id || l.cafe;
+      return cid && cid.toString() === selectedCafeId.toString();
+    });
+  }, [locations, selectedCafeId]);
+
+  const allBranchOptions = useMemo(() => locationsInCafe.map((l) => ({ label: `${l.city} - ${l.name}`, value: l._id })), [locationsInCafe]);
 
   // Branches the creator may assign (super admin: all; admin/branch admin: their own)
   const myBranchOptions = useMemo(() => {
     if (currentUser?.role === 'super_admin') return allBranchOptions;
-    return locations.filter((l) => myBranchIds.includes(l._id.toString())).map((l) => ({ label: `${l.city} - ${l.name}`, value: l._id }));
-  }, [currentUser, locations, myBranchIds, allBranchOptions]);
+    return locationsInCafe.filter((l) => myBranchIds.includes(l._id.toString())).map((l) => ({ label: `${l.city} - ${l.name}`, value: l._id }));
+  }, [currentUser, locationsInCafe, myBranchIds, allBranchOptions]);
 
   const adminOptions = useMemo(() => admins.map((a) => {
     const c = (a.accessibleLocations || []).length;
@@ -235,6 +252,7 @@ export default function AddMemberPage() {
       payload.accessibleLocations = ids;
     } else if (form.role === 'admin') {
       payload.accessibleLocations = form.accessibleLocations || [];
+      if (selectedCafeId) payload.cafes = [selectedCafeId];
       delete payload.assignedLocation;
     } else {
       payload.accessibleLocations = [];
@@ -322,13 +340,28 @@ export default function AddMemberPage() {
             <Field label="Role">
               <PremiumSelect
                 value={form.role}
-                onChange={(v) => { set('role', v); set('assignedLocation', ''); set('accessibleLocations', []); setSelectedAdminId(''); }}
+                onChange={(v) => { set('role', v); set('assignedLocation', ''); set('accessibleLocations', []); setSelectedAdminId(''); setSelectedCafeId(''); }}
                 options={availableRoles}
               />
             </Field>
             <Field label="Highest Qualification">
               <PremiumSelect value={form.highestQualification} onChange={(v) => set('highestQualification', v)} options={[{ label: '10th Pass', value: '10th Pass' }, { label: '12th Pass', value: '12th Pass' }, { label: 'Diploma', value: 'Diploma' }, { label: 'Graduate', value: 'Graduate' }, { label: 'Post Graduate', value: 'Post Graduate' }]} />
             </Field>
+
+            {/* Cafe selector — shown for admin and (for filtering) branch_admin / staff / chef */}
+            {cafeOptions.length > 0 && (
+              <Field
+                label={form.role === 'admin' ? 'Cafe (Organization)' : 'Filter by Cafe'}
+                hint={form.role === 'admin' ? 'The cafe this admin belongs to.' : 'Narrows down the branch list below.'}
+              >
+                <PremiumSelect
+                  value={selectedCafeId}
+                  onChange={(v) => { setSelectedCafeId(v); set('assignedLocation', ''); set('accessibleLocations', []); }}
+                  options={cafeOptions}
+                  placeholder="All cafes"
+                />
+              </Field>
+            )}
 
             {/* Branch selection per role */}
             {['staff', 'chef'].includes(form.role) && (
@@ -357,7 +390,7 @@ export default function AddMemberPage() {
 
             {form.role === 'admin' && (
               <Field label="Branches This Admin Can Manage">
-                <PremiumSelect value={form.accessibleLocations} onChange={(v) => set('accessibleLocations', v)} options={allBranchOptions} multiple placeholder="Select branches" />
+                <PremiumSelect value={form.accessibleLocations} onChange={(v) => set('accessibleLocations', v)} options={allBranchOptions} multiple placeholder={selectedCafeId ? 'Select branches from this cafe' : 'Select branches'} />
               </Field>
             )}
 

@@ -91,6 +91,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
   } = req.body;
   let assignedLocation = req.body.assignedLocation;
   let accessibleLocations = normalizeIdList(req.body.accessibleLocations);
+  const cafes = normalizeIdList(req.body.cafes);
 
   const userCount = await User.countDocuments();
   let finalRole = role;
@@ -232,6 +233,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
     alternatePhone, role: finalRole, assignedLocation, accessibleLocations,
+    cafes: ['admin', 'super_admin'].includes(finalRole) && cafes.length ? cafes : [],
     aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary,
     permissions: finalPermissions
   });
