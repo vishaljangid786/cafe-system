@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { digitsOnly } from '@/app/utils/inputValidation';
-import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store } from 'lucide-react';
+import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -44,6 +44,23 @@ export default function BranchesPage() {
     name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
   });
   const [staffTab, setStaffTab] = useState('staff'); // 'staff' or 'chef'
+
+  useEffect(() => {
+    if (!selectedLocation) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setSelectedLocation(null);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [selectedLocation]);
 
   const fetchLocations = async () => {
     progress.start();
@@ -505,42 +522,46 @@ export default function BranchesPage() {
 
         <AnimatePresence>
           {selectedLocation && (
-            <div className="fixed inset-0 z-110 flex justify-end">
+            <div className="fixed inset-0 z-300 flex justify-end">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedLocation(null)}
-                className="absolute inset-0 bg-black/60 "
+                className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
               />
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-2xl bg-(--color-surface) h-full shadow-sm border-l border-(--color-border) overflow-y-auto custom-scrollbar z-999"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${selectedLocation.name} branch overview`}
+                className="relative z-10 flex h-dvh w-full max-w-2xl flex-col overflow-hidden border-l border-(--color-border) bg-(--color-surface) shadow-2xl"
               >
-                <div className="p-8 border-b border-(--color-border) sticky top-0 bg-(--color-surface)/80  z-10 flex items-center justify-between">
-                   <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-(--color-on-primary) dark:text-(--color-on-primary) shadow-lg ">
+                <div className="flex shrink-0 items-center justify-between gap-4 border-b border-(--color-border) bg-(--color-surface) px-5 py-5 sm:px-8 sm:py-6">
+                   <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-(--color-on-primary) shadow-lg">
                         <MapPin size={24} />
                       </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-(--color-text-primary) tracking-tight leading-none">{selectedLocation.name}</h2>
-                        <p className="text-[10px] font-bold uppercase text-primary tracking-normal mt-2">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-xl font-bold leading-tight tracking-tight text-(--color-text-primary) sm:text-2xl">{selectedLocation.name}</h2>
+                        <p className="mt-1.5 truncate text-[10px] font-bold uppercase tracking-normal text-primary">
                           {selectedLocation.cafe?.name ? `${selectedLocation.cafe.name} · Branch Overview` : 'Branch Overview'}
                         </p>
                       </div>
                    </div>
                    <button 
                     onClick={() => setSelectedLocation(null)}
-                    className="p-3 rounded-xl hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-colors"
+                    aria-label="Close branch overview"
+                    className="shrink-0 rounded-xl border border-(--color-border) p-2.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)"
                    >
-                     <Plus className="rotate-45" size={24} />
+                     <X size={20} />
                    </button>
                 </div>
 
-                <div className="p-8 space-y-12">
+                <div className="custom-scrollbar flex-1 space-y-10 overflow-y-auto overscroll-contain p-5 pb-10 sm:p-8 sm:pb-12">
                    <section className='flex flex-col gap-10'>
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
