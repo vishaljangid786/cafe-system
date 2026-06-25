@@ -518,7 +518,7 @@ export default function BranchesPage() {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-2xl bg-(--color-surface) h-full shadow-sm border-l border-(--color-border) overflow-y-auto custom-scrollbar"
+                className="relative w-full max-w-2xl bg-(--color-surface) h-full shadow-sm border-l border-(--color-border) overflow-y-auto custom-scrollbar z-999"
               >
                 <div className="p-8 border-b border-(--color-border) sticky top-0 bg-(--color-surface)/80  z-10 flex items-center justify-between">
                    <div className="flex items-center gap-4">
