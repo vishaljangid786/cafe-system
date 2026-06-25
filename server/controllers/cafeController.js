@@ -197,17 +197,16 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
 // @desc    Create a cafe (+ optionally its first admin)
 // @route   POST /api/cafes   (super_admin)
 const createCafe = asyncHandler(async (req, res) => {
-  const { name, logo, gstin, address, contact, adminMode } = req.body;
-
-  const exists = await Cafe.findOne({ name: String(name || '').trim(), status: { $ne: 'deleted' } });
-  if (exists) {
-    res.status(400);
-    throw new Error('A cafe with this name already exists');
-  }
-
-  let cafe;
   try {
-    cafe = await Cafe.create({
+    const { name, logo, gstin, address, contact } = req.body;
+
+    const exists = await Cafe.findOne({ name: String(name || '').trim(), status: { $ne: 'deleted' } });
+    if (exists) {
+      res.status(400);
+      throw new Error('A cafe with this name already exists');
+    }
+
+    const cafe = await Cafe.create({
       name,
       logo: logo || '',
       gstin: gstin || '',
@@ -215,33 +214,36 @@ const createCafe = asyncHandler(async (req, res) => {
       contact: contact || {},
       createdBy: req.user._id,
     });
+
+    let createdAdmin = null;
+    try {
+      createdAdmin = await attachAdmin(req, cafe, req.body);
+    } catch (err) {
+      // Roll back the cafe so a failed admin step doesn't leave an orphan cafe.
+      try { await Cafe.deleteOne({ _id: cafe._id }); } catch (e) { /* best effort */ }
+      throw err;
+    }
+
+    await logActivity(req.user, 'CAFE_CREATE', `Created cafe: ${cafe.name}`, req, { cafeId: cafe._id });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        ...cafe.toObject(),
+        branchCount: 0,
+        admins: createdAdmin ? [{ _id: createdAdmin._id, name: createdAdmin.name, email: createdAdmin.email }] : [],
+      },
+    });
   } catch (err) {
-    res.status(400);
+    // Cafe creation must never surface as an opaque 500. Every failure here
+    // (duplicate, validation, missing field) is user-actionable, and this route
+    // is super_admin-only — so surface the REAL reason as a 4xx and log it.
+    if (!err.statusCode && (res.statusCode === 200 || res.statusCode === 201)) {
+      err.statusCode = 400;
+    }
+    console.error('[createCafe] failed:', err && err.message, '| name:', err && err.name, '| code:', err && err.code);
     throw err;
   }
-
-  let createdAdmin = null;
-  try {
-    createdAdmin = await attachAdmin(req, cafe, req.body);
-  } catch (err) {
-    // Roll back the cafe so a failed admin step doesn't leave an orphan cafe.
-    try { await Cafe.deleteOne({ _id: cafe._id }); } catch (e) { /* best effort */ }
-    // Surface the real reason (duplicate email, validation, etc.) as a 4xx so the
-    // user sees what's wrong instead of an opaque "Something went wrong" 500.
-    res.status(err.statusCode || 400);
-    throw err;
-  }
-
-  await logActivity(req.user, 'CAFE_CREATE', `Created cafe: ${cafe.name}`, req, { cafeId: cafe._id });
-
-  res.status(201).json({
-    success: true,
-    data: {
-      ...cafe.toObject(),
-      branchCount: 0,
-      admins: createdAdmin ? [{ _id: createdAdmin._id, name: createdAdmin.name, email: createdAdmin.email }] : [],
-    },
-  });
 });
 
 // @desc    Update cafe details / branding
