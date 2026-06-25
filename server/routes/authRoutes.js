@@ -1,6 +1,6 @@
 const express = require('express');
 const { registerUser, loginUser, getProfile, impersonateUser, exitImpersonation, logoutUser } = require('../controllers/authController');
-const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission, canImpersonate } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const { signupSchema, loginSchema, validate } = require('../middlewares/validateMiddleware');
 
@@ -43,7 +43,7 @@ router.post('/register', authLimiter, maybeVerifyToken, gateCanCreateUser, uploa
 router.post('/login', authLimiter, ...loginSchema, validate, loginUser);
 router.get('/profile', verifyToken, getProfile);
 
-router.post('/impersonate/:userId', verifyToken, checkRoleOrPermission(['super_admin'], 'impersonateUsers'), impersonateUser);
+router.post('/impersonate/:userId', verifyToken, canImpersonate, impersonateUser);
 router.post('/exit-impersonation', verifyToken, exitImpersonation);
 router.post('/logout', verifyToken, logoutUser);
 

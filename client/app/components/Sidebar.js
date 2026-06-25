@@ -157,7 +157,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       const opsItems = [];
 
       if (canView('page_orders')) opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
-      if (canView('page_reservations')) opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      // Reservations is a shared page (staff use it too), so it rides with All Orders
+      // rather than being a separately-restrictable page.
+      if (canView('page_orders')) opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
       if (canView('page_tables')) opsItems.push({ name: 'Tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
       if (canView('page_menu')) opsItems.push({ name: 'Menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
       if (canView('page_inventory') && role !== 'location_admin') opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });

@@ -63,7 +63,7 @@ const getAuthCookieOptions = () => ({
 });
 
 // Helper to set token in cookie and send response
-const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false, impersonatorSessionVersion = null) => {
+const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false, impersonatorSessionVersion = null, impersonatorRole = null) => {
   const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly, impersonatorSessionVersion);
 
   // Token is set as httpOnly cookie only — never returned in JSON body to prevent XSS theft
@@ -85,6 +85,9 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
         impersonatedBy: impersonatedBy || undefined,
         isImpersonating: Boolean(impersonatedBy),
         isViewOnly: impersonatedBy ? Boolean(isViewOnly) : false,
+        // Real (original) impersonator's role — lets the UI offer "switch user
+        // while impersonating" to super_admins only.
+        impersonatorRole: impersonatedBy ? impersonatorRole : undefined,
       }
     });
 };
@@ -243,7 +246,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
   // creator sent a selection, use it — gated to pages the creator themselves holds
   // (super_admin grants anything). Then DERIVE the coarse page-permissions from the
   // granted pages so the data APIs (still gated by the old permission keys) work.
-  const { ROLE_DEFAULT_PAGES, sanitizePages, PAGES: PAGE_DEFS } = require('../utils/pageAccess');
+  const { ROLE_DEFAULT_PAGES, sanitizePages, permsForPages } = require('../utils/pageAccess');
   let finalPages = [...(ROLE_DEFAULT_PAGES[finalRole] || [])];
   if (finalRole !== 'super_admin' && req.user) {
     let reqPages = req.body.allowedPages;
@@ -259,10 +262,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
     res.status(400);
     throw new Error('A member must be granted access to at least one page.');
   }
-  // Derive coarse page-permissions from the granted pages and merge them in, so the
-  // server route guards (which still check the legacy keys) allow those pages.
-  const pageLegacyPerm = Object.fromEntries(PAGE_DEFS.map((p) => [p.key, p.legacyPerm]));
-  finalPages.forEach((k) => { const perm = pageLegacyPerm[k]; if (perm) finalPermissions[perm] = true; });
+  // Derive the coarse permissions the granted pages need to FUNCTION (each page's
+  // `grants`) and merge them in, so the data APIs (still gated by the legacy keys)
+  // work — e.g. All Orders enables manageOrders, Cash Drawer enables viewRevenue.
+  permsForPages(finalPages).forEach((perm) => { finalPermissions[perm] = true; });
 
   const user = await User.create({
     name, email, password, phone, gender, age,

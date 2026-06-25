@@ -166,4 +166,20 @@ const checkAnyPermission = (...permissions) => {
   };
 };
 
-module.exports = { verifyToken, optionalVerifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission };
+// Gate for POST /auth/impersonate.
+//  - Normal (not impersonating): super_admin, or anyone holding impersonateUsers.
+//  - Already impersonating (HOT-SWITCH to another user without exiting): allowed
+//    ONLY when the ORIGINAL impersonator is a super_admin. Delegated impersonators
+//    must exit their current session first.
+const canImpersonate = (req, res, next) => {
+  if (req.impersonator) {
+    if (req.impersonator.role === 'super_admin') return next();
+    res.status(403);
+    throw new Error('Exit the current session before logging in as another user');
+  }
+  if (req.user?.role === 'super_admin' || req.user?.permissions?.impersonateUsers === true) return next();
+  res.status(403);
+  throw new Error('You do not have permission to log in as other users');
+};
+
+module.exports = { verifyToken, optionalVerifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission, canImpersonate };

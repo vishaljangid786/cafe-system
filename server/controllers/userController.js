@@ -706,18 +706,17 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
   // gated by the old keys — match the page selection. Capabilities are untouched.
   let nextAllowedPages = user.allowedPages || [];
   if (req.body.allowedPages !== undefined) {
-    const { sanitizePages, PAGES: PAGE_DEFS } = require('../utils/pageAccess');
+    const { sanitizePages, permsForPages, DERIVABLE_PERMS } = require('../utils/pageAccess');
     let reqPages = req.body.allowedPages;
     if (typeof reqPages === 'string') { try { reqPages = JSON.parse(reqPages); } catch (e) { reqPages = null; } }
     if (Array.isArray(reqPages)) {
       const actorPages = new Set(req.user.allowedPages || []);
       nextAllowedPages = sanitizePages(reqPages).filter((k) => actorIsSuper || actorPages.has(k));
-      const grantedLegacy = new Set(
-        nextAllowedPages.map((k) => (PAGE_DEFS.find((p) => p.key === k) || {}).legacyPerm).filter(Boolean)
-      );
-      new Set(PAGE_DEFS.map((p) => p.legacyPerm)).forEach((perm) => {
-        mergedPerms[perm] = grantedLegacy.has(perm);
-      });
+      // Recompute every page-derivable coarse permission from the granted pages (a
+      // perm is true iff some surviving page grants it). Capabilities (editRevenue,
+      // forceComplete, …) are NOT derivable, so the toggles above are left intact.
+      const grantedPerms = permsForPages(nextAllowedPages);
+      DERIVABLE_PERMS.forEach((perm) => { mergedPerms[perm] = grantedPerms.has(perm); });
     }
   }
 

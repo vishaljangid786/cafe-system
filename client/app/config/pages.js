@@ -9,7 +9,6 @@ export const PAGES = [
   { key: 'page_attendance',      label: 'Attendance',       group: 'Staff & People',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_salaries',        label: 'Salaries',         group: 'Staff & People',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_orders',          label: 'All Orders',       group: 'Operations',      defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { key: 'page_reservations',    label: 'Reservations',     group: 'Operations',      defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_tables',          label: 'Tables',           group: 'Operations',      defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_menu',            label: 'Menu',             group: 'Operations',      defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_inventory',       label: 'Inventory',        group: 'Operations',      defaultRoles: ['super_admin', 'admin', 'branch_admin'] },

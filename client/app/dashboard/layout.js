@@ -79,7 +79,10 @@ const GATED_PAGES = [
   { key: 'page_alerts',          paths: ['/dashboard/admin/command-center'] },
   { key: 'page_forecast',        paths: ['/dashboard/admin/forecasting'] },
   { key: 'page_exports',         paths: ['/dashboard/admin/exports'] },
-  { key: 'page_branches',        paths: ['/dashboard/admin/locations'] },
+  // Branches is shown to admins by ROLE in the sidebar (not page-gated there), so the
+  // guard must let admins in by role too — while still allowing delegation to other
+  // roles via allowedPages. (super_admin always passes.)
+  { key: 'page_branches',        paths: ['/dashboard/admin/locations'], roleAllow: ['admin'] },
   { key: 'page_auditlogs',       paths: ['/dashboard/admin/audit-logs'] },
   { key: 'page_impersonate',     paths: ['/dashboard/admin/impersonate'] },
   { key: 'page_admincenter',     paths: ['/dashboard/super-admin'] },
@@ -142,7 +145,9 @@ export default function DashboardLayout({ children }) {
           // Page-level access: only super_admin, or a user whose allowedPages holds
           // this page key, may open it. This enforces "one toggle = one page" even on
           // direct URL access, overriding the broad role-prefix allowance.
-          const canOpen = user.role === 'super_admin' || (user.allowedPages || []).includes(gated.key);
+          const canOpen = user.role === 'super_admin'
+            || (gated.roleAllow && gated.roleAllow.includes(user.role))
+            || (user.allowedPages || []).includes(gated.key);
           if (!canOpen) router.replace(allowed[0]);
         } else if (!allowed.some(p => pathname.startsWith(p))) {
           // Non-gated page (Overview, Settings, Cafes, role dashboard, …): role prefix.

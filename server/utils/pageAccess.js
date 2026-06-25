@@ -18,18 +18,19 @@
 // used only to migrate existing users.
 const PAGES = [
   // Staff & people
-  { key: 'page_users',          label: 'Users',            group: 'Staff',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin'] },
-  { key: 'page_staff',          label: 'Staff',            group: 'Staff',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { key: 'page_attendance',     label: 'Attendance',       group: 'Staff',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { key: 'page_salaries',       label: 'Salaries',         group: 'Staff',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  // Orders & operations
-  { key: 'page_orders',         label: 'All Orders',       group: 'Operations', legacyPerm: 'viewOrders',    defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { key: 'page_reservations',   label: 'Reservations',     group: 'Operations', legacyPerm: 'viewOrders',    defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { key: 'page_users',          label: 'Users',            group: 'Staff & People',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin'] },
+  { key: 'page_staff',          label: 'Staff',            group: 'Staff & People',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { key: 'page_attendance',     label: 'Attendance',       group: 'Staff & People',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { key: 'page_salaries',       label: 'Salaries',         group: 'Staff & People',      legacyPerm: 'manageStaff',   defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  // Orders & operations. `grants` = the coarse perms enabled when the page is
+  // granted (so the page actually FUNCTIONS, not just lists). `legacyPerm` stays the
+  // single perm that GATED the page in the old system (used only by the migration).
+  { key: 'page_orders',         label: 'All Orders',       group: 'Operations', legacyPerm: 'viewOrders',    grants: ['viewOrders', 'manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_tables',         label: 'Tables',           group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_menu',           label: 'Menu',             group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_inventory',      label: 'Inventory',        group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin'] },
   { key: 'page_procurement',    label: 'Procurement',      group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { key: 'page_cashdrawer',     label: 'Cash Drawer',      group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { key: 'page_cashdrawer',     label: 'Cash Drawer',      group: 'Operations', legacyPerm: 'manageOrders',  grants: ['manageOrders', 'viewRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_waitlist',       label: 'Waitlist',         group: 'Operations', legacyPerm: 'manageOrders',  defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_coupons',        label: 'Offers',           group: 'Operations', legacyPerm: 'manageCoupons',  defaultRoles: ['super_admin', 'admin'] },
   // Revenue
@@ -69,10 +70,28 @@ const ROLE_DEFAULT_PAGES = ROLES.reduce((acc, role) => {
 
 // OLD coarse permission key -> the page keys it used to unlock. Used ONLY by the
 // one-time migration to seed allowedPages for users created before this system.
-const PERM_TO_PAGES = ALL_PAGE_KEYS.reduce((acc, key) => acc, {});
+const PERM_TO_PAGES = {};
 PAGES.forEach((p) => {
   (PERM_TO_PAGES[p.legacyPerm] = PERM_TO_PAGES[p.legacyPerm] || []).push(p.key);
 });
+
+// The coarse permissions a page enables (so it functions). Defaults to [legacyPerm].
+const grantsFor = (p) => p.grants || [p.legacyPerm];
+const PAGE_BY_KEY = Object.fromEntries(PAGES.map((p) => [p.key, p]));
+// Every coarse permission that any page can derive — these are recomputed from
+// allowedPages on update (capabilities like editRevenue/forceComplete are NOT here,
+// so they stay independent toggles).
+const DERIVABLE_PERMS = [...new Set(PAGES.flatMap(grantsFor))];
+
+// The set of coarse permissions granted by a list of page keys.
+const permsForPages = (pageKeys = []) => {
+  const set = new Set();
+  pageKeys.forEach((k) => {
+    const p = PAGE_BY_KEY[k];
+    if (p) grantsFor(p).forEach((perm) => set.add(perm));
+  });
+  return set;
+};
 
 // Sanitize a requested allowedPages array down to known keys (drops anything bogus).
 const sanitizePages = (pages) =>
@@ -94,6 +113,8 @@ module.exports = {
   PAGE_KEY_SET,
   ROLE_DEFAULT_PAGES,
   PERM_TO_PAGES,
+  DERIVABLE_PERMS,
   sanitizePages,
   pagesFromPermissions,
+  permsForPages,
 };
