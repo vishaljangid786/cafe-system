@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const slugify = (value = '') =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 // A Cafe is a brand / organization that OWNS one or more branches (Locations).
 //
 // Hierarchy:  super_admin  ─owns→  Cafe  ─owns→  Location (branch)  ─has→  staff/chef
@@ -25,6 +32,9 @@ const cafeSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       index: true,
+      default: function () {
+        return slugify(this.name);
+      },
     },
     logo: {
       type: String,
@@ -71,21 +81,6 @@ cafeSchema.index(
   { unique: true, partialFilterExpression: { status: { $in: ['active', 'inactive'] } } }
 );
 
-const slugify = (value = '') =>
-  String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-// Synchronous pre-hook (no `next`): Mongoose 9 calls zero-arity hooks and
-// proceeds when they return. The old `function (next) { … next() }` style threw
-// "next is not a function" under Mongoose 9, which crashed every Cafe.create().
-cafeSchema.pre('validate', function () {
-  if (this.name && (!this.slug || this.isModified('name'))) {
-    this.slug = slugify(this.name);
-  }
-});
-
 const Cafe = mongoose.model('Cafe', cafeSchema);
+Cafe.slugify = slugify;
 module.exports = Cafe;

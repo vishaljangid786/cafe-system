@@ -211,6 +211,7 @@ const createCafe = asyncHandler(async (req, res) => {
 
     const cafe = await Cafe.create({
       name,
+      slug: Cafe.slugify(name),
       logo: logo || '',
       gstin: gstin || '',
       address: address || {},
@@ -238,14 +239,14 @@ const createCafe = asyncHandler(async (req, res) => {
       },
     });
   } catch (err) {
-    // Cafe creation must never surface as an opaque 500. Every failure here
-    // (duplicate, validation, missing field) is user-actionable, and this route
-    // is super_admin-only — so surface the REAL reason as a 4xx and log it.
-    if (!err.statusCode && (res.statusCode === 200 || res.statusCode === 201)) {
-      err.statusCode = 400;
-    }
     console.error('[createCafe] failed:', err && err.message, '| name:', err && err.name, '| code:', err && err.code);
-    throw err;
+    const message = err?.code === 11000
+      ? 'A cafe with this name already exists'
+      : err?.message || 'Unable to create cafe';
+    return res.status(err?.statusCode || 400).json({
+      success: false,
+      message,
+    });
   }
 });
 
@@ -271,6 +272,7 @@ const updateCafe = asyncHandler(async (req, res) => {
       throw new Error('A cafe with this name already exists');
     }
     cafe.name = name;
+    cafe.slug = Cafe.slugify(name);
   }
   if (logo !== undefined) cafe.logo = logo;
   if (gstin !== undefined) cafe.gstin = gstin;
