@@ -69,8 +69,15 @@ const attachUserFromToken = async (req, res, token) => {
     }
 
     if (decoded.isViewOnly && req.method !== 'GET') {
-      res.status(403);
-      throw new Error('Action restricted: View-only impersonation mode is active');
+      // Session changes — switching to ANOTHER user (hot-switch) or exiting the
+      // impersonation — are navigation, not data mutations, so they're allowed even
+      // in view-only mode. Every other write stays blocked.
+      const url = req.originalUrl || req.url || '';
+      const isSessionChange = req.method === 'POST' && /\/auth\/(impersonate\/|exit-impersonation)/.test(url);
+      if (!isSessionChange) {
+        res.status(403);
+        throw new Error('Action restricted: View-only impersonation mode is active');
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../services/api';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
@@ -15,6 +16,11 @@ import PremiumSelect from './ui/PremiumSelect';
 const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function StaffReportsAnalytics({ user }) {
+  const router = useRouter();
+  // Each row links to that staff member's full detail page (orders, coupons,
+  // reservations, …). Route base follows the viewer's role.
+  const basePath = user?.role === 'branch_admin' ? '/dashboard/branch-admin'
+    : user?.role === 'location_admin' ? '/dashboard/location-admin' : '/dashboard/admin';
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -367,9 +373,9 @@ export default function StaffReportsAnalytics({ user }) {
                 </thead>
                 <tbody>
                   {data.map((staff) => (
-                    <tr key={staff._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group">
+                    <tr key={staff._id} onClick={() => router.push(`${basePath}/staff-reports/${staff._id}`)} title="View full report" className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group cursor-pointer">
                       <td className="py-4 text-xs font-bold text-primary">#{staff.ranking}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{staff.name}</td>
+                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-primary) group-hover:text-primary transition-colors">{staff.name} <span className="opacity-0 group-hover:opacity-60 text-[10px]">›</span></td>
                       <td className="py-4 text-[10px] font-bold text-(--color-text-muted) uppercase tracking-wider">{staff.role}</td>
                       <td className="py-4 text-xs font-bold text-(--color-text-muted)">{staff.branchName}</td>
                       <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-white">₹{staff.totalSales}</td>

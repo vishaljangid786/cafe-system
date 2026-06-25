@@ -141,6 +141,7 @@ const getOrders = asyncHandler(async (req, res) => {
     .populate('table', 'tableNumber')
     .populate('createdBy', 'name')
     .populate('assignedChef', 'name')
+    .populate('coupon', 'code discountType discountValue')
     .populate('items.menuItem', 'name price dietaryType category')
     .sort({ createdAt: -1 })
     .skip(skip)

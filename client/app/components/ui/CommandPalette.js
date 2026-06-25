@@ -63,17 +63,25 @@ export default function CommandPalette() {
         ].filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
 
         let userResults = [];
-        if (currentUser?.role === 'super_admin' && !currentUser.impersonatedBy) {
+        // Switch-user (impersonate) is a super_admin tool. It ALSO stays available
+        // WHILE impersonating — but only when the REAL (original) identity is a
+        // super_admin — so they can hot-switch between users without exiting first.
+        const isImpersonating = !!currentUser?.impersonatedBy || currentUser?.isImpersonating;
+        const canSwitchUsers = isImpersonating
+          ? (currentUser?.impersonatorRole === 'super_admin' || currentUser?.impersonatedBy?.role === 'super_admin')
+          : currentUser?.role === 'super_admin';
+        if (canSwitchUsers) {
+          const verb = isImpersonating ? 'Switch to' : 'Impersonate';
           const res = await api.get(`/users?search=${search}`);
           userResults = res.data.data.slice(0, 5).map(u => ({
             type: 'user',
-            name: `Impersonate: ${u.name}`,
+            name: `${verb}: ${u.name}`,
             subtext: u.role,
             id: u._id,
             icon: User,
             fullAccess: true
           }));
-          
+
           const viewOnlyResults = res.data.data.slice(0, 5).map(u => ({
             type: 'user',
             name: `View: ${u.name} (View-Only)`,

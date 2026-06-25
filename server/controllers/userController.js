@@ -66,28 +66,34 @@ const normalizeBranchAdminUpdate = (user, updateData) => {
 const getUsers = asyncHandler(async (req, res) => {
   let query = {};
 
+  // Authorize/scope the listing as the REAL actor: when a super_admin is
+  // impersonating, they should still see ALL users (so "switch user while
+  // impersonating" works even from inside a staff session that couldn't otherwise
+  // list users). Everyone else is scoped by their own (effective) role.
+  const actor = req.impersonator?.role === 'super_admin' ? req.impersonator : req.user;
+
   // Hierarchy Visibility Logic
-  if (req.user.role === 'branch_admin') {
-    query.assignedLocation = { $in: userLocationIds(req.user) };
+  if (actor.role === 'branch_admin') {
+    query.assignedLocation = { $in: userLocationIds(actor) };
     query.role = { $in: ['staff', 'chef'] };
-  } else if (req.user.role === 'admin') {
+  } else if (actor.role === 'admin') {
     // Admins see branch admins and staff under their accessible locations
-    const allowedLocs = userLocationIds(req.user);
+    const allowedLocs = userLocationIds(actor);
     query.$and = [
       { role: { $in: ['branch_admin', 'staff', 'chef'] } },
-      { 
+      {
         $or: [
           { assignedLocation: { $in: allowedLocs } },
           { accessibleLocations: { $in: allowedLocs } } // If an admin has permission for another admin's location
         ]
       }
     ];
-  } else if (req.user.role === 'super_admin') {
+  } else if (actor.role === 'super_admin') {
     query.role = { $in: ['admin', 'branch_admin', 'staff', 'chef'] };
   } else {
     // Any other role (e.g. a staff/chef/location_admin granted manageStaff):
     // restrict strictly to their own branch's staff & chefs — never global data.
-    query.assignedLocation = { $in: userLocationIds(req.user) };
+    query.assignedLocation = { $in: userLocationIds(actor) };
     query.role = { $in: ['staff', 'chef'] };
   }
 

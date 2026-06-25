@@ -266,11 +266,12 @@ exports.createReservation = async (req, res) => {
 // @access  Private
 exports.getReservations = async (req, res) => {
   try {
-    const { date, eventName, locationId, status, search } = req.query;
+    const { date, eventName, locationId, status, search, createdBy } = req.query;
     let query = {};
 
     if (date) query.date = new Date(date);
     if (status) query.status = status;
+    if (createdBy) query.userId = createdBy; // reservations created by this staff member
     if (eventName) query.eventName = { $regex: escapeRegex(eventName), $options: 'i' };
 
     const branchScope = scopedLocationId(req, locationId);

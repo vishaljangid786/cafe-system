@@ -395,10 +395,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
 // @route   POST /api/auth/impersonate/:userId
 // @access  Private (Super Admin)
 const impersonateUser = asyncHandler(async (req, res, next) => {
-  if (req.impersonator) {
-    res.status(403);
-    throw new Error('Already logged in as another user');
-  }
+  // The REAL identity performing the impersonation. When the caller is ALREADY
+  // impersonating (a super_admin hot-switching to another user — the gate already
+  // ensured only super_admin originals reach here), the actor is that original
+  // super_admin, NOT the currently-impersonated user. Otherwise it's just the
+  // logged-in user.
+  const actor = req.impersonator || req.user;
 
   const targetUser = await User.findById(req.params.userId).populate('assignedLocation accessibleLocations');
 
@@ -407,12 +409,18 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     throw new Error('Target user not found');
   }
 
+  // Can't impersonate your own real account.
+  if (targetUser._id.toString() === actor._id.toString()) {
+    res.status(400);
+    throw new Error('You cannot log in as your own account');
+  }
+
   // Privilege-escalation guard: a delegated (non-super-admin) impersonator may
   // only log in as users STRICTLY BELOW their own role — never a peer or higher.
   // Without this, the impersonateUsers permission could be used to become an
   // admin/super_admin by impersonating one.
   const ROLE_RANK = { super_admin: 5, admin: 4, branch_admin: 3, location_admin: 2, staff: 1, chef: 1 };
-  if (req.user.role !== 'super_admin' && (ROLE_RANK[targetUser.role] || 0) >= (ROLE_RANK[req.user.role] || 0)) {
+  if (actor.role !== 'super_admin' && (ROLE_RANK[targetUser.role] || 0) >= (ROLE_RANK[actor.role] || 0)) {
     res.status(403);
     throw new Error('You can only log in as users below your own role');
   }
@@ -421,8 +429,8 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
   // inside a branch they manage. Reject location-less/global targets (admins
   // have no assignedLocation) so the rank guard above can't be sidestepped by
   // impersonating a branch-less account.
-  if (req.user.role !== 'super_admin') {
-    if (!targetUser.assignedLocation || !canAccessLocation(req.user, targetUser.assignedLocation)) {
+  if (actor.role !== 'super_admin') {
+    if (!targetUser.assignedLocation || !canAccessLocation(actor, targetUser.assignedLocation)) {
       res.status(403);
       throw new Error('You can only log in as users within branches you manage');
     }
@@ -431,14 +439,16 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
   const { viewOnly } = req.body;
 
   await AuditLog.create({
-    action: 'IMPERSONATION_START',
-    performedBy: req.user._id,
+    action: req.impersonator ? 'IMPERSONATION_SWITCH' : 'IMPERSONATION_START',
+    performedBy: actor._id,
     targetUser: targetUser._id,
-    details: `Admin ${req.user.name} logged in as ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-CONTROL'}]`,
-    role: req.user.role
+    details: `${actor.name} logged in as ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-CONTROL'}]`,
+    role: actor.role
   });
 
-  sendTokenResponse(targetUser, 200, res, req.user._id, Boolean(viewOnly), req.user.sessionVersion);
+  // New session is impersonated BY the real actor (the original super_admin when
+  // hot-switching), so impersonatedBy stays anchored to the real identity.
+  sendTokenResponse(targetUser, 200, res, actor._id, Boolean(viewOnly), actor.sessionVersion, actor.role);
 });
 
 // @desc    Exit impersonation
@@ -504,6 +514,8 @@ const getProfile = asyncHandler(async (req, res, next) => {
       userData.impersonatedBy = req.impersonator;
       userData.isImpersonating = true;
       userData.isViewOnly = Boolean(req.authToken?.isViewOnly);
+      // Drives the "switch user while impersonating" affordance (super_admin only).
+      userData.impersonatorRole = req.impersonator.role;
     } else {
       userData.isImpersonating = false;
       userData.isViewOnly = false;
