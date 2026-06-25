@@ -295,8 +295,12 @@ export const AuthProvider = ({ children }) => {
   const impersonate = async (userId, viewOnly = false) => {
     try {
       setLoading(true);
-      const res = await api.post(`/auth/impersonate/${userId}`, { viewOnly });
-      const userData = res.data.data;
+      await api.post(`/auth/impersonate/${userId}`, { viewOnly });
+      // Read the authoritative profile after the cookie switches. This includes
+      // impersonatedBy/isViewOnly immediately, so the exit banner renders
+      // without requiring a manual page refresh.
+      const profile = await api.get('/auth/profile');
+      const userData = profile.data.data;
       setUser(userData);
 
       const initialLoc = ['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)
@@ -330,8 +334,9 @@ export const AuthProvider = ({ children }) => {
   const exitImpersonation = async () => {
     try {
       setLoading(true);
-      const res = await api.post('/auth/exit-impersonation');
-      const userData = res.data.data;
+      await api.post('/auth/exit-impersonation');
+      const profile = await api.get('/auth/profile');
+      const userData = profile.data.data;
       setUser(userData);
 
       const initialLoc = ['admin', 'super_admin'].includes(userData.role) || usesAllAssignedBranches(userData)
@@ -355,7 +360,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       // Role-routed home — a non-admin delegated impersonator can't open
       // /dashboard/admin/users and would be bounced by the layout guard.
-      router.push('/dashboard');
+      router.replace(getRoleDashboard(userData.role));
 
       return { success: true };
     } catch (error) {

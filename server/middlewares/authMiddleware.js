@@ -63,6 +63,7 @@ const attachUserFromToken = async (req, res, token) => {
     }
   }
 
+  req.authToken = decoded;
   return decoded;
 };
 

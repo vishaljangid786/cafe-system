@@ -77,6 +77,9 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
         accessibleLocations: user.accessibleLocations,
         permissions: user.permissions,
         cafes: user.cafes || [],
+        impersonatedBy: impersonatedBy || undefined,
+        isImpersonating: Boolean(impersonatedBy),
+        isViewOnly: impersonatedBy ? Boolean(isViewOnly) : false,
       }
     });
 };
@@ -465,6 +468,11 @@ const getProfile = asyncHandler(async (req, res, next) => {
     const userData = user.toObject();
     if (req.impersonator) {
       userData.impersonatedBy = req.impersonator;
+      userData.isImpersonating = true;
+      userData.isViewOnly = Boolean(req.authToken?.isViewOnly);
+    } else {
+      userData.isImpersonating = false;
+      userData.isViewOnly = false;
     }
 
     res.json({
