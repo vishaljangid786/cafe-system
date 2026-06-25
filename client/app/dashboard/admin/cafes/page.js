@@ -258,7 +258,7 @@ export default function CafesPage() {
     try {
       const data = new FormData();
       data.append('image', file);
-      const res = await api.post('/cafes/upload-image', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await api.post('/cafes/upload-logo', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       setAdmin(field, res.data.url);
       toast.success('Image uploaded', { id: t });
     } catch (err) {
