@@ -1,4 +1,5 @@
 'use client';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
@@ -68,6 +69,7 @@ const EMPTY_FORM = {
 
 const inputCls = 'w-full px-5 py-3.5 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold text-sm';
 const labelCls = 'block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1';
+const CREATE_CAFE_URL = '/backend/create-cafe';
 
 // Full new-admin form — same fields + permissions + identity docs as Add-Member.
 function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, uploading }) {
@@ -314,7 +316,7 @@ export default function CafesPage() {
         };
         if (form.adminMode === 'new') payload.admin = buildAdminPayload();
         if (form.adminMode === 'existing') payload.adminUserId = form.adminUserId;
-        await api.post('/cafes', payload);
+        await axios.post(CREATE_CAFE_URL, payload, { withCredentials: true });
       }
       toast.success(editing ? 'Cafe updated' : 'Cafe created', { id: loadToast });
       setShowModal(false);
