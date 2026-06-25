@@ -79,11 +79,13 @@ const slugify = (value = '') =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-cafeSchema.pre('validate', function (next) {
+// Synchronous pre-hook (no `next`): Mongoose 9 calls zero-arity hooks and
+// proceeds when they return. The old `function (next) { … next() }` style threw
+// "next is not a function" under Mongoose 9, which crashed every Cafe.create().
+cafeSchema.pre('validate', function () {
   if (this.name && (!this.slug || this.isModified('name'))) {
     this.slug = slugify(this.name);
   }
-  next();
 });
 
 const Cafe = mongoose.model('Cafe', cafeSchema);

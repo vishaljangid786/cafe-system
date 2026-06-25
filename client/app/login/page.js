@@ -64,10 +64,10 @@ export default function LoginPage() {
         <img
           src="/images/login_bg.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-20"
+          className="absolute inset-0 w-full h-full object-cover "
         />
-        <div className="absolute inset-0 bg-primary/70" />
-
+        <div className="absolute inset-0" />
+q
         <div className="relative z-10 w-full p-16 flex flex-col justify-between text-white">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center text-white">

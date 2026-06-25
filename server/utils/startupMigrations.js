@@ -142,27 +142,93 @@ const backfillCafes = async () => {
 };
 
 // Auto-seeds demo data when the database is completely empty (first deploy / fresh DB).
-// Fully idempotent: skips immediately if any User document exists.
+// Runs AT MOST ONCE for the lifetime of a database:
+//   1. Fast path — skips immediately if any User document already exists, so a
+//      restart against a seeded DB never re-seeds (your data is never wiped).
+//   2. Cross-instance lock — an atomic upsert on the `migrations` collection means
+//      that when several instances cold-start against the same empty DB at once
+//      (e.g. serverless on Vercel), only the one that INSERTS the lock seeds; the
+//      rest bail. Without this, concurrent boots could each see 0 users and seed
+//      in parallel, producing duplicate data.
 const bootstrapSeedIfEmpty = async () => {
   const User = require('../models/User');
   const count = await User.estimatedDocumentCount();
-  if (count > 0) return; // already has data
+  if (count > 0) return; // already has data — never re-seed
+
+  const db = mongoose.connection.db;
+  if (db) {
+    try {
+      const prior = await db.collection('migrations').findOneAndUpdate(
+        { _id: 'demo-seed' },
+        { $setOnInsert: { startedAt: new Date() } },
+        { upsert: true, returnDocument: 'before' }
+      );
+      // findOneAndUpdate returns the pre-existing doc (or null when we inserted).
+      const existed = prior && (prior.value !== undefined ? prior.value : prior);
+      if (existed) return; // another instance already claimed/ran the seed
+    } catch (e) {
+      // A concurrent upsert on the unique _id can make the race-loser throw a
+      // duplicate-key error instead of matching the existing doc — that means
+      // another instance won the lock, so BAIL (don't double-seed).
+      if (e && (e.code === 11000 || e.code === 11001)) return;
+      // Any other lock error → fall through; the count guard above still
+      // prevents re-runs on a single instance.
+    }
+  }
 
   console.log('[startup] Empty database detected — running demo seed...');
   try {
     const { seedData } = require('../seed/data');
     await seedData();
+    if (db) {
+      try {
+        await db.collection('migrations').updateOne(
+          { _id: 'demo-seed' },
+          { $set: { completedAt: new Date() } }
+        );
+      } catch (e) { /* observability only */ }
+    }
     console.log('[startup] Demo seed complete.');
   } catch (err) {
     console.error('[startup] Demo seed failed (non-fatal):', err.message);
+    // Seed failed and the DB is still empty — release the lock so the next boot
+    // can retry instead of being permanently blocked by a half-finished marker.
+    if (db) {
+      try {
+        await db.collection('migrations').deleteOne({ _id: 'demo-seed', completedAt: { $exists: false } });
+      } catch (e) { /* best effort */ }
+    }
   }
 };
 
+// DESTRUCTIVE: wipes EVERY seeded collection and rebuilds the full demo dataset
+// from scratch. Gated behind the RESEED_ON_START env flag so it only ever runs
+// when you explicitly opt in (it is unset in production, so a deploy can never
+// nuke a live database). seedData() itself drops all collections before
+// inserting, so this is just "run the seed unconditionally".
+const reseedAll = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('[startup] ⚠ RESEED_ON_START=true in PRODUCTION — wiping and reseeding the live database!');
+  }
+  console.log('[startup] RESEED_ON_START=true — wiping all data and reseeding from scratch...');
+  const { seedData } = require('../seed/data');
+  await seedData();
+  console.log('[startup] Reseed complete.');
+};
+
+const reseedEnabled = () => String(process.env.RESEED_ON_START).toLowerCase() === 'true';
+
 const runStartupMigrations = async (connection) => {
   try {
-    await bootstrapSeedIfEmpty();
+    if (reseedEnabled()) {
+      // Every connect: blow away all data and rebuild the demo dataset.
+      await reseedAll();
+    } else {
+      // Default: seed exactly once, only when the database is empty.
+      await bootstrapSeedIfEmpty();
+    }
   } catch (err) {
-    console.error('[migration] Bootstrap seed failed (non-fatal):', err.message);
+    console.error('[startup] Seed step failed (non-fatal):', err.message);
   }
   try {
     await backfillCafes();
