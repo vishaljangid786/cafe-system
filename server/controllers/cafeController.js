@@ -200,54 +200,50 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
 // @desc    Create a cafe (+ optionally its first admin)
 // @route   POST /api/cafes   (super_admin)
 const createCafe = asyncHandler(async (req, res) => {
-  try {
-    const { name, logo, gstin, address, contact } = req.body;
+  const { name, logo, gstin, address, contact } = req.body;
 
-    const exists = await Cafe.findOne({ name: String(name || '').trim(), status: { $ne: 'deleted' } });
-    if (exists) {
-      res.status(400);
-      throw new Error('A cafe with this name already exists');
-    }
-
-    const cafe = await Cafe.create({
-      name,
-      slug: Cafe.slugify(name),
-      logo: logo || '',
-      gstin: gstin || '',
-      address: address || {},
-      contact: contact || {},
-      createdBy: req.user._id,
-    });
-
-    let createdAdmin = null;
-    try {
-      createdAdmin = await attachAdmin(req, cafe, req.body);
-    } catch (err) {
-      // Roll back the cafe so a failed admin step doesn't leave an orphan cafe.
-      try { await Cafe.deleteOne({ _id: cafe._id }); } catch (e) { /* best effort */ }
-      throw err;
-    }
-
-    await logActivity(req.user, 'CAFE_CREATE', `Created cafe: ${cafe.name}`, req, { cafeId: cafe._id });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        ...cafe.toObject(),
-        branchCount: 0,
-        admins: createdAdmin ? [{ _id: createdAdmin._id, name: createdAdmin.name, email: createdAdmin.email }] : [],
-      },
-    });
-  } catch (err) {
-    console.error('[createCafe] failed:', err && err.message, '| name:', err && err.name, '| code:', err && err.code);
-    const message = err?.code === 11000
-      ? 'A cafe with this name already exists'
-      : err?.message || 'Unable to create cafe';
-    return res.status(err?.statusCode || 400).json({
-      success: false,
-      message,
-    });
+  const exists = await Cafe.findOne({
+    name: String(name || '').trim(),
+    status: { $ne: 'deleted' },
+  });
+  if (exists) {
+    res.status(400);
+    throw new Error('A cafe with this name already exists');
   }
+
+  const cafe = await Cafe.create({
+    name,
+    slug: Cafe.slugify(name),
+    logo: logo || '',
+    gstin: gstin || '',
+    address: address || {},
+    contact: contact || {},
+    createdBy: req.user._id,
+  });
+
+  let createdAdmin = null;
+  try {
+    createdAdmin = await attachAdmin(req, cafe, req.body);
+  } catch (err) {
+    // Roll back the cafe so a failed admin step doesn't leave an orphan cafe.
+    try { await Cafe.deleteOne({ _id: cafe._id }); } catch (rollbackError) {
+      console.error('[createCafe] rollback failed:', rollbackError.message);
+    }
+    throw err;
+  }
+
+  await logActivity(req.user, 'CAFE_CREATE', `Created cafe: ${cafe.name}`, req, { cafeId: cafe._id });
+
+  res.status(201).json({
+    success: true,
+    data: {
+      ...cafe.toObject(),
+      branchCount: 0,
+      admins: createdAdmin
+        ? [{ _id: createdAdmin._id, name: createdAdmin.name, email: createdAdmin.email }]
+        : [],
+    },
+  });
 });
 
 // @desc    Update cafe details / branding
