@@ -12,20 +12,32 @@ export default function AdminOrderCard({ order, onCancel, onForceComplete, userR
     'REJECTED': 'bg-[rgba(var(--color-danger-rgb),0.1)] text-danger border-(--color-border)'
   };
 
-  const isDelayed = !['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status) && 
+  const isDelayed = !['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status) &&
     (new Date() - new Date(order.createdAt)) / 1000 / 60 > 15;
+
+  // Order type — takeaway/delivery have no table; dine-in shows the table number.
+  const typeLabel = order.orderType === 'takeaway' ? 'Takeaway'
+    : order.orderType === 'delivery' ? 'Delivery'
+    : 'Dine-in';
 
   return (
     <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className={`card ${isDelayed ? 'animate-pulse-danger' : ''} p-6 rounded-xl transition-colors duration-200 hover:border-(--color-border-strong) relative h-full flex flex-col`}>
         <div className="flex justify-between items-start mb-6 relative z-10">
           <div>
-            <div className={`px-2.5 py-1 rounded-md text-xs font-semibold inline-block border ${statusColors[order.status]}`}>
-              {order.status}
-              {isDelayed && <span className="ml-2 opacity-70">Delayed</span>}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className={`px-2.5 py-1 rounded-md text-xs font-semibold inline-block border ${statusColors[order.status]}`}>
+                {order.status}
+                {isDelayed && <span className="ml-2 opacity-70">Delayed</span>}
+              </div>
+              <div className="px-2.5 py-1 rounded-md text-xs font-semibold inline-block border border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted) uppercase tracking-normal">
+                {typeLabel}
+              </div>
             </div>
             <h4 className="text-xl font-bold text-(--color-text-primary) mt-3">
-              Table {order.table?.tableNumber || '??'}
+              {order.orderType && order.orderType !== 'dine-in'
+                ? typeLabel
+                : `Table ${order.table?.tableNumber || '??'}`}
             </h4>
             <p className="text-xs font-medium text-(--color-text-muted) mt-1">{order.branch?.cafe?.name ? `${order.branch.cafe.name} · ` : ''}Branch: {order.branch?.name}</p>
           </div>

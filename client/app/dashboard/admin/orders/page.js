@@ -517,7 +517,11 @@ export default function AdminOrdersDashboard() {
                                     <span className="text-[9px] font-bold text-primary uppercase tracking-normal mb-0.5">{order.branch.cafe.name}</span>
                                   )}
                                   <span className="text-xs font-bold text-(--color-text-primary)">{order.branch?.name}</span>
-                                  <span className="text-[10px] font-bold text-(--color-text-muted) mt-1 uppercase tracking-normal">Table {order.table?.tableNumber}</span>
+                                  <span className="text-[10px] font-bold text-(--color-text-muted) mt-1 uppercase tracking-normal">
+                                    {order.orderType === 'takeaway' ? 'Takeaway'
+                                      : order.orderType === 'delivery' ? 'Delivery'
+                                      : `Dine-in · Table ${order.table?.tableNumber ?? '—'}`}
+                                  </span>
                                 </div>
                               </td>
                               <td className="py-6 px-8 max-w-75">
