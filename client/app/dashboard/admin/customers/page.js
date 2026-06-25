@@ -8,8 +8,12 @@ import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function CustomersDashboard() {
+  // Scope CRM data to the global top-navbar cafe/branch selector (previously the
+  // customer KPIs/lists were always global, ignoring the selector).
+  const { selectedCafe, selectedLocation } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
@@ -28,10 +32,18 @@ export default function CustomersDashboard() {
       // allSettled so one failing sub-request (e.g. /customers/top or /inactive
       // returning 500) doesn't reject the batch and blank a page where analytics
       // loaded fine.
+      // A specific branch (selectedLocation) wins; otherwise scope to the selected cafe.
+      const params = new URLSearchParams();
+      if (selectedLocation && selectedLocation !== 'all') {
+        params.append('locationId', selectedLocation._id || selectedLocation);
+      } else if (selectedCafe && selectedCafe !== 'all') {
+        params.append('cafeId', selectedCafe);
+      }
+      const qs = params.toString() ? `?${params.toString()}` : '';
       const [analyticsRes, topRes, inactiveRes, settingsRes] = await Promise.allSettled([
-        api.get('/customers/analytics'),
-        api.get('/customers/top'),
-        api.get('/customers/inactive'),
+        api.get(`/customers/analytics${qs}`),
+        api.get(`/customers/top${qs}`),
+        api.get(`/customers/inactive${qs}`),
         api.get('/settings')
       ]);
 
@@ -58,7 +70,9 @@ export default function CustomersDashboard() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, []);
+    // Refetch when the global cafe/branch selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCafe, selectedLocation]);
 
   // Show only the last 4 digits of a phone number in the UI (e.g. ******7890).
   const maskPhone = (phone) => {

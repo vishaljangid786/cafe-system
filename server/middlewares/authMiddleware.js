@@ -57,6 +57,17 @@ const attachUserFromToken = async (req, res, token) => {
       throw new Error('Impersonation ended: the original account is no longer active. Please log in again.');
     }
 
+    // Also honour the impersonator's OWN session revocation. The token carries the
+    // TARGET's sessionVersion (validated above), so without this an admin who reset
+    // their password / logged out everywhere couldn't kill a live impersonation
+    // token. Legacy tokens lack the field → default to 1 for graceful migration.
+    const impTokenVersion = decoded.impersonatorSessionVersion || 1;
+    const impCurrentVersion = req.impersonator.sessionVersion || 1;
+    if (impTokenVersion !== impCurrentVersion) {
+      res.status(401);
+      throw new Error('Session expired due to a security update on the original account. Please log in again.');
+    }
+
     if (decoded.isViewOnly && req.method !== 'GET') {
       res.status(403);
       throw new Error('Action restricted: View-only impersonation mode is active');

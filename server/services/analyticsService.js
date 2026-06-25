@@ -67,7 +67,7 @@ class AnalyticsService {
     const dateMatch = this.getDateMatchCriteria(startDate, endDate, null, 'date');
     const targetObjectId = new mongoose.Types.ObjectId(targetLocation);
 
-    const [revenueAgg, expenseAgg, payrollAgg] = await Promise.all([
+    const [revenueAgg, expenseAgg] = await Promise.all([
       Transaction.aggregate([
         { $match: { locationId: targetObjectId, type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...dateMatch, status: 'approved' } },
         { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
@@ -75,18 +75,16 @@ class AnalyticsService {
       Transaction.aggregate([
         { $match: { locationId: targetObjectId, type: 'EXPENSE', ...dateMatch, status: 'approved' } },
         { $group: { _id: null, totalExpense: { $sum: '$totalAmount' } } }
-      ]),
-      Payroll.aggregate([
-        { $match: { status: 'PAID' } },
-        { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'staff' } },
-        { $unwind: '$staff' },
-        { $match: { 'staff.assignedLocation': targetObjectId } },
-        { $group: { _id: null, totalPayroll: { $sum: '$netSalary' } } }
       ])
     ]);
 
     const totalRevenue = revenueAgg[0]?.totalRevenue || 0;
-    const totalExpense = (expenseAgg[0]?.totalExpense || 0) + (payrollAgg[0]?.totalPayroll || 0);
+    // Salary cost is already posted to the ledger as an EXPENSE Transaction when a
+    // payroll is marked PAID (salaryController.approvePayroll → syncExpenseToTransaction),
+    // so it is already inside the EXPENSE aggregation above. Adding the Payroll
+    // collection again double-counted every salary — and that extra aggregation had
+    // no date filter, so it also leaked all-time payroll into a period-scoped total.
+    const totalExpense = expenseAgg[0]?.totalExpense || 0;
 
     return {
       locationId: targetLocation,
@@ -103,7 +101,7 @@ class AnalyticsService {
     const dateMatch = this.getDateMatchCriteria(startDate, endDate, period, 'date');
     const match = { ...dateMatch, ...matchScope };
 
-    const [revenueAgg, expenseAgg, payrollAgg] = await Promise.all([
+    const [revenueAgg, expenseAgg] = await Promise.all([
       Transaction.aggregate([
         { $match: { type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] }, ...match, status: 'approved' } },
         { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
@@ -111,18 +109,14 @@ class AnalyticsService {
       Transaction.aggregate([
         { $match: { type: 'EXPENSE', ...match, status: 'approved' } },
         { $group: { _id: null, totalExpense: { $sum: '$totalAmount' } } }
-      ]),
-      Payroll.aggregate([
-        { $match: { status: 'PAID' } },
-        { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'staff' } },
-        { $unwind: '$staff' },
-        { $match: (match.locationId ? { 'staff.assignedLocation': match.locationId } : {}) },
-        { $group: { _id: null, totalPayroll: { $sum: '$netSalary' } } }
       ])
     ]);
 
     const totalRevenue = revenueAgg[0]?.totalRevenue || 0;
-    const totalExpense = (expenseAgg[0]?.totalExpense || 0) + (payrollAgg[0]?.totalPayroll || 0);
+    // Paid salaries already appear as EXPENSE Transactions (see approvePayroll), so
+    // they are inside the EXPENSE aggregation above; re-adding the Payroll collection
+    // double-counted them (and the unfiltered $match ignored the period). See getLocationMetrics.
+    const totalExpense = expenseAgg[0]?.totalExpense || 0;
 
     return {
       totalRevenue,

@@ -198,6 +198,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Tracks the cafe whose branch scope has actually been applied, so the back-fill
+  // effect below applies it exactly once per cafe and never clobbers a manual
+  // branch narrowing on a later locations refetch.
+  const appliedCafeScopeRef = useRef(null);
+
   // Switch the active cafe. 'all' = every cafe (all branches). Selecting a
   // specific cafe scopes the branch selector + data to that cafe's branches
   // (all of them by default; the branch panel can then narrow to one).
@@ -206,15 +211,41 @@ export const AuthProvider = ({ children }) => {
     setSelectedCafe(next);
     if (next === 'all') {
       Cookies.remove('selectedCafe');
+      appliedCafeScopeRef.current = null;
       switchLocationIds([]); // all branches across all cafes
       return;
     }
     Cookies.set('selectedCafe', next, { expires: 30 });
-    const cafeBranchIds = (locations || [])
-      .filter((l) => String(l.cafe?._id || l.cafe) === String(next))
-      .map((l) => l._id || l);
-    switchLocationIds(cafeBranchIds); // all branches of this cafe
+    // Apply the cafe's branch scope now IF locations are loaded; otherwise defer to
+    // the effect below. Previously this computed from a possibly-empty `locations`
+    // and silently reset to "all branches" when a cafe was chosen/restored before
+    // the locations list had loaded.
+    if (locations && locations.length > 0) {
+      const cafeBranchIds = locations
+        .filter((l) => String(l.cafe?._id || l.cafe) === String(next))
+        .map((l) => l._id || l);
+      appliedCafeScopeRef.current = next;
+      switchLocationIds(cafeBranchIds); // all branches of this cafe
+    } else {
+      appliedCafeScopeRef.current = null; // pending — back-filled once locations load
+    }
   };
+
+  // Back-fill the selected cafe's branch scope once locations are available. Covers
+  // both restore-on-reload (the cookie is restored before locations load) and
+  // choosing a cafe early. The ref guard makes it run once per cafe (no loop, and a
+  // user's later manual branch narrowing is preserved).
+  useEffect(() => {
+    if (!selectedCafe || selectedCafe === 'all') return;
+    if (!locations || locations.length === 0) return;
+    if (appliedCafeScopeRef.current === selectedCafe) return;
+    const cafeBranchIds = locations
+      .filter((l) => String(l.cafe?._id || l.cafe) === String(selectedCafe))
+      .map((l) => l._id || l);
+    appliedCafeScopeRef.current = selectedCafe;
+    switchLocationIds(cafeBranchIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locations, selectedCafe]);
 
   // Load cafes whenever a session is established; restore the saved cafe filter.
   useEffect(() => {

@@ -353,13 +353,18 @@ const recordPayment = asyncHandler(async (req, res) => {
     order.paymentType = paymentType;
   }
 
-  // Derive status from the amount unless explicitly provided.
-  if (paymentStatus && ['unpaid', 'partial', 'paid'].includes(paymentStatus)) {
+  // Derive the truthful status from the recorded amount, then honour an explicit
+  // status ONLY when it doesn't over-claim payment. A client must never be able to
+  // mark an order 'paid' (or 'partial') while it is actually underpaid — that would
+  // corrupt cash-drawer reconciliation, which sums collected cash from these orders.
+  const total = Number(order.totalAmount) || 0;
+  const paid = Number(order.amountPaid) || 0;
+  const derived = paid <= 0 ? 'unpaid' : (paid < total ? 'partial' : 'paid');
+  const rank = { unpaid: 0, partial: 1, paid: 2 };
+  if (paymentStatus && rank[paymentStatus] !== undefined && rank[paymentStatus] <= rank[derived]) {
     order.paymentStatus = paymentStatus;
   } else {
-    const total = Number(order.totalAmount) || 0;
-    const paid = Number(order.amountPaid) || 0;
-    order.paymentStatus = paid <= 0 ? 'unpaid' : (paid < total ? 'partial' : 'paid');
+    order.paymentStatus = derived;
   }
 
   await order.save();
@@ -667,6 +672,13 @@ const refundOrder = asyncHandler(async (req, res) => {
         { $inc: { balance: toRestore }, $push: { transactions: { type: 'topup', amount: toRestore, orderId: order._id, by: req.user._id, note: 'refund reversal' } } }
       );
     }
+  }
+
+  // Return the coupon use consumed by this (now reversed) order, mirroring
+  // cancel/reject — otherwise a single-use coupon stays burned after a refund.
+  if (order.coupon) {
+    const Coupon = require('../models/Coupon');
+    await Coupon.updateOne({ _id: order.coupon, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
   }
 
   order.isRefunded = true;
@@ -1038,7 +1050,9 @@ const getMyChefStats = asyncHandler(async (req, res) => {
       prepCount++;
     }
 
-    if (order.status === 'SERVED') {
+    // A fully billed order's terminal status is COMPLETED; SERVED is the prior
+    // step. Count both so sales aren't under-reported once an order is completed.
+    if (order.status === 'SERVED' || order.status === 'COMPLETED') {
       totalSales += order.totalAmount;
     }
 
@@ -1074,7 +1088,7 @@ const getMyChefStats = asyncHandler(async (req, res) => {
     }
   });
 
-  const completedCount = allOrders.filter(o => o.status === 'SERVED').length;
+  const completedCount = allOrders.filter(o => o.status === 'SERVED' || o.status === 'COMPLETED').length;
   const cancelledCount = allOrders.filter(o => o.status === 'CANCELLED').length;
   const unacceptedCount = allOrders.filter(o => o.status === 'PLACED' || o.status === 'REJECTED').length;
 
@@ -1210,7 +1224,9 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
   const catCounts = {};
 
   allOrders.forEach(order => {
-    if (order.status === 'SERVED') {
+    // A fully billed order's terminal status is COMPLETED; SERVED is the prior
+    // step. Count both so sales aren't under-reported once an order is completed.
+    if (order.status === 'SERVED' || order.status === 'COMPLETED') {
       totalSales += order.totalAmount;
     }
 
@@ -1246,7 +1262,7 @@ const getMyStaffStats = asyncHandler(async (req, res) => {
     }
   });
 
-  const completedCount = allOrders.filter(o => o.status === 'SERVED').length;
+  const completedCount = allOrders.filter(o => o.status === 'SERVED' || o.status === 'COMPLETED').length;
   const cancelledCount = allOrders.filter(o => o.status === 'CANCELLED').length;
   const unacceptedCount = allOrders.filter(o => o.status === 'PLACED' || o.status === 'REJECTED').length;
 

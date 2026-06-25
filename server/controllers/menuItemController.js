@@ -62,11 +62,13 @@ const getMenuItems = asyncHandler(async (req, res) => {
     enforceLocationAccess(req, res, locationId, 'You do not have permission to view menu for this branch');
     filter.$or = [{ isGlobal: true }, { availableBranches: locationId }];
   } else if (!isSuper) {
-    // Default scope to accessible/assigned branches when no locationId provided
+    // Default scope to accessible/assigned branches when no locationId provided.
+    // ALWAYS constrain: when the user has zero accessible branches, an empty $in
+    // matches nothing, so they see only global items — NOT every cafe's menu. The
+    // previous `if (ids.length > 0)` guard skipped scoping entirely on empty access,
+    // leaking all branches' menu + cost/margin data.
     const ids = userLocationIds(req.user);
-    if (ids.length > 0) {
-      filter.$or = [{ isGlobal: true }, { availableBranches: { $in: ids } }];
-    }
+    filter.$or = [{ isGlobal: true }, { availableBranches: { $in: ids } }];
   }
 
   // Pagination

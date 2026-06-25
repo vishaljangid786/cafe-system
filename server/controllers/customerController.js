@@ -1,13 +1,38 @@
 const Customer = require('../models/Customer');
+const Location = require('../models/Location');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId } = require('../utils/accessControl');
+const { scopedLocationId, isAllLocation } = require('../utils/accessControl');
 
-// Build a Customer query filter scoped to the current user's accessible branches.
-// Customers are tied to a `branch` field; super_admin sees all, admin sees their
-// accessibleLocations, branch_admin/staff see only their assignedLocation.
-const buildBranchFilter = (req) => {
-  const branch = scopedLocationId(req, req.query.locationId);
-  return branch ? { branch } : {};
+// Build a Customer query filter scoped to the caller's accessible branches AND the
+// optional top-navbar cafe/branch selector. Customers carry a `branch`; super_admin
+// sees all, others only their accessible branches. A specific branch (locationId)
+// wins; otherwise a selected cafe scopes to that cafe's branches (intersected with
+// the caller's scope). Async because the cafe→branches lookup hits the DB.
+const buildBranchFilter = async (req) => {
+  const { locationId, cafeId } = req.query;
+  const branchScope = scopedLocationId(req, locationId); // single id | { $in } | null
+
+  if (locationId && !isAllLocation(locationId)) {
+    return branchScope ? { branch: branchScope } : {};
+  }
+
+  if (cafeId && !isAllLocation(cafeId)) {
+    const cafeBranches = await Location.find({ cafe: cafeId, isPermanentlyDeleted: { $ne: true } })
+      .select('_id').lean();
+    let ids = cafeBranches.map((b) => b._id.toString());
+    if (branchScope && typeof branchScope === 'object' && Array.isArray(branchScope.$in)) {
+      const allowed = new Set(branchScope.$in.map(String));
+      ids = ids.filter((id) => allowed.has(id)); // intersect with the caller's {$in} scope
+    } else if (branchScope) {
+      // Scalar branch (the location_admin/staff fallback returns a bare id): keep it
+      // only if it belongs to the cafe, so the cafe filter can never WIDEN a
+      // single-branch user's scope to every branch in the cafe.
+      ids = ids.includes(String(branchScope)) ? [String(branchScope)] : [];
+    }
+    return { branch: { $in: ids } };
+  }
+
+  return branchScope ? { branch: branchScope } : {};
 };
 
 // @desc    Get all customers with pagination & search
@@ -25,7 +50,7 @@ const getCustomers = asyncHandler(async (req, res) => {
   const SORTABLE = new Set(['totalSpend', 'visits', 'orderCount', 'name', 'createdAt', 'lastVisit', 'loyaltyPoints']);
   const safeSort = SORTABLE.has(String(sort).replace(/^-/, '')) ? sort : '-totalSpend';
 
-  const query = buildBranchFilter(req);
+  const query = await buildBranchFilter(req);
 
   if (search) {
     const cleanSearch = escapeRegex(search);
@@ -56,7 +81,7 @@ const getCustomers = asyncHandler(async (req, res) => {
 // @route   GET /api/customers/top
 // @access  Private/Admin
 const getTopCustomers = asyncHandler(async (req, res) => {
-  const customers = await Customer.find(buildBranchFilter(req))
+  const customers = await Customer.find(await buildBranchFilter(req))
     .sort({ totalSpend: -1 })
     .limit(10)
     .lean();
@@ -71,7 +96,7 @@ const getInactiveCustomers = asyncHandler(async (req, res) => {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const customers = await Customer.find({
-    ...buildBranchFilter(req),
+    ...(await buildBranchFilter(req)),
     lastVisit: { $lt: thirtyDaysAgo }
   })
     .sort({ lastVisit: -1 })
@@ -85,7 +110,7 @@ const getInactiveCustomers = asyncHandler(async (req, res) => {
 // @route   GET /api/customers/analytics
 // @access  Private/Admin
 const getCustomerAnalytics = asyncHandler(async (req, res) => {
-  const branchFilter = buildBranchFilter(req);
+  const branchFilter = await buildBranchFilter(req);
 
   const totalCustomers = await Customer.countDocuments(branchFilter);
 

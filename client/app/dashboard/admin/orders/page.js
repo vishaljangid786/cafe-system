@@ -36,7 +36,9 @@ import DashboardFilters from './components/DashboardFilters';
 export default function AdminOrdersDashboard() {
   const { confirm, confirmDialog } = useConfirm();
   // Reuse the socket from AuthContext — do NOT create a new connection here.
-  const { user, socket } = useAuth();
+  // selectedCafe / selectedLocation come from the global top-navbar selector so this
+  // page follows it (previously it only used its own local filters and ignored it).
+  const { user, socket, selectedCafe, selectedLocation } = useAuth();
   const [orders, setOrders] = useState([]);
   const [tables, setTables] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -90,11 +92,13 @@ export default function AdminOrdersDashboard() {
       // Drop the result if a newer request has since started.
       if (reqId !== reqIdRef.current) return;
       if (orderRes.status === 'fulfilled') {
-        setOrders(orderRes.value.data.data);
+        // Guard against null payloads (the api 404-interceptor resolves to
+        // { data: null }); without `|| []` the later orders.map(...) crashed the page.
+        setOrders(orderRes.value.data.data || []);
         setTotalPages(orderRes.value.data.pagination?.pages || 1);
       }
       if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data.data);
-      if (locRes.status === 'fulfilled') setLocations(locRes.value.data.data);
+      if (locRes.status === 'fulfilled') setLocations(locRes.value.data.data || []);
       if (cafeRes.status === 'fulfilled') setCafes(cafeRes.value.data.data || []);
     } catch (error) {
       if (reqId === reqIdRef.current) toast.error('Could not load orders. Please try again.');
@@ -122,6 +126,21 @@ export default function AdminOrdersDashboard() {
     if (!didMountRef.current) { didMountRef.current = true; return; }
     setCurrentPage(1);
   }, [branchFilter, cafeFilter, statusFilter, dateRange, searchTerm]);
+
+  // Follow the global top-navbar cafe/branch selector. Changing the cafe or branch in
+  // the navbar drives this page's filters too; the local dropdowns can still narrow
+  // further until the next navbar change.
+  useEffect(() => {
+    setCafeFilter(selectedCafe && selectedCafe !== 'all' ? selectedCafe : 'all');
+  }, [selectedCafe]);
+
+  useEffect(() => {
+    if (selectedLocation && selectedLocation !== 'all') {
+      setBranchFilter(selectedLocation._id || selectedLocation);
+    } else {
+      setBranchFilter('all');
+    }
+  }, [selectedLocation]);
 
   // Attach real-time listeners to the shared socket from AuthContext.
   // No new connection is created — this eliminates the duplicate socket bug.

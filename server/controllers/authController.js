@@ -9,11 +9,15 @@ const { addAdminToCafe } = require('../utils/cafeSync');
 const Cafe = require('../models/Cafe');
 
 // Generate JWT
-const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false) => {
+const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false, impersonatorSessionVersion = null) => {
   const payload = { id, sessionVersion };
   if (impersonatedBy) {
     payload.impersonatedBy = impersonatedBy;
     payload.isViewOnly = isViewOnly;
+    // Embed the IMPERSONATOR's session version too, so revoking the original admin's
+    // session (a password change / logout-all bumps their sessionVersion) also kills
+    // any live impersonation token — see authMiddleware.attachUserFromToken.
+    payload.impersonatorSessionVersion = impersonatorSessionVersion;
   }
   return jwt.sign(payload, process.env.JWT_SECRET, {
     // Never sign a token with no expiry — a missing/blank JWT_EXPIRE would
@@ -59,8 +63,8 @@ const getAuthCookieOptions = () => ({
 });
 
 // Helper to set token in cookie and send response
-const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false) => {
-  const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly);
+const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewOnly = false, impersonatorSessionVersion = null) => {
+  const token = generateToken(user._id, user.sessionVersion, impersonatedBy, isViewOnly, impersonatorSessionVersion);
 
   // Token is set as httpOnly cookie only — never returned in JSON body to prevent XSS theft
   res
@@ -404,7 +408,7 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     role: req.user.role
   });
 
-  sendTokenResponse(targetUser, 200, res, req.user._id, Boolean(viewOnly));
+  sendTokenResponse(targetUser, 200, res, req.user._id, Boolean(viewOnly), req.user.sessionVersion);
 });
 
 // @desc    Exit impersonation

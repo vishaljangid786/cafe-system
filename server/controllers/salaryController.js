@@ -5,7 +5,7 @@ const Payroll = require('../models/Payroll');
 const Expense = require('../models/Expense');
 const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
+const { scopedLocationId, scopedLocationIds, isAllLocation, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
 const { getSettings, num } = require('../utils/settings');
 const mongoose = require('mongoose');
 
@@ -136,6 +136,25 @@ const stdMinFor = async (branchId) => {
   return num((await getSettings(loc)).payroll.standardDayMinutes, 480) || 480;
 };
 
+// Resolve the assignedLocation filter for the salary endpoints from the optional
+// branch (locationId) AND the optional cafe (cafeId — set by the global top-navbar
+// cafe selector). Returns null for "everything in scope" (no filter) or a
+// { $in: [branchIds] }. When a cafe is chosen we intersect the branch scope with
+// that cafe's branches, so "All Branches" under a cafe means that cafe's branches
+// only — never every branch in the system.
+const resolveAssignedLocationFilter = async (req, locationId, cafeId) => {
+  let scope = scopedLocationIds(req, locationId); // null (all in scope) | { $in: [...] }
+  if (cafeId && !isAllLocation(cafeId)) {
+    const branches = await Location.find({ cafe: cafeId, isPermanentlyDeleted: { $ne: true } })
+      .select('_id').lean();
+    const cafeBranchIds = branches.map((b) => b._id.toString());
+    scope = scope == null
+      ? { $in: cafeBranchIds }
+      : { $in: (scope.$in || []).map(String).filter((id) => cafeBranchIds.includes(id)) };
+  }
+  return scope;
+};
+
 // @desc    Get salary of staff in a location
 // @route   GET /api/salary/location
 // @access  Private (Branch Admin, Admin, Super Admin)
@@ -173,19 +192,20 @@ const getLocationSalary = asyncHandler(async (req, res) => {
 // @route   GET /api/salary/all
 // @access  Private (Admin, Super Admin)
 const getAllSalary = asyncHandler(async (req, res) => {
-  const { month, search, role, locationId, page = 1, limit = 10 } = req.query; // YYYY-MM
+  const { month, search, role, locationId, cafeId, page = 1, limit = 10 } = req.query; // YYYY-MM
   requireValidMonth(res, month);
 
   // 1. Build User Filter Query for Search/Role/Location
   let userQuery = {};
-  
+
   // Hierarchy visibility: which roles this actor may see salaries for (never peers
   // or superiors). A requested ?role filter is intersected with this — otherwise an
   // admin could pass ?role=admin to view peer admins' salaries.
   const visibleRoles = salaryVisibleRoles(req.user.role);
   userQuery.role = (role && visibleRoles.includes(role)) ? role : { $in: visibleRoles };
 
-  const branchScope = scopedLocationId(req, locationId);
+  // Scope by branch and/or the globally-selected cafe (top-navbar cafe filter).
+  const branchScope = await resolveAssignedLocationFilter(req, locationId, cafeId);
   if (branchScope) userQuery.assignedLocation = branchScope;
   
   if (search) {
@@ -334,7 +354,7 @@ const getMySalary = asyncHandler(async (req, res) => {
 });
 
 const generatePayroll = asyncHandler(async (req, res) => {
-  const { month, locationId } = req.body;
+  const { month, locationId, cafeId } = req.body;
   if (!month) {
     res.status(400);
     throw new Error('Month (YYYY-MM) is required');
@@ -344,13 +364,18 @@ const generatePayroll = asyncHandler(async (req, res) => {
     throw new Error('Month must be in YYYY-MM format');
   }
 
-  const targetLocation = scopedLocationId(req, locationId);
-  if (!targetLocation) {
-    res.status(400);
-    throw new Error('Location context missing');
-  }
+  // Resolve the branch scope, honouring both the branch toggle and the global
+  // cafe filter. null = every branch in scope (e.g. super_admin + All Branches +
+  // All Cafes); { $in: [...] } = a specific branch, the caller's branches, or the
+  // selected cafe's branches. The previous singular scopedLocationId returned null
+  // for super_admin + "all" and 400'd here, which broke "Calculate Monthly Salary"
+  // whenever All Branches was selected.
+  const branchScope = await resolveAssignedLocationFilter(req, locationId, cafeId);
 
-  const users = await User.find({ assignedLocation: targetLocation, role: { $in: ['staff', 'chef'] } }).lean();
+  const userQuery = { role: { $in: ['staff', 'chef'] } };
+  if (branchScope) userQuery.assignedLocation = branchScope;
+
+  const users = await User.find(userQuery).lean();
   const daysInMonth = getDaysInMonth(month);
 
   // Resolve payroll config PER BRANCH (a multi-branch run must not collapse every

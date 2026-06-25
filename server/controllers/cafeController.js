@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const { logActivity } = require('../utils/auditLogger');
 const { addAdminToCafe, removeAdminFromCafe } = require('../utils/cafeSync');
+const { canAccessLocation } = require('../utils/accessControl');
 
 // A cafe owner gets full control over everything inside their cafe (branches,
 // staff, menu, revenue, audit, admin center). Platform-only powers
@@ -66,6 +67,14 @@ const getCafes = asyncHandler(async (req, res) => {
   // Branding lookup for a specific branch (used by the receipt/bill preview). Any
   // user who can access the branch can read its cafe's branding.
   if (req.query.branchId) {
+    // Only a user who can actually access this branch may read its cafe's branding.
+    // Without this check, any authenticated user could enumerate branch ObjectIds
+    // and read another tenant's full cafe record (GSTIN, address, contact). Branch-
+    // level access (not cafe membership) is used so branch staff/chef printing bills
+    // still resolve their own branding. super_admin passes via canAccessLocation.
+    if (!canAccessLocation(req.user, req.query.branchId)) {
+      return res.json({ success: true, data: [] });
+    }
     const branch = await Location.findById(req.query.branchId).select('cafe').lean();
     if (!branch?.cafe) return res.json({ success: true, data: [] });
     const cafe = await Cafe.findOne({ _id: branch.cafe, status: { $ne: 'deleted' } }).lean();

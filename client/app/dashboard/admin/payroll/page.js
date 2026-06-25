@@ -39,7 +39,18 @@ export default function PayrollRecordsPage() {
     name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
   });
   const router = useRouter();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, selectedCafe, cafes } = useAuth();
+
+  // Branches shown in the local filter are scoped to the cafe chosen in the top
+  // navbar (selectedCafe). 'all' = every branch the user can see.
+  const cafeScopedLocations =
+    !selectedCafe || selectedCafe === 'all'
+      ? locations
+      : locations.filter((l) => String(l.cafe?._id || l.cafe) === String(selectedCafe));
+  const selectedCafeName =
+    selectedCafe && selectedCafe !== 'all'
+      ? (cafes?.find((c) => c._id === selectedCafe)?.name || 'Selected Cafe')
+      : null;
 
   // Only admins/super-admins (or staff explicitly granted payroll/staff access)
   // may view payroll records. A dead `const { user } = api` previously made this
@@ -60,7 +71,7 @@ export default function PayrollRecordsPage() {
       progress.start();
       try {
         const [salRes, locRes, payRes] = await Promise.all([
-          api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
+          api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
           api.get('/locations'),
           api.get(`/salary/payroll/history?month=${month}`)
         ]);
@@ -87,7 +98,14 @@ export default function PayrollRecordsPage() {
       }
     };
     fetchData();
-  }, [month, selectedLocation, activeTab, searchQuery, page]);
+  }, [month, selectedLocation, activeTab, searchQuery, page, selectedCafe]);
+
+  // When the global cafe filter (top navbar) changes, drop any branch selection
+  // that may no longer belong to the new cafe and jump back to the first page.
+  useEffect(() => {
+    setSelectedLocation('All');
+    setPage(1);
+  }, [selectedCafe]);
 
   const filteredSalaries = salaries; // Now filtered by backend
 
@@ -180,8 +198,8 @@ export default function PayrollRecordsPage() {
                         setPage(1);
                       }}
                       options={[
-                        { label: 'All Locations', value: 'All' },
-                        ...locations.map(l => ({ label: l.name, value: l.name }))
+                        { label: selectedCafe && selectedCafe !== 'all' ? 'All Branches in Cafe' : 'All Locations', value: 'All' },
+                        ...cafeScopedLocations.map(l => ({ label: l.name, value: l.name }))
                       ]}
                   />
                 </div>
@@ -234,7 +252,9 @@ export default function PayrollRecordsPage() {
                       Scope
                     </p>
                     <p className="mt-1 text-sm font-bold text-primary-dark dark:text-primary">
-                      {selectedLocation === 'All' ? 'All Branches' : selectedLocation}
+                      {selectedLocation === 'All'
+                        ? (selectedCafeName ? `${selectedCafeName} · All Branches` : 'All Branches')
+                        : selectedLocation}
                     </p>
                   </div>
                 </div>
@@ -245,7 +265,11 @@ export default function PayrollRecordsPage() {
                       const loadToast = toast.loading("Calculating salaries...");
                       try {
                         const locObj = locations.find(l => l.name === selectedLocation);
-                        await api.post('/salary/generate', { month, locationId: locObj?._id || 'all' });
+                        await api.post('/salary/generate', {
+                          month,
+                          locationId: locObj?._id || 'all',
+                          cafeId: selectedCafe && selectedCafe !== 'all' ? selectedCafe : 'all',
+                        });
                         toast.success("Salary details saved successfully", { id: loadToast });
                         setTimeout(() => window.location.reload(), 1000);
                       } catch (e) {

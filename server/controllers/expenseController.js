@@ -148,6 +148,16 @@ const deleteExpense = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to delete this expense');
 
+  // An expense posted to the ledger (syncExpenseToTransaction posts BOTH 'approved'
+  // AND 'completed' as an approved EXPENSE Transaction) must not be hard-deleted by a
+  // regular user — that silently erases a real cost (overstating profit) with no
+  // reversal trail. Only a super_admin may force-delete; anyone else must REJECT it
+  // instead, which reverses the ledger entry via the expense sync.
+  if (['approved', 'completed'].includes(expense.status) && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error('This expense is already posted to the ledger. Reject it instead of deleting it.');
+  }
+
   await expense.deleteOne();
   await TransactionService.deleteExpenseTransaction(expense._id);
 

@@ -215,7 +215,13 @@ const createNotification = asyncHandler(async (req, res) => {
     }
     // 'all' is the everyone-pseudo-role surfaced in the targets list — treat it as
     // a system broadcast rather than a (non-existent) role lookup.
-    const users = targetId === 'all' ? await User.find({}) : await User.find({ role: targetId });
+    // Non-super broadcasters are confined to their own cafe/branches so a delegated
+    // sendGlobalNotifications can't blast every tenant; super_admin stays platform-wide.
+    const scope = senderRole === 'super_admin'
+      ? {}
+      : { $or: [{ assignedLocation: { $in: userLocationIds(req.user) } }, { accessibleLocations: { $in: userLocationIds(req.user) } }] };
+    const baseFilter = targetId === 'all' ? {} : { role: targetId };
+    const users = await User.find({ ...baseFilter, ...scope });
     recipients = users.map(u => ({ user: u._id }));
   }
   else if (targetType === 'branch') {
@@ -242,7 +248,11 @@ const createNotification = asyncHandler(async (req, res) => {
       res.status(403);
       throw new Error('Only super admins can message everyone');
     }
-    const users = await User.find({});
+    // A delegated (non-super) broadcaster's "everyone" is everyone in THEIR cafe.
+    const scope = senderRole === 'super_admin'
+      ? {}
+      : { $or: [{ assignedLocation: { $in: userLocationIds(req.user) } }, { accessibleLocations: { $in: userLocationIds(req.user) } }] };
+    const users = await User.find(scope);
     recipients = users.map(u => ({ user: u._id }));
   }
 
@@ -339,10 +349,21 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   let roles = [];
   let branches = [];
 
-  if (canBroadcast) {
+  if (canBroadcast && role === 'super_admin') {
     users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
     roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
     branches = await Location.find().select('name city');
+  }
+  else if (canBroadcast) {
+    // Delegated (non-super) broadcaster: may broadcast, but ONLY within their own
+    // cafe/branches — never the entire platform's user & branch directory. Previously
+    // any non-super holder of sendGlobalNotifications could enumerate every tenant.
+    users = await User.find({
+      _id: { $ne: user._id },
+      $or: [{ assignedLocation: { $in: branchIds } }, { accessibleLocations: { $in: branchIds } }],
+    }).select('name role assignedLocation');
+    roles = ['branch_admin', 'location_admin', 'staff', 'chef', 'all'];
+    branches = await Location.find({ _id: { $in: branchIds } }).select('name city');
   }
   else if (role === 'admin') {
     // Super admin (up) + everyone in this admin's branches (down).

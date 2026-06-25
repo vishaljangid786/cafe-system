@@ -231,17 +231,15 @@ class OrderService {
       let finalDiscount = 0;
       let appliedCoupon = couponId || null;
       if (couponId) {
-        const coupon = await Coupon.findOneAndUpdate(
-          {
-            _id: couponId,
-            isActive: true,
-            expiryDate: { $gte: new Date() },
-            $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }]
-          },
-          { $inc: { usedCount: 1 } },
-          { new: true, session }
-        );
-        if (!coupon) throw new Error('Coupon is no longer valid or usage limit reached');
+        // Read + validate FIRST; claim the usage LAST (the $inc below). Previously the
+        // atomic $inc:{usedCount:1} ran here, BEFORE the min-order/applicability checks
+        // — so on the non-transactional (standalone-Mongo) fallback a thrown "minimum
+        // not met" left the coupon use permanently consumed for an order never created.
+        // Reading first keeps validation side-effect-free.
+        const coupon = await Coupon.findOne({ _id: couponId, isActive: true }).session(session || null);
+        if (!coupon || (coupon.expiryDate && coupon.expiryDate < new Date())) {
+          throw new Error('Coupon is no longer valid');
+        }
         appliedCoupon = coupon._id;
 
         // Enforce min order amount
@@ -282,6 +280,21 @@ class OrderService {
         }
         finalDiscount = Math.min(finalDiscount, subtotal); // cannot exceed subtotal
         finalDiscount = Number(finalDiscount.toFixed(2));
+
+        // Claim the usage LAST, atomically — the only coupon side effect. Still
+        // enforces the usage limit + re-checks active/expiry (under the transaction
+        // when one is available), and now runs only after all validation has passed.
+        const claimed = await Coupon.findOneAndUpdate(
+          {
+            _id: couponId,
+            isActive: true,
+            expiryDate: { $gte: new Date() },
+            $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }]
+          },
+          { $inc: { usedCount: 1 } },
+          { new: true, session }
+        );
+        if (!claimed) throw new Error('Coupon usage limit reached');
       }
 
       // 4. Order Creation
@@ -646,6 +659,21 @@ class OrderService {
   }
 
   /**
+   * Give back a coupon use when an order that consumed it is cancelled / rejected
+   * / refunded. _createOrder does `$inc: { usedCount: 1 }`; without this, a
+   * single-use coupon stays permanently burned by an order that never completed.
+   * Guarded at usedCount > 0 so it can never go negative.
+   */
+  async _restoreCouponUsage(order, session = null) {
+    if (!order.coupon) return;
+    await Coupon.updateOne(
+      { _id: order.coupon, usedCount: { $gt: 0 } },
+      { $inc: { usedCount: -1 } },
+      session ? { session } : {}
+    );
+  }
+
+  /**
    * Reject order and restore stock
    */
   async rejectOrder(orderId, rejectReason, userId) {
@@ -657,6 +685,7 @@ class OrderService {
     order.assignedChef = userId;
 
     await this._restoreStockForItems(order);
+    await this._restoreCouponUsage(order);
 
     order.statusHistory.push({
       status: 'REJECTED',
@@ -682,6 +711,7 @@ class OrderService {
 
     order.status = 'CANCELLED';
     await this._restoreStockForItems(order);
+    await this._restoreCouponUsage(order);
     order.statusHistory.push({
       status: 'CANCELLED',
       timestamp: new Date(),
@@ -710,6 +740,9 @@ class OrderService {
 
     if (!['CANCELLED', 'REJECTED', 'COMPLETED'].includes(order.status)) {
       await this._restoreStockForItems(order);
+      // Active order being deleted still holds its coupon use (cancel/reject paths
+      // already gave theirs back, and are excluded above) — return it.
+      await this._restoreCouponUsage(order);
       await Table.findByIdAndUpdate(order.table, { $inc: { activeOrdersCount: -1 } }, { runValidators: false });
     }
 

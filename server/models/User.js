@@ -12,6 +12,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Email is required'],
       unique: true,
+      // Normalize at the schema level so the unique index and all lookups agree on
+      // casing. Without this, `Foo@x.com` and `foo@x.com` are distinct in the unique
+      // index (duplicate accounts), and a mixed-case signup could never log in
+      // because login always lower-cases the lookup.
+      lowercase: true,
+      trim: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
         'Please add a valid email',
@@ -20,7 +26,9 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      // Matches the signup validator's 10-char minimum so non-signup paths
+      // (admin-created users, resets, seed) can't store weaker passwords.
+      minlength: [10, 'Password must be at least 10 characters'],
     },
     phone: {
       type: String,

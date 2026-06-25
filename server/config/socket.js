@@ -52,9 +52,12 @@ module.exports = {
       },
     });
 
-    // Redis Adapter for scaling
-    if (process.env.REDIS_URL || process.env.NODE_ENV === 'production') {
-      const pubClient = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
+    // Redis Adapter for horizontal scaling — enable ONLY when a REDIS_URL is
+    // actually configured. Previously this also turned on for NODE_ENV==='production'
+    // and fell back to redis://127.0.0.1:6379, so a prod deploy without Redis spammed
+    // continuous ioredis ECONNREFUSED errors against a non-existent localhost server.
+    if (process.env.REDIS_URL) {
+      const pubClient = new Redis(process.env.REDIS_URL);
       const subClient = pubClient.duplicate();
       io.adapter(createAdapter(pubClient, subClient));
       console.log('Socket.io Redis Adapter initialized');

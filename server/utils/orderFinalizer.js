@@ -94,8 +94,19 @@ const finalizeOrder = async (order, user) => {
     return acc + ((price - costPrice) * qty);
   }, 0);
 
-  // Net Profit = Gross Profit - Discount
-  const totalProfit = grossProfit - (Number(order.discountAmount) || 0);
+  // Net Profit = item gross margin − discount + service charge. Service charge is
+  // pure income (no cost) so it belongs in profit; GST is a pass-through liability
+  // and is excluded from BOTH profit and revenue (see revenue basis at the txn below).
+  const serviceCharge = Number(order.serviceCharge) || 0;
+  const taxAmount = Number(order.taxAmount) || 0;
+  const totalProfit = grossProfit - (Number(order.discountAmount) || 0) + serviceCharge;
+
+  // Revenue is recorded GST-EXCLUSIVE, matching the Order schema's stated design
+  // ("Revenue itself stays GST-exclusive"). grandTotal includes GST (money owed to
+  // the government, not earned income); booking it as revenue overstated revenue
+  // and profit. Cash collected / cash-drawer reconciliation still use the
+  // GST-inclusive grandTotal + amountPaid separately.
+  const revenueAmount = Math.max(0, Number(order.grandTotal || order.totalAmount || 0) - taxAmount);
 
   // Deduct ingredients FIRST so a deduction failure surfaces before we record
   // revenue. Previously the false return was swallowed, which could leave a
@@ -119,7 +130,7 @@ const finalizeOrder = async (order, user) => {
     paymentType: order.paymentType || 'CASH',
     title: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
     category: 'Sales',
-    totalAmount: Number(order.grandTotal || order.totalAmount || 0),
+    totalAmount: revenueAmount,
     totalProfit: isNaN(totalProfit) ? 0 : totalProfit,
     date: new Date(),
     status: 'approved',

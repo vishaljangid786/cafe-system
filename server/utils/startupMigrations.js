@@ -208,7 +208,15 @@ const bootstrapSeedIfEmpty = async () => {
 // inserting, so this is just "run the seed unconditionally".
 const reseedAll = async () => {
   if (process.env.NODE_ENV === 'production') {
-    console.warn('[startup] ⚠ RESEED_ON_START=true in PRODUCTION — wiping and reseeding the live database!');
+    // HARD STOP: never wipe a production database off a stray RESEED_ON_START env
+    // var. seedData() drops every collection, and this runs on each serverless cold
+    // start — one leftover flag would nuke live data on the next deploy. Require a
+    // separate, explicit confirmation token to override; otherwise skip loudly.
+    if (process.env.RESEED_CONFIRM_PRODUCTION !== 'I_UNDERSTAND_THIS_WIPES_PROD') {
+      console.error('[startup] ⛔ RESEED_ON_START=true in PRODUCTION was IGNORED — refusing to wipe the live database. To intentionally reseed prod, also set RESEED_CONFIRM_PRODUCTION="I_UNDERSTAND_THIS_WIPES_PROD".');
+      return;
+    }
+    console.warn('[startup] ⚠ RESEED confirmed in PRODUCTION — wiping and reseeding the LIVE database!');
   }
   console.log('[startup] RESEED_ON_START=true — wiping all data and reseeding from scratch...');
   const { seedData } = require('../seed/data');
@@ -217,6 +225,57 @@ const reseedAll = async () => {
 };
 
 const reseedEnabled = () => String(process.env.RESEED_ON_START).toLowerCase() === 'true';
+
+// ---------------------------------------------------------------------------
+// Payroll ledger backfill — every PAID payroll must have a matching EXPENSE
+// Transaction. approvePayroll posts one for net-new approvals (and stamps
+// ledgerExpenseId), but seed data and any payroll marked PAID before that sync
+// existed have NO ledger entry. The P&L analytics source salary cost from the
+// ledger (Transaction), so those paid salaries would be UNDER-counted, overstating
+// profit. This backfills the missing Expense + synced Transaction so historical
+// totals stay whole.
+//
+// Fully idempotent: only touches PAID payrolls whose ledgerExpenseId is unset, and
+// stamps each one as it posts. Non-destructive: it only ADDS the missing records.
+const backfillPayrollLedger = async () => {
+  const Payroll = require('../models/Payroll');
+  const Expense = require('../models/Expense');
+  const User = require('../models/User');
+  const TransactionService = require('../services/transactionService');
+
+  // { ledgerExpenseId: null } matches both null AND a missing field (seed inserts
+  // omit the field entirely), so this captures every un-posted paid payroll.
+  const orphans = await Payroll.find({ status: 'PAID', ledgerExpenseId: null })
+    .populate('user', 'name role assignedLocation')
+    .lean();
+  if (orphans.length === 0) return;
+
+  const superAdmin = await User.findOne({ role: 'super_admin' }).select('_id').lean();
+  let posted = 0;
+  for (const payroll of orphans) {
+    // Salary cost is booked against the staff member's branch; skip (and leave for a
+    // later re-run) any payroll whose user/branch can't be resolved.
+    if (!payroll.user || !payroll.user.assignedLocation) continue;
+    const [year, mon] = String(payroll.month || '').split('-');
+    const expenseDate = (year && mon) ? new Date(Number(year), Number(mon) - 1, 28) : new Date();
+    const expense = await Expense.create({
+      title: `Salary — ${payroll.user.name} (${payroll.month})`,
+      description: `Payroll for ${payroll.user.name} (${payroll.user.role}) — ${payroll.payableDays} payable days (ledger backfill)`,
+      amount: Number(payroll.netSalary) || 0,
+      type: 'EXPENSE',
+      category: 'Salary',
+      status: 'approved',
+      date: expenseDate,
+      locationId: payroll.user.assignedLocation,
+      createdBy: superAdmin?._id || payroll.user._id,
+      proofImage: 'payroll-auto',
+    });
+    await TransactionService.syncExpenseToTransaction(expense);
+    await Payroll.updateOne({ _id: payroll._id }, { $set: { ledgerExpenseId: expense._id } });
+    posted++;
+  }
+  if (posted) console.log(`[migration] Payroll ledger backfill: posted ${posted} missing salary expense(s).`);
+};
 
 const runStartupMigrations = async (connection) => {
   try {
@@ -235,6 +294,11 @@ const runStartupMigrations = async (connection) => {
   } catch (err) {
     // Never let a migration failure crash the server boot — log and continue.
     console.error('[migration] Cafe backfill failed (non-fatal):', err.message);
+  }
+  try {
+    await backfillPayrollLedger();
+  } catch (err) {
+    console.error('[migration] Payroll ledger backfill failed (non-fatal):', err.message);
   }
 };
 
