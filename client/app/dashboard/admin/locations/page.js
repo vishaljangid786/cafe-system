@@ -541,7 +541,7 @@ export default function BranchesPage() {
                 </div>
 
                 <div className="p-8 space-y-12">
-                   <section>
+                   <section className='flex flex-col gap-10'>
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                           <ShieldAlert size={14} className="text-primary" /> Management
