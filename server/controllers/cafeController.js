@@ -205,14 +205,20 @@ const createCafe = asyncHandler(async (req, res) => {
     throw new Error('A cafe with this name already exists');
   }
 
-  const cafe = await Cafe.create({
-    name,
-    logo: logo || '',
-    gstin: gstin || '',
-    address: address || {},
-    contact: contact || {},
-    createdBy: req.user._id,
-  });
+  let cafe;
+  try {
+    cafe = await Cafe.create({
+      name,
+      logo: logo || '',
+      gstin: gstin || '',
+      address: address || {},
+      contact: contact || {},
+      createdBy: req.user._id,
+    });
+  } catch (err) {
+    res.status(400);
+    throw err;
+  }
 
   let createdAdmin = null;
   try {

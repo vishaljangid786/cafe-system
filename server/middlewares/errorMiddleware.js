@@ -8,12 +8,9 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || (res.statusCode === 200 ? 500 : res.statusCode);
   let message = err.message;
 
-  if (process.env.NODE_ENV === 'production') {
-    // Operational summary only — keep stack out of stdout
-    console.error(`[${statusCode}] ${req.method} ${req.originalUrl} — ${message}`);
-  } else {
-    console.error('SERVER_ERROR:', err);
-  }
+  // Always log the real error — in production this goes to Vercel function logs
+  // and is the only way to diagnose 500s that are hidden from the client.
+  console.error(`[${statusCode}] ${req.method} ${req.originalUrl} — ${err.name}: ${err.message}`, err.stack ? `\n${err.stack}` : '');
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError' && err.kind === 'ObjectId') {
