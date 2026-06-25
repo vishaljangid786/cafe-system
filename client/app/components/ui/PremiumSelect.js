@@ -18,7 +18,7 @@ export default function PremiumSelect({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0, openUp: false, maxHeight: 256 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -43,14 +43,25 @@ export default function PremiumSelect({
   }, []);
 
   const updateCoords = () => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width
-      });
-    }
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const GAP = 8;
+    const MAX = 256; // design max dropdown height (was max-h-64)
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    // Flip up only when there isn't enough room below AND there's more above.
+    // Either way we cap the menu to the space actually available so its options
+    // never spill past the viewport (where a fixed-position menu can't scroll).
+    const openUp = spaceBelow < Math.min(MAX, 200) && spaceAbove > spaceBelow;
+    const available = openUp ? spaceAbove : spaceBelow;
+    setCoords({
+      top: rect.bottom + GAP,
+      bottom: window.innerHeight - rect.top + GAP,
+      left: rect.left,
+      width: rect.width,
+      openUp,
+      maxHeight: Math.max(140, Math.min(MAX, available)),
+    });
   };
 
   // Open/close the menu. When opening we measure the trigger synchronously and
@@ -95,14 +106,15 @@ export default function PremiumSelect({
           transition={{ duration: 0.15, ease: "easeOut" }}
           style={{
             position: 'fixed',
-            top: coords.top + 8,
+            top: coords.openUp ? 'auto' : coords.top,
+            bottom: coords.openUp ? coords.bottom : 'auto',
             left: coords.left,
             width: coords.width,
             zIndex: 999999
           }}
           className="bg-(--color-surface) rounded-lg border border-(--color-border) shadow-[var(--shadow-md)] overflow-hidden"
         >
-          <div className="max-h-64 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
+          <div className="overflow-y-auto custom-scrollbar p-1.5 space-y-1" style={{ maxHeight: coords.maxHeight }}>
             {options.length === 0 ? (
               <div className="px-4 py-3 text-sm text-(--color-text-muted) text-center">No options available</div>
             ) : (
