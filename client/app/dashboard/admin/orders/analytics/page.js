@@ -185,13 +185,8 @@ export default function OrderAnalyticsDashboard() {
               <ExportActions
                 data={data?.charts?.branchPerformance || []}
                 columns={sectorColumns}
-                filename="Sector_Performance_Report"
+                filename="Order_Analytics_Report"
                 hasCharts={true}
-              />
-              <ExportActions
-                data={data?.charts?.chefPerformance || []}
-                columns={chefColumns}
-                filename="Chef_Performance_Report"
               />
             </div>
             <button

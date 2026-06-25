@@ -18,6 +18,24 @@ export default function PremiumSelect({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
+  const autoSelectedRef = useRef(null);
+
+  // Convenience: when a single-select has exactly ONE option and nothing has been
+  // chosen yet, pick it automatically so the user doesn't have to. The ref makes it
+  // fire once per distinct option value (no re-select loop, and a real user choice
+  // is never overridden — we only act when the current value is empty).
+  useEffect(() => {
+    if (multiple || typeof onChange !== 'function' || options.length !== 1) {
+      autoSelectedRef.current = null;
+      return;
+    }
+    const only = typeof options[0] === 'object' ? options[0].value : options[0];
+    const isEmpty = value === undefined || value === null || value === '';
+    if (isEmpty && only !== '' && only != null && autoSelectedRef.current !== only) {
+      autoSelectedRef.current = only;
+      onChange(only);
+    }
+  }, [options, value, multiple, onChange]);
   const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0, openUp: false, maxHeight: 256 });
   const [mounted, setMounted] = useState(false);
 
