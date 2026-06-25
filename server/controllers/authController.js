@@ -80,6 +80,7 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
         assignedLocation: user.assignedLocation,
         accessibleLocations: user.accessibleLocations,
         permissions: user.permissions,
+        allowedPages: user.allowedPages || [],
         cafes: user.cafes || [],
         impersonatedBy: impersonatedBy || undefined,
         isImpersonating: Boolean(impersonatedBy),
@@ -238,13 +239,39 @@ const registerUser = asyncHandler(async (req, res, next) => {
     }
   }
 
+  // Page-level access (allowedPages). Default to the role's default pages; if the
+  // creator sent a selection, use it — gated to pages the creator themselves holds
+  // (super_admin grants anything). Then DERIVE the coarse page-permissions from the
+  // granted pages so the data APIs (still gated by the old permission keys) work.
+  const { ROLE_DEFAULT_PAGES, sanitizePages, PAGES: PAGE_DEFS } = require('../utils/pageAccess');
+  let finalPages = [...(ROLE_DEFAULT_PAGES[finalRole] || [])];
+  if (finalRole !== 'super_admin' && req.user) {
+    let reqPages = req.body.allowedPages;
+    if (typeof reqPages === 'string') { try { reqPages = JSON.parse(reqPages); } catch (e) { reqPages = null; } }
+    if (Array.isArray(reqPages)) {
+      const actorIsSuperPg = req.user.role === 'super_admin';
+      const actorPages = new Set(req.user.allowedPages || []);
+      finalPages = sanitizePages(reqPages).filter((k) => actorIsSuperPg || actorPages.has(k));
+    }
+  }
+  // No zero-access admin-tier members (Staff/Chef work from their own fixed menu).
+  if (['admin', 'branch_admin', 'location_admin'].includes(finalRole) && finalPages.length === 0) {
+    res.status(400);
+    throw new Error('A member must be granted access to at least one page.');
+  }
+  // Derive coarse page-permissions from the granted pages and merge them in, so the
+  // server route guards (which still check the legacy keys) allow those pages.
+  const pageLegacyPerm = Object.fromEntries(PAGE_DEFS.map((p) => [p.key, p.legacyPerm]));
+  finalPages.forEach((k) => { const perm = pageLegacyPerm[k]; if (perm) finalPermissions[perm] = true; });
+
   const user = await User.create({
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
     alternatePhone, role: finalRole, assignedLocation, accessibleLocations,
     cafes: ['admin', 'super_admin'].includes(finalRole) && cafes.length ? cafes : [],
     aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary,
-    permissions: finalPermissions
+    permissions: finalPermissions,
+    allowedPages: finalPages,
   });
 
   if (user) {

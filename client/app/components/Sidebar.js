@@ -15,44 +15,16 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Pages that are normally role-locked but can be delegated to a user via a
-// permission. `defaultRoles` = roles that already see the page through their
-// normal menu; for everyone else we surface it under a "Granted Access" group.
-// Every permission-gated page, with the roles that already see it in their
-// normal menu (defaultRoles). For ANY other role, if the user holds one of the
-// page's `perms`, it is surfaced under a "Granted Access" group — so a granted
-// permission is actually usable for staff/chef/location_admin too, not just
-// branch_admin/admin. Keep this in sync with PAGE_PERMISSIONS in dashboard/layout.js.
-const GRANTABLE_PAGES = [
-  // Staff management (manageStaff)
-  { name: 'Users', href: '/dashboard/admin/users', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin'] },
-  { name: 'Staff', href: '/dashboard/admin/staff', icon: Users, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Salaries', href: '/dashboard/admin/payroll', icon: Wallet, perms: ['manageStaff'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  // Orders & operations
-  { name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt, perms: ['viewOrders', 'forceComplete'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Tables', href: '/dashboard/admin/tables', icon: Coffee, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package, perms: ['manageOrders'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag, perms: ['manageCoupons'], defaultRoles: ['super_admin', 'admin'] },
-  // Revenue (viewRevenue / editRevenue)
-  { name: 'Revenue', href: '/dashboard/admin/revenue', icon: TrendingUp, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Expenses', href: '/dashboard/admin/expenses', icon: Receipt, perms: ['viewRevenue', 'editRevenue'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  // Analytics (viewAnalytics)
-  { name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Staff Reports', href: '/dashboard/admin/staff-reports', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  { name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin', 'branch_admin'], requiresMultipleBranches: true },
-  { name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp, perms: ['viewAnalytics'], defaultRoles: ['super_admin', 'admin'] },
-  // Exports
-  { name: 'Export Center', href: '/dashboard/admin/exports', icon: Download, perms: ['exportReports'], defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
-  // Role-locked page-access permissions
-  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity, perms: ['viewAuditLogs'], defaultRoles: ['super_admin'] },
-  { name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert, perms: ['impersonateUsers'], defaultRoles: ['super_admin'] },
-  { name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin, perms: ['manageBranches'], defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap, perms: ['viewAdminCenter'], defaultRoles: ['super_admin'] },
+// Role-locked pages that don't appear in the main page-by-page nav (which is built
+// from allowedPages via canView). For a NON-default role that has been granted one
+// of these (allowedPages contains its pageKey), we surface it under "Granted Access".
+// `defaultRoles` = roles that already see the page through their normal menu.
+const ROLE_LOCKED_PAGES = [
+  { name: 'Users',         href: '/dashboard/admin/users',      icon: Users,       pageKey: 'page_users',       defaultRoles: ['super_admin'] },
+  { name: 'Branches',      href: '/dashboard/admin/locations',  icon: MapPin,      pageKey: 'page_branches',    defaultRoles: ['super_admin', 'admin'] },
+  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity,    pageKey: 'page_auditlogs',   defaultRoles: ['super_admin'] },
+  { name: 'Login As Staff',href: '/dashboard/admin/impersonate',icon: ShieldAlert, pageKey: 'page_impersonate', defaultRoles: ['super_admin'] },
+  { name: 'Admin Center',  href: '/dashboard/super-admin',      icon: Zap,         pageKey: 'page_admincenter', defaultRoles: ['super_admin'] },
 ];
 
 const getBranchId = (branch) => {
@@ -101,9 +73,12 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
   const groups = useMemo(() => {
     if (!user) return [];
     const role = user.role;
-    const permissions = user.permissions || {};
     const isSuper = role === 'super_admin';
-    const hasPermission = (key) => isSuper || permissions[key] === true;
+    // Page-level access: "one toggle = one page". super_admin sees everything;
+    // everyone else sees only the pages in their allowedPages list. Replaces the
+    // old coarse permission gates so granting e.g. only Salaries shows ONLY Salaries.
+    const allowedPages = user.allowedPages || [];
+    const canView = (pageKey) => isSuper || allowedPages.includes(pageKey);
     const roleBasePath = getRoleBasePath(role);
     const comparableBranchCount = role === 'super_admin'
       ? (locations.length > 0 ? locations.length : 2)
@@ -161,11 +136,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
         adminItems.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
       }
 
-      if (hasPermission('manageStaff')) {
-        adminItems.push({ name: 'Staff', href: `${roleBasePath}/staff`, icon: Users });
-        adminItems.push({ name: 'Attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
-        adminItems.push({ name: 'Salaries', href: getSalaryPath(role), icon: Wallet });
-      }
+      if (canView('page_staff')) adminItems.push({ name: 'Staff', href: `${roleBasePath}/staff`, icon: Users });
+      if (canView('page_attendance')) adminItems.push({ name: 'Attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
+      if (canView('page_salaries')) adminItems.push({ name: 'Salaries', href: getSalaryPath(role), icon: Wallet });
 
       if (role !== 'location_admin') {
         adminItems.push({ name: 'Permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
@@ -183,25 +156,15 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const opsItems = [];
 
-      if (hasPermission('viewOrders')) {
-        opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
-        opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      }
-
-      if (hasPermission('manageOrders')) {
-        opsItems.push({ name: 'Tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
-        opsItems.push({ name: 'Menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
-        if (role !== 'location_admin') {
-          opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
-        }
-        opsItems.push({ name: 'Procurement', href: '/dashboard/admin/procurement', icon: Truck });
-        opsItems.push({ name: 'Cash Drawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
-        opsItems.push({ name: 'Waitlist', href: '/dashboard/admin/waitlist', icon: Users });
-      }
-
-      if ((role === 'super_admin' || role === 'admin') && hasPermission('manageCoupons')) {
-        opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
-      }
+      if (canView('page_orders')) opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
+      if (canView('page_reservations')) opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      if (canView('page_tables')) opsItems.push({ name: 'Tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
+      if (canView('page_menu')) opsItems.push({ name: 'Menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
+      if (canView('page_inventory') && role !== 'location_admin') opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
+      if (canView('page_procurement')) opsItems.push({ name: 'Procurement', href: '/dashboard/admin/procurement', icon: Truck });
+      if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
+      if (canView('page_waitlist')) opsItems.push({ name: 'Waitlist', href: '/dashboard/admin/waitlist', icon: Users });
+      if (canView('page_coupons')) opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
 
       opsItems.push({ name: 'Gift Cards', href: '/dashboard/admin/gift-cards', icon: Gift });
 
@@ -226,31 +189,16 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const analyticsItems = [];
 
-      if (hasPermission('viewRevenue')) {
-        analyticsItems.push({ name: 'Revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
-        analyticsItems.push({ name: 'Expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
-      }
-
-      if (hasPermission('viewAnalytics')) {
-        analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-
-        if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin') && hasMultipleComparableBranches) {
-          analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
-        }
-
-        analyticsItems.push({ name: 'Staff Reports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
-        analyticsItems.push({ name: 'Feedback', href: '/dashboard/admin/feedback', icon: Star });
-
-        if (role === 'super_admin' || role === 'admin') {
-          analyticsItems.push({ name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
-          analyticsItems.push({ name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle });
-          analyticsItems.push({ name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
-        }
-      }
-
-      if (hasPermission('exportReports')) {
-        analyticsItems.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
-      }
+      if (canView('page_revenue')) analyticsItems.push({ name: 'Revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
+      if (canView('page_expenses')) analyticsItems.push({ name: 'Expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
+      if (canView('page_orderreports')) analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+      if (canView('page_branchcompare') && hasMultipleComparableBranches) analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
+      if (canView('page_staffreports')) analyticsItems.push({ name: 'Staff Reports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
+      if (canView('page_feedback')) analyticsItems.push({ name: 'Feedback', href: '/dashboard/admin/feedback', icon: Star });
+      if (canView('page_paymentinsights')) analyticsItems.push({ name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+      if (canView('page_alerts')) analyticsItems.push({ name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle });
+      if (canView('page_forecast')) analyticsItems.push({ name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+      if (canView('page_exports')) analyticsItems.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
 
       if (analyticsItems.length > 0) {
         groupsList.push({ title: 'Analytics', items: analyticsItems });
@@ -270,18 +218,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     }
 
     // Loyalty Group
-    if ((role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') && hasPermission('viewAnalytics')) {
+    if (canView('page_customers')) {
       groupsList.push({
         title: 'Rewards',
         items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }]
       });
     }
 
-    // Granted Access: role-locked pages delegated to this user via a permission
+    // Granted Access: role-locked pages delegated to this user via allowedPages
     // that their role wouldn't normally surface in the menu.
-    const grantedItems = GRANTABLE_PAGES
-      .filter(p => !isSuper && !p.defaultRoles.includes(role) && p.perms.some(k => permissions[k] === true))
-      .filter(p => !p.requiresMultipleBranches || hasMultipleComparableBranches)
+    const grantedItems = ROLE_LOCKED_PAGES
+      .filter(p => !isSuper && !p.defaultRoles.includes(role) && canView(p.pageKey))
       .map(({ name, href, icon }) => ({ name, href, icon }));
     if (grantedItems.length > 0) {
       groupsList.push({ title: 'Granted Access', items: grantedItems });

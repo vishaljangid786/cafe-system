@@ -109,6 +109,14 @@ const userSchema = new mongoose.Schema(
       sendMessages: { type: Boolean, default: true },
       messageSuperAdmin: { type: Boolean, default: false },
     },
+    // Page-level access — the authoritative list of dashboard pages this user may
+    // open (keys from utils/pageAccess.js, e.g. 'page_salaries'). "One toggle = one
+    // page": the sidebar and route guard read this. super_admin ignores it (sees
+    // all). Existing users are backfilled from the legacy `permissions` on startup.
+    allowedPages: {
+      type: [String],
+      default: [],
+    },
     // Primary/default branch for Staff, Chef, Location Admin, and Branch Admin
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,

@@ -49,36 +49,57 @@ const SHARED_PREFIXES = [
   '/dashboard/admin/branch-presence',
 ];
 
-// Pages that are normally role-locked but can be delegated to ANY user via a
-// permission. If the user holds the mapped permission, they may open the path
-// even if it falls outside their role's prefix.
-// Every permission-gated page a non-default-role user may open if they hold one
-// of `perms`. Keep in sync with GRANTABLE_PAGES in components/Sidebar.js.
-const PAGE_PERMISSIONS = [
-  { path: '/dashboard/admin/users', perms: ['manageStaff'] },
-  { path: '/dashboard/admin/staff-reports', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/staff', perms: ['manageStaff'] },
-  { path: '/dashboard/admin/attendance', perms: ['manageStaff'] },
-  { path: '/dashboard/admin/payroll', perms: ['manageStaff'] },
-  { path: '/dashboard/admin/orders/analytics', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/orders', perms: ['viewOrders', 'forceComplete'] },
-  { path: '/dashboard/admin/tables', perms: ['manageOrders'] },
-  { path: '/dashboard/admin/menu', perms: ['manageOrders'] },
-  { path: '/dashboard/admin/inventory', perms: ['manageOrders'] },
-  { path: '/dashboard/admin/coupons', perms: ['manageCoupons'] },
-  { path: '/dashboard/admin/revenue', perms: ['viewRevenue', 'editRevenue'] },
-  { path: '/dashboard/admin/expenses', perms: ['viewRevenue', 'editRevenue'] },
-  { path: '/dashboard/admin/customers', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/location-comparison', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/payment-intelligence', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/command-center', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/forecasting', perms: ['viewAnalytics'] },
-  { path: '/dashboard/admin/exports', perms: ['exportReports'] },
-  { path: '/dashboard/admin/locations', perms: ['manageBranches'] },
-  { path: '/dashboard/admin/audit-logs', perms: ['viewAuditLogs'] },
-  { path: '/dashboard/admin/impersonate', perms: ['impersonateUsers'] },
-  { path: '/dashboard/super-admin', perms: ['viewAdminCenter'] },
+// Page-level access guard. Each gated page maps to its access key (allowedPages)
+// and EVERY path it can live at across roles (admin / branch-admin / location-admin
+// variants). A page in this list may be opened ONLY if the user's allowedPages
+// contains its key (super_admin bypasses). Anything NOT listed here is governed by
+// the role-prefix check instead (Overview, Settings, Cafes, Gift Cards, role
+// dashboards, shared pages). Keep page keys in sync with utils/pageAccess.js.
+const GATED_PAGES = [
+  { key: 'page_users',           paths: ['/dashboard/admin/users'] },
+  { key: 'page_staff',           paths: ['/dashboard/admin/staff', '/dashboard/branch-admin/staff', '/dashboard/location-admin/staff'] },
+  { key: 'page_attendance',      paths: ['/dashboard/admin/attendance', '/dashboard/branch-admin/attendance', '/dashboard/location-admin/attendance'] },
+  { key: 'page_salaries',        paths: ['/dashboard/admin/payroll', '/dashboard/branch-admin/salary', '/dashboard/location-admin/salary'] },
+  { key: 'page_orderreports',    paths: ['/dashboard/admin/orders/analytics'] },
+  { key: 'page_orders',          paths: ['/dashboard/admin/orders'] },
+  { key: 'page_tables',          paths: ['/dashboard/admin/tables', '/dashboard/branch-admin/tables', '/dashboard/location-admin/tables'] },
+  { key: 'page_menu',            paths: ['/dashboard/admin/menu', '/dashboard/branch-admin/menu', '/dashboard/location-admin/menu'] },
+  { key: 'page_inventory',       paths: ['/dashboard/admin/inventory'] },
+  { key: 'page_procurement',     paths: ['/dashboard/admin/procurement'] },
+  { key: 'page_cashdrawer',      paths: ['/dashboard/admin/cash-drawer'] },
+  { key: 'page_waitlist',        paths: ['/dashboard/admin/waitlist'] },
+  { key: 'page_coupons',         paths: ['/dashboard/admin/coupons'] },
+  { key: 'page_revenue',         paths: ['/dashboard/admin/revenue', '/dashboard/branch-admin/revenue', '/dashboard/location-admin/revenue'] },
+  { key: 'page_expenses',        paths: ['/dashboard/admin/expenses', '/dashboard/branch-admin/expenses', '/dashboard/location-admin/expenses'] },
+  { key: 'page_staffreports',    paths: ['/dashboard/admin/staff-reports', '/dashboard/branch-admin/staff-reports', '/dashboard/location-admin/staff-reports'] },
+  { key: 'page_feedback',        paths: ['/dashboard/admin/feedback'] },
+  { key: 'page_customers',       paths: ['/dashboard/admin/customers'] },
+  { key: 'page_branchcompare',   paths: ['/dashboard/admin/location-comparison'] },
+  { key: 'page_paymentinsights', paths: ['/dashboard/admin/payment-intelligence'] },
+  { key: 'page_alerts',          paths: ['/dashboard/admin/command-center'] },
+  { key: 'page_forecast',        paths: ['/dashboard/admin/forecasting'] },
+  { key: 'page_exports',         paths: ['/dashboard/admin/exports'] },
+  { key: 'page_branches',        paths: ['/dashboard/admin/locations'] },
+  { key: 'page_auditlogs',       paths: ['/dashboard/admin/audit-logs'] },
+  { key: 'page_impersonate',     paths: ['/dashboard/admin/impersonate'] },
+  { key: 'page_admincenter',     paths: ['/dashboard/super-admin'] },
 ];
+
+// Find the gated page whose path is the LONGEST prefix of `pathname` (so
+// /orders/analytics resolves to its own entry, not the shorter /orders).
+const matchGatedPage = (pathname) => {
+  let matched = null;
+  let matchedLen = -1;
+  for (const gp of GATED_PAGES) {
+    for (const path of gp.paths) {
+      if ((pathname === path || pathname.startsWith(path + '/')) && path.length > matchedLen) {
+        matched = gp;
+        matchedLen = path.length;
+      }
+    }
+  }
+  return matched;
+};
 
 export default function DashboardLayout({ children }) {
   const { user, loading, exitImpersonation } = useAuth();
@@ -116,14 +137,15 @@ export default function DashboardLayout({ children }) {
       const allowed = ROLE_PREFIX[user.role];
       const isShared = SHARED_PREFIXES.some(p => pathname.startsWith(p));
       if (allowed && !isShared) {
-        const canAccess = allowed.some(p => pathname.startsWith(p));
-        // Longest-prefix match so e.g. /orders/analytics resolves to its own
-        // entry rather than the shorter /orders one.
-        const grantedPage = PAGE_PERMISSIONS
-          .filter(pp => pathname.startsWith(pp.path))
-          .sort((a, b) => b.path.length - a.path.length)[0];
-        const hasPagePerm = !!grantedPage && grantedPage.perms.some(k => user.permissions?.[k] === true);
-        if (!canAccess && !hasPagePerm) {
+        const gated = matchGatedPage(pathname);
+        if (gated) {
+          // Page-level access: only super_admin, or a user whose allowedPages holds
+          // this page key, may open it. This enforces "one toggle = one page" even on
+          // direct URL access, overriding the broad role-prefix allowance.
+          const canOpen = user.role === 'super_admin' || (user.allowedPages || []).includes(gated.key);
+          if (!canOpen) router.replace(allowed[0]);
+        } else if (!allowed.some(p => pathname.startsWith(p))) {
+          // Non-gated page (Overview, Settings, Cafes, role dashboard, …): role prefix.
           router.replace(allowed[0]);
         }
       }

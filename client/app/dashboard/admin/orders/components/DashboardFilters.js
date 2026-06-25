@@ -20,21 +20,40 @@ export default function DashboardFilters({
   cafes = [],
   cafeFilter = 'all',
   setCafeFilter,
+  staffMembers = [],
+  staffFilter = '',
+  setStaffFilter,
 }) {
   // Multi-cafe operators (super_admin, or an admin owning >1 cafe) get a brand
   // filter so they can focus a single cafe's orders.
   const showCafeFilter = cafes.length > 1 && typeof setCafeFilter === 'function';
+  // "Who placed it" filter — list the staff/chefs/branch-admins this operator manages.
+  const showStaffFilter = staffMembers.length > 0 && typeof setStaffFilter === 'function';
   return (
     <div className="bg-(--color-surface) p-2 rounded-xl border border-(--color-border) shadow-sm space-y-2">
-      {showCafeFilter && (
-        <div className="px-1">
-          <PremiumSelect
-            value={cafeFilter}
-            onChange={setCafeFilter}
-            placeholder="All Cafes"
-            options={[{ label: 'All Cafes (Brands)', value: 'all' }, ...cafes.map((c) => ({ label: c.name, value: c._id }))]}
-            className="h-11"
-          />
+      {(showCafeFilter || showStaffFilter) && (
+        <div className="px-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {showCafeFilter ? (
+            <PremiumSelect
+              value={cafeFilter}
+              onChange={setCafeFilter}
+              placeholder="All Cafes"
+              options={[{ label: 'All Cafes (Brands)', value: 'all' }, ...cafes.map((c) => ({ label: c.name, value: c._id }))]}
+              className="h-11"
+            />
+          ) : <div />}
+          {showStaffFilter && (
+            <PremiumSelect
+              value={staffFilter}
+              onChange={setStaffFilter}
+              placeholder="All Staff Members"
+              options={[
+                { label: 'All Staff Members', value: '' },
+                ...staffMembers.map((s) => ({ label: `${s.name} · ${String(s.role || '').replace('_', ' ')}`, value: s._id })),
+              ]}
+              className="h-11"
+            />
+          )}
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">

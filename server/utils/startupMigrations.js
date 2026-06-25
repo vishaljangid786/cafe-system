@@ -277,6 +277,35 @@ const backfillPayrollLedger = async () => {
   if (posted) console.log(`[migration] Payroll ledger backfill: posted ${posted} missing salary expense(s).`);
 };
 
+// ---------------------------------------------------------------------------
+// allowedPages backfill — seeds User.allowedPages (the new page-level access list)
+// for users created before it existed, derived from their OLD coarse `permissions`
+// so their visible pages don't change. super_admin ignores the field. Idempotent:
+// only touches users whose allowedPages is unset/empty, and never widens beyond
+// what their legacy permissions already granted.
+const backfillAllowedPages = async () => {
+  const User = require('../models/User');
+  const { pagesFromPermissions } = require('./pageAccess');
+
+  const users = await User.find({
+    role: { $ne: 'super_admin' },
+    $or: [{ allowedPages: { $exists: false } }, { allowedPages: { $size: 0 } }],
+  }).select('role permissions').lean();
+  if (users.length === 0) return;
+
+  const ops = [];
+  for (const u of users) {
+    const pages = pagesFromPermissions(u.permissions || {});
+    if (pages.length) {
+      ops.push({ updateOne: { filter: { _id: u._id }, update: { $set: { allowedPages: pages } } } });
+    }
+  }
+  if (ops.length) {
+    await User.bulkWrite(ops);
+    console.log(`[migration] allowedPages backfill: seeded pages for ${ops.length} user(s).`);
+  }
+};
+
 const runStartupMigrations = async (connection) => {
   try {
     if (reseedEnabled()) {
@@ -299,6 +328,11 @@ const runStartupMigrations = async (connection) => {
     await backfillPayrollLedger();
   } catch (err) {
     console.error('[migration] Payroll ledger backfill failed (non-fatal):', err.message);
+  }
+  try {
+    await backfillAllowedPages();
+  } catch (err) {
+    console.error('[migration] allowedPages backfill failed (non-fatal):', err.message);
   }
 };
 

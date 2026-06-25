@@ -40,6 +40,9 @@ export default function AdminOrderCard({ order, onCancel, onForceComplete, userR
                 : `Table ${order.table?.tableNumber || '??'}`}
             </h4>
             <p className="text-xs font-medium text-(--color-text-muted) mt-1">{order.branch?.cafe?.name ? `${order.branch.cafe.name} · ` : ''}Branch: {order.branch?.name}</p>
+            {order.createdBy?.name && (
+              <p className="text-[11px] font-semibold text-(--color-text-secondary) mt-1">Placed by {order.createdBy.name}</p>
+            )}
           </div>
           {isDelayed && (
             <div className="bg-[rgba(var(--color-danger-rgb),0.1)] p-2 rounded-lg border border-(--color-border) text-danger">

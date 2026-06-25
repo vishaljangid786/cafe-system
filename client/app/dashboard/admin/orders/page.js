@@ -49,6 +49,8 @@ export default function AdminOrdersDashboard() {
   const [branchFilter, setBranchFilter] = useState('all');
   const [cafeFilter, setCafeFilter] = useState('all');
   const [cafes, setCafes] = useState([]);
+  const [staffFilter, setStaffFilter] = useState(''); // '' = all staff; else a user _id (createdBy)
+  const [staffMembers, setStaffMembers] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState(''); // '' | dine-in | takeaway | delivery
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -81,6 +83,7 @@ export default function AdminOrdersDashboard() {
       if (dateRange.start) params.append('startDate', dateRange.start);
       if (dateRange.end) params.append('endDate', dateRange.end);
       if (searchTerm) params.append('search', searchTerm);
+      if (staffFilter) params.append('createdBy', staffFilter);
 
       // allSettled so a 403/500 on analytics (a delegated branch_admin may hold
       // viewOrders but not viewAnalytics) or locations doesn't reject the whole
@@ -112,7 +115,7 @@ export default function AdminOrdersDashboard() {
         progress.done();
       }
     }
-  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, currentPage, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, currentPage, searchTerm, staffFilter]);
 
   // Debounce data fetches so each keystroke/filter change doesn't fire its own
   // request burst; the stale-response guard above handles any overlap.
@@ -127,7 +130,7 @@ export default function AdminOrdersDashboard() {
   useEffect(() => {
     if (!didMountRef.current) { didMountRef.current = true; return; }
     setCurrentPage(1);
-  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, searchTerm]);
+  }, [branchFilter, cafeFilter, statusFilter, typeFilter, dateRange, searchTerm, staffFilter]);
 
   // Follow the global top-navbar cafe/branch selector. Changing the cafe or branch in
   // the navbar drives this page's filters too; the local dropdowns can still narrow
@@ -243,6 +246,20 @@ export default function AdminOrdersDashboard() {
     return () => { ignore = true; };
   }, []);
 
+  // Staff members (order creators) for the "filter by staff" dropdown — loaded once.
+  // The /users endpoint is already scoped to who the current admin/branch-admin manages.
+  useEffect(() => {
+    let ignore = false;
+    api.get('/users', { params: { limit: 500 } })
+      .then((res) => {
+        if (ignore) return;
+        const orderRoles = ['staff', 'chef', 'branch_admin', 'location_admin'];
+        setStaffMembers((res.data?.data || []).filter((u) => orderRoles.includes(u.role)));
+      })
+      .catch(() => {});
+    return () => { ignore = true; };
+  }, []);
+
   const handleMoveTable = async (id, tableId) => {
     try {
       await api.patch(`/orders/${id}/move-table`, { tableId });
@@ -285,6 +302,7 @@ export default function AdminOrdersDashboard() {
     setTypeFilter('');
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
+    setStaffFilter('');
     toast.success('Filters cleared');
   };
 
@@ -386,6 +404,9 @@ export default function AdminOrdersDashboard() {
           cafes={cafes}
           cafeFilter={cafeFilter}
           setCafeFilter={setCafeFilter}
+          staffMembers={staffMembers}
+          staffFilter={staffFilter}
+          setStaffFilter={setStaffFilter}
         />
 
 
@@ -508,6 +529,9 @@ export default function AdminOrdersDashboard() {
                                 <div className="flex flex-col">
                                   <span className="text-[10px] font-bold text-primary uppercase tracking-normal">#{order._id.substring(order._id.length - 8)}</span>
                                   <span className="text-[9px] font-bold text-(--color-text-muted) mt-1">{new Date(order.createdAt).toLocaleTimeString()}</span>
+                                  {order.createdBy?.name && (
+                                    <span className="text-[9px] font-semibold text-(--color-text-secondary) mt-0.5">by {order.createdBy.name}</span>
+                                  )}
                                 </div>
                               </td>
                               <td className="py-6 px-8">

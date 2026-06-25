@@ -13,39 +13,31 @@ import { Button } from '@/app/components/ui/Button';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import toast from 'react-hot-toast';
+import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '@/app/config/pages';
 
-const PERMISSION_LIST = [
-  { key: 'viewRevenue', label: 'View Revenue' },
-  { key: 'editRevenue', label: 'Edit Revenue' },
-  { key: 'viewOrders', label: 'View Orders' },
-  { key: 'manageOrders', label: 'Manage Orders' },
-  { key: 'forceComplete', label: 'Force Complete Orders' },
-  { key: 'exportReports', label: 'Export Reports' },
-  { key: 'manageStaff', label: 'Manage Staff' },
+// PAGE access is now chosen page-by-page (see PAGE_GROUPS -> allowedPages). What's
+// left here are CAPABILITIES — non-page abilities that aren't "open a page".
+const CAPABILITY_LIST = [
+  { key: 'editRevenue', label: 'Edit Revenue (not just view)' },
+  { key: 'forceComplete', label: 'Force-Complete Orders' },
   { key: 'manageNotifications', label: 'Manage Notifications' },
-  { key: 'viewAnalytics', label: 'View Analytics' },
-  { key: 'manageCoupons', label: 'Manage Coupons' },
-  { key: 'manageBranches', label: 'Open Branches Page' },
-  { key: 'viewAuditLogs', label: 'Open Security Logs' },
-  { key: 'impersonateUsers', label: 'Login As Users' },
-  { key: 'viewAdminCenter', label: 'Open Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
   { key: 'sendMessages', label: 'Send Messages' },
   { key: 'messageSuperAdmin', label: 'Message Super Admin' },
 ];
 
-// Default permissions each role gets (mirrors the backend). Keys not listed default to false.
+// Default CAPABILITIES per role (page defaults come from ROLE_DEFAULT_PAGES).
 // sendMessages is ON for everyone so the messaging hierarchy works out of the box.
-const ROLE_DEFAULTS = {
-  admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true, viewAnalytics: true, manageCoupons: true, sendMessages: true, messageSuperAdmin: true },
-  branch_admin: { viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true, forceComplete: true, exportReports: true, manageStaff: true, viewAnalytics: true, sendMessages: true },
-  location_admin: { viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true, viewAnalytics: true, sendMessages: true },
-  staff: { viewOrders: true, manageOrders: true, sendMessages: true },
-  chef: { viewOrders: true, manageOrders: true, sendMessages: true },
+const ROLE_DEFAULT_CAPS = {
+  admin: { editRevenue: true, forceComplete: true, manageNotifications: true, sendMessages: true, messageSuperAdmin: true },
+  branch_admin: { editRevenue: true, forceComplete: true, sendMessages: true },
+  location_admin: { sendMessages: true },
+  staff: { sendMessages: true },
+  chef: { sendMessages: true },
 };
 
-const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
+const emptyPerms = () => CAPABILITY_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
 
 const Field = ({ label, children, hint }) => (
   <div className="space-y-1.5">
@@ -82,6 +74,7 @@ export default function AddMemberPage() {
   const [admins, setAdmins] = useState([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
   const [permissions, setPermissions] = useState(emptyPerms());
+  const [selectedPages, setSelectedPages] = useState([]); // page-access keys (allowedPages)
   const [aadharImage, setAadharImage] = useState(null);
   const [aadharPreview, setAadharPreview] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -125,9 +118,10 @@ export default function AddMemberPage() {
     if (currentUser) load();
   }, [currentUser]);
 
-  // Pre-select the chosen role's default permissions
+  // Pre-select the chosen role's default capabilities AND default page access.
   useEffect(() => {
-    setPermissions({ ...emptyPerms(), ...(ROLE_DEFAULTS[form.role] || {}) });
+    setPermissions({ ...emptyPerms(), ...(ROLE_DEFAULT_CAPS[form.role] || {}) });
+    setSelectedPages(ROLE_DEFAULT_PAGES[form.role] || []);
   }, [form.role]);
 
   // Image previews
@@ -210,6 +204,16 @@ export default function AddMemberPage() {
     setPermissions((p) => ({ ...p, [key]: !p[key] }));
   };
 
+  // You can only grant page access you yourself hold (super_admin grants anything).
+  const actorCanGrantPage = (pageKey) =>
+    currentUser?.role === 'super_admin' || (currentUser?.allowedPages || []).includes(pageKey);
+  const togglePage = (pageKey) => {
+    if (!actorCanGrantPage(pageKey)) return;
+    setSelectedPages((prev) =>
+      prev.includes(pageKey) ? prev.filter((k) => k !== pageKey) : [...prev, pageKey]
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Light client-side validation (the backend validates fully)
@@ -245,6 +249,12 @@ export default function AddMemberPage() {
       toast.error('Please upload the Aadhaar card image.');
       return;
     }
+    // A member must be given access to at least one page — no zero-access accounts.
+    // (Staff/Chef work from their own fixed menu, so they're exempt.)
+    if (['admin', 'branch_admin', 'location_admin'].includes(form.role) && selectedPages.length === 0) {
+      toast.error('Select at least one page this member can access.');
+      return;
+    }
 
     const payload = { ...form };
     if (form.role === 'branch_admin') {
@@ -267,6 +277,7 @@ export default function AddMemberPage() {
     if (aadharImage) data.append('aadharImage', aadharImage);
     if (profileImage) data.append('profileImage', profileImage);
     data.append('permissions', JSON.stringify(permissions));
+    data.append('allowedPages', JSON.stringify(selectedPages));
 
     setSubmitting(true);
     const loadToast = toast.loading('Creating member...');
@@ -401,13 +412,59 @@ export default function AddMemberPage() {
           </div>
         </Section>
 
-        {/* Permissions */}
-        <Section icon={Check} title="Permissions" desc="This role's defaults are pre-selected — add more if needed (only ones you have)">
+        {/* Page Access — one toggle per page (this is what the member can open). */}
+        <Section icon={Shield} title="Page Access" desc="Tick exactly the pages this member can open — they'll see ONLY these. The role's typical pages are pre-selected.">
+          {['staff', 'chef'].includes(form.role) ? (
+            <p className="text-xs font-bold text-(--color-text-muted) bg-(--color-surface-soft) border border-(--color-border) rounded-xl px-4 py-3">
+              {form.role === 'chef' ? 'Chefs' : 'Staff'} use their own dedicated menu (Kitchen / New Orders / Tables …). No dashboard page access is assigned here.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-end -mt-2">
+                <span className={`text-[10px] font-bold uppercase tracking-normal ${selectedPages.length === 0 ? 'text-danger' : 'text-(--color-text-muted)'}`}>
+                  {selectedPages.length} page{selectedPages.length === 1 ? '' : 's'} selected
+                </span>
+              </div>
+              <div className="space-y-4">
+                {Object.entries(PAGE_GROUPS).map(([group, pages]) => (
+                  <div key={group}>
+                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">{group}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {pages.map(({ key, label }) => {
+                        const checked = selectedPages.includes(key);
+                        const allowed = actorCanGrantPage(key);
+                        return (
+                          <button
+                            type="button"
+                            key={key}
+                            onClick={() => togglePage(key)}
+                            className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'} ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <span className="flex flex-col">
+                              {label}
+                              {!allowed && <span className="text-[9px] text-danger normal-case">You don&apos;t have this</span>}
+                            </span>
+                            <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
+                              {checked && <Check size={12} strokeWidth={3} />}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </Section>
+
+        {/* Capabilities — non-page abilities (edit revenue, force-complete, messaging…). */}
+        <Section icon={Check} title="Capabilities" desc="Extra abilities that aren't a page. The role's defaults are pre-selected — add more if needed (only ones you have).">
           <div className="flex items-center justify-end -mt-2">
             <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {PERMISSION_LIST.map(({ key, label }) => {
+            {CAPABILITY_LIST.map(({ key, label }) => {
               const checked = !!permissions[key];
               const allowed = actorCanGrant(key);
               return (

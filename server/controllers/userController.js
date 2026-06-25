@@ -700,13 +700,35 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
     }
   });
 
+  // Page-level access. When allowedPages is sent, gate it to pages the actor can
+  // grant, then RECOMPUTE the coarse page-permissions from the granted pages (a
+  // legacy perm is true iff some granted page maps to it) so the data APIs — still
+  // gated by the old keys — match the page selection. Capabilities are untouched.
+  let nextAllowedPages = user.allowedPages || [];
+  if (req.body.allowedPages !== undefined) {
+    const { sanitizePages, PAGES: PAGE_DEFS } = require('../utils/pageAccess');
+    let reqPages = req.body.allowedPages;
+    if (typeof reqPages === 'string') { try { reqPages = JSON.parse(reqPages); } catch (e) { reqPages = null; } }
+    if (Array.isArray(reqPages)) {
+      const actorPages = new Set(req.user.allowedPages || []);
+      nextAllowedPages = sanitizePages(reqPages).filter((k) => actorIsSuper || actorPages.has(k));
+      const grantedLegacy = new Set(
+        nextAllowedPages.map((k) => (PAGE_DEFS.find((p) => p.key === k) || {}).legacyPerm).filter(Boolean)
+      );
+      new Set(PAGE_DEFS.map((p) => p.legacyPerm)).forEach((perm) => {
+        mergedPerms[perm] = grantedLegacy.has(perm);
+      });
+    }
+  }
+
   user.permissions = mergedPerms;
+  user.allowedPages = nextAllowedPages;
   await user.save();
 
   res.json({
     success: true,
     message: 'Permissions updated successfully',
-    data: user.permissions
+    data: { permissions: user.permissions, allowedPages: user.allowedPages }
   });
 });
 

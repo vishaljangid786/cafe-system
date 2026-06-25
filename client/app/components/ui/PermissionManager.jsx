@@ -11,29 +11,29 @@ import { Spinner } from './Spinner';
 import PremiumSelect from './PremiumSelect';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '../../config/pages';
 
+// Page access is edited page-by-page (PAGE_GROUPS -> allowedPages). What's left
+// here are CAPABILITIES — non-page abilities.
 const permissionList = [
-  { key: 'viewRevenue', label: 'View Revenue' },
-  { key: 'editRevenue', label: 'Edit Revenue' },
-  { key: 'viewOrders', label: 'View Orders' },
-  { key: 'manageOrders', label: 'Manage Orders' },
-  { key: 'forceComplete', label: 'Force Complete' },
-  { key: 'exportReports', label: 'Export Reports' },
-  { key: 'manageStaff', label: 'Manage Staff' },
+  { key: 'editRevenue', label: 'Edit Revenue (not just view)' },
+  { key: 'forceComplete', label: 'Force-Complete Orders' },
   { key: 'manageNotifications', label: 'Manage Notifications' },
-  { key: 'viewAnalytics', label: 'View Analytics' },
-  { key: 'manageCoupons', label: 'Manage Coupons' },
-  // Page-access permissions (unlock normally role-locked pages)
-  { key: 'manageBranches', label: 'Open Branches Page' },
-  { key: 'viewAuditLogs', label: 'Open Security Logs' },
-  { key: 'impersonateUsers', label: 'Login As Users' },
-  { key: 'viewAdminCenter', label: 'Open Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
-  // Messaging
   { key: 'sendMessages', label: 'Send Messages' },
   { key: 'messageSuperAdmin', label: 'Message Super Admin' },
 ];
+
+// Default CAPABILITIES per role (mirrors add-member). Page defaults come from
+// ROLE_DEFAULT_PAGES. Used by the "Reset to role defaults" button.
+const ROLE_DEFAULT_CAPS = {
+  admin: { editRevenue: true, forceComplete: true, manageNotifications: true, sendMessages: true, messageSuperAdmin: true },
+  branch_admin: { editRevenue: true, forceComplete: true, sendMessages: true },
+  location_admin: { sendMessages: true },
+  staff: { sendMessages: true },
+  chef: { sendMessages: true },
+};
 
 const ROLE_FILTERS = [
   { label: 'All Roles', value: 'all' },
@@ -54,6 +54,7 @@ export default function PermissionManager({ className = "" }) {
   const [roleFilter, setRoleFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [editedPermissions, setEditedPermissions] = useState({});
+  const [editedPages, setEditedPages] = useState([]); // allowedPages being edited
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -137,6 +138,7 @@ export default function PermissionManager({ className = "" }) {
     // sendMessages is ON unless explicitly turned off, so show it checked for
     // accounts that pre-date the field rather than misleadingly unchecked.
     setEditedPermissions({ ...perms, sendMessages: perms.sendMessages !== false });
+    setEditedPages(Array.isArray(user.allowedPages) ? [...user.allowedPages] : []);
     setIsModalOpen(true);
     setError('');
   };
@@ -146,6 +148,34 @@ export default function PermissionManager({ className = "" }) {
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  // You can only grant page access you yourself hold (super_admin grants anything).
+  const actorCanGrantPage = (pageKey) =>
+    currentUser?.role === 'super_admin' || (currentUser?.allowedPages || []).includes(pageKey);
+
+  const handlePageToggle = (pageKey) => {
+    if (!actorCanGrantPage(pageKey)) return;
+    setEditedPages(prev =>
+      prev.includes(pageKey) ? prev.filter(k => k !== pageKey) : [...prev, pageKey]
+    );
+  };
+
+  // Reset this user's access to their ROLE's defaults (the same set Add-Member would
+  // pre-select for that role) — pages + capabilities, gated to what you can grant.
+  const resetToRoleDefaults = () => {
+    if (!selectedUser) return;
+    const role = selectedUser.role;
+    setEditedPages((ROLE_DEFAULT_PAGES[role] || []).filter(actorCanGrantPage));
+    const caps = ROLE_DEFAULT_CAPS[role] || {};
+    setEditedPermissions(prev => {
+      const next = { ...prev };
+      permissionList.forEach(({ key }) => {
+        if (actorCanGrant(key)) next[key] = !!caps[key];
+      });
+      return next;
+    });
+    toast.success('Reset to role defaults');
   };
 
   // Fill the toggles from a saved role, but only for permissions the current
@@ -171,8 +201,11 @@ export default function PermissionManager({ className = "" }) {
       Object.keys(editedPermissions).forEach((key) => {
         if (actorCanGrant(key)) safePermissions[key] = editedPermissions[key];
       });
+      // Only send pages the actor can grant (server re-validates too).
+      const safePages = editedPages.filter(actorCanGrantPage);
       await api.put(`/users/${selectedUser._id}/permissions`, {
-        permissions: safePermissions
+        permissions: safePermissions,
+        allowedPages: safePages,
       });
       toast.success('Permissions updated');
       setIsModalOpen(false);
@@ -437,6 +470,49 @@ export default function PermissionManager({ className = "" }) {
             </div>
           )}
 
+          {/* Page Access — one toggle per page (what this member can open). */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Page Access</span>
+            <button type="button" onClick={resetToRoleDefaults} className="text-[11px] font-bold text-primary hover:underline">
+              Reset to role defaults
+            </button>
+          </div>
+          {['staff', 'chef'].includes(selectedUser?.role) ? (
+            <p className="text-xs font-medium text-(--color-text-muted) bg-(--color-surface-soft) border border-(--color-border) rounded-lg px-4 py-3">
+              {selectedUser?.role === 'chef' ? 'Chefs' : 'Staff'} use their own dedicated menu — no dashboard page access is set here.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(PAGE_GROUPS).map(([group, pages]) => (
+                <div key={group}>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">{group}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {pages.map(({ key: pk, label: pl }) => {
+                      const isChecked = editedPages.includes(pk);
+                      const canGrant = actorCanGrantPage(pk);
+                      return (
+                        <div
+                          key={pk}
+                          onClick={() => canGrant && handlePageToggle(pk)}
+                          className={`p-3 rounded-lg border transition-colors flex items-center justify-between cursor-pointer group/item ${isChecked ? 'border-primary bg-(--color-primary-soft)' : 'border-(--color-border) hover:border-(--color-border-strong) hover:bg-(--color-surface-soft)'} ${!canGrant ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-(--color-text-primary)">{pl}</span>
+                            {!canGrant && <span className="text-xs text-danger flex items-center gap-1"><X size={10} /> Not allowed</span>}
+                          </div>
+                          <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${isChecked ? 'bg-primary border-primary text-(--color-on-primary)' : 'border-(--color-border-strong) group-hover/item:border-primary'}`}>
+                            {isChecked && <Check size={14} strokeWidth={3} />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) block pt-2">Capabilities</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {permissionList.map(({ key, label }) => {
               const isChecked = editedPermissions[key] || false;
