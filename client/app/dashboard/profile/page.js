@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { blockNonInteger } from '@/app/utils/inputValidation';
 import {
   User as UserIcon, Mail, Phone, MapPin,
   Camera, Save, Loader2, Calendar, Award,
@@ -227,7 +228,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <DetailsField label="Full Name" name="name" value={formData.name} icon={UserIcon} isEditing={isEditing} onChange={handleChange} />
                     <DetailsField label="Mobile Number" name="phone" value={formData.phone} icon={Phone} isEditing={isEditing} onChange={handleChange} />
-                    <DetailsField label="Age" name="age" value={formData.age} icon={Calendar} isEditing={isEditing} onChange={handleChange} type="number" />
+                    <DetailsField label="Age" name="age" value={formData.age} icon={Calendar} isEditing={isEditing} onChange={handleChange} type="number" onKeyDown={blockNonInteger} />
                     <DetailsField label="City" name="city" value={formData.city} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
                     <DetailsField label="State" name="state" value={formData.state} icon={MapPin} isEditing={isEditing} onChange={handleChange} />
                     <DetailsField label="Country" name="country" value={formData.country} icon={Globe} isEditing={isEditing} onChange={handleChange} />
@@ -315,7 +316,7 @@ export default function ProfilePage() {
   );
 }
 
-function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength }) {
+function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength, onKeyDown }) {
   return (
     <div className="space-y-3">
       <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-4">{label}</label>
@@ -328,6 +329,7 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
           value={value}
           onChange={onChange}
           maxLength={maxLength}
+          onKeyDown={onKeyDown}
           className="w-full pl-16 pr-6 py-5 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 focus:bg-(--color-surface) outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-(--color-text-primary)"
           placeholder={`Enter ${label}...`}
         />

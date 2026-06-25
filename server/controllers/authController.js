@@ -5,6 +5,8 @@ const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const AuditLog = require('../models/AuditLog');
 const { canAccessLocation, normalizeIdList, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
+const { addAdminToCafe } = require('../utils/cafeSync');
+const Cafe = require('../models/Cafe');
 
 // Generate JWT
 const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = false) => {
@@ -239,6 +241,19 @@ const registerUser = asyncHandler(async (req, res, next) => {
   });
 
   if (user) {
+    // Link an admin to the selected cafe(s): records cafe membership AND mirrors
+    // each cafe's branches into accessibleLocations, so all branch-level scoping
+    // keeps working. Only super_admins can reach finalRole === 'admin' here.
+    if (finalRole === 'admin') {
+      const requestedCafeIds = normalizeIdList(req.body.cafes);
+      if (requestedCafeIds.length) {
+        const validCafes = await Cafe.find({ _id: { $in: requestedCafeIds }, status: { $ne: 'deleted' } }).select('_id').lean();
+        for (const c of validCafes) {
+          await addAdminToCafe(c._id, user._id);
+        }
+      }
+    }
+
     await sendNotification({
       title: 'New Member Added',
       message: `${user.name} (${user.role.replace('_', ' ')}) has been added to the team.`,

@@ -7,6 +7,7 @@ import {
   UserPlus, User, MapPin, Shield, CreditCard,
   Image as ImageIcon, Check, Building2
 } from 'lucide-react';
+import { sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
@@ -305,7 +306,7 @@ export default function AddMemberPage() {
               <input required className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Rahul Sharma" />
             </Field>
             <Field label="Email Address">
-              <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="rahul@cafe.com" />
+              <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" />
             </Field>
             <Field label="Password" hint="The member can change it after first login.">
               <input required type="text" minLength={10} className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 10 characters" />
@@ -314,7 +315,7 @@ export default function AddMemberPage() {
               <input required className={inputCls} value={form.phone} maxLength={10} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" />
             </Field>
             <Field label="Age">
-              <input type="number" min="18" max="99" className={inputCls} value={form.age} onChange={(e) => set('age', e.target.value)} placeholder="24" />
+              <input type="number" min="18" max="99" onKeyDown={blockNonInteger} className={inputCls} value={form.age} onChange={(e) => set('age', e.target.value)} placeholder="24" />
             </Field>
             <Field label="Gender">
               <PremiumSelect value={form.gender} onChange={(v) => set('gender', v)} options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
@@ -395,7 +396,7 @@ export default function AddMemberPage() {
             )}
 
             <Field label="Monthly Salary (₹)">
-              <input type="number" min="0" className={inputCls} value={form.monthlySalary} onChange={(e) => set('monthlySalary', e.target.value)} placeholder="28000" />
+              <input type="number" min="0" onKeyDown={blockNegative} className={inputCls} value={form.monthlySalary} onChange={(e) => set('monthlySalary', e.target.value)} placeholder="28000" />
             </Field>
           </div>
         </Section>

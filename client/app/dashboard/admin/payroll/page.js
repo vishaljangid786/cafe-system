@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
+import { digitsOnly, blockNegative } from '@/app/utils/inputValidation';
 import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Wallet, Filter, MapPin, ChevronRight, Download, Receipt, PieChart as PieIcon, Activity, FileText, Target, X } from 'lucide-react';
@@ -659,12 +660,12 @@ export default function PayrollRecordsPage() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Monthly Salary (₹)</label>
-                      <input type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
+                      <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Contact</label>
-                        <input className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                        <input type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: digitsOnly(e.target.value, 10)})} />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Role</label>

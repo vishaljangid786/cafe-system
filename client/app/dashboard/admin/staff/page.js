@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
+import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, Mail, Phone, MapPin, Edit3, Trash2, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -838,18 +839,18 @@ export default function LocationStaffPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Email</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect
@@ -934,14 +935,14 @@ export default function LocationStaffPage() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Pincode</label>
-                  <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                  <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-6">
                 <div className="col-span-2">
                   <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Aadhar Number</label>
-                  <input type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.aadharNumber} onInput={e => { if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12); }} onChange={e => setFormData({ ...formData, aadharNumber: e.target.value })} />
+                  <input type="text" inputMode="numeric" maxLength={12} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.aadharNumber} onChange={e => setFormData({ ...formData, aadharNumber: digitsOnly(e.target.value, 12) })} />
                 </div>
                 <div>
                   <PremiumSelect
@@ -961,7 +962,7 @@ export default function LocationStaffPage() {
 
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Salary (₹)</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
 
             <motion.button

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { digitsOnly, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -169,9 +170,9 @@ export default function ProcurementPage() {
                         <PremiumSelect value={it.ingredient} onChange={(v) => onPickIngredient(idx, v)} options={ingredients.map((ing) => ({ label: ing.name, value: ing._id }))} placeholder="Ingredient (links to stock)…" />
                       </div>
                       <input value={it.name} onChange={(e) => setItem(idx, { name: e.target.value })} placeholder="or item name" className={`${inputCls} w-36`} />
-                      <input type="number" value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} placeholder="Qty" className={`${inputCls} w-20`} />
+                      <input type="number" min="0" onKeyDown={blockNonInteger} value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} placeholder="Qty" className={`${inputCls} w-20`} />
                       <span className="text-[10px] text-(--color-text-muted) uppercase">{it.unit}</span>
-                      <input type="number" value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="₹/unit" className={`${inputCls} w-24`} />
+                      <input type="number" min="0" onKeyDown={blockNegative} value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="₹/unit" className={`${inputCls} w-24`} />
                       <span className="text-xs font-bold text-(--color-text-primary) w-20 text-right">{money((Number(it.quantity) || 0) * (Number(it.unitCost) || 0))}</span>
                       {poItems.length > 1 && (
                         <button onClick={() => setPoItems((p) => p.filter((_, i) => i !== idx))} className="p-2 text-danger hover:bg-danger/10 rounded-lg"><Trash2 size={14} /></button>
@@ -226,7 +227,7 @@ export default function ProcurementPage() {
                 <h2 className="text-sm font-bold text-(--color-text-primary)">Add supplier</h2>
                 <div className="flex flex-wrap gap-3">
                   <input value={supForm.name} onChange={(e) => setSupForm({ ...supForm, name: e.target.value })} placeholder="Name" className={`${inputCls} flex-1 min-w-40`} />
-                  <input value={supForm.phone} onChange={(e) => setSupForm({ ...supForm, phone: e.target.value })} placeholder="Phone" className={`${inputCls} w-36`} />
+                  <input type="tel" inputMode="numeric" maxLength={10} value={supForm.phone} onChange={(e) => setSupForm({ ...supForm, phone: digitsOnly(e.target.value, 10) })} placeholder="Phone" className={`${inputCls} w-36`} />
                   <input value={supForm.gstin} onChange={(e) => setSupForm({ ...supForm, gstin: e.target.value })} placeholder="GSTIN" className={`${inputCls} w-40`} />
                   <input value={supForm.paymentTerms} onChange={(e) => setSupForm({ ...supForm, paymentTerms: e.target.value })} placeholder="Terms (e.g. Net 15)" className={`${inputCls} w-36`} />
                   <button onClick={addSupplier} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>

@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
+import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
-  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone,
+  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -13,14 +14,138 @@ import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContaine
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
+// Full grantable permission set (mirrors the Add-Member page + User schema).
+const PERMISSION_LIST = [
+  { key: 'viewRevenue', label: 'View Revenue' },
+  { key: 'editRevenue', label: 'Edit Revenue' },
+  { key: 'viewOrders', label: 'View Orders' },
+  { key: 'manageOrders', label: 'Manage Orders' },
+  { key: 'forceComplete', label: 'Force Complete Orders' },
+  { key: 'exportReports', label: 'Export Reports' },
+  { key: 'manageStaff', label: 'Manage Staff' },
+  { key: 'manageNotifications', label: 'Manage Notifications' },
+  { key: 'viewAnalytics', label: 'View Analytics' },
+  { key: 'manageCoupons', label: 'Manage Coupons' },
+  { key: 'manageBranches', label: 'Open Branches Page' },
+  { key: 'viewAuditLogs', label: 'Open Security Logs' },
+  { key: 'impersonateUsers', label: 'Login As Users' },
+  { key: 'viewAdminCenter', label: 'Open Admin Center' },
+  { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
+  { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
+  { key: 'sendMessages', label: 'Send Messages' },
+  { key: 'messageSuperAdmin', label: 'Message Super Admin' },
+];
+
+// A cafe admin (owner) gets full cafe control by default; platform-only powers
+// (impersonateUsers, sendGlobalNotifications) stay OFF.
+const ADMIN_DEFAULT_PERMS = {
+  viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true,
+  forceComplete: true, exportReports: true, manageStaff: true, manageNotifications: true,
+  viewAnalytics: true, manageCoupons: true, manageBranches: true, viewAuditLogs: true,
+  viewAdminCenter: true, manageGlobalMenu: true, sendMessages: true, messageSuperAdmin: true,
+};
+const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
+const adminPerms = () => ({ ...emptyPerms(), ...ADMIN_DEFAULT_PERMS });
+
+const EMPTY_ADMIN = {
+  name: '', email: '', password: '', phone: '', age: '', gender: 'Male',
+  address1: '', address2: '', city: '', state: '', country: 'India', pincode: '',
+  highestQualification: '12th Pass', monthlySalary: '', aadharNumber: '',
+  aadharImage: '', profileImageUrl: '',
+};
+
 const EMPTY_FORM = {
   name: '', logo: '', gstin: '',
   address: { line1: '', line2: '', city: '', state: '', country: 'India', pincode: '' },
   contact: { phone: '', email: '' },
-  adminMode: 'new',
-  admin: { name: '', email: '', password: '', phone: '', gender: 'Other' },
+  // Default to NO admin so creating a cafe is never blocked by admin validation.
+  // Admins can be created here ('new'/'existing') or from the Add-Member page.
+  adminMode: 'none',
+  admin: { ...EMPTY_ADMIN },
+  adminPermissions: adminPerms(),
   adminUserId: '',
 };
+
+const inputCls = 'w-full px-5 py-3.5 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold text-sm';
+const labelCls = 'block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1';
+
+// Full new-admin form — same fields + permissions + identity docs as Add-Member.
+function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, uploading }) {
+  return (
+    <div className="space-y-6">
+      {/* Identity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', e.target.value)} placeholder="Rahul Sharma" /></div>
+        <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={admin.email} onChange={(e) => setAdmin('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" /></div>
+        <div><label className={labelCls}>Password *</label><input type="text" className={inputCls} value={admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="At least 10 characters" /></div>
+        <div><label className={labelCls}>Phone *</label><input type="tel" inputMode="numeric" className={inputCls} value={admin.phone} maxLength={10} onChange={(e) => setAdmin('phone', digitsOnly(e.target.value, 10))} placeholder="9876543210" /></div>
+        <div><label className={labelCls}>Age</label><input type="number" min="18" max="99" onKeyDown={blockNonInteger} className={inputCls} value={admin.age} onChange={(e) => setAdmin('age', e.target.value)} placeholder="30" /></div>
+        <div>
+          <PremiumSelect label="Gender" value={admin.gender} onChange={(v) => setAdmin('gender', v)}
+            options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
+        </div>
+      </div>
+
+      {/* Address */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div><label className={labelCls}>Address Line 1 *</label><input className={inputCls} value={admin.address1} onChange={(e) => setAdmin('address1', e.target.value)} placeholder="Building / Street" /></div>
+        <div><label className={labelCls}>Address Line 2</label><input className={inputCls} value={admin.address2} onChange={(e) => setAdmin('address2', e.target.value)} placeholder="Locality / Landmark" /></div>
+        <div><label className={labelCls}>City *</label><input className={inputCls} value={admin.city} onChange={(e) => setAdmin('city', e.target.value)} placeholder="Mumbai" /></div>
+        <div><label className={labelCls}>State</label><input className={inputCls} value={admin.state} onChange={(e) => setAdmin('state', e.target.value)} placeholder="Maharashtra" /></div>
+        <div><label className={labelCls}>Country</label><input className={inputCls} value={admin.country} onChange={(e) => setAdmin('country', e.target.value)} placeholder="India" /></div>
+        <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" className={inputCls} value={admin.pincode} maxLength={6} onChange={(e) => setAdmin('pincode', digitsOnly(e.target.value, 6))} placeholder="400001" /></div>
+        <div>
+          <PremiumSelect label="Highest Qualification" value={admin.highestQualification} onChange={(v) => setAdmin('highestQualification', v)}
+            options={[{ label: '10th Pass', value: '10th Pass' }, { label: '12th Pass', value: '12th Pass' }, { label: 'Diploma', value: 'Diploma' }, { label: 'Graduate', value: 'Graduate' }, { label: 'Post Graduate', value: 'Post Graduate' }]} />
+        </div>
+        <div><label className={labelCls}>Monthly Salary (₹)</label><input type="number" min="0" onKeyDown={blockNegative} className={inputCls} value={admin.monthlySalary} onChange={(e) => setAdmin('monthlySalary', e.target.value)} placeholder="60000" /></div>
+      </div>
+
+      {/* Permissions */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Check size={13} className="text-primary" /> Permissions</p>
+          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {PERMISSION_LIST.map(({ key, label }) => {
+            const checked = !!permissions[key];
+            return (
+              <button type="button" key={key} onClick={() => togglePerm(key)}
+                className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+                <span>{label}</span>
+                <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>{checked && <Check size={12} strokeWidth={3} />}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Identity documents */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label className={labelCls}><CreditCard size={11} className="inline mr-1" /> Aadhaar Number *</label>
+          <input type="text" inputMode="numeric" className={inputCls} value={admin.aadharNumber} maxLength={12} onChange={(e) => setAdmin('aadharNumber', digitsOnly(e.target.value, 12))} placeholder="12-digit Aadhaar number" />
+        </div>
+        <div />
+        <div>
+          <label className={labelCls}>Aadhaar Card Image *</label>
+          <label className={`group relative flex items-center justify-center min-h-28 bg-(--color-bg-soft) border-2 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden ${admin.aadharImage ? 'border-(--color-border)' : 'border-danger/40'}`}>
+            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading.aadhar} onChange={(e) => onImage(e.target.files?.[0], 'aadharImage')} />
+            {admin.aadharImage ? <img src={admin.aadharImage} alt="Aadhaar" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-bold">{uploading.aadhar ? 'Uploading…' : 'Upload Aadhaar'}</span></div>}
+          </label>
+        </div>
+        <div>
+          <label className={labelCls}>Profile Photo <span className="text-(--color-text-muted) normal-case font-medium">(optional)</span></label>
+          <label className="group relative flex items-center justify-center min-h-28 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
+            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading.profile} onChange={(e) => onImage(e.target.files?.[0], 'profileImageUrl')} />
+            {admin.profileImageUrl ? <img src={admin.profileImageUrl} alt="Profile" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-bold">{uploading.profile ? 'Uploading…' : 'Upload photo'}</span></div>}
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CafesPage() {
   const router = useRouter();
@@ -35,6 +160,7 @@ export default function CafesPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingImg, setUploadingImg] = useState({ aadhar: false, profile: false });
 
   // Gate: only super_admin and admins (cafe owners) may open this page.
   useEffect(() => {
@@ -57,12 +183,13 @@ export default function CafesPage() {
     }
   };
 
-  // Only super_admins assign existing users as admins, so only they need the list.
+  // Only super_admins assign existing users as admins. Per the requirement, the
+  // "existing user" picker lists ONLY admins (assign an admin to another cafe).
   const fetchUsers = async () => {
     if (!isSuper) return;
     try {
-      const res = await api.get('/users');
-      setUsers((res.data.data || []).filter((u) => u.role !== 'super_admin'));
+      const res = await api.get('/users', { params: { role: 'admin', limit: 1000 } });
+      setUsers((res.data.data || []).filter((u) => u.role === 'admin'));
     } catch (e) {
       console.error('Failed to load users');
     }
@@ -78,7 +205,7 @@ export default function CafesPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, admin: { ...EMPTY_ADMIN }, adminPermissions: adminPerms() });
     setShowModal(true);
   };
 
@@ -86,6 +213,8 @@ export default function CafesPage() {
     setEditing(cafe);
     setForm({
       ...EMPTY_FORM,
+      admin: { ...EMPTY_ADMIN },
+      adminPermissions: adminPerms(),
       name: cafe.name || '',
       logo: cafe.logo || '',
       gstin: cafe.gstin || '',
@@ -100,6 +229,7 @@ export default function CafesPage() {
   const setAddress = (k, v) => setForm((f) => ({ ...f, address: { ...f.address, [k]: v } }));
   const setContact = (k, v) => setForm((f) => ({ ...f, contact: { ...f.contact, [k]: v } }));
   const setAdmin = (k, v) => setForm((f) => ({ ...f, admin: { ...f.admin, [k]: v } }));
+  const togglePerm = (key) => setForm((f) => ({ ...f, adminPermissions: { ...f.adminPermissions, [key]: !f.adminPermissions[key] } }));
 
   // Upload the chosen logo/icon image → store the returned hosted URL in form.logo.
   const handleLogoFile = async (file) => {
@@ -119,9 +249,51 @@ export default function CafesPage() {
     }
   };
 
+  // Upload an admin image (Aadhaar card or profile photo) → store the hosted URL.
+  const handleAdminImage = async (file, field) => {
+    if (!file) return;
+    const which = field === 'aadharImage' ? 'aadhar' : 'profile';
+    setUploadingImg((u) => ({ ...u, [which]: true }));
+    const t = toast.loading('Uploading image…');
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      const res = await api.post('/cafes/upload-image', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setAdmin(field, res.data.url);
+      toast.success('Image uploaded', { id: t });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Image upload failed', { id: t });
+    } finally {
+      setUploadingImg((u) => ({ ...u, [which]: false }));
+    }
+  };
+
+  // Client-side guard for the "new admin" path so the user gets instant, specific
+  // feedback before the request (the server validates fully too).
+  const validateNewAdmin = (a) => {
+    if (!a.name?.trim()) return 'Admin name is required';
+    if (!/^\S+@\S+\.\S+$/.test(a.email || '')) return 'A valid admin email is required';
+    if ((a.password || '').length < 10) return 'Admin password must be at least 10 characters';
+    if (!/^[0-9]{10}$/.test(a.phone || '')) return 'A valid 10-digit admin phone is required';
+    if (!a.address1?.trim()) return 'Admin address is required';
+    if (!a.city?.trim()) return 'Admin city is required';
+    if (!/^[0-9]{12}$/.test(a.aadharNumber || '')) return 'A valid 12-digit Aadhaar number is required';
+    if (!a.aadharImage) return 'Please upload the Aadhaar card image';
+    return null;
+  };
+
+  const buildAdminPayload = () => ({ ...form.admin, permissions: form.adminPermissions });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error('Cafe name is required');
+    if (!editing && form.adminMode === 'new') {
+      const adminErr = validateNewAdmin(form.admin);
+      if (adminErr) return toast.error(adminErr);
+    }
+    if (!editing && form.adminMode === 'existing' && !form.adminUserId) {
+      return toast.error('Select an admin to assign');
+    }
     setSaving(true);
     const loadToast = toast.loading(editing ? 'Saving cafe...' : 'Creating cafe...');
     try {
@@ -136,7 +308,7 @@ export default function CafesPage() {
           address: form.address, contact: form.contact,
           adminMode: form.adminMode,
         };
-        if (form.adminMode === 'new') payload.admin = form.admin;
+        if (form.adminMode === 'new') payload.admin = buildAdminPayload();
         if (form.adminMode === 'existing') payload.adminUserId = form.adminUserId;
         await api.post('/cafes', payload);
       }
@@ -168,19 +340,25 @@ export default function CafesPage() {
   };
 
   const handleAddAdmin = async (cafe) => {
+    if (form.adminMode === 'new') {
+      const adminErr = validateNewAdmin(form.admin);
+      if (adminErr) return toast.error(adminErr);
+    }
+    if (form.adminMode === 'existing' && !form.adminUserId) return toast.error('Select an admin to assign');
     const payload = { adminMode: form.adminMode };
-    if (form.adminMode === 'new') payload.admin = form.admin;
+    if (form.adminMode === 'new') payload.admin = buildAdminPayload();
     if (form.adminMode === 'existing') payload.adminUserId = form.adminUserId;
     const loadToast = toast.loading('Adding admin...');
     try {
       await api.post(`/cafes/${cafe._id}/admins`, payload);
       toast.success('Admin added', { id: loadToast });
-      setForm((f) => ({ ...f, admin: EMPTY_FORM.admin, adminUserId: '' }));
+      setForm((f) => ({ ...f, admin: { ...EMPTY_ADMIN }, adminPermissions: adminPerms(), adminUserId: '' }));
       fetchCafes();
       const fresh = await api.get(`/cafes/${cafe._id}`);
       if (fresh.data.data) setEditing(fresh.data.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not add admin', { id: loadToast });
+      const msg = err.response?.data?.message || err.response?.data?.errors?.map((o) => Object.values(o)[0]).join(', ') || 'Could not add admin';
+      toast.error(msg, { id: loadToast });
     }
   };
 
@@ -199,8 +377,28 @@ export default function CafesPage() {
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
-  const inputCls = 'w-full px-5 py-3.5 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold text-sm';
-  const labelCls = 'block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1';
+  const adminModeSelect = (extra = []) => (
+    <PremiumSelect
+      label="How to assign the admin"
+      value={form.adminMode}
+      onChange={(v) => setField('adminMode', v)}
+      options={[
+        { label: 'Create a new admin account', value: 'new' },
+        { label: 'Assign an existing admin', value: 'existing' },
+        ...extra,
+      ]}
+    />
+  );
+
+  const existingAdminSelect = () => (
+    <PremiumSelect
+      label="Select an admin to assign"
+      placeholder={users.length ? 'Choose an admin' : 'No admins available'}
+      value={form.adminUserId}
+      onChange={(v) => setField('adminUserId', v)}
+      options={users.map((u) => ({ label: `${u.name} — ${u.email}`, value: u._id }))}
+    />
+  );
 
   return (
     <PageTransition>
@@ -356,9 +554,9 @@ export default function CafesPage() {
                         </div>
                         <div><label className={labelCls}>City</label><input className={inputCls} value={form.address.city} onChange={(e) => setAddress('city', e.target.value)} /></div>
                         <div><label className={labelCls}>State</label><input className={inputCls} value={form.address.state} onChange={(e) => setAddress('state', e.target.value)} /></div>
-                        <div><label className={labelCls}>Pincode</label><input className={inputCls} value={form.address.pincode} onChange={(e) => setAddress('pincode', e.target.value)} /></div>
-                        <div><label className={labelCls}><Phone size={11} className="inline mr-1" /> Phone</label><input className={inputCls} value={form.contact.phone} onChange={(e) => setContact('phone', e.target.value)} /></div>
-                        <div className="md:col-span-2"><label className={labelCls}><Mail size={11} className="inline mr-1" /> Email</label><input className={inputCls} value={form.contact.email} onChange={(e) => setContact('email', e.target.value)} /></div>
+                        <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" maxLength={6} className={inputCls} value={form.address.pincode} onChange={(e) => setAddress('pincode', digitsOnly(e.target.value, 6))} /></div>
+                        <div><label className={labelCls}><Phone size={11} className="inline mr-1" /> Phone</label><input type="tel" inputMode="numeric" maxLength={10} className={inputCls} value={form.contact.phone} onChange={(e) => setContact('phone', digitsOnly(e.target.value, 10))} /></div>
+                        <div className="md:col-span-2"><label className={labelCls}><Mail size={11} className="inline mr-1" /> Email</label><input type="email" className={inputCls} value={form.contact.email} onChange={(e) => setContact('email', sanitizeEmail(e.target.value))} /></div>
                       </div>
                     </section>
 
@@ -366,43 +564,17 @@ export default function CafesPage() {
                     {!editing && isSuper && (
                       <section className="space-y-5">
                         <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Cafe Admin (Owner)</h3>
-                        <PremiumSelect
-                          label="How to assign the admin"
-                          value={form.adminMode}
-                          onChange={(v) => setField('adminMode', v)}
-                          options={[
-                            { label: 'Create a new admin account', value: 'new' },
-                            { label: 'Assign an existing user', value: 'existing' },
-                            { label: 'No admin for now', value: 'none' },
-                          ]}
-                        />
+                        {adminModeSelect([{ label: 'No admin for now', value: 'none' }])}
                         {form.adminMode === 'new' && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={form.admin.name} onChange={(e) => setAdmin('name', e.target.value)} /></div>
-                            <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={form.admin.email} onChange={(e) => setAdmin('email', e.target.value)} /></div>
-                            <div><label className={labelCls}>Password *</label><input type="password" className={inputCls} value={form.admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="Min 6 characters" /></div>
-                            <div><label className={labelCls}>Phone *</label><input className={inputCls} value={form.admin.phone} onChange={(e) => setAdmin('phone', e.target.value)} placeholder="10-digit" /></div>
-                            <div>
-                              <PremiumSelect label="Gender" value={form.admin.gender} onChange={(v) => setAdmin('gender', v)}
-                                options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]} />
-                            </div>
-                          </div>
+                          <NewAdminFields admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
                         )}
-                        {form.adminMode === 'existing' && (
-                          <PremiumSelect
-                            label="Select user to make admin"
-                            placeholder="Choose a user"
-                            value={form.adminUserId}
-                            onChange={(v) => setField('adminUserId', v)}
-                            options={users.map((u) => ({ label: `${u.name} — ${u.email} (${u.role})`, value: u._id }))}
-                          />
-                        )}
+                        {form.adminMode === 'existing' && existingAdminSelect()}
                       </section>
                     )}
 
                     <div className="flex gap-4 pt-2">
                       <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all">Cancel</button>
-                      <button type="submit" disabled={saving} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
+                      <button type="submit" disabled={saving || uploadingImg.aadhar || uploadingImg.profile} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
                         {editing ? 'Save Changes' : 'Create Cafe'}
                       </button>
                     </div>
@@ -429,20 +601,13 @@ export default function CafesPage() {
 
                       <div className="rounded-xl border border-dashed border-(--color-border) p-5 space-y-4">
                         <p className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><UserPlus size={13} /> Add an admin</p>
-                        <PremiumSelect value={form.adminMode} onChange={(v) => setField('adminMode', v)}
-                          options={[{ label: 'New admin account', value: 'new' }, { label: 'Existing user', value: 'existing' }]} />
+                        {adminModeSelect()}
                         {form.adminMode === 'new' ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input className={inputCls} placeholder="Name" value={form.admin.name} onChange={(e) => setAdmin('name', e.target.value)} />
-                            <input className={inputCls} placeholder="Email" value={form.admin.email} onChange={(e) => setAdmin('email', e.target.value)} />
-                            <input className={inputCls} type="password" placeholder="Password" value={form.admin.password} onChange={(e) => setAdmin('password', e.target.value)} />
-                            <input className={inputCls} placeholder="Phone (10-digit)" value={form.admin.phone} onChange={(e) => setAdmin('phone', e.target.value)} />
-                          </div>
+                          <NewAdminFields admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
                         ) : (
-                          <PremiumSelect placeholder="Choose a user" value={form.adminUserId} onChange={(v) => setField('adminUserId', v)}
-                            options={users.map((u) => ({ label: `${u.name} — ${u.email}`, value: u._id }))} />
+                          existingAdminSelect()
                         )}
-                        <button type="button" onClick={() => handleAddAdmin(editing)} className="w-full px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 transition-all">Add Admin</button>
+                        <button type="button" onClick={() => handleAddAdmin(editing)} disabled={uploadingImg.aadhar || uploadingImg.profile} className="w-full px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 transition-all disabled:opacity-50">Add Admin</button>
                       </div>
                     </section>
                   )}

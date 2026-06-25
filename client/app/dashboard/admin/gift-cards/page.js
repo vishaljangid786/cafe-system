@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
+import { digitsOnly, blockNegative } from '@/app/utils/inputValidation';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -72,9 +73,9 @@ export default function GiftCardsPage() {
           <SlideIn delay={0.05}>
             <div className="glass-card p-6 rounded-xl space-y-3 h-full">
               <h2 className="text-sm font-bold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Issue a card</h2>
-              <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (₹)" className={`${inputCls} w-full`} />
+              <input type="number" min="0" onKeyDown={blockNegative} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (₹)" className={`${inputCls} w-full`} />
               <input value={form.issuedToName} onChange={(e) => setForm({ ...form, issuedToName: e.target.value })} placeholder="Recipient name (optional)" className={`${inputCls} w-full`} />
-              <input value={form.issuedToPhone} onChange={(e) => setForm({ ...form, issuedToPhone: e.target.value })} placeholder="Phone (optional)" className={`${inputCls} w-full`} />
+              <input type="tel" inputMode="numeric" maxLength={10} value={form.issuedToPhone} onChange={(e) => setForm({ ...form, issuedToPhone: digitsOnly(e.target.value, 10) })} placeholder="Phone (optional)" className={`${inputCls} w-full`} />
               <button onClick={issue} disabled={busy} className="w-full py-3 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Issue card</button>
             </div>
           </SlideIn>

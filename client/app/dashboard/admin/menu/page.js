@@ -1,4 +1,5 @@
 'use client';
+import { blockNegative, blockNonInteger } from '@/app/utils/inputValidation';
 import {
   UtensilsCrossed, Search, Plus, Filter,
   Edit2, Trash2, CheckCircle2, XCircle,
@@ -844,6 +845,8 @@ export default function MenuManagementPage() {
                               <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={14} />
                               <input
                                 type="number"
+                                min="0"
+                                onKeyDown={blockNegative}
                                 placeholder="Min"
                                 className="w-full pl-10 pr-4 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm shadow-sm transition-all text-(--color-text-primary)"
                                 value={minPrice}
@@ -858,6 +861,8 @@ export default function MenuManagementPage() {
                               <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={14} />
                               <input
                                 type="number"
+                                min="0"
+                                onKeyDown={blockNegative}
                                 placeholder="Max"
                                 className="w-full pl-10 pr-4 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm shadow-sm transition-all text-(--color-text-primary)"
                                 value={maxPrice}
@@ -1106,6 +1111,8 @@ export default function MenuManagementPage() {
                           <input
                             name="preparationTime"
                             type="number"
+                            min="0"
+                            onKeyDown={blockNonInteger}
                             defaultValue={editingItem?.preparationTime || 10}
                             required
                             className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
@@ -1188,6 +1195,8 @@ export default function MenuManagementPage() {
                           <input
                             name="price"
                             type="number"
+                            min="0"
+                            onKeyDown={blockNegative}
                             defaultValue={editingItem?.price}
                             required
                             className="w-full pl-10 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
@@ -1202,6 +1211,8 @@ export default function MenuManagementPage() {
                             <input
                               name="costPrice"
                               type="number"
+                              min="0"
+                              onKeyDown={blockNegative}
                               defaultValue={editingItem?.costPrice || 0}
                               required
                               className="w-full pl-10 pr-5 py-4 bg-primary/5 rounded-xl border border-primary/20 outline-none focus:ring-2 focus:ring-primary font-bold text-primary-dark dark:text-primary transition-all"
@@ -1217,6 +1228,8 @@ export default function MenuManagementPage() {
                         <input
                           name="originalPrice"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNegative}
                           defaultValue={editingItem?.originalPrice}
                           className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
                           placeholder="The 'Old' price"
@@ -1227,6 +1240,8 @@ export default function MenuManagementPage() {
                         <input
                           name="discountedPrice"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNegative}
                           defaultValue={editingItem?.discountedPrice}
                           className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
                           placeholder="The 'Sale' price"
@@ -1366,6 +1381,8 @@ export default function MenuManagementPage() {
                                           <div className="relative w-20">
                                             <input
                                               type="number"
+                                              min="0"
+                                              onKeyDown={blockNonInteger}
                                               name={`stock_${loc._id}`}
                                               defaultValue={bStock ? bStock.stock : (editingItem?.stock || 0)}
                                               className="w-full pl-3 pr-2 py-2 bg-(--color-surface-soft) border border-(--color-border) rounded-lg text-xs font-bold outline-none focus:ring-1 focus:ring-primary text-(--color-text-primary)"
@@ -1390,6 +1407,8 @@ export default function MenuManagementPage() {
                         <input
                           name="stock"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNonInteger}
                           defaultValue={editingItem?.stock || 0}
                           className="w-full pl-12 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
                         />
@@ -1450,6 +1469,7 @@ export default function MenuManagementPage() {
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) text-xs">₹</span>
                             <input
                               type="number"
+                              onKeyDown={blockNegative}
                               value={o.priceDelta}
                               onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.map((y, j) => (j === oi ? { ...y, priceDelta: Number(e.target.value) || 0 } : y)) } : x)))}
                               placeholder="+ price"

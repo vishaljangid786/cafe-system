@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
@@ -387,6 +388,8 @@ export default function ExpensesPage() {
                   <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Min Amount (₹)</label>
                   <input
                     type="number"
+                    min="0"
+                    onKeyDown={blockNegative}
                     placeholder="0"
                     className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-danger"
                     value={amountRange.min}
@@ -397,6 +400,8 @@ export default function ExpensesPage() {
                   <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Max Amount (₹)</label>
                   <input
                     type="number"
+                    min="0"
+                    onKeyDown={blockNegative}
                     placeholder="50000"
                     className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-danger"
                     value={amountRange.max}
@@ -765,7 +770,7 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold uppercase tracking-normal text-danger ml-2">Amount (₹)</label>
-                  <input required type="number" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-5 text-sm font-bold text-(--color-text-primary) focus:ring-4 focus:ring-danger/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
+                  <input required type="number" min="0" onKeyDown={blockNegative} className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-5 text-sm font-bold text-(--color-text-primary) focus:ring-4 focus:ring-danger/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
                 </div>
                 <div className="space-y-3">
                   <PremiumSelect

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { blockNonInteger } from '@/app/utils/inputValidation';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -105,8 +106,8 @@ export default function WaitlistPage() {
             <div className="flex flex-wrap gap-2">
               <input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Name" className={`${inputCls} flex-1 min-w-32`} />
               <input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} placeholder="Phone" className={`${inputCls} w-32`} />
-              <input type="number" value={form.partySize} onChange={(e) => setForm({ ...form, partySize: e.target.value })} placeholder="Party" className={`${inputCls} w-20`} title="Party size" />
-              <input type="number" value={form.quotedWaitMinutes} onChange={(e) => setForm({ ...form, quotedWaitMinutes: e.target.value })} placeholder="~min" className={`${inputCls} w-20`} title="Quoted wait (min)" />
+              <input type="number" min="1" onKeyDown={blockNonInteger} value={form.partySize} onChange={(e) => setForm({ ...form, partySize: e.target.value })} placeholder="Party" className={`${inputCls} w-20`} title="Party size" />
+              <input type="number" min="0" onKeyDown={blockNonInteger} value={form.quotedWaitMinutes} onChange={(e) => setForm({ ...form, quotedWaitMinutes: e.target.value })} placeholder="~min" className={`${inputCls} w-20`} title="Quoted wait (min)" />
               <button onClick={add} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>
             </div>
           </div>

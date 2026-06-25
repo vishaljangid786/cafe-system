@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Coffee, Eye, EyeOff, Zap, AlertCircle, Lock } from 'lucide-react';
+import { sanitizeEmail } from '../utils/inputValidation';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
@@ -136,6 +137,10 @@ q
               <label className="label block ml-0.5">Email Address</label>
               <input
                 {...register('email')}
+                onChange={(e) => {
+                  e.target.value = sanitizeEmail(e.target.value);
+                  register('email').onChange(e);
+                }}
                 className={`input ${errors.email ? '!border-danger' : ''}`}
                 placeholder="admin@cafeos.com"
               />

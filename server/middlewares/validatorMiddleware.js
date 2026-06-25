@@ -9,9 +9,12 @@ const validate = (req, res, next) => {
   const extractedErrors = [];
   errors.array().map(err => extractedErrors.push({ [err.path]: err.msg }));
 
+  // Surface the FIRST specific field error as the top-level message so clients
+  // that show `message` get an actionable reason (e.g. "Invalid GSTIN format")
+  // instead of an opaque "Validation failed".
   return res.status(422).json({
     success: false,
-    message: 'Validation failed',
+    message: errors.array()[0]?.msg || 'Validation failed',
     errors: extractedErrors,
   });
 };

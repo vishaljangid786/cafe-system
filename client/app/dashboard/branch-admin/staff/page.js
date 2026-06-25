@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
+import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
 import { Skeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -290,18 +291,18 @@ export default function BranchStaffPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Email</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.phone} onInput={e => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Age</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.age} onInput={e => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect 
@@ -333,11 +334,11 @@ export default function BranchStaffPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Pincode</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.pincode} onInput={e => { if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6); }} onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+                <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Monthly Salary (₹)</label>
-                <input required type="number" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
 
@@ -533,7 +534,7 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Email</label>
-              <input required type="email" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} placeholder="email@cafe.com" />
+              <input required type="email" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: sanitizeEmail(e.target.value) }))} placeholder="email@cafe.com" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Password</label>
@@ -541,7 +542,7 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Phone</label>
-              <input required type="tel" maxLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="10-digit number" />
+              <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: digitsOnly(e.target.value, 10) }))} placeholder="10-digit number" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Gender</label>
@@ -562,7 +563,7 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Monthly Salary</label>
-              <input type="number" min="0" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
+              <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
             </div>
             <div className="flex gap-4 pt-2">
               <Button type="submit" className="flex-1">Create Staff</Button>

@@ -1,4 +1,5 @@
 'use client';
+import { blockNegative, blockNonInteger } from '@/app/utils/inputValidation';
 import {
   Tag, Search, Plus, Filter,
   Edit2, Trash2, CheckCircle2, XCircle,
@@ -464,8 +465,10 @@ export default function CouponsManagementPage() {
                         <div className="relative flex-1">
                           <input
                             required
-                             name="discountValue"
+                            name="discountValue"
                             type="number"
+                            min="0"
+                            onKeyDown={blockNegative}
                             defaultValue={editingCoupon?.discountValue}
                             onChange={handleInputChange}
                             className="w-full pl-4 pr-4 py-3 bg-transparent text-(--color-text-primary) outline-none font-bold text-lg"
@@ -506,6 +509,8 @@ export default function CouponsManagementPage() {
                         <input
                           name="minOrderAmount"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNegative}
                           defaultValue={editingCoupon?.minOrderAmount || 0}
                           className="w-full pl-10 pr-5 py-4 bg-(--color-bg-base) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-secondary/20 font-bold"
                         />
@@ -516,8 +521,10 @@ export default function CouponsManagementPage() {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-bold">₹</span>
                         <input
-                           name="maxDiscount"
+                          name="maxDiscount"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNegative}
                           defaultValue={editingCoupon?.maxDiscount}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-5 py-4 bg-(--color-bg-base) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-secondary/20 font-bold"
@@ -555,9 +562,11 @@ export default function CouponsManagementPage() {
                       <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Total Redemption Limit</label>
                       <div className="relative">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
-                         <input
+                        <input
                           name="usageLimit"
                           type="number"
+                          min="0"
+                          onKeyDown={blockNonInteger}
                           defaultValue={editingCoupon?.usageLimit}
                           className="w-full pl-12 pr-5 py-4 bg-(--color-bg-base) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-danger/20 font-bold"
                           placeholder="Infinite"

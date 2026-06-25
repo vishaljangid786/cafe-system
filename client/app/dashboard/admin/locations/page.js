@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
+import { digitsOnly } from '@/app/utils/inputValidation';
 import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
@@ -448,9 +449,11 @@ export default function BranchesPage() {
                         <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Postal Code</label>
                         <input
                           required
+                          inputMode="numeric"
+                          maxLength={6}
                           className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold"
                           value={formData.pincode}
-                          onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })}
                         />
                       </div>
                       <PremiumSelect 
@@ -741,10 +744,13 @@ export default function BranchesPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Phone Number</label>
-                          <input 
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={10}
                             className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                             value={staffFormData.phone}
-                            onChange={(e) => setStaffFormData({...staffFormData, phone: e.target.value})}
+                            onChange={(e) => setStaffFormData({...staffFormData, phone: digitsOnly(e.target.value, 10)})}
                             placeholder="Phone Number"
                           />
                         </div>

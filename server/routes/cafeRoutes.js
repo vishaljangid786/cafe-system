@@ -26,6 +26,15 @@ router.post(
   uploadCafeLogo
 );
 
+// Generic image upload (logo, admin Aadhaar card, admin profile photo) → hosted
+// URL. Same handler/permission as the logo upload; the field name is 'image'.
+router.post(
+  '/upload-image',
+  checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'),
+  upload.single('image'),
+  uploadCafeLogo
+);
+
 router
   .route('/')
   .get(getCafes) // visibility scoped inside the controller (super_admin: all; others: own)

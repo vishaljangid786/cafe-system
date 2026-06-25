@@ -15,6 +15,30 @@ const CAFE_ADMIN_PERMISSIONS = {
   viewAdminCenter: true, manageGlobalMenu: true, sendMessages: true, messageSuperAdmin: true,
 };
 
+// Every grantable permission flag (mirrors the User schema + Add-Member form).
+const ALL_PERMISSION_KEYS = [
+  'viewRevenue', 'editRevenue', 'viewOrders', 'manageOrders', 'forceComplete',
+  'exportReports', 'manageStaff', 'manageNotifications', 'viewAnalytics', 'manageCoupons',
+  'manageBranches', 'viewAuditLogs', 'impersonateUsers', 'viewAdminCenter',
+  'manageGlobalMenu', 'sendGlobalNotifications', 'sendMessages', 'messageSuperAdmin',
+];
+
+// Build a clean permission object from a (possibly stringified / partial) input.
+// Only super_admins create cafe admins, so any requested flag is allowed; we just
+// fall back to the full cafe-admin default set when nothing usable is sent.
+const resolveAdminPermissions = (requested) => {
+  let req = requested;
+  if (typeof req === 'string') {
+    try { req = JSON.parse(req); } catch (e) { req = null; }
+  }
+  if (!req || typeof req !== 'object') return { ...CAFE_ADMIN_PERMISSIONS };
+  const perms = {};
+  ALL_PERMISSION_KEYS.forEach((k) => { perms[k] = req[k] === true; });
+  // Messaging master switch defaults ON unless explicitly disabled.
+  perms.sendMessages = req.sendMessages !== false;
+  return perms;
+};
+
 const userCafeIds = (user) => (user?.cafes || []).map((c) => c.toString());
 
 const canAccessCafe = (user, cafeId) => {
@@ -108,13 +132,15 @@ const getCafe = asyncHandler(async (req, res) => {
 // Create or attach an admin to a cafe. Returns the admin user (or null).
 const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
   if (adminMode === 'new' && admin) {
-    const email = String(admin.email || '').trim();
+    const email = String(admin.email || '').trim().toLowerCase();
     const dupe = await User.findOne({ email });
     if (dupe) {
       const err = new Error('A user with this email already exists');
       err.statusCode = 400;
       throw err;
     }
+    // Full member parity (mirrors the Add-Member page): identity, address,
+    // qualification, salary, Aadhaar, profile photo, and the full permission set.
     const created = await User.create({
       name: admin.name,
       email,
@@ -123,10 +149,18 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
       gender: admin.gender || 'Other',
       age: admin.age || undefined,
       address1: admin.address1 || 'N/A',
+      address2: admin.address2 || '',
       city: admin.city || cafe.address?.city || 'N/A',
       state: admin.state || cafe.address?.state || '',
+      country: admin.country || 'India',
+      pincode: admin.pincode || undefined,
+      highestQualification: admin.highestQualification || '12th Pass',
+      monthlySalary: admin.monthlySalary || 0,
+      aadharNumber: admin.aadharNumber || undefined,
+      aadharImage: admin.aadharImage || '',
+      profileImageUrl: admin.profileImageUrl || '',
       role: 'admin',
-      permissions: CAFE_ADMIN_PERMISSIONS,
+      permissions: resolveAdminPermissions(admin.permissions),
     });
     // Mirror cafe membership + all existing branches into accessibleLocations.
     await addAdminToCafe(cafe._id, created._id);
@@ -140,15 +174,16 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
       err.statusCode = 404;
       throw err;
     }
-    if (user.role === 'super_admin') {
-      const err = new Error('A super-admin cannot be assigned as a cafe admin');
+    // Only an existing ADMIN can be assigned to (another) cafe. To turn a staff
+    // member into a cafe owner, use "Create a new admin account" instead.
+    if (user.role !== 'admin') {
+      const err = new Error('Only existing admins can be assigned. Use "Create a new admin account" for anyone else.');
       err.statusCode = 400;
       throw err;
     }
-    user.role = 'admin';
+    // Ensure they hold the cafe-management permissions, and that their access
+    // derives purely from cafes/accessibleLocations (admins aren't single-branch).
     user.permissions = { ...(user.permissions || {}), ...CAFE_ADMIN_PERMISSIONS };
-    // Admins are CAFE-scoped, not single-branch — drop any stale single-branch
-    // pointer so their access derives purely from cafes/accessibleLocations.
     user.assignedLocation = undefined;
     await user.save();
     // Record membership + mirror the cafe's branches into accessibleLocations.

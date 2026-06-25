@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
+import { blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
@@ -499,9 +500,11 @@ export default function InventoryDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
-                <input 
+                <input
                   type="number"
                   required
+                  min="0"
+                  onKeyDown={blockNonInteger}
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                   className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -510,9 +513,11 @@ export default function InventoryDashboard() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Cost Per Unit</label>
-                <input 
+                <input
                   type="number"
                   required
+                  min="0"
+                  onKeyDown={blockNegative}
                   value={formData.costPerUnit}
                   onChange={(e) => setFormData({...formData, costPerUnit: e.target.value})}
                   className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -523,8 +528,10 @@ export default function InventoryDashboard() {
 
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Low Stock Alert Level</label>
-              <input 
+              <input
                 type="number"
+                min="0"
+                onKeyDown={blockNonInteger}
                 value={formData.minThreshold}
                 onChange={(e) => setFormData({...formData, minThreshold: e.target.value})}
                 className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -566,16 +573,18 @@ export default function InventoryDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
-                <input 
+                <input
                   type="number"
                   required
+                  min="0"
+                  onKeyDown={blockNonInteger}
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                   className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                   placeholder="0.00"
                 />
               </div>
-              <PremiumSelect 
+              <PremiumSelect
                 label="Reason"
                 value={formData.reason}
                 onChange={(val) => setFormData({...formData, reason: val})}
@@ -641,8 +650,10 @@ export default function InventoryDashboard() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Base Cost</label>
-                <input 
+                <input
                   type="number"
+                  min="0"
+                  onKeyDown={blockNegative}
                   value={formData.baseCost}
                   onChange={(e) => setFormData({...formData, baseCost: e.target.value})}
                   className="w-full px-5 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
