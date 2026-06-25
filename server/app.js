@@ -64,6 +64,12 @@ const configuredCorsOrigins = parseOrigins(process.env.CORS_ORIGIN);
 const allowedOrigins = new Set([
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  // Hard-coded client deployment. The same-origin Next.js proxy forwards the
+  // browser's Origin header to this Express server on every non-GET request,
+  // and this origin must be allowed or the cors() middleware fires an error
+  // with no statusCode set, which errorHandler maps to 500. Add new client
+  // domains here, or set CLIENT_URL in the Vercel project's env vars.
+  'https://cafe-orgaization-system-by-vishal.vercel.app',
   ...parseOrigins(process.env.CLIENT_URL),
   ...configuredCorsOrigins,
   ...getVercelOrigin(),
@@ -82,7 +88,11 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Give CORS rejections a 403 so errorHandler doesn't misread the
+    // default res.statusCode (200) as 500.
+    const err = new Error(`CORS blocked for origin: ${origin}`);
+    err.statusCode = 403;
+    return callback(err);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
