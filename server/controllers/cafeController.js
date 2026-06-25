@@ -181,11 +181,14 @@ const attachAdmin = async (req, cafe, { adminMode, admin, adminUserId }) => {
       err.statusCode = 400;
       throw err;
     }
-    // Ensure they hold the cafe-management permissions, and that their access
-    // derives purely from cafes/accessibleLocations (admins aren't single-branch).
-    user.permissions = { ...(user.permissions || {}), ...CAFE_ADMIN_PERMISSIONS };
-    user.assignedLocation = undefined;
-    await user.save();
+    // Grant the cafe-management permissions and drop any single-branch pointer
+    // (admins are cafe-scoped). Use a TARGETED updateOne — NOT user.save() — so we
+    // don't re-validate the existing (possibly legacy/seeded) document. A full
+    // re-validation would fail on stale data such as an Aadhaar number that was
+    // encrypted under a different ENCRYPTION_KEY, blocking the assignment entirely.
+    const permSet = {};
+    Object.entries(CAFE_ADMIN_PERMISSIONS).forEach(([k, v]) => { permSet[`permissions.${k}`] = v; });
+    await User.updateOne({ _id: user._id }, { $set: permSet, $unset: { assignedLocation: 1 } });
     // Record membership + mirror the cafe's branches into accessibleLocations.
     await addAdminToCafe(cafe._id, user._id);
     return user;

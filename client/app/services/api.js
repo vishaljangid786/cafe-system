@@ -17,7 +17,7 @@ import Cookies from 'js-cookie';
 // A direct localhost API (local full-stack dev) is left untouched: localhost
 // ports are the same *site*, so SameSite=Lax cookies already work there.
 const resolveBaseURL = () => {
-  const configured = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const configured = process.env.NEXT_PUBLIC_API_URL || 'https://cafe-system-three.vercel.app/api';
 
   // SSR / non-browser: nothing to proxy against — use the configured value.
   if (typeof window === 'undefined') return configured;
