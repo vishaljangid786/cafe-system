@@ -7,7 +7,7 @@ import { useNotifications } from '../context/NotificationContext';
 import NotificationPanel from './NotificationPanel';
 import {
   Bell, User as UserIcon, Sun, Moon,
-  Menu, MapPin, Zap, Search,
+  Menu, MapPin, Store, Zap, Search,
   ChevronLeft, ChevronRight, RefreshCw, Check, ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ import PremiumSelect from './ui/PremiumSelect';
 
 const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   const router = useRouter();
-  const { user, selectedLocation, selectedLocationIds, switchLocation, switchLocationIds, locations, refreshLocations, logout } = useAuth();
+  const { user, selectedLocation, selectedLocationIds, switchLocation, switchLocationIds, locations, refreshLocations, cafes, selectedCafe, switchCafe, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -61,7 +61,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
 
   const canViewAllBranches = ['admin', 'super_admin'].includes(user?.role);
 
-  const availableBranches = useMemo(() => {
+  const baseBranches = useMemo(() => {
     if (canViewAllBranches) return locations || [];
 
     const branches = [];
@@ -79,6 +79,18 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
 
     return branches;
   }, [canViewAllBranches, locations, user]);
+
+  // When a specific cafe is selected, scope the branch list to that cafe.
+  const availableBranches = useMemo(() => {
+    if (!selectedCafe || selectedCafe === 'all') return baseBranches;
+    return baseBranches.filter((b) => String(b.cafe?._id || b.cafe) === String(selectedCafe));
+  }, [baseBranches, selectedCafe]);
+
+  const canViewAllCafes = ['admin', 'super_admin'].includes(user?.role);
+  const showCafeSelector = canViewAllCafes && (cafes?.length || 0) > 0;
+  const selectedCafeName = selectedCafe === 'all'
+    ? 'All Cafes'
+    : (cafes.find((c) => c._id === selectedCafe)?.name || 'Cafe');
 
   const canUseBranchPanel = canViewAllBranches || (user?.role === 'branch_admin' && availableBranches.length > 1);
 
@@ -114,6 +126,13 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
       value: branch._id || branch,
     })),
   ];
+
+  // "All" inside the branch panel means: every branch (cafe = all) OR every
+  // branch of the selected cafe (cafe = specific).
+  const allBranchIds = availableBranches.map((b) => b._id || b);
+  const allBranchesActive = (!selectedCafe || selectedCafe === 'all')
+    ? pendingIds.length === 0
+    : (allBranchIds.length > 0 && allBranchIds.every((id) => pendingIds.includes(id)));
 
   if (!user) return null;
 
@@ -154,6 +173,19 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
+        {/* Cafe Selector — scopes the branch list below to one cafe (or all). */}
+        {!isMobile && showCafeSelector && (
+          <div className="w-44">
+            <PremiumSelect
+              icon={Store}
+              value={selectedCafe}
+              onChange={(v) => switchCafe(v)}
+              options={[{ label: 'All Cafes', value: 'all' }, ...cafes.map((c) => ({ label: c.name, value: c._id }))]}
+              placeholder="All Cafes"
+            />
+          </div>
+        )}
+
         {/* Location Selector */}
         {!isMobile && (
           <div className="relative" ref={branchPanelRef}>
@@ -183,11 +215,13 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                     >
                       <div className="p-2 border-b border-(--color-border)">
                         <button
-                          onClick={() => setPendingIds([])}
-                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pendingIds.length === 0 ? 'bg-primary text-(--color-on-primary)' : 'hover:bg-(--color-surface-soft) text-(--color-text-primary)'}`}
+                          onClick={() => setPendingIds(selectedCafe === 'all' ? [] : allBranchIds)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${allBranchesActive ? 'bg-primary text-(--color-on-primary)' : 'hover:bg-(--color-surface-soft) text-(--color-text-primary)'}`}
                         >
-                          <Check size={13} className={pendingIds.length === 0 ? 'opacity-100' : 'opacity-0'} />
-                          {canViewAllBranches ? 'All Branches' : 'All Assigned Branches'}
+                          <Check size={13} className={allBranchesActive ? 'opacity-100' : 'opacity-0'} />
+                          {selectedCafe === 'all'
+                            ? (canViewAllBranches ? 'All Branches' : 'All Assigned Branches')
+                            : `All ${selectedCafeName} Branches`}
                         </button>
                       </div>
                       <div className="max-h-60 overflow-y-auto p-2 space-y-1">

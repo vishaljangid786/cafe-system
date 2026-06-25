@@ -10,6 +10,10 @@ export const digitsOnly = (value, maxLen) => {
 // Removes whitespace and lowercases. Use in email onChange.
 export const sanitizeEmail = (value) => String(value).replace(/\s/g, '').toLowerCase();
 
+// Keeps only letters, spaces and . ' - so a name field can't hold an email,
+// digits or symbols (the '@' is stripped as you type). Use in name onChange.
+export const sanitizeName = (value) => String(value).replace(/[^\p{L}\s.'-]/gu, '');
+
 // onKeyDown — blocks -, +, e, E, . so integer fields can't go negative or decimal.
 export const blockNonInteger = (e) => {
   if (['-', '+', 'e', 'E', '.'].includes(e.key)) e.preventDefault();

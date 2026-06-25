@@ -6,7 +6,8 @@ const { body } = require('express-validator');
 const onNew = (prefix, field) => body(`${prefix}.${field}`).if(body('adminMode').equals('new'));
 const newAdminRules = (prefix = 'admin') => [
   onNew(prefix, 'name').trim().notEmpty().withMessage('Admin name is required')
-    .bail().isLength({ min: 2 }).withMessage('Admin name must be at least 2 characters'),
+    .bail().isLength({ min: 2 }).withMessage('Admin name must be at least 2 characters')
+    .bail().custom((v) => { if (/@/.test(v)) throw new Error('Admin name cannot be an email address'); return true; }),
   onNew(prefix, 'email').trim().isEmail().withMessage('A valid admin email is required'),
   onNew(prefix, 'password').isLength({ min: 10 }).withMessage('Admin password must be at least 10 characters'),
   onNew(prefix, 'phone').matches(/^[0-9]{10}$/).withMessage('A valid 10-digit admin phone is required'),

@@ -7,7 +7,7 @@ import {
   UserPlus, User, MapPin, Shield, CreditCard,
   Image as ImageIcon, Check, Building2
 } from 'lucide-react';
-import { sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
+import { sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Button } from '@/app/components/ui/Button';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
@@ -303,7 +303,7 @@ export default function AddMemberPage() {
         <Section icon={User} title="Basic Information" desc="Login and identity details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field label="Full Name">
-              <input required className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Rahul Sharma" />
+              <input required className={inputCls} value={form.name} onChange={(e) => set('name', sanitizeName(e.target.value))} placeholder="Rahul Sharma" />
             </Field>
             <Field label="Email Address">
               <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" />

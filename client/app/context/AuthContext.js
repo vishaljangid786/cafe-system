@@ -16,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedLocationIds, setSelectedLocationIds] = useState([]); // [] = all, [id1, id2] = subset
   const [locations, setLocations] = useState([]);
+  const [cafes, setCafes] = useState([]);
+  const [selectedCafe, setSelectedCafe] = useState('all'); // 'all' | cafeId — scopes the branch selector
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
   const socketRef = useRef(null);
@@ -42,6 +44,17 @@ export const AuthProvider = ({ children }) => {
       return res.data.data;
     } catch (err) {
       logger.error('Failed to load global locations');
+      return [];
+    }
+  };
+
+  const fetchCafes = async () => {
+    try {
+      const res = await api.get('/cafes');
+      setCafes(res.data.data || []);
+      return res.data.data || [];
+    } catch (err) {
+      logger.error('Failed to load cafes');
       return [];
     }
   };
@@ -185,6 +198,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Switch the active cafe. 'all' = every cafe (all branches). Selecting a
+  // specific cafe scopes the branch selector + data to that cafe's branches
+  // (all of them by default; the branch panel can then narrow to one).
+  const switchCafe = (cafeId) => {
+    const next = cafeId || 'all';
+    setSelectedCafe(next);
+    if (next === 'all') {
+      Cookies.remove('selectedCafe');
+      switchLocationIds([]); // all branches across all cafes
+      return;
+    }
+    Cookies.set('selectedCafe', next, { expires: 30 });
+    const cafeBranchIds = (locations || [])
+      .filter((l) => String(l.cafe?._id || l.cafe) === String(next))
+      .map((l) => l._id || l);
+    switchLocationIds(cafeBranchIds); // all branches of this cafe
+  };
+
+  // Load cafes whenever a session is established; restore the saved cafe filter.
+  useEffect(() => {
+    if (!user) { setCafes([]); setSelectedCafe('all'); return; }
+    const stored = Cookies.get('selectedCafe');
+    if (stored) setSelectedCafe(stored);
+    fetchCafes();
+  }, [user]);
+
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -235,9 +274,12 @@ export const AuthProvider = ({ children }) => {
     }
     
     Cookies.remove('selectedLocation');
-    
+    Cookies.remove('selectedCafe');
+
     setUser(null);
     setSelectedLocation(null);
+    setSelectedCafe('all');
+    setCafes([]);
     setLocations([]);
     if (socketRef.current) {
       socketRef.current.disconnect();
@@ -332,6 +374,10 @@ export const AuthProvider = ({ children }) => {
       switchLocationIds,
       locations,
       refreshLocations: fetchLocations,
+      cafes,
+      selectedCafe,
+      switchCafe,
+      refreshCafes: fetchCafes,
       globalSearch, 
       setGlobalSearch, 
       loading, 
