@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
-import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
+import { digitsOnly, sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
   Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check,
 } from 'lucide-react';
@@ -75,7 +75,7 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
     <div className="space-y-6">
       {/* Identity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', e.target.value)} placeholder="Rahul Sharma" /></div>
+        <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', sanitizeName(e.target.value))} placeholder="Rahul Sharma" /></div>
         <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={admin.email} onChange={(e) => setAdmin('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" /></div>
         <div><label className={labelCls}>Password *</label><input type="text" className={inputCls} value={admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="At least 10 characters" /></div>
         <div><label className={labelCls}>Phone *</label><input type="tel" inputMode="numeric" className={inputCls} value={admin.phone} maxLength={10} onChange={(e) => setAdmin('phone', digitsOnly(e.target.value, 10))} placeholder="9876543210" /></div>
@@ -287,6 +287,12 @@ export default function CafesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error('Cafe name is required');
+    if (form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstin))
+      return toast.error('Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)');
+    if (form.contact.phone && !/^[0-9]{10}$/.test(form.contact.phone))
+      return toast.error('Contact phone must be exactly 10 digits');
+    if (form.contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact.email))
+      return toast.error('Invalid contact email');
     if (!editing && form.adminMode === 'new') {
       const adminErr = validateNewAdmin(form.admin);
       if (adminErr) return toast.error(adminErr);
@@ -318,9 +324,9 @@ export default function CafesPage() {
       setEditing(null);
       fetchCafes();
     } catch (err) {
-      const msg = err.response?.data?.message
-        || err.response?.data?.errors?.map((o) => Object.values(o)[0]).join(', ')
-        || 'Something went wrong. Please try again.';
+      const d = err.response?.data;
+      const fieldErrors = d?.errors?.map?.((o) => Object.values(o)[0]).filter(Boolean).join(', ');
+      const msg = fieldErrors || d?.message || 'Something went wrong. Please try again.';
       toast.error(msg, { id: loadToast });
     } finally {
       setSaving(false);
