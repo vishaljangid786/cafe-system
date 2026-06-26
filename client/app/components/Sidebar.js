@@ -68,6 +68,20 @@ const ROLE_LOCKED_PAGE_KEYS = new Set([
   'page_admincenter',
 ]);
 
+// Representative icon for each top-level group row (shown in the rounded square,
+// reference-style). Falls back to the group's first item icon for any title not
+// listed here, so new groups never render iconless.
+const GROUP_ICONS = {
+  Main: LayoutDashboard,
+  Administration: ShieldCheck,
+  Operations: UtensilsCrossed,
+  Analytics: TrendingUp,
+  Performance: TrendingUp,
+  Rewards: Crown,
+  'Granted Access': Star,
+  System: Settings,
+};
+
 const getBranchId = (branch) => {
   if (!branch) return '';
   return (branch._id || branch).toString();
@@ -438,8 +452,10 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       >
         <div className="space-y-4">
           {groups.map((group) => {
-            const FirstIcon = group.items[0]?.icon || Coffee;
+            const GroupIcon = GROUP_ICONS[group.title] || group.items[0]?.icon || Coffee;
             const isActive = group.items.some(link => link.href === activeHref);
+            const isOpen = openGroup === group.title;
+            const isHot = isOpen || isActive;
 
             return (
               <div
@@ -449,14 +465,17 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
               >
                 {showLabels ? (
                   <div
-                    className={`px-3 py-2 flex items-center justify-between group/header rounded-lg transition-colors duration-200 ${openGroup === group.title ? 'bg-(--color-surface-soft)' : 'hover:bg-(--color-surface-soft)'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGroupInteraction(e, group.title, 'click');
+                    }}
+                    className={`pl-2 pr-1.5 py-2 flex items-center gap-3 group/header rounded-xl cursor-pointer transition-colors duration-200 ${isOpen ? 'bg-(--color-surface-soft)' : 'hover:bg-(--color-surface-soft)'}`}
                   >
+                    <span className={`h-8 w-8 shrink-0 flex items-center justify-center rounded-lg transition-colors ${isHot ? 'bg-(--color-primary-soft) text-primary' : 'text-(--color-text-muted) group-hover/header:text-(--color-text-primary)'}`}>
+                      <GroupIcon size={18} strokeWidth={isHot ? 2.5 : 2} />
+                    </span>
                     <span
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGroupInteraction(e, group.title, 'click');
-                      }}
-                      className={`flex-1 py-1 text-xs font-semibold cursor-pointer transition-colors ${openGroup === group.title ? 'text-(--color-text-primary)' : 'text-(--color-text-muted) group-hover/header:text-(--color-text-primary)'}`}
+                      className={`flex-1 min-w-0 truncate text-sm font-semibold transition-colors ${isHot ? 'text-(--color-text-primary)' : 'text-(--color-text-secondary) group-hover/header:text-(--color-text-primary)'}`}
                     >
                       {group.title}
                     </span>
@@ -465,11 +484,11 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                         e.stopPropagation();
                         handleGroupInteraction(e, group.title, 'toggle');
                       }}
-                      animate={{ rotate: openGroup === group.title ? 0 : -90 }}
+                      animate={{ rotate: isOpen ? 0 : -90 }}
                       transition={{ duration: 0.2 }}
                       className="p-1 cursor-pointer hover:bg-(--color-hover) rounded-md transition-colors"
                     >
-                      <ChevronDown size={14} className={openGroup === group.title ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'} />
+                      <ChevronDown size={16} className={isHot ? 'text-(--color-text-secondary)' : 'text-(--color-text-soft)'} />
                     </motion.div>
                   </div>
                 ) : (
@@ -479,9 +498,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       e.stopPropagation();
                       handleGroupInteraction(e, group.title, 'click');
                     }}
-                    className={`h-11 w-11 mx-auto flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 ${openGroup === group.title || isActive ? 'bg-primary text-(--color-on-primary)' : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}`}
+                    className={`h-11 w-11 mx-auto flex items-center justify-center rounded-xl cursor-pointer transition-colors duration-200 ${isHot ? 'bg-primary text-(--color-on-primary)' : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}`}
                   >
-                    <FirstIcon size={20} strokeWidth={openGroup === group.title || isActive ? 2.5 : 2} />
+                    <GroupIcon size={20} strokeWidth={isHot ? 2.5 : 2} />
                   </div>
                 )}
 
@@ -495,37 +514,42 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="mt-1 ml-4 mr-1 overflow-hidden rounded-xl border border-[rgba(var(--color-primary-rgb),0.18)] bg-(--color-primary-soft) p-1.5 space-y-1"
+                      className="overflow-hidden"
                     >
-                      {group.items.map((link) => {
-                        const Icon = link.icon;
-                        const isLinkActive = link.href === activeHref;
-                        return (
-                          <Link
-                            key={link.name}
-                            href={link.href}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isMobile) setIsMobileOpen(false);
-                              setOpenGroup(group.title);
-                            }}
-                            className={`
-                              flex items-center py-2.5 px-3 rounded-lg transition-colors duration-150
-                              ${isLinkActive
-                                ? 'bg-primary text-(--color-on-primary) font-medium'
-                                : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}
-                            `}
-                          >
-                            <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="mr-3 shrink-0" />
-                            <span className="text-sm">{link.name}</span>
-                            {link.badge > 0 && (
-                              <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
-                                {link.badge}
-                              </span>
-                            )}
-                          </Link>
-                        );
-                      })}
+                      <div className="mt-1 mb-1 ml-6 pl-3 border-l border-(--color-border) space-y-0.5">
+                        {group.items.map((link) => {
+                          const Icon = link.icon;
+                          const isLinkActive = link.href === activeHref;
+                          return (
+                            <Link
+                              key={link.name}
+                              href={link.href}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isMobile) setIsMobileOpen(false);
+                                setOpenGroup(group.title);
+                              }}
+                              className={`
+                                relative flex items-center gap-2.5 py-2 px-3 rounded-lg transition-colors duration-150
+                                ${isLinkActive
+                                  ? 'bg-(--color-primary-soft) text-primary font-semibold'
+                                  : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}
+                              `}
+                            >
+                              {isLinkActive && (
+                                <span className="absolute -left-3.25 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-primary" />
+                              )}
+                              <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0" />
+                              <span className="text-sm truncate">{link.name}</span>
+                              {link.badge > 0 && (
+                                <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${isLinkActive ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
+                                  {link.badge}
+                                </span>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -556,9 +580,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       )}
 
       {/* User Footer */}
-      <div className={`p-4 mt-auto border-t border-(--color-border) bg-(--color-bg-soft)/70`}>
-        <div className={`flex items-center gap-3 ${showLabels ? '' : 'justify-center'}`}>
-          <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-(--color-surface) border border-(--color-border) flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
+      <div className="p-3 mt-auto border-t border-(--color-border)">
+        <div className={`flex items-center gap-3 rounded-xl transition-colors ${showLabels ? 'p-2 border border-(--color-border) bg-(--color-surface) hover:bg-(--color-surface-soft)' : 'justify-center'}`}>
+          <Link href="/dashboard/profile" className="h-9 w-9 rounded-lg bg-(--color-surface-soft) border border-(--color-border) flex items-center justify-center shrink-0 relative group cursor-pointer overflow-hidden">
             {user.profileImageUrl ? (
               <img src={user.profileImageUrl} alt={user.name} className="h-full w-full object-cover" />
             ) : (
@@ -575,7 +599,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           {showLabels && (
             <button
               onClick={logout}
-              className="p-1.5 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+              className="p-1.5 shrink-0 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
             >
               <LogOut size={16} />
             </button>
@@ -667,15 +691,18 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                             className={`
                               group/item flex items-center relative py-2.5 px-3 rounded-lg transition-colors duration-150
                               ${isLinkActive
-                                ? 'bg-primary text-(--color-on-primary) font-medium'
+                                ? 'bg-(--color-primary-soft) text-primary font-semibold'
                                 : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}
                             `}
                           >
+                            {isLinkActive && (
+                              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-primary" />
+                            )}
                             <div className="relative z-10 flex items-center w-full">
                               <Icon size={18} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0" />
                               <span className="ml-3 text-sm whitespace-nowrap flex-1">{link.name}</span>
                               {link.badge > 0 && (
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${isLinkActive ? 'bg-white/25 text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${isLinkActive ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
                                   {link.badge}
                                 </span>
                               )}
