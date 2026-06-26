@@ -180,7 +180,10 @@ export default function DashboardLayout({ children }) {
     }
 
     let cancelled = false;
-    api.get('/users?limit=1000')
+    // forSwitch=1 tells the API this is the global hot-switch picker: a super_admin
+    // impersonator gets EVERY user (all branches/cafes), not just the impersonated
+    // user's scoped list, so they can switch to anyone.
+    api.get('/users?limit=1000&forSwitch=1')
       .then((res) => { if (!cancelled) setSwitchUsers(res.data?.data || []); })
       .catch(() => { if (!cancelled) setSwitchUsers([]); });
     return () => { cancelled = true; };
