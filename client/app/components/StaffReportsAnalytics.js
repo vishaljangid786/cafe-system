@@ -7,7 +7,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, ShoppingBag, Award, XCircle, CheckCircle2, Zap,
-  Filter, Calendar, Bookmark, Download, Printer, User
+  Filter, Calendar, Bookmark, Download, Printer, User, Users
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -150,6 +150,12 @@ export default function StaffReportsAnalytics({ user }) {
         </div>
 
         <div className="flex gap-4">
+          <button
+            onClick={() => router.push(`${basePath}/staff-comparison`)}
+            className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
+          >
+            <Users size={16} /> Compare Staff
+          </button>
           <button
             onClick={exportCSV}
             className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
