@@ -108,6 +108,12 @@ export default function AdminDashboard() {
       let start = '';
       let end = '';
 
+      // Format as a LOCAL calendar date (YYYY-MM-DD). Using toISOString() shifted
+      // IST-local midnight back to the previous UTC day, so "Today" wrongly pulled
+      // in yesterday's orders. Local date parts keep the day boundary correct.
+      const fmtLocal = (dt) =>
+        `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
       if (timeFilter === 'custom') {
         start = customDates.start;
         end = customDates.end;
@@ -120,8 +126,8 @@ export default function AdminDashboard() {
         else if (timeFilter === '6m') d.setMonth(now.getMonth() - 6);
         else if (timeFilter === '1y') d.setFullYear(now.getFullYear() - 1);
 
-        start = d.toISOString().split('T')[0];
-        end = now.toISOString().split('T')[0];
+        start = fmtLocal(d);
+        end = fmtLocal(now);
       }
 
       if (start) params.append('startDate', start);
