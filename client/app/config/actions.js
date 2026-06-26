@@ -116,6 +116,7 @@ export const ACTION_SCOPES = [
     scope: 'salaries', pageKey: 'page_salaries', label: 'Salaries',
     actions: [
       { action: 'add', label: 'Generate', legacy: { roles: [], perms: ['manageStaff'] } },
+      { action: 'modify', label: 'Adjust (deduct / bonus)', legacy: { roles: ['admin'], perms: [] } },
       { action: 'approve', label: 'Approve / Pay', legacy: { roles: [], perms: ['manageStaff'] } },
     ],
   },

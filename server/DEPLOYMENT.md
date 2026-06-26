@@ -32,7 +32,9 @@ CORS_ORIGIN=http://localhost:3000,http://127.0.0.1:3000,https://your-client-doma
 CLIENT_URL=http://localhost:3000,http://127.0.0.1:3000,https://your-client-domain.vercel.app
 ```
 
-`CRON_SECRET` guards the daily-report endpoint. `node-cron` cannot run on serverless, so the daily report is triggered by a Vercel Cron (configured in `vercel.json`) that calls `GET /api/cron/daily-report` with `Authorization: Bearer <CRON_SECRET>`. Set the same value in Vercel's Cron settings.
+`CRON_SECRET` guards the cron endpoints. `node-cron` cannot run on serverless, so cron jobs are triggered by Vercel Cron (configured in `vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. Set the same value in Vercel's Cron settings. Endpoints:
+- `GET /api/cron/daily-report` — daily operational report (23:59 every day).
+- `GET /api/cron/generate-payroll` — auto-generates the previous month's payroll in PENDING_APPROVAL state (00:30 on the 1st). Optional `?month=YYYY-MM` override.
 
 `ENCRYPTION_KEY` is **mandatory in production** — the server refuses to start (throws at load time) without it, so the Vercel function will crash on every request if it is missing. Use the **same value** across every environment that shares a database, or existing encrypted Aadhaar PII will fail to decrypt.
 

@@ -6,6 +6,7 @@ const Transaction = require('../models/Transaction');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Location = require('../models/Location');
+const { runMonthlyPayrollGeneration } = require('../controllers/salaryController');
 
 // Configuration for Mailer
 const transporter = nodemailer.createTransport({
@@ -93,6 +94,28 @@ const generateDailyReport = async () => {
   }
 };
 
+// The just-ended calendar month as YYYY-MM. Payroll runs on the 1st for the month
+// that just closed, so all of its attendance is final.
+const previousMonthString = () => {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+// Auto-generate PENDING_APPROVAL payrolls for every staff/chef for the month that
+// just ended, then notify admins/branch-admins (handled inside the controller).
+const generateMonthlyPayroll = async () => {
+  const month = previousMonthString();
+  console.log(`[SCHEDULER] Generating month-end payroll for ${month}...`);
+  try {
+    const count = await runMonthlyPayrollGeneration(month);
+    console.log(`[SCHEDULER] Month-end payroll generated: ${count} record(s) for ${month}.`);
+  } catch (error) {
+    console.error('[SCHEDULER] Month-end payroll generation failed:', error);
+  }
+};
+
 // Schedule for 11:59 PM every day.
 // node-cron relies on a long-lived process, which does NOT exist on serverless
 // (Vercel) — the function is torn down after each request, so the timer never
@@ -108,7 +131,11 @@ const initScheduler = () => {
   cron.schedule('59 23 * * *', () => {
     generateDailyReport();
   });
-  console.log('[SCHEDULER] Daily report cron job initialized.');
+  // 00:30 on the 1st of every month — generate the previous month's payroll.
+  cron.schedule('30 0 1 * *', () => {
+    generateMonthlyPayroll();
+  });
+  console.log('[SCHEDULER] Daily report + monthly payroll cron jobs initialized.');
 };
 
 // Secret-guarded HTTP trigger for serverless cron. Vercel Cron invocations carry
@@ -133,4 +160,28 @@ const handleCronDailyReport = async (req, res) => {
   }
 };
 
-module.exports = { initScheduler, generateDailyReport, handleCronDailyReport };
+// Secret-guarded HTTP trigger for serverless month-end payroll. Vercel Cron (or a
+// manual call) hits this with the project's CRON_SECRET. Accepts an optional
+// ?month=YYYY-MM override; otherwise generates the previous month.
+const handleCronGeneratePayroll = async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers?.authorization || '';
+  const provided = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  if (!secret || provided !== secret) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const q = req.query?.month;
+    const month = (typeof q === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(q)) ? q : previousMonthString();
+    const count = await runMonthlyPayrollGeneration(month);
+    res.status(200).json({ success: true, month, count });
+  } catch (err) {
+    console.error('[SCHEDULER] Cron payroll generation failed:', err);
+    res.status(500).json({ success: false });
+  }
+};
+
+module.exports = { initScheduler, generateDailyReport, handleCronDailyReport, generateMonthlyPayroll, handleCronGeneratePayroll };

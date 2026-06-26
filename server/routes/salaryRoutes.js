@@ -5,6 +5,7 @@ const {
   getMySalaryHistory,
   getMySalary,
   generatePayroll,
+  adjustPayroll,
   approvePayroll,
   getPayrollHistory
 } = require('../controllers/salaryController');
@@ -32,6 +33,9 @@ router.route('/generate')
 
 router.route('/payroll/history')
   .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getPayrollHistory);
+
+router.route('/payroll/:id/adjust')
+  .patch(checkAction('salaries.modify'), adjustPayroll);
 
 router.route('/payroll/:id/approve')
   .patch(checkAction('salaries.approve'), approvePayroll);

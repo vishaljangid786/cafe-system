@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Location = require('../models/Location');
 const Payroll = require('../models/Payroll');
 const Expense = require('../models/Expense');
+const Notification = require('../models/Notification');
 const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
@@ -42,6 +43,26 @@ const salaryVisibleRoles = (actorRole) =>
     : actorRole === 'admin'
       ? ['branch_admin', 'location_admin', 'staff', 'chef']
       : ['staff', 'chef'];
+
+// Sum manual adjustment line-items of a given kind ('bonus' | 'deduction').
+const sumAdjustments = (adjustments, kind) =>
+  (adjustments || [])
+    .filter((a) => a.type === kind)
+    .reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+
+// Single source of truth for netSalary: base + all bonuses + manual bonuses,
+// minus all penalties and manual deductions, floored at 0. Used by the adjust
+// endpoint so a salary stays consistent after every change.
+const recomputeNetSalary = (p) => {
+  const bonuses = (p.bonuses?.topSeller || 0) + (p.bonuses?.performance || 0) + (p.bonuses?.extraShifts || 0);
+  const penalties = (p.penalties?.lateMark || 0) + (p.penalties?.absent || 0) + (p.penalties?.leave || 0);
+  const adjBonus = sumAdjustments(p.adjustments, 'bonus');
+  const adjDeduction = sumAdjustments(p.adjustments, 'deduction');
+  return Math.max(0, (p.baseSalary || 0) + bonuses + adjBonus - penalties - adjDeduction);
+};
+
+// A payroll is still editable/approvable until it is PAID or REJECTED.
+const isPendingStatus = (status) => status !== 'PAID' && status !== 'REJECTED';
 
 // Internal helper for aggregation pipeline
 const getSalaryAggregation = async (userIds, month, daysInMonth, stdDayMin = 480) => {
@@ -354,25 +375,11 @@ const getMySalary = asyncHandler(async (req, res) => {
   });
 });
 
-const generatePayroll = asyncHandler(async (req, res) => {
-  const { month, locationId, cafeId } = req.body;
-  if (!month) {
-    res.status(400);
-    throw new Error('Month (YYYY-MM) is required');
-  }
-  if (!isValidMonth(month)) {
-    res.status(400);
-    throw new Error('Month must be in YYYY-MM format');
-  }
-
-  // Resolve the branch scope, honouring both the branch toggle and the global
-  // cafe filter. null = every branch in scope (e.g. super_admin + All Branches +
-  // All Cafes); { $in: [...] } = a specific branch, the caller's branches, or the
-  // selected cafe's branches. The previous singular scopedLocationId returned null
-  // for super_admin + "all" and 400'd here, which broke "Calculate Monthly Salary"
-  // whenever All Branches was selected.
-  const branchScope = await resolveAssignedLocationFilter(req, locationId, cafeId);
-
+// Core payroll builder shared by the HTTP handler and the month-end cron. Given a
+// month and an optional branch scope (null = every branch), it (re)generates a
+// PENDING_APPROVAL payroll for each staff/chef, skipping any record already past
+// pending. No req/res — returns the processed payroll docs.
+const buildPayrollsForMonth = async (month, branchScope = null) => {
   const userQuery = { role: { $in: ['staff', 'chef'] } };
   if (branchScope) userQuery.assignedLocation = branchScope;
 
@@ -434,8 +441,11 @@ const generatePayroll = asyncHandler(async (req, res) => {
 
     const netSalary = Math.max(0, baseSalary + topSellerBonus + performanceBonus + overtimePay - latePenalties - absentPenalties);
 
+    // Don't clobber a payroll that's already moving through approval (or paid):
+    // only a still-pending or rejected record may be (re)generated. Manual
+    // adjustments are reset on regeneration since base figures changed.
     const existingPayroll = await Payroll.findOne({ user: raw._id, month });
-    if (existingPayroll && !['PENDING_BRANCH_APPROVAL', 'REJECTED'].includes(existingPayroll.status)) {
+    if (existingPayroll && !['PENDING_APPROVAL', 'PENDING_BRANCH_APPROVAL', 'REJECTED'].includes(existingPayroll.status)) {
       processedPayrolls.push(existingPayroll);
       continue;
     }
@@ -448,13 +458,39 @@ const generatePayroll = asyncHandler(async (req, res) => {
         baseSalary,
         penalties: { lateMark: latePenalties, absent: absentPenalties, leave: 0 },
         bonuses: { topSeller: topSellerBonus, performance: performanceBonus, extraShifts: overtimePay },
+        adjustments: [],
         netSalary,
-        status: 'PENDING_BRANCH_APPROVAL'
+        rejectedReason: null,
+        status: 'PENDING_APPROVAL'
       },
       { upsert: true, new: true }
     );
     processedPayrolls.push(payroll);
   }
+
+  return processedPayrolls;
+};
+
+const generatePayroll = asyncHandler(async (req, res) => {
+  const { month, locationId, cafeId } = req.body;
+  if (!month) {
+    res.status(400);
+    throw new Error('Month (YYYY-MM) is required');
+  }
+  if (!isValidMonth(month)) {
+    res.status(400);
+    throw new Error('Month must be in YYYY-MM format');
+  }
+
+  // Resolve the branch scope, honouring both the branch toggle and the global
+  // cafe filter. null = every branch in scope (e.g. super_admin + All Branches +
+  // All Cafes); { $in: [...] } = a specific branch, the caller's branches, or the
+  // selected cafe's branches. The previous singular scopedLocationId returned null
+  // for super_admin + "all" and 400'd here, which broke "Calculate Monthly Salary"
+  // whenever All Branches was selected.
+  const branchScope = await resolveAssignedLocationFilter(req, locationId, cafeId);
+
+  const processedPayrolls = await buildPayrollsForMonth(month, branchScope);
 
   await sendNotification({
     title: 'Payroll generated',
@@ -466,6 +502,97 @@ const generatePayroll = asyncHandler(async (req, res) => {
   res.json({ success: true, count: processedPayrolls.length, data: processedPayrolls });
 });
 
+// Month-end automatic generation: build PENDING_APPROVAL payrolls for every staff
+// /chef across all branches, then notify admins/branch-admins so they can review,
+// adjust and approve. Idempotent — re-running only (re)generates still-pending
+// records (see buildPayrollsForMonth). Returns a count for the caller/cron logs.
+const runMonthlyPayrollGeneration = async (month) => {
+  if (!isValidMonth(month)) {
+    throw new Error('runMonthlyPayrollGeneration: month must be YYYY-MM');
+  }
+  const processed = await buildPayrollsForMonth(month, null);
+
+  // Best-effort: tell every admin / branch-admin / super-admin the payroll is
+  // waiting. Created directly (no human actor) — sender is any super_admin.
+  try {
+    const [systemSender, recipients] = await Promise.all([
+      User.findOne({ role: 'super_admin' }).select('_id'),
+      User.find({ role: { $in: ['admin', 'branch_admin', 'super_admin'] } }).select('_id'),
+    ]);
+    if (systemSender && recipients.length) {
+      await Notification.create({
+        title: 'Monthly payroll ready for approval',
+        message: `Payroll for ${month} was generated automatically — review, adjust and approve it.`,
+        type: 'activity',
+        sender: systemSender._id,
+        roleTarget: 'admin',
+        recipients: recipients.map((u) => ({ user: u._id, isRead: false })),
+      });
+    }
+  } catch (err) {
+    console.error('[PAYROLL CRON] notification failed:', err);
+  }
+
+  return processed.length;
+};
+
+// Apply a manual deduction or bonus to a still-pending payroll. Gated by
+// salaries.modify (admin by default; a branch_admin only if explicitly granted).
+// Recomputes netSalary so the figure stays correct, and refuses once the salary
+// has been PAID (already on the books) or REJECTED.
+const adjustPayroll = asyncHandler(async (req, res) => {
+  const { type, amount, reason } = req.body;
+
+  if (!['deduction', 'bonus'].includes(type)) {
+    res.status(400);
+    throw new Error("Adjustment type must be 'deduction' or 'bonus'");
+  }
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || amt <= 0) {
+    res.status(400);
+    throw new Error('Adjustment amount must be a positive number');
+  }
+  if (!reason || !String(reason).trim()) {
+    res.status(400);
+    throw new Error('A reason is required for every salary adjustment');
+  }
+
+  const payroll = await Payroll.findById(req.params.id).populate('user', 'name role assignedLocation');
+  if (!payroll) {
+    res.status(404);
+    throw new Error('Payroll record not found');
+  }
+
+  enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'You do not have permission to adjust this payroll');
+
+  if (!isPendingStatus(payroll.status)) {
+    res.status(400);
+    throw new Error(`Cannot adjust a payroll that is already ${payroll.status === 'PAID' ? 'paid' : 'rejected'}`);
+  }
+
+  payroll.adjustments.push({
+    type,
+    amount: amt,
+    reason: String(reason).trim(),
+    by: req.user._id,
+    byName: req.user.name,
+    at: new Date(),
+  });
+  payroll.netSalary = recomputeNetSalary(payroll);
+  await payroll.save();
+
+  await sendNotification({
+    title: type === 'deduction' ? 'Salary deduction applied' : 'Salary bonus applied',
+    message: `${req.user.name} applied a ${type} of ₹${amt} to ${payroll.user?.name}'s ${payroll.month} payroll (${String(reason).trim()}).`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: payroll.user?.assignedLocation,
+    notifyUserId: payroll.user?._id,
+  });
+
+  res.json({ success: true, data: payroll });
+});
+
 const approvePayroll = asyncHandler(async (req, res) => {
   const payroll = await Payroll.findById(req.params.id).populate('user', 'name role assignedLocation');
   if (!payroll) {
@@ -475,50 +602,70 @@ const approvePayroll = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'You do not have permission to approve this payroll');
 
-  const role = req.user.role;
+  const { reject, reason } = req.body || {};
 
-  if (role === 'branch_admin' && payroll.status === 'PENDING_BRANCH_APPROVAL') {
-    payroll.status = 'PENDING_ADMIN_APPROVAL';
-    payroll.approvedByBranchAt = new Date();
-  } else if (role === 'admin' && payroll.status === 'PENDING_ADMIN_APPROVAL') {
-    payroll.status = 'FINAL_APPROVED';
-    payroll.approvedByAdminAt = new Date();
-  } else if (role === 'super_admin' && payroll.status === 'FINAL_APPROVED') {
-    // Only finalize an admin-approved payroll — don't skip stages, and (since PAID
-    // no longer matches any branch) a paid payroll can't be re-run/re-paid.
-    payroll.status = 'PAID';
-    payroll.approvedBySuperAdminAt = new Date();
+  if (payroll.status === 'PAID') {
+    res.status(400);
+    throw new Error('This payroll has already been paid');
+  }
 
-    // Post the salary cost to the ledger so it shows up as a real expense in
-    // P&L (previously payroll never hit the books, overstating profit). Guard with
-    // ledgerExpenseId so a salary is never double-posted.
-    if (!payroll.ledgerExpenseId && payroll.user?.assignedLocation) {
-      const [year, mon] = String(payroll.month).split('-');
-      const expenseDate = (year && mon) ? new Date(Number(year), Number(mon) - 1, 28) : new Date();
-      const expense = await Expense.create({
-        title: `Salary — ${payroll.user.name} (${payroll.month})`,
-        description: `Payroll for ${payroll.user.name} (${payroll.user.role}) — ${payroll.payableDays} payable days`,
-        amount: Number(payroll.netSalary) || 0,
-        type: 'EXPENSE',
-        category: 'Salary',
-        status: 'approved',
-        date: expenseDate,
-        locationId: payroll.user.assignedLocation,
-        createdBy: req.user._id,
-        proofImage: 'payroll-auto',
-      });
-      await TransactionService.syncExpenseToTransaction(expense);
-      payroll.ledgerExpenseId = expense._id;
+  // Reject path — bounce a pending payroll back so it can be regenerated.
+  if (reject) {
+    if (payroll.status === 'REJECTED') {
+      res.status(400);
+      throw new Error('This payroll is already rejected');
     }
-  } else {
-    res.status(403);
-    throw new Error('Approval workflow level not allowed or out of sequence');
+    payroll.status = 'REJECTED';
+    payroll.rejectedReason = reason ? String(reason).trim() : undefined;
+    await payroll.save();
+    await sendNotification({
+      title: 'Payroll rejected',
+      message: `Payroll for ${payroll.user?.name} (${payroll.month}) was rejected by ${req.user.name}.`,
+      type: 'activity',
+      performedByUser: req.user,
+      locationId: payroll.user?.assignedLocation,
+      notifyUserId: payroll.user?._id,
+    });
+    return res.json({ success: true, data: payroll });
+  }
+
+  if (payroll.status === 'REJECTED') {
+    res.status(400);
+    throw new Error('Regenerate this payroll before approving it');
+  }
+
+  // Single-stage final approval: anyone holding salaries.approve (the route gate
+  // already enforced it) marks the payroll PAID and posts the salary to the
+  // ledger as a real Expense. netSalary is recomputed first so any last-minute
+  // adjustment is captured. ledgerExpenseId guards against double-posting.
+  payroll.netSalary = recomputeNetSalary(payroll);
+  payroll.status = 'PAID';
+  payroll.approvedBy = req.user._id;
+  payroll.approvedAt = new Date();
+
+  if (!payroll.ledgerExpenseId && payroll.user?.assignedLocation) {
+    const [year, mon] = String(payroll.month).split('-');
+    const expenseDate = (year && mon) ? new Date(Number(year), Number(mon) - 1, 28) : new Date();
+    const expense = await Expense.create({
+      title: `Salary — ${payroll.user.name} (${payroll.month})`,
+      description: `Payroll for ${payroll.user.name} (${payroll.user.role}) — ${payroll.payableDays} payable days`,
+      amount: Number(payroll.netSalary) || 0,
+      type: 'EXPENSE',
+      category: 'Salary',
+      status: 'approved',
+      date: expenseDate,
+      locationId: payroll.user.assignedLocation,
+      createdBy: req.user._id,
+      proofImage: 'payroll-auto',
+    });
+    await TransactionService.syncExpenseToTransaction(expense);
+    payroll.ledgerExpenseId = expense._id;
   }
 
   await payroll.save();
 
   await sendNotification({
-    title: 'Payroll approved',
+    title: 'Payroll approved & paid',
     message: `Payroll for ${payroll.user?.name} (${payroll.month}) was approved by ${req.user.name}.`,
     type: 'activity',
     performedByUser: req.user,
@@ -554,6 +701,8 @@ module.exports = {
   getMySalaryHistory,
   getMySalary,
   generatePayroll,
+  runMonthlyPayrollGeneration,
+  adjustPayroll,
   approvePayroll,
   getPayrollHistory
 };

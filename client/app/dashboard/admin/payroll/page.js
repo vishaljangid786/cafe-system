@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import useBranchScope from '../../../hooks/useBranchScope';
+import { can } from '../../../config/actions';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -33,6 +34,8 @@ export default function PayrollRecordsPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [viewingSalary, setViewingSalary] = useState(null);
+  const [adjustingSalary, setAdjustingSalary] = useState(null);
+  const [adjustForm, setAdjustForm] = useState({ type: 'deduction', amount: '', reason: '' });
   const [activeTab, setActiveTab] = useState('staff'); // 'staff', 'chef', 'branch_admin', 'admin'
   const [editingUser, setEditingUser] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -41,6 +44,11 @@ export default function PayrollRecordsPage() {
   const router = useRouter();
   const { user: currentUser, selectedCafe, cafes } = useAuth();
   const { singleBranchId } = useBranchScope();
+
+  // Single-stage workflow: whoever holds salaries.approve can finalize & pay;
+  // salaries.modify lets them deduct/bonus a still-pending salary.
+  const canApprove = can(currentUser, 'salaries.approve');
+  const canAdjust = can(currentUser, 'salaries.modify');
 
   // The focused branch is driven entirely by the global Navbar filter.
   // 'All' = all branches (a multi-branch / cafe subset also resolves to 'All'
@@ -108,6 +116,25 @@ export default function PayrollRecordsPage() {
   }, [selectedCafe, singleBranchId]);
 
   const filteredSalaries = salaries; // Now filtered by backend
+
+  const submitAdjustment = async () => {
+    const amt = Number(adjustForm.amount);
+    if (!['deduction', 'bonus'].includes(adjustForm.type)) return toast.error('Choose deduction or bonus');
+    if (!amt || amt <= 0) return toast.error('Enter a valid amount');
+    if (!adjustForm.reason.trim()) return toast.error('A reason is required');
+    const loadToast = toast.loading('Applying adjustment...');
+    try {
+      await api.patch(`/salary/payroll/${adjustingSalary.payrollRecord._id}/adjust`, {
+        type: adjustForm.type,
+        amount: amt,
+        reason: adjustForm.reason.trim(),
+      });
+      toast.success('Adjustment applied', { id: loadToast });
+      setTimeout(() => window.location.reload(), 900);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
+    }
+  };
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -452,24 +479,43 @@ export default function PayrollRecordsPage() {
                     </button>
 
                     {['staff', 'chef'].includes(activeTab) ? (
-                      <div className="flex gap-2 flex-1">
-                         {s.payrollRecord && (
-                            <button
-                              onClick={async () => {
-                                const loadToast = toast.loading("Approving salary...");
-                                try {
-                                  await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
-                                  toast.success("Salary approved", { id: loadToast });
-                                  setTimeout(() => window.location.reload(), 1000);
-                                } catch (e) {
-                                  toast.error(e.response?.data?.message || "Something went wrong. Please try again.", { id: loadToast });
-                                }
-                              }}
-                              className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-success text-(--color-bg-base) hover:bg-success/90 rounded-xl transition-all text-center"
-                            >
-                              Approve
-                            </button>
-                         )}
+                      <div className="flex flex-wrap gap-2 flex-1">
+                         {s.payrollRecord && s.payrollRecord.status === 'PAID' ? (
+                            <span className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-success/15 text-success rounded-xl text-center">
+                              Paid
+                            </span>
+                         ) : s.payrollRecord ? (
+                            <>
+                              {canAdjust && (
+                                <button
+                                  onClick={() => {
+                                    setAdjustingSalary(s);
+                                    setAdjustForm({ type: 'deduction', amount: '', reason: '' });
+                                  }}
+                                  className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-secondary) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
+                                >
+                                  Adjust
+                                </button>
+                              )}
+                              {canApprove && (
+                                <button
+                                  onClick={async () => {
+                                    const loadToast = toast.loading("Approving salary...");
+                                    try {
+                                      await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
+                                      toast.success("Salary approved & paid", { id: loadToast });
+                                      setTimeout(() => window.location.reload(), 1000);
+                                    } catch (e) {
+                                      toast.error(e.response?.data?.message || "Something went wrong. Please try again.", { id: loadToast });
+                                    }
+                                  }}
+                                  className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-success text-(--color-bg-base) hover:bg-success/90 rounded-xl transition-all text-center"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                            </>
+                         ) : null}
                         <button
                           onClick={() => setViewingSalary(s)}
                           className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
@@ -574,22 +620,49 @@ export default function PayrollRecordsPage() {
                   </div>
                 </div>
 
-                {viewingSalary.payrollRecord && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success">
-                      <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
-                      <p className="text-xl font-bold">
-                        + ₹{((viewingSalary.payrollRecord.bonuses?.topSeller || 0) + (viewingSalary.payrollRecord.bonuses?.performance || 0)).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger">
-                      <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
-                      <p className="text-xl font-bold">
-                        - ₹{((viewingSalary.payrollRecord.penalties?.lateMark || 0) + (viewingSalary.payrollRecord.penalties?.absent || 0)).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                {viewingSalary.payrollRecord && (() => {
+                  const pr = viewingSalary.payrollRecord;
+                  const adjBonus = (pr.adjustments || []).filter(a => a.type === 'bonus').reduce((s, a) => s + (a.amount || 0), 0);
+                  const adjDeduct = (pr.adjustments || []).filter(a => a.type === 'deduction').reduce((s, a) => s + (a.amount || 0), 0);
+                  const totalBonus = (pr.bonuses?.topSeller || 0) + (pr.bonuses?.performance || 0) + (pr.bonuses?.extraShifts || 0) + adjBonus;
+                  const totalPenalty = (pr.penalties?.lateMark || 0) + (pr.penalties?.absent || 0) + (pr.penalties?.leave || 0) + adjDeduct;
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success">
+                          <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
+                          <p className="text-xl font-bold">+ ₹{totalBonus.toLocaleString()}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger">
+                          <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
+                          <p className="text-xl font-bold">- ₹{totalPenalty.toLocaleString()}</p>
+                        </div>
+                      </div>
+
+                      {(pr.adjustments || []).length > 0 && (
+                        <div className="rounded-xl border border-(--color-border) bg-(--color-surface-soft)/40 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-3">Manual Adjustments</p>
+                          <div className="space-y-2">
+                            {pr.adjustments.map((a, i) => (
+                              <div key={i} className="flex items-center justify-between gap-3 text-xs">
+                                <div className="min-w-0">
+                                  <span className={`font-bold ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
+                                    {a.type === 'bonus' ? 'Bonus' : 'Deduction'}
+                                  </span>
+                                  <span className="text-(--color-text-secondary)"> — {a.reason}</span>
+                                  {a.byName && <span className="text-(--color-text-muted)"> ({a.byName})</span>}
+                                </div>
+                                <span className={`shrink-0 font-bold ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
+                                  {a.type === 'bonus' ? '+' : '-'} ₹{(a.amount || 0).toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 <div className="p-6 rounded-xl bg-primary text-(--color-bg-base) shadow-sm ">
                   <div className="flex justify-between items-center mb-2">
@@ -691,6 +764,89 @@ export default function PayrollRecordsPage() {
                     <button type="submit" className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal shadow-sm ">Update Profile</button>
                  </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {adjustingSalary && (
+          <div className="fixed inset-0 z-120 flex items-center justify-center p-4 bg-(--color-bg-deep)/60">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative w-full max-w-md bg-(--color-surface) rounded-xl p-8 border border-(--color-border) shadow-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight">Adjust <span className="text-primary">Salary</span></h2>
+                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">
+                    {adjustingSalary.name} · {month}
+                  </p>
+                </div>
+                <button onClick={() => setAdjustingSalary(null)} className="p-2 rounded-full hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-colors">
+                  <X size={22} />
+                </button>
+              </div>
+
+              <div className="mb-5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) p-4 flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Current Net Payout</span>
+                <span className="text-lg font-bold text-(--color-text-primary)">
+                  ₹{(adjustingSalary.payrollRecord?.netSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'deduction', label: 'Deduct (−)' },
+                      { id: 'bonus', label: 'Bonus (+)' },
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setAdjustForm({ ...adjustForm, type: opt.id })}
+                        className={`py-3 rounded-xl text-[11px] font-bold uppercase tracking-normal border transition-all ${
+                          adjustForm.type === opt.id
+                            ? (opt.id === 'bonus' ? 'bg-success text-(--color-bg-base) border-transparent' : 'bg-danger text-(--color-bg-base) border-transparent')
+                            : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:border-primary/40'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Amount (₹)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    onKeyDown={blockNegative}
+                    value={adjustForm.amount}
+                    onChange={e => setAdjustForm({ ...adjustForm, amount: e.target.value })}
+                    placeholder="e.g. 500"
+                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Reason</label>
+                  <textarea
+                    rows={2}
+                    value={adjustForm.reason}
+                    onChange={e => setAdjustForm({ ...adjustForm, reason: e.target.value })}
+                    placeholder={adjustForm.type === 'bonus' ? 'e.g. Overtime / great work' : 'e.g. Damaged equipment'}
+                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <button type="button" onClick={() => setAdjustingSalary(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
+                <button type="button" onClick={submitAdjustment} className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal shadow-sm">Apply</button>
+              </div>
             </motion.div>
           </div>
         )}

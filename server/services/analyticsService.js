@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Expense = require('../models/Expense');
-const Payroll = require('../models/Payroll');
 const Table = require('../models/Table');
 const Location = require('../models/Location');
 const User = require('../models/User');
@@ -151,7 +150,6 @@ class AnalyticsService {
     const [
       transactionAgg,
       manualExpenseAgg,
-      payrollAgg,
       personnelStats,
       attendanceAgg,
       paymentAgg,
@@ -180,17 +178,6 @@ class AnalyticsService {
           }
         }
       ]),
-      (async () => {
-        if (userRole !== 'admin' && userRole !== 'super_admin') return [];
-        const payrollPipeline = [
-          { $match: { status: 'PAID' } },
-          { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'staff' } },
-          { $unwind: '$staff' }
-        ];
-        if (match.locationId) payrollPipeline.push({ $match: { 'staff.assignedLocation': match.locationId } });
-        payrollPipeline.push({ $group: { _id: "$month", expenses: { $sum: "$netSalary" } } });
-        return Payroll.aggregate(payrollPipeline);
-      })(),
       (async () => {
         if (userRole !== 'admin' && userRole !== 'super_admin') return null;
         const userMatch = { role: { $in: ['branch_admin', 'staff', 'chef'] } };
@@ -272,17 +259,14 @@ class AnalyticsService {
       }
     ]);
 
-    const allExpenseDates = [...manualExpenseAgg.map(m => m._id), ...payrollAgg.map(p => `${p._id}-01`)];
-    const dates = Array.from(new Set([...ordersByDateAgg.map(o => o._id), ...allExpenseDates])).filter(d => d && typeof d === 'string').sort();
+    const dates = Array.from(new Set([...ordersByDateAgg.map(o => o._id), ...manualExpenseAgg.map(m => m._id)])).filter(d => d && typeof d === 'string').sort();
 
     const timeSeries = dates.map(date => {
       const o = ordersByDateAgg.find(item => item._id === date) || { revenue: 0, orders: 0 };
-      // Expenses are sourced from the Expense collection only (Transaction EXPENSE rows
-      // are mirrors of these and would double-count if added again).
-      const e = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
-      const monthStr = date.substring(0, 7);
-      const p = date.endsWith('-01') ? (payrollAgg.find(item => item._id === monthStr)?.expenses || 0) : 0;
-      const dayExpenses = e + p;
+      // Expenses are sourced from the Expense collection only. Paid salaries already
+      // live there as auto-created "Salary" Expense rows (approvePayroll), so adding
+      // the Payroll collection again would double-count every salary.
+      const dayExpenses = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
       return { date, revenue: o.revenue, profit: o.revenue - dayExpenses, expenses: dayExpenses, orders: o.orders };
     });
 
@@ -299,7 +283,9 @@ class AnalyticsService {
 
     // billedRevenue = money actually settled at the till (approved revenue txns).
     const billedRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
-    const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
+    // Paid salaries are already Expense rows (see approvePayroll), so they are inside
+    // manualExpenseAgg — re-adding the Payroll collection double-counted every salary.
+    const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0);
     // billedOrders = orders that generated approved revenue (settled at the till);
     // totalOrders = every order actually placed in the window.
     const billedOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
