@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { LoaderBlock } from '@/app/components/ui/Spinner';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -225,7 +226,7 @@ export default function BookingsManagementPage() {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex justify-end gap-2">
-                          {booking.status === 'pending' && (
+                          {booking.status === 'pending' && can(user, 'reservations.modify') && (
                             <>
                               <button
                                 onClick={() => updateStatus(booking._id, 'confirmed')}

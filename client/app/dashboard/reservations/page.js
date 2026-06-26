@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import ReservationForm from '../../components/reservations/ReservationForm';
 import ReservationDetails from '../../components/reservations/ReservationDetails';
 import { useAuth } from '../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import { format } from 'date-fns';
 import api from '../../services/api';
 import ExportActions from '../../components/ui/ExportActions';
@@ -194,16 +195,18 @@ export default function ReservationsPage() {
             ]} 
             filename="reservations_report" 
           />
-          <button 
-            onClick={() => {
-              setSelectedReservation(null);
-              setIsFormOpen(true);
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-secondary text-white font-bold rounded-xl transition-all shadow-lg "
-          >
-            <Plus size={20} />
-            New Reservation
-          </button>
+          {can(user, 'reservations.add') && (
+            <button
+              onClick={() => {
+                setSelectedReservation(null);
+                setIsFormOpen(true);
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-secondary text-white font-bold rounded-xl transition-all shadow-lg "
+            >
+              <Plus size={20} />
+              New Reservation
+            </button>
+          )}
         </div>
       </div>
 
@@ -456,7 +459,7 @@ export default function ReservationsPage() {
               <Eye size={15} /> View Details
             </button>
 
-            {canManage && actionMenu.reservation.status !== 'cancelled' && (
+            {can(user, 'reservations.modify') && actionMenu.reservation.status !== 'cancelled' && (
               <button
                 onClick={() => {
                   setSelectedReservation(actionMenu.reservation);

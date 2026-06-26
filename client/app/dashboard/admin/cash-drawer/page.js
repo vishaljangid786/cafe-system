@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import { can } from '@/app/config/actions';
 import { Wallet, LockOpen, Lock, ArrowDownCircle, ArrowUpCircle, Plus, Minus, IndianRupee, History } from 'lucide-react';
 
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -150,9 +151,11 @@ export default function CashDrawerPage() {
                     className="w-full pl-11 pr-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:border-primary"
                   />
                 </div>
-                <button onClick={doOpen} disabled={busy} className="px-8 py-3 bg-primary text-(--color-on-primary) text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">
-                  Open drawer
-                </button>
+                {can(user, 'cashdrawer.add') && (
+                  <button onClick={doOpen} disabled={busy} className="px-8 py-3 bg-primary text-(--color-on-primary) text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">
+                    Open drawer
+                  </button>
+                )}
               </div>
             </div>
           </SlideIn>
@@ -199,12 +202,16 @@ export default function CashDrawerPage() {
                     className="w-32 px-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:border-primary" />
                   <input type="text" value={moveReason} onChange={(e) => setMoveReason(e.target.value)} placeholder="Reason (e.g. milk purchase)"
                     className="flex-1 min-w-40 px-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:border-primary" />
-                  <button onClick={() => doMovement('in')} disabled={busy} className="flex items-center gap-1.5 px-4 py-3 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-xl border border-success/20 hover:bg-success hover:text-white disabled:opacity-50">
-                    <ArrowDownCircle size={14} /> Pay in
-                  </button>
-                  <button onClick={() => doMovement('out')} disabled={busy} className="flex items-center gap-1.5 px-4 py-3 bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-normal rounded-xl border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50">
-                    <ArrowUpCircle size={14} /> Pay out
-                  </button>
+                  {can(user, 'cashdrawer.modify') && (
+                    <button onClick={() => doMovement('in')} disabled={busy} className="flex items-center gap-1.5 px-4 py-3 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-xl border border-success/20 hover:bg-success hover:text-white disabled:opacity-50">
+                      <ArrowDownCircle size={14} /> Pay in
+                    </button>
+                  )}
+                  {can(user, 'cashdrawer.modify') && (
+                    <button onClick={() => doMovement('out')} disabled={busy} className="flex items-center gap-1.5 px-4 py-3 bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-normal rounded-xl border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50">
+                      <ArrowUpCircle size={14} /> Pay out
+                    </button>
+                  )}
                 </div>
                 {session.movements?.length > 0 && (
                   <div className="space-y-1 pt-2">
@@ -238,9 +245,11 @@ export default function CashDrawerPage() {
                   </div>
                   <input type="text" value={closeNotes} onChange={(e) => setCloseNotes(e.target.value)} placeholder="Notes (optional)"
                     className="flex-1 min-w-40 px-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:border-primary" />
-                  <button onClick={doClose} disabled={busy} className="px-8 py-3 bg-danger text-white text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">
-                    Close & reconcile
-                  </button>
+                  {can(user, 'cashdrawer.modify') && (
+                    <button onClick={doClose} disabled={busy} className="px-8 py-3 bg-danger text-white text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">
+                      Close & reconcile
+                    </button>
+                  )}
                 </div>
                 {countedCash !== '' && (
                   <p className="text-xs font-bold">
