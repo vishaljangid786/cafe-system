@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
-import { ListSkeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import toast from 'react-hot-toast';
 
 const ROLE_META = {
@@ -289,8 +289,8 @@ export default function PeopleDrawer({ roleKey, onClose, currentUserRole, locati
 
             {/* List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-              {loading ? (
-                <ListSkeleton rows={6} />
+              {loading && people.length === 0 ? (
+                <LoadingScreen fullScreen={false} />
               ) : people.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-20 text-(--color-text-muted)">
                   <Users size={48} className="mb-4 opacity-20" />

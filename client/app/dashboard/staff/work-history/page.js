@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { PageTransition } from '../../../components/ui/AnimatedContainer';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import toast from 'react-hot-toast';
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -53,6 +54,7 @@ export default function WorkHistoryPage() {
   }, [user]);
 
   if (!user) return null;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

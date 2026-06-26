@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
-import { DashboardSkeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
@@ -38,15 +38,7 @@ export default function SuperAdminDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return (
-      <PageTransition>
-        <div className="p-6 lg:p-12">
-          <DashboardSkeleton />
-        </div>
-      </PageTransition>
-    );
-  }
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

@@ -9,6 +9,7 @@ import { PageTransition } from './ui/AnimatedContainer';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
+import LoadingScreen from './ui/LoadingScreen';
 import useBranchScope from '../hooks/useBranchScope';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
@@ -116,6 +117,8 @@ export default function StaffPerformanceDashboard({ user, role }) {
   };
 
   if (!user) return null;
+  // First open (and any reload) shows the branded loader instead of a skeleton.
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="max-w-400 mx-auto pb-10 space-y-6">

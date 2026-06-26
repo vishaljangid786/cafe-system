@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
 import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw } from 'lucide-react';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -327,17 +328,7 @@ export default function StaffTablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   };
 
-  if (loading) return (
-    <div className="space-y-6 p-4">
-      <Skeleton className="h-16 rounded-xl" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>

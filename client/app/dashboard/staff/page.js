@@ -7,6 +7,7 @@ import {
   ArrowUpRight, IndianRupee, History, Filter
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../components/ui/AnimatedContainer';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
@@ -202,7 +203,7 @@ export default function StaffDashboard() {
   const orderTrendData = stats?.ordersByDate || [];
 
   if (!mounted || (loading && !stats)) {
-    return <DashboardSkeleton />;
+    return <LoadingScreen fullScreen={false} />;
   }
 
   return (

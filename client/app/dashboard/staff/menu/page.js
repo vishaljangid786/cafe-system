@@ -17,6 +17,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 
 export default function StaffMenuPage() {
   const { selectedLocation, user } = useAuth();
@@ -108,6 +109,8 @@ export default function StaffMenuPage() {
 
     return matchesSearch && matchesCat && matchesAvailability && matchesDietary;
   });
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
