@@ -8,7 +8,7 @@ const {
   checkIn,
   checkOut,
 } = require('../controllers/attendanceController');
-const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.post('/check-in', checkIn);
 router.post('/check-out', checkOut);
 
 router.route('/mark')
-  .post(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), markAttendance);
+  .post(checkAction('attendance.add'), markAttendance);
 
 router.route('/location')
   .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getLocationAttendance);

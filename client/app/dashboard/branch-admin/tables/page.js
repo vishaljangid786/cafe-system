@@ -16,6 +16,7 @@ import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/t
 import { Button } from '@/app/components/ui/Button';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { can } from '@/app/config/actions';
 
 export default function TablesPage() {
   const { user, socket } = useAuth();
@@ -410,20 +411,22 @@ export default function TablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-2 hidden sm:block" />
-            <Button 
-              variant="primary" 
-              className="!rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal"
-              icon={Plus}
-              onClick={() => {
-                setIsEditing(false);
-                setNewTableNumber('');
-                setNewTableName('');
-                setNewTableCapacity('1');
-                setShowAddModal(true);
-              }}
-            >
-              Add Table
-            </Button>
+            {can(user, 'tables.add') && (
+              <Button
+                variant="primary"
+                className="!rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal"
+                icon={Plus}
+                onClick={() => {
+                  setIsEditing(false);
+                  setNewTableNumber('');
+                  setNewTableName('');
+                  setNewTableCapacity('1');
+                  setShowAddModal(true);
+                }}
+              >
+                Add Table
+              </Button>
+            )}
           </div>
         </div>
 
@@ -523,22 +526,26 @@ export default function TablesPage() {
                               <ShoppingBag size={18} />
                             </motion.button>
                           )}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
-                            className="p-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) border border-(--color-border) dark:border-(--color-border) hover:text-primary transition-all"
-                          >
-                            <Edit3 size={18} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(table._id); }}
-                            className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all"
-                          >
-                            <Trash2 size={18} />
-                          </motion.button>
+                          {can(user, 'tables.modify') && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
+                              className="p-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) border border-(--color-border) dark:border-(--color-border) hover:text-primary transition-all"
+                            >
+                              <Edit3 size={18} />
+                            </motion.button>
+                          )}
+                          {can(user, 'tables.delete') && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(table._id); }}
+                              className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all"
+                            >
+                              <Trash2 size={18} />
+                            </motion.button>
+                          )}
                         </div>
                       </td>
                     </motion.tr>

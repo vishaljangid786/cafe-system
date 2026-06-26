@@ -7,6 +7,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '../../../config/actions';
 import {
   TrendingDown, Search, Filter,
   ChevronRight, Calendar, MapPin,
@@ -41,7 +42,7 @@ const EXPENSE_TITLES = [
 ];
 
 export default function ExpensesPage() {
-  const { user, selectedLocation, switchLocation, globalSearch } = useAuth();
+  const { user, selectedLocation, globalSearch } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -276,30 +277,16 @@ export default function ExpensesPage() {
 
             <div className="flex flex-wrap items-center gap-4">
 
-              {(user?.role === 'super_admin' || user?.role === 'admin') && (
-                <PremiumSelect
-                  icon={MapPin}
-                  label="Branch"
-                  value={selectedLocation?._id || selectedLocation || 'all'}
-                  onChange={(val) => {
-                    const loc = val === 'all' ? 'all' : locations.find(l => l._id === val);
-                    switchLocation(loc);
-                  }}
-                  options={[
-                    { label: 'All Branches', value: 'all' },
-                    ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                  ]}
-                  className="min-w-45 !py-2.5"
-                />
+              {can(user, 'revenue.add') && (
+                <Button
+                  variant="primary"
+                  icon={Plus}
+                  onClick={() => setShowAddModal(true)}
+                  className="!rounded-xl !py-4 px-8 bg-danger hover:bg-danger/90 shadow-sm  scale-105  active:scale-95 transition-all text-(--color-bg-base)"
+                >
+                  New Entry
+                </Button>
               )}
-              <Button
-                variant="primary"
-                icon={Plus}
-                onClick={() => setShowAddModal(true)}
-                className="!rounded-xl !py-4 px-8 bg-danger hover:bg-danger/90 shadow-sm  scale-105  active:scale-95 transition-all text-(--color-bg-base)"
-              >
-                New Entry
-              </Button>
             </div>
           </div>
 
@@ -690,7 +677,7 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              {selectedExpense.status === 'pending' ? (
+              {selectedExpense.status === 'pending' && can(user, 'revenue.approve') ? (
                 <div className="flex gap-4 pt-4">
                   <Button
                     variant="primary"

@@ -4,11 +4,11 @@ import axios from 'axios';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
-import { 
-  CalendarDays, Plus, Search, Filter, 
-  MapPin, Clock, Users, Phone, 
+import {
+  CalendarDays, Plus, Search, Filter,
+  MapPin, Clock, Users, Phone,
   MoreVertical, CheckCircle2, XCircle,
-  AlertCircle, ChevronDown, Download,
+  AlertCircle, Download,
   Eye, Pencil, Trash2, Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import api from '../../services/api';
 import ExportActions from '../../components/ui/ExportActions';
 import PremiumSelect from '../../components/ui/PremiumSelect';
+import useBranchScope from '../../hooks/useBranchScope';
 
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
@@ -30,13 +31,13 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
-    locationId: '',
     date: ''
   });
+  const { singleBranchId } = useBranchScope();
+  const scopedLocationId = singleBranchId === 'all' ? '' : singleBranchId;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
-  const [locations, setLocations] = useState([]);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [stats, setStats] = useState({ total: 0, confirmedToday: 0, pending: 0, cancelled: 0 });
@@ -54,6 +55,7 @@ export default function ReservationsPage() {
     try {
       const params = {
         ...filters,
+        locationId: scopedLocationId,
         search: searchTerm,
         page: currentPage,
         limit: itemsPerPage
@@ -73,21 +75,12 @@ export default function ReservationsPage() {
     }
   };
 
-  const fetchLocations = async () => {
-    try {
-      const { data } = await api.get('/locations');
-      setLocations(data.data);
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-    }
-  };
-
   // Stats must reflect ALL matching reservations, not just the current page.
   // We read pagination.total from cheap count queries (limit=1) for each metric,
   // scoped to the same location filter the user has chosen.
   const fetchStats = async () => {
     try {
-      const base = { locationId: filters.locationId, limit: 1 };
+      const base = { locationId: scopedLocationId, limit: 1 };
       const today = new Date().toISOString().split('T')[0];
       const [allRes, confirmedTodayRes, pendingRes, cancelledRes] = await Promise.all([
         api.get('/reservations', { params: { ...base } }),
@@ -109,12 +102,11 @@ export default function ReservationsPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchReservations();
-      fetchLocations();
       fetchStats();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filters, searchTerm, currentPage]);
+  }, [filters, searchTerm, currentPage, singleBranchId]);
 
   // The row action menu is fixed-positioned (to escape the table's overflow
   // clipping), so close it whenever the page scrolls or the window resizes.
@@ -250,18 +242,7 @@ export default function ReservationsPage() {
           </div>
           
           <div className="md:col-span-3">
-            <PremiumSelect 
-              value={filters.locationId}
-              onChange={(val) => setFilters({...filters, locationId: val})}
-              options={[
-                { label: 'All Branches', value: '' },
-                ...locations.map(loc => ({ label: loc.name || loc.city, value: loc._id }))
-              ]}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <PremiumSelect 
+            <PremiumSelect
               value={filters.status}
               onChange={(val) => setFilters({...filters, status: val})}
               options={[

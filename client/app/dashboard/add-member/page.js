@@ -13,7 +13,9 @@ import { Button } from '@/app/components/ui/Button';
 import { PageTransition } from '@/app/components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import toast from 'react-hot-toast';
-import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '@/app/config/pages';
+import { ROLE_DEFAULT_PAGES } from '@/app/config/pages';
+import { ACTIONS_BY_PAGE, can as canAct } from '@/app/config/actions';
+import PageAccessEditor from '@/app/components/ui/PageAccessEditor';
 
 // PAGE access is now chosen page-by-page (see PAGE_GROUPS -> allowedPages). What's
 // left here are CAPABILITIES — non-page abilities that aren't "open a page".
@@ -98,6 +100,7 @@ export default function AddMemberPage() {
   const [selectedAdminId, setSelectedAdminId] = useState('');
   const [permissions, setPermissions] = useState(emptyPerms());
   const [selectedPages, setSelectedPages] = useState([]); // page-access keys (allowedPages)
+  const [selectedActions, setSelectedActions] = useState([]); // per-page action keys (actionPermissions)
   const [aadharImage, setAadharImage] = useState(null);
   const [aadharPreview, setAadharPreview] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -145,6 +148,9 @@ export default function AddMemberPage() {
   useEffect(() => {
     setPermissions({ ...emptyPerms(), ...(ROLE_DEFAULT_CAPS[form.role] || {}) });
     setSelectedPages(ROLE_DEFAULT_PAGES[form.role] || []);
+    // Granular action grants start empty for every role — they're opt-in extras the
+    // creator ticks per page. The role's broad caps above already cover defaults.
+    setSelectedActions([]);
   }, [form.role]);
 
   // Image previews
@@ -234,8 +240,23 @@ export default function AddMemberPage() {
     currentUser?.role === 'super_admin' || (currentUser?.allowedPages || []).includes(pageKey);
   const togglePage = (pageKey) => {
     if (!actorCanGrantPage(pageKey)) return;
-    setSelectedPages((prev) =>
-      prev.includes(pageKey) ? prev.filter((k) => k !== pageKey) : [...prev, pageKey]
+    const has = selectedPages.includes(pageKey);
+    if (has) {
+      // Dropping a page also drops any action grants scoped to it.
+      const scope = ACTIONS_BY_PAGE[pageKey];
+      setSelectedPages((prev) => prev.filter((k) => k !== pageKey));
+      if (scope) setSelectedActions((acts) => acts.filter((k) => !k.startsWith(`${scope.scope}.`)));
+    } else {
+      setSelectedPages((prev) => [...prev, pageKey]);
+    }
+  };
+
+  // You can only grant an action you can perform yourself (super_admin grants any).
+  const actorCanGrantAction = (actionKey) => canAct(currentUser, actionKey);
+  const toggleAction = (actionKey) => {
+    if (!actorCanGrantAction(actionKey)) return;
+    setSelectedActions((prev) =>
+      prev.includes(actionKey) ? prev.filter((k) => k !== actionKey) : [...prev, actionKey]
     );
   };
 
@@ -303,6 +324,7 @@ export default function AddMemberPage() {
     if (profileImage) data.append('profileImage', profileImage);
     data.append('permissions', JSON.stringify(permissions));
     data.append('allowedPages', JSON.stringify(selectedPages));
+    data.append('actionPermissions', JSON.stringify(selectedActions));
 
     setSubmitting(true);
     const loadToast = toast.loading('Creating member...');
@@ -437,43 +459,25 @@ export default function AddMemberPage() {
           </div>
         </Section>
 
-        {/* Page Access — one toggle per page (this is what the member can open). */}
-        <Section icon={Shield} title="Page Access" desc="Tick exactly the pages this member can open — they'll see ONLY these. The role's typical pages are pre-selected.">
+        {/* Page Access — page-open toggle + per-page Add/Modify/Delete/Approve actions. */}
+        <Section icon={Shield} title="Page Access & Actions" desc="Tick the pages this member can open (they'll see ONLY these). For each page, tick the exact actions — Add / Modify / Delete / Approve — they're allowed to do. Role defaults are pre-selected.">
           <>
-              <div className="flex items-center justify-end -mt-2">
+              <div className="flex items-center justify-end -mt-2 gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                  {selectedActions.length} action{selectedActions.length === 1 ? '' : 's'}
+                </span>
                 <span className={`text-[10px] font-bold uppercase tracking-normal ${selectedPages.length === 0 ? 'text-danger' : 'text-(--color-text-muted)'}`}>
                   {selectedPages.length} page{selectedPages.length === 1 ? '' : 's'} selected
                 </span>
               </div>
-              <div className="space-y-4">
-                {Object.entries(PAGE_GROUPS).map(([group, pages]) => (
-                  <div key={group}>
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">{group}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                      {pages.map(({ key, label }) => {
-                        const checked = selectedPages.includes(key);
-                        const allowed = actorCanGrantPage(key);
-                        return (
-                          <button
-                            type="button"
-                            key={key}
-                            onClick={() => togglePage(key)}
-                            className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'} ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <span className="flex flex-col">
-                              {label}
-                              {!allowed && <span className="text-[9px] text-danger normal-case">You don&apos;t have this</span>}
-                            </span>
-                            <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>
-                              {checked && <Check size={12} strokeWidth={3} />}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <PageAccessEditor
+                selectedPages={selectedPages}
+                onTogglePage={togglePage}
+                canGrantPage={actorCanGrantPage}
+                selectedActions={selectedActions}
+                onToggleAction={toggleAction}
+                canGrantAction={actorCanGrantAction}
+              />
           </>
         </Section>
 

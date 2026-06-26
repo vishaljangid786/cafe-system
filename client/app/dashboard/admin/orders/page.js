@@ -15,6 +15,7 @@ import {
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '../../../config/actions';
 import api from '../../../services/api';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import toast from 'react-hot-toast';
@@ -296,8 +297,7 @@ export default function AdminOrdersDashboard() {
   };
 
   const resetFilters = () => {
-    setBranchFilter('all');
-    setCafeFilter('all');
+    // Branch & cafe scope is owned by the Navbar global filter, not this page.
     setStatusFilter('');
     setTypeFilter('');
     setDateRange({ start: '', end: '' });
@@ -566,7 +566,7 @@ export default function AdminOrdersDashboard() {
                                   <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="p-2.5 bg-(--color-surface) text-primary rounded-xl border border-(--color-border) hover:bg-primary hover:text-white transition-all shadow-sm">
                                     <Eye size={14} />
                                   </button>
-                                  {['admin', 'super_admin'].includes(user?.role) && order.status !== 'COMPLETED' && (
+                                  {can(user, 'orders.delete') && order.status !== 'COMPLETED' && (
                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order._id); }} className="p-2.5 bg-(--color-surface) text-danger rounded-xl border border-(--color-border) hover:bg-danger hover:text-white transition-all shadow-sm">
                                       <Trash size={14} />
                                     </button>
@@ -624,6 +624,8 @@ export default function AdminOrdersDashboard() {
           handleRedeemGiftCard={handleRedeemGiftCard}
           tables={tables}
           userRole={user?.role}
+          canDelete={can(user, 'orders.delete')}
+          canRefund={can(user, 'revenue.modify')}
         />
 
         {/* Delayed Orders Modal */}

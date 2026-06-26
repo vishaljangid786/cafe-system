@@ -497,6 +497,15 @@ const deleteTable = asyncHandler(async (req, res) => {
 
   await table.deleteOne();
 
+  await sendNotification({
+    title: 'Table Deleted',
+    message: `Table ${table.tableName || table.tableNumber} was deleted by ${req.user.name}.`,
+    type: 'table_action',
+    priority: 'high',
+    performedByUser: req.user,
+    locationId: table.locationId,
+  });
+
   const io = getIO();
   io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'delete' });
 
@@ -555,6 +564,14 @@ const mergeTable = asyncHandler(async (req, res) => {
   source.status = 'available';
   await source.save();
 
+  await sendNotification({
+    title: 'Tables Merged',
+    message: `Table ${source.tableNumber} was merged into Table ${target.tableNumber} by ${req.user.name}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: source.locationId,
+  });
+
   const io = getIO();
   io.to(`branch_${source.locationId}`).emit('table:update', { tableId: target._id, action: 'merge' });
 
@@ -594,6 +611,14 @@ const completeOrder = asyncHandler(async (req, res) => {
 
   await table.save();
 
+  await sendNotification({
+    title: 'Table Cleared',
+    message: `Table ${table.tableNumber} was cleared and marked completed by ${req.user.name}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: table.locationId,
+  });
+
   const io = getIO();
   io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'complete' });
 
@@ -622,6 +647,14 @@ const updateTable = asyncHandler(async (req, res) => {
   const updatedTable = await Table.findByIdAndUpdate(req.params.id, safeBody, {
     new: true,
     runValidators: true,
+  });
+
+  await sendNotification({
+    title: 'Table Updated',
+    message: `Table ${updatedTable.tableName || updatedTable.tableNumber} details were updated by ${req.user.name}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: updatedTable.locationId,
   });
 
   const io = getIO();

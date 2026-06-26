@@ -6,11 +6,12 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, CreditCard, ShoppingBag, Award, Zap,
-  Filter, Calendar, Building, DollarSign, BarChart2
+  Filter, Calendar, DollarSign, BarChart2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import useBranchScope from '../../../hooks/useBranchScope';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
@@ -36,35 +37,18 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
 }
 
 export default function PaymentInformationPage() {
+  const { singleBranchId } = useBranchScope();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-  const [locations, setLocations] = useState([]);
   const [filters, setFilters] = useState({
     date: '',
     period: '',
     startDate: '',
     endDate: '',
-    financialYear: '',
-    branchId: 'all'
+    financialYear: ''
   });
-
-  const fetchLocations = async () => {
-    try {
-      const res = await api.get('/locations');
-      setLocations(res.data.data || []);
-    } catch (err) {
-      console.error('Failed to load branches');
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchLocations();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
 
   const fetchStats = async () => {
     const isInitial = !didInitRef.current;
@@ -77,7 +61,7 @@ export default function PaymentInformationPage() {
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
       if (filters.financialYear) params.financialYear = filters.financialYear;
-      if (filters.branchId && filters.branchId !== 'all') params.branchId = filters.branchId;
+      if (singleBranchId !== 'all') params.branchId = singleBranchId;
 
       const res = await api.get('/analytics/payment-intelligence', { params });
       setStats(res.data.data);
@@ -96,7 +80,7 @@ export default function PaymentInformationPage() {
       fetchStats();
     }, 0);
     return () => clearTimeout(timer);
-  }, [filters]);
+  }, [filters, singleBranchId]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => {
@@ -132,21 +116,6 @@ export default function PaymentInformationPage() {
           <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-secondary)">Payment Filters</span>
         </div>
         
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
-              <Building size={12} /> Branch
-            </label>
-            <PremiumSelect
-              value={filters.branchId}
-              onChange={(val) => handleFilterChange('branchId', val)}
-              options={[
-                { label: 'All Branches', value: 'all' },
-                ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-              ]}
-              className="w-full"
-            />
-          </div>
-
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Exact Date

@@ -10,21 +10,21 @@ const {
   getIngredients,
   getAllInventory
 } = require('../controllers/inventoryController');
-const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
 // Reads are branch-scoped in the controller (scopedLocationId), so any manageOrders
 // holder / branch admin may view their own inventory — not just admins. Creating
-// ingredient definitions (catalog) stays admin-only.
+// ingredient definitions (catalog) stays admin-only (legacy roles still pass).
 router.get('/', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getAllInventory);
-router.post('/ingredients', checkRoles('admin', 'super_admin'), createIngredient);
+router.post('/ingredients', checkAction('inventory.add'), createIngredient);
 router.get('/ingredients', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getIngredients);
 
 // Shared/Branch routes — reads match the list route (any manageOrders holder).
 router.get('/branch/:branchId', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getBranchInventory);
-router.post('/update', checkRoles('admin', 'super_admin', 'branch_admin'), updateInventory);
-router.post('/waste', checkRoles('admin', 'super_admin', 'branch_admin'), logWaste);
+router.post('/update', checkAction('inventory.modify'), updateInventory);
+router.post('/waste', checkAction('inventory.modify'), logWaste);
 router.get('/alerts', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getInventoryAlerts);
 router.get('/suggestions', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getPurchaseSuggestions);
 

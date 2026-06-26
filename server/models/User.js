@@ -117,6 +117,16 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Per-page ACTION access — the granular layer above allowedPages. A map of
+    // `${scope}.${action}` (e.g. 'orders.add', 'revenue.approve') -> Boolean. See
+    // utils/actionPermissions.js. Empty by default; ticking a key grants that exact
+    // ability to this user even when their role normally couldn't (kept ALONGSIDE
+    // the legacy broad `permissions`, never replacing them).
+    actionPermissions: {
+      type: Map,
+      of: Boolean,
+      default: () => ({}),
+    },
     // Primary/default branch for Staff, Chef, Location Admin, and Branch Admin
     assignedLocation: {
       type: mongoose.Schema.Types.ObjectId,

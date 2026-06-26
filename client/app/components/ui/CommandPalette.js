@@ -72,7 +72,9 @@ export default function CommandPalette() {
           : currentUser?.role === 'super_admin';
         if (canSwitchUsers) {
           const verb = isImpersonating ? 'Switch to' : 'Impersonate';
-          const res = await api.get(`/users?search=${search}`);
+          // forSwitch=1 → a super_admin impersonator gets the FULL user list here
+          // (so they can hot-switch to anyone). Normal member views stay scoped.
+          const res = await api.get(`/users?search=${encodeURIComponent(search)}&forSwitch=1`);
           userResults = res.data.data.slice(0, 5).map(u => ({
             type: 'user',
             name: `${verb}: ${u.name}`,

@@ -9,6 +9,7 @@ const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+const sendNotification = require('../utils/sendNotification');
 // Re-export from service layer — single source of truth, no duplicate logic
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 
@@ -92,6 +93,14 @@ const updateInventory = asyncHandler(async (req, res) => {
     await TransactionService.syncExpenseToTransaction(expense);
   }
 
+  await sendNotification({
+    title: 'Inventory Restocked',
+    message: `Inventory was restocked by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: branch,
+  });
+
   res.json({ success: true, data: item });
 });
 
@@ -126,6 +135,14 @@ const logWaste = asyncHandler(async (req, res) => {
     reason,
     notes,
     recordedBy: req.user._id,
+  });
+
+  await sendNotification({
+    title: 'Waste Logged',
+    message: `Inventory waste was logged by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: branch,
   });
 
   res.json({ success: true, data: waste });
@@ -190,6 +207,14 @@ const createIngredient = asyncHandler(async (req, res) => {
   }
 
   const ingredient = await Ingredient.create(data);
+
+  await sendNotification({
+    title: 'Ingredient Created',
+    message: `Ingredient ${ingredient.name} was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.status(201).json({ success: true, data: ingredient });
 });
 

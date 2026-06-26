@@ -3,6 +3,7 @@ const GiftCard = require('../models/GiftCard');
 const Order = require('../models/Order');
 const { getSettings } = require('../utils/settings');
 const { canAccessLocation, userLocationIds, clampLimit } = require('../utils/accessControl');
+const sendNotification = require('../utils/sendNotification');
 
 // The amount the customer actually owes for an order. Once finalized this is the
 // stored grandTotal; before completion we derive it the same way the bill does
@@ -66,6 +67,15 @@ const issueGiftCard = asyncHandler(async (req, res) => {
     res.status(500);
     throw new Error('Could not generate a unique card code, please retry');
   }
+
+  await sendNotification({
+    title: 'Gift Card Issued',
+    message: `A gift card was issued by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: loc,
+  });
+
   res.status(201).json({ success: true, data: card });
 });
 
@@ -160,6 +170,14 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  await sendNotification({
+    title: 'Gift Card Redeemed',
+    message: `A gift card was redeemed by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: { code: card.code, redeemed: redeemValue, balance: card.balance, orderPaid: newPaid, orderStatus: order.paymentStatus } });
 });
 
@@ -190,6 +208,15 @@ const topupGiftCard = asyncHandler(async (req, res) => {
   card.balance += value;
   card.transactions.push({ type: 'topup', amount: value, by: req.user._id });
   await card.save();
+
+  await sendNotification({
+    title: 'Gift Card Topped Up',
+    message: `A gift card was topped up by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: card.locationId,
+  });
+
   res.json({ success: true, data: card });
 });
 

@@ -83,6 +83,14 @@ const createOrder = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  await sendNotification({
+    title: 'New Order',
+    message: `Order #${shortOrderId(order._id)} was placed by ${req.user.name}.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: order.branch || branch,
+  });
+
   res.status(201).json({ success: true, data: order });
 });
 
@@ -280,7 +288,16 @@ const deleteOrder = asyncHandler(async (req, res) => {
   }
 
   await OrderService.deleteOrder(orderId, req.user.role);
-  
+
+  await sendNotification({
+    title: 'Order Deleted',
+    message: `Order #${shortOrderId(orderId)} was deleted by ${req.user.name}.`,
+    type: 'order_action',
+    priority: 'high',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, message: 'Order deleted from system' });
 });
 
@@ -381,6 +398,14 @@ const recordPayment = asyncHandler(async (req, res) => {
     notifyCustomer(order.customerPhone, `Hi${order.customerName ? ` ${order.customerName}` : ''}! Your order #${shortOrderId(order._id)} is ready. Thank you for visiting.`, { type: 'order-ready' });
   }
 
+  await sendNotification({
+    title: 'Payment Recorded',
+    message: `Payment recorded for order #${shortOrderId(order._id)} (${order.paymentStatus}) by ${req.user.name}.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: order });
 });
 
@@ -458,6 +483,15 @@ const moveOrderTable = asyncHandler(async (req, res) => {
 
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('table:update', { tableId, action: 'move' });
+
+  await sendNotification({
+    title: 'Order Moved',
+    message: `Order #${shortOrderId(order._id)} was moved to another table by ${req.user.name}.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: order });
 });
 
@@ -538,6 +572,15 @@ const splitOrder = asyncHandler(async (req, res) => {
 
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
+
+  await sendNotification({
+    title: 'Order Split',
+    message: `Order #${shortOrderId(order._id)} was split into #${shortOrderId(newOrder._id)} by ${req.user.name}.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
+
   res.json({ success: true, data: { original: order, newOrder } });
 });
 
@@ -702,6 +745,15 @@ const refundOrder = asyncHandler(async (req, res) => {
 
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
+
+  await sendNotification({
+    title: 'Order Refunded',
+    message: `Order #${shortOrderId(order._id)} was refunded by ${req.user.name}${reason ? `: "${reason}"` : ''}.`,
+    type: 'order_action',
+    priority: 'high',
+    performedByUser: req.user,
+    locationId: order.branch,
+  });
 
   res.json({ success: true, data: order });
 });
@@ -919,6 +971,27 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
     const acceptedAt = order.statusHistory.find(h => h.status === 'ACCEPTED')?.timestamp;
     const readyAt = order.statusHistory.find(h => h.status === 'READY')?.timestamp;
 
+    // Per-chef aggregation: count every order assigned to a chef (not just completed preps)
+    if (order.assignedChef) {
+      const chefId = order.assignedChef._id.toString();
+      if (!chefStats[chefId]) {
+        chefStats[chefId] = {
+          id: chefId,
+          name: order.assignedChef.name,
+          count: 0,            // orders with a measured prep time
+          totalPrepTime: 0,
+          totalOrders: 0,      // every order assigned to this chef
+          served: 0,
+          cancelled: 0,
+          fastest: null,
+          slowest: null,
+        };
+      }
+      chefStats[chefId].totalOrders++;
+      if (order.status === 'SERVED') chefStats[chefId].served++;
+      if (order.status === 'CANCELLED' || order.status === 'REJECTED') chefStats[chefId].cancelled++;
+    }
+
     if (acceptedAt && readyAt) {
       const duration = (new Date(readyAt) - new Date(acceptedAt)) / 1000 / 60;
       if (!isNaN(duration)) {
@@ -926,12 +999,11 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
         prepCount++;
 
         if (order.assignedChef) {
-          const chefId = order.assignedChef._id.toString();
-          if (!chefStats[chefId]) {
-            chefStats[chefId] = { name: order.assignedChef.name, count: 0, totalPrepTime: 0 };
-          }
-          chefStats[chefId].count++;
-          chefStats[chefId].totalPrepTime += duration;
+          const chef = chefStats[order.assignedChef._id.toString()];
+          chef.count++;
+          chef.totalPrepTime += duration;
+          chef.fastest = chef.fastest == null ? duration : Math.min(chef.fastest, duration);
+          chef.slowest = chef.slowest == null ? duration : Math.max(chef.slowest, duration);
         }
       }
     }
@@ -972,11 +1044,19 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
       charts: {
         ordersPerHour: hourlyCounts.map((count, hour) => ({ hour: `${hour}:00`, count })),
         ordersByStatus: Object.keys(statusCounts).map(status => ({ name: status, value: statusCounts[status] })),
-        chefPerformance: Object.values(chefStats).map(c => ({
-          name: c.name,
-          avgTime: (c.totalPrepTime / c.count).toFixed(2),
-          total: c.count
-        })),
+        chefPerformance: Object.values(chefStats)
+          .filter(c => c.count > 0)
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            avgTime: (c.totalPrepTime / c.count).toFixed(2),
+            total: c.totalOrders,
+            completed: c.count,
+            served: c.served,
+            cancelled: c.cancelled,
+            fastest: c.fastest != null ? Number(c.fastest.toFixed(1)) : null,
+            slowest: c.slowest != null ? Number(c.slowest.toFixed(1)) : null,
+          })),
         branchPerformance
       },
       delayedOrders: delayedOrders.sort((a, b) => b.duration - a.duration).slice(0, 10)

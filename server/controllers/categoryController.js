@@ -1,6 +1,7 @@
 const Category = require('../models/Category');
 const MenuItem = require('../models/MenuItem');
 const asyncHandler = require('../utils/asyncHandler');
+const sendNotification = require('../utils/sendNotification');
 const { escapeRegex } = require('../utils/accessControl');
 
 // @desc    Get all active categories
@@ -55,6 +56,13 @@ const createCategory = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
+  await sendNotification({
+    title: 'Category Created',
+    message: `Category "${category.name}" was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.status(201).json({
     success: true,
     data: category,
@@ -96,6 +104,13 @@ const updateCategory = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   );
 
+  await sendNotification({
+    title: 'Category Updated',
+    message: `Category "${updated.name}" was updated by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.json({
     success: true,
     data: updated,
@@ -125,6 +140,14 @@ const deleteCategory = asyncHandler(async (req, res) => {
   // Soft-delete
   category.isActive = false;
   await category.save();
+
+  await sendNotification({
+    title: 'Category Deleted',
+    message: `Category "${category.name}" was deleted by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'high',
+    performedByUser: req.user,
+  });
 
   res.json({
     success: true,

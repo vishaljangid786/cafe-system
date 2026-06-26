@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PremiumSelect from './ui/PremiumSelect';
+import useBranchScope from '../hooks/useBranchScope';
 
 const ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
 const PAYMENT_TYPES = ['CASH', 'CARD', 'UPI', 'ONLINE', 'GIFT_CARD', 'OTHER'];
@@ -96,14 +97,13 @@ export default function StaffDetailReport({ staffId, user }) {
       : '/dashboard/admin';
 
   const [report, setReport] = useState(null);
-  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
+  const { singleBranchId } = useBranchScope();
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
-    branch: '',
     status: '',
     paymentType: '',
     orderType: '',
@@ -111,12 +111,6 @@ export default function StaffDetailReport({ staffId, user }) {
     expenseStatus: '',
     expenseType: '',
   });
-
-  useEffect(() => {
-    api.get('/locations')
-      .then((res) => setBranches(res.data?.data || []))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!staffId) return;
@@ -133,6 +127,7 @@ export default function StaffDetailReport({ staffId, user }) {
         Object.entries(filters).forEach(([key, value]) => {
           if (value) params[key] = value;
         });
+        if (singleBranchId !== 'all') params.branch = singleBranchId;
         const res = await api.get(`/analytics/staff-reports/${staffId}`, { params });
         if (!ignore) setReport(res.data?.data || null);
       } catch (error) {
@@ -149,7 +144,7 @@ export default function StaffDetailReport({ staffId, user }) {
 
     load();
     return () => { ignore = true; };
-  }, [staffId, filters]);
+  }, [staffId, filters, singleBranchId]);
 
   const staff = report?.staff;
   const summary = report?.summary || {};
@@ -177,7 +172,6 @@ export default function StaffDetailReport({ staffId, user }) {
     setFilters({
       startDate: '',
       endDate: '',
-      branch: '',
       status: '',
       paymentType: '',
       orderType: '',
@@ -249,17 +243,6 @@ export default function StaffDetailReport({ staffId, user }) {
             <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">To</label>
             <input type="date" className={inputCls} value={filters.endDate} onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value }))} />
           </div>
-          {user?.role !== 'branch_admin' && (
-            <PremiumSelect
-              label="Branch"
-              value={filters.branch}
-              onChange={(value) => setFilters((f) => ({ ...f, branch: value }))}
-              options={[
-                { label: 'All Branches', value: '' },
-                ...branches.map((branch) => ({ label: branch.name || branch.city || 'Branch', value: branch._id }))
-              ]}
-            />
-          )}
           <PremiumSelect
             label="Order Status"
             value={filters.status}

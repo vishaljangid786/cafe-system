@@ -1,6 +1,6 @@
 import PremiumSelect from '../../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../../components/ui/UniversalDateFilter';
-import { Globe, LayoutGrid, List, FilterX } from 'lucide-react';
+import { LayoutGrid, List, FilterX } from 'lucide-react';
 
 export default function DashboardFilters({
   user,
@@ -24,61 +24,28 @@ export default function DashboardFilters({
   staffFilter = '',
   setStaffFilter,
 }) {
-  // Multi-cafe operators (super_admin, or an admin owning >1 cafe) get a brand
-  // filter so they can focus a single cafe's orders.
-  const showCafeFilter = cafes.length > 1 && typeof setCafeFilter === 'function';
   // "Who placed it" filter — list the staff/chefs/branch-admins this operator manages.
+  // Branch & cafe scope is controlled by the global Navbar filter, not here.
   const showStaffFilter = staffMembers.length > 0 && typeof setStaffFilter === 'function';
   return (
     <div className="bg-(--color-surface) p-2 rounded-xl border border-(--color-border) shadow-sm space-y-2">
-      {(showCafeFilter || showStaffFilter) && (
-        <div className="px-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {showCafeFilter ? (
-            <PremiumSelect
-              value={cafeFilter}
-              onChange={setCafeFilter}
-              placeholder="All Cafes"
-              options={[{ label: 'All Cafes (Brands)', value: 'all' }, ...cafes.map((c) => ({ label: c.name, value: c._id }))]}
-              className="h-11"
-            />
-          ) : <div />}
-          {showStaffFilter && (
-            <PremiumSelect
-              value={staffFilter}
-              onChange={setStaffFilter}
-              placeholder="All Staff Members"
-              options={[
-                { label: 'All Staff Members', value: '' },
-                ...staffMembers.map((s) => ({ label: `${s.name} · ${String(s.role || '').replace('_', ' ')}`, value: s._id })),
-              ]}
-              className="h-11"
-            />
-          )}
+      {showStaffFilter && (
+        <div className="px-1">
+          <PremiumSelect
+            value={staffFilter}
+            onChange={setStaffFilter}
+            placeholder="All Staff Members"
+            options={[
+              { label: 'All Staff Members', value: '' },
+              ...staffMembers.map((s) => ({ label: `${s.name} · ${String(s.role || '').replace('_', ' ')}`, value: s._id })),
+            ]}
+            className="h-11"
+          />
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
-        {/* Sector Selector */}
-        <div className="lg:col-span-2 ">
-          {user?.role === 'branch_admin' && locations.length <= 1 ? (
-            <div className="h-11 w-full flex items-center px-6 text-primary gap-3 bg-(--color-surface) rounded-xl border border-primary/20 shadow-inner">
-              <Globe size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-normal">{locations.find(l => l._id === branchFilter)?.name || locations[0]?.name || 'Restricted Session'}</span>
-            </div>
-          ) : (
-            <PremiumSelect
-              value={branchFilter}
-              onChange={setBranchFilter}
-              options={[
-                { label: user?.role === 'branch_admin' ? 'All Assigned Branches' : 'Global Monitor', value: 'all' },
-                ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-              ]}
-              className="h-11"
-            />
-          )}
-        </div>
-
         {/* Status Selector */}
-        <div className="lg:col-span-2 ">
+        <div className="lg:col-span-3 ">
           <PremiumSelect
             value={statusFilter}
             onChange={setStatusFilter}
@@ -96,7 +63,7 @@ export default function DashboardFilters({
         </div>
 
         {/* Order Type Selector — Dine-in / Takeaway / Delivery */}
-        <div className="lg:col-span-2 ">
+        <div className="lg:col-span-3 ">
           <PremiumSelect
             value={typeFilter}
             onChange={setTypeFilter}

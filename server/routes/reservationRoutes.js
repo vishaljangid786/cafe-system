@@ -8,7 +8,7 @@ const {
   updateReservation,
   deleteReservation,
 } = require('../controllers/reservationController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -16,14 +16,14 @@ router.use(verifyToken);
 // Availability check
 router.get('/availability', checkAvailability);
 
-// CRUD operations
+// CRUD operations — writes gated by granular actions (legacy roles still pass).
 router.route('/')
-  .post(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'staff'), createReservation)
+  .post(checkAction('reservations.add'), createReservation)
   .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'staff'), getReservations);
 
 router.route('/:id')
   .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getReservationById)
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateReservation)
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteReservation);
+  .put(checkAction('reservations.modify'), updateReservation)
+  .delete(checkAction('reservations.delete'), deleteReservation);
 
 module.exports = router;

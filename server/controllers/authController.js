@@ -81,6 +81,9 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
         accessibleLocations: user.accessibleLocations,
         permissions: user.permissions,
         allowedPages: user.allowedPages || [],
+        // A Mongoose Map serializes to {} through JSON.stringify — flatten to a
+        // plain object so the client `user` actually carries the granular flags.
+        actionPermissions: user.actionPermissions ? Object.fromEntries(user.actionPermissions) : {},
         cafes: user.cafes || [],
         impersonatedBy: impersonatedBy || undefined,
         isImpersonating: Boolean(impersonatedBy),
@@ -266,6 +269,21 @@ const registerUser = asyncHandler(async (req, res, next) => {
   // work — e.g. All Orders enables manageOrders, Cash Drawer enables viewRevenue.
   permsForPages(finalPages).forEach((perm) => { finalPermissions[perm] = true; });
 
+  // Per-page ACTION permissions (Add/Modify/Delete/Approve). Gate each requested key
+  // to actions the CREATOR can perform themselves (super_admin grants anything) —
+  // mirrors the page/permission grant gates above. Stored as a plain object; the
+  // schema's Map accepts it directly.
+  const { sanitizeActionPermissions, userCanAct } = require('../utils/actionPermissions');
+  let finalActions = {};
+  if (finalRole !== 'super_admin' && req.user) {
+    let reqActions = req.body.actionPermissions;
+    if (typeof reqActions === 'string') { try { reqActions = JSON.parse(reqActions); } catch (e) { reqActions = null; } }
+    const requested = sanitizeActionPermissions(reqActions);
+    Object.keys(requested).forEach((key) => {
+      if (requested[key] === true && userCanAct(req.user, key)) finalActions[key] = true;
+    });
+  }
+
   const user = await User.create({
     name, email, password, phone, gender, age,
     address1, address2, city, state, country, pincode,
@@ -274,6 +292,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     aadharNumber, aadharImage, profileImageUrl, highestQualification, monthlySalary,
     permissions: finalPermissions,
     allowedPages: finalPages,
+    actionPermissions: finalActions,
   });
 
   if (user) {
@@ -319,6 +338,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
           accessibleLocations: user.accessibleLocations,
           permissions: user.permissions,
           allowedPages: user.allowedPages || [],
+          actionPermissions: user.actionPermissions ? Object.fromEntries(user.actionPermissions) : {},
         },
       });
     } else {
@@ -520,6 +540,10 @@ const getProfile = asyncHandler(async (req, res, next) => {
       userData.isImpersonating = false;
       userData.isViewOnly = false;
     }
+
+    // toObject() keeps Map fields as native Maps (which JSON.stringify drops to {}).
+    // Flatten actionPermissions to a plain object so the client retains the flags.
+    userData.actionPermissions = user.actionPermissions ? Object.fromEntries(user.actionPermissions) : {};
 
     res.json({
       success: true,

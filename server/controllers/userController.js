@@ -66,11 +66,13 @@ const normalizeBranchAdminUpdate = (user, updateData) => {
 const getUsers = asyncHandler(async (req, res) => {
   let query = {};
 
-  // Authorize/scope the listing as the REAL actor: when a super_admin is
-  // impersonating, they should still see ALL users (so "switch user while
-  // impersonating" works even from inside a staff session that couldn't otherwise
-  // list users). Everyone else is scoped by their own (effective) role.
-  const actor = req.impersonator?.role === 'super_admin' ? req.impersonator : req.user;
+  // Scope the listing by the EFFECTIVE (impersonated) user, so normal staff/member
+  // views stay true to whoever is being impersonated (e.g. an admin sees only their
+  // own branches' members). The ONLY exception is the global "switch user" picker,
+  // which passes ?forSwitch=1: there a super_admin impersonator gets the full user
+  // list so they can hot-switch to anyone, even from inside a staff session.
+  const forSwitch = req.query.forSwitch === '1' && req.impersonator?.role === 'super_admin';
+  const actor = forSwitch ? req.impersonator : req.user;
 
   // Hierarchy Visibility Logic
   if (actor.role === 'branch_admin') {
@@ -251,6 +253,7 @@ const promoteUser = asyncHandler(async (req, res) => {
     type: 'user_action',
     performedByUser: req.user,
     locationId: user.assignedLocation,
+    notifyUserId: user._id,
   });
 
   res.json({ success: true, message: `User promoted to ${nextRole}`, data: user });
@@ -301,6 +304,7 @@ const demoteUser = asyncHandler(async (req, res) => {
     type: 'user_action',
     performedByUser: req.user,
     locationId: user.assignedLocation,
+    notifyUserId: user._id,
   });
 
   res.json({ success: true, message: `User demoted to ${prevRole}`, data: user });
@@ -423,6 +427,26 @@ const updateUser = asyncHandler(async (req, res) => {
   const { logSecurityAction } = require('../utils/auditLogger');
   await logSecurityAction(req, 'USER_UPDATED', { changedFields: Object.keys(updateData) }, user._id, 'User');
 
+  // Notify the affected user + the branch's managers about the change.
+  let updateMessage;
+  if (updateData.active === false) {
+    updateMessage = `${user.name}'s account was deactivated by ${req.user.name}.`;
+  } else if (updateData.active === true) {
+    updateMessage = `${user.name}'s account was reactivated by ${req.user.name}.`;
+  } else if (updateData.role && updateData.role !== user.role) {
+    updateMessage = `${user.name}'s role was changed to ${updateData.role} by ${req.user.name}.`;
+  } else {
+    updateMessage = `${user.name}'s details were updated by ${req.user.name}.`;
+  }
+  await sendNotification({
+    title: 'User Updated',
+    message: updateMessage,
+    type: 'user_action',
+    performedByUser: req.user,
+    locationId: updatedUser.assignedLocation || user.assignedLocation,
+    notifyUserId: user._id,
+  });
+
   res.json({
     success: true,
     data: updatedUser,
@@ -511,6 +535,16 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
 
   user.isBlocked = !user.isBlocked;
   await user.save();
+
+  await sendNotification({
+    title: user.isBlocked ? 'User Blocked' : 'User Unblocked',
+    message: `${user.name} was ${user.isBlocked ? 'blocked' : 'unblocked'} by ${req.user.name}.`,
+    type: 'user_action',
+    priority: user.isBlocked ? 'high' : 'medium',
+    performedByUser: req.user,
+    locationId: user.assignedLocation,
+    notifyUserId: user._id,
+  });
 
   res.json({
     success: true,
@@ -745,19 +779,56 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
     }
   }
 
-  if ((nextAllowedPages || []).length === 0 && !Object.values(mergedPerms).some(Boolean)) {
+  // Per-page ACTION permissions (Add/Modify/Delete/Approve). Merge key-by-key so a
+  // partial body can't wipe existing grants; gate every key the actor turns ON to
+  // actions the actor can perform themselves (super_admin grants anything). The
+  // server is the source of truth here — the client gate is only UX.
+  let nextActionPermissions;
+  if (req.body.actionPermissions !== undefined) {
+    const { sanitizeActionPermissions, userCanAct } = require('../utils/actionPermissions');
+    let reqActions = req.body.actionPermissions;
+    if (typeof reqActions === 'string') { try { reqActions = JSON.parse(reqActions); } catch (e) { reqActions = null; } }
+    const requested = sanitizeActionPermissions(reqActions);
+    const existing = user.actionPermissions && user.actionPermissions.toObject
+      ? user.actionPermissions.toObject()
+      : (user.actionPermissions || {});
+    const merged = { ...existing };
+    Object.keys(requested).forEach((key) => {
+      const wantsTrue = requested[key] === true;
+      if (wantsTrue && !userCanAct(req.user, key)) {
+        res.status(403);
+        throw new Error(`You cannot grant the action '${key}' because you cannot perform it yourself`);
+      }
+      merged[key] = wantsTrue;
+    });
+    nextActionPermissions = merged;
+  }
+
+  if ((nextAllowedPages || []).length === 0 && !Object.values(mergedPerms).some(Boolean)
+      && !(nextActionPermissions && Object.values(nextActionPermissions).some(Boolean))
+      && !(user.actionPermissions && [...(user.actionPermissions.values?.() || [])].some(Boolean))) {
     res.status(400);
     throw new Error('A member must be granted at least one page access or permission.');
   }
 
   user.permissions = mergedPerms;
   user.allowedPages = nextAllowedPages;
+  if (nextActionPermissions !== undefined) user.actionPermissions = nextActionPermissions;
   await user.save();
+
+  await sendNotification({
+    title: 'Permissions Updated',
+    message: `${user.name}'s access permissions were updated by ${req.user.name}.`,
+    type: 'user_action',
+    performedByUser: req.user,
+    locationId: user.assignedLocation,
+    notifyUserId: user._id,
+  });
 
   res.json({
     success: true,
     message: 'Permissions updated successfully',
-    data: { permissions: user.permissions, allowedPages: user.allowedPages }
+    data: { permissions: user.permissions, allowedPages: user.allowedPages, actionPermissions: user.actionPermissions }
   });
 });
 

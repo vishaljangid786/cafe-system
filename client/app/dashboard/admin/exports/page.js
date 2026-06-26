@@ -9,12 +9,13 @@ import {
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import useBranchScope from '@/app/hooks/useBranchScope';
 import { useAuth } from '@/app/context/AuthContext';
 import { progress } from '@/app/components/ui/TopProgressBar';
 
 export default function ExportCenter() {
-  const { user, selectedLocationIds } = useAuth();
+  const { user } = useAuth();
+  const { branchIds, singleBranchId } = useBranchScope();
   const hasAccess = user?.role === 'super_admin' || user?.permissions?.exportReports === true;
 
   const [loading, setLoading] = useState(false);
@@ -24,8 +25,7 @@ export default function ExportCenter() {
     type: 'orders',
     format: 'pdf',
     startDate: '',
-    endDate: '',
-    branchId: 'all'
+    endDate: ''
   });
 
   const categories = [
@@ -70,10 +70,11 @@ export default function ExportCenter() {
       setLoading(true);
       progress.start();
       const exportFilters = { ...filters };
-      // Multi-branch subset from Navbar overrides single branchId
-      if (selectedLocationIds.length > 1) {
-        delete exportFilters.branchId;
-        exportFilters.locationIds = selectedLocationIds.join(',');
+      // Branch scope comes from the global Navbar filter (single, all, or subset).
+      if (branchIds.length > 1) {
+        exportFilters.locationIds = branchIds.join(',');
+      } else if (singleBranchId !== 'all') {
+        exportFilters.branchId = singleBranchId;
       }
       const query = new URLSearchParams(exportFilters).toString();
       const response = await api.get(`/export?${query}`, {
@@ -183,23 +184,15 @@ export default function ExportCenter() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
-                  <MapPin size={12} /> Branch
+                  <MapPin size={12} /> Branch <span className="text-(--color-text-muted)/60 normal-case font-medium">(from navbar)</span>
                 </label>
-                {selectedLocationIds.length > 1 ? (
-                  <div className="w-full p-3 bg-primary/10 border border-primary/30 rounded-xl text-xs font-bold text-primary uppercase tracking-normal">
-                    {selectedLocationIds.length} branches selected
-                  </div>
-                ) : (
-                  <PremiumSelect
-                    value={filters.branchId}
-                    onChange={(val) => setFilters({ ...filters, branchId: val })}
-                    options={[
-                      { label: 'All Branches', value: 'all' },
-                      ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                    ]}
-                    className="w-full"
-                  />
-                )}
+                <div className="w-full p-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-xs font-bold text-(--color-text-primary) uppercase tracking-normal truncate">
+                  {branchIds.length > 1
+                    ? `${branchIds.length} branches selected`
+                    : singleBranchId !== 'all'
+                      ? (locations.find((loc) => loc._id === singleBranchId)?.name || 'Selected branch')
+                      : 'All branches'}
+                </div>
               </div>
             </div>
           </div>

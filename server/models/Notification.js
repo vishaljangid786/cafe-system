@@ -24,7 +24,9 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['expense', 'user_action', 'table_action', 'announcement', 'alert', 'message'],
+      // 'activity' is the generic bucket for change-feed events that don't fit a
+      // more specific domain type (reservations, bookings, menu, cash, etc.).
+      enum: ['expense', 'user_action', 'table_action', 'order_action', 'activity', 'announcement', 'alert', 'message'],
       default: 'announcement',
     },
     priority: {

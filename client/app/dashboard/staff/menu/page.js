@@ -14,11 +14,12 @@ import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 
 export default function StaffMenuPage() {
-  const { selectedLocation } = useAuth();
+  const { selectedLocation, user } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -285,6 +286,7 @@ export default function StaffMenuPage() {
                           </div>
 
                           <div className="flex gap-2">
+                            {can(user, 'menu.modify') && (
                             <button
                               onClick={() => toggleAvailability(item._id)}
                               className={`p-3 rounded-xl border transition-all active:scale-90 ${item.isAvailable ? 'bg-(--color-surface-soft) dark:bg-(--color-surface) border-(--color-border) dark:border-(--color-border) text-(--color-text-muted) hover:text-success hover:border-success/50' : 'bg-success border-success text-white shadow-lg '}`}
@@ -292,6 +294,8 @@ export default function StaffMenuPage() {
                             >
                               <Zap size={16} fill={item.isAvailable ? 'none' : 'currentColor'} />
                             </button>
+                            )}
+                            {can(user, 'menu.modify') && (
                             <button
                               onClick={() => {
                                 setEditingItem(item);
@@ -303,6 +307,7 @@ export default function StaffMenuPage() {
                             >
                               <Layers size={16} />
                             </button>
+                            )}
                           </div>
                         </div>
                       </div>

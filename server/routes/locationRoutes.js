@@ -5,7 +5,7 @@ const {
   updateLocation,
   softDeleteLocation,
 } = require('../controllers/locationController');
-const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
 const { locationSchema, updateLocationSchema, validate } = require('../middlewares/validateMiddleware');
 
 const router = express.Router();
@@ -27,10 +27,10 @@ router.route('/')
   .get(verifyToken, getLocations)
   // Admins can create branches inside their own cafe; super_admin / anyone with the
   // manageBranches permission can too. Cafe ownership is enforced in the controller.
-  .post(verifyToken, checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'), ...locationSchema, validate, createLocation);
+  .post(verifyToken, checkAction('branches.add'), ...locationSchema, validate, createLocation);
 
 router.route('/:id')
-  .patch(verifyToken, checkRoleOrPermission(['super_admin', 'admin'], 'manageBranches'), ...updateLocationSchema, validate, updateLocation)
-  .delete(verifyToken, checkRoleOrPermission(['super_admin'], 'manageBranches'), softDeleteLocation);
+  .patch(verifyToken, checkAction('branches.modify'), ...updateLocationSchema, validate, updateLocation)
+  .delete(verifyToken, checkAction('branches.delete'), softDeleteLocation);
 
 module.exports = router;

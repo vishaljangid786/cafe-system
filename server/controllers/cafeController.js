@@ -5,6 +5,7 @@ const Location = require('../models/Location');
 const { logActivity } = require('../utils/auditLogger');
 const { addAdminToCafe, removeAdminFromCafe } = require('../utils/cafeSync');
 const { canAccessLocation } = require('../utils/accessControl');
+const sendNotification = require('../utils/sendNotification');
 
 // A cafe owner gets full control over everything inside their cafe (branches,
 // staff, menu, revenue, audit, admin center). Platform-only powers
@@ -243,6 +244,13 @@ const createCafe = asyncHandler(async (req, res) => {
 
   await logActivity(req.user, 'CAFE_CREATE', `Created cafe: ${cafe.name}`, req, { cafeId: cafe._id });
 
+  await sendNotification({
+    title: 'Cafe Created',
+    message: `Cafe ${cafe.name} was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.status(201).json({
     success: true,
     data: {
@@ -291,6 +299,13 @@ const updateCafe = asyncHandler(async (req, res) => {
   await cafe.save();
   await logActivity(req.user, 'CAFE_UPDATE', `Updated cafe: ${cafe.name}`, req, { cafeId: cafe._id });
 
+  await sendNotification({
+    title: 'Cafe Updated',
+    message: `Cafe ${cafe.name} was updated by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.json({ success: true, data: cafe });
 });
 
@@ -316,6 +331,14 @@ const addCafeAdmin = asyncHandler(async (req, res) => {
   }
 
   await logActivity(req.user, 'CAFE_ADMIN_ADD', `Added admin ${admin.name} to cafe ${cafe.name}`, req, { cafeId: cafe._id, targetUserId: admin._id });
+
+  await sendNotification({
+    title: 'Cafe Admin Added',
+    message: `Admin ${admin.name} was added to cafe ${cafe.name} by ${req.user.name}.`,
+    type: 'user_action',
+    performedByUser: req.user,
+    notifyUserId: admin._id,
+  });
 
   res.status(201).json({ success: true, data: { _id: admin._id, name: admin.name, email: admin.email } });
 });
@@ -349,6 +372,14 @@ const removeCafeAdmin = asyncHandler(async (req, res) => {
 
   await logActivity(req.user, 'CAFE_ADMIN_REMOVE', `Removed an admin from cafe ${cafe.name}`, req, { cafeId: cafe._id, targetUserId: req.params.userId });
 
+  await sendNotification({
+    title: 'Cafe Admin Removed',
+    message: `An admin was removed from cafe ${cafe.name} by ${req.user.name}.`,
+    type: 'user_action',
+    performedByUser: req.user,
+    notifyUserId: req.params.userId,
+  });
+
   res.json({ success: true, message: 'Admin removed from cafe' });
 });
 
@@ -381,6 +412,14 @@ const deleteCafe = asyncHandler(async (req, res) => {
   }
 
   await logActivity(req.user, 'CAFE_DELETE', `Deleted cafe: ${cafe.name}`, req, { cafeId: cafe._id });
+
+  await sendNotification({
+    title: 'Cafe Deleted',
+    message: `Cafe ${cafe.name} was deleted by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'high',
+    performedByUser: req.user,
+  });
 
   res.json({ success: true, message: 'Cafe deleted' });
 });

@@ -302,6 +302,14 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     });
   }
 
+  await sendNotification({
+    title: 'Booking Status Updated',
+    message: `A booking at ${booking.locationId?.name || 'a location'} was marked ${status} by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: booking.locationId._id
+  });
+
   res.status(200).json({ success: true, data: booking });
 });
 

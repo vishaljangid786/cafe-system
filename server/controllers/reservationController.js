@@ -424,6 +424,14 @@ exports.updateReservation = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    await sendNotification({
+      title: 'Reservation Updated',
+      message: `Reservation "${reservation.eventName}" was updated by ${req.user.name}.`,
+      type: 'activity',
+      performedByUser: req.user,
+      locationId
+    });
+
     res.status(200).json(reservation);
   } catch (error) {
     const status = res.statusCode === 200 ? 500 : res.statusCode;
@@ -445,6 +453,16 @@ exports.deleteReservation = async (req, res) => {
     enforceLocationAccess(req, res, getReservationLocationId(reservation));
 
     await reservation.deleteOne();
+
+    await sendNotification({
+      title: 'Reservation Deleted',
+      message: `Reservation "${reservation.eventName}" was deleted by ${req.user.name}.`,
+      type: 'activity',
+      priority: 'high',
+      performedByUser: req.user,
+      locationId: getReservationLocationId(reservation)
+    });
+
     res.status(200).json({ message: 'Reservation removed' });
   } catch (error) {
     const status = res.statusCode === 200 ? 500 : res.statusCode;

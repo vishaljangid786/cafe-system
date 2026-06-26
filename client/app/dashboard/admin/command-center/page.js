@@ -3,14 +3,14 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import {
   ShoppingBag, Flame, Users, DollarSign, Clock,
-  Heart, AlertCircle, MapPin, RefreshCcw, Bell
+  Heart, AlertCircle, RefreshCcw, Bell
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import io from 'socket.io-client';
 import getSocketUrl from '../../../services/socketUrl';
 import toast from 'react-hot-toast';
-import PremiumSelect from '../../../components/ui/PremiumSelect';
+import useBranchScope from '../../../hooks/useBranchScope';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { progress } from '../../../components/ui/TopProgressBar';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
@@ -18,22 +18,12 @@ import { CardSkeleton } from '../../../components/ui/Skeleton';
 const SOCKET_URL = getSocketUrl();
 
 export default function CommandCenterPage() {
-  const [locations, setLocations] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState('all');
+  const { singleBranchId } = useBranchScope();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const [alerts, setAlerts] = useState([]);
   const didInitRef = useRef(false);
-
-  const fetchInitialData = async () => {
-    try {
-      const res = await api.get('/locations');
-      setLocations(res.data.data || []);
-    } catch (error) {
-      toast.error('Could not load branches. Please try again.');
-    }
-  };
 
   // `silent` is used for real-time socket refreshes so live updates never
   // flicker a skeleton. The first call drives the full-page loader; subsequent
@@ -46,7 +36,7 @@ export default function CommandCenterPage() {
       progress.start();
     }
     try {
-      const res = await api.get(`/analytics/command-center?branchId=${selectedBranch}`);
+      const res = await api.get(`/analytics/command-center?branchId=${singleBranchId}`);
       setStats(res.data.data);
     } catch (error) {
       console.error('Command center fetch fail');
@@ -62,14 +52,6 @@ export default function CommandCenterPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchInitialData();
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
       fetchStats();
     }, 0);
     
@@ -79,7 +61,7 @@ export default function CommandCenterPage() {
     const socket = io(SOCKET_URL, { withCredentials: true });
     
     socket.on('connect', () => {
-      socket.emit('join_session', { branchId: selectedBranch });
+      socket.emit('join_session', { branchId: singleBranchId });
     });
 
     const handleRealTimeEvent = () => {
@@ -101,7 +83,7 @@ export default function CommandCenterPage() {
       clearTimeout(timer);
       socket.close();
     };
-  }, [selectedBranch]);
+  }, [singleBranchId]);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -122,16 +104,6 @@ export default function CommandCenterPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <PremiumSelect
-                value={selectedBranch}
-                onChange={(val) => setSelectedBranch(val)}
-                options={[
-                  { label: 'All Locations', value: 'all' },
-                  ...locations.map(loc => ({ label: loc.cafe?.name ? `${loc.name} · ${loc.cafe.name}` : loc.name, value: loc._id }))
-                ]}
-                className="min-w-50"
-              />
-
               <button
                 onClick={() => fetchStats()}
                 className={`p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 transition-all text-(--color-text-muted) ${refetching ? 'opacity-60 pointer-events-none' : ''}`}

@@ -9,7 +9,7 @@ const PAYMENT_CHIP = {
   unpaid: 'text-danger bg-danger/10 border-danger/20',
 };
 
-export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, handleRedeemGiftCard, tables = [], userRole }) {
+export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, handleRedeemGiftCard, tables = [], userRole, canDelete, canRefund: canRefundProp }) {
   const [showSplit, setShowSplit] = useState(false);
   const [splitQty, setSplitQty] = useState({}); // itemId -> qty to split off
   const [gcCode, setGcCode] = useState('');
@@ -26,7 +26,10 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
   const orderTypeLabel = selectedOrder.table?.tableNumber
     ? `Table ${selectedOrder.table.tableNumber}`
     : (selectedOrder.orderType === 'delivery' ? 'Delivery' : 'Takeaway');
-  const canRefund = ['admin', 'super_admin', 'branch_admin'].includes(userRole);
+  // Prefer the action-permission flags from the parent (which include granted
+  // users); fall back to the legacy role check when the props aren't supplied.
+  const canRefund = canRefundProp !== undefined ? canRefundProp : ['admin', 'super_admin', 'branch_admin'].includes(userRole);
+  const canDeleteOrder = canDelete !== undefined ? canDelete : ['admin', 'super_admin'].includes(userRole);
 
   return (
     <Modal
@@ -219,7 +222,7 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
             </button>
           )}
 
-          {['admin', 'super_admin'].includes(userRole) && selectedOrder.status !== 'COMPLETED' && (
+          {canDeleteOrder && selectedOrder.status !== 'COMPLETED' && (
             <button
               onClick={() => handleDeleteOrder(selectedOrder._id)}
               className="w-full py-4 bg-danger/5 text-danger/40 text-[9px] font-bold uppercase tracking-normal rounded-xl border border-danger/10 hover:bg-danger hover:text-white transition-all mt-2"

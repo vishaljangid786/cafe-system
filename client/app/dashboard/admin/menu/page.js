@@ -8,7 +8,6 @@ import {
   FileText, List, ChevronDown, ChevronUp, Minus,
   Zap,
   Users,
-  MapPin,
   TrendingDown,
   TrendingUp,
   Utensils,
@@ -26,6 +25,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -44,7 +44,7 @@ const SUGGESTED_ICONS = [
 export default function MenuManagementPage() {
   const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
-  const { selectedLocation, switchLocation, user } = useAuth();
+  const { selectedLocation, user } = useAuth();
   const [activeTab, setActiveTab] = useState('items'); // 'items' or 'categories'
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -510,22 +510,6 @@ export default function MenuManagementPage() {
         {/* Analytics Filters */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-wrap items-center gap-4">
-            {/* Location Selector */}
-            <PremiumSelect
-              icon={MapPin}
-              label="Branch"
-              value={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation || 'all')}
-              onChange={(val) => {
-                const loc = val === 'all' ? 'all' : locations.find(l => l._id === val);
-                switchLocation(loc);
-              }}
-              options={[
-                { label: 'All Branches', value: 'all' },
-                ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-              ]}
-              className="min-w-50"
-            />
-
             {/* Time Filter */}
             <div className="flex items-center gap-3 bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar max-w-full">
               {['7d', '30d', 'all', 'custom'].map(t => (
@@ -734,23 +718,25 @@ export default function MenuManagementPage() {
 
                 <div className="h-10 w-px bg-(--color-border) mx-1 hidden sm:block" />
                 <div className="flex items-center gap-3 flex-1 sm:flex-none">
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      if (activeTab === 'items') {
-                        setEditingItem(null);
-                        setImagePreview(null);
-                        setShowItemModal(true);
-                      } else {
-                        setEditingCategory(null);
-                        setShowCategoryModal(true);
-                      }
-                    }}
-                    className="flex-1 sm:flex-none h-14 px-8 rounded-xl bg-primary text-(--color-bg-base) border-none hover:bg-primary/90 transition-all gap-3"
-                  >
-                    <Plus size={20} strokeWidth={3} />
-                    <span className="font-bold text-xs uppercase tracking-normal">Add New</span>
-                  </Button>
+                  {can(user, 'menu.add') && (
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        if (activeTab === 'items') {
+                          setEditingItem(null);
+                          setImagePreview(null);
+                          setShowItemModal(true);
+                        } else {
+                          setEditingCategory(null);
+                          setShowCategoryModal(true);
+                        }
+                      }}
+                      className="flex-1 sm:flex-none h-14 px-8 rounded-xl bg-primary text-(--color-bg-base) border-none hover:bg-primary/90 transition-all gap-3"
+                    >
+                      <Plus size={20} strokeWidth={3} />
+                      <span className="font-bold text-xs uppercase tracking-normal">Add New</span>
+                    </Button>
+                  )}
 
                   <ExportActions
                     data={activeTab === 'items' ? filteredItems : filteredCategories}
@@ -937,12 +923,14 @@ export default function MenuManagementPage() {
                             {item.dietaryType}
                           </span>
                         </div>
-                        <button
-                          onClick={() => toggleAvailability(item._id)}
-                          className={`absolute top-4 right-4 p-2 rounded-xl  border transition-all ${item.isAvailable ? 'bg-success/20 border-success/30 text-success' : 'bg-danger/20 border-danger/30 text-danger'}`}
-                        >
-                          {item.isAvailable ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-                        </button>
+                        {can(user, 'menu.modify') && (
+                          <button
+                            onClick={() => toggleAvailability(item._id)}
+                            className={`absolute top-4 right-4 p-2 rounded-xl  border transition-all ${item.isAvailable ? 'bg-success/20 border-success/30 text-success' : 'bg-danger/20 border-danger/30 text-danger'}`}
+                          >
+                            {item.isAvailable ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                          </button>
+                        )}
 
                         {item.discountedPrice && (
                           <div className="absolute bottom-4 left-4">
@@ -979,23 +967,27 @@ export default function MenuManagementPage() {
                             {item.preparationTime} Min
                           </div>
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingItem(item);
-                                setShowItemModal(true);
-                                setImagePreview(item.image);
-                                fetchRecipe(item._id);
-                              }}
-                              className="p-3 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all shadow-sm"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => deleteItem(item._id)}
-                              className="p-3 rounded-xl bg-danger/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-danger hover:text-(--color-bg-base) transition-all shadow-sm"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            {can(user, 'menu.modify') && (
+                              <button
+                                onClick={() => {
+                                  setEditingItem(item);
+                                  setShowItemModal(true);
+                                  setImagePreview(item.image);
+                                  fetchRecipe(item._id);
+                                }}
+                                className="p-3 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all shadow-sm"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            {can(user, 'menu.delete') && (
+                              <button
+                                onClick={() => deleteItem(item._id)}
+                                className="p-3 rounded-xl bg-danger/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-danger hover:text-(--color-bg-base) transition-all shadow-sm"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1040,18 +1032,22 @@ export default function MenuManagementPage() {
                       {cat.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => { setEditingCategory(cat); setShowCategoryModal(true); }}
-                        className="p-2.5 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => deleteCategory(cat._id)}
-                        className="p-2.5 rounded-xl bg-danger/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-danger hover:text-(--color-bg-base) transition-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {can(user, 'menu.modify') && (
+                        <button
+                          onClick={() => { setEditingCategory(cat); setShowCategoryModal(true); }}
+                          className="p-2.5 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {can(user, 'menu.delete') && (
+                        <button
+                          onClick={() => deleteCategory(cat._id)}
+                          className="p-2.5 rounded-xl bg-danger/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-danger hover:text-(--color-bg-base) transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -1787,7 +1783,9 @@ export default function MenuManagementPage() {
             <UtensilsCrossed size={64} className="mx-auto text-primary/10 mb-6" strokeWidth={1} />
             <h3 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
             <p className="text-(--color-text-muted) font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
-            <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
+            {can(user, 'menu.add') && (
+              <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
+            )}
           </div>
         ) : null}
         {activeTab === 'items' && totalPages > 1 && (

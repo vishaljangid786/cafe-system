@@ -179,6 +179,14 @@ const createLocation = asyncHandler(async (req, res) => {
     { locationId: location._id, cafeId }
   );
 
+  await sendNotification({
+    title: 'Branch Created',
+    message: `New branch ${location.city} - ${location.name} was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: location._id,
+  });
+
   res.status(201).json({
     success: true,
     data: location,
@@ -283,6 +291,14 @@ const updateLocation = asyncHandler(async (req, res) => {
     { locationId: location._id, changes: req.body }
   );
 
+  await sendNotification({
+    title: 'Branch Updated',
+    message: `Branch ${location.city} - ${location.name} was updated by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: location._id,
+  });
+
   res.json({
     success: true,
     data: location,
@@ -324,6 +340,15 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     req,
     { locationId: location._id }
   );
+
+  await sendNotification({
+    title: 'Branch Removed',
+    message: `Branch ${location.city} - ${location.name} was removed by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'high',
+    performedByUser: req.user,
+    locationId: location._id,
+  });
 
   res.json({
     success: true,

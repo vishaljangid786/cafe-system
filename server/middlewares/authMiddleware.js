@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('../utils/asyncHandler');
 const User = require('../models/User');
+const { userCanAct } = require('../utils/actionPermissions');
 
 const getRequestToken = (req) => {
   let token;
@@ -173,6 +174,20 @@ const checkAnyPermission = (...permissions) => {
   };
 };
 
+// Gate a write by a granular per-page ACTION key (e.g. 'orders.add'). This is the
+// "keep both" gate: it PASSES when the user is super_admin, OR holds the legacy
+// role/permission that already governed this route, OR holds the granular action
+// flag — so it never tightens existing access, it only ADDS the new grant path.
+// Define the action + its legacy fallback in utils/actionPermissions.js.
+const checkAction = (actionKey) => {
+  return (req, res, next) => {
+    if (userCanAct(req.user, actionKey)) return next();
+    console.error(`[AUTH_FAILURE] User: ${req.user?.name} (${req.user?.role}) - Missing action: ${actionKey}`);
+    res.status(403);
+    throw new Error('You do not have permission to do this');
+  };
+};
+
 // Gate for POST /auth/impersonate.
 //  - Normal (not impersonating): super_admin, or anyone holding impersonateUsers.
 //  - Already impersonating (HOT-SWITCH to another user without exiting): allowed
@@ -189,4 +204,4 @@ const canImpersonate = (req, res, next) => {
   throw new Error('You do not have permission to log in as other users');
 };
 
-module.exports = { verifyToken, optionalVerifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission, canImpersonate };
+module.exports = { verifyToken, optionalVerifyToken, checkRoles, checkPermissions, checkRoleOrPermission, checkAnyPermission, checkAction, canImpersonate };

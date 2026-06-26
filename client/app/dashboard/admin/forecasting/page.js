@@ -8,29 +8,20 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-  TrendingUp, Calendar, Clock, MapPin, RefreshCcw, Award, Percent
+  TrendingUp, Calendar, Clock, RefreshCcw, Award, Percent
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import toast from 'react-hot-toast';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import useBranchScope from '../../../hooks/useBranchScope';
 
 export default function ForecastingDashboard() {
-  const [locations, setLocations] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState('all');
+  const { singleBranchId } = useBranchScope();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-
-  const fetchLocations = async () => {
-    try {
-      const res = await api.get('/locations');
-      setLocations(res.data.data || []);
-    } catch (err) {
-      console.error('Failed to load branches');
-    }
-  };
 
   const fetchForecast = async () => {
     const isInitial = !didInitRef.current;
@@ -38,7 +29,7 @@ export default function ForecastingDashboard() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/analytics/forecasting?branchId=${selectedBranch}&period=${selectedPeriod}`);
+      const res = await api.get(`/analytics/forecasting?branchId=${singleBranchId}&period=${selectedPeriod}`);
       setForecast(res.data.data);
     } catch (err) {
       toast.error('Could not load forecast. Please try again.');
@@ -52,19 +43,11 @@ export default function ForecastingDashboard() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchLocations();
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
       fetchForecast();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [selectedBranch, selectedPeriod]);
+  }, [singleBranchId, selectedPeriod]);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -83,16 +66,6 @@ export default function ForecastingDashboard() {
             </div>
 
             <div className="flex items-center gap-4">
-              <PremiumSelect
-                value={selectedBranch}
-                onChange={(val) => setSelectedBranch(val)}
-                options={[
-                  { label: 'All Branches', value: 'all' },
-                  ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                ]}
-                className="min-w-45"
-              />
-
               <PremiumSelect
                 value={selectedPeriod}
                 onChange={(val) => setSelectedPeriod(val)}

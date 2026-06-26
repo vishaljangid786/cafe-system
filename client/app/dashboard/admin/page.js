@@ -14,7 +14,7 @@ import {
   Coffee, Calendar, Zap, Activity, Clock,
   ArrowUpRight, Target, Flame, Layers, Filter,
   ChefHat, Utensils, Receipt, ShoppingBag,
-  ChevronDown, MapPin, User, DollarSign,
+  ChevronDown, User, DollarSign,
   CreditCard, BarChart3, PieChart as PieChartIcon
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton';
@@ -28,7 +28,6 @@ import { Button } from '../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ExportActions from '../../components/ui/ExportActions';
-import PremiumSelect from '../../components/ui/PremiumSelect';
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
@@ -45,7 +44,6 @@ export default function AdminDashboard() {
   const ordersHref = '/dashboard/admin/orders';
   const orderAnalyticsHref = '/dashboard/admin/orders/analytics';
   const [locations, setLocations] = useState([]);
-  const [filterLocation, setFilterLocation] = useState('all');
   const [analytics, setAnalytics] = useState({
     summary: { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0, netProfit: 0, totalExpenses: 0 },
     timeSeries: [],
@@ -59,9 +57,12 @@ export default function AdminDashboard() {
   const didInitRef = useRef(false);
   const [timeFilter, setTimeFilter] = useState('all'); // '7d', '30d', 'all', 'custom'
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
-  const [isLocSelectorOpen, setIsLocSelectorOpen] = useState(false);
   // Which role's people list the drawer is showing ('' = closed; 'staff' | 'chef' | 'branch_admin' | 'all')
   const [drawerRole, setDrawerRole] = useState('');
+
+  // Branch scope comes solely from the Navbar global filter (AuthContext).
+  // Single branch -> its id; all / multi-branch subset -> 'all' (the subset is sent via locationIds).
+  const activeLocationId = authLocation ? (authLocation._id || authLocation) : 'all';
 
   const isDark = theme === 'dark';
 
@@ -99,8 +100,8 @@ export default function AdminDashboard() {
       // Multi-branch subset takes priority over single location filter
       if (selectedLocationIds.length > 0) {
         params.append('locationIds', selectedLocationIds.join(','));
-      } else if (filterLocation !== 'all') {
-        params.append('locationId', filterLocation);
+      } else if (activeLocationId !== 'all') {
+        params.append('locationId', activeLocationId);
       }
 
       const now = new Date();
@@ -147,24 +148,13 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Sync page filter whenever the Navbar branch selector changes (all roles)
-  useEffect(() => {
-    if (selectedLocationIds.length > 0) {
-      // Multi-branch selection — keep filterLocation as 'all' visually; fetchAnalytics uses locationIds
-      setFilterLocation('all');
-    } else {
-      const id = authLocation?._id || authLocation;
-      setFilterLocation(id || 'all');
-    }
-  }, [authLocation, selectedLocationIds]);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchAnalytics();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filterLocation, timeFilter, customDates, selectedLocationIds]);
+  }, [authLocation, timeFilter, customDates, selectedLocationIds]);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -184,16 +174,16 @@ export default function AdminDashboard() {
             </div>
             <div className="h-px w-8 bg-(--color-border)" />
             <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
-              {selectedLocationIds.length > 1 ? `Showing ${selectedLocationIds.length} Branches` : filterLocation === 'all' ? 'Showing All Branches' : 'Showing Branch'}
+              {selectedLocationIds.length > 1 ? `Showing ${selectedLocationIds.length} Branches` : activeLocationId === 'all' ? 'Showing All Branches' : 'Showing Branch'}
             </span>
           </motion.div>
 
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-(--color-text-primary) flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
-            {selectedLocationIds.length > 1 ? 'Multi-Branch' : filterLocation === 'all' ? 'Business' : (locations.find(l => l._id === filterLocation)?.city || 'Branch')}
+            {selectedLocationIds.length > 1 ? 'Multi-Branch' : activeLocationId === 'all' ? 'Business' : (locations.find(l => l._id === activeLocationId)?.city || 'Branch')}
             <span className="text-primary not-italic">Overview</span>
           </h1>
           <p className="text-sm text-(--color-text-muted) font-medium max-w-lg leading-relaxed border-l-2 border-primary/30 pl-4">
-            Real-time data for {selectedLocationIds.length > 1 ? `${selectedLocationIds.length} selected branches` : filterLocation === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === filterLocation)?.name || 'the selected branch')}.
+            Real-time data for {selectedLocationIds.length > 1 ? `${selectedLocationIds.length} selected branches` : activeLocationId === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === activeLocationId)?.name || 'the selected branch')}.
           </p>
         </div>
 
@@ -210,17 +200,6 @@ export default function AdminDashboard() {
             filename="analytics_report"
             hasCharts={true}
           />
-          <PremiumSelect
-            icon={MapPin}
-            value={filterLocation}
-            onChange={(val) => setFilterLocation(val)}
-            options={[
-              { label: 'All Branches', value: 'all' },
-              ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-            ]}
-            className="w-full sm:w-55"
-          />
-
           <div className="flex items-center gap-2 sm:gap-3 bg-(--color-surface)/40 p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
             {['today', '7d', '30d', 'all', 'custom'].map(t => (
               <button
@@ -686,7 +665,7 @@ export default function AdminDashboard() {
         roleKey={drawerRole}
         onClose={() => setDrawerRole('')}
         currentUserRole={user?.role}
-        locationId={filterLocation !== 'all' ? filterLocation : ''}
+        locationId={activeLocationId !== 'all' ? activeLocationId : ''}
         staffHref={`${dashPrefix}/staff`}
       />
     </div>

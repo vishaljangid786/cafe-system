@@ -135,7 +135,7 @@ const NotificationsPage = () => {
 
     if (filters.activeTab === 'all') return true;
 
-    const systemTypes = ['user_action', 'table_action', 'expense'];
+    const systemTypes = ['user_action', 'table_action', 'expense', 'order_action', 'activity'];
     const isSystem = systemTypes.includes(notif.type);
     
     if (filters.activeTab === 'system') {
@@ -290,6 +290,8 @@ const NotificationsPage = () => {
         { label: 'Expenses', value: 'expense' },
         { label: 'User Actions', value: 'user_action' },
         { label: 'Table Actions', value: 'table_action' },
+        { label: 'Order Actions', value: 'order_action' },
+        { label: 'Activity', value: 'activity' },
         { label: 'Announcements', value: 'announcement' },
         { label: 'Alerts', value: 'alert' },
         { label: 'Messages', value: 'message' }

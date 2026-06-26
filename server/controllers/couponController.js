@@ -87,6 +87,13 @@ const createCoupon = asyncHandler(async (req, res) => {
     { couponId: coupon._id }
   );
 
+  await sendNotification({
+    title: 'Coupon Created',
+    message: `Coupon "${coupon.code}" was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.status(201).json({ success: true, data: coupon });
 });
 
@@ -136,6 +143,13 @@ const updateCoupon = asyncHandler(async (req, res) => {
     { couponId: coupon._id, changes: updates }
   );
 
+  await sendNotification({
+    title: 'Coupon Updated',
+    message: `Coupon "${coupon.code}" was updated by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.json({ success: true, data: coupon });
 });
 
@@ -158,6 +172,14 @@ const deleteCoupon = asyncHandler(async (req, res) => {
     req,
     { couponId: coupon._id }
   );
+
+  await sendNotification({
+    title: 'Coupon Deactivated',
+    message: `Coupon "${coupon.code}" was deactivated by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'high',
+    performedByUser: req.user,
+  });
 
   res.json({ success: true, message: 'Coupon deactivated' });
 });

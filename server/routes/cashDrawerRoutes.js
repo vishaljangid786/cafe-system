@@ -7,15 +7,15 @@ const {
   closeDrawer,
   getDrawerHistory,
 } = require('../controllers/cashDrawerController');
-const { verifyToken, checkPermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
 
 router.use(verifyToken);
 
-// Cashier operations (whoever can take orders can run the drawer).
+// Cashier operations (whoever can take orders can run the drawer; legacy manageOrders still passes).
 router.get('/current', checkPermissions('manageOrders'), getCurrentDrawer);
-router.post('/open', checkPermissions('manageOrders'), openDrawer);
-router.post('/:id/movement', checkPermissions('manageOrders'), addMovement);
-router.post('/:id/close', checkPermissions('manageOrders'), closeDrawer);
+router.post('/open', checkAction('cashdrawer.add'), openDrawer);
+router.post('/:id/movement', checkAction('cashdrawer.modify'), addMovement);
+router.post('/:id/close', checkAction('cashdrawer.modify'), closeDrawer);
 
 // Z-report history is financial reporting.
 router.get('/', checkPermissions('viewRevenue'), getDrawerHistory);

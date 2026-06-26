@@ -8,7 +8,7 @@ const {
   approvePayroll,
   getPayrollHistory
 } = require('../controllers/salaryController');
-const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
 const express = require('express')
 
 const router = express.Router();
@@ -28,12 +28,12 @@ router.route('/user/:id')
   .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getUserSalary);
 
 router.route('/generate')
-  .post(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), generatePayroll);
+  .post(checkAction('salaries.add'), generatePayroll);
 
 router.route('/payroll/history')
   .get(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), getPayrollHistory);
 
 router.route('/payroll/:id/approve')
-  .patch(checkRoles('branch_admin', 'admin', 'super_admin'), checkPermissions('manageStaff'), approvePayroll);
+  .patch(checkAction('salaries.approve'), approvePayroll);
 
 module.exports = router;

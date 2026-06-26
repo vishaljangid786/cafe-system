@@ -11,7 +11,7 @@ const {
   mergeTable,
   updateTable
 } = require('../controllers/tableController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
@@ -20,12 +20,12 @@ router.use(verifyToken);
 
 router.route('/')
   .get(getTables)
-  .post(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), addTable);
+  .post(checkAction('tables.add'), addTable);
 
 router.route('/:id')
   .get(getTable)
-  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), updateTable)
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteTable);
+  .put(checkAction('tables.modify'), updateTable)
+  .delete(checkAction('tables.delete'), deleteTable);
 
 router.route('/:id/book')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'), bookTable);

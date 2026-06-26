@@ -22,10 +22,11 @@ import { useEffect, useState, useRef } from 'react';
 import useConfirm from '@/app/components/ui/useConfirm';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function CouponsManagementPage() {
-  const { selectedLocation } = useAuth();
+  const { selectedLocation, user } = useAuth();
   const { confirm, confirmDialog } = useConfirm();
   const [coupons, setCoupons] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
@@ -219,6 +220,7 @@ export default function CouponsManagementPage() {
               <Target size={14} className="mr-2 text-primary" /> Create and manage discount coupons for customers.
             </p>
           </div>
+          {can(user, 'coupons.add') && (
           <Button
             variant="primary"
             icon={Plus}
@@ -233,6 +235,7 @@ export default function CouponsManagementPage() {
           >
             Create Coupon
           </Button>
+          )}
         </div>
 
         {/* Stats Grid */}

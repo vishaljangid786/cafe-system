@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import {
   TrendingUp, Timer, ShoppingBag, Award, XCircle, CheckCircle2, Zap, History,
-  Filter, Calendar, Bookmark, Utensils, Building, CreditCard, Ticket
+  Filter, Calendar, Bookmark, Utensils, CreditCard, Ticket
 } from 'lucide-react';
 import { PageTransition } from './ui/AnimatedContainer';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
+import useBranchScope from '../hooks/useBranchScope';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
@@ -37,19 +38,18 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
 export default function StaffPerformanceDashboard({ user, role }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { singleBranchId } = useBranchScope();
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     category: '',
     foodItem: '',
-    branch: (['staff', 'chef'].includes(role) && user.assignedLocation) ? (user.assignedLocation._id || user.assignedLocation) : '',
     paymentType: '',
     coupon: ''
   });
 
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
-  const [branches, setBranches] = useState([]);
   const [coupons, setCoupons] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,22 +57,13 @@ export default function StaffPerformanceDashboard({ user, role }) {
 
   const fetchFilterOptions = async () => {
     try {
-      const [catRes, menuRes, locRes, coupRes] = await Promise.all([
+      const [catRes, menuRes, coupRes] = await Promise.all([
         api.get('/categories').catch(() => ({ data: { data: [] } })),
         api.get('/menu').catch(() => ({ data: { data: [] } })),
-        api.get('/locations').catch(() => ({ data: { data: [] } })),
         api.get('/coupons').catch(() => ({ data: { data: [] } }))
       ]);
       setCategories(catRes.data.data || []);
       setMenuItems(menuRes.data.data || []);
-      
-      let locData = locRes.data.data || [];
-      if (['staff', 'chef'].includes(role) && user.assignedLocation) {
-        const myLocId = user.assignedLocation._id || user.assignedLocation;
-        locData = locData.filter(loc => loc._id === myLocId);
-      }
-      setBranches(locData);
-      
       setCoupons(coupRes.data.data || []);
     } catch (error) {
       console.error('Failed to load filter options');
@@ -87,7 +78,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
       if (filters.endDate) params.endDate = filters.endDate;
       if (filters.category) params.category = filters.category;
       if (filters.foodItem) params.foodItem = filters.foodItem;
-      if (filters.branch) params.branch = filters.branch;
+      if (singleBranchId !== 'all') params.branch = singleBranchId;
       if (filters.paymentType) params.paymentType = filters.paymentType;
       if (filters.coupon) params.coupon = filters.coupon;
 
@@ -118,7 +109,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filters]);
+  }, [filters, singleBranchId]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -205,25 +196,6 @@ export default function StaffPerformanceDashboard({ user, role }) {
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
-              <Building size={12} /> Branch
-            </label>
-            <PremiumSelect
-              value={filters.branch}
-              onChange={(val) => handleFilterChange('branch', val)}
-              disabled={['staff', 'chef'].includes(role)}
-              options={['staff', 'chef'].includes(role) ? 
-                branches.map(loc => ({ label: loc.name, value: loc._id })) :
-                [
-                  { label: 'All Branches', value: '' },
-                  ...branches.map(loc => ({ label: loc.name, value: loc._id }))
-                ]
-              }
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <CreditCard size={12} /> Payment Type
             </label>
             <PremiumSelect
@@ -258,7 +230,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           <div className="flex items-end">
             <button
               onClick={() => setFilters({
-                startDate: '', endDate: '', category: '', foodItem: '', branch: '', paymentType: '', coupon: ''
+                startDate: '', endDate: '', category: '', foodItem: '', paymentType: '', coupon: ''
               })}
               className="w-full py-3 bg-primary text-(--color-on-primary) hover:bg-primary/80 rounded-xl text-xs font-bold uppercase tracking-normal transition-all shadow-sm"
             >

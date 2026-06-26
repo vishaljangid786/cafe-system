@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const CashSession = require('../models/CashSession');
 const Order = require('../models/Order');
+const sendNotification = require('../utils/sendNotification');
 const { canAccessLocation, endOfDay, clampLimit, userLocationIds } = require('../utils/accessControl');
 
 // Resolve which branch the request acts on. Branch-scoped roles always use their
@@ -80,6 +81,13 @@ const openDrawer = asyncHandler(async (req, res) => {
       openingFloat,
       status: 'open',
     });
+    await sendNotification({
+      title: 'Cash drawer opened',
+      message: `A cash drawer was opened by ${req.user.name}.`,
+      type: 'activity',
+      performedByUser: req.user,
+      locationId,
+    });
     res.status(201).json({ success: true, data: session });
   } catch (err) {
     // Unique partial index lost the race — another open drawer was just created.
@@ -135,6 +143,13 @@ const addMovement = asyncHandler(async (req, res) => {
 
   session.movements.push({ type, amount: amt, reason: reason || '', by: req.user._id, at: new Date() });
   await session.save();
+  await sendNotification({
+    title: 'Cash movement added',
+    message: `A cash movement was added by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: session.locationId,
+  });
   res.json({ success: true, data: session });
 });
 
@@ -172,6 +187,14 @@ const closeDrawer = asyncHandler(async (req, res) => {
   session.variance = Number((countedCash - expectedCash).toFixed(2));
   session.notes = (req.body.notes || '').toString().slice(0, 500);
   await session.save();
+
+  await sendNotification({
+    title: 'Cash drawer closed',
+    message: `A cash drawer was closed by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: session.locationId,
+  });
 
   res.json({ success: true, data: session });
 });

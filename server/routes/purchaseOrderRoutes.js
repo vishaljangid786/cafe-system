@@ -6,12 +6,14 @@ const {
   receivePurchaseOrder,
   cancelPurchaseOrder,
 } = require('../controllers/purchaseController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 
-router.use(verifyToken, checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'));
+router.use(verifyToken);
 
-router.route('/').get(getPurchaseOrders).post(createPurchaseOrder);
-router.patch('/:id/receive', receivePurchaseOrder);
-router.patch('/:id/cancel', cancelPurchaseOrder);
+router.route('/')
+  .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getPurchaseOrders)
+  .post(checkAction('procurement.add'), createPurchaseOrder);
+router.patch('/:id/receive', checkAction('procurement.modify'), receivePurchaseOrder);
+router.patch('/:id/cancel', checkAction('procurement.modify'), cancelPurchaseOrder);
 
 module.exports = router;

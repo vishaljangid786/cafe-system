@@ -8,7 +8,7 @@ const {
   toggleAvailability,
   updateStock,
 } = require('../controllers/menuItemController');
-const { verifyToken, checkRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const { menuItemSchema, validate } = require('../middlewares/validateMiddleware');
 
@@ -19,7 +19,7 @@ router.use(verifyToken);
 router.route('/')
   .get(getMenuItems)
   .post(
-    checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'),
+    checkAction('menu.add'),
     upload.single('image'),
     ...menuItemSchema,
     validate,
@@ -29,13 +29,13 @@ router.route('/')
 router.route('/:id')
   .get(getMenuItem)
   .put(
-    checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'),
+    checkAction('menu.modify'),
     upload.single('image'),
     ...menuItemSchema,
     validate,
     updateMenuItem
   )
-  .delete(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), deleteMenuItem);
+  .delete(checkAction('menu.delete'), deleteMenuItem);
 
 router.route('/:id/availability')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'chef', 'staff'), toggleAvailability);

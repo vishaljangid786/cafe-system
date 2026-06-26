@@ -23,12 +23,11 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import { useTheme } from '../../../context/ThemeContext';
-import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 
 export default function RevenuePage() {
   const { theme } = useTheme();
-  const { user, selectedLocation, switchLocation, globalSearch } = useAuth();
+  const { user, selectedLocation, globalSearch } = useAuth();
   
   const hasAccess = user?.role === 'super_admin' || user?.permissions?.viewRevenue === true;
 
@@ -184,22 +183,6 @@ export default function RevenuePage() {
             <p className="text-(--color-text-muted) font-medium mt-1">Track your earnings and sales data.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {(user?.role === 'super_admin' || user?.role === 'admin') && (
-              <PremiumSelect
-                icon={MapPin}
-                label="Branch"
-                value={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation || 'all')}
-                onChange={(val) => {
-                  const loc = val === 'all' ? 'all' : locations.find(l => l._id === val);
-                  switchLocation(loc);
-                }}
-                options={[
-                  { label: 'All Branches', value: 'all' },
-                  ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                ]}
-                className="min-w-45 !py-2"
-              />
-            )}
             <UniversalDateFilter
               onFilterChange={({ startDate, endDate }) => {
                 setStartDate(startDate);

@@ -5,9 +5,9 @@ import { blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
-import { 
-  Package, AlertTriangle, Trash2, ShoppingCart, 
-  TrendingDown, MapPin, Search, Filter, 
+import {
+  Package, AlertTriangle, Trash2, ShoppingCart,
+  TrendingDown, Search, Filter,
   RefreshCcw, Plus, ChevronRight, X
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
@@ -17,8 +17,10 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import Modal from '@/app/components/ui/Modal';
 import { Button } from '@/app/components/ui/Button';
 import ExportActions from '@/app/components/ui/ExportActions';
+import useBranchScope from '../../../hooks/useBranchScope';
 
 export default function InventoryDashboard() {
+  const { singleBranchId } = useBranchScope();
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
@@ -26,7 +28,6 @@ export default function InventoryDashboard() {
   const [inventory, setInventory] = useState([]);
   const [locations, setLocations] = useState([]);
   const [ingredients, setIngredients] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState('All');
   const [alerts, setAlerts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +92,7 @@ export default function InventoryDashboard() {
       progress.start();
     }
     try {
-      const branchId = selectedBranch === 'All' ? '' : selectedBranch;
+      const branchId = singleBranchId === 'all' ? '' : singleBranchId;
       const [invRes, alertRes, sugRes] = await Promise.all([
         api.get(branchId ? `/inventory/branch/${branchId}` : `/inventory`),
         api.get(`/inventory/alerts${branchId ? `?branchId=${branchId}` : ''}`),
@@ -118,7 +119,7 @@ export default function InventoryDashboard() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [selectedBranch]);
+  }, [singleBranchId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -207,21 +208,9 @@ export default function InventoryDashboard() {
               <ExportActions
                 data={inventory}
                 columns={columns}
-                filename={`Inventory_${selectedBranch}`}
+                filename={`Inventory_${singleBranchId === 'all' ? 'All' : singleBranchId}`}
                 hasCharts={true}
               />
-              <div className="flex items-center gap-4 bg-(--color-surface) p-2 rounded-lg border border-(--color-border)">
-                <MapPin size={18} className="text-(--color-text-muted) ml-2" />
-                <PremiumSelect 
-                  value={selectedBranch}
-                  onChange={(val) => setSelectedBranch(val)}
-                  options={[
-                    { label: 'All Branches', value: 'All' },
-                    ...locations.map(loc => ({ label: loc.name, value: loc._id }))
-                  ]}
-                  className="min-w-50"
-                />
-              </div>
             </div>
           </div>
         </SlideIn>
@@ -325,7 +314,7 @@ export default function InventoryDashboard() {
                     <button 
                       onClick={() => {
                         setFormData({
-                          branch: selectedBranch === 'All' ? '' : selectedBranch,
+                          branch: singleBranchId === 'all' ? '' : singleBranchId,
                           ingredient: '',
                           quantity: '',
                           costPerUnit: '',

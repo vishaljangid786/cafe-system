@@ -8,6 +8,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/app/context/AuthContext';
+import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
@@ -418,8 +419,9 @@ export default function AdminTablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-border) mx-2 hidden sm:block" />
-            <Button 
-              variant="primary" 
+            {can(user, 'tables.add') && (
+            <Button
+              variant="primary"
               className="!rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary-dark text-[10px] font-bold uppercase tracking-normal"
               icon={Plus}
               onClick={() => {
@@ -432,6 +434,7 @@ export default function AdminTablesPage() {
             >
               Add Table
             </Button>
+            )}
           </div>
         </div>
 
@@ -569,6 +572,7 @@ export default function AdminTablesPage() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end gap-2  transition-opacity">
+                        {can(user, 'tables.modify') && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -577,6 +581,8 @@ export default function AdminTablesPage() {
                         >
                           <Edit3 size={16} />
                         </motion.button>
+                        )}
+                        {can(user, 'tables.delete') && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -585,6 +591,7 @@ export default function AdminTablesPage() {
                         >
                           <Trash2 size={16} />
                         </motion.button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

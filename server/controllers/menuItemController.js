@@ -2,6 +2,7 @@ const MenuItem = require('../models/MenuItem');
 const Location = require('../models/Location');
 const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
+const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
 const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds } = require('../utils/accessControl');
 
@@ -270,6 +271,13 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
 
   await logAction(req, 'MENU_ITEM_CREATE', `Created menu item: ${item.name} (₹${item.price})`);
 
+  await sendNotification({
+    title: 'Menu Item Created',
+    message: `Menu item "${item.name}" was created by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.status(201).json({
     success: true,
     data: item,
@@ -439,6 +447,13 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
 
   await logAction(req, 'MENU_ITEM_UPDATE', `Updated menu item: ${updated.name}`);
 
+  await sendNotification({
+    title: 'Menu Item Updated',
+    message: `Menu item "${updated.name}" was updated by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+  });
+
   res.json({
     success: true,
     data: updated,
@@ -473,6 +488,14 @@ const deleteMenuItem = asyncHandler(async (req, res) => {
 
   await logAction(req, 'MENU_ITEM_DELETE', `Deleted menu item: ${item.name}`);
 
+  await sendNotification({
+    title: 'Menu Item Deleted',
+    message: `Menu item "${item.name}" was deleted by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'high',
+    performedByUser: req.user,
+  });
+
   res.json({
     success: true,
     message: 'Menu item removed successfully',
@@ -502,6 +525,14 @@ const toggleAvailability = asyncHandler(async (req, res) => {
       [{ $set: { isAvailable: { $not: '$isAvailable' } } }],
       { new: true, upsert: true }
     );
+    await sendNotification({
+      title: 'Availability Toggled',
+      message: `Availability for menu item "${item.name}" was toggled by ${req.user.name}.`,
+      type: 'activity',
+      priority: 'low',
+      performedByUser: req.user,
+      locationId: branchStock.branch,
+    });
     return res.json({
       success: true,
       data: branchStock,
@@ -526,6 +557,14 @@ const toggleAvailability = asyncHandler(async (req, res) => {
 
   item.isAvailable = !item.isAvailable;
   await item.save();
+
+  await sendNotification({
+    title: 'Availability Toggled',
+    message: `Availability for menu item "${item.name}" was toggled by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'low',
+    performedByUser: req.user,
+  });
 
   res.json({
     success: true,
@@ -564,7 +603,16 @@ const updateStock = asyncHandler(async (req, res) => {
       { stock: numStock, isAvailable: numStock > 0 },
       { new: true, upsert: true }
     );
-    
+
+    await sendNotification({
+      title: 'Stock Updated',
+      message: `Stock for menu item "${item.name}" was updated by ${req.user.name}.`,
+      type: 'activity',
+      priority: 'low',
+      performedByUser: req.user,
+      locationId: branchId,
+    });
+
     res.json({
       success: true,
       data: branchStock,
@@ -574,6 +622,15 @@ const updateStock = asyncHandler(async (req, res) => {
     // Fallback for global stock if no branchId (deprecated behavior)
     item.stock = numStock;
     await item.save();
+
+    await sendNotification({
+      title: 'Stock Updated',
+      message: `Global stock for menu item "${item.name}" was updated by ${req.user.name}.`,
+      type: 'activity',
+      priority: 'low',
+      performedByUser: req.user,
+    });
+
     res.json({
       success: true,
       data: item,

@@ -8,6 +8,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/app/context/AuthContext';
+import { can } from '@/app/config/actions';
 import TableCard from '../../../components/tables/TableCard';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
@@ -283,20 +284,22 @@ export default function TablesPage() {
             </h1>
             <p className="text-xs text-(--color-text-muted) mt-1 font-medium">Manage tables and orders</p>
           </div>
-          <Button
-            variant="primary"
-            className="!rounded-xl !py-2.5 px-5 shadow-lg  whitespace-nowrap self-start sm:self-auto"
-            icon={Plus}
-            onClick={() => {
-              setIsEditing(false);
-              setNewTableNumber('');
-              setNewTableName('');
-              setNewTableCapacity('1');
-              setShowAddModal(true);
-            }}
-          >
-            Add Table
-          </Button>
+          {can(user, 'tables.add') && (
+            <Button
+              variant="primary"
+              className="!rounded-xl !py-2.5 px-5 shadow-lg  whitespace-nowrap self-start sm:self-auto"
+              icon={Plus}
+              onClick={() => {
+                setIsEditing(false);
+                setNewTableNumber('');
+                setNewTableName('');
+                setNewTableCapacity('1');
+                setShowAddModal(true);
+              }}
+            >
+              Add Table
+            </Button>
+          )}
         </div>
 
         {/* Stats Strip */}
@@ -376,18 +379,22 @@ export default function TablesPage() {
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-2 mt-1 transition-opacity">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
-                          className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-primary/50 hover:bg-primary/5 transition-all text-(--color-text-muted) hover:text-primary"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(table._id); }}
-                          className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-danger/50 hover:bg-danger/5 transition-all text-(--color-text-muted) hover:text-danger"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {can(user, 'tables.modify') && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
+                            className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-primary/50 hover:bg-primary/5 transition-all text-(--color-text-muted) hover:text-primary"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                        )}
+                        {can(user, 'tables.delete') && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(table._id); }}
+                            className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-danger/50 hover:bg-danger/5 transition-all text-(--color-text-muted) hover:text-danger"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

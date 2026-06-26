@@ -10,6 +10,7 @@ import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContaine
 import { motion } from 'framer-motion';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import useBranchScope from '../../../hooks/useBranchScope';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -27,7 +28,6 @@ export default function PayrollRecordsPage() {
   const didInitRef = useRef(false);
   const [locations, setLocations] = useState([]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [selectedLocation, setSelectedLocation] = useState('All');
   const [roleFilter, setRoleFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -40,13 +40,15 @@ export default function PayrollRecordsPage() {
   });
   const router = useRouter();
   const { user: currentUser, selectedCafe, cafes } = useAuth();
+  const { singleBranchId } = useBranchScope();
 
-  // Branches shown in the local filter are scoped to the cafe chosen in the top
-  // navbar (selectedCafe). 'all' = every branch the user can see.
-  const cafeScopedLocations =
-    !selectedCafe || selectedCafe === 'all'
-      ? locations
-      : locations.filter((l) => String(l.cafe?._id || l.cafe) === String(selectedCafe));
+  // The focused branch is driven entirely by the global Navbar filter.
+  // 'All' = all branches (a multi-branch / cafe subset also resolves to 'All'
+  // here; the salary API still scopes it via cafeId and the user's allowed branches).
+  const selectedLocation =
+    singleBranchId === 'all'
+      ? 'All'
+      : (locations.find((l) => l._id === singleBranchId)?.name || 'All');
   const selectedCafeName =
     selectedCafe && selectedCafe !== 'all'
       ? (cafes?.find((c) => c._id === selectedCafe)?.name || 'Selected Cafe')
@@ -71,7 +73,7 @@ export default function PayrollRecordsPage() {
       progress.start();
       try {
         const [salRes, locRes, payRes] = await Promise.all([
-          api.get(`/salary/all?month=${month}&locationId=${selectedLocation === 'All' ? '' : locations.find(l => l.name === selectedLocation)?._id || ''}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
+          api.get(`/salary/all?month=${month}&locationId=${singleBranchId === 'all' ? '' : singleBranchId}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
           api.get('/locations'),
           api.get(`/salary/payroll/history?month=${month}`)
         ]);
@@ -98,14 +100,12 @@ export default function PayrollRecordsPage() {
       }
     };
     fetchData();
-  }, [month, selectedLocation, activeTab, searchQuery, page, selectedCafe]);
+  }, [month, singleBranchId, activeTab, searchQuery, page, selectedCafe]);
 
-  // When the global cafe filter (top navbar) changes, drop any branch selection
-  // that may no longer belong to the new cafe and jump back to the first page.
+  // Reset to the first page whenever the global Navbar scope (cafe/branch) changes.
   useEffect(() => {
-    setSelectedLocation('All');
     setPage(1);
-  }, [selectedCafe]);
+  }, [selectedCafe, singleBranchId]);
 
   const filteredSalaries = salaries; // Now filtered by backend
 
@@ -190,18 +190,6 @@ export default function PayrollRecordsPage() {
                     </div>
                   </div>
 
-                  <PremiumSelect
-                      label="Location"
-                      value={selectedLocation}
-                      onChange={(val) => {
-                        setSelectedLocation(val);
-                        setPage(1);
-                      }}
-                      options={[
-                        { label: selectedCafe && selectedCafe !== 'all' ? 'All Branches in Cafe' : 'All Locations', value: 'All' },
-                        ...cafeScopedLocations.map(l => ({ label: l.name, value: l.name }))
-                      ]}
-                  />
                 </div>
               </div>
 

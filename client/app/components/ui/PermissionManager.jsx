@@ -11,7 +11,9 @@ import { Spinner } from './Spinner';
 import PremiumSelect from './PremiumSelect';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '../../config/pages';
+import { ROLE_DEFAULT_PAGES } from '../../config/pages';
+import { ACTIONS_BY_PAGE, ALL_ACTION_KEYS, can as canAct } from '../../config/actions';
+import PageAccessEditor from './PageAccessEditor';
 
 // Page access is edited page-by-page (PAGE_GROUPS -> allowedPages). What's left
 // here are CAPABILITIES — non-page abilities.
@@ -79,6 +81,7 @@ export default function PermissionManager({ className = "" }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editedPermissions, setEditedPermissions] = useState({});
   const [editedPages, setEditedPages] = useState([]); // allowedPages being edited
+  const [editedActions, setEditedActions] = useState([]); // actionPermissions keys being edited
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -163,6 +166,8 @@ export default function PermissionManager({ className = "" }) {
     // accounts that pre-date the field rather than misleadingly unchecked.
     setEditedPermissions({ ...perms, sendMessages: perms.sendMessages !== false });
     setEditedPages(Array.isArray(user.allowedPages) ? [...user.allowedPages] : []);
+    const ap = user.actionPermissions || {};
+    setEditedActions(Object.keys(ap).filter((k) => ap[k] === true));
     setIsModalOpen(true);
     setError('');
   };
@@ -180,8 +185,22 @@ export default function PermissionManager({ className = "" }) {
 
   const handlePageToggle = (pageKey) => {
     if (!actorCanGrantPage(pageKey)) return;
-    setEditedPages(prev =>
-      prev.includes(pageKey) ? prev.filter(k => k !== pageKey) : [...prev, pageKey]
+    const has = editedPages.includes(pageKey);
+    if (has) {
+      const scope = ACTIONS_BY_PAGE[pageKey];
+      setEditedPages(prev => prev.filter(k => k !== pageKey));
+      if (scope) setEditedActions(acts => acts.filter(k => !k.startsWith(`${scope.scope}.`)));
+    } else {
+      setEditedPages(prev => [...prev, pageKey]);
+    }
+  };
+
+  // You can only grant an action you can perform yourself (super_admin grants any).
+  const actorCanGrantAction = (actionKey) => canAct(currentUser, actionKey);
+  const handleActionToggle = (actionKey) => {
+    if (!actorCanGrantAction(actionKey)) return;
+    setEditedActions(prev =>
+      prev.includes(actionKey) ? prev.filter(k => k !== actionKey) : [...prev, actionKey]
     );
   };
 
@@ -191,6 +210,8 @@ export default function PermissionManager({ className = "" }) {
     if (!selectedUser) return;
     const role = selectedUser.role;
     setEditedPages((ROLE_DEFAULT_PAGES[role] || []).filter(actorCanGrantPage));
+    // Role defaults carry no granular action grants — they're per-user extras.
+    setEditedActions([]);
     const caps = ROLE_DEFAULT_CAPS[role] || {};
     setEditedPermissions(prev => {
       const next = { ...prev };
@@ -227,7 +248,18 @@ export default function PermissionManager({ className = "" }) {
       });
       // Only send pages the actor can grant (server re-validates too).
       const safePages = editedPages.filter(actorCanGrantPage);
-      if (safePages.length === 0 && !Object.values(safePermissions).some(Boolean)) {
+      // Send an explicit true/false for EVERY action key the actor can grant (so
+      // un-ticking actually revokes — the server merges by key). Keys the actor
+      // can't grant are omitted, leaving the user's existing grant untouched.
+      const SCOPE_TO_PAGE = Object.values(ACTIONS_BY_PAGE).reduce((o, s) => { o[s.scope] = s.pageKey; return o; }, {});
+      const safeActions = {};
+      ALL_ACTION_KEYS.forEach((key) => {
+        if (!actorCanGrantAction(key)) return;
+        const pageKey = SCOPE_TO_PAGE[key.split('.')[0]];
+        const pageGranted = pageKey ? safePages.includes(pageKey) : true;
+        safeActions[key] = editedActions.includes(key) && pageGranted;
+      });
+      if (safePages.length === 0 && !Object.values(safePermissions).some(Boolean) && !Object.values(safeActions).some(Boolean)) {
         setError('Select at least one page access or permission. Zero-access members are not allowed.');
         setSaving(false);
         return;
@@ -235,6 +267,7 @@ export default function PermissionManager({ className = "" }) {
       await api.put(`/users/${selectedUser._id}/permissions`, {
         permissions: safePermissions,
         allowedPages: safePages,
+        actionPermissions: safeActions,
       });
       toast.success('Permissions updated');
       setIsModalOpen(false);
@@ -502,41 +535,21 @@ export default function PermissionManager({ className = "" }) {
             </div>
           )}
 
-          {/* Page Access — one toggle per page (what this member can open). */}
+          {/* Page Access + per-page actions (Add / Modify / Delete / Approve). */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Page Access</span>
+            <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Page Access &amp; Actions</span>
             <button type="button" onClick={resetToRoleDefaults} className="text-[11px] font-bold text-primary hover:underline">
               Reset to role defaults
             </button>
           </div>
-          <div className="space-y-4">
-              {Object.entries(PAGE_GROUPS).map(([group, pages]) => (
-                <div key={group}>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">{group}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    {pages.map(({ key: pk, label: pl }) => {
-                      const isChecked = editedPages.includes(pk);
-                      const canGrant = actorCanGrantPage(pk);
-                      return (
-                        <div
-                          key={pk}
-                          onClick={() => canGrant && handlePageToggle(pk)}
-                          className={`p-3 rounded-lg border transition-colors flex items-center justify-between cursor-pointer group/item ${isChecked ? 'border-primary bg-(--color-primary-soft)' : 'border-(--color-border) hover:border-(--color-border-strong) hover:bg-(--color-surface-soft)'} ${!canGrant ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-medium text-(--color-text-primary)">{pl}</span>
-                            {!canGrant && <span className="text-xs text-danger flex items-center gap-1"><X size={10} /> Not allowed</span>}
-                          </div>
-                          <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${isChecked ? 'bg-primary border-primary text-(--color-on-primary)' : 'border-(--color-border-strong) group-hover/item:border-primary'}`}>
-                            {isChecked && <Check size={14} strokeWidth={3} />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <PageAccessEditor
+            selectedPages={editedPages}
+            onTogglePage={handlePageToggle}
+            canGrantPage={actorCanGrantPage}
+            selectedActions={editedActions}
+            onToggleAction={handleActionToggle}
+            canGrantAction={actorCanGrantAction}
+          />
 
           <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) block pt-2">Permissions</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

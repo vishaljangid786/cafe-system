@@ -341,6 +341,15 @@ const checkIn = asyncHandler(async (req, res) => {
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
 
+  await sendNotification({
+    title: 'Checked in',
+    message: `A shift was checked in by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'low',
+    performedByUser: req.user,
+    locationId,
+  });
+
   res.json({ success: true, data: attendance, late: isLate });
 });
 
@@ -370,6 +379,15 @@ const checkOut = asyncHandler(async (req, res) => {
     attendance.status = 'half-day';
   }
   await attendance.save();
+
+  await sendNotification({
+    title: 'Checked out',
+    message: `A shift was checked out by ${req.user.name}.`,
+    type: 'activity',
+    priority: 'low',
+    performedByUser: req.user,
+    locationId: attendance.locationId,
+  });
 
   res.json({ success: true, data: attendance });
 });

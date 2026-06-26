@@ -7,11 +7,12 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, ShoppingBag, Award, XCircle, CheckCircle2, Zap,
-  Filter, Calendar, Bookmark, Building, Download, Printer, User
+  Filter, Calendar, Bookmark, Download, Printer, User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
+import useBranchScope from '../hooks/useBranchScope';
 
 const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -25,23 +26,13 @@ export default function StaffReportsAnalytics({ user }) {
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-  const [branches, setBranches] = useState([]);
+  const { singleBranchId } = useBranchScope();
   const [filters, setFilters] = useState({
     staffName: '',
-    branch: '',
     date: '',
     month: '',
     financialYear: ''
   });
-
-  const fetchBranches = async () => {
-    try {
-      const res = await api.get('/locations');
-      setBranches(res.data.data || []);
-    } catch (error) {
-      console.error('Failed to load branches');
-    }
-  };
 
   const fetchReports = async () => {
     const isInitial = !didInitRef.current;
@@ -51,7 +42,7 @@ export default function StaffReportsAnalytics({ user }) {
     try {
       const params = {};
       if (filters.staffName) params.staffName = filters.staffName;
-      if (filters.branch) params.branch = filters.branch;
+      if (singleBranchId !== 'all') params.branch = singleBranchId;
       if (filters.date) params.date = filters.date;
       if (filters.month) params.month = filters.month;
       if (filters.financialYear) params.financialYear = filters.financialYear;
@@ -70,19 +61,11 @@ export default function StaffReportsAnalytics({ user }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchBranches();
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
       fetchReports();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filters]);
+  }, [filters, singleBranchId]);
 
   const handleFilterChange = (key, value) => {
     // If setting one time filter, clear the others
@@ -98,7 +81,6 @@ export default function StaffReportsAnalytics({ user }) {
   const resetFilters = () => {
     setFilters({
       staffName: '',
-      branch: '',
       date: '',
       month: '',
       financialYear: ''
@@ -204,7 +186,7 @@ export default function StaffReportsAnalytics({ user }) {
           </button>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {/* Staff Name */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
@@ -218,24 +200,6 @@ export default function StaffReportsAnalytics({ user }) {
               className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
-
-          {/* Branch (Hidden for Branch Admin) */}
-          {user?.role !== 'branch_admin' && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
-                <Building size={12} /> Branch
-              </label>
-              <PremiumSelect
-                value={filters.branch}
-                onChange={(val) => handleFilterChange('branch', val)}
-                options={[
-                  { label: 'All Branches', value: '' },
-                  ...branches.map(loc => ({ label: loc.name, value: loc._id }))
-                ]}
-                className="w-full"
-              />
-            </div>
-          )}
 
           {/* Exact Date */}
           <div className="space-y-2">

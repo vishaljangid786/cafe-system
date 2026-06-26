@@ -255,15 +255,10 @@ const approveTransaction = asyncHandler(async (req, res) => {
     throw new Error('You cannot approve a transaction you created');
   }
 
-  // IDOR Mitigation: Branch/Location Admin can only approve transactions for their own branch
+  // IDOR Mitigation: anyone except super_admin (including a user granted
+  // 'revenue.approve') may only approve transactions within their own branch scope.
   const transactionLocationId = transaction.locationId?._id || transaction.locationId;
-  if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, transactionLocationId)) {
-    res.status(403);
-    throw new Error('You do not have permission to approve transactions for another branch');
-  }
-
-  // Admin: Only if they have permission for this location
-  if (req.user.role === 'admin' && !canAccessLocation(req.user, transactionLocationId)) {
+  if (req.user.role !== 'super_admin' && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to approve transactions for this branch');
   }
@@ -323,15 +318,10 @@ const rejectTransaction = asyncHandler(async (req, res) => {
     throw new Error('You cannot reject a transaction you created');
   }
 
-  // IDOR Mitigation: Branch/Location Admin can only reject transactions for their own branch
+  // IDOR Mitigation: anyone except super_admin (including a 'revenue.approve'
+  // grantee) may only reject transactions within their own branch scope.
   const transactionLocationId = transaction.locationId?._id || transaction.locationId;
-  if (['branch_admin', 'location_admin'].includes(req.user.role) && !canAccessLocation(req.user, transactionLocationId)) {
-    res.status(403);
-    throw new Error('You do not have permission to reject transactions for another branch');
-  }
-
-  // Admin: Only if they have permission for this location
-  if (req.user.role === 'admin' && !canAccessLocation(req.user, transactionLocationId)) {
+  if (req.user.role !== 'super_admin' && !canAccessLocation(req.user, transactionLocationId)) {
     res.status(403);
     throw new Error('You do not have permission to reject transactions for this branch');
   }

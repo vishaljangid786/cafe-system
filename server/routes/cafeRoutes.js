@@ -10,7 +10,7 @@ const {
   deleteCafe,
   uploadCafeLogo,
 } = require('../controllers/cafeController');
-const { verifyToken, checkRoles, checkRoleOrPermission } = require('../middlewares/authMiddleware');
+const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validatorMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const { createCafeValidator, updateCafeValidator, addAdminValidator } = require('../validators/cafeValidator');
@@ -38,13 +38,13 @@ router.post(
 router
   .route('/')
   .get(getCafes) // visibility scoped inside the controller (super_admin: all; others: own)
-  .post(checkRoles('super_admin'), createCafeValidator, validate, createCafe);
+  .post(checkAction('cafes.add'), createCafeValidator, validate, createCafe);
 
 router
   .route('/:id')
   .get(getCafe)
   .patch(updateCafeValidator, validate, updateCafe) // access checked in controller (super_admin or cafe admin)
-  .delete(checkRoles('super_admin'), deleteCafe);
+  .delete(checkAction('cafes.delete'), deleteCafe);
 
 router.post('/:id/admins', checkRoles('super_admin'), addAdminValidator, validate, addCafeAdmin);
 router.delete('/:id/admins/:userId', checkRoles('super_admin'), removeCafeAdmin);

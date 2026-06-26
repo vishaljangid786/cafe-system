@@ -163,6 +163,15 @@ const cancelLeaveRequest = asyncHandler(async (req, res) => {
     throw new Error('Only a pending request can be cancelled');
   }
   await leave.deleteOne();
+
+  await sendNotification({
+    title: 'Leave request cancelled',
+    message: `A leave request was cancelled by ${req.user.name}.`,
+    type: 'activity',
+    performedByUser: req.user,
+    locationId: req.user.assignedLocation,
+  });
+
   res.json({ success: true });
 });
 
