@@ -183,6 +183,10 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, [authLocation, timeFilter, customDates, selectedLocationIds]);
 
+  // On first open show the branded full loader (no skeleton). Skeletons only ever
+  // appear for a filter-triggered refetch on an already-loaded page.
+  if (loading) return <LoadingScreen fullScreen={false} />;
+
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
@@ -256,7 +260,7 @@ export default function AdminDashboard() {
         </motion.div>
       )}
 
-      {(loading || refetching) ? (
+      {refetching ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
