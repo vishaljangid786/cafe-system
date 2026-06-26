@@ -148,7 +148,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     } else if (creator.role === 'admin') {
       if (['super_admin', 'admin'].includes(role)) {
         res.status(403);
-        throw new Error('Admins can only register Branch Admins and Staff');
+        throw new Error('Admins can only register Branch Admins, Location Admins, Staff or Chefs');
       }
       // Admin can only assign locations they have permission for
       if (assignedLocation && !canAccessLocation(creator, assignedLocation)) {
@@ -257,10 +257,9 @@ const registerUser = asyncHandler(async (req, res, next) => {
       finalPages = sanitizePages(reqPages).filter((k) => actorIsSuperPg || actorPages.has(k));
     }
   }
-  // No zero-access admin-tier members (Staff/Chef work from their own fixed menu).
-  if (['admin', 'branch_admin', 'location_admin'].includes(finalRole) && finalPages.length === 0) {
+  if (finalPages.length === 0 && !Object.values(finalPermissions).some(Boolean)) {
     res.status(400);
-    throw new Error('A member must be granted access to at least one page.');
+    throw new Error('A member must be granted at least one page access or permission.');
   }
   // Derive the coarse permissions the granted pages need to FUNCTION (each page's
   // `grants`) and merge them in, so the data APIs (still gated by the legacy keys)
@@ -319,6 +318,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
           assignedLocation: user.assignedLocation,
           accessibleLocations: user.accessibleLocations,
           permissions: user.permissions,
+          allowedPages: user.allowedPages || [],
         },
       });
     } else {

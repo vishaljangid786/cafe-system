@@ -15,17 +15,58 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Role-locked pages that don't appear in the main page-by-page nav (which is built
-// from allowedPages via canView). For a NON-default role that has been granted one
-// of these (allowedPages contains its pageKey), we surface it under "Granted Access".
-// `defaultRoles` = roles that already see the page through their normal menu.
-const ROLE_LOCKED_PAGES = [
-  { name: 'Users',         href: '/dashboard/admin/users',      icon: Users,       pageKey: 'page_users',       defaultRoles: ['super_admin'] },
-  { name: 'Branches',      href: '/dashboard/admin/locations',  icon: MapPin,      pageKey: 'page_branches',    defaultRoles: ['super_admin', 'admin'] },
-  { name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity,    pageKey: 'page_auditlogs',   defaultRoles: ['super_admin'] },
-  { name: 'Login As Staff',href: '/dashboard/admin/impersonate',icon: ShieldAlert, pageKey: 'page_impersonate', defaultRoles: ['super_admin'] },
-  { name: 'Admin Center',  href: '/dashboard/super-admin',      icon: Zap,         pageKey: 'page_admincenter', defaultRoles: ['super_admin'] },
+const GRANTABLE_PAGES = [
+  { name: 'Overview', pageKey: 'page_overview', href: '/dashboard/admin', icon: LayoutDashboard },
+  { name: 'Branch Presence', pageKey: 'page_branchpresence', href: '/dashboard/admin/branch-presence', icon: ShieldCheck },
+  { name: 'Users', pageKey: 'page_users', href: '/dashboard/admin/users', icon: Users },
+  { name: 'Staff', pageKey: 'page_staff', href: '/dashboard/admin/staff', icon: Users },
+  { name: 'Attendance', pageKey: 'page_attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck },
+  { name: 'Salaries', pageKey: 'page_salaries', href: '/dashboard/admin/payroll', icon: Wallet },
+  { name: 'All Orders', pageKey: 'page_orders', href: '/dashboard/admin/orders', icon: Receipt },
+  { name: 'Reservations', pageKey: 'page_reservations', href: '/dashboard/reservations', icon: CalendarDays },
+  { name: 'Tables', pageKey: 'page_tables', href: '/dashboard/admin/tables', icon: Coffee },
+  { name: 'Menu', pageKey: 'page_menu', href: '/dashboard/admin/menu', icon: UtensilsCrossed },
+  { name: 'Inventory', pageKey: 'page_inventory', href: '/dashboard/admin/inventory', icon: Package },
+  { name: 'Procurement', pageKey: 'page_procurement', href: '/dashboard/admin/procurement', icon: Truck },
+  { name: 'Cash Drawer', pageKey: 'page_cashdrawer', href: '/dashboard/admin/cash-drawer', icon: Wallet },
+  { name: 'Waitlist', pageKey: 'page_waitlist', href: '/dashboard/admin/waitlist', icon: Users },
+  { name: 'Offers', pageKey: 'page_coupons', href: '/dashboard/admin/coupons', icon: Tag },
+  { name: 'Gift Cards', pageKey: 'page_giftcards', href: '/dashboard/admin/gift-cards', icon: Gift },
+  { name: 'Revenue', pageKey: 'page_revenue', href: '/dashboard/admin/revenue', icon: TrendingUp },
+  { name: 'Expenses', pageKey: 'page_expenses', href: '/dashboard/admin/expenses', icon: Receipt },
+  { name: 'Order Reports', pageKey: 'page_orderreports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp },
+  { name: 'Staff Reports', pageKey: 'page_staffreports', href: '/dashboard/admin/staff-reports', icon: TrendingUp },
+  { name: 'Feedback', pageKey: 'page_feedback', href: '/dashboard/admin/feedback', icon: Star },
+  { name: 'Customers & CRM', pageKey: 'page_customers', href: '/dashboard/admin/customers', icon: Crown },
+  { name: 'Branch Compare', pageKey: 'page_branchcompare', href: '/dashboard/admin/location-comparison', icon: Target },
+  { name: 'Payment Insights', pageKey: 'page_paymentinsights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard },
+  { name: 'Alerts Overview', pageKey: 'page_alerts', href: '/dashboard/admin/command-center', icon: AlertCircle },
+  { name: 'Sales Forecast', pageKey: 'page_forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp },
+  { name: 'Export Center', pageKey: 'page_exports', href: '/dashboard/admin/exports', icon: Download },
+  { name: 'My Performance', pageKey: 'page_myperformance', href: '/dashboard/staff/performance', icon: TrendingUp },
+  { name: 'Work History', pageKey: 'page_workhistory', href: '/dashboard/staff/work-history', icon: History },
+  { name: 'My Attendance', pageKey: 'page_myattendance', href: '/dashboard/staff/attendance', icon: Calendar },
+  { name: 'Add Member', pageKey: 'page_addmember', href: '/dashboard/add-member', icon: UserPlus },
+  { name: 'Permissions', pageKey: 'page_permissions', href: '/dashboard/admin/permissions', icon: ShieldCheck },
+  { name: 'Settings', pageKey: 'page_settings', href: '/dashboard/admin/settings', icon: Settings },
+  { name: 'Cafes', pageKey: 'page_cafes', href: '/dashboard/admin/cafes', icon: Store },
+  { name: 'Branches', pageKey: 'page_branches', href: '/dashboard/admin/locations', icon: MapPin },
+  { name: 'Security Logs', pageKey: 'page_auditlogs', href: '/dashboard/admin/audit-logs', icon: Activity },
+  { name: 'Login As Staff', pageKey: 'page_impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert },
+  { name: 'Admin Center', pageKey: 'page_admincenter', href: '/dashboard/super-admin', icon: Zap },
 ];
+
+const ROLE_LOCKED_PAGE_KEYS = new Set([
+  'page_addmember',
+  'page_permissions',
+  'page_settings',
+  'page_cafes',
+  'page_users',
+  'page_branches',
+  'page_auditlogs',
+  'page_impersonate',
+  'page_admincenter',
+]);
 
 const getBranchId = (branch) => {
   if (!branch) return '';
@@ -90,62 +131,74 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     // Main Group
     const mainItems = [];
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
-      mainItems.push({ 
-        name: 'Overview', 
-        href: roleBasePath,
-        icon: LayoutDashboard 
-      });
-      mainItems.push({ 
-        name: 'Branch Presence', 
-        href: '/dashboard/admin/branch-presence', 
-        icon: ShieldCheck 
-      });
-      if (role === 'super_admin') {
-        mainItems.push({ name: 'Admin Center', href: '/dashboard/super-admin', icon: Zap });
+      if (canView('page_overview')) {
+        mainItems.push({
+          name: 'Overview',
+          pageKey: 'page_overview',
+          href: roleBasePath,
+          icon: LayoutDashboard
+        });
+      }
+      if (canView('page_branchpresence')) {
+        mainItems.push({
+          name: 'Branch Presence',
+          pageKey: 'page_branchpresence',
+          href: '/dashboard/admin/branch-presence',
+          icon: ShieldCheck
+        });
+      }
+      if (canView('page_admincenter')) {
+        mainItems.push({ name: 'Admin Center', pageKey: 'page_admincenter', href: '/dashboard/super-admin', icon: Zap });
       }
     } else if (role === 'chef') {
-      mainItems.push({ name: 'Kitchen', href: '/dashboard/chef', icon: UtensilsCrossed });
+      if (canView('page_orders')) mainItems.push({ name: 'Kitchen', pageKey: 'page_orders', href: '/dashboard/chef', icon: UtensilsCrossed });
     } else {
-      mainItems.push({ name: 'My Dashboard', href: '/dashboard/staff', icon: LayoutDashboard });
-      mainItems.push({ name: 'New Orders', href: '/dashboard/staff/orders', icon: Receipt });
+      if (canView('page_overview')) mainItems.push({ name: 'My Dashboard', pageKey: 'page_overview', href: '/dashboard/staff', icon: LayoutDashboard });
+      if (canView('page_orders')) mainItems.push({ name: 'New Orders', pageKey: 'page_orders', href: '/dashboard/staff/orders', icon: Receipt });
     }
-    groupsList.push({ title: 'Main', items: mainItems });
+    if (mainItems.length > 0) groupsList.push({ title: 'Main', items: mainItems });
 
     // Administration Group
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const adminItems = [];
 
       // Add Member -> in-dashboard single-page member form
-      if (role !== 'location_admin') {
-        adminItems.push({ name: 'Add Member', href: '/dashboard/add-member', icon: UserPlus });
+      if (role !== 'location_admin' && canView('page_addmember')) {
+        adminItems.push({ name: 'Add Member', pageKey: 'page_addmember', href: '/dashboard/add-member', icon: UserPlus });
       }
 
-      if (role === 'super_admin') {
-        adminItems.push({ name: 'Users', href: '/dashboard/admin/users', icon: Users });
-        adminItems.push({ name: 'Security Logs', href: '/dashboard/admin/audit-logs', icon: Activity });
+      if (canView('page_users')) {
+        adminItems.push({ name: 'Users', pageKey: 'page_users', href: '/dashboard/admin/users', icon: Users });
+      }
+      if (canView('page_auditlogs')) {
+        adminItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: '/dashboard/admin/audit-logs', icon: Activity });
       }
 
-      if (role === 'super_admin') {
-        adminItems.push({ name: 'Login As Staff', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
+      if (canView('page_impersonate')) {
+        adminItems.push({ name: 'Login As Staff', pageKey: 'page_impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
       }
 
-      if (role === 'super_admin' || role === 'admin') {
+      if (canView('page_cafes')) {
         // Cafes (brands) sit ABOVE branches. Super-admins manage every cafe;
         // admins manage the branding of the cafe(s) they own.
-        adminItems.push({ name: 'Cafes', href: '/dashboard/admin/cafes', icon: Store });
-        adminItems.push({ name: 'Branches', href: '/dashboard/admin/locations', icon: MapPin });
+        adminItems.push({ name: 'Cafes', pageKey: 'page_cafes', href: '/dashboard/admin/cafes', icon: Store });
+      }
+      if (canView('page_branches')) {
+        adminItems.push({ name: 'Branches', pageKey: 'page_branches', href: '/dashboard/admin/locations', icon: MapPin });
       }
 
-      if (canView('page_staff')) adminItems.push({ name: 'Staff', href: `${roleBasePath}/staff`, icon: Users });
-      if (canView('page_attendance')) adminItems.push({ name: 'Attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
-      if (canView('page_salaries')) adminItems.push({ name: 'Salaries', href: getSalaryPath(role), icon: Wallet });
+      if (canView('page_staff')) adminItems.push({ name: 'Staff', pageKey: 'page_staff', href: `${roleBasePath}/staff`, icon: Users });
+      if (canView('page_attendance')) adminItems.push({ name: 'Attendance', pageKey: 'page_attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
+      if (canView('page_salaries')) adminItems.push({ name: 'Salaries', pageKey: 'page_salaries', href: getSalaryPath(role), icon: Wallet });
 
-      if (role !== 'location_admin') {
-        adminItems.push({ name: 'Permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
+      if (role !== 'location_admin' && canView('page_permissions')) {
+        adminItems.push({ name: 'Permissions', pageKey: 'page_permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
       }
 
       // Settings — tax/billing/payroll/loyalty config (page itself scopes branch access).
-      adminItems.push({ name: 'Settings', href: '/dashboard/admin/settings', icon: Settings });
+      if (canView('page_settings')) {
+        adminItems.push({ name: 'Settings', pageKey: 'page_settings', href: '/dashboard/admin/settings', icon: Settings });
+      }
 
       if (adminItems.length > 0) {
         groupsList.push({ title: 'Administration', items: adminItems });
@@ -156,19 +209,16 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const opsItems = [];
 
-      if (canView('page_orders')) opsItems.push({ name: 'All Orders', href: '/dashboard/admin/orders', icon: Receipt });
-      // Reservations is a shared page (staff use it too), so it rides with All Orders
-      // rather than being a separately-restrictable page.
-      if (canView('page_orders')) opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      if (canView('page_tables')) opsItems.push({ name: 'Tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
-      if (canView('page_menu')) opsItems.push({ name: 'Menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
-      if (canView('page_inventory') && role !== 'location_admin') opsItems.push({ name: 'Inventory', href: '/dashboard/admin/inventory', icon: Package });
-      if (canView('page_procurement')) opsItems.push({ name: 'Procurement', href: '/dashboard/admin/procurement', icon: Truck });
-      if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
-      if (canView('page_waitlist')) opsItems.push({ name: 'Waitlist', href: '/dashboard/admin/waitlist', icon: Users });
-      if (canView('page_coupons')) opsItems.push({ name: 'Offers', href: '/dashboard/admin/coupons', icon: Tag });
-
-      opsItems.push({ name: 'Gift Cards', href: '/dashboard/admin/gift-cards', icon: Gift });
+      if (canView('page_orders')) opsItems.push({ name: 'All Orders', pageKey: 'page_orders', href: '/dashboard/admin/orders', icon: Receipt });
+      if (canView('page_reservations')) opsItems.push({ name: 'Reservations', pageKey: 'page_reservations', href: '/dashboard/reservations', icon: CalendarDays });
+      if (canView('page_tables')) opsItems.push({ name: 'Tables', pageKey: 'page_tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
+      if (canView('page_menu')) opsItems.push({ name: 'Menu', pageKey: 'page_menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
+      if (canView('page_inventory') && role !== 'location_admin') opsItems.push({ name: 'Inventory', pageKey: 'page_inventory', href: '/dashboard/admin/inventory', icon: Package });
+      if (canView('page_procurement')) opsItems.push({ name: 'Procurement', pageKey: 'page_procurement', href: '/dashboard/admin/procurement', icon: Truck });
+      if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', pageKey: 'page_cashdrawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
+      if (canView('page_waitlist')) opsItems.push({ name: 'Waitlist', pageKey: 'page_waitlist', href: '/dashboard/admin/waitlist', icon: Users });
+      if (canView('page_coupons')) opsItems.push({ name: 'Offers', pageKey: 'page_coupons', href: '/dashboard/admin/coupons', icon: Tag });
+      if (canView('page_giftcards')) opsItems.push({ name: 'Gift Cards', pageKey: 'page_giftcards', href: '/dashboard/admin/gift-cards', icon: Gift });
 
       if (opsItems.length > 0) {
         groupsList.push({ title: 'Operations', items: opsItems });
@@ -176,62 +226,69 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     } else {
       const opsItems = [];
       if (role !== 'chef') {
-        opsItems.push({ name: 'Tables', href: '/dashboard/staff/tables', icon: Coffee });
-        opsItems.push({ name: 'Menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
-        opsItems.push({ name: 'Reservations', href: '/dashboard/reservations', icon: CalendarDays });
-        opsItems.push({ name: 'Cash Drawer', href: '/dashboard/staff/cash-drawer', icon: Wallet });
-        opsItems.push({ name: 'Waitlist', href: '/dashboard/staff/waitlist', icon: Users });
+        if (canView('page_tables')) opsItems.push({ name: 'Tables', pageKey: 'page_tables', href: '/dashboard/staff/tables', icon: Coffee });
+        if (canView('page_menu')) opsItems.push({ name: 'Menu', pageKey: 'page_menu', href: '/dashboard/staff/menu', icon: UtensilsCrossed });
+        if (canView('page_reservations')) opsItems.push({ name: 'Reservations', pageKey: 'page_reservations', href: '/dashboard/reservations', icon: CalendarDays });
+        if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', pageKey: 'page_cashdrawer', href: '/dashboard/staff/cash-drawer', icon: Wallet });
+        if (canView('page_waitlist')) opsItems.push({ name: 'Waitlist', pageKey: 'page_waitlist', href: '/dashboard/staff/waitlist', icon: Users });
       } else {
-        opsItems.push({ name: 'Branch Menu', href: '/dashboard/staff/menu', icon: Coffee });
+        if (canView('page_menu')) opsItems.push({ name: 'Branch Menu', pageKey: 'page_menu', href: '/dashboard/staff/menu', icon: Coffee });
       }
-      groupsList.push({ title: 'Operations', items: opsItems });
+      if (opsItems.length > 0) groupsList.push({ title: 'Operations', items: opsItems });
     }
 
     // Analytics Group
     if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
       const analyticsItems = [];
 
-      if (canView('page_revenue')) analyticsItems.push({ name: 'Revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
-      if (canView('page_expenses')) analyticsItems.push({ name: 'Expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
-      if (canView('page_orderreports')) analyticsItems.push({ name: 'Order Reports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      if (canView('page_branchcompare') && hasMultipleComparableBranches) analyticsItems.push({ name: 'Branch Compare', href: '/dashboard/admin/location-comparison', icon: Target });
-      if (canView('page_staffreports')) analyticsItems.push({ name: 'Staff Reports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
-      if (canView('page_feedback')) analyticsItems.push({ name: 'Feedback', href: '/dashboard/admin/feedback', icon: Star });
-      if (canView('page_paymentinsights')) analyticsItems.push({ name: 'Payment Insights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
-      if (canView('page_alerts')) analyticsItems.push({ name: 'Alerts Overview', href: '/dashboard/admin/command-center', icon: AlertCircle });
-      if (canView('page_forecast')) analyticsItems.push({ name: 'Sales Forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
-      if (canView('page_exports')) analyticsItems.push({ name: 'Export Center', href: '/dashboard/admin/exports', icon: Download });
+      if (canView('page_revenue')) analyticsItems.push({ name: 'Revenue', pageKey: 'page_revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
+      if (canView('page_expenses')) analyticsItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
+      if (canView('page_orderreports')) analyticsItems.push({ name: 'Order Reports', pageKey: 'page_orderreports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+      if (canView('page_branchcompare') && hasMultipleComparableBranches) analyticsItems.push({ name: 'Branch Compare', pageKey: 'page_branchcompare', href: '/dashboard/admin/location-comparison', icon: Target });
+      if (canView('page_staffreports')) analyticsItems.push({ name: 'Staff Reports', pageKey: 'page_staffreports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
+      if (canView('page_feedback')) analyticsItems.push({ name: 'Feedback', pageKey: 'page_feedback', href: '/dashboard/admin/feedback', icon: Star });
+      if (canView('page_paymentinsights')) analyticsItems.push({ name: 'Payment Insights', pageKey: 'page_paymentinsights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+      if (canView('page_alerts')) analyticsItems.push({ name: 'Alerts Overview', pageKey: 'page_alerts', href: '/dashboard/admin/command-center', icon: AlertCircle });
+      if (canView('page_forecast')) analyticsItems.push({ name: 'Sales Forecast', pageKey: 'page_forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+      if (canView('page_exports')) analyticsItems.push({ name: 'Export Center', pageKey: 'page_exports', href: '/dashboard/admin/exports', icon: Download });
 
       if (analyticsItems.length > 0) {
         groupsList.push({ title: 'Analytics', items: analyticsItems });
       }
     } else {
-      const performanceItems = [
-        { name: 'My Performance', href: '/dashboard/staff/performance', icon: TrendingUp },
-        { name: 'Work History', href: '/dashboard/staff/work-history', icon: History },
-        { name: 'My Attendance', href: '/dashboard/staff/attendance', icon: Calendar },
-      ];
-      if (role === 'chef') {
-        performanceItems.push({ name: 'Expenses', href: '/dashboard/chef/expenses', icon: Receipt });
-      } else {
-        performanceItems.push({ name: 'Expenses', href: '/dashboard/staff/expenses', icon: Receipt });
+      const performanceItems = [];
+      if (canView('page_myperformance')) {
+        performanceItems.push({ name: 'My Performance', pageKey: 'page_myperformance', href: role === 'chef' ? '/dashboard/chef/performance' : '/dashboard/staff/performance', icon: TrendingUp });
       }
-      groupsList.push({ title: 'Performance', items: performanceItems });
+      if (role !== 'chef' && canView('page_workhistory')) {
+        performanceItems.push({ name: 'Work History', pageKey: 'page_workhistory', href: '/dashboard/staff/work-history', icon: History });
+      }
+      if (role !== 'chef' && canView('page_myattendance')) {
+        performanceItems.push({ name: 'My Attendance', pageKey: 'page_myattendance', href: '/dashboard/staff/attendance', icon: Calendar });
+      }
+      if (canView('page_expenses')) {
+        performanceItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: role === 'chef' ? '/dashboard/chef/expenses' : '/dashboard/staff/expenses', icon: Receipt });
+      }
+      if (performanceItems.length > 0) groupsList.push({ title: 'Performance', items: performanceItems });
     }
 
     // Loyalty Group
     if (canView('page_customers')) {
       groupsList.push({
         title: 'Rewards',
-        items: [{ name: 'Customers & CRM', href: '/dashboard/admin/customers', icon: Crown }]
+        items: [{ name: 'Customers & CRM', pageKey: 'page_customers', href: '/dashboard/admin/customers', icon: Crown }]
       });
     }
 
-    // Granted Access: role-locked pages delegated to this user via allowedPages
-    // that their role wouldn't normally surface in the menu.
-    const grantedItems = ROLE_LOCKED_PAGES
-      .filter(p => !isSuper && !p.defaultRoles.includes(role) && canView(p.pageKey))
-      .map(({ name, href, icon }) => ({ name, href, icon }));
+    const visibleHrefs = new Set(groupsList.flatMap(group => group.items.map(item => item.href)));
+    const visiblePageKeys = new Set(groupsList.flatMap(group => group.items.map(item => item.pageKey).filter(Boolean)));
+    const grantableForRole = ['staff', 'chef'].includes(role)
+      ? GRANTABLE_PAGES
+      : GRANTABLE_PAGES.filter(p => ROLE_LOCKED_PAGE_KEYS.has(p.pageKey));
+    const grantedItems = GRANTABLE_PAGES
+      .filter(p => grantableForRole.includes(p))
+      .filter(p => !isSuper && canView(p.pageKey) && !visiblePageKeys.has(p.pageKey) && !visibleHrefs.has(p.href))
+      .map(({ name, pageKey, href, icon }) => ({ name, pageKey, href, icon }));
     if (grantedItems.length > 0) {
       groupsList.push({ title: 'Granted Access', items: grantedItems });
     }

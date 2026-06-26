@@ -5,7 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { digitsOnly, sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
-  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check,
+  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -70,9 +70,15 @@ const inputCls = 'w-full px-5 py-3.5 rounded-xl border border-(--color-border) b
 const labelCls = 'block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1';
 
 // Full new-admin form — same fields + permissions + identity docs as Add-Member.
-function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, uploading }) {
+// `only` renders a slice of the form so the create wizard can split it across steps:
+//   'profile'  → identity + address    'permsdocs' → permissions + documents
+//   undefined  → everything (used by the edit-mode "Add an admin" block).
+function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, uploading, only }) {
+  const showProfile = !only || only === 'profile';
+  const showPermsDocs = !only || only === 'permsdocs';
   return (
     <div className="space-y-6">
+      {showProfile && (<>
       {/* Identity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', sanitizeName(e.target.value))} placeholder="Rahul Sharma" /></div>
@@ -100,7 +106,9 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
         </div>
         <div><label className={labelCls}>Monthly Salary (₹)</label><input type="number" min="0" onKeyDown={blockNegative} className={inputCls} value={admin.monthlySalary} onChange={(e) => setAdmin('monthlySalary', e.target.value)} placeholder="60000" /></div>
       </div>
+      </>)}
 
+      {showPermsDocs && (<>
       {/* Permissions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -143,6 +151,31 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
           </label>
         </div>
       </div>
+      </>)}
+    </div>
+  );
+}
+
+// Compact step indicator for the create wizard.
+function Stepper({ steps, current }) {
+  return (
+    <div className="flex items-center gap-2">
+      {steps.map((s, i) => {
+        const done = i < current;
+        const active = i === current;
+        const Icon = s.icon;
+        return (
+          <div key={s.key} className="flex items-center gap-2 min-w-0">
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${active ? 'border-primary/40 bg-primary/10 text-primary' : done ? 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-secondary)' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+              <span className={`h-5 w-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${active || done ? 'bg-primary text-white' : 'bg-(--color-border) text-(--color-text-muted)'}`}>
+                {done ? <Check size={12} strokeWidth={3} /> : i + 1}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-normal hidden sm:inline truncate"><Icon size={11} className="inline mr-1" />{s.title}</span>
+            </div>
+            {i < steps.length - 1 && <span className={`h-px w-3 sm:w-5 shrink-0 ${done ? 'bg-primary/50' : 'bg-(--color-border)'}`} />}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -161,6 +194,7 @@ export default function CafesPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingImg, setUploadingImg] = useState({ aadhar: false, profile: false });
+  const [step, setStep] = useState(0); // create-wizard step index
 
   // Gate: only super_admin and admins (cafe owners) may open this page.
   useEffect(() => {
@@ -205,6 +239,7 @@ export default function CafesPage() {
 
   const openCreate = () => {
     setEditing(null);
+    setStep(0);
     setForm({ ...EMPTY_FORM, admin: { ...EMPTY_ADMIN }, adminPermissions: adminPerms() });
     setShowModal(true);
   };
@@ -284,8 +319,64 @@ export default function CafesPage() {
 
   const buildAdminPayload = () => ({ ...form.admin, permissions: form.adminPermissions });
 
+  // --- Create wizard ---------------------------------------------------------
+  // Steps are derived from adminMode: the two admin sub-steps only exist when the
+  // super admin chooses to create a brand-new admin account.
+  const createSteps = [
+    { key: 'brand', title: 'Brand', icon: Store },
+    { key: 'receipt', title: 'Receipt', icon: Receipt },
+    { key: 'admin', title: 'Admin', icon: ShieldCheck },
+    ...(form.adminMode === 'new'
+      ? [
+          { key: 'profile', title: 'Admin Profile', icon: User },
+          { key: 'access', title: 'Access & Docs', icon: Check },
+        ]
+      : []),
+  ];
+  const curStep = Math.min(step, createSteps.length - 1);
+  const isLastStep = curStep === createSteps.length - 1;
+
+  // Per-step validation so the user can't advance with bad data; the final submit
+  // re-validates everything server-side too.
+  const validateStep = (key) => {
+    if (key === 'brand') {
+      if (!form.name.trim()) return 'Cafe name is required';
+    }
+    if (key === 'receipt') {
+      if (form.contact.phone && !/^[0-9]{10}$/.test(form.contact.phone)) return 'Contact phone must be exactly 10 digits';
+      if (form.contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact.email)) return 'Invalid contact email';
+    }
+    if (key === 'admin') {
+      if (form.adminMode === 'existing' && !form.adminUserId) return 'Select an admin to assign';
+    }
+    if (key === 'profile') {
+      const a = form.admin;
+      if (!a.name?.trim()) return 'Admin name is required';
+      if (!/^\S+@\S+\.\S+$/.test(a.email || '')) return 'A valid admin email is required';
+      if ((a.password || '').length < 10) return 'Admin password must be at least 10 characters';
+      if (!/^[0-9]{10}$/.test(a.phone || '')) return 'A valid 10-digit admin phone is required';
+      if (!a.address1?.trim()) return 'Admin address is required';
+      if (!a.city?.trim()) return 'Admin city is required';
+    }
+    if (key === 'access') {
+      const a = form.admin;
+      if (!/^[0-9]{12}$/.test(a.aadharNumber || '')) return 'A valid 12-digit Aadhaar number is required';
+      if (!a.aadharImage) return 'Please upload the Aadhaar card image';
+    }
+    return null;
+  };
+
+  const goNext = () => {
+    const err = validateStep(createSteps[curStep].key);
+    if (err) return toast.error(err);
+    setStep(Math.min(curStep + 1, createSteps.length - 1));
+  };
+  const goBack = () => setStep(Math.max(0, curStep - 1));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Wizard guard: in create mode, Enter / early submit just advances a step.
+    if (!editing && !isLastStep) return goNext();
     if (!form.name.trim()) return toast.error('Cafe name is required');
     if (form.contact.phone && !/^[0-9]{10}$/.test(form.contact.phone))
       return toast.error('Contact phone must be exactly 10 digits');
@@ -385,7 +476,9 @@ export default function CafesPage() {
     <PremiumSelect
       label="How to assign the admin"
       value={form.adminMode}
-      onChange={(v) => setField('adminMode', v)}
+      // Clamp the wizard back to the admin step so switching mode never leaves a
+      // stale later-step index pointing past the (now changed) step list.
+      onChange={(v) => { setField('adminMode', v); setStep((s) => Math.min(s, 2)); }}
       options={[
         { label: 'Create a new admin account', value: 'new' },
         { label: 'Assign an existing admin', value: 'existing' },
@@ -402,6 +495,76 @@ export default function CafesPage() {
       onChange={(v) => setField('adminUserId', v)}
       options={users.map((u) => ({ label: `${u.name} — ${u.email}`, value: u._id }))}
     />
+  );
+
+  // Reusable sections — shared between the create wizard and the edit form.
+  const renderBrandSection = () => (
+    <section className="space-y-5">
+      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Store size={14} className="text-primary" /> Brand Details</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label className={labelCls}>Cafe Name *</label>
+          <input className={inputCls} value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="e.g. Brew Haven" />
+        </div>
+        <div>
+          <label className={labelCls}>GSTIN</label>
+          <input className={inputCls} value={form.gstin} onChange={(e) => setField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
+        </div>
+        <div className="md:col-span-2">
+          <label className={labelCls}><ImageIcon size={11} className="inline mr-1" /> Logo / Icon (shown on receipts)</label>
+          <div className="flex items-center gap-4">
+            <label className="relative h-20 w-20 shrink-0 rounded-xl border border-dashed border-(--color-border) bg-(--color-bg-soft) flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-all">
+              {form.logo ? (
+                <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon size={22} className="text-(--color-text-muted)" />
+              )}
+              {uploadingLogo && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[9px] font-bold uppercase">…</div>
+              )}
+              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleLogoFile(e.target.files?.[0])} disabled={uploadingLogo} />
+            </label>
+            <div className="flex-1">
+              <input className={inputCls} value={form.logo} onChange={(e) => setField('logo', e.target.value)} placeholder="Click the tile to upload, or paste an image URL" />
+              <p className="text-[9px] text-(--color-text-muted) mt-1.5 ml-1">PNG/JPG up to 5MB. Upload replaces the URL automatically.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderReceiptSection = () => (
+    <section className="space-y-5">
+      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Receipt size={14} className="text-primary" /> Receipt Address & Contact</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="md:col-span-2">
+          <label className={labelCls}>Address Line 1</label>
+          <input className={inputCls} value={form.address.line1} onChange={(e) => setAddress('line1', e.target.value)} />
+        </div>
+        <div><label className={labelCls}>City</label><input className={inputCls} value={form.address.city} onChange={(e) => setAddress('city', e.target.value)} /></div>
+        <div><label className={labelCls}>State</label><input className={inputCls} value={form.address.state} onChange={(e) => setAddress('state', e.target.value)} /></div>
+        <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" maxLength={6} className={inputCls} value={form.address.pincode} onChange={(e) => setAddress('pincode', digitsOnly(e.target.value, 6))} /></div>
+        <div><label className={labelCls}><Phone size={11} className="inline mr-1" /> Phone</label><input type="tel" inputMode="numeric" maxLength={10} className={inputCls} value={form.contact.phone} onChange={(e) => setContact('phone', digitsOnly(e.target.value, 10))} /></div>
+        <div className="md:col-span-2"><label className={labelCls}><Mail size={11} className="inline mr-1" /> Email</label><input type="email" className={inputCls} value={form.contact.email} onChange={(e) => setContact('email', sanitizeEmail(e.target.value))} /></div>
+      </div>
+    </section>
+  );
+
+  // The admin step picks HOW to assign the owner. New-admin fields live on their
+  // own steps; the existing-admin picker shows inline here.
+  const renderAdminStep = () => (
+    <section className="space-y-5">
+      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Cafe Admin (Owner)</h3>
+      {adminModeSelect([{ label: 'No admin for now', value: 'none' }])}
+      {form.adminMode === 'existing' && existingAdminSelect()}
+      {form.adminMode === 'new' && (
+        <p className="text-[11px] text-(--color-text-muted) italic">Continue to the next steps to fill in the new admin’s profile, permissions and documents.</p>
+      )}
+      {form.adminMode === 'none' && (
+        <p className="text-[11px] text-(--color-text-muted) italic">You can add an admin later from this page or the Add-Member page.</p>
+      )}
+    </section>
   );
 
   return (
@@ -513,75 +676,64 @@ export default function CafesPage() {
 
                 <div className="overflow-y-auto custom-scrollbar p-8">
                   <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Brand details */}
-                    <section className="space-y-5">
-                      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Store size={14} className="text-primary" /> Brand Details</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                          <label className={labelCls}>Cafe Name *</label>
-                          <input className={inputCls} value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="e.g. Brew Haven" required />
+                    {editing ? (
+                      <>
+                        {renderBrandSection()}
+                        {renderReceiptSection()}
+                        <div className="flex gap-4 pt-2">
+                          <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all">Cancel</button>
+                          <button type="submit" disabled={saving} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">Save Changes</button>
                         </div>
-                        <div>
-                          <label className={labelCls}>GSTIN</label>
-                          <input className={inputCls} value={form.gstin} onChange={(e) => setField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className={labelCls}><ImageIcon size={11} className="inline mr-1" /> Logo / Icon (shown on receipts)</label>
-                          <div className="flex items-center gap-4">
-                            <label className="relative h-20 w-20 shrink-0 rounded-xl border border-dashed border-(--color-border) bg-(--color-bg-soft) flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-all">
-                              {form.logo ? (
-                                <img src={form.logo} alt="logo" className="h-full w-full object-cover" />
-                              ) : (
-                                <ImageIcon size={22} className="text-(--color-text-muted)" />
-                              )}
-                              {uploadingLogo && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[9px] font-bold uppercase">…</div>
-                              )}
-                              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleLogoFile(e.target.files?.[0])} disabled={uploadingLogo} />
-                            </label>
-                            <div className="flex-1">
-                              <input className={inputCls} value={form.logo} onChange={(e) => setField('logo', e.target.value)} placeholder="Click the tile to upload, or paste an image URL" />
-                              <p className="text-[9px] text-(--color-text-muted) mt-1.5 ml-1">PNG/JPG up to 5MB. Upload replaces the URL automatically.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
+                      </>
+                    ) : (
+                      <>
+                        {/* Step indicator */}
+                        <Stepper steps={createSteps} current={curStep} />
 
-                    {/* Address + contact (appear on receipt) */}
-                    <section className="space-y-5">
-                      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Receipt size={14} className="text-primary" /> Receipt Address & Contact</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="md:col-span-2">
-                          <label className={labelCls}>Address Line 1</label>
-                          <input className={inputCls} value={form.address.line1} onChange={(e) => setAddress('line1', e.target.value)} />
+                        {/* Step content */}
+                        <div className="min-h-48">
+                          {createSteps[curStep].key === 'brand' && renderBrandSection()}
+                          {createSteps[curStep].key === 'receipt' && renderReceiptSection()}
+                          {createSteps[curStep].key === 'admin' && isSuper && renderAdminStep()}
+                          {createSteps[curStep].key === 'admin' && !isSuper && (
+                            <p className="text-[11px] text-(--color-text-muted) italic">Only a super admin can assign a cafe owner.</p>
+                          )}
+                          {createSteps[curStep].key === 'profile' && (
+                            <section className="space-y-5">
+                              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><User size={14} className="text-primary" /> Admin Profile</h3>
+                              <NewAdminFields only="profile" admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
+                            </section>
+                          )}
+                          {createSteps[curStep].key === 'access' && (
+                            <section className="space-y-5">
+                              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Check size={14} className="text-primary" /> Permissions & Documents</h3>
+                              <NewAdminFields only="permsdocs" admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
+                            </section>
+                          )}
                         </div>
-                        <div><label className={labelCls}>City</label><input className={inputCls} value={form.address.city} onChange={(e) => setAddress('city', e.target.value)} /></div>
-                        <div><label className={labelCls}>State</label><input className={inputCls} value={form.address.state} onChange={(e) => setAddress('state', e.target.value)} /></div>
-                        <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" maxLength={6} className={inputCls} value={form.address.pincode} onChange={(e) => setAddress('pincode', digitsOnly(e.target.value, 6))} /></div>
-                        <div><label className={labelCls}><Phone size={11} className="inline mr-1" /> Phone</label><input type="tel" inputMode="numeric" maxLength={10} className={inputCls} value={form.contact.phone} onChange={(e) => setContact('phone', digitsOnly(e.target.value, 10))} /></div>
-                        <div className="md:col-span-2"><label className={labelCls}><Mail size={11} className="inline mr-1" /> Email</label><input type="email" className={inputCls} value={form.contact.email} onChange={(e) => setContact('email', sanitizeEmail(e.target.value))} /></div>
-                      </div>
-                    </section>
 
-                    {/* Admin assignment — create mode (super_admin only) */}
-                    {!editing && isSuper && (
-                      <section className="space-y-5">
-                        <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Cafe Admin (Owner)</h3>
-                        {adminModeSelect([{ label: 'No admin for now', value: 'none' }])}
-                        {form.adminMode === 'new' && (
-                          <NewAdminFields admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
-                        )}
-                        {form.adminMode === 'existing' && existingAdminSelect()}
-                      </section>
+                        {/* Wizard navigation */}
+                        <div className="flex items-center gap-4 pt-2">
+                          <button
+                            type="button"
+                            onClick={curStep === 0 ? () => setShowModal(false) : goBack}
+                            className="px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all inline-flex items-center gap-2"
+                          >
+                            {curStep === 0 ? 'Cancel' : (<><ChevronLeft size={15} /> Back</>)}
+                          </button>
+                          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Step {curStep + 1} / {createSteps.length}</span>
+                          {isLastStep ? (
+                            <button type="submit" disabled={saving || uploadingImg.aadhar || uploadingImg.profile} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
+                              {saving ? 'Creating…' : 'Create Cafe'}
+                            </button>
+                          ) : (
+                            <button type="button" onClick={goNext} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all inline-flex items-center justify-center gap-2">
+                              Next <ChevronRight size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </>
                     )}
-
-                    <div className="flex gap-4 pt-2">
-                      <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all">Cancel</button>
-                      <button type="submit" disabled={saving || uploadingImg.aadhar || uploadingImg.profile} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
-                        {editing ? 'Save Changes' : 'Create Cafe'}
-                      </button>
-                    </div>
                   </form>
 
                   {/* Admin management — edit mode (super_admin only) */}

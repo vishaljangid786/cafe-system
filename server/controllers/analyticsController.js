@@ -7,8 +7,12 @@ const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Payroll = require('../models/Payroll');
+const Reservation = require('../models/Reservation');
+const CashSession = require('../models/CashSession');
+const AuditLog = require('../models/AuditLog');
+const WasteRecord = require('../models/WasteRecord');
 const asyncHandler = require('../utils/asyncHandler');
-const { scopedLocationId, scopedLocationIds, normalizeId, canAccessLocation, userLocationIds, escapeRegex } = require('../utils/accessControl');
+const { scopedLocationId, scopedLocationIds, normalizeId, canAccessLocation, userLocationIds, escapeRegex, endOfDay, clampLimit } = require('../utils/accessControl');
 
 // Returns a Mongoose $in array for the current user's accessible locations, or null for super_admin (no filter)
 const allowedLocationFilter = (user) => {
@@ -17,6 +21,91 @@ const allowedLocationFilter = (user) => {
   return ids.map(id => new mongoose.Types.ObjectId(id));
 };
 const AnalyticsService = require('../services/analyticsService');
+
+const COMPLETED_ORDER_STATUSES = ['SERVED', 'COMPLETED'];
+const ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
+const PAYMENT_TYPES = ['CASH', 'CARD', 'UPI', 'ONLINE', 'GIFT_CARD', 'OTHER'];
+const ORDER_TYPES = ['dine-in', 'takeaway', 'delivery'];
+
+const buildDateRange = ({ date, startDate, endDate, month, financialYear } = {}) => {
+  let start = null;
+  let end = null;
+
+  if (date) {
+    start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    end = endOfDay(date);
+  } else if (month) {
+    const [year, m] = String(month).split('-').map(Number);
+    if (year && m) {
+      start = new Date(year, m - 1, 1);
+      end = new Date(year, m, 0, 23, 59, 59, 999);
+    }
+  } else if (financialYear) {
+    const year = Number(financialYear);
+    if (year) {
+      start = new Date(year, 3, 1);
+      end = new Date(year + 1, 2, 31, 23, 59, 59, 999);
+    }
+  } else if (startDate || endDate) {
+    if (startDate) {
+      start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+    }
+    if (endDate) end = endOfDay(endDate);
+  }
+
+  if (!start && !end) return null;
+  return {
+    ...(start ? { $gte: start } : {}),
+    ...(end ? { $lte: end } : {})
+  };
+};
+
+const buildDateStringRange = (dateRange) => {
+  if (!dateRange) return null;
+  return {
+    ...(dateRange.$gte ? { $gte: dateRange.$gte.toISOString().slice(0, 10) } : {}),
+    ...(dateRange.$lte ? { $lte: dateRange.$lte.toISOString().slice(0, 10) } : {})
+  };
+};
+
+// Use `||` not `??`: served-but-unbilled orders have grandTotal === 0 (the final
+// GST-inclusive total is only computed at billing), so fall back to the subtotal
+// (totalAmount) instead of keeping the literal 0.
+const amountOfOrder = (order) => Number(order.grandTotal || order.totalAmount || 0) || 0;
+
+const sameId = (a, b) => normalizeId(a) === normalizeId(b);
+
+const getOrderInvolvement = (order, staffId) => {
+  const roles = [];
+  if (sameId(order.createdBy, staffId)) roles.push('Created');
+  if (sameId(order.assignedChef, staffId)) roles.push('Chef');
+  if (sameId(order.servedBy, staffId)) roles.push('Served');
+
+  const touchedStatuses = new Set();
+  (order.statusHistory || []).forEach((entry) => {
+    if (sameId(entry.updatedBy, staffId) && entry.status) {
+      touchedStatuses.add(entry.status);
+    }
+  });
+  touchedStatuses.forEach((status) => roles.push(`Updated ${status}`));
+
+  return [...new Set(roles)];
+};
+
+const summarizeAttendance = (records) => {
+  const summary = { present: 0, absent: 0, halfDay: 0, leave: 0, weekOff: 0, workedMinutes: 0 };
+  records.forEach((record) => {
+    if (record.status === 'present') summary.present += 1;
+    else if (record.status === 'absent') summary.absent += 1;
+    else if (record.status === 'half-day') summary.halfDay += 1;
+    else if (record.status === 'leave') summary.leave += 1;
+    else if (record.status === 'week-off') summary.weekOff += 1;
+    summary.workedMinutes += Number(record.workedMinutes || 0);
+  });
+  return summary;
+};
 
 // @desc    Get analytics for a specific location
 // @route   GET /api/analytics/location
@@ -608,6 +697,331 @@ const getStaffReports = asyncHandler(async (req, res) => {
   res.json({ success: true, data: finalReport });
 });
 
+const getStaffReportDetail = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    branch,
+    status,
+    paymentType,
+    orderType,
+    reservationStatus,
+    expenseStatus,
+    expenseType
+  } = req.query;
+
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400);
+    throw new Error('Invalid staff member ID');
+  }
+
+  const staffObjectId = new mongoose.Types.ObjectId(id);
+  const staff = await User.findById(id)
+    .select('name email phone role assignedLocation accessibleLocations profileImageUrl monthlySalary active isBlocked city state')
+    .populate('assignedLocation', 'name city')
+    .populate('accessibleLocations', 'name city')
+    .lean();
+
+  if (!staff) {
+    res.status(404);
+    throw new Error('Staff member not found');
+  }
+
+  if (req.user.role !== 'super_admin') {
+    const targetLocationIds = userLocationIds(staff);
+    const hasLocationAccess = targetLocationIds.some((locId) => canAccessLocation(req.user, locId));
+    if (!hasLocationAccess) {
+      res.status(403);
+      throw new Error('You do not have permission to view this staff report');
+    }
+  }
+
+  const dateRange = buildDateRange(req.query);
+  const dateStringRange = buildDateStringRange(dateRange);
+  const branchScope = scopedLocationId(req, branch);
+  const limit = clampLimit(req.query.limit, 500, 2000);
+
+  const orderQuery = {
+    $or: [
+      { createdBy: staffObjectId },
+      { assignedChef: staffObjectId },
+      { servedBy: staffObjectId },
+      { 'statusHistory.updatedBy': staffObjectId }
+    ]
+  };
+  if (dateRange) orderQuery.createdAt = dateRange;
+  if (branchScope) orderQuery.branch = branchScope;
+  if (status && ORDER_STATUSES.includes(status)) orderQuery.status = status;
+  if (paymentType && PAYMENT_TYPES.includes(paymentType)) orderQuery.paymentType = paymentType;
+  if (orderType && ORDER_TYPES.includes(orderType)) orderQuery.orderType = orderType;
+
+  const reservationQuery = { userId: staffObjectId };
+  if (dateRange) reservationQuery.date = dateRange;
+  if (branchScope) reservationQuery.locationId = branchScope;
+  if (reservationStatus && ['pending', 'confirmed', 'cancelled', 'no-show'].includes(reservationStatus)) {
+    reservationQuery.status = reservationStatus;
+  }
+
+  const attendanceQuery = { user: staffObjectId };
+  if (dateStringRange) attendanceQuery.date = dateStringRange;
+  if (branchScope) attendanceQuery.locationId = branchScope;
+
+  const expenseQuery = { createdBy: staffObjectId };
+  if (dateRange) expenseQuery.date = dateRange;
+  if (branchScope) expenseQuery.locationId = branchScope;
+  if (expenseStatus && ['pending', 'approved', 'rejected', 'live', 'completed'].includes(expenseStatus)) {
+    expenseQuery.status = expenseStatus;
+  }
+  if (expenseType && ['EXPENSE', 'INCOME'].includes(expenseType)) {
+    expenseQuery.type = expenseType;
+  }
+
+  const cashSessionClauses = [
+    {
+      $or: [
+        { openedBy: staffObjectId },
+        { closedBy: staffObjectId },
+        { 'movements.by': staffObjectId }
+      ]
+    }
+  ];
+  if (dateRange) {
+    cashSessionClauses.push({
+      $or: [
+        { openedAt: dateRange },
+        { closedAt: dateRange },
+        { 'movements.at': dateRange }
+      ]
+    });
+  }
+  const cashSessionQuery = { $and: cashSessionClauses };
+  if (branchScope) cashSessionQuery.locationId = branchScope;
+
+  const auditQuery = { performedBy: staffObjectId };
+  if (dateRange) auditQuery.timestamp = dateRange;
+  if (branchScope) auditQuery.locationId = branchScope;
+
+  // Ledger entries (manual revenue / expense) this person recorded.
+  const transactionQuery = { createdBy: staffObjectId };
+  if (dateRange) transactionQuery.date = dateRange;
+  if (branchScope) transactionQuery.locationId = branchScope;
+
+  // Inventory waste this person logged (WasteRecord scopes branch as `branch`).
+  const wasteQuery = { recordedBy: staffObjectId };
+  if (dateRange) wasteQuery.date = dateRange;
+  if (branchScope) wasteQuery.branch = branchScope;
+
+  const [
+    orders,
+    reservations,
+    attendance,
+    expenses,
+    cashSessions,
+    activity,
+    transactions,
+    waste
+  ] = await Promise.all([
+    Order.find(orderQuery)
+      .populate('branch', 'name city')
+      .populate('table', 'tableNumber')
+      .populate('createdBy', 'name role')
+      .populate('assignedChef', 'name role')
+      .populate('servedBy', 'name role')
+      .populate('coupon', 'code discountType discountValue')
+      .populate({ path: 'items.menuItem', select: 'name price costPrice category', populate: { path: 'category', select: 'name' } })
+      .populate('statusHistory.updatedBy', 'name role')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean(),
+    Reservation.find(reservationQuery)
+      .populate('locationId', 'name city')
+      .populate('tableIds', 'tableNumber')
+      .sort({ date: -1, startTime: -1 })
+      .limit(limit)
+      .lean(),
+    Attendance.find(attendanceQuery)
+      .populate('locationId', 'name city')
+      .populate('markedBy', 'name role')
+      .sort({ date: -1 })
+      .limit(limit)
+      .lean(),
+    Expense.find(expenseQuery)
+      .populate('locationId', 'name city')
+      .sort({ date: -1, createdAt: -1 })
+      .limit(limit)
+      .lean(),
+    CashSession.find(cashSessionQuery)
+      .populate('locationId', 'name city')
+      .populate('openedBy', 'name role')
+      .populate('closedBy', 'name role')
+      .populate('movements.by', 'name role')
+      .sort({ openedAt: -1 })
+      .limit(limit)
+      .lean(),
+    AuditLog.find(auditQuery)
+      .populate('locationId', 'name city')
+      .sort({ timestamp: -1 })
+      .limit(50)
+      .lean(),
+    Transaction.find(transactionQuery)
+      .populate('locationId', 'name city')
+      .sort({ date: -1, createdAt: -1 })
+      .limit(limit)
+      .lean(),
+    WasteRecord.find(wasteQuery)
+      .populate('ingredient', 'name unit')
+      .populate('branch', 'name city')
+      .sort({ date: -1 })
+      .limit(limit)
+      .lean()
+  ]);
+
+  const coupons = {};
+  const statusCounts = {};
+  const paymentBreakdown = {};
+  const orderRoleCounts = { created: 0, chef: 0, served: 0, updated: 0 };
+  const categorySales = {};
+  const topItems = {};
+
+  let totalSales = 0;
+  let estimatedProfit = 0;
+  let completedOrders = 0;
+  let cancelledOrders = 0;
+  let totalDiscount = 0;
+
+  const decoratedOrders = orders.map((order) => {
+    const involvedAs = getOrderInvolvement(order, id);
+    if (involvedAs.includes('Created')) orderRoleCounts.created += 1;
+    if (involvedAs.includes('Chef')) orderRoleCounts.chef += 1;
+    if (involvedAs.includes('Served')) orderRoleCounts.served += 1;
+    if (involvedAs.some((role) => role.startsWith('Updated '))) orderRoleCounts.updated += 1;
+
+    statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+    paymentBreakdown[order.paymentType || 'UNKNOWN'] = (paymentBreakdown[order.paymentType || 'UNKNOWN'] || 0) + 1;
+
+    const isCompleted = COMPLETED_ORDER_STATUSES.includes(order.status);
+    if (isCompleted) {
+      completedOrders += 1;
+      totalSales += amountOfOrder(order);
+    }
+    if (order.status === 'CANCELLED') cancelledOrders += 1;
+
+    const discount = Number(order.discountAmount || 0);
+    if (order.coupon || discount > 0) {
+      const code = order.coupon?.code || 'Manual discount';
+      if (!coupons[code]) {
+        coupons[code] = {
+          code,
+          couponId: order.coupon?._id || null,
+          count: 0,
+          discount: 0,
+          sales: 0,
+          lastUsedAt: null
+        };
+      }
+      coupons[code].count += 1;
+      coupons[code].discount += discount;
+      coupons[code].sales += amountOfOrder(order);
+      coupons[code].lastUsedAt = coupons[code].lastUsedAt || order.createdAt;
+      totalDiscount += discount;
+    }
+
+    (order.items || []).forEach((item) => {
+      const name = item.menuItem?.name || item.itemName || 'Item';
+      const qty = Number(item.quantity || 0);
+      const price = Number(item.price ?? item.menuItem?.price ?? 0);
+      const cost = Number(item.costPrice ?? item.menuItem?.costPrice ?? 0);
+      const category = item.menuItem?.category?.name || 'Uncategorized';
+
+      if (isCompleted) {
+        estimatedProfit += (price - cost) * qty;
+        categorySales[category] = (categorySales[category] || 0) + price * qty;
+      }
+      if (!topItems[name]) topItems[name] = { name, quantity: 0, sales: 0 };
+      topItems[name].quantity += qty;
+      topItems[name].sales += price * qty;
+    });
+
+    return {
+      ...order,
+      shortId: order._id.toString().slice(-6).toUpperCase(),
+      involvedAs,
+      itemCount: (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+    };
+  });
+
+  const reservationRevenue = reservations.reduce((sum, reservation) => sum + Number(reservation.totalAmount || 0), 0);
+  const reservationAdvance = reservations.reduce((sum, reservation) => sum + Number(reservation.advancePayment || 0), 0);
+  const expenseTotal = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+  const cashVariance = cashSessions.reduce((sum, session) => sum + Number(session.variance || 0), 0);
+  const attendanceSummary = summarizeAttendance(attendance);
+
+  // Ledger split: EXPENSE-type entries are costs, everything else is revenue.
+  const transactionSummary = transactions.reduce((acc, txn) => {
+    const amount = Number(txn.totalAmount || 0);
+    if (String(txn.type || '').toUpperCase().includes('EXPENSE')) acc.expense += amount;
+    else acc.revenue += amount;
+    acc.count += 1;
+    return acc;
+  }, { count: 0, revenue: 0, expense: 0 });
+
+  const wasteSummary = waste.reduce((acc, record) => {
+    acc.count += 1;
+    acc.quantity += Number(record.quantity || 0);
+    return acc;
+  }, { count: 0, quantity: 0 });
+
+  const summary = {
+    orders: decoratedOrders.length,
+    completedOrders,
+    cancelledOrders,
+    totalSales,
+    averageOrderValue: completedOrders ? totalSales / completedOrders : 0,
+    estimatedProfit,
+    couponsUsed: Object.values(coupons).reduce((sum, coupon) => sum + coupon.count, 0),
+    totalDiscount,
+    reservations: reservations.length,
+    reservationRevenue,
+    reservationAdvance,
+    attendance: attendanceSummary,
+    expenses: {
+      count: expenses.length,
+      total: expenseTotal
+    },
+    cashSessions: {
+      count: cashSessions.length,
+      variance: cashVariance
+    },
+    transactions: transactionSummary,
+    waste: wasteSummary,
+    orderRoleCounts,
+    statusCounts,
+    paymentBreakdown,
+    categorySales: Object.entries(categorySales)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value),
+    topItems: Object.values(topItems)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10)
+  };
+
+  res.json({
+    success: true,
+    data: {
+      staff,
+      summary,
+      orders: decoratedOrders,
+      coupons: Object.values(coupons).sort((a, b) => b.count - a.count),
+      reservations,
+      attendance,
+      expenses,
+      cashSessions,
+      transactions,
+      waste,
+      activity
+    }
+  });
+});
+
 const getPaymentInfo = asyncHandler(async (req, res) => {
   const Order = require('../models/Order');
   const Location = require('../models/Location');
@@ -640,7 +1054,7 @@ const getPaymentInfo = asyncHandler(async (req, res) => {
   } else if (startDate || endDate) {
     orderQuery.createdAt = {};
     if (startDate) orderQuery.createdAt.$gte = new Date(startDate);
-    if (endDate) orderQuery.createdAt.$lte = new Date(endDate);
+    if (endDate) orderQuery.createdAt.$lte = endOfDay(endDate);
   }
 
   const branchScope = scopedLocationId(req, branchId);
@@ -1027,6 +1441,7 @@ module.exports = {
   getComparisonDetails,
   getLocationInfo,
   getStaffReports,
+  getStaffReportDetail,
   getPaymentInfo,
   getBranchComparisonSuite,
   getCommandCenterStats,

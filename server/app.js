@@ -40,6 +40,8 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const waitlistRoutes = require('./routes/waitlistRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const seedRoutes = require('./routes/seedRoutes');
+const { renderHome } = require('./controllers/seedController');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -184,11 +186,12 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/seed', seedRoutes);
 
 
-// Base route
+// Base route — landing page with a one-click "Seed Sample Data" button.
 app.get('/', (req, res) => {
-  res.send('Cafe Management API is running...');
+  res.type('html').send(renderHome());
 });
 
 // Error Handling Middlewares

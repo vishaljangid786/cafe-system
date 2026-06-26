@@ -12,6 +12,7 @@ const {
   getComparisonDetails,
   getLocationInfo,
   getStaffReports,
+  getStaffReportDetail,
   getPaymentInfo,
   getBranchComparisonSuite,
   getCommandCenterStats,
@@ -34,6 +35,9 @@ router.route('/location-comparison')
 
 router.route('/staff-reports')
   .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), getStaffReports);
+
+router.route('/staff-reports/:id')
+  .get(checkRoles('branch_admin', 'location_admin', 'admin', 'super_admin'), getStaffReportDetail);
 
 router.route('/payment-intelligence')
   .get(getPaymentInfo);

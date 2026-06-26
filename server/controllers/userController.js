@@ -153,6 +153,23 @@ const getUsers = asyncHandler(async (req, res) => {
     }
   }
 
+  // Join Date Filter (filter people by when their account was created)
+  if (req.query.joinedStart || req.query.joinedEnd) {
+    const createdAt = {};
+    if (req.query.joinedStart) {
+      const start = new Date(req.query.joinedStart);
+      if (!isNaN(start.getTime())) createdAt.$gte = start;
+    }
+    if (req.query.joinedEnd) {
+      const end = new Date(req.query.joinedEnd);
+      if (!isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999); // include the whole end day
+        createdAt.$lte = end;
+      }
+    }
+    if (Object.keys(createdAt).length) query.createdAt = createdAt;
+  }
+
   // Pagination
   const page = parseInt(req.query.page, 10) || 1;
   const limit = clampLimit(req.query.limit, 10, 1000); // allow large limit for the staff tree view
@@ -722,8 +739,15 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
       // perm is true iff some surviving page grants it). Capabilities (editRevenue,
       // forceComplete, …) are NOT derivable, so the toggles above are left intact.
       const grantedPerms = permsForPages(nextAllowedPages);
-      DERIVABLE_PERMS.forEach((perm) => { mergedPerms[perm] = grantedPerms.has(perm); });
+      DERIVABLE_PERMS.forEach((perm) => {
+        mergedPerms[perm] = mergedPerms[perm] === true || grantedPerms.has(perm);
+      });
     }
+  }
+
+  if ((nextAllowedPages || []).length === 0 && !Object.values(mergedPerms).some(Boolean)) {
+    res.status(400);
+    throw new Error('A member must be granted at least one page access or permission.');
   }
 
   user.permissions = mergedPerms;

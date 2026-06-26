@@ -314,6 +314,13 @@ export default function LocationStaffPage() {
                   >
                     <Info size={18} />
                   </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/staff-reports/${member._id}`); }}
+                    className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
+                    title="View report"
+                  >
+                    <Award size={18} />
+                  </button>
                   {canManageStaff && (
                     <>
                       <button
@@ -727,6 +734,15 @@ export default function LocationStaffPage() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/staff-reports/${member._id}`); }}
+                            className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                            title="View report"
+                          >
+                            <Award size={18} />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setAttendanceStaff(member);
@@ -1127,13 +1143,20 @@ export default function LocationStaffPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-8 border-t border-(--color-border) flex gap-4">
+              <div className="pt-8 border-t border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <Button
                   variant="outline"
                   className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
                   onClick={() => setViewingStaff(null)}
                 >
                   Close
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  onClick={() => router.push(`/dashboard/admin/staff-reports/${viewingStaff._id}`)}
+                >
+                  View Report
                 </Button>
                 <Button
                   className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-text-primary) text-(--color-surface) shadow-sm"

@@ -31,6 +31,7 @@ import ExportActions from '../../components/ui/ExportActions';
 import PremiumSelect from '../../components/ui/PremiumSelect';
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
+import PeopleDrawer from './components/PeopleDrawer';
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -59,6 +60,8 @@ export default function AdminDashboard() {
   const [timeFilter, setTimeFilter] = useState('all'); // '7d', '30d', 'all', 'custom'
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
   const [isLocSelectorOpen, setIsLocSelectorOpen] = useState(false);
+  // Which role's people list the drawer is showing ('' = closed; 'staff' | 'chef' | 'branch_admin' | 'all')
+  const [drawerRole, setDrawerRole] = useState('');
 
   const isDark = theme === 'dark';
 
@@ -601,10 +604,14 @@ export default function AdminDashboard() {
 
         {/* Staff Performance Leaderboard */}
         <Card className="!p-8 glass-card border-(--color-border) premium-shadow lg:col-span-1" hover={false}>
-          <div className="flex items-center justify-between mb-6">
-            <CardTitle className="text-lg">Staff Leaderboard</CardTitle>
-            <Target size={18} className="text-(--color-amber)" />
-          </div>
+          <button
+            type="button"
+            onClick={() => setDrawerRole('staff')}
+            className="w-full flex items-center justify-between mb-6 group cursor-pointer text-left"
+          >
+            <CardTitle className="text-lg group-hover:text-primary transition-colors">Staff Leaderboard</CardTitle>
+            <Target size={18} className="text-(--color-amber) group-hover:scale-110 transition-transform" />
+          </button>
           <div className="space-y-3">
             {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
@@ -646,13 +653,18 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { label: 'Total Staff', count: analytics?.staffStats?.staffCount || 0, icon: Users, color: 'amber' },
-                { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, color: 'orange' },
-                { label: 'Branch Admins', count: analytics?.staffStats?.adminCount || 0, icon: User, color: 'indigo' }
+                { label: 'Total Staff', count: analytics?.staffStats?.staffCount || 0, icon: Users, roleKey: 'staff' },
+                { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, roleKey: 'chef' },
+                { label: 'Branch Admins', count: analytics?.staffStats?.adminCount || 0, icon: User, roleKey: 'branch_admin' }
               ].map((item, i) => (
-                <div key={i} className="p-6 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) flex items-center justify-between group hover:border-primary/20 transition-all">
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setDrawerRole(item.roleKey)}
+                  className="text-left p-6 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) flex items-center justify-between group hover:border-primary/30 hover:bg-(--color-surface-soft) transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-105">
                       <item.icon size={22} />
                     </div>
                     <div>
@@ -660,8 +672,8 @@ export default function AdminDashboard() {
                       <p className="text-2xl font-bold text-(--color-text-primary)">{item.count}</p>
                     </div>
                   </div>
-                  <ChevronDown className="text-(--color-text-muted) opacity-30 -rotate-90" size={18} />
-                </div>
+                  <ChevronDown className="text-(--color-text-muted) opacity-30 group-hover:opacity-70 group-hover:text-primary -rotate-90 transition-all" size={18} />
+                </button>
               ))}
             </div>
           </Card>
@@ -669,6 +681,14 @@ export default function AdminDashboard() {
       )}
       </>
       )}
+
+      <PeopleDrawer
+        roleKey={drawerRole}
+        onClose={() => setDrawerRole('')}
+        currentUserRole={user?.role}
+        locationId={filterLocation !== 'all' ? filterLocation : ''}
+        staffHref={`${dashPrefix}/staff`}
+      />
     </div>
   );
 }

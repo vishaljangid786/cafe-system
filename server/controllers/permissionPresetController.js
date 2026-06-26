@@ -8,6 +8,7 @@ const PERMISSION_KEYS = [
   'manageBranches', 'viewAuditLogs', 'impersonateUsers',
   // Delegated super-admin capabilities
   'viewAdminCenter', 'manageGlobalMenu', 'sendGlobalNotifications',
+  'sendMessages', 'messageSuperAdmin',
 ];
 
 // Keep only the known permission keys as strict booleans.

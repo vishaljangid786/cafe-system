@@ -5,7 +5,7 @@ import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   UserPlus, User, MapPin, Shield, CreditCard,
-  Image as ImageIcon, Check, Building2
+  Image as ImageIcon, Check
 } from 'lucide-react';
 import { sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
@@ -17,10 +17,21 @@ import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '@/app/config/pages';
 
 // PAGE access is now chosen page-by-page (see PAGE_GROUPS -> allowedPages). What's
 // left here are CAPABILITIES — non-page abilities that aren't "open a page".
-const CAPABILITY_LIST = [
+const PERMISSION_LIST = [
+  { key: 'viewRevenue', label: 'View Revenue' },
   { key: 'editRevenue', label: 'Edit Revenue (not just view)' },
+  { key: 'viewOrders', label: 'View Orders' },
+  { key: 'manageOrders', label: 'Manage Orders' },
   { key: 'forceComplete', label: 'Force-Complete Orders' },
+  { key: 'exportReports', label: 'Export Reports' },
+  { key: 'manageStaff', label: 'Manage Staff' },
   { key: 'manageNotifications', label: 'Manage Notifications' },
+  { key: 'viewAnalytics', label: 'View Analytics' },
+  { key: 'manageCoupons', label: 'Manage Offers / Coupons' },
+  { key: 'manageBranches', label: 'Manage Branches' },
+  { key: 'viewAuditLogs', label: 'View Security Logs' },
+  { key: 'impersonateUsers', label: 'Login As Staff' },
+  { key: 'viewAdminCenter', label: 'View Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
   { key: 'sendMessages', label: 'Send Messages' },
@@ -30,14 +41,26 @@ const CAPABILITY_LIST = [
 // Default CAPABILITIES per role (page defaults come from ROLE_DEFAULT_PAGES).
 // sendMessages is ON for everyone so the messaging hierarchy works out of the box.
 const ROLE_DEFAULT_CAPS = {
-  admin: { editRevenue: true, forceComplete: true, manageNotifications: true, sendMessages: true, messageSuperAdmin: true },
-  branch_admin: { editRevenue: true, forceComplete: true, sendMessages: true },
-  location_admin: { sendMessages: true },
-  staff: { sendMessages: true },
-  chef: { sendMessages: true },
+  admin: {
+    viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true,
+    forceComplete: true, exportReports: true, manageStaff: true,
+    manageNotifications: true, viewAnalytics: true, manageCoupons: true,
+    sendMessages: true, messageSuperAdmin: true,
+  },
+  branch_admin: {
+    viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true,
+    forceComplete: true, exportReports: true, manageStaff: true,
+    viewAnalytics: true, sendMessages: true,
+  },
+  location_admin: {
+    viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true,
+    viewAnalytics: true, sendMessages: true,
+  },
+  staff: { viewOrders: true, manageOrders: true, sendMessages: true },
+  chef: { viewOrders: true, manageOrders: true, sendMessages: true },
 };
 
-const emptyPerms = () => CAPABILITY_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
+const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
 
 const Field = ({ label, children, hint }) => (
   <div className="space-y-1.5">
@@ -143,11 +166,13 @@ export default function AddMemberPage() {
       case 'super_admin': return [
         { value: 'admin', label: 'Admin' },
         { value: 'branch_admin', label: 'Branch Admin' },
+        { value: 'location_admin', label: 'Location Admin' },
         { value: 'staff', label: 'Staff' },
         { value: 'chef', label: 'Chef' },
       ];
       case 'admin': return [
         { value: 'branch_admin', label: 'Branch Admin' },
+        { value: 'location_admin', label: 'Location Admin' },
         { value: 'staff', label: 'Staff' },
         { value: 'chef', label: 'Chef' },
       ];
@@ -237,7 +262,7 @@ export default function AddMemberPage() {
       toast.error('Please assign at least one branch to the branch admin.');
       return;
     }
-    if (['staff', 'chef'].includes(form.role) && !form.assignedLocation) {
+    if (['location_admin', 'staff', 'chef'].includes(form.role) && !form.assignedLocation) {
       toast.error('Please select a branch for this member.');
       return;
     }
@@ -251,8 +276,8 @@ export default function AddMemberPage() {
     }
     // A member must be given access to at least one page — no zero-access accounts.
     // (Staff/Chef work from their own fixed menu, so they're exempt.)
-    if (['admin', 'branch_admin', 'location_admin'].includes(form.role) && selectedPages.length === 0) {
-      toast.error('Select at least one page this member can access.');
+    if (selectedPages.length === 0 && !Object.values(permissions).some(Boolean)) {
+      toast.error('Select at least one page access or permission. Zero-access members cannot be created.');
       return;
     }
 
@@ -376,7 +401,7 @@ export default function AddMemberPage() {
             )}
 
             {/* Branch selection per role */}
-            {['staff', 'chef'].includes(form.role) && (
+            {['location_admin', 'staff', 'chef'].includes(form.role) && (
               <Field label="Branch">
                 <PremiumSelect value={form.assignedLocation} onChange={(v) => set('assignedLocation', v)} options={myBranchOptions} placeholder="Select branch" />
               </Field>
@@ -414,12 +439,7 @@ export default function AddMemberPage() {
 
         {/* Page Access — one toggle per page (this is what the member can open). */}
         <Section icon={Shield} title="Page Access" desc="Tick exactly the pages this member can open — they'll see ONLY these. The role's typical pages are pre-selected.">
-          {['staff', 'chef'].includes(form.role) ? (
-            <p className="text-xs font-bold text-(--color-text-muted) bg-(--color-surface-soft) border border-(--color-border) rounded-xl px-4 py-3">
-              {form.role === 'chef' ? 'Chefs' : 'Staff'} use their own dedicated menu (Kitchen / New Orders / Tables …). No dashboard page access is assigned here.
-            </p>
-          ) : (
-            <>
+          <>
               <div className="flex items-center justify-end -mt-2">
                 <span className={`text-[10px] font-bold uppercase tracking-normal ${selectedPages.length === 0 ? 'text-danger' : 'text-(--color-text-muted)'}`}>
                   {selectedPages.length} page{selectedPages.length === 1 ? '' : 's'} selected
@@ -454,17 +474,16 @@ export default function AddMemberPage() {
                   </div>
                 ))}
               </div>
-            </>
-          )}
+          </>
         </Section>
 
         {/* Capabilities — non-page abilities (edit revenue, force-complete, messaging…). */}
-        <Section icon={Check} title="Capabilities" desc="Extra abilities that aren't a page. The role's defaults are pre-selected — add more if needed (only ones you have).">
+        <Section icon={Check} title="Permissions" desc="Extra abilities that aren't a page. The role's defaults are pre-selected — add more if needed (only ones you have).">
           <div className="flex items-center justify-end -mt-2">
             <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {CAPABILITY_LIST.map(({ key, label }) => {
+            {PERMISSION_LIST.map(({ key, label }) => {
               const checked = !!permissions[key];
               const allowed = actorCanGrant(key);
               return (
@@ -520,3 +539,4 @@ export default function AddMemberPage() {
     </PageTransition>
   );
 }
+

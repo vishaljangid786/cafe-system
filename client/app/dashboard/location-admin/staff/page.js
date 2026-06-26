@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert, Info, Calendar, Award, Briefcase, Hash, Globe, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/app/components/ui/Skeleton';
@@ -15,6 +16,7 @@ import Link from 'next/link';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 
 export default function LocationStaffPage() {
+  const router = useRouter();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
@@ -158,6 +160,13 @@ export default function LocationStaffPage() {
 
                   <div className="mt-10 pt-6 border-t border-(--color-border) dark:border-(--color-border) flex justify-end items-center relative z-10">
                     <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/location-admin/staff-reports/${member._id}`); }}
+                        className="p-3 text-(--color-text-muted) hover:text-primary hover:bg-primary dark:hover:bg-primary/10 rounded-xl transition-all"
+                        title="View Report"
+                      >
+                        <Award size={20} />
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
                         className="p-3 text-(--color-text-muted) hover:text-primary hover:bg-primary dark:hover:bg-primary/10 rounded-xl transition-all"
@@ -409,13 +418,20 @@ export default function LocationStaffPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-8 border-t border-(--color-border) dark:border-(--color-border) flex gap-4">
+              <div className="pt-8 border-t border-(--color-border) dark:border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <Button
                   variant="outline"
                   className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
                   onClick={() => setViewingStaff(null)}
                 >
                   Close
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  onClick={() => router.push(`/dashboard/location-admin/staff-reports/${viewingStaff._id}`)}
+                >
+                  View Report
                 </Button>
                 <Button
                   className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) shadow-sm"

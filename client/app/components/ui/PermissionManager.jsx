@@ -16,9 +16,20 @@ import { PAGE_GROUPS, ROLE_DEFAULT_PAGES } from '../../config/pages';
 // Page access is edited page-by-page (PAGE_GROUPS -> allowedPages). What's left
 // here are CAPABILITIES — non-page abilities.
 const permissionList = [
+  { key: 'viewRevenue', label: 'View Revenue' },
   { key: 'editRevenue', label: 'Edit Revenue (not just view)' },
+  { key: 'viewOrders', label: 'View Orders' },
+  { key: 'manageOrders', label: 'Manage Orders' },
   { key: 'forceComplete', label: 'Force-Complete Orders' },
+  { key: 'exportReports', label: 'Export Reports' },
+  { key: 'manageStaff', label: 'Manage Staff' },
   { key: 'manageNotifications', label: 'Manage Notifications' },
+  { key: 'viewAnalytics', label: 'View Analytics' },
+  { key: 'manageCoupons', label: 'Manage Offers / Coupons' },
+  { key: 'manageBranches', label: 'Manage Branches' },
+  { key: 'viewAuditLogs', label: 'View Security Logs' },
+  { key: 'impersonateUsers', label: 'Login As Staff' },
+  { key: 'viewAdminCenter', label: 'View Admin Center' },
   { key: 'manageGlobalMenu', label: 'Manage Global Menu' },
   { key: 'sendGlobalNotifications', label: 'Send Global Notifications' },
   { key: 'sendMessages', label: 'Send Messages' },
@@ -28,17 +39,30 @@ const permissionList = [
 // Default CAPABILITIES per role (mirrors add-member). Page defaults come from
 // ROLE_DEFAULT_PAGES. Used by the "Reset to role defaults" button.
 const ROLE_DEFAULT_CAPS = {
-  admin: { editRevenue: true, forceComplete: true, manageNotifications: true, sendMessages: true, messageSuperAdmin: true },
-  branch_admin: { editRevenue: true, forceComplete: true, sendMessages: true },
-  location_admin: { sendMessages: true },
-  staff: { sendMessages: true },
-  chef: { sendMessages: true },
+  admin: {
+    viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true,
+    forceComplete: true, exportReports: true, manageStaff: true,
+    manageNotifications: true, viewAnalytics: true, manageCoupons: true,
+    sendMessages: true, messageSuperAdmin: true,
+  },
+  branch_admin: {
+    viewRevenue: true, editRevenue: true, viewOrders: true, manageOrders: true,
+    forceComplete: true, exportReports: true, manageStaff: true,
+    viewAnalytics: true, sendMessages: true,
+  },
+  location_admin: {
+    viewRevenue: true, viewOrders: true, manageOrders: true, exportReports: true,
+    viewAnalytics: true, sendMessages: true,
+  },
+  staff: { viewOrders: true, manageOrders: true, sendMessages: true },
+  chef: { viewOrders: true, manageOrders: true, sendMessages: true },
 };
 
 const ROLE_FILTERS = [
   { label: 'All Roles', value: 'all' },
   { label: 'Admin', value: 'admin' },
   { label: 'Branch Admin', value: 'branch_admin' },
+  { label: 'Location Admin', value: 'location_admin' },
   { label: 'Chef', value: 'chef' },
   { label: 'Staff', value: 'staff' },
 ];
@@ -91,8 +115,8 @@ export default function PermissionManager({ className = "" }) {
         // Super Admin can manage everyone except themselves
         filtered = allUsers.filter(u => u._id !== currentUser?._id);
       } else if (currentUser?.role === 'admin') {
-        // Admin can manage branch_admins, chefs, and staff
-        const allowedRoles = ['branch_admin', 'chef', 'staff'];
+        // Admin can manage branch/location admins, chefs, and staff
+        const allowedRoles = ['branch_admin', 'location_admin', 'chef', 'staff'];
         filtered = allUsers.filter(u => allowedRoles.includes(u.role));
       } else if (currentUser?.role === 'branch_admin') {
         // Branch Admin can manage chefs and staff in their branch
@@ -203,6 +227,11 @@ export default function PermissionManager({ className = "" }) {
       });
       // Only send pages the actor can grant (server re-validates too).
       const safePages = editedPages.filter(actorCanGrantPage);
+      if (safePages.length === 0 && !Object.values(safePermissions).some(Boolean)) {
+        setError('Select at least one page access or permission. Zero-access members are not allowed.');
+        setSaving(false);
+        return;
+      }
       await api.put(`/users/${selectedUser._id}/permissions`, {
         permissions: safePermissions,
         allowedPages: safePages,
@@ -367,7 +396,10 @@ export default function PermissionManager({ className = "" }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="sm:w-56">
+        <div className="sm:w-56 space-y-1">
+          <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">
+            Filter by type
+          </label>
           <PremiumSelect
             value={roleFilter}
             onChange={setRoleFilter}
@@ -389,13 +421,13 @@ export default function PermissionManager({ className = "" }) {
                 <tr className="bg-(--color-surface-soft) text-xs font-semibold text-(--color-text-muted)">
                   <th className="px-6 py-3">Staff Member</th>
                   <th className="px-6 py-3">Role</th>
-                  <th className="px-6 py-3 text-center">Active Permissions</th>
+                  <th className="px-6 py-3 text-center">Active Access</th>
                   <th className="px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-(--color-border)">
                 {filteredUsers.map((sub, idx) => {
-                  const activeCount = Object.values(sub.permissions || {}).filter(Boolean).length;
+                  const activeCount = Object.values(sub.permissions || {}).filter(Boolean).length + (sub.allowedPages || []).length;
                   return (
                     <motion.tr
                       key={sub._id}
@@ -424,7 +456,7 @@ export default function PermissionManager({ className = "" }) {
                         <div className="flex items-center justify-center gap-2">
                           <div className={`h-2 w-2 rounded-full ${activeCount > 0 ? "bg-success" : "bg-(--color-text-muted)"}`} />
                           <span className="text-sm font-medium text-(--color-text-primary)">
-                            {activeCount} <span className="text-(--color-text-muted) text-xs">/ {permissionList.length} set</span>
+                            {activeCount} <span className="text-(--color-text-muted) text-xs">access item{activeCount === 1 ? '' : 's'} set</span>
                           </span>
                         </div>
                       </td>
@@ -477,12 +509,7 @@ export default function PermissionManager({ className = "" }) {
               Reset to role defaults
             </button>
           </div>
-          {['staff', 'chef'].includes(selectedUser?.role) ? (
-            <p className="text-xs font-medium text-(--color-text-muted) bg-(--color-surface-soft) border border-(--color-border) rounded-lg px-4 py-3">
-              {selectedUser?.role === 'chef' ? 'Chefs' : 'Staff'} use their own dedicated menu — no dashboard page access is set here.
-            </p>
-          ) : (
-            <div className="space-y-4">
+          <div className="space-y-4">
               {Object.entries(PAGE_GROUPS).map(([group, pages]) => (
                 <div key={group}>
                   <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">{group}</p>
@@ -510,9 +537,8 @@ export default function PermissionManager({ className = "" }) {
                 </div>
               ))}
             </div>
-          )}
 
-          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) block pt-2">Capabilities</span>
+          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) block pt-2">Permissions</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {permissionList.map(({ key, label }) => {
               const isChecked = editedPermissions[key] || false;
@@ -646,3 +672,4 @@ export default function PermissionManager({ className = "" }) {
     </div>
   );
 }
+
