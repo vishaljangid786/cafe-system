@@ -142,6 +142,10 @@ class AnalyticsService {
 
     const dateMatch = this.getDateMatchCriteria(startDate, endDate, null, 'date');
     const transactionMatch = { ...match, ...dateMatch };
+    // Orders are timestamped on `createdAt` (transactions use `date`). Scope the
+    // real-order count to the same selected window so "Total Orders" reflects every
+    // placed order — not just the billed ones that produced a revenue transaction.
+    const orderDateMatch = this.getDateMatchCriteria(startDate, endDate, null, 'createdAt');
 
     // Parallel Aggregations
     const [
@@ -240,7 +244,7 @@ class AnalyticsService {
         { $project: { upiCount: { $ifNull: ["$upiCount", 0] }, cashCount: { $ifNull: ["$cashCount", 0] }, otherCount: { $ifNull: ["$otherCount", 0] } } }
       ]),
       Order.aggregate([
-        { $match: { ...(match.locationId ? { branch: match.locationId } : {}), createdAt: { $gte: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000) } } },
+        { $match: { ...(match.locationId ? { branch: match.locationId } : {}), ...orderDateMatch } },
         { $group: { _id: "$status", count: { $sum: 1 }, revenue: { $sum: "$totalAmount" } } }
       ]),
       (async () => {
@@ -279,7 +283,11 @@ class AnalyticsService {
 
     const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
     const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
-    const totalOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
+    // billedOrders = orders that generated approved revenue (drives avg order value);
+    // totalOrders = every order actually placed in the window (what the user expects
+    // to see — placed orders show up even before they're served/billed).
+    const billedOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
+    const totalOrders = orderStatusAgg.reduce((acc, curr) => acc + (curr.count || 0), 0);
 
     const [staffAgg, categoryAgg, recentTransactions, recentManualExpenses, recentRevenues] = await Promise.all([
       Transaction.aggregate([
@@ -332,7 +340,8 @@ class AnalyticsService {
         totalRevenue,
         totalExpenses,
         totalOrders,
-        avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+        billedOrders,
+        avgOrderValue: billedOrders > 0 ? totalRevenue / billedOrders : 0,
         netProfit: totalRevenue - totalExpenses,
         cancellationRate: orderStatusAgg.find(o => o._id === 'CANCELLED')?.count || 0
       }
