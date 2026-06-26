@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import { digitsOnly, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
@@ -186,7 +187,9 @@ export default function ProcurementPage() {
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <input value={poNotes} onChange={(e) => setPoNotes(e.target.value)} placeholder="Notes (optional)" className={`${inputCls} flex-1 min-w-40`} />
                   <p className="text-sm font-bold text-(--color-text-primary)">Total: <span className="text-primary">{money(poTotal)}</span></p>
-                  <button onClick={createPO} disabled={busy} className="px-6 py-3 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Create PO</button>
+                  {can(user, 'procurement.add') && (
+                    <button onClick={createPO} disabled={busy} className="px-6 py-3 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Create PO</button>
+                  )}
                 </div>
               </div>
             </SlideIn>
@@ -207,8 +210,12 @@ export default function ProcurementPage() {
                         <span className={`text-[9px] font-bold uppercase tracking-normal px-2.5 py-1 rounded-lg ${po.status === 'received' ? 'bg-success/10 text-success' : po.status === 'cancelled' ? 'bg-danger/10 text-danger' : 'bg-amber-500/10 text-amber-500'}`}>{po.status}</span>
                         {po.status === 'ordered' && (
                           <>
-                            <button disabled={busy} onClick={() => receivePO(po._id)} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[9px] font-bold uppercase rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Receive</button>
-                            <button disabled={busy} onClick={() => cancelPO(po._id)} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[9px] font-bold uppercase rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50"><X size={12} /> Cancel</button>
+                            {can(user, 'procurement.modify') && (
+                              <button disabled={busy} onClick={() => receivePO(po._id)} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[9px] font-bold uppercase rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Receive</button>
+                            )}
+                            {can(user, 'procurement.modify') && (
+                              <button disabled={busy} onClick={() => cancelPO(po._id)} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[9px] font-bold uppercase rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50"><X size={12} /> Cancel</button>
+                            )}
                           </>
                         )}
                       </div>
@@ -230,7 +237,9 @@ export default function ProcurementPage() {
                   <input type="tel" inputMode="numeric" maxLength={10} value={supForm.phone} onChange={(e) => setSupForm({ ...supForm, phone: digitsOnly(e.target.value, 10) })} placeholder="Phone" className={`${inputCls} w-36`} />
                   <input value={supForm.gstin} onChange={(e) => setSupForm({ ...supForm, gstin: e.target.value })} placeholder="GSTIN" className={`${inputCls} w-40`} />
                   <input value={supForm.paymentTerms} onChange={(e) => setSupForm({ ...supForm, paymentTerms: e.target.value })} placeholder="Terms (e.g. Net 15)" className={`${inputCls} w-36`} />
-                  <button onClick={addSupplier} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>
+                  {can(user, 'procurement.add') && (
+                    <button onClick={addSupplier} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>
+                  )}
                 </div>
               </div>
             </SlideIn>

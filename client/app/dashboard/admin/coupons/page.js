@@ -378,18 +378,22 @@ export default function CouponsManagementPage() {
                   </td>
                   <td className="px-8 py-6 text-right">
                     <div className="flex justify-end gap-2">
+                      {can(user, 'coupons.modify') && (
                       <button
                         onClick={() => openEditModal(coupon)}
                         className="p-2.5 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all shadow-sm"
                       >
                         <Edit2 size={16} />
                       </button>
+                      )}
+                      {can(user, 'coupons.delete') && (
                       <button
                         onClick={() => handleDelete(coupon._id)}
                         className="p-2.5 rounded-xl bg-danger/10 hover:bg-[rgba(var(--color-danger-rgb),0.12)] text-danger hover:text-(--color-bg-base) transition-all shadow-sm"
                       >
                         <Trash2 size={16} />
                       </button>
+                      )}
                     </div>
                   </td>
                 </motion.tr>
