@@ -295,7 +295,7 @@ export default function BookingsManagementPage() {
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-(--color-border) flex gap-2">
-                      {booking.status === 'pending' ? (
+                      {booking.status === 'pending' && can(user, 'reservations.modify') ? (
                         <>
                           <button
                             onClick={() => updateStatus(booking._id, 'confirmed')}
@@ -388,7 +388,7 @@ export default function BookingsManagementPage() {
               </div>
 
               <div className="flex gap-4">
-                {selectedBooking.status === 'pending' ? (
+                {selectedBooking.status === 'pending' && can(user, 'reservations.modify') ? (
                   <>
                     <Button
                       variant="primary"
@@ -407,7 +407,7 @@ export default function BookingsManagementPage() {
                       Cancel Booking
                     </Button>
                   </>
-                ) : selectedBooking.status === 'confirmed' ? (
+                ) : selectedBooking.status === 'confirmed' && can(user, 'reservations.modify') ? (
                   <Button
                     variant="primary"
                     icon={CheckCircle2}

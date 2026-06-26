@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '@/app/config/actions';
 import api from '../../../services/api';
 import { digitsOnly } from '@/app/utils/inputValidation';
 import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store, X } from 'lucide-react';
@@ -264,6 +265,7 @@ export default function BranchesPage() {
                 />
               </div>
 
+              {can(user, 'branches.add') && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -276,6 +278,7 @@ export default function BranchesPage() {
               >
                 <Plus className="mr-2" size={16} /> New Branch
               </motion.button>
+              )}
             </div>
           </div>
         </SlideIn>
@@ -354,6 +357,7 @@ export default function BranchesPage() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end gap-2  transition-opacity">
+                        {can(user, 'branches.modify') && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -362,6 +366,8 @@ export default function BranchesPage() {
                         >
                           <Edit2 size={16} />
                         </motion.button>
+                        )}
+                        {can(user, 'branches.modify') && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -373,6 +379,7 @@ export default function BranchesPage() {
                         >
                           <ShieldAlert size={16} />
                         </motion.button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

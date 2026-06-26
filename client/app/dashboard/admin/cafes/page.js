@@ -13,6 +13,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { can } from '@/app/config/actions';
 
 // Full grantable permission set (mirrors the Add-Member page + User schema).
 const PERMISSION_LIST = [
@@ -580,7 +581,7 @@ export default function CafesPage() {
                 {isSuper ? 'Create and manage every cafe (brand). Each cafe owns its own branches and bills.' : 'Manage your cafe brand details shown on receipts.'}
               </p>
             </div>
-            {isSuper && (
+            {can(user, 'cafes.add') && (
               <motion.button
                 whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 onClick={openCreate}
@@ -621,7 +622,7 @@ export default function CafesPage() {
                       <button onClick={() => openEdit(cafe)} className="p-2.5 rounded-xl bg-(--color-surface-soft) text-(--color-text-secondary) border border-(--color-border) hover:text-primary transition-all" title="Edit">
                         <Edit2 size={15} />
                       </button>
-                      {isSuper && (
+                      {can(user, 'cafes.delete') && (
                         <button onClick={() => handleDelete(cafe)} className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all" title="Delete">
                           <Trash2 size={15} />
                         </button>

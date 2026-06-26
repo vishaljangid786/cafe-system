@@ -472,7 +472,7 @@ export default function ReservationsPage() {
               </button>
             )}
 
-            {canManage && !['confirmed', 'cancelled'].includes(actionMenu.reservation.status) && (
+            {can(user, 'reservations.modify') && !['confirmed', 'cancelled'].includes(actionMenu.reservation.status) && (
               <button
                 onClick={() => updateStatus(actionMenu.reservation, 'confirmed')}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
@@ -481,7 +481,7 @@ export default function ReservationsPage() {
               </button>
             )}
 
-            {canManage && !['no-show', 'cancelled'].includes(actionMenu.reservation.status) && (
+            {can(user, 'reservations.modify') && !['no-show', 'cancelled'].includes(actionMenu.reservation.status) && (
               <button
                 onClick={() => updateStatus(actionMenu.reservation, 'no-show')}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors"
@@ -490,7 +490,7 @@ export default function ReservationsPage() {
               </button>
             )}
 
-            {canManage && actionMenu.reservation.status !== 'cancelled' && (
+            {can(user, 'reservations.modify') && actionMenu.reservation.status !== 'cancelled' && (
               <button
                 onClick={() => updateStatus(actionMenu.reservation, 'cancelled')}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
@@ -499,7 +499,7 @@ export default function ReservationsPage() {
               </button>
             )}
 
-            {canManage && (
+            {can(user, 'reservations.delete') && (
               <>
                 <div className="my-1 border-t border-(--color-border)" />
                 <button
