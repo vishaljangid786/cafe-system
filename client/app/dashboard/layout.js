@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import CommandPalette from '../components/ui/CommandPalette';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import { useRouter, usePathname } from 'next/navigation';
+import api from '../services/api';
+import PremiumSelect from '../components/ui/PremiumSelect';
 
 // Each role maps to the dashboard prefixes it is allowed to visit. The FIRST
 // entry is that role's default landing target (used when redirecting away from
@@ -105,13 +107,35 @@ const matchGatedPage = (pathname) => {
 };
 
 export default function DashboardLayout({ children }) {
-  const { user, loading, exitImpersonation } = useAuth();
+  const { user, loading, exitImpersonation, impersonate } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [switchUsers, setSwitchUsers] = useState([]);
+
+  // "Switch user while impersonating" is a super_admin-only tool: it shows only when
+  // the REAL (original) identity is a super_admin — never for a delegated impersonator.
+  const canSwitchUser = !!user?.impersonatedBy &&
+    (user?.impersonatorRole === 'super_admin' || user?.impersonatedBy?.role === 'super_admin');
+
+  // Load the people a super_admin can hot-switch to (impersonating super_admins still
+  // see every user via GET /users).
+  useEffect(() => {
+    if (!canSwitchUser) { setSwitchUsers([]); return; }
+    let cancelled = false;
+    api.get('/users?limit=1000')
+      .then((res) => { if (!cancelled) setSwitchUsers(res.data?.data || []); })
+      .catch(() => { if (!cancelled) setSwitchUsers([]); });
+    return () => { cancelled = true; };
+  }, [canSwitchUser]);
+
+  const handleSwitchUser = async (uid) => {
+    if (!uid || String(uid) === String(user?._id)) return;
+    try { await impersonate(uid, false); } catch (e) { /* AuthContext surfaces the error */ }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -188,7 +212,23 @@ export default function DashboardLayout({ children }) {
                   Impersonating: {user.name} ({user.role})
                 </span>
               </span>
-              <button 
+              {/* super_admin only: hot-switch to any other user without exiting. */}
+              {canSwitchUser && switchUsers.length > 0 && (
+                <div className="w-56 sm:w-64">
+                  <PremiumSelect
+                    value=""
+                    onChange={(uid) => { if (uid) handleSwitchUser(uid); }}
+                    placeholder="Switch to a user…"
+                    options={[
+                      { label: 'Switch to a user…', value: '' },
+                      ...switchUsers
+                        .filter((u) => String(u._id) !== String(user?._id))
+                        .map((u) => ({ label: `${u.name} · ${String(u.role || '').replace(/_/g, ' ')}`, value: u._id })),
+                    ]}
+                  />
+                </div>
+              )}
+              <button
                 onClick={exitImpersonation}
                 className="bg-black text-primary px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-normal hover:bg-(--color-bg-deep)  active:scale-95 transition-all whitespace-nowrap shadow-sm"
               >
