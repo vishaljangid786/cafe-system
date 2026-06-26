@@ -323,10 +323,10 @@ export const AuthProvider = ({ children }) => {
 
   const [globalSearch, setGlobalSearch] = useState('');
 
-  const impersonate = async (userId, viewOnly = false) => {
+  const impersonate = async (userId, viewOnly = false, notify = true) => {
     try {
       setLoading(true);
-      await api.post(`/auth/impersonate/${userId}`, { viewOnly });
+      await api.post(`/auth/impersonate/${userId}`, { viewOnly, notify });
       // Read the authoritative profile after the cookie switches. This includes
       // impersonatedBy/isViewOnly immediately, so the exit banner renders
       // without requiring a manual page refresh.

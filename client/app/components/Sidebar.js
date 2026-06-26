@@ -73,13 +73,16 @@ const ROLE_LOCKED_PAGE_KEYS = new Set([
 // listed here, so new groups never render iconless.
 const GROUP_ICONS = {
   Main: LayoutDashboard,
-  Administration: ShieldCheck,
+  People: Users,
   Operations: UtensilsCrossed,
-  Analytics: TrendingUp,
+  Inventory: Package,
+  Marketing: Tag,
+  Finance: Wallet,
+  Reports: TrendingUp,
+  Setup: Settings,
   Performance: TrendingUp,
-  Rewards: Crown,
   'Granted Access': Star,
-  System: Settings,
+  System: Bell,
 };
 
 const getBranchId = (branch) => {
@@ -172,72 +175,76 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
     }
     if (mainItems.length > 0) groupsList.push({ title: 'Main', items: mainItems });
 
-    // Administration Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
-      const adminItems = [];
+    const isManager = role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin';
+    const tablesHref = ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables';
+    const menuHref = ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu';
 
-      // Add Member -> in-dashboard single-page member form
-      if (role !== 'location_admin' && canView('page_addmember')) {
-        adminItems.push({ name: 'Add Member', pageKey: 'page_addmember', href: '/dashboard/add-member', icon: UserPlus });
-      }
+    // Helper: push a group only if it ended up with at least one visible item.
+    const pushGroup = (title, items) => { if (items.length > 0) groupsList.push({ title, items }); };
 
-      if (canView('page_users')) {
-        adminItems.push({ name: 'Users', pageKey: 'page_users', href: '/dashboard/admin/users', icon: Users });
-      }
-      if (canView('page_auditlogs')) {
-        adminItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: '/dashboard/admin/audit-logs', icon: Activity });
-      }
+    if (isManager) {
+      // People — staff & HR (who works here and how they're paid)
+      const peopleItems = [];
+      if (role !== 'location_admin' && canView('page_addmember')) peopleItems.push({ name: 'Add Member', pageKey: 'page_addmember', href: '/dashboard/add-member', icon: UserPlus });
+      if (canView('page_users')) peopleItems.push({ name: 'Users', pageKey: 'page_users', href: '/dashboard/admin/users', icon: Users });
+      if (canView('page_staff')) peopleItems.push({ name: 'Staff', pageKey: 'page_staff', href: `${roleBasePath}/staff`, icon: Users });
+      if (canView('page_attendance')) peopleItems.push({ name: 'Attendance', pageKey: 'page_attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
+      if (canView('page_salaries')) peopleItems.push({ name: 'Salaries', pageKey: 'page_salaries', href: getSalaryPath(role), icon: Wallet });
+      pushGroup('People', peopleItems);
 
-      if (canView('page_impersonate')) {
-        adminItems.push({ name: 'Login As Staff', pageKey: 'page_impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
-      }
-
-      if (canView('page_cafes')) {
-        // Cafes (brands) sit ABOVE branches. Super-admins manage every cafe;
-        // admins manage the branding of the cafe(s) they own.
-        adminItems.push({ name: 'Cafes', pageKey: 'page_cafes', href: '/dashboard/admin/cafes', icon: Store });
-      }
-      if (canView('page_branches')) {
-        adminItems.push({ name: 'Branches', pageKey: 'page_branches', href: '/dashboard/admin/locations', icon: MapPin });
-      }
-
-      if (canView('page_staff')) adminItems.push({ name: 'Staff', pageKey: 'page_staff', href: `${roleBasePath}/staff`, icon: Users });
-      if (canView('page_attendance')) adminItems.push({ name: 'Attendance', pageKey: 'page_attendance', href: `${roleBasePath}/attendance`, icon: CalendarCheck });
-      if (canView('page_salaries')) adminItems.push({ name: 'Salaries', pageKey: 'page_salaries', href: getSalaryPath(role), icon: Wallet });
-
-      if (role !== 'location_admin' && canView('page_permissions')) {
-        adminItems.push({ name: 'Permissions', pageKey: 'page_permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
-      }
-
-      // Settings — tax/billing/payroll/loyalty config (page itself scopes branch access).
-      if (canView('page_settings')) {
-        adminItems.push({ name: 'Settings', pageKey: 'page_settings', href: '/dashboard/admin/settings', icon: Settings });
-      }
-
-      if (adminItems.length > 0) {
-        groupsList.push({ title: 'Administration', items: adminItems });
-      }
-    }
-
-    // Operations Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
+      // Operations — day-to-day service floor
       const opsItems = [];
-
       if (canView('page_orders')) opsItems.push({ name: 'All Orders', pageKey: 'page_orders', href: '/dashboard/admin/orders', icon: Receipt });
+      if (canView('page_tables')) opsItems.push({ name: 'Tables', pageKey: 'page_tables', href: tablesHref, icon: Coffee });
+      if (canView('page_menu')) opsItems.push({ name: 'Menu', pageKey: 'page_menu', href: menuHref, icon: UtensilsCrossed });
       if (canView('page_reservations')) opsItems.push({ name: 'Reservations', pageKey: 'page_reservations', href: '/dashboard/reservations', icon: CalendarDays });
-      if (canView('page_tables')) opsItems.push({ name: 'Tables', pageKey: 'page_tables', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/tables` : '/dashboard/admin/tables', icon: Coffee });
-      if (canView('page_menu')) opsItems.push({ name: 'Menu', pageKey: 'page_menu', href: ['branch_admin', 'location_admin'].includes(role) ? `${roleBasePath}/menu` : '/dashboard/admin/menu', icon: UtensilsCrossed });
-      if (canView('page_inventory') && role !== 'location_admin') opsItems.push({ name: 'Inventory', pageKey: 'page_inventory', href: '/dashboard/admin/inventory', icon: Package });
-      if (canView('page_procurement')) opsItems.push({ name: 'Procurement', pageKey: 'page_procurement', href: '/dashboard/admin/procurement', icon: Truck });
-      if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', pageKey: 'page_cashdrawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
       if (canView('page_waitlist')) opsItems.push({ name: 'Waitlist', pageKey: 'page_waitlist', href: '/dashboard/admin/waitlist', icon: Users });
-      if (canView('page_coupons')) opsItems.push({ name: 'Offers', pageKey: 'page_coupons', href: '/dashboard/admin/coupons', icon: Tag });
-      if (canView('page_giftcards')) opsItems.push({ name: 'Gift Cards', pageKey: 'page_giftcards', href: '/dashboard/admin/gift-cards', icon: Gift });
+      if (canView('page_cashdrawer')) opsItems.push({ name: 'Cash Drawer', pageKey: 'page_cashdrawer', href: '/dashboard/admin/cash-drawer', icon: Wallet });
+      pushGroup('Operations', opsItems);
 
-      if (opsItems.length > 0) {
-        groupsList.push({ title: 'Operations', items: opsItems });
-      }
+      // Inventory — stock & supply
+      const invItems = [];
+      if (canView('page_inventory') && role !== 'location_admin') invItems.push({ name: 'Inventory', pageKey: 'page_inventory', href: '/dashboard/admin/inventory', icon: Package });
+      if (canView('page_procurement')) invItems.push({ name: 'Procurement', pageKey: 'page_procurement', href: '/dashboard/admin/procurement', icon: Truck });
+      pushGroup('Inventory', invItems);
+
+      // Marketing — promotions & customers
+      const mktItems = [];
+      if (canView('page_coupons')) mktItems.push({ name: 'Offers', pageKey: 'page_coupons', href: '/dashboard/admin/coupons', icon: Tag });
+      if (canView('page_giftcards')) mktItems.push({ name: 'Gift Cards', pageKey: 'page_giftcards', href: '/dashboard/admin/gift-cards', icon: Gift });
+      if (canView('page_customers')) mktItems.push({ name: 'Customers & CRM', pageKey: 'page_customers', href: '/dashboard/admin/customers', icon: Crown });
+      if (canView('page_feedback')) mktItems.push({ name: 'Feedback', pageKey: 'page_feedback', href: '/dashboard/admin/feedback', icon: Star });
+      pushGroup('Marketing', mktItems);
+
+      // Finance — money in / money out
+      const finItems = [];
+      if (canView('page_revenue')) finItems.push({ name: 'Revenue', pageKey: 'page_revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
+      if (canView('page_expenses')) finItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
+      if (canView('page_paymentinsights')) finItems.push({ name: 'Payment Insights', pageKey: 'page_paymentinsights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
+      pushGroup('Finance', finItems);
+
+      // Reports — analytics & insights
+      const repItems = [];
+      if (canView('page_orderreports')) repItems.push({ name: 'Order Reports', pageKey: 'page_orderreports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
+      if (canView('page_staffreports')) repItems.push({ name: 'Staff Reports', pageKey: 'page_staffreports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
+      if (canView('page_staffcomparison')) repItems.push({ name: 'Staff Comparison', pageKey: 'page_staffcomparison', href: `${roleBasePath}/staff-comparison`, icon: Users });
+      if (canView('page_branchcompare') && hasMultipleComparableBranches) repItems.push({ name: 'Branch Compare', pageKey: 'page_branchcompare', href: '/dashboard/admin/location-comparison', icon: Target });
+      if (canView('page_forecast')) repItems.push({ name: 'Sales Forecast', pageKey: 'page_forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
+      if (canView('page_alerts')) repItems.push({ name: 'Alerts Overview', pageKey: 'page_alerts', href: '/dashboard/admin/command-center', icon: AlertCircle });
+      if (canView('page_exports')) repItems.push({ name: 'Export Center', pageKey: 'page_exports', href: '/dashboard/admin/exports', icon: Download });
+      pushGroup('Reports', repItems);
+
+      // Setup — configuration & access control
+      const setupItems = [];
+      if (canView('page_cafes')) setupItems.push({ name: 'Cafes', pageKey: 'page_cafes', href: '/dashboard/admin/cafes', icon: Store });
+      if (canView('page_branches')) setupItems.push({ name: 'Branches', pageKey: 'page_branches', href: '/dashboard/admin/locations', icon: MapPin });
+      if (role !== 'location_admin' && canView('page_permissions')) setupItems.push({ name: 'Permissions', pageKey: 'page_permissions', href: `${roleBasePath}/permissions`, icon: ShieldCheck });
+      if (canView('page_settings')) setupItems.push({ name: 'Settings', pageKey: 'page_settings', href: '/dashboard/admin/settings', icon: Settings });
+      if (canView('page_auditlogs')) setupItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: '/dashboard/admin/audit-logs', icon: Activity });
+      if (canView('page_impersonate')) setupItems.push({ name: 'Login As Staff', pageKey: 'page_impersonate', href: '/dashboard/admin/impersonate', icon: ShieldAlert });
+      pushGroup('Setup', setupItems);
     } else {
+      // Staff / chef — service floor + their own performance
       const opsItems = [];
       if (role !== 'chef') {
         if (canView('page_tables')) opsItems.push({ name: 'Tables', pageKey: 'page_tables', href: '/dashboard/staff/tables', icon: Coffee });
@@ -248,51 +255,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       } else {
         if (canView('page_menu')) opsItems.push({ name: 'Branch Menu', pageKey: 'page_menu', href: '/dashboard/staff/menu', icon: Coffee });
       }
-      if (opsItems.length > 0) groupsList.push({ title: 'Operations', items: opsItems });
-    }
+      pushGroup('Operations', opsItems);
 
-    // Analytics Group
-    if (role === 'super_admin' || role === 'admin' || role === 'branch_admin' || role === 'location_admin') {
-      const analyticsItems = [];
-
-      if (canView('page_revenue')) analyticsItems.push({ name: 'Revenue', pageKey: 'page_revenue', href: `${roleBasePath}/revenue`, icon: TrendingUp });
-      if (canView('page_expenses')) analyticsItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: `${roleBasePath}/expenses`, icon: Receipt });
-      if (canView('page_orderreports')) analyticsItems.push({ name: 'Order Reports', pageKey: 'page_orderreports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
-      if (canView('page_branchcompare') && hasMultipleComparableBranches) analyticsItems.push({ name: 'Branch Compare', pageKey: 'page_branchcompare', href: '/dashboard/admin/location-comparison', icon: Target });
-      if (canView('page_staffreports')) analyticsItems.push({ name: 'Staff Reports', pageKey: 'page_staffreports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
-      if (canView('page_staffcomparison')) analyticsItems.push({ name: 'Staff Comparison', pageKey: 'page_staffcomparison', href: `${roleBasePath}/staff-comparison`, icon: Users });
-      if (canView('page_feedback')) analyticsItems.push({ name: 'Feedback', pageKey: 'page_feedback', href: '/dashboard/admin/feedback', icon: Star });
-      if (canView('page_paymentinsights')) analyticsItems.push({ name: 'Payment Insights', pageKey: 'page_paymentinsights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
-      if (canView('page_alerts')) analyticsItems.push({ name: 'Alerts Overview', pageKey: 'page_alerts', href: '/dashboard/admin/command-center', icon: AlertCircle });
-      if (canView('page_forecast')) analyticsItems.push({ name: 'Sales Forecast', pageKey: 'page_forecast', href: '/dashboard/admin/forecasting', icon: TrendingUp });
-      if (canView('page_exports')) analyticsItems.push({ name: 'Export Center', pageKey: 'page_exports', href: '/dashboard/admin/exports', icon: Download });
-
-      if (analyticsItems.length > 0) {
-        groupsList.push({ title: 'Analytics', items: analyticsItems });
-      }
-    } else {
       const performanceItems = [];
-      if (canView('page_myperformance')) {
-        performanceItems.push({ name: 'My Performance', pageKey: 'page_myperformance', href: role === 'chef' ? '/dashboard/chef/performance' : '/dashboard/staff/performance', icon: TrendingUp });
-      }
-      if (role !== 'chef' && canView('page_workhistory')) {
-        performanceItems.push({ name: 'Work History', pageKey: 'page_workhistory', href: '/dashboard/staff/work-history', icon: History });
-      }
-      if (role !== 'chef' && canView('page_myattendance')) {
-        performanceItems.push({ name: 'My Attendance', pageKey: 'page_myattendance', href: '/dashboard/staff/attendance', icon: Calendar });
-      }
-      if (canView('page_expenses')) {
-        performanceItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: role === 'chef' ? '/dashboard/chef/expenses' : '/dashboard/staff/expenses', icon: Receipt });
-      }
-      if (performanceItems.length > 0) groupsList.push({ title: 'Performance', items: performanceItems });
-    }
-
-    // Loyalty Group
-    if (canView('page_customers')) {
-      groupsList.push({
-        title: 'Rewards',
-        items: [{ name: 'Customers & CRM', pageKey: 'page_customers', href: '/dashboard/admin/customers', icon: Crown }]
-      });
+      if (canView('page_myperformance')) performanceItems.push({ name: 'My Performance', pageKey: 'page_myperformance', href: role === 'chef' ? '/dashboard/chef/performance' : '/dashboard/staff/performance', icon: TrendingUp });
+      if (role !== 'chef' && canView('page_workhistory')) performanceItems.push({ name: 'Work History', pageKey: 'page_workhistory', href: '/dashboard/staff/work-history', icon: History });
+      if (role !== 'chef' && canView('page_myattendance')) performanceItems.push({ name: 'My Attendance', pageKey: 'page_myattendance', href: '/dashboard/staff/attendance', icon: Calendar });
+      if (canView('page_expenses')) performanceItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: role === 'chef' ? '/dashboard/chef/expenses' : '/dashboard/staff/expenses', icon: Receipt });
+      pushGroup('Performance', performanceItems);
     }
 
     const visibleHrefs = new Set(groupsList.flatMap(group => group.items.map(item => item.href)));

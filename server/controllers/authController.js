@@ -456,15 +456,33 @@ const impersonateUser = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const { viewOnly } = req.body;
+  const { viewOnly, notify } = req.body;
 
   await AuditLog.create({
     action: req.impersonator ? 'IMPERSONATION_SWITCH' : 'IMPERSONATION_START',
     performedBy: actor._id,
     targetUser: targetUser._id,
-    details: `${actor.name} logged in as ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-CONTROL'}]`,
+    details: `${actor.name} logged in as ${targetUser.name} [Mode: ${viewOnly ? 'VIEW-ONLY' : 'FULL-CONTROL'}]${notify === false ? ' [Ghost]' : ''}`,
     role: actor.role
   });
+
+  // Transparency mode: privately tell the user that this admin signed into their
+  // account. `notify === false` is "ghost mode" — log in silently. The notice goes
+  // ONLY to the target (targetOnly), never broadcast to other managers/super-admins.
+  if (notify !== false) {
+    const ROLE_LABELS = { super_admin: 'Super Admin', admin: 'Admin', branch_admin: 'Branch Admin', location_admin: 'Location Admin', staff: 'Staff', chef: 'Chef' };
+    const actorRole = ROLE_LABELS[actor.role] || actor.role;
+    await sendNotification({
+      title: 'Your account was accessed',
+      message: `${actor.name} (${actorRole}) signed in to your account${viewOnly ? ' in view-only mode' : ''}.`,
+      type: 'alert',
+      priority: 'high',
+      performedByUser: actor,
+      locationId: targetUser.assignedLocation?._id || targetUser.assignedLocation,
+      notifyUserId: targetUser._id,
+      targetOnly: true,
+    });
+  }
 
   // New session is impersonated BY the real actor (the original super_admin when
   // hot-switching), so impersonatedBy stays anchored to the real identity.

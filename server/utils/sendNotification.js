@@ -33,30 +33,34 @@ const MANAGER_ROLES = ['admin', 'branch_admin', 'location_admin'];
  * @param {String}  [params.locationId]          Affected branch; defaults to the actor's assignedLocation
  * @param {String}  [params.notifyUserId]        A specific user to also notify (the change's target)
  */
-const sendNotification = async ({ title, message, type, priority, performedByUser, locationId, notifyUserId }) => {
+const sendNotification = async ({ title, message, type, priority, performedByUser, locationId, notifyUserId, targetOnly = false }) => {
   try {
     if (!performedByUser || !performedByUser._id) return;
 
     const actorId = normalizeId(performedByUser._id);
     const targetLocationId = normalizeId(locationId || performedByUser.assignedLocation);
 
-    // super_admins always; branch managers only when a branch is known.
-    const orConditions = [{ role: 'super_admin' }];
-    if (targetLocationId) {
-      orConditions.push({
-        role: { $in: MANAGER_ROLES },
-        $or: [
-          { assignedLocation: targetLocationId },
-          { accessibleLocations: targetLocationId },
-        ],
-      });
-    }
-
     // Map keyed by id-string dedupes a manager who is also the affected user.
     const recipientIds = new Map();
 
-    const managers = await User.find({ _id: { $ne: actorId }, $or: orConditions }).select('_id');
-    managers.forEach((u) => recipientIds.set(u._id.toString(), u._id));
+    // targetOnly: notify ONLY the specific affected user (notifyUserId) — used for
+    // private alerts like "someone logged into your account" that must NOT fan out
+    // to every super_admin / branch manager.
+    if (!targetOnly) {
+      // super_admins always; branch managers only when a branch is known.
+      const orConditions = [{ role: 'super_admin' }];
+      if (targetLocationId) {
+        orConditions.push({
+          role: { $in: MANAGER_ROLES },
+          $or: [
+            { assignedLocation: targetLocationId },
+            { accessibleLocations: targetLocationId },
+          ],
+        });
+      }
+      const managers = await User.find({ _id: { $ne: actorId }, $or: orConditions }).select('_id');
+      managers.forEach((u) => recipientIds.set(u._id.toString(), u._id));
+    }
 
     // The specifically-affected user (if any) — still exists and isn't the actor.
     if (notifyUserId) {

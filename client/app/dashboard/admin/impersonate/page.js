@@ -34,6 +34,9 @@ export default function ImpersonatePage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [branchFilter, setBranchFilter] = useState('all');
   const [impersonating, setImpersonating] = useState(false);
+  // When ON, the user is privately notified that you signed into their account.
+  // When OFF ("ghost mode"), you log in silently with no notification to them.
+  const [notifyUser, setNotifyUser] = useState(true);
 
   const fetchUsers = async () => {
     try {
@@ -90,7 +93,7 @@ export default function ImpersonatePage() {
     try {
       setImpersonating(true);
       toast.loading(`Logging in as ${userName}...`, { id: 'impersonate' });
-      const res = await impersonate(userId);
+      const res = await impersonate(userId, false, notifyUser);
       if (res.success) {
         toast.success(`Logged in as: ${userName}`, { id: 'impersonate' });
       } else {
@@ -208,6 +211,38 @@ export default function ImpersonatePage() {
               Back to My Account
             </Button>
           )}
+        </div>
+
+        {/* Notify toggle — transparency vs ghost mode */}
+        <div
+          onClick={() => setNotifyUser((v) => !v)}
+          className={`card rounded-xl p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-colors ${notifyUser ? 'border-primary/40' : 'border-(--color-border)'}`}
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${notifyUser ? 'bg-primary/10 text-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+              {notifyUser ? <Shield size={20} /> : <ShieldAlert size={20} />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-(--color-text-primary)">
+                {notifyUser ? 'Notify the user' : 'Ghost mode'}
+              </p>
+              <p className="text-xs font-medium text-(--color-text-muted) mt-0.5 leading-relaxed">
+                {notifyUser
+                  ? 'The user will get a notification that you (your name & role) signed into their account.'
+                  : 'You log in silently — the user is NOT notified that you accessed their account.'}
+              </p>
+            </div>
+          </div>
+          {/* Switch */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={notifyUser}
+            onClick={(e) => { e.stopPropagation(); setNotifyUser((v) => !v); }}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${notifyUser ? 'bg-primary' : 'bg-(--color-border-strong)'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${notifyUser ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
         </div>
 
         {/* Search + Filters */}
