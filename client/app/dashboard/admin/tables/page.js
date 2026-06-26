@@ -110,14 +110,61 @@ export default function AdminTablesPage() {
     }
   };
 
+  // Fetch the menu SCOPED to a branch so the server merges that branch's stock +
+  // availability (BranchStock) into each item. Re-scoped per table on order open.
+  const fetchMenu = async (locId) => {
+    try {
+      const id = locId?._id || locId;
+      const params = new URLSearchParams({ limit: '500' });
+      if (id && id !== 'All' && id !== 'all') params.append('locationId', id);
+      const res = await api.get(`/menu?${params.toString()}`);
+      setMenuItems(res?.data?.data || []);
+    } catch (error) {
+      console.error('Menu sync failed');
+    }
+  };
+
+  // Per-branch stock state for a menu item. `branchSpecificStock` is only present
+  // when the branch actually tracks stock; if not, we never block on a phantom 0.
+  const stockInfo = (item) => {
+    const tracks = typeof item.branchSpecificStock === 'number';
+    const out = item.isAvailable === false || (tracks && item.branchSpecificStock <= 0);
+    return { tracks, out, qty: tracks ? item.branchSpecificStock : null };
+  };
+
+  // Single add-to-order path used by both card grids, with out-of-stock guard.
+  const addItemToOrder = (item) => {
+    if (appliedCoupon) return toast.error('Remove coupon to add new items');
+    if (stockInfo(item).out) return toast.error(`${item.name} is out of stock`);
+    const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
+    let newOrders;
+    if (existingIdx > -1) {
+      newOrders = [...pendingOrders];
+      newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
+    } else {
+      newOrders = [...pendingOrders, {
+        itemName: item.name,
+        image: item.image,
+        price: Number(item.discountedPrice || item.price),
+        costPrice: Number(item.costPrice || 0),
+        quantity: 1,
+        menuItemId: item._id,
+        categoryId: item.category?._id || item.category
+      }];
+    }
+    setPendingOrders(newOrders);
+    handleSyncOrders(newOrders);
+    toast.success(`Added ${item.name}`, { duration: 1000 });
+  };
+
   const fetchResources = async () => {
     try {
-      const [menuRes, locRes] = await Promise.all([
-        api.get('/menu'),
+      const [locRes] = await Promise.all([
         api.get('/locations')
       ]);
-      setMenuItems(menuRes?.data?.data || []);
       setLocations(locRes?.data?.data || []);
+      // Initial menu scoped to the currently selected branch (if any).
+      fetchMenu(selectedLocation);
     } catch (error) {
       console.error("Resource sync failed:", error.response?.data || error.message);
     }
@@ -231,6 +278,8 @@ export default function AdminTablesPage() {
     setDiscountAmount(0);
     setCouponCode('');
     fetchSystemOrders(table._id);
+    // Scope the menu to THIS table's branch so stock/availability are accurate.
+    fetchMenu(table.locationId);
     setShowOrderModal(true);
   };
 
@@ -909,32 +958,13 @@ export default function AdminTablesPage() {
                       <Zap size={12} className="mr-2 text-primary" /> Popular Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                      {menuItems.slice(0, 4).map((item) => (
+                      {menuItems.slice(0, 4).map((item) => {
+                        const { out, tracks, qty } = stockInfo(item);
+                        return (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 bg-(--color-surface) rounded-xl p-4 border border-(--color-border) hover:border-primary/30 transition-all cursor-pointer group shadow-sm"
-                          onClick={() => {
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
-                            const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
-                            let newOrders;
-                            if (existingIdx > -1) {
-                              newOrders = [...pendingOrders];
-                              newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
-                            } else {
-                              newOrders = [...pendingOrders, {
-                                itemName: item.name,
-                                image: item.image,
-                                price: Number(item.discountedPrice || item.price),
-                                costPrice: Number(item.costPrice || 0),
-                                quantity: 1,
-                                menuItemId: item._id,
-                                categoryId: item.category?._id || item.category
-                              }];
-                            }
-                            setPendingOrders(newOrders);
-                            handleSyncOrders(newOrders);
-                            toast.success(`Added ${item.name}`, { duration: 1000 });
-                          }}
+                          className={`flex-shrink-0 w-40 bg-(--color-surface) rounded-xl p-4 border border-(--color-border) transition-all group shadow-sm ${out ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/30 cursor-pointer'}`}
+                          onClick={() => addItemToOrder(item)}
                         >
                           <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-(--color-bg-soft) relative shadow-inner">
                             {item.image ? (
@@ -942,14 +972,28 @@ export default function AdminTablesPage() {
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-(--color-text-muted)"><Coffee size={24} /></div>
                             )}
-                            <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
-                              <Plus className="text-(--color-bg-base) drop-shadow-md" size={24} strokeWidth={3} />
-                            </div>
+                            {out ? (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
+                                <Plus className="text-(--color-bg-base) drop-shadow-md" size={24} strokeWidth={3} />
+                              </div>
+                            )}
                           </div>
                           <div className="text-[10px] font-bold text-(--color-text-primary) truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-primary mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            {tracks && (
+                              <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                {qty <= 0 ? 'Out' : `${qty} left`}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -957,32 +1001,13 @@ export default function AdminTablesPage() {
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
                   <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                    {isModalReady ? filteredMenuItems.map((item) => (
+                    {isModalReady ? filteredMenuItems.map((item) => {
+                        const { out, tracks, qty } = stockInfo(item);
+                        return (
                         <div
                           key={item._id}
-                          onClick={() => {
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
-                            const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
-                            let newOrders;
-                            if (existingIdx > -1) {
-                              newOrders = [...pendingOrders];
-                              newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
-                            } else {
-                              newOrders = [...pendingOrders, {
-                                itemName: item.name,
-                                image: item.image,
-                                price: Number(item.discountedPrice || item.price),
-                                costPrice: Number(item.costPrice || 0),
-                                quantity: 1,
-                                menuItemId: item._id,
-                                categoryId: item.category?._id || item.category
-                              }];
-                            }
-                            setPendingOrders(newOrders);
-                            handleSyncOrders(newOrders);
-                            toast.success(`Added ${item.name}`, { duration: 1000 });
-                          }}
-                          className="bg-(--color-surface) p-4 rounded-xl border border-(--color-border) hover:border-primary/30 transition-all cursor-pointer flex flex-col gap-3 group relative shadow-sm hover:shadow-sm"
+                          onClick={() => addItemToOrder(item)}
+                          className={`bg-(--color-surface) p-4 rounded-xl border border-(--color-border) transition-all flex flex-col gap-3 group relative shadow-sm ${out ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/30 cursor-pointer hover:shadow-sm'}`}
                         >
                           <div className="h-24 w-full rounded-xl bg-(--color-bg-soft) overflow-hidden relative shadow-inner">
                             {item.image ? (
@@ -995,21 +1020,34 @@ export default function AdminTablesPage() {
                                 {item.dietaryType || 'Food'}
                               </div>
                             </div>
-                            <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
-                              <Plus className="text-(--color-bg-base) drop-shadow-md" size={32} strokeWidth={3} />
-                            </div>
+                            {out ? (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
+                                <Plus className="text-(--color-bg-base) drop-shadow-md" size={32} strokeWidth={3} />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <div className="text-[11px] font-bold text-(--color-text-primary) leading-tight truncate">{item.name}</div>
                             <div className="flex items-center justify-between mt-1">
                               <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
-                              <div className="h-6 w-6 rounded-lg bg-(--color-bg-soft) flex items-center justify-center text-(--color-text-muted) group-hover:bg-primary group-hover:text-(--color-bg-base) transition-all">
-                                <Plus size={12} />
-                              </div>
+                              {tracks ? (
+                                <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                  {qty <= 0 ? 'Out' : `${qty} left`}
+                                </span>
+                              ) : (
+                                <div className={`h-6 w-6 rounded-lg flex items-center justify-center transition-all ${out ? 'bg-danger/10 text-danger' : 'bg-(--color-bg-soft) text-(--color-text-muted) group-hover:bg-primary group-hover:text-(--color-bg-base)'}`}>
+                                  {out ? <X size={12} /> : <Plus size={12} />}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      )) : (
+                        );
+                      }) : (
                         [1,2,3,4,5,6].map(i => (
                           <div key={i} className="h-40 rounded-xl bg-(--color-bg-soft)/20 animate-pulse border border-(--color-border)" />
                         ))

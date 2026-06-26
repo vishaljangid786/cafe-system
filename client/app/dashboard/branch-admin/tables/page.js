@@ -83,15 +83,66 @@ export default function TablesPage() {
     }
   };
 
+  // Fetch the menu SCOPED to a branch so the server merges that branch's stock +
+  // availability (BranchStock) into each item. Passing a locationId is also what
+  // makes the menu show up reliably for a branch_admin and avoids the default
+  // 20-item page cap. Falls back to the admin's own branch when none is given.
+  const fetchMenu = async (locId) => {
+    try {
+      const id = locId?._id || locId;
+      const params = new URLSearchParams({ limit: '500' });
+      if (id) params.append('locationId', id);
+      const res = await api.get(`/menu?${params.toString()}`);
+      setMenuItems(res.data.data);
+    } catch (error) {
+      console.error('Menu sync failed');
+    }
+  };
+
+  // Per-branch stock state for a menu item. `branchSpecificStock` is only present
+  // when the branch actually tracks stock for it; if it isn't tracked we never
+  // block on a phantom 0 — only an explicit availability toggle marks it out.
+  const stockInfo = (item) => {
+    const tracks = typeof item.branchSpecificStock === 'number';
+    const out = item.isAvailable === false || (tracks && item.branchSpecificStock <= 0);
+    return { tracks, out, qty: tracks ? item.branchSpecificStock : null };
+  };
+
+  // Single add-to-order path used by both the Best Selling and Full Menu cards,
+  // with the out-of-stock guard applied in one place.
+  const addItemToOrder = (item) => {
+    if (appliedCoupon) return toast.error('Remove coupon to add new items');
+    if (stockInfo(item).out) return toast.error(`${item.name} is out of stock`);
+    const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
+    let newOrders;
+    if (existingIdx > -1) {
+      newOrders = [...pendingOrders];
+      newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
+    } else {
+      newOrders = [...pendingOrders, {
+        itemName: item.name,
+        image: item.image,
+        price: Number(item.discountedPrice || item.price),
+        costPrice: Number(item.costPrice || 0),
+        quantity: 1,
+        menuItemId: item._id,
+        categoryId: item.category?._id || item.category
+      }];
+    }
+    setPendingOrders(newOrders);
+    handleSyncOrders(newOrders);
+    toast.success(`Added ${item.name}`, { duration: 1000 });
+  };
+
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const [menuRes, couponRes] = await Promise.all([
-          api.get('/menu'),
+        const [couponRes] = await Promise.all([
           api.get('/coupons?active=true')
         ]);
-        setMenuItems(menuRes.data.data);
         setCoupons(couponRes.data.data);
+        // Initial menu scoped to the admin's own branch; re-scoped per table on open.
+        fetchMenu(user?.assignedLocation);
       } catch (error) {
         console.error("List sync failed");
       }
@@ -194,6 +245,8 @@ export default function TablesPage() {
     setDiscountAmount(0);
     setCouponCode('');
     fetchSystemOrders(table._id);
+    // Scope the menu to THIS table's branch so stock/availability are accurate.
+    fetchMenu(table.locationId);
     setShowOrderModal(true);
   };
 
@@ -863,32 +916,13 @@ export default function TablesPage() {
                       <Zap size={12} className="mr-2 text-primary" /> Best Selling Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                      {menuItems.slice(0, 4).map((item) => (
+                      {menuItems.slice(0, 4).map((item) => {
+                        const { out, tracks, qty } = stockInfo(item);
+                        return (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-(--color-border) dark:border-(--color-border) hover:border-primary/30 transition-all cursor-pointer group"
-                          onClick={() => {
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
-                            const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
-                            let newOrders;
-                            if (existingIdx > -1) {
-                              newOrders = [...pendingOrders];
-                              newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
-                            } else {
-                              newOrders = [...pendingOrders, {
-                                itemName: item.name,
-                                image: item.image,
-                                price: Number(item.discountedPrice || item.price),
-                                costPrice: Number(item.costPrice || 0),
-                                quantity: 1,
-                                menuItemId: item._id,
-                                categoryId: item.category?._id || item.category
-                              }];
-                            }
-                            setPendingOrders(newOrders);
-                            handleSyncOrders(newOrders);
-                            toast.success(`Added ${item.name}`, { duration: 1000 });
-                          }}
+                          className={`flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-(--color-border) dark:border-(--color-border) transition-all group ${out ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/30 cursor-pointer'}`}
+                          onClick={() => addItemToOrder(item)}
                         >
                           <div className="h-20 w-full rounded-xl overflow-hidden mb-3 bg-(--color-surface-soft) dark:bg-(--color-surface) relative">
                             {item.image ? (
@@ -899,14 +933,28 @@ export default function TablesPage() {
                             <div className="absolute top-2 left-2">
                                <div className={`w-3 h-3 rounded-full border-2 border-(--color-border) dark:border-(--color-border) ${item.dietaryType === 'veg' ? 'bg-success ' : 'bg-danger '}`} />
                             </div>
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                              <Plus className="text-white" size={24} />
-                            </div>
+                            {out ? (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-[9px] font-bold uppercase tracking-normal text-white bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                <Plus className="text-white" size={24} />
+                              </div>
+                            )}
                           </div>
                           <div className="text-[10px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-primary mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            {tracks && (
+                              <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                {qty <= 0 ? 'Out' : `${qty} left`}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -917,32 +965,13 @@ export default function TablesPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {menuItems
                       .filter(m => m.name.toLowerCase().includes(menuSearch.toLowerCase()))
-                      .map((item) => (
+                      .map((item) => {
+                        const { out, tracks, qty } = stockInfo(item);
+                        return (
                         <div
                           key={item._id}
-                          onClick={() => {
-                            if (appliedCoupon) return toast.error('Remove coupon to add new items');
-                            const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
-                            let newOrders;
-                            if (existingIdx > -1) {
-                              newOrders = [...pendingOrders];
-                              newOrders[existingIdx] = { ...newOrders[existingIdx], quantity: newOrders[existingIdx].quantity + 1 };
-                            } else {
-                              newOrders = [...pendingOrders, {
-                                itemName: item.name,
-                                image: item.image,
-                                price: Number(item.discountedPrice || item.price),
-                                costPrice: Number(item.costPrice || 0),
-                                quantity: 1,
-                                menuItemId: item._id,
-                                categoryId: item.category?._id || item.category
-                              }];
-                            }
-                            setPendingOrders(newOrders);
-                            handleSyncOrders(newOrders);
-                            toast.success(`Added ${item.name}`, { duration: 1000 });
-                          }}
-                          className="bg-(--color-surface) dark:bg-(--color-surface)/50 p-3 rounded-xl border border-(--color-border) dark:border-(--color-border) hover:border-primary/20 transition-all cursor-pointer flex items-center gap-3 group"
+                          onClick={() => addItemToOrder(item)}
+                          className={`bg-(--color-surface) dark:bg-(--color-surface)/50 p-3 rounded-xl border border-(--color-border) dark:border-(--color-border) transition-all flex items-center gap-3 group ${out ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/20 cursor-pointer'}`}
                         >
                           <div className="h-10 w-10 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) flex-shrink-0 overflow-hidden relative">
                             {item.image ? (
@@ -958,13 +987,24 @@ export default function TablesPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-[11px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) leading-tight truncate">{item.name}</div>
-                            <div className="text-[10px] font-bold text-primary mt-0.5">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</span>
+                              {tracks && (
+                                <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                  · {qty <= 0 ? 'Out of stock' : `${qty} left`}
+                                </span>
+                              )}
+                              {!tracks && item.isAvailable === false && (
+                                <span className="text-[9px] font-bold uppercase tracking-normal text-danger">· Unavailable</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) flex items-center justify-center text-(--color-text-muted) group-hover:bg-primary group-hover:text-white transition-all">
-                            <Plus size={12} />
+                          <div className={`h-6 w-6 rounded-lg flex items-center justify-center transition-all ${out ? 'bg-danger/10 text-danger' : 'bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) group-hover:bg-primary group-hover:text-white'}`}>
+                            {out ? <X size={12} /> : <Plus size={12} />}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
 

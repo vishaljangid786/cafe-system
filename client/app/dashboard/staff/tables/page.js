@@ -707,8 +707,9 @@ export default function StaffTablesPage() {
                       {menuItems.slice(0, 4).map((item) => (
                         <div
                           key={item._id}
-                          className="flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-(--color-border) dark:border-(--color-border) hover:border-primary/30 transition-all cursor-pointer group"
+                          className={`flex-shrink-0 w-40 glass-morphism rounded-xl p-4 border border-(--color-border) dark:border-(--color-border) transition-all group ${!item.isAvailable ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-primary/30 cursor-pointer'}`}
                           onClick={() => {
+                            if (!item.isAvailable) return toast.error(`${item.name} is out of stock right now`, { icon: '🚫' });
                             if (appliedCoupon) return toast.error('Please remove the coupon before adding new items');
                             const existingIdx = pendingOrders.findIndex(o => o.menuItemId === item._id);
                             let newOrders;
@@ -737,12 +738,23 @@ export default function StaffTablesPage() {
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-(--color-text-muted)"><Coffee size={24} /></div>
                             )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                              <Plus className="text-white" size={24} />
-                            </div>
+                            {!item.isAvailable ? (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-white uppercase tracking-normal px-2 py-1 border border-(--color-border) rounded-full">Sold Out</span>
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                <Plus className="text-white" size={24} />
+                              </div>
+                            )}
                           </div>
                           <div className="text-[10px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
-                          <div className="text-[10px] font-bold text-primary mt-1">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            {item.isAvailable && item.stock !== undefined && (
+                              <span className={`text-[9px] font-bold uppercase tracking-tight ${item.stock < 10 ? 'text-danger' : 'text-success'}`}>{item.stock} left</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
