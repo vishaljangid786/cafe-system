@@ -105,47 +105,47 @@ export default function BranchPresencePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 max-w-400 mx-auto">
-        
+      <div className="space-y-6 max-w-400 mx-auto">
+
         {/* Header */}
         <SlideIn direction="down">
-          <div className="relative overflow-hidden rounded-xl bg-(--color-surface) p-10 lg:p-14 border border-(--color-border) shadow-sm">
-            <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
-              <div className="flex items-center gap-6">
+          <div className="relative overflow-hidden rounded-xl bg-(--color-surface) p-5 lg:p-6 border border-(--color-border) shadow-sm">
+            <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-5">
+              <div className="flex items-center gap-4">
                 {selectedLocation ? (
-                  <button 
+                  <button
                     onClick={() => setSelectedLocation(null)}
-                    className="p-4 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) hover:text-primary transition-all border border-(--color-border)"
+                    className="p-3 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) hover:text-primary transition-all border border-(--color-border)"
                   >
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={20} />
                   </button>
                 ) : (
-                  <div className="p-4 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                    <CalendarCheck size={32} />
+                  <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                    <CalendarCheck size={24} />
                   </div>
                 )}
                 <div>
-                  <h1 className="text-4xl lg:text-5xl font-bold text-(--color-text-primary) tracking-tight leading-none uppercase italic">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
                     Branch <span className="text-primary">Presence</span>
                   </h1>
-                  <p className="text-(--color-text-muted) font-bold mt-2 tracking-normal uppercase text-[10px]">
+                  <p className="text-(--color-text-muted) font-medium mt-2 tracking-normal text-[11px]">
                     {selectedLocation ? `Managing ${selectedLocation.name}` : 'Select a branch to mark staff attendance'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div 
+                <div
                   onClick={() => dateInputRef.current?.showPicker()}
-                  className="px-6 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) flex items-center gap-3 cursor-pointer hover:border-primary/40 transition-all"
+                  className="px-5 py-3 rounded-xl bg-(--color-bg-soft) border border-(--color-border) flex items-center gap-3 cursor-pointer hover:border-primary/40 transition-all"
                 >
                   <Clock className="text-primary" size={18} />
-                  <input 
+                  <input
                     ref={dateInputRef}
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="bg-transparent outline-none text-xs font-bold uppercase tracking-normal text-(--color-text-primary) cursor-pointer"
+                    className="bg-transparent outline-none text-xs font-medium tracking-normal text-(--color-text-primary) cursor-pointer"
                   />
                 </div>
               </div>
@@ -158,37 +158,37 @@ export default function BranchPresencePage() {
 
         {!selectedLocation ? (
           /* Branch Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {locations.map((loc, idx) => (
               <SlideIn key={loc._id} delay={idx * 0.1}>
                 <CardHover>
-                  <div 
+                  <div
                     onClick={() => setSelectedLocation(loc)}
-                    className="group relative bg-(--color-surface) rounded-xl p-10 border border-(--color-border) cursor-pointer overflow-hidden transition-all hover:shadow-sm"
+                    className="group relative bg-(--color-surface) rounded-xl p-5 border border-(--color-border) cursor-pointer overflow-hidden transition-all hover:shadow-sm"
                   >
-                    <div className="relative z-10 flex flex-col h-full justify-between gap-10">
+                    <div className="relative z-10 flex flex-col h-full justify-between gap-5">
                       <div className="flex justify-between items-start">
-                        <div className="p-4 rounded-xl bg-(--color-bg-soft) text-primary border border-(--color-border)">
+                        <div className="p-3 rounded-xl bg-(--color-bg-soft) text-primary border border-(--color-border)">
                           <MapPin size={24} />
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch ID</span>
-                          <p className="text-xs font-bold text-(--color-text-primary)">#{loc._id.slice(-6).toUpperCase()}</p>
+                          <span className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Branch ID</span>
+                          <p className="text-xs font-medium text-(--color-text-primary)">#{loc._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
 
                       <div>
                         {loc.cafe?.name && (
-                          <span className="inline-block text-[9px] font-bold uppercase tracking-normal text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full mb-1">{loc.cafe.name}</span>
+                          <span className="inline-block text-[11px] font-medium tracking-normal text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full mb-1">{loc.cafe.name}</span>
                         )}
-                        <h3 className="text-3xl font-bold text-(--color-text-primary) tracking-tight italic uppercase">{loc.name}</h3>
+                        <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">{loc.name}</h3>
                         <p className="text-xs font-medium text-(--color-text-muted) mt-1">{loc.city}, {loc.state}</p>
                       </div>
 
                       <div className="flex items-center justify-between pt-6 border-t border-(--color-border)">
                         <div className="flex items-center gap-2">
                           <Users size={16} className="text-primary opacity-40" />
-                          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">View Staff</span>
+                          <span className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">View Staff</span>
                         </div>
                         <ChevronRight size={20} className="text-primary group-hover:translate-x-2 transition-transform" />
                       </div>
@@ -203,42 +203,42 @@ export default function BranchPresencePage() {
           </div>
         ) : (
           /* Staff Marking Section */
-          <div className="space-y-10">
+          <div className="space-y-6">
             {/* Quick Filter & Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
               <div className="lg:col-span-4">
-                <div className="bg-(--color-surface) rounded-xl p-8 border border-(--color-border) h-full">
-                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                <div className="bg-(--color-surface) rounded-xl p-5 border border-(--color-border) h-full">
+                  <h3 className="text-[11px] font-medium tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                     <TrendingUp size={14} /> Branch Overview
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 rounded-xl bg-success/10 border border-success/20">
-                      <p className="text-[10px] font-bold text-success uppercase tracking-normal">Present</p>
-                      <p className="text-3xl font-bold text-success mt-1">{attendance.filter(a => a.status === 'present').length}</p>
+                    <div className="p-5 rounded-xl bg-success/10 border border-success/20">
+                      <p className="text-[11px] font-medium text-success tracking-normal">Present</p>
+                      <p className="text-2xl font-semibold text-success mt-1">{attendance.filter(a => a.status === 'present').length}</p>
                     </div>
-                    <div className="p-6 rounded-xl bg-danger/10 border border-danger/20">
-                      <p className="text-[10px] font-bold text-danger uppercase tracking-normal">Absent</p>
-                      <p className="text-3xl font-bold text-danger mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
+                    <div className="p-5 rounded-xl bg-danger/10 border border-danger/20">
+                      <p className="text-[11px] font-medium text-danger tracking-normal">Absent</p>
+                      <p className="text-2xl font-semibold text-danger mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="lg:col-span-8">
-                <div className="bg-(--color-surface) rounded-xl p-8 border border-(--color-border) flex items-center gap-6 h-full">
-                  <div className="flex-1 relative">
+                <div className="bg-(--color-surface) rounded-xl p-5 border border-(--color-border) flex items-center gap-5 h-full">
+                  <div className="flex-1 min-w-0 relative">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={20} />
-                    <input 
+                    <input
                       type="text"
                       placeholder="Filter staff by name or email..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-16 pr-6 py-6 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 outline-none text-sm font-bold transition-all"
+                      className="w-full pl-16 pr-6 py-2.5 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 outline-none text-sm font-medium transition-all"
                     />
                   </div>
-                  <div className="hidden md:flex flex-col items-end">
-                    <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Staff</span>
-                    <p className="text-2xl font-bold text-(--color-text-primary)">{staff.length}</p>
+                  <div className="hidden md:flex flex-col items-end sm:shrink-0">
+                    <span className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Total Staff</span>
+                    <p className="text-2xl font-semibold text-(--color-text-primary)">{staff.length}</p>
                   </div>
                 </div>
               </div>
@@ -250,25 +250,25 @@ export default function BranchPresencePage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="bg-(--color-surface-soft) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) border-b border-(--color-border)">
-                        <th className="px-10 py-7">Staff Member</th>
-                        <th className="px-10 py-7 text-center">Status</th>
-                        <th className="px-10 py-7 text-right">Actions</th>
+                      <tr className="bg-(--color-surface-soft) text-[11px] font-medium tracking-normal text-(--color-text-muted) border-b border-(--color-border)">
+                        <th className="px-5 py-4">Staff Member</th>
+                        <th className="px-5 py-4 text-center">Status</th>
+                        <th className="px-5 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-(--color-border)">
                       {refetching ? (
                         <tr>
-                          <td colSpan="3" className="px-10 py-8">
+                          <td colSpan="3" className="px-5 py-4">
                             <TableSkeleton rows={6} cols={3} />
                           </td>
                         </tr>
                       ) : filteredStaff.length === 0 ? (
                         <tr>
-                          <td colSpan="3" className="px-10 py-20 text-center">
+                          <td colSpan="3" className="px-5 py-20 text-center">
                             <div className="flex flex-col items-center gap-4 opacity-30">
                               <Users size={48} />
-                              <p className="text-xs font-bold uppercase tracking-normal">No staff found for this branch</p>
+                              <p className="text-xs font-medium tracking-normal">No staff found for this branch</p>
                             </div>
                           </td>
                         </tr>
@@ -277,30 +277,30 @@ export default function BranchPresencePage() {
                           const status = getAttendanceStatus(user._id);
                           return (
                             <tr key={user._id} className="hover:bg-primary/[0.02] transition-colors group">
-                              <td className="px-10 py-8">
+                              <td className="px-5 py-4">
                                 <div className="flex items-center">
-                                  <div className="h-14 w-14 rounded-[1.2rem] bg-(--color-bg-soft) flex items-center justify-center font-bold text-xl text-primary border border-(--color-border) transition-transform">
+                                  <div className="h-14 w-14 rounded-[1.2rem] bg-(--color-bg-soft) flex items-center justify-center font-semibold text-xl text-primary border border-(--color-border) transition-transform">
                                     {user.name.charAt(0).toUpperCase()}
                                   </div>
                                   <div className="ml-5">
-                                    <p className="text-lg font-bold text-(--color-text-primary) tracking-tight leading-none">{user.name}</p>
+                                    <p className="text-lg font-medium text-(--color-text-primary) tracking-tight leading-none">{user.name}</p>
                                     <div className="flex items-center gap-2 mt-2">
-                                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-bold uppercase tracking-normal rounded border border-primary/20">
+                                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-medium tracking-normal rounded border border-primary/20">
                                         {user.role}
                                       </span>
-                                      <span className="text-[10px] font-bold text-(--color-text-muted)">{user.email}</span>
+                                      <span className="text-[11px] font-medium text-(--color-text-muted)">{user.email}</span>
                                     </div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-10 py-8">
+                              <td className="px-5 py-4">
                                 <div className="flex justify-center">
                                   <AnimatePresence mode="wait">
                                     <motion.span
                                       key={status}
                                       initial={{ opacity: 0, scale: 0.9 }}
                                       animate={{ opacity: 1, scale: 1 }}
-                                      className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-normal rounded-xl border shadow-sm ${
+                                      className={`px-2.5 py-1 text-[11px] font-medium tracking-normal rounded-xl border ${
                                         status === 'present' ? 'bg-[rgba(var(--color-success-rgb),0.12)] text-success border-success' :
                                         status === 'absent' ? 'bg-[rgba(var(--color-danger-rgb),0.12)] text-danger border-danger' :
                                         status === 'half-day' ? 'bg-(--color-primary-soft) text-primary border-primary' :
@@ -312,7 +312,7 @@ export default function BranchPresencePage() {
                                   </AnimatePresence>
                                 </div>
                               </td>
-                              <td className="px-10 py-8">
+                              <td className="px-5 py-4">
                                 <div className="flex justify-end gap-3">
                                   {[
                                     { id: 'present', icon: CheckCircle2, label: 'Present', color: 'bg-success' },
@@ -325,9 +325,9 @@ export default function BranchPresencePage() {
                                       whileTap={{ scale: 0.95 }}
                                       disabled={markingLoading}
                                       onClick={() => handleMarkAttendance(user._id, btn.id)}
-                                      className={`px-6 py-4 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all border flex items-center gap-2 ${
-                                        status === btn.id 
-                                          ? `${btn.color} text-white border-transparent shadow-sm` 
+                                      className={`px-5 py-2.5 rounded-xl text-[11px] font-medium tracking-normal transition-all border flex items-center gap-2 ${
+                                        status === btn.id
+                                          ? `${btn.color} text-white border-transparent shadow-sm`
                                           : 'bg-(--color-bg-soft) text-(--color-text-muted) border-(--color-border) hover:border-primary'
                                       }`}
                                     >

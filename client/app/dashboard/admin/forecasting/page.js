@@ -53,16 +53,16 @@ export default function ForecastingDashboard() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
         <SlideIn direction="down">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-4">
-                <TrendingUp className="text-primary" size={36} />
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+                <TrendingUp className="text-primary" size={24} />
                 Sales <span className="text-primary">Forecast</span>
               </h1>
-              <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal">Estimates based on your past sales</p>
+              <p className="text-(--color-text-secondary) text-sm font-medium mt-1 tracking-normal">Estimates based on your past sales</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -94,63 +94,63 @@ export default function ForecastingDashboard() {
         ) : (
           <>
         {/* Prediction Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <Calendar size={24} className="opacity-80" />
-            <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Expected Today Revenue</p>
-            <h2 className="text-4xl font-bold mt-2 tracking-tight">₹{forecast?.expectedTodayRevenue?.toLocaleString() || 0}</h2>
-            <div className="mt-4 flex items-center gap-2 text-xs font-bold opacity-90">
+            <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Expected Today Revenue</p>
+            <h2 className="text-2xl font-semibold mt-2 tracking-tight">₹{forecast?.expectedTodayRevenue?.toLocaleString() || 0}</h2>
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium opacity-90">
               <Percent size={14} /> Confidence {forecast?.confidenceScore}%
             </div>
           </div>
 
-          <div className="p-8 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
+          <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <TrendingUp size={24} className="opacity-80" />
-            <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Weekly Revenue Estimate</p>
-            <h2 className="text-4xl font-bold mt-2 tracking-tight">₹{forecast?.weeklyRevenueEstimate?.toLocaleString() || 0}</h2>
-            <div className="mt-4 flex items-center gap-2 text-xs font-bold opacity-90">
+            <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Weekly Revenue Estimate</p>
+            <h2 className="text-2xl font-semibold mt-2 tracking-tight">₹{forecast?.weeklyRevenueEstimate?.toLocaleString() || 0}</h2>
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium opacity-90">
               <Percent size={14} /> Based on recent sales
             </div>
           </div>
 
-          <div className="p-8 bg-gradient-to-br from-success to-success rounded-xl text-white shadow-sm">
+          <div className="p-5 bg-gradient-to-br from-success to-success rounded-xl text-white shadow-sm">
             <Award size={24} className="opacity-80" />
-            <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Best Category Forecast</p>
-            <h2 className="text-4xl font-bold mt-2 tracking-tight">{forecast?.bestCategoryForecast || 'N/A'}</h2>
-            <div className="mt-4 flex items-center gap-2 text-xs font-bold opacity-90">
+            <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Best Category Forecast</p>
+            <h2 className="text-2xl font-semibold mt-2 tracking-tight">{forecast?.bestCategoryForecast || 'N/A'}</h2>
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium opacity-90">
               Your top-selling category.
             </div>
           </div>
         </div>
 
         {/* Quick Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Slowest Business Days</p>
-              <h3 className="text-2xl font-bold mt-2 text-(--color-text-primary)">{forecast?.slowBusinessDays || 'N/A'}</h3>
+              <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Slowest Business Days</p>
+              <h3 className="text-2xl font-semibold mt-2 text-(--color-text-primary)">{forecast?.slowBusinessDays || 'N/A'}</h3>
               <p className="text-xs text-(--color-text-secondary) mt-1">Recommended for promotions & maintenance</p>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-danger/10 text-danger flex items-center justify-center border border-danger/20">
-              <Calendar size={24} />
+            <div className="h-6 w-6 rounded-xl bg-danger/10 text-danger flex items-center justify-center border border-danger/20">
+              <Calendar size={16} />
             </div>
           </div>
 
-          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
+          <div className="p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Peak Hours Forecast</p>
-              <h3 className="text-2xl font-bold mt-2 text-(--color-text-primary)">{forecast?.peakHoursForecast || 'N/A'}</h3>
+              <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Peak Hours Forecast</p>
+              <h3 className="text-2xl font-semibold mt-2 text-(--color-text-primary)">{forecast?.peakHoursForecast || 'N/A'}</h3>
               <p className="text-xs text-(--color-text-secondary) mt-1">Add extra staff to keep wait times low</p>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-              <Clock size={24} />
+            <div className="h-6 w-6 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+              <Clock size={16} />
             </div>
           </div>
         </div>
 
         {/* Monthly Projection Chart */}
-        <div className="bg-(--color-surface)/80  border border-(--color-border) p-10 rounded-xl shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-normal text-(--color-text-muted) mb-8">Expected Revenue Next Month</h3>
+        <div className="bg-(--color-surface)/80  border border-(--color-border) p-5 rounded-xl shadow-sm">
+          <h3 className="text-sm font-medium uppercase tracking-normal text-(--color-text-muted) mb-6">Expected Revenue Next Month</h3>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={forecast?.nextMonthSalesTrend || []}>

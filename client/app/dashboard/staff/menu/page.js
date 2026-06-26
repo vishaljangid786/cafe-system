@@ -111,24 +111,24 @@ export default function StaffMenuPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-24">
+      <div className="space-y-6 pb-10">
         {/* Header */}
-        <div className="relative group overflow-hidden bg-(--color-surface) dark:bg-(--color-surface) rounded-xl p-10 border border-(--color-border) dark:border-(--color-border) shadow-sm ">
+        <div className="relative group overflow-hidden bg-(--color-surface) dark:bg-(--color-surface) rounded-xl p-5 border border-(--color-border) dark:border-(--color-border) shadow-sm ">
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
             <UtensilsCrossed size={200} className="text-primary" strokeWidth={1} />
           </div>
-          
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
+
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-lg ">
-                  <Package size={32} strokeWidth={2.5} />
+                <div className="h-6 w-6 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary ">
+                  <Package size={16} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-(--color-text-primary) dark:text-white leading-none">
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) dark:text-white leading-none">
                     Menu <span className="text-primary">Items</span>
                   </h1>
-                  <p className="text-(--color-text-muted) font-bold mt-2 flex items-center gap-2 text-sm">
+                  <p className="text-(--color-text-muted) font-medium mt-2 flex items-center gap-2 text-sm">
                     <Sparkles size={14} className="text-warning" />
                     Manage your branch inventory and availability.
                   </p>
@@ -140,11 +140,11 @@ export default function StaffMenuPage() {
               <div className="flex items-center gap-3 bg-(--color-surface-soft) dark:bg-(--color-bg) p-2 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-inner">
                 <div className="flex items-center gap-2 px-3 border-r border-(--color-border) dark:border-(--color-border) mr-1">
                   <Activity size={14} className="text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{filteredItems.length} Items</span>
+                  <span className="text-[11px] font-medium text-(--color-text-muted)">{filteredItems.length} Items</span>
                 </div>
                 <div className="flex items-center gap-2 px-3">
                   <CheckCircle2 size={14} className="text-success" />
-                  <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{filteredItems.filter(i => i.isAvailable).length} Available</span>
+                  <span className="text-[11px] font-medium text-(--color-text-muted)">{filteredItems.filter(i => i.isAvailable).length} Available</span>
                 </div>
               </div>
             </div>
@@ -153,21 +153,21 @@ export default function StaffMenuPage() {
 
         {/* Filters Section */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-2 relative group">
+          <div className="lg:col-span-2 relative group flex-1 min-w-0">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={20} />
             <input
               type="text"
               placeholder="Search food items..."
-              className="w-full pl-14 pr-6 py-5 bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm text-(--color-text-primary) dark:text-(--color-text-primary) shadow-sm"
+              className="w-full pl-14 pr-6 py-2.5 bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/10 outline-none transition-all font-medium text-sm text-(--color-text-primary) dark:text-(--color-text-primary) shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="flex items-center gap-3 bg-(--color-surface) dark:bg-(--color-surface) p-2 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm">
             <button
               onClick={() => setSelectedCategory('All')}
-              className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${selectedCategory === 'All' ? 'bg-primary text-white shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
+              className={`flex-1 py-3 px-4 rounded-xl text-[11px] font-medium transition-all ${selectedCategory === 'All' ? 'bg-primary text-white ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
             >
               All
             </button>
@@ -203,7 +203,7 @@ export default function StaffMenuPage() {
         </div>
 
         {/* Menu Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading ? (
             Array(8).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-100 rounded-xl" />
@@ -213,8 +213,8 @@ export default function StaffMenuPage() {
               <div className="h-20 w-20 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) flex items-center justify-center text-(--color-text-muted) mx-auto mb-6">
                 <UtensilsCrossed size={40} strokeWidth={1} />
               </div>
-              <p className="text-(--color-text-muted) font-bold text-lg tracking-tight">No food items match your current selection.</p>
-              <button onClick={() => {setSearchTerm(''); setSelectedCategory('All'); setDietaryFilter('All');}} className="mt-4 text-primary text-xs font-bold uppercase tracking-normal hover:underline">Clear Filters</button>
+              <p className="text-(--color-text-muted) font-medium text-lg tracking-tight">No food items match your current selection.</p>
+              <button onClick={() => {setSearchTerm(''); setSelectedCategory('All'); setDietaryFilter('All');}} className="mt-4 text-primary text-xs font-medium hover:underline">Clear Filters</button>
             </div>
           ) : (
             <AnimatePresence mode='popLayout'>
@@ -235,35 +235,35 @@ export default function StaffMenuPage() {
                           
                           {/* Floating Badges */}
                           <div className="absolute top-4 left-4 flex flex-col gap-2">
-                            <span className="px-3 py-1 bg-white/80 dark:bg-black/80  rounded-full text-[9px] font-bold uppercase tracking-normal border border-(--color-border) shadow-sm text-(--color-text-primary) dark:text-white">
+                            <span className="px-2.5 py-1 bg-white/80 dark:bg-black/80  rounded-full text-[11px] font-medium border border-(--color-border) text-(--color-text-primary) dark:text-white">
                               {item.category?.name || 'Item'}
                             </span>
                           </div>
 
                           <div className="absolute top-4 right-4">
-                            <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2  shadow-sm ${
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2  ${
                               item.dietaryType === 'veg' ? 'border-success bg-success/20 text-success' : 'border-danger bg-danger/20 text-danger'
                             }`}>
                               <Leaf size={14} fill={item.dietaryType === 'veg' ? 'currentColor' : 'none'} />
                             </div>
                           </div>
 
-                          <div className={`absolute bottom-4 right-4 px-4 py-1.5 rounded-full  border text-[8px] font-bold uppercase tracking-normal shadow-sm ${item.isAvailable ? 'bg-success text-white border-success' : 'bg-danger text-white border-danger'}`}>
+                          <div className={`absolute bottom-4 right-4 px-2.5 py-1 rounded-full  border text-[11px] font-medium ${item.isAvailable ? 'bg-success text-white border-success' : 'bg-danger text-white border-danger'}`}>
                             {item.isAvailable ? 'Available' : 'Not Available'}
                           </div>
                         </div>
                       </div>
 
                       {/* Content Container */}
-                      <div className="p-8 flex-1 flex flex-col">
+                      <div className="p-5 flex-1 flex flex-col">
                         <div className="flex justify-between items-start gap-4 mb-3">
-                          <h3 className="text-xl font-bold text-(--color-text-primary) dark:text-white tracking-tight leading-none group-hover:text-primary transition-colors">{item.name}</h3>
+                          <h3 className="text-xl font-semibold text-(--color-text-primary) dark:text-white tracking-tight leading-none group-hover:text-primary transition-colors">{item.name}</h3>
                           <div className="flex flex-col items-end shrink-0">
-                            <span className="text-lg font-bold text-primary dark:text-primary flex items-center tracking-tight">
+                            <span className="text-lg font-semibold text-primary dark:text-primary flex items-center tracking-tight">
                               <IndianRupee size={16} strokeWidth={3} />{item.discountedPrice || item.price}
                             </span>
                             {item.discountedPrice && (
-                              <span className="text-[10px] text-(--color-text-muted) line-through font-bold">
+                              <span className="text-[11px] text-(--color-text-muted) line-through font-medium">
                                 ₹{item.price}
                               </span>
                             )}
@@ -280,8 +280,8 @@ export default function StaffMenuPage() {
                               <Package size={18} />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) leading-none">Stock</p>
-                              <p className="text-sm font-bold text-(--color-text-primary) dark:text-white mt-1">{item.stock || 0} Units</p>
+                              <p className="text-[11px] font-medium text-(--color-text-muted) leading-none">Stock</p>
+                              <p className="text-sm font-medium text-(--color-text-primary) dark:text-white mt-1">{item.stock || 0} Units</p>
                             </div>
                           </div>
 
@@ -289,7 +289,7 @@ export default function StaffMenuPage() {
                             {can(user, 'menu.modify') && (
                             <button
                               onClick={() => toggleAvailability(item._id)}
-                              className={`p-3 rounded-xl border transition-all active:scale-90 ${item.isAvailable ? 'bg-(--color-surface-soft) dark:bg-(--color-surface) border-(--color-border) dark:border-(--color-border) text-(--color-text-muted) hover:text-success hover:border-success/50' : 'bg-success border-success text-white shadow-lg '}`}
+                              className={`p-3 rounded-xl border transition-all active:scale-90 ${item.isAvailable ? 'bg-(--color-surface-soft) dark:bg-(--color-surface) border-(--color-border) dark:border-(--color-border) text-(--color-text-muted) hover:text-success hover:border-success/50' : 'bg-success border-success text-white '}`}
                               title={item.isAvailable ? 'Mark as not available' : 'Mark as available'}
                             >
                               <Zap size={16} fill={item.isAvailable ? 'none' : 'currentColor'} />
@@ -321,15 +321,15 @@ export default function StaffMenuPage() {
 
         {/* Premium Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 py-8">
+          <div className="flex items-center justify-center gap-4 py-4">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="px-6 py-3 rounded-xl bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:border-primary/30 active:scale-95 flex items-center gap-2"
+              className="px-5 py-4 rounded-xl bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[11px] font-medium disabled:opacity-30 transition-all hover:border-primary/30 active:scale-95 flex items-center gap-2"
             >
               <ChevronRight size={14} className="rotate-180" /> Previous
             </button>
-            <div className="flex items-center gap-1.5 px-5 py-3 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) font-bold text-xs">
+            <div className="flex items-center gap-1.5 px-5 py-3 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) font-medium text-xs">
               <span className="text-primary">{currentPage}</span>
               <span className="text-(--color-text-muted)">/</span>
               <span className="text-(--color-text-muted)">{totalPages}</span>
@@ -337,7 +337,7 @@ export default function StaffMenuPage() {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="px-6 py-3 rounded-xl bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:border-primary/30 active:scale-95 flex items-center gap-2"
+              className="px-5 py-4 rounded-xl bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[11px] font-medium disabled:opacity-30 transition-all hover:border-primary/30 active:scale-95 flex items-center gap-2"
             >
               Next <ChevronRight size={14} />
             </button>
@@ -351,23 +351,23 @@ export default function StaffMenuPage() {
           title="Update Stock"
           maxWidth="max-w-md"
         >
-          <div className="p-8 space-y-10">
+          <div className="p-5 space-y-6">
             <div className="flex flex-col items-center text-center gap-6">
               <div className="h-24 w-24 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner group relative">
                 <Package size={48} className="transition-transform duration-500" />
-                <div className="absolute -top-2 -right-2 h-8 w-8 rounded-xl bg-primary text-white flex items-center justify-center text-[10px] font-bold shadow-lg">
+                <div className="absolute -top-2 -right-2 h-8 w-8 rounded-xl bg-primary text-white flex items-center justify-center text-[11px] font-medium">
                   <Zap size={14} fill="currentColor" />
                 </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold tracking-tight text-(--color-text-primary) dark:text-white leading-none">{editingItem?.name}</h3>
+                <h3 className="text-2xl font-semibold tracking-tight text-(--color-text-primary) dark:text-white leading-none">{editingItem?.name}</h3>
                 <div className="flex items-center justify-center gap-2">
-                   <span className="px-3 py-1 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) border border-(--color-border) dark:border-(--color-border)">Current: {editingItem?.stock || 0} Units</span>
+                   <span className="px-2.5 py-1 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) text-[11px] font-medium text-(--color-text-muted) border border-(--color-border) dark:border-(--color-border)">Current: {editingItem?.stock || 0} Units</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-(--color-surface-soft) dark:bg-(--color-bg) rounded-xl p-8 border border-(--color-border) dark:border-(--color-border) flex items-center justify-center gap-10 shadow-inner">
+            <div className="bg-(--color-surface-soft) dark:bg-(--color-bg) rounded-xl p-5 border border-(--color-border) dark:border-(--color-border) flex items-center justify-center gap-10 shadow-inner">
               <button 
                 onClick={() => setStockValue(Math.max(0, stockValue - 1))}
                 className="h-14 w-14 rounded-xl bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) flex items-center justify-center text-(--color-text-muted) hover:text-danger hover:border-danger/30 transition-all shadow-sm active:scale-90"
@@ -380,7 +380,7 @@ export default function StaffMenuPage() {
                   type="number"
                   value={stockValue}
                   onChange={(e) => setStockValue(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-24 text-5xl font-bold text-center bg-transparent outline-none text-(--color-text-primary) dark:text-white group-focus:text-primary transition-colors"
+                  className="w-24 text-2xl font-semibold text-center bg-transparent outline-none text-(--color-text-primary) dark:text-white group-focus:text-primary transition-colors"
                 />
                 <div className="h-1 w-full bg-primary/20 rounded-full mt-2 overflow-hidden">
                   <motion.div initial={{width: 0}} animate={{width: '100%'}} className="h-full bg-primary" />
@@ -400,13 +400,13 @@ export default function StaffMenuPage() {
                 variant="primary"
                 onClick={handleStockUpdate}
                 icon={Save}
-                className="w-full !py-6 rounded-xl shadow-sm  bg-primary hover:bg-primary font-bold uppercase tracking-normal text-xs transition-all active:scale-95"
+                className="w-full !py-4 rounded-xl shadow-sm  bg-primary hover:bg-primary font-semibold text-xs transition-all active:scale-95"
               >
                 Save Changes
               </Button>
               <button
                 onClick={() => setShowStockModal(false)}
-                className="w-full py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-white transition-colors"
+                className="w-full py-4 text-[11px] font-medium text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-white transition-colors"
               >
                 Dismiss
               </button>

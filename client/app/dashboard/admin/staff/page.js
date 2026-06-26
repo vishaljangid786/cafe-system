@@ -267,7 +267,7 @@ export default function LocationStaffPage() {
     return (
       <div className="space-y-4">
         <div
-          className={`group flex items-center p-6 rounded-xl border transition-all cursor-pointer ${isExpanded ? 'bg-primary/5 border-primary/20 shadow-lg' : 'bg-(--color-surface) border-(--color-border) hover:border-primary/20'
+          className={`group flex items-center p-5 rounded-xl border transition-all cursor-pointer ${isExpanded ? 'bg-primary/5 border-primary/20 shadow-sm' : 'bg-(--color-surface) border-(--color-border) hover:border-primary/20'
             } ${!searchQuery || (member.name && member.name.toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}
           onClick={() => hasChildren && toggleBranch(member._id)}
           style={{ marginLeft: `${level * 40}px` }}
@@ -279,24 +279,24 @@ export default function LocationStaffPage() {
               <div className="w-5" />
             )}
 
-            <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border ${member.role === 'system_group' ? 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border)' : 'bg-primary/10 text-primary-dark dark:text-primary border-primary/10'
+            <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-semibold border ${member.role === 'system_group' ? 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border)' : 'bg-primary/10 text-primary-dark dark:text-primary border-primary/10'
               }`}>
               {member.role === 'system_group' ? <Layers size={20} /> : member.name.charAt(0)}
             </div>
 
             <div>
-              <p className="font-bold text-(--color-text-primary) text-lg leading-none">{member.name}</p>
+              <p className="font-medium text-(--color-text-primary) text-lg leading-none">{member.name}</p>
               <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-normal text-primary-dark dark:text-primary">
+                <span className="text-[11px] font-medium tracking-normal text-primary-dark dark:text-primary">
                   {member.role === 'system_group' ? 'Department' : (member.role === 'location_admin' || member.role === 'branch_admin') ? 'Branch Admin' : member.role.replace('_', ' ')}
                 </span>
                 {member.assignedLocation && (
-                  <span className="text-[9px] font-bold text-(--color-text-muted) flex items-center gap-1">
+                  <span className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1">
                     <MapPin size={10} /> {member.assignedLocation.city} - {member.assignedLocation.name}
                   </span>
                 )}
                 {['admin', 'branch_admin'].includes(member.role) && member.accessibleLocations?.length > 0 && (
-                  <span className="text-[9px] font-bold text-primary flex items-center gap-1">
+                  <span className="text-[11px] font-medium text-primary flex items-center gap-1">
                     <Layers size={10} /> {member.accessibleLocations.length} Branches Linked
                   </span>
                 )}
@@ -465,7 +465,7 @@ export default function LocationStaffPage() {
         )) : (
           <div className="py-32 bg-(--color-surface) rounded-xl border-4 border-dashed border-(--color-border) flex flex-col items-center justify-center opacity-30">
             <ShieldAlert size={64} className="mb-6" />
-            <p className="font-bold text-sm uppercase tracking-normal">No staff to show</p>
+            <p className="font-medium text-sm tracking-normal">No staff to show</p>
           </div>
         )}
       </div>
@@ -476,21 +476,21 @@ export default function LocationStaffPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10">
+      <div className="space-y-6">
         <SlideIn direction="down">
-          <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-6 md:p-8 shadow-sm flex flex-col gap-6">
+          <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-5 md:p-6 shadow-sm flex flex-col gap-6">
 
             {/* Top Row */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
               {/* Left: Title */}
               <div className="flex items-start gap-4">
-                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <Users size={26} strokeWidth={2.5} />
+                <div className="h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Users size={16} strokeWidth={2.5} />
                 </div>
 
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-(--color-text-primary) tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
                     Staff <span className="text-primary">Team</span>
                   </h1>
 
@@ -545,7 +545,7 @@ export default function LocationStaffPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => router.push('/dashboard/add-member')}
-                    className="flex items-center gap-2 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-normal shadow-lg "
+                    className="flex items-center gap-2 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) px-5 py-3 rounded-xl text-xs font-semibold tracking-normal shadow-sm "
                   >
                     <Plus size={16} />
                     Add Staff
@@ -674,11 +674,11 @@ export default function LocationStaffPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                    <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Staff Member</th>
-                    <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Contact Info</th>
-                    <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Role</th>
-                    <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch</th>
-                    <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
+                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Staff Member</th>
+                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Contact Info</th>
+                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Role</th>
+                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch</th>
+                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -691,45 +691,45 @@ export default function LocationStaffPage() {
                       onClick={() => handleViewStaff(member)}
                       className="group border-b border-(--color-border) hover:bg-primary/5 transition-all cursor-pointer"
                     >
-                      <td className="px-8 py-6">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-bold">
+                          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-semibold">
                             {member.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-(--color-text-primary)">{member.name}</p>
-                            <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
+                            <p className="text-sm font-medium text-(--color-text-primary)">{member.name}</p>
+                            <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-5 py-4">
                         <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-xs font-bold text-(--color-text-primary)">
+                          <div className="flex items-center gap-2 text-xs font-medium text-(--color-text-primary)">
                             <Mail size={12} className="text-primary" />
                             {member.email}
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] font-medium text-(--color-text-muted)">
+                          <div className="flex items-center gap-2 text-[11px] font-medium text-(--color-text-muted)">
                             <Phone size={12} />
                             {member.phone}
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-normal">
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-medium tracking-normal">
                           {(member.role === 'location_admin' || member.role === 'branch_admin') ? 'Branch Admin' : member.role === 'admin' ? 'Main Admin' : member.role}
                         </span>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-2 text-(--color-text-primary)">
                           <MapPin size={14} className="text-primary" />
-                          <span className="text-sm font-bold">
+                          <span className="text-sm font-medium">
                             {member.role === 'branch_admin' && getMemberBranchIds(member).length > 1
                               ? `${getMemberBranchIds(member).length} Branches`
                               : member.assignedLocation ? `${member.assignedLocation.city} - ${member.assignedLocation.name}` : 'Not Assigned'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-right">
+                      <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2 transition-opacity">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -780,16 +780,16 @@ export default function LocationStaffPage() {
                 </tbody>
               </table>
               {staffToDisplay.length === 0 && (
-                <div className="p-20 text-center text-(--color-text-muted)">
+                <div className="p-10 text-center text-(--color-text-muted)">
                   <Users size={48} className="mx-auto mb-4 opacity-20" />
-                  <p className="text-sm font-bold uppercase tracking-normal">No staff found</p>
+                  <p className="text-sm font-medium tracking-normal">No staff found</p>
                 </div>
               )}
             </div>
 
             {/* Pagination Controls */}
             {viewMode === 'list' && pagination.pages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-12">
+              <div className="flex justify-center items-center gap-4 mt-6">
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -812,7 +812,7 @@ export default function LocationStaffPage() {
                       <button
                         key={pageNum}
                         onClick={() => setPage(pageNum)}
-                        className={`h-12 w-12 rounded-xl font-bold text-xs transition-all ${page === pageNum
+                        className={`h-12 w-12 rounded-xl font-semibold text-xs transition-all ${page === pageNum
                           ? 'bg-primary text-(--color-on-primary) shadow-sm  scale-110'
                           : 'bg-(--color-surface) border border-(--color-border) text-(--color-text-muted) hover:text-primary'
                           }`}
@@ -850,23 +850,23 @@ export default function LocationStaffPage() {
           <form onSubmit={showAddModal ? handleAdd : handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Full Name</label>
-                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Full Name</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Email</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Email</label>
+                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
-                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Phone</label>
+                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Age</label>
-                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Age</label>
+                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect
@@ -926,39 +926,39 @@ export default function LocationStaffPage() {
 
             {showAddModal && (
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Password</label>
-                <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="At least 10 characters" />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Password</label>
+                <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="At least 10 characters" />
               </div>
             )}
 
             <div>
-              <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Address</label>
-              <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
+              <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Address</label>
+              <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
               <div className="grid grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">City</label>
-                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">City</label>
+                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">State</label>
-                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">State</label>
+                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Country</label>
-                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} />
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Country</label>
+                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Pincode</label>
-                  <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Pincode</label>
+                  <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-6">
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Aadhar Number</label>
-                  <input type="text" inputMode="numeric" maxLength={12} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.aadharNumber} onChange={e => setFormData({ ...formData, aadharNumber: digitsOnly(e.target.value, 12) })} />
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Aadhar Number</label>
+                  <input type="text" inputMode="numeric" maxLength={12} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.aadharNumber} onChange={e => setFormData({ ...formData, aadharNumber: digitsOnly(e.target.value, 12) })} />
                 </div>
                 <div>
                   <PremiumSelect
@@ -977,15 +977,15 @@ export default function LocationStaffPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Salary (₹)</label>
-                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-bold text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Salary (₹)</label>
+                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               disabled={isSubmitting}
-              className="w-full py-5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  mt-4 disabled:opacity-50"
+              className="w-full py-5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-semibold text-xs tracking-normal shadow-sm  mt-4 disabled:opacity-50"
             >
               {showAddModal ? "Add Staff" : "Save Changes"}
             </motion.button>
@@ -1008,11 +1008,11 @@ export default function LocationStaffPage() {
           maxWidth="max-w-3xl"
         >
           {viewingStaff && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Header Profile */}
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-5 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-bold shadow-sm  transition-transform">
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white">
@@ -1021,57 +1021,57 @@ export default function LocationStaffPage() {
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-2xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">Staff <span className="text-primary">Details</span></h2>
-                  <p className="text-sm font-bold text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
+                  <h2 className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">Staff <span className="text-primary">Details</span></h2>
+                  <p className="text-sm font-medium text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
                     <Mail size={14} className="text-primary" /> {viewingStaff.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-full border border-primary/20">
+                    <span className="px-2.5 py-1 bg-primary/10 text-primary text-[11px] font-medium tracking-normal rounded-full border border-primary/20">
                       {(viewingStaff.role === 'location_admin' || viewingStaff.role === 'branch_admin') ? 'Branch Admin' : viewingStaff.role}
                     </span>
-                    <span className="px-3 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal rounded-full">
+                    <span className="px-2.5 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[11px] font-medium tracking-normal rounded-full">
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
-                    <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-full">
+                    <span className="px-2.5 py-1 bg-success/10 text-success text-[11px] font-medium tracking-normal rounded-full">
                       Active
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
-                  <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
+                  <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-1">Monthly Salary</p>
+                  <p className="text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Data Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-6">
                   {/* Identity Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                       <CreditCard size={14} className="text-primary" /> Staff Details
                     </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Hash className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Aadhar Number</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not Added'}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Aadhar Number</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not Added'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Phone className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Primary Contact</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Primary Contact</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Award className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Qualification</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Qualification</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
                     </div>
@@ -1079,30 +1079,30 @@ export default function LocationStaffPage() {
 
                   {/* Demographic Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                       <Globe size={14} className="text-primary" /> Personal Info
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Age</p>
-                        <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
+                        <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-1">Age</p>
+                        <p className="text-lg font-medium text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
                       </div>
                       <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Gender</p>
-                        <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
+                        <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-1">Gender</p>
+                        <p className="text-lg font-medium text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {/* Address Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                       <MapPin size={14} className="text-primary" /> Address
                     </h3>
-                    <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                      <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
+                    <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                      <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
                         {viewingStaff.address1}<br />
                         {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
                         {viewingStaff.city}, {viewingStaff.state} - {viewingStaff.pincode}
@@ -1112,7 +1112,7 @@ export default function LocationStaffPage() {
 
                   {/* Document Proof Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                       <Info size={14} className="text-primary" /> Aadhar Card
                     </h3>
                     {viewingStaff.aadharImage ? (
@@ -1129,13 +1129,13 @@ export default function LocationStaffPage() {
                           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                         >
                           <Globe size={24} className="text-primary" />
-                          <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
+                          <span className="font-medium text-[11px] tracking-normal">View Full Image</span>
                         </a>
                       </div>
                     ) : (
-                      <div className="rounded-xl border-2 border-dashed border-(--color-border) p-10 flex flex-col items-center justify-center text-(--color-text-muted) aspect-video">
+                      <div className="rounded-xl border-2 border-dashed border-(--color-border) p-6 flex flex-col items-center justify-center text-(--color-text-muted) aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar Card Uploaded</p>
+                        <p className="text-[11px] font-medium tracking-normal text-center">No Aadhar Card Uploaded</p>
                       </div>
                     )}
                   </div>
@@ -1146,20 +1146,20 @@ export default function LocationStaffPage() {
               <div className="pt-8 border-t border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  className="flex-1 py-5 !rounded-xl font-medium text-xs tracking-normal"
                   onClick={() => setViewingStaff(null)}
                 >
                   Close
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  className="flex-1 py-5 !rounded-xl font-medium text-xs tracking-normal"
                   onClick={() => router.push(`/dashboard/admin/staff-reports/${viewingStaff._id}`)}
                 >
                   View Report
                 </Button>
                 <Button
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-text-primary) text-(--color-surface) shadow-sm"
+                  className="flex-1 py-5 !rounded-xl font-semibold text-xs tracking-normal bg-(--color-text-primary) text-(--color-surface) shadow-sm"
                   onClick={() => {
                     handleEdit(viewingStaff);
                     setViewingStaff(null);
@@ -1179,36 +1179,36 @@ export default function LocationStaffPage() {
           className="max-w-md"
         >
           {attendanceStaff && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div className="flex items-center gap-4 p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-semibold">
                   {attendanceStaff.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-(--color-text-primary)">{attendanceStaff.name}</p>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{attendanceStaff.role.replace('_', ' ')}</p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">{attendanceStaff.name}</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">{attendanceStaff.role.replace('_', ' ')}</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary"
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Date</label>
+                  <input
+                    type="date"
+                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary"
                     value={attendanceDate}
                     onChange={e => setAttendanceDate(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Status</label>
+                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Status</label>
                   <div className="grid grid-cols-3 gap-3">
                     {['present', 'absent', 'half-day'].map(status => (
                       <button
                         key={status}
                         onClick={() => setAttendanceStatus(status)}
-                        className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal border transition-all ${attendanceStatus === status ? 'bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) border-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:border-primary/30'}`}
+                        className={`py-3 rounded-xl text-[11px] font-medium tracking-normal border transition-all ${attendanceStatus === status ? 'bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) border-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:border-primary/30'}`}
                       >
                         {status}
                       </button>
@@ -1221,7 +1221,7 @@ export default function LocationStaffPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleMarkAttendance}
-                className="w-full py-5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm "
+                className="w-full py-5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-semibold text-xs tracking-normal shadow-sm "
               >
                 Save Attendance
               </motion.button>

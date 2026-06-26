@@ -155,29 +155,29 @@ export default function LocationComparisonPage() {
 
     return (
       <PageTransition>
-        <div className="space-y-10 pb-20">
+        <div className="space-y-6 pb-10">
           <SlideIn direction="down">
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-              <div className="flex items-center gap-6">
-                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-                  <ArrowRightLeft size={32} />
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                  <ArrowRightLeft size={16} />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
                     Branch <span className="text-primary">Comparison</span>
                   </h1>
-                  <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal">Compare how your branches are performing</p>
+                  <p className="text-(--color-text-secondary) text-sm font-medium mt-1">Compare how your branches are performing</p>
                 </div>
               </div>
             </div>
           </SlideIn>
 
           <div className="min-h-[42vh] flex items-center justify-center">
-            <div className="w-full max-w-2xl bg-(--color-surface)/80 border border-(--color-border) rounded-xl p-10 text-center shadow-sm">
-              <div className="mx-auto h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                <MapPin size={26} />
+            <div className="w-full max-w-2xl bg-(--color-surface)/80 border border-(--color-border) rounded-xl p-6 text-center shadow-sm">
+              <div className="mx-auto h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <MapPin size={16} />
               </div>
-              <h2 className="mt-6 text-2xl font-bold text-(--color-text-primary)">Branch comparison is unavailable</h2>
+              <h2 className="mt-6 text-2xl font-semibold text-(--color-text-primary)">Branch comparison is unavailable</h2>
               <p className="mt-3 text-sm font-medium text-(--color-text-secondary) leading-6">
                 {onlyBranch
                   ? `${onlyBranch.name || onlyBranch.city || 'Your assigned branch'} is the only branch assigned to this account. A second assigned branch is required before comparisons are available.`
@@ -192,33 +192,33 @@ export default function LocationComparisonPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header with Dual Selectors */}
         <SlideIn direction="down">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-              <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-                <ArrowRightLeft size={32} />
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <ArrowRightLeft size={16} />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
                   Branch <span className="text-primary">Comparison</span>
                 </h1>
-                <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal">Compare how your branches are performing</p>
+                <p className="text-(--color-text-secondary) text-sm font-medium mt-1">Compare how your branches are performing</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {activeTab === 'dual' && (
                 <>
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc1Open(!isLoc1Open); setIsLoc2Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-bold text-xs"
+                      className="flex items-center gap-3 px-5 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-medium text-xs"
                     >
                       <MapPin size={18} className="text-primary" />
                       <div className="flex flex-col items-start">
-                        <span className="text-[10px] uppercase text-(--color-text-muted)">Branch 1</span>
+                        <span className="text-[11px] text-(--color-text-muted)">Branch 1</span>
                         <span>{locations.find(l => l._id === loc1)?.name || 'Select'}</span>
                       </div>
                       <ChevronDown size={16} className="ml-auto" />
@@ -226,8 +226,8 @@ export default function LocationComparisonPage() {
                     {isLoc1Open && (
                       <div className="absolute top-full left-0 mt-3 w-full bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc2).map(loc => (
-                          <button key={loc._id} onClick={() => { setLoc1(loc._id); setIsLoc1Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-bold transition-colors">
-                            {loc.name}{loc.cafe?.name ? <span className="text-[10px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
+                          <button key={loc._id} onClick={() => { setLoc1(loc._id); setIsLoc1Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-medium transition-colors">
+                            {loc.name}{loc.cafe?.name ? <span className="text-[11px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
                           </button>
                         ))}
                       </div>
@@ -237,11 +237,11 @@ export default function LocationComparisonPage() {
                   <div className="relative">
                     <button
                       onClick={() => { setIsLoc2Open(!isLoc2Open); setIsLoc1Open(false); }}
-                      className="flex items-center gap-3 px-6 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-bold text-xs"
+                      className="flex items-center gap-3 px-5 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm hover:border-primary/50 transition-all min-w-55 font-medium text-xs"
                     >
                       <MapPin size={18} className="text-primary" />
                       <div className="flex flex-col items-start">
-                        <span className="text-[10px] uppercase text-(--color-text-muted)">Branch 2</span>
+                        <span className="text-[11px] text-(--color-text-muted)">Branch 2</span>
                         <span>{locations.find(l => l._id === loc2)?.name || 'Select'}</span>
                       </div>
                       <ChevronDown size={16} className="ml-auto" />
@@ -249,8 +249,8 @@ export default function LocationComparisonPage() {
                     {isLoc2Open && (
                       <div className="absolute top-full left-0 mt-3 w-full bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm z-50 p-2">
                         {locations.filter(l => l._id !== loc1).map(loc => (
-                          <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-bold transition-colors">
-                            {loc.name}{loc.cafe?.name ? <span className="text-[10px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
+                          <button key={loc._id} onClick={() => { setLoc2(loc._id); setIsLoc2Open(false); }} className="w-full text-left p-3 rounded-xl hover:bg-primary/10 hover:text-primary text-xs font-medium transition-colors">
+                            {loc.name}{loc.cafe?.name ? <span className="text-[11px] text-(--color-text-muted) font-medium"> · {loc.cafe.name}</span> : ''}
                           </button>
                         ))}
                       </div>
@@ -261,10 +261,10 @@ export default function LocationComparisonPage() {
 
               {/* Tab Selector */}
               <div className="flex bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border)">
-                <button onClick={() => setActiveTab('dual')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'dual' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
+                <button onClick={() => setActiveTab('dual')} className={`px-5 py-2.5 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all ${activeTab === 'dual' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
                   Compare Two
                 </button>
-                <button onClick={() => setActiveTab('advanced')} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${activeTab === 'advanced' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
+                <button onClick={() => setActiveTab('advanced')} className={`px-5 py-2.5 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all ${activeTab === 'advanced' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
                   All Branches
                 </button>
               </div>
@@ -272,7 +272,7 @@ export default function LocationComparisonPage() {
               {/* Date Filter */}
               <div className="flex bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border)">
                 {['week', 'month', 'year', 'FY'].map((p) => (
-                  <button key={p} onClick={() => setDateRange(p)} className={`px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${dateRange === p ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
+                  <button key={p} onClick={() => setDateRange(p)} className={`px-5 py-2.5 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all ${dateRange === p ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}>
                     {p}
                   </button>
                 ))}
@@ -284,10 +284,10 @@ export default function LocationComparisonPage() {
         {activeTab === 'dual' ? (
           refetching ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <ChartSkeleton />
                 <ChartSkeleton />
               </div>
@@ -295,7 +295,7 @@ export default function LocationComparisonPage() {
           ) : (
           <>
             {/* Winner Analysis Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
                 { label: 'Sales Winner', field: 'revenue', icon: DollarSign },
                 { label: 'Profit Leader', field: 'netProfit', icon: Zap },
@@ -305,23 +305,23 @@ export default function LocationComparisonPage() {
                 const winner = getWinner(item.field);
                 const isWinner1 = winner?.name === l1Data?.name;
                 return (
-                  <div key={idx} className={`p-8 rounded-xl border transition-all ${isWinner1 ? 'bg-primary/5 border-primary/20' : 'bg-primary/5 border-primary/20'}`}>
+                  <div key={idx} className={`p-5 rounded-xl border transition-all ${isWinner1 ? 'bg-primary/5 border-primary/20' : 'bg-primary/5 border-primary/20'}`}>
                      <div className="flex items-center gap-4 mb-4">
                        <item.icon size={20} className={isWinner1 ? 'text-primary' : 'text-primary'} />
-                       <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{item.label}</span>
+                       <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">{item.label}</span>
                      </div>
                      <div className="flex flex-col gap-4 mt-6">
                        <div className="flex justify-between items-center">
-                         <span className="text-xs font-bold text-(--color-text-muted)">{l1Data?.name || 'Branch A'}</span>
-                         <span className="text-xs font-bold text-(--color-text-primary)">₹{l1Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-medium text-(--color-text-muted)">{l1Data?.name || 'Branch A'}</span>
+                         <span className="text-xs font-semibold text-(--color-text-primary)">₹{l1Data?.[item.field] || 0}</span>
                        </div>
                        <div className="flex justify-between items-center">
-                         <span className="text-xs font-bold text-(--color-text-muted)">{l2Data?.name || 'Branch B'}</span>
-                         <span className="text-xs font-bold text-(--color-text-primary)">₹{l2Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-medium text-(--color-text-muted)">{l2Data?.name || 'Branch B'}</span>
+                         <span className="text-xs font-semibold text-(--color-text-primary)">₹{l2Data?.[item.field] || 0}</span>
                        </div>
                        <div className="pt-3 border-t border-(--color-border) flex justify-between items-center">
-                         <span className="text-[10px] font-bold truncate text-primary">{winner?.name}</span>
-                         <span className="text-[10px] font-bold text-success">+{winner?.diff}%</span>
+                         <span className="text-[11px] font-medium truncate text-primary">{winner?.name}</span>
+                         <span className="text-[11px] font-semibold text-success">+{winner?.diff}%</span>
                        </div>
                      </div>
                   </div>
@@ -330,9 +330,9 @@ export default function LocationComparisonPage() {
             </div>
 
             {/* Graphical Benchmark */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-(--color-surface)/80  border border-(--color-border) rounded-xl p-10">
-                <h3 className="text-sm font-bold text-(--color-text-muted) uppercase tracking-normal mb-6">Performance Radar</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="bg-(--color-surface)/80  border border-(--color-border) rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-(--color-text-muted) uppercase tracking-normal mb-6">Performance Radar</h3>
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={getRadarData()}>
@@ -347,8 +347,8 @@ export default function LocationComparisonPage() {
                 </div>
               </div>
 
-              <div className="bg-(--color-surface)/80  border border-(--color-border) rounded-xl p-10">
-                <h3 className="text-sm font-bold text-(--color-text-muted) uppercase tracking-normal mb-6">Total Sales Breakdown</h3>
+              <div className="bg-(--color-surface)/80  border border-(--color-border) rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-(--color-text-muted) uppercase tracking-normal mb-6">Total Sales Breakdown</h3>
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={[
@@ -371,10 +371,10 @@ export default function LocationComparisonPage() {
           </>
           )
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-6">
             {suiteLoading ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
                 </div>
                 <TableSkeleton rows={6} cols={10} />
@@ -382,65 +382,65 @@ export default function LocationComparisonPage() {
             ) : (
               <>
                 {/* Outliers Premium Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="p-8 bg-gradient-to-br from-success to-success rounded-xl text-white shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="p-5 bg-gradient-to-br from-success to-success rounded-xl text-white shadow-sm">
                     <Award size={24} className="opacity-80" />
-                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Most Profitable</p>
-                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.mostProfitable?.name || 'N/A'}</p>
-                    <p className="text-sm font-bold mt-2 opacity-90">₹{suiteData?.outliers?.mostProfitable?.value}</p>
-                  </div>
-                  
-                  <div className="p-8 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
-                    <AlertTriangle size={24} className="opacity-80" />
-                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Slowest Growth</p>
-                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.slowestGrowth?.name || 'N/A'}</p>
-                    <p className="text-sm font-bold mt-2 opacity-90">{suiteData?.outliers?.slowestGrowth?.value}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Most Profitable</p>
+                    <p className="text-2xl font-semibold mt-1 truncate">{suiteData?.outliers?.mostProfitable?.name || 'N/A'}</p>
+                    <p className="text-sm font-medium mt-2 opacity-90">₹{suiteData?.outliers?.mostProfitable?.value}</p>
                   </div>
 
-                  <div className="p-8 bg-gradient-to-br from-danger to-danger rounded-xl text-white shadow-sm">
+                  <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
+                    <AlertTriangle size={24} className="opacity-80" />
+                    <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Slowest Growth</p>
+                    <p className="text-2xl font-semibold mt-1 truncate">{suiteData?.outliers?.slowestGrowth?.name || 'N/A'}</p>
+                    <p className="text-sm font-medium mt-2 opacity-90">{suiteData?.outliers?.slowestGrowth?.value}</p>
+                  </div>
+
+                  <div className="p-5 bg-gradient-to-br from-danger to-danger rounded-xl text-white shadow-sm">
                     <TrendingDown size={24} className="opacity-80" />
-                    <p className="text-[10px] font-bold uppercase tracking-normal mt-4 opacity-80">Lowest Performing</p>
-                    <p className="text-2xl font-bold mt-1 truncate">{suiteData?.outliers?.lowestPerforming?.name || 'N/A'}</p>
-                    <p className="text-sm font-bold mt-2 opacity-90">₹{suiteData?.outliers?.lowestPerforming?.value}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Lowest Performing</p>
+                    <p className="text-2xl font-semibold mt-1 truncate">{suiteData?.outliers?.lowestPerforming?.name || 'N/A'}</p>
+                    <p className="text-sm font-medium mt-2 opacity-90">₹{suiteData?.outliers?.lowestPerforming?.value}</p>
                   </div>
                 </div>
 
                 {/* Advanced Comparison List Table */}
-                <div className="bg-(--color-surface)/80  border border-(--color-border) p-8 rounded-xl shadow-sm">
-                  <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+                <div className="bg-(--color-surface)/80  border border-(--color-border) p-5 rounded-xl shadow-sm">
+                  <h3 className="text-xs font-semibold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                     <Target size={16} className="text-primary" /> All Branches Comparison
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-(--color-border)">
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Name</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Revenue</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Orders</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Growth</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">UPI %</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Avg Ticket</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Staff Eff.</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cancel Rate</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Coupon Usage</th>
-                          <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Profit</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch Name</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Revenue</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Orders</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Growth</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">UPI %</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Avg Ticket</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Staff Eff.</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Cancel Rate</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Coupon Usage</th>
+                          <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Profit</th>
                         </tr>
                       </thead>
                       <tbody>
                         {suiteData?.branches?.map((branch) => (
-                          <tr key={branch._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/50 transition-all font-bold text-xs">
+                          <tr key={branch._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/50 transition-all font-medium text-xs">
                             <td className="py-4 text-(--color-text-primary)">{branch.name}</td>
                             <td className="py-4 text-primary">{branch.cafeName || '—'}</td>
                             <td className="py-4 text-(--color-text-primary)">₹{branch.revenue}</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.orders}</td>
-                            <td className={`py-4 font-bold ${Number(branch.growthPercent) >= 0 ? 'text-success' : 'text-danger'}`}>{branch.growthPercent}%</td>
+                            <td className={`py-4 font-medium ${Number(branch.growthPercent) >= 0 ? 'text-success' : 'text-danger'}`}>{branch.growthPercent}%</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.upiPercent}%</td>
                             <td className="py-4 text-(--color-text-primary)">₹{branch.avgOrderValue}</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.staffEfficiency}</td>
                             <td className="py-4 text-danger">{branch.cancellationRate}%</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.couponUsage}</td>
-                            <td className="py-4 text-success font-bold">₹{branch.profitability}</td>
+                            <td className="py-4 text-success font-semibold">₹{branch.profitability}</td>
                           </tr>
                         ))}
                       </tbody>

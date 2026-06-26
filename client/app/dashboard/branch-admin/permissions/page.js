@@ -6,7 +6,7 @@ import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContaine
 export default function BranchAdminPermissionsPage() {
   return (
     <PageTransition>
-      <div className="p-4 md:p-8 space-y-8">
+      <div className="p-4 md:p-6 space-y-6">
         <SlideIn delay={0.1}>
           <PermissionManager />
         </SlideIn>

@@ -47,6 +47,7 @@ const PAGES = [
   // Analytics
   { key: 'page_orderreports', label: 'Order Reports', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_staffreports', label: 'Staff Reports', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
+  { key: 'page_staffcomparison', label: 'Staff Comparison', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_feedback', label: 'Feedback', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_customers', label: 'Customers & CRM', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin', 'location_admin'] },
   { key: 'page_branchcompare', label: 'Branch Compare', group: 'Analytics', legacyPerm: 'viewAnalytics', defaultRoles: ['super_admin', 'admin', 'branch_admin'] },

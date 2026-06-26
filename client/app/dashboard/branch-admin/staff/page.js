@@ -139,12 +139,12 @@ export default function BranchStaffPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10">
+      <div className="space-y-6">
         <SlideIn direction="down">
-          <div className="bg-(--color-surface) dark:bg-(--color-surface) p-10 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="bg-(--color-surface) dark:bg-(--color-surface) p-5 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-none">
-                <Users className="mr-4 text-primary" size={36} /> Branch <span className="ml-3 text-primary">Staff</span>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-none">
+                <Users className="mr-3 text-primary" size={24} /> Branch <span className="ml-2 text-primary">Staff</span>
               </h1>
               <p className="text-(--color-text-muted) dark:text-(--color-text-muted) text-sm mt-2 font-medium">Manage your cafe team and staff members.</p>
             </div>
@@ -154,9 +154,9 @@ export default function BranchStaffPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCreateModal(true)}
-                className="bg-primary text-(--color-on-primary) px-10 py-5 rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  flex items-center"
+                className="bg-primary text-(--color-on-primary) px-5 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-normal shadow-sm  flex items-center"
               >
-                <Plus size={20} className="mr-3" strokeWidth={3} /> Add Staff
+                <Plus size={18} className="mr-2" strokeWidth={2.5} /> Add Staff
               </motion.button>
             </div>
           </div>
@@ -169,11 +169,11 @@ export default function BranchStaffPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Staff Member</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Contact Details</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Role</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Location</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Staff Member</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Contact Details</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Role</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Location</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -186,41 +186,41 @@ export default function BranchStaffPage() {
                   onClick={() => setViewingStaff(member)}
                   className="group border-b border-(--color-border) hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <td className="px-8 py-6">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-bold">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-semibold">
                         {member.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-(--color-text-primary)">{member.name}</p>
-                        <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-sm font-medium text-(--color-text-primary)">{member.name}</p>
+                        <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">ID: {member._id.slice(-6).toUpperCase()}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-5 py-4">
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-xs font-bold text-(--color-text-primary)">
+                      <div className="flex items-center gap-2 text-xs font-medium text-(--color-text-primary)">
                         <Mail size={12} className="text-primary" />
                         {member.email}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] font-medium text-(--color-text-muted)">
+                      <div className="flex items-center gap-2 text-[11px] font-medium text-(--color-text-muted)">
                         <Phone size={12} />
                         {member.phone}
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-normal">
+                  <td className="px-5 py-4">
+                    <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-medium tracking-normal">
                       {member.role}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-2 text-(--color-text-primary)">
                       <MapPin size={14} className="text-primary" />
-                      <span className="text-sm font-bold">{member.city}, {member.state}</span>
+                      <span className="text-sm font-medium">{member.city}, {member.state}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-5 py-4 text-right">
                     <div className="flex justify-end gap-2 transition-opacity">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -254,9 +254,9 @@ export default function BranchStaffPage() {
             </tbody>
           </table>
           {staff.length === 0 && (
-            <div className="p-20 text-center text-(--color-text-muted)">
+            <div className="p-10 text-center text-(--color-text-muted)">
               <Users size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-bold uppercase tracking-normal">No staff added yet</p>
+              <p className="text-sm font-medium tracking-normal">No staff added yet</p>
             </div>
           )}
         </div>
@@ -264,22 +264,22 @@ export default function BranchStaffPage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl mt-10 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+          <div className="flex items-center justify-between px-5 py-4 bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl mt-6 shadow-sm">
+            <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft)"
+                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[11px] font-medium uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft)"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft)"
+                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) text-[11px] font-medium uppercase tracking-normal disabled:opacity-30 transition-all hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft)"
               >
                 Next
               </button>
@@ -295,23 +295,23 @@ export default function BranchStaffPage() {
           <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Full Name</label>
-                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Full Name</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Email</label>
-                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Email</label>
+                <input required type="email" className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: sanitizeEmail(e.target.value) })} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
-                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
+                <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Age</label>
-                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Age</label>
+                <input required type="number" min="18" max="99" onKeyDown={blockNonInteger} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} />
               </div>
               <div>
                 <PremiumSelect 
@@ -328,33 +328,33 @@ export default function BranchStaffPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Address</label>
-              <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
+              <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Address</label>
+              <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
             <div className="grid grid-cols-4 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">City</label>
-                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">City</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">State</label>
-                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">State</label>
+                <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Pincode</label>
-                <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Pincode</label>
+                <input required type="text" inputMode="numeric" maxLength={6} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Monthly Salary (₹)</label>
-                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-bold dark:text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
+                <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Monthly Salary (₹)</label>
+                <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
               </div>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-5 bg-primary text-(--color-on-primary) rounded-xl font-bold text-xs uppercase tracking-normal shadow-sm  mt-4"
+              className="w-full py-4 bg-primary text-(--color-on-primary) rounded-xl font-semibold text-xs uppercase tracking-normal shadow-sm  mt-4"
             >
               Update Staff Details
             </motion.button>
@@ -377,11 +377,11 @@ export default function BranchStaffPage() {
           maxWidth="max-w-3xl"
         >
           {viewingStaff && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Header Profile */}
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-5 pb-5 border-b border-(--color-border) dark:border-(--color-border)">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-bold shadow-sm  transition-transform">
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
                     {viewingStaff.name.charAt(0)}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white">
@@ -390,57 +390,57 @@ export default function BranchStaffPage() {
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none">{viewingStaff.name}</h2>
-                  <p className="text-sm font-bold text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
+                  <h2 className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none">{viewingStaff.name}</h2>
+                  <p className="text-sm font-medium text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
                     <Mail size={14} className="text-primary" /> {viewingStaff.email}
                   </p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-full border border-primary/20">
+                    <span className="px-2.5 py-1 bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-normal rounded-full border border-primary/20">
                       {viewingStaff.role}
                     </span>
-                    <span className="px-3 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal rounded-full">
+                    <span className="px-2.5 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[11px] font-medium uppercase tracking-normal rounded-full">
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
-                    <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-full">
+                    <span className="px-2.5 py-1 bg-success/10 text-success text-[11px] font-medium uppercase tracking-normal rounded-full">
                       Active Member
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
-                  <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+                <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
+                  <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Data Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-6">
                   {/* Identity Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-4 flex items-center gap-2">
                       <CreditCard size={14} className="text-primary" /> Staff Details
                     </h3>
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Hash className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Aadhar Number</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not added'}</p>
+                          <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Aadhar Number</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not added'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Phone className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Primary Contact</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
+                          <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Primary Contact</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                         <Award className="text-primary" size={20} />
                         <div>
-                          <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Qualification</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
+                          <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Qualification</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
                         </div>
                       </div>
                     </div>
@@ -448,30 +448,30 @@ export default function BranchStaffPage() {
 
                   {/* Demographic Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-4 flex items-center gap-2">
                       <Globe size={14} className="text-primary" /> Personal Information
                     </h3>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Age</p>
-                        <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
+                        <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-1">Age</p>
+                        <p className="text-lg font-semibold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
                       </div>
                       <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Gender</p>
-                        <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
+                        <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-1">Gender</p>
+                        <p className="text-lg font-semibold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {/* Address Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-4 flex items-center gap-2">
                       <MapPin size={14} className="text-primary" /> Address
                     </h3>
-                    <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                      <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
+                    <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                      <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
                         {viewingStaff.address1}<br />
                         {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
                         {viewingStaff.city}, {viewingStaff.state}
@@ -481,7 +481,7 @@ export default function BranchStaffPage() {
 
                   {/* Document Proof Section */}
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                    <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-4 flex items-center gap-2">
                       <Info size={14} className="text-primary" /> Aadhar Card
                     </h3>
                     {viewingStaff.aadharImage ? (
@@ -498,13 +498,13 @@ export default function BranchStaffPage() {
                           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                         >
                           <Globe size={24} className="text-primary" />
-                          <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
+                          <span className="font-medium text-[11px] uppercase tracking-normal">View Full Image</span>
                         </a>
                       </div>
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-(--color-border) dark:border-(--color-border) p-10 flex flex-col items-center justify-center text-(--color-text-muted) aspect-video">
                         <ShieldAlert size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar image uploaded</p>
+                        <p className="text-[11px] font-medium uppercase tracking-normal text-center">No Aadhar image uploaded</p>
                       </div>
                     )}
                   </div>
@@ -512,23 +512,23 @@ export default function BranchStaffPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-8 border-t border-(--color-border) dark:border-(--color-border) flex flex-col sm:flex-row gap-4">
+              <div className="pt-5 border-t border-(--color-border) dark:border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  className="flex-1 py-4 !rounded-xl font-medium text-xs uppercase tracking-normal"
                   onClick={() => setViewingStaff(null)}
                 >
                   Close
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                  className="flex-1 py-4 !rounded-xl font-medium text-xs uppercase tracking-normal"
                   onClick={() => router.push(`/dashboard/branch-admin/staff-reports/${viewingStaff._id}`)}
                 >
                   View Report
                 </Button>
                 <Button
-                  className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) shadow-sm"
+                  className="flex-1 py-4 !rounded-xl font-semibold text-xs uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-primary) border border-(--color-border) shadow-sm"
                   onClick={() => {
                     handleEdit(viewingStaff);
                     setViewingStaff(null);
@@ -545,23 +545,23 @@ export default function BranchStaffPage() {
         <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Add New Staff">
           <form onSubmit={handleCreate} className="space-y-5 p-2">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Full Name</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Full Name</label>
               <input required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.name} onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))} placeholder="Staff member's name" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Email</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Email</label>
               <input required type="email" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: sanitizeEmail(e.target.value) }))} placeholder="email@cafe.com" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Password</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Password</label>
               <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Min 10 characters" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Phone</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Phone</label>
               <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.phone} onChange={e => setCreateForm(p => ({ ...p, phone: digitsOnly(e.target.value, 10) }))} placeholder="10-digit number" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Gender</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Gender</label>
               <PremiumSelect
                 value={createForm.gender}
                 onChange={(v) => setCreateForm(p => ({ ...p, gender: v }))}
@@ -570,15 +570,15 @@ export default function BranchStaffPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Address</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Address</label>
               <input required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.address1} onChange={e => setCreateForm(p => ({ ...p, address1: e.target.value }))} placeholder="Street address" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">City</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">City</label>
               <input required className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.city} onChange={e => setCreateForm(p => ({ ...p, city: e.target.value }))} placeholder="City" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Monthly Salary</label>
+              <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Monthly Salary</label>
               <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.monthlySalary} onChange={e => setCreateForm(p => ({ ...p, monthlySalary: e.target.value }))} placeholder="0" />
             </div>
             <div className="flex gap-4 pt-2">

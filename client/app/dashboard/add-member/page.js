@@ -66,22 +66,22 @@ const emptyPerms = () => PERMISSION_LIST.reduce((acc, { key }) => ({ ...acc, [ke
 
 const Field = ({ label, children, hint }) => (
   <div className="space-y-1.5">
-    <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">{label}</label>
+    <label className="text-[11px] font-medium text-(--color-text-muted) ml-1">{label}</label>
     {children}
     {hint && <p className="text-[10px] text-(--color-text-muted) ml-1">{hint}</p>}
   </div>
 );
 
-const inputCls = "w-full px-5 py-3.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/30 transition-all";
+const inputCls = "w-full px-5 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/30 transition-all";
 
 const Section = ({ icon: Icon, title, desc, children }) => (
-  <div className="bg-(--color-surface)/40 border border-(--color-border) rounded-2xl p-6 sm:p-8 space-y-6">
+  <div className="bg-(--color-surface)/40 border border-(--color-border) rounded-2xl p-5 sm:p-6 space-y-6">
     <div className="flex items-center gap-3">
       <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
         <Icon size={18} />
       </div>
       <div>
-        <h2 className="text-sm font-bold text-(--color-text-primary)">{title}</h2>
+        <h2 className="text-sm font-semibold text-(--color-text-primary)">{title}</h2>
         {desc && <p className="text-[11px] text-(--color-text-muted)">{desc}</p>}
       </div>
     </div>
@@ -347,11 +347,11 @@ export default function AddMemberPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-              <UserPlus size={22} />
+            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+              <UserPlus size={18} />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--color-text-primary)">Add Member</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary)">Add Member</h1>
               <p className="text-sm text-(--color-text-muted)">Create a new team member and set their access.</p>
             </div>
           </div>
@@ -463,10 +463,10 @@ export default function AddMemberPage() {
         <Section icon={Shield} title="Page Access & Actions" desc="Tick the pages this member can open (they'll see ONLY these). For each page, tick the exact actions — Add / Modify / Delete / Approve — they're allowed to do. Role defaults are pre-selected.">
           <>
               <div className="flex items-center justify-end -mt-2 gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <span className="text-[11px] font-medium text-(--color-text-muted)">
                   {selectedActions.length} action{selectedActions.length === 1 ? '' : 's'}
                 </span>
-                <span className={`text-[10px] font-bold uppercase tracking-normal ${selectedPages.length === 0 ? 'text-danger' : 'text-(--color-text-muted)'}`}>
+                <span className={`text-[11px] font-medium ${selectedPages.length === 0 ? 'text-danger' : 'text-(--color-text-muted)'}`}>
                   {selectedPages.length} page{selectedPages.length === 1 ? '' : 's'} selected
                 </span>
               </div>
@@ -484,7 +484,7 @@ export default function AddMemberPage() {
         {/* Capabilities — non-page abilities (edit revenue, force-complete, messaging…). */}
         <Section icon={Check} title="Permissions" desc="Extra abilities that aren't a page. The role's defaults are pre-selected — add more if needed (only ones you have).">
           <div className="flex items-center justify-end -mt-2">
-            <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
+            <span className="text-[11px] font-medium text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {PERMISSION_LIST.map(({ key, label }) => {
@@ -495,7 +495,7 @@ export default function AddMemberPage() {
                   type="button"
                   key={key}
                   onClick={() => togglePermission(key)}
-                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'} ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-medium text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'} ${!allowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span className="flex flex-col">
                     {label}
@@ -520,13 +520,13 @@ export default function AddMemberPage() {
             <Field label={<>Aadhaar Card Image <span className="text-danger">*</span></>}>
               <label className={`group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden ${aadharImage ? 'border-(--color-border)' : 'border-danger/40'}`}>
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setAadharImage(e.target.files[0])} />
-                {aadharPreview ? <img src={aadharPreview} alt="Aadhaar" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-bold">Upload Aadhaar photo</span></div>}
+                {aadharPreview ? <img src={aadharPreview} alt="Aadhaar" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-medium">Upload Aadhaar photo</span></div>}
               </label>
             </Field>
             <Field label={<>Profile Photo <span className="text-(--color-text-muted) normal-case font-medium">(optional)</span></>}>
               <label className="group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} />
-                {profilePreview ? <img src={profilePreview} alt="Profile" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-bold">Upload profile photo</span></div>}
+                {profilePreview ? <img src={profilePreview} alt="Profile" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-medium">Upload profile photo</span></div>}
               </label>
             </Field>
           </div>

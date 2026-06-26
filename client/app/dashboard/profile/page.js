@@ -149,12 +149,12 @@ export default function ProfilePage() {
 
   return (
     <PageTransition>
-      <div className="max-w-375 mx-auto pb-20 space-y-8">
+      <div className="max-w-375 mx-auto pb-10 space-y-6">
         {/* Hero Section */}
         {activeTab === 'details' &&
           <SlideIn direction="down">
-            <div className="card rounded-xl p-6 lg:p-8 text-(--color-text-primary)">
-              <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
+            <div className="card rounded-xl p-5 lg:p-6 text-(--color-text-primary)">
+              <div className="flex flex-col lg:flex-row justify-between items-center gap-5">
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="relative h-32 w-32 rounded-xl bg-(--color-surface-soft) p-2 border border-(--color-border) overflow-hidden group">
                     <div className="h-full w-full rounded-lg overflow-hidden bg-(--color-surface-soft) flex items-center justify-center">
@@ -175,7 +175,7 @@ export default function ProfilePage() {
                     <span className="badge bg-(--color-primary-soft) text-primary capitalize">
                       {user.role.replace('_', ' ')}
                     </span>
-                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight mt-3 leading-tight">{user.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-3 leading-tight">{user.name}</h1>
                     <p className="text-(--color-text-muted) font-medium mt-2 flex items-center justify-center md:justify-start gap-2">
                       <Mail size={16} /> {user.email}
                     </p>
@@ -221,7 +221,7 @@ export default function ProfilePage() {
           {activeTab === 'details' && (
             <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-8 space-y-6">
-                <div className="card rounded-xl p-6 lg:p-8">
+                <div className="card rounded-xl p-5 lg:p-6">
                   <h3 className="section-title mb-6 flex items-center gap-2">
                     <Shield size={16} className="text-primary" /> Personal Details
                   </h3>
@@ -272,12 +272,12 @@ export default function ProfilePage() {
 
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-2xl mx-auto">
-              <div className="bg-(--color-surface) rounded-xl p-10 lg:p-14 border border-(--color-border) shadow-sm">
-                <h3 className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-10 flex items-center gap-3">
+              <div className="bg-(--color-surface) rounded-xl p-6 border border-(--color-border) shadow-sm">
+                <h3 className="text-[11px] font-medium text-(--color-text-muted) mb-6 flex items-center gap-3">
                   <Shield size={16} className="text-primary" /> Change Password
                 </h3>
 
-                <form className="space-y-8" onSubmit={async (e) => {
+                <form className="space-y-6" onSubmit={async (e) => {
                   e.preventDefault();
                   const currentPassword = e.target.currentPassword.value;
                   const newPassword = e.target.newPassword.value;
@@ -302,7 +302,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="pt-6">
-                    <Button type="submit" className="w-full h-16 !text-xs font-bold uppercase tracking-normal bg-primary text-white shadow-sm">
+                    <Button type="submit" className="w-full h-12 font-semibold bg-primary text-white shadow-sm">
                       Confirm Change
                     </Button>
                   </div>
@@ -318,10 +318,10 @@ export default function ProfilePage() {
 
 function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, type = 'text', maxLength, onKeyDown }) {
   return (
-    <div className="space-y-3">
-      <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-4">{label}</label>
+    <div className="space-y-2">
+      <label className="text-[11px] font-medium text-(--color-text-muted) ml-4">{label}</label>
       <div className={`relative group transition-all duration-300 ${!isEditing ? 'opacity-70' : ''}`}>
-        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
+        <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
         <input
           name={name}
           type={type}
@@ -330,7 +330,7 @@ function DetailsField({ label, name, value, icon: Icon, isEditing, onChange, typ
           onChange={onChange}
           maxLength={maxLength}
           onKeyDown={onKeyDown}
-          className="w-full pl-16 pr-6 py-5 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 focus:bg-(--color-surface) outline-none text-xs font-bold transition-all shadow-inner placeholder:opacity-30 text-(--color-text-primary)"
+          className="w-full pl-14 pr-5 py-3 rounded-xl bg-(--color-bg-soft) border-2 border-transparent focus:border-primary/30 focus:bg-(--color-surface) outline-none text-sm font-medium transition-all placeholder:opacity-30 text-(--color-text-primary)"
           placeholder={`Enter ${label}...`}
         />
       </div>
@@ -348,13 +348,13 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
 
   return (
     <CardHover>
-      <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) shadow-sm flex flex-col items-center text-center group">
-        <div className={`h-14 w-14 rounded-xl ${colors[color]} flex items-center justify-center mb-6 transition-transform duration-500`}>
-          <Icon size={24} />
+      <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm flex flex-col items-center text-center group">
+        <div className={`h-6 w-6 rounded-xl ${colors[color]} flex items-center justify-center mb-6 transition-transform duration-500`}>
+          <Icon size={16} />
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">{label}</p>
-        <h4 className="text-3xl font-bold text-(--color-text-primary) tracking-tight mb-2">{value || '0'}</h4>
-        <p className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">{sub}</p>
+        <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">{label}</p>
+        <h4 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight mb-2">{value || '0'}</h4>
+        <p className="text-[11px] font-medium text-(--color-text-muted)">{sub}</p>
       </div>
     </CardHover>
   );

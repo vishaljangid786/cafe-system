@@ -136,13 +136,13 @@ export default function StaffReportsAnalytics({ user }) {
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
-    <div className="max-w-400 mx-auto pb-20 space-y-10 print:p-0 print:bg-(--color-surface) print:text-(--color-on-primary)">
+    <div className="max-w-400 mx-auto pb-10 space-y-6 print:p-0 print:bg-(--color-surface) print:text-(--color-on-primary)">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
-              <TrendingUp size={24} className="text-(--color-on-primary)" />
+          <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+            <div className="h-6 w-6 rounded-xl bg-primary flex items-center justify-center">
+              <TrendingUp size={14} className="text-(--color-on-primary)" />
             </div>
             Staff Reports & Analytics
           </h1>
@@ -152,19 +152,19 @@ export default function StaffReportsAnalytics({ user }) {
         <div className="flex gap-4">
           <button
             onClick={() => router.push(`${basePath}/staff-comparison`)}
-            className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
+            className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
           >
             <Users size={16} /> Compare Staff
           </button>
           <button
             onClick={exportCSV}
-            className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
+            className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
           >
             <Download size={16} /> Export CSV
           </button>
           <button
             onClick={exportPDF}
-            className="px-5 py-3 bg-primary text-(--color-on-primary) rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 shadow-lg"
+            className="px-5 py-3 bg-primary text-(--color-on-primary) rounded-xl text-[11px] font-semibold uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm"
           >
             <Printer size={16} /> Print/PDF
           </button>
@@ -173,29 +173,29 @@ export default function StaffReportsAnalytics({ user }) {
 
       {/* Print Only Header */}
       <div className="hidden print:block text-center pb-8 border-b border-(--color-border) mb-8">
-        <h1 className="text-2xl font-bold">Staff Performance Report</h1>
+        <h1 className="text-2xl font-semibold">Staff Performance Report</h1>
         <p className="text-sm text-(--color-text-secondary) mt-2">Generated on {new Date().toLocaleString()}</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-(--color-surface)/80  p-8 rounded-xl border border-(--color-border) shadow-sm space-y-6 print:hidden">
+      <div className="bg-(--color-surface)/80  p-6 rounded-xl border border-(--color-border) shadow-sm space-y-6 print:hidden">
         <div className="flex items-center justify-between pb-4 border-b border-(--color-border)">
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-primary" />
-            <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Filter Reports</span>
+            <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Filter Reports</span>
           </div>
-          <button 
+          <button
             onClick={resetFilters}
-            className="px-4 py-2 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-muted) hover:text-danger rounded-xl text-[9px] font-bold uppercase tracking-normal transition-all border border-(--color-border) active:scale-95 flex items-center gap-2 group"
+            className="px-4 py-2 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-muted) hover:text-danger rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all border border-(--color-border) active:scale-95 flex items-center gap-2 group"
           >
-            <CheckCircle2 size={12} className="group-hover:rotate-12 transition-transform" /> Reset Filters
+            <CheckCircle2 size={12} /> Reset Filters
           </button>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
           {/* Staff Name */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <User size={12} /> Staff Name
             </label>
             <input
@@ -203,39 +203,39 @@ export default function StaffReportsAnalytics({ user }) {
               placeholder="Search staff..."
               value={filters.staffName}
               onChange={(e) => handleFilterChange('staffName', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
+              className="w-full px-4 py-2.5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-medium focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
 
           {/* Exact Date */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Specific Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
+              className="w-full px-4 py-2.5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-medium focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
 
           {/* Month */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Month
             </label>
             <input
               type="month"
               value={filters.month}
               onChange={(e) => handleFilterChange('month', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
+              className="w-full px-4 py-2.5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-medium focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
 
           {/* Financial Year */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
               <Bookmark size={12} /> Financial Year
             </label>
             <PremiumSelect
@@ -254,8 +254,8 @@ export default function StaffReportsAnalytics({ user }) {
       </div>
 
       {refetching ? (
-        <div className="space-y-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:hidden">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 print:hidden">
             <div className="lg:col-span-7"><ChartSkeleton /></div>
             <div className="lg:col-span-5"><ChartSkeleton /></div>
           </div>
@@ -264,10 +264,10 @@ export default function StaffReportsAnalytics({ user }) {
       ) : (
         <>
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 print:hidden">
             {/* Sales leaderboard */}
-            <div className="lg:col-span-7 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+            <div className="lg:col-span-7 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Sales Leaderboard (₹)
               </h3>
               <div className="h-75">
@@ -284,8 +284,8 @@ export default function StaffReportsAnalytics({ user }) {
             </div>
 
             {/* Category Sales Share */}
-            <div className="lg:col-span-5 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8 flex flex-col">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+            <div className="lg:col-span-5 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6 flex flex-col">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <Bookmark size={16} className="text-primary" /> Category Distribution
               </h3>
               <div className="flex-1 min-h-[250px] flex items-center justify-center">
@@ -312,7 +312,7 @@ export default function StaffReportsAnalytics({ user }) {
                 {catSalesData.slice(0, 6).map((item, index) => (
                   <div key={item.name} className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) dark:text-(--color-text-muted) truncate">{item.name}</span>
+                    <span className="text-[11px] font-medium text-(--color-text-secondary) dark:text-(--color-text-muted) truncate">{item.name}</span>
                   </div>
                 ))}
               </div>
@@ -320,46 +320,46 @@ export default function StaffReportsAnalytics({ user }) {
           </div>
 
           {/* Detailed Performance Table */}
-          <div className="bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8 print:p-0 print:border-0 print:shadow-none">
-            <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3 print:hidden">
+          <div className="bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6 print:p-0 print:border-0 print:shadow-none">
+            <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3 print:hidden">
               <Award size={16} className="text-primary" /> Staff Performance List
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-(--color-border)">
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Rank</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Name</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Role</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Sales</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Orders</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Coupons Used</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Coupon Disc.</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Est. Profit</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cancelled %</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Avg Ticket</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Rank</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Name</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Role</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Sales</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Orders</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Coupons Used</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Coupon Disc.</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Est. Profit</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Cancelled %</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Avg Ticket</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.map((staff) => (
                     <tr key={staff._id} onClick={() => router.push(`${basePath}/staff-reports/${staff._id}`)} title="View full report" className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group cursor-pointer">
-                      <td className="py-4 text-xs font-bold text-primary">#{staff.ranking}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-primary) group-hover:text-primary transition-colors">{staff.name} <span className="opacity-0 group-hover:opacity-60 text-[10px]">›</span></td>
-                      <td className="py-4 text-[10px] font-bold text-(--color-text-muted) uppercase tracking-wider">{staff.role}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-muted)">{staff.branchName}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-white">₹{staff.totalSales}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.ordersHandled}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.couponUsageCount}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-muted)">₹{staff.couponDiscountAmount}</td>
-                      <td className="py-4 text-xs font-bold text-success">₹{staff.estimatedProfitContribution}</td>
-                      <td className="py-4 text-xs font-bold text-danger">{staff.cancelledRatio}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-white">₹{staff.avgOrderValue}</td>
+                      <td className="py-4 text-xs font-semibold text-primary">#{staff.ranking}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-(--color-text-primary) group-hover:text-primary transition-colors">{staff.name} <span className="opacity-0 group-hover:opacity-60 text-[10px]">›</span></td>
+                      <td className="py-4 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wider">{staff.role}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-muted)">{staff.branchName}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{staff.totalSales}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.ordersHandled}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.couponUsageCount}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-muted)">₹{staff.couponDiscountAmount}</td>
+                      <td className="py-4 text-xs font-medium text-success">₹{staff.estimatedProfitContribution}</td>
+                      <td className="py-4 text-xs font-medium text-danger">{staff.cancelledRatio}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{staff.avgOrderValue}</td>
                     </tr>
                   ))}
                   {data.length === 0 && (
                     <tr>
-                      <td colSpan="11" className="py-10 text-center italic text-xs font-bold text-(--color-text-muted) opacity-40">No staff records found for the selected filters.</td>
+                      <td colSpan="11" className="py-10 text-center text-xs font-medium text-(--color-text-muted) opacity-40">No staff records found for the selected filters.</td>
                     </tr>
                   )}
                 </tbody>

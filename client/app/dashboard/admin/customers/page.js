@@ -105,15 +105,15 @@ export default function CustomersDashboard() {
         <SlideIn>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-3">
-                <Crown className="text-primary h-10 w-10" />
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) flex items-center gap-3">
+                <Crown className="text-primary h-6 w-6" />
                 Customer Rewards
               </h1>
               <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Manage customer relationships and reward points.</p>
             </div>
-            <button 
+            <button
               onClick={fetchCRMData}
-              className="px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal rounded-xl  transition-transform shadow-sm "
+              className="px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal rounded-xl  transition-transform shadow-sm "
             >
               Refresh Information
             </button>
@@ -130,9 +130,9 @@ export default function CustomersDashboard() {
                 <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Users size={120} />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Customers</p>
-                <p className="text-4xl font-bold text-(--color-text-primary) mt-2">{analytics.totalCustomers}</p>
-                <p className="text-xs font-bold text-success mt-2 flex items-center gap-1">
+                <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Customers</p>
+                <p className="text-2xl font-semibold text-(--color-text-primary) mt-2">{analytics.totalCustomers}</p>
+                <p className="text-xs font-medium text-success mt-2 flex items-center gap-1">
                   All registered customers
                 </p>
               </div>
@@ -143,9 +143,9 @@ export default function CustomersDashboard() {
                 <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Activity size={120} />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Repeat Rate</p>
-                <p className="text-4xl font-bold text-(--color-text-primary) mt-2">{analytics.repeatRate}%</p>
-                <p className="text-xs font-bold text-success mt-2 flex items-center gap-1">
+                <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Repeat Rate</p>
+                <p className="text-2xl font-semibold text-(--color-text-primary) mt-2">{analytics.repeatRate}%</p>
+                <p className="text-xs font-medium text-success mt-2 flex items-center gap-1">
                   {analytics.repeatCustomers} returning customers
                 </p>
               </div>
@@ -156,9 +156,9 @@ export default function CustomersDashboard() {
                 <div className="absolute -right-4 -bottom-4 opacity-20">
                   <Award size={120} />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-normal opacity-80">Reward Points</p>
-                <p className="text-4xl font-bold mt-2">{analytics.totalRewardPoints?.toLocaleString()}</p>
-                <p className="text-xs font-bold opacity-90 mt-2 flex items-center gap-1">
+                <p className="text-[11px] font-medium uppercase tracking-normal opacity-80">Reward Points</p>
+                <p className="text-2xl font-semibold mt-2">{analytics.totalRewardPoints?.toLocaleString()}</p>
+                <p className="text-xs font-medium opacity-90 mt-2 flex items-center gap-1">
                   Total reward points
                 </p>
               </div>
@@ -166,9 +166,9 @@ export default function CustomersDashboard() {
 
             <SlideIn delay={0.4}>
               <div className="bg-danger/10 p-6 rounded-xl border border-danger/20 relative overflow-hidden">
-                <p className="text-[10px] font-bold uppercase tracking-normal text-danger">At Risk (Inactive)</p>
-                <p className="text-4xl font-bold text-danger mt-2">{analytics.inactiveCustomersCount}</p>
-                <p className="text-xs font-bold text-danger mt-2 flex items-center gap-1">
+                <p className="text-[11px] font-medium uppercase tracking-normal text-danger">At Risk (Inactive)</p>
+                <p className="text-2xl font-semibold text-danger mt-2">{analytics.inactiveCustomersCount}</p>
+                <p className="text-xs font-medium text-danger mt-2 flex items-center gap-1">
                    30 days since last visit
                 </p>
               </div>
@@ -180,7 +180,7 @@ export default function CustomersDashboard() {
           {/* Top Customers Leaderboard */}
           <div className="lg:col-span-2 space-y-6">
             <SlideIn delay={0.5}>
-              <h2 className="text-lg font-bold uppercase tracking-normal text-(--color-text-primary) flex items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-normal text-(--color-text-primary) flex items-center gap-2">
                 <Star className="text-primary" /> Top Reward Earners
               </h2>
             </SlideIn>
@@ -192,12 +192,12 @@ export default function CustomersDashboard() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Rank</th>
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Customer</th>
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Tier</th>
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Spend</th>
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Visits</th>
-                      <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Action</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Rank</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Customer</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Tier</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Spend</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Visits</th>
+                      <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-(--color-border)">
@@ -205,28 +205,28 @@ export default function CustomersDashboard() {
                       const tier = getTier(cust.totalSpend);
                       return (
                         <tr key={cust._id} className="hover:bg-primary/[0.02] transition-colors group">
-                          <td className="p-6">
-                            <span className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-bold ${idx < 3 ? 'bg-primary/20 text-primary-dark dark:text-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+                          <td className="px-5 py-4">
+                            <span className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-semibold ${idx < 3 ? 'bg-primary/20 text-primary-dark dark:text-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
                               #{idx + 1}
                             </span>
                           </td>
-                          <td className="p-6">
-                            <p className="font-bold text-(--color-text-primary)">{cust.name}</p>
+                          <td className="px-5 py-4">
+                            <p className="font-medium text-(--color-text-primary)">{cust.name}</p>
                             <p className="text-xs font-medium text-(--color-text-secondary)">{maskPhone(cust.phone)}</p>
                           </td>
-                          <td className="p-6">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-normal ${tier.bg} ${tier.color}`}>
+                          <td className="px-5 py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium tracking-normal ${tier.bg} ${tier.color}`}>
                               {tier.label}
                             </span>
                           </td>
-                          <td className="p-6">
-                            <p className="text-lg font-bold text-(--color-text-primary)">₹{cust.totalSpend?.toLocaleString()}</p>
+                          <td className="px-5 py-4">
+                            <p className="text-lg font-semibold text-(--color-text-primary)">₹{cust.totalSpend?.toLocaleString()}</p>
                           </td>
-                          <td className="p-6">
-                            <p className="font-bold text-(--color-text-secondary)">{cust.visits}x</p>
+                          <td className="px-5 py-4">
+                            <p className="font-medium text-(--color-text-secondary)">{cust.visits}x</p>
                           </td>
-                          <td className="p-6">
-                            <button 
+                          <td className="px-5 py-4">
+                            <button
                               onClick={() => setViewingCustomer(cust)}
                               className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-on-primary) transition-all shadow-sm"
                             >
@@ -246,7 +246,7 @@ export default function CustomersDashboard() {
           {/* Inactive Customers Target List */}
           <div className="space-y-6">
             <SlideIn delay={0.6}>
-              <h2 className="text-lg font-bold uppercase tracking-normal text-(--color-text-primary) flex items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-normal text-(--color-text-primary) flex items-center gap-2">
                 <Heart className="text-danger" /> Customers to Win Back
               </h2>
             </SlideIn>
@@ -258,7 +258,7 @@ export default function CustomersDashboard() {
               {inactiveCustomers.map(cust => (
                 <div key={cust._id} className="p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex justify-between items-center group hover:border-danger/30 transition-colors">
                   <div>
-                    <p className="font-bold text-(--color-text-primary)">{cust.name}</p>
+                    <p className="font-medium text-(--color-text-primary)">{cust.name}</p>
                     <p className="text-xs font-medium text-(--color-text-muted) mt-1 flex items-center gap-1">
                       <Calendar size={12}/> Last: {new Date(cust.lastVisit).toLocaleDateString()}
                     </p>
@@ -282,24 +282,24 @@ export default function CustomersDashboard() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-(--color-surface) w-full max-w-lg rounded-xl shadow-sm overflow-hidden border border-(--color-border)"
           >
-            <div className="p-8 border-b border-(--color-border) flex justify-between items-start">
+            <div className="p-5 border-b border-(--color-border) flex justify-between items-start">
               <div>
-                <h3 className="text-xl font-bold text-(--color-text-primary)">Customer <span className="text-primary">Profile</span></h3>
-                <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">ID: {viewingCustomer._id}</p>
+                <h3 className="text-xl font-semibold text-(--color-text-primary)">Customer <span className="text-primary">Profile</span></h3>
+                <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">ID: {viewingCustomer._id}</p>
               </div>
               <button onClick={() => setViewingCustomer(null)} className="h-10 w-10 rounded-full bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) hover:text-danger transition-colors">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="p-5 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
-                <div className="h-14 w-14 rounded-xl bg-primary text-(--color-on-primary) flex items-center justify-center text-2xl font-bold shadow-lg ">
+                <div className="h-14 w-14 rounded-xl bg-primary text-(--color-on-primary) flex items-center justify-center text-2xl font-semibold shadow-sm ">
                   {viewingCustomer.name?.charAt(0) || 'C'}
                 </div>
                 <div>
-                  <p className="font-bold text-xl text-(--color-text-primary)">{viewingCustomer.name}</p>
-                  <p className="text-sm font-bold text-(--color-text-secondary) flex items-center gap-1 mt-1">
+                  <p className="font-semibold text-xl text-(--color-text-primary)">{viewingCustomer.name}</p>
+                  <p className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-1 mt-1">
                     <Phone size={14}/> {maskPhone(viewingCustomer.phone)}
                   </p>
                 </div>
@@ -307,20 +307,20 @@ export default function CustomersDashboard() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-success/10 border border-success/20">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-success mb-1">Lifetime Value</p>
-                  <p className="text-2xl font-bold text-success">₹{viewingCustomer.totalSpend?.toLocaleString()}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-success mb-1">Lifetime Value</p>
+                  <p className="text-2xl font-semibold text-success">₹{viewingCustomer.totalSpend?.toLocaleString()}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-primary mb-1 flex items-center gap-1"><Award size={12}/> Reward Points</p>
-                  <p className="text-2xl font-bold text-primary">{viewingCustomer.loyaltyPoints} pts</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-primary mb-1 flex items-center gap-1"><Award size={12}/> Reward Points</p>
+                  <p className="text-2xl font-semibold text-primary">{viewingCustomer.loyaltyPoints} pts</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-8 bg-(--color-surface-soft)/30 border-t border-(--color-border)">
+            <div className="p-5 bg-(--color-surface-soft)/30 border-t border-(--color-border)">
               <button
                 onClick={() => setViewingCustomer(null)}
-                className="w-full py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal transition-all  shadow-sm "
+                className="w-full py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal transition-all  shadow-sm "
               >
                 Close Profile
               </button>

@@ -53,10 +53,10 @@ function Stat({ icon: Icon, label, value, sub, tone = 'primary' }) {
     <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-5 min-h-30">
       <div className="flex items-center gap-2 text-(--color-text-muted)">
         <Icon size={14} className={`text-${tone}`} />
-        <span className="text-[10px] font-bold uppercase tracking-normal">{label}</span>
+        <span className="text-[11px] font-medium uppercase tracking-normal">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-(--color-text-primary) mt-2 break-words">{value}</p>
-      {sub && <p className="text-[10px] text-(--color-text-muted) mt-1">{sub}</p>}
+      <p className="text-2xl font-semibold text-(--color-text-primary) mt-2 break-words">{value}</p>
+      {sub && <p className="text-[11px] text-(--color-text-muted) mt-1">{sub}</p>}
     </div>
   );
 }
@@ -65,12 +65,12 @@ function Section({ icon: Icon, title, count, children }) {
   return (
     <div className="rounded-xl border border-(--color-border) bg-(--color-surface) overflow-hidden">
       <div className="px-5 py-4 border-b border-(--color-border) flex items-center justify-between gap-3">
-        <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
           <Icon size={14} className="text-primary" />
           {title}
         </h3>
         {count !== undefined && (
-          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+          <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
             {count}
           </span>
         )}
@@ -186,7 +186,7 @@ export default function StaffDetailReport({ staffId, user }) {
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
-    <div className="max-w-400 mx-auto pb-20 space-y-8">
+    <div className="max-w-400 mx-auto pb-10 space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <button
@@ -196,11 +196,11 @@ export default function StaffDetailReport({ staffId, user }) {
           >
             <ArrowLeft size={18} />
           </button>
-          <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl overflow-hidden shrink-0">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-semibold text-lg overflow-hidden shrink-0">
             {staff?.profileImageUrl ? <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" /> : (staff?.name?.charAt(0) || '?')}
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight truncate">
+            <h1 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight truncate">
               {staff?.name || 'Staff Member'} Report
             </h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[11px] font-medium text-(--color-text-muted)">
@@ -212,7 +212,7 @@ export default function StaffDetailReport({ staffId, user }) {
           </div>
         </div>
         {refetching && (
-          <span className="text-[10px] font-bold uppercase tracking-normal text-primary">
+          <span className="text-[11px] font-medium uppercase tracking-normal text-primary">
             Refreshing report...
           </span>
         )}
@@ -222,12 +222,12 @@ export default function StaffDetailReport({ staffId, user }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-(--color-text-muted)">
             <Filter size={14} className="text-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-normal">Filter this staff report</span>
+            <span className="text-[11px] font-medium uppercase tracking-normal">Filter this staff report</span>
           </div>
           {hasFilters && (
             <button
               onClick={resetFilters}
-              className="px-3 py-2 rounded-xl border border-(--color-border) text-(--color-text-muted) hover:text-danger hover:border-danger/40 text-[10px] font-bold uppercase inline-flex items-center gap-2"
+              className="px-3 py-2 rounded-xl border border-(--color-border) text-(--color-text-muted) hover:text-danger hover:border-danger/40 text-[11px] font-medium uppercase inline-flex items-center gap-2"
             >
               <FilterX size={13} /> Clear
             </button>
@@ -236,11 +236,11 @@ export default function StaffDetailReport({ staffId, user }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           <div>
-            <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">From</label>
+            <label className="text-[11px] font-medium uppercase text-(--color-text-muted) ml-1">From</label>
             <input type="date" className={inputCls} value={filters.startDate} onChange={(e) => setFilters((f) => ({ ...f, startDate: e.target.value }))} />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">To</label>
+            <label className="text-[11px] font-medium uppercase text-(--color-text-muted) ml-1">To</label>
             <input type="date" className={inputCls} value={filters.endDate} onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value }))} />
           </div>
           <PremiumSelect
@@ -292,8 +292,8 @@ export default function StaffDetailReport({ staffId, user }) {
           <div className="p-5 grid grid-cols-2 gap-3">
             {Object.entries(summary.orderRoleCounts || {}).map(([role, count]) => (
               <div key={role} className="rounded-lg bg-(--color-surface-soft)/60 p-3">
-                <p className="text-[10px] font-bold uppercase text-(--color-text-muted)">{role}</p>
-                <p className="text-xl font-bold text-(--color-text-primary)">{count}</p>
+                <p className="text-[11px] font-medium uppercase text-(--color-text-muted)">{role}</p>
+                <p className="text-xl font-semibold text-(--color-text-primary)">{count}</p>
               </div>
             ))}
           </div>
@@ -303,8 +303,8 @@ export default function StaffDetailReport({ staffId, user }) {
           <div className="p-5 space-y-2">
             {Object.entries(summary.paymentBreakdown || {}).map(([type, count]) => (
               <div key={type} className="flex items-center justify-between text-xs">
-                <span className="font-bold text-(--color-text-secondary)">{type}</span>
-                <span className="font-bold text-(--color-text-primary)">{count}</span>
+                <span className="font-medium text-(--color-text-secondary)">{type}</span>
+                <span className="font-medium text-(--color-text-primary)">{count}</span>
               </div>
             ))}
             {Object.keys(summary.paymentBreakdown || {}).length === 0 && <p className="text-xs text-(--color-text-muted) italic">No payment data.</p>}
@@ -315,8 +315,8 @@ export default function StaffDetailReport({ staffId, user }) {
           <div className="p-5 space-y-2">
             {(summary.topItems || []).slice(0, 5).map((item) => (
               <div key={item.name} className="flex items-center justify-between gap-3 text-xs">
-                <span className="font-bold text-(--color-text-secondary) truncate">{item.name}</span>
-                <span className="font-bold text-(--color-text-primary)">x{item.quantity}</span>
+                <span className="font-medium text-(--color-text-secondary) truncate">{item.name}</span>
+                <span className="font-medium text-(--color-text-primary)">x{item.quantity}</span>
               </div>
             ))}
             {(summary.topItems || []).length === 0 && <p className="text-xs text-(--color-text-muted) italic">No item data.</p>}
@@ -327,7 +327,7 @@ export default function StaffDetailReport({ staffId, user }) {
       <Section icon={Ticket} title="Coupons Used" count={coupons.length}>
         <div className="p-5 flex flex-wrap gap-2">
           {coupons.map((coupon) => (
-            <div key={coupon.code} className="px-3 py-2 rounded-xl bg-warning/10 border border-warning/20 text-[11px] font-bold text-warning">
+            <div key={coupon.code} className="px-3 py-2 rounded-xl bg-warning/10 border border-warning/20 text-[11px] font-medium text-warning">
               {coupon.code} <span className="opacity-70">x{coupon.count}</span>
               {coupon.discount > 0 && <span className="text-(--color-text-muted) ml-1">({inr(coupon.discount)})</span>}
             </div>
@@ -340,7 +340,7 @@ export default function StaffDetailReport({ staffId, user }) {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+              <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                 <th className="py-3 px-5">Order</th>
                 <th className="py-3 px-5">Date / Time</th>
                 <th className="py-3 px-5">Involvement</th>
@@ -354,16 +354,16 @@ export default function StaffDetailReport({ staffId, user }) {
             <tbody className="divide-y divide-(--color-border)/50">
               {orders.map((order) => (
                 <tr key={order._id} className="hover:bg-(--color-surface-soft)/30">
-                  <td className="py-3 px-5 text-[11px] font-bold text-primary">#{order.shortId}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium text-primary">#{order.shortId}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-secondary)">{shortDateTime(order.createdAt)}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{(order.involvedAs || []).join(', ') || '-'}</td>
-                  <td className="py-3 px-5 text-[10px] font-bold uppercase">{order.status}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium uppercase">{order.status}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted) max-w-80 truncate">
                     {(order.items || []).map((item) => `${item.quantity}x ${item.menuItem?.name || item.itemName || 'Item'}`).join(', ')}
                   </td>
-                  <td className="py-3 px-5 text-[11px] font-semibold text-warning">{order.coupon?.code || (Number(order.discountAmount) > 0 ? inr(order.discountAmount) : '-')}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium text-warning">{order.coupon?.code || (Number(order.discountAmount) > 0 ? inr(order.discountAmount) : '-')}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{order.paymentType || '-'}</td>
-                  <td className="py-3 px-5 text-right text-sm font-bold text-(--color-text-primary)">{inr(order.grandTotal ?? order.totalAmount)}</td>
+                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(order.grandTotal ?? order.totalAmount)}</td>
                 </tr>
               ))}
               {orders.length === 0 && <EmptyRow colSpan={8} text="No orders found for this staff member in the selected filters." />}
@@ -376,7 +376,7 @@ export default function StaffDetailReport({ staffId, user }) {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+              <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                 <th className="py-3 px-5">Event</th>
                 <th className="py-3 px-5">Customer</th>
                 <th className="py-3 px-5">Date</th>
@@ -389,13 +389,13 @@ export default function StaffDetailReport({ staffId, user }) {
             <tbody className="divide-y divide-(--color-border)/50">
               {reservations.map((reservation) => (
                 <tr key={reservation._id} className="hover:bg-(--color-surface-soft)/30">
-                  <td className="py-3 px-5 text-[11px] font-semibold text-(--color-text-primary)">{reservation.eventName || '-'}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium text-(--color-text-primary)">{reservation.eventName || '-'}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-secondary)">{reservation.customerName || '-'}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(reservation.date)}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{reservation.startTime}{reservation.endTime ? `-${reservation.endTime}` : ''}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{reservation.locationId?.name || '-'}</td>
-                  <td className="py-3 px-5 text-[10px] font-bold uppercase">{reservation.status}</td>
-                  <td className="py-3 px-5 text-right text-sm font-bold text-(--color-text-primary)">{inr(reservation.totalAmount)}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium uppercase">{reservation.status}</td>
+                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(reservation.totalAmount)}</td>
                 </tr>
               ))}
               {reservations.length === 0 && <EmptyRow colSpan={7} text="No reservations created by this staff member in the selected filters." />}
@@ -404,12 +404,12 @@ export default function StaffDetailReport({ staffId, user }) {
         </div>
       </Section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <Section icon={BadgeCheck} title="Attendance" count={attendance.length}>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                   <th className="py-3 px-5">Date</th>
                   <th className="py-3 px-5">Status</th>
                   <th className="py-3 px-5">Check In</th>
@@ -420,8 +420,8 @@ export default function StaffDetailReport({ staffId, user }) {
               <tbody className="divide-y divide-(--color-border)/50">
                 {attendance.map((record) => (
                   <tr key={record._id} className="hover:bg-(--color-surface-soft)/30">
-                    <td className="py-3 px-5 text-[11px] font-semibold text-(--color-text-primary)">{record.date}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{record.status}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium text-(--color-text-primary)">{record.date}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{record.status}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{record.checkIn ? shortDateTime(record.checkIn) : '-'}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{record.checkOut ? shortDateTime(record.checkOut) : '-'}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{record.locationId?.name || '-'}</td>
@@ -437,7 +437,7 @@ export default function StaffDetailReport({ staffId, user }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                   <th className="py-3 px-5">Title</th>
                   <th className="py-3 px-5">Date</th>
                   <th className="py-3 px-5">Type</th>
@@ -448,11 +448,11 @@ export default function StaffDetailReport({ staffId, user }) {
               <tbody className="divide-y divide-(--color-border)/50">
                 {expenses.map((expense) => (
                   <tr key={expense._id} className="hover:bg-(--color-surface-soft)/30">
-                    <td className="py-3 px-5 text-[11px] font-semibold text-(--color-text-primary) max-w-70 truncate">{expense.title}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium text-(--color-text-primary) max-w-70 truncate">{expense.title}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(expense.date)}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{expense.type}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{expense.status}</td>
-                    <td className="py-3 px-5 text-right text-sm font-bold text-(--color-text-primary)">{inr(expense.amount)}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{expense.type}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{expense.status}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(expense.amount)}</td>
                   </tr>
                 ))}
                 {expenses.length === 0 && <EmptyRow colSpan={5} text="No expenses or income records created by this staff member." />}
@@ -462,12 +462,12 @@ export default function StaffDetailReport({ staffId, user }) {
         </Section>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <Section icon={WalletCards} title="Cash Drawer Activity" count={cashSessions.length}>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                   <th className="py-3 px-5">Opened</th>
                   <th className="py-3 px-5">Status</th>
                   <th className="py-3 px-5">Branch</th>
@@ -478,9 +478,9 @@ export default function StaffDetailReport({ staffId, user }) {
                 {cashSessions.map((session) => (
                   <tr key={session._id} className="hover:bg-(--color-surface-soft)/30">
                     <td className="py-3 px-5 text-[11px] text-(--color-text-secondary)">{shortDateTime(session.openedAt)}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{session.status}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{session.status}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{session.locationId?.name || '-'}</td>
-                    <td className="py-3 px-5 text-right text-sm font-bold text-(--color-text-primary)">{inr(session.variance)}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(session.variance)}</td>
                   </tr>
                 ))}
                 {cashSessions.length === 0 && <EmptyRow colSpan={4} text="No cash drawer activity for this staff member." />}
@@ -495,24 +495,24 @@ export default function StaffDetailReport({ staffId, user }) {
               <div key={entry._id} className="p-4 hover:bg-(--color-surface-soft)/30">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-(--color-text-primary) uppercase truncate">{entry.action}</p>
+                    <p className="text-xs font-medium text-(--color-text-primary) uppercase truncate">{entry.action}</p>
                     <p className="text-[11px] text-(--color-text-muted) mt-1 truncate">{activityText(entry)}</p>
                   </div>
-                  <span className="text-[10px] font-bold text-(--color-text-muted) shrink-0">{shortDate(entry.timestamp)}</span>
+                  <span className="text-[11px] font-medium text-(--color-text-muted) shrink-0">{shortDate(entry.timestamp)}</span>
                 </div>
               </div>
             ))}
-            {activity.length === 0 && <p className="p-8 text-center text-xs text-(--color-text-muted) italic">No recent audit activity for this staff member.</p>}
+            {activity.length === 0 && <p className="p-6 text-center text-xs text-(--color-text-muted) italic">No recent audit activity for this staff member.</p>}
           </div>
         </Section>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <Section icon={ArrowLeftRight} title="Ledger / Transactions" count={transactions.length}>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                   <th className="py-3 px-5">Title</th>
                   <th className="py-3 px-5">Date</th>
                   <th className="py-3 px-5">Type</th>
@@ -523,11 +523,11 @@ export default function StaffDetailReport({ staffId, user }) {
               <tbody className="divide-y divide-(--color-border)/50">
                 {transactions.map((txn) => (
                   <tr key={txn._id} className="hover:bg-(--color-surface-soft)/30">
-                    <td className="py-3 px-5 text-[11px] font-semibold text-(--color-text-primary) max-w-70 truncate">{txn.title || txn.category || txn.description || '-'}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium text-(--color-text-primary) max-w-70 truncate">{txn.title || txn.category || txn.description || '-'}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(txn.date)}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{String(txn.type || '-').replace(/_/g, ' ')}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{txn.status}</td>
-                    <td className="py-3 px-5 text-right text-sm font-bold text-(--color-text-primary)">{inr(txn.totalAmount)}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{String(txn.type || '-').replace(/_/g, ' ')}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{txn.status}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(txn.totalAmount)}</td>
                   </tr>
                 ))}
                 {transactions.length === 0 && <EmptyRow colSpan={5} text="No ledger entries recorded by this staff member." />}
@@ -540,7 +540,7 @@ export default function StaffDetailReport({ staffId, user }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/40 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                   <th className="py-3 px-5">Ingredient</th>
                   <th className="py-3 px-5 text-right">Qty</th>
                   <th className="py-3 px-5">Reason</th>
@@ -551,9 +551,9 @@ export default function StaffDetailReport({ staffId, user }) {
               <tbody className="divide-y divide-(--color-border)/50">
                 {waste.map((record) => (
                   <tr key={record._id} className="hover:bg-(--color-surface-soft)/30">
-                    <td className="py-3 px-5 text-[11px] font-semibold text-(--color-text-primary)">{record.ingredient?.name || '-'}</td>
-                    <td className="py-3 px-5 text-right text-[11px] font-bold text-(--color-text-primary)">{record.quantity}{record.ingredient?.unit ? ` ${record.ingredient.unit}` : ''}</td>
-                    <td className="py-3 px-5 text-[10px] font-bold uppercase">{record.reason || '-'}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium text-(--color-text-primary)">{record.ingredient?.name || '-'}</td>
+                    <td className="py-3 px-5 text-right text-[11px] font-medium text-(--color-text-primary)">{record.quantity}{record.ingredient?.unit ? ` ${record.ingredient.unit}` : ''}</td>
+                    <td className="py-3 px-5 text-[11px] font-medium uppercase">{record.reason || '-'}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(record.date)}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{record.branch?.name || '-'}</td>
                   </tr>

@@ -89,15 +89,15 @@ export default function CommandCenterPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div>
-              <h1 className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
                 Live <span className="text-primary">Control Panel</span>
               </h1>
-              <p className="text-(--color-text-secondary) text-sm font-medium mt-1 uppercase tracking-normal flex items-center gap-2">
+              <p className="text-(--color-text-secondary) text-sm font-medium mt-1 tracking-normal flex items-center gap-2">
                 <span className="w-2 h-2 bg-success rounded-full animate-ping" />
                 Live updates from your cafe
               </p>
@@ -115,18 +115,18 @@ export default function CommandCenterPage() {
         </SlideIn>
 
         {refetching ? (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
             </div>
           </div>
         ) : (
           <>
         {/* Real-Time Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             { label: 'New Orders Now', value: stats?.ordersIncomingNow || 0, icon: ShoppingBag, color: 'from-primary to-secondary', anim: stats?.ordersIncomingNow > 0 },
             { label: 'Kitchen Busy Level', value: stats?.kitchenBusyLevel || 0, icon: Flame, color: 'from-danger to-(--color-danger-dark)', anim: stats?.kitchenBusyLevel > 5 },
@@ -134,12 +134,12 @@ export default function CommandCenterPage() {
             { label: "Today's Revenue", value: `₹${stats?.revenueTodayLive?.toLocaleString() || 0}`, icon: DollarSign, color: 'from-success to-(--color-success-dark)' }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.1}>
-              <div className={`p-8 bg-gradient-to-br ${stat.color} rounded-xl text-white shadow-sm relative overflow-hidden group`}>
-                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none transition-transform duration-700">
+              <div className={`p-5 bg-gradient-to-br ${stat.color} rounded-xl text-white shadow-sm relative overflow-hidden group`}>
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                   <stat.icon size={120} />
                 </div>
                 <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">{stat.label}</span>
+                  <span className="text-[11px] font-medium tracking-normal opacity-80">{stat.label}</span>
                   {stat.anim && (
                     <span className="flex h-3 w-3 relative">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-(--color-surface) opacity-75"></span>
@@ -147,44 +147,44 @@ export default function CommandCenterPage() {
                     </span>
                   )}
                 </div>
-                <h2 className="text-4xl font-bold mt-6 tracking-tight">{stat.value}</h2>
+                <h2 className="text-2xl font-semibold mt-6 tracking-tight">{stat.value}</h2>
               </div>
             </SlideIn>
           ))}
         </div>
 
         {/* Secondary Insights Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Active Online Staff */}
-          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
+          <div className="p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Staff Online</p>
-              <h3 className="text-3xl font-bold mt-2 text-(--color-text-primary)">{stats?.activeStaffOnline || 0}</h3>
+              <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Staff Online</p>
+              <h3 className="text-2xl font-semibold mt-2 text-(--color-text-primary)">{stats?.activeStaffOnline || 0}</h3>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-sm">
-              <Users size={24} />
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+              <Users size={20} />
             </div>
           </div>
 
           {/* Pending Orders > 10 Min */}
-          <div className={`p-8 bg-(--color-surface) border rounded-xl flex items-center justify-between shadow-sm transition-all ${stats?.pendingOrdersOver10Min > 0 ? 'border-danger/30' : 'border-(--color-border)'}`}>
+          <div className={`p-5 bg-(--color-surface) border rounded-xl flex items-center justify-between shadow-sm transition-all ${stats?.pendingOrdersOver10Min > 0 ? 'border-danger/30' : 'border-(--color-border)'}`}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Orders Waiting &gt; 10 Mins</p>
-              <h3 className={`text-3xl font-bold mt-2 ${stats?.pendingOrdersOver10Min > 0 ? 'text-danger' : 'text-(--color-text-primary)'}`}>{stats?.pendingOrdersOver10Min || 0}</h3>
+              <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Orders Waiting &gt; 10 Mins</p>
+              <h3 className={`text-2xl font-semibold mt-2 ${stats?.pendingOrdersOver10Min > 0 ? 'text-danger' : 'text-(--color-text-primary)'}`}>{stats?.pendingOrdersOver10Min || 0}</h3>
             </div>
-            <div className={`h-14 w-14 rounded-xl flex items-center justify-center border shadow-sm ${stats?.pendingOrdersOver10Min > 0 ? 'bg-danger/10 text-danger border-danger/20' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border)'}`}>
-              <Clock size={24} />
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${stats?.pendingOrdersOver10Min > 0 ? 'bg-danger/10 text-danger border-danger/20' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border)'}`}>
+              <Clock size={20} />
             </div>
           </div>
 
           {/* Branch Health Score */}
-          <div className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
+          <div className="p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Health Score</p>
-              <h3 className="text-3xl font-bold mt-2 text-(--color-text-primary)">{stats?.branchHealthScore || 100}%</h3>
+              <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Branch Health Score</p>
+              <h3 className="text-2xl font-semibold mt-2 text-(--color-text-primary)">{stats?.branchHealthScore || 100}%</h3>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-success/10 text-success flex items-center justify-center border border-success/20 shadow-sm">
-              <Heart size={24} />
+            <div className="h-10 w-10 rounded-xl bg-success/10 text-success flex items-center justify-center border border-success/20">
+              <Heart size={20} />
             </div>
           </div>
         </div>
@@ -192,14 +192,14 @@ export default function CommandCenterPage() {
         )}
 
         {/* Alerts & Operational Logs */}
-        <div className="bg-(--color-surface) border border-(--color-border) p-10 rounded-xl shadow-sm">
-          <div className="flex items-center gap-4 mb-8">
+        <div className="bg-(--color-surface) border border-(--color-border) p-6 rounded-xl shadow-sm">
+          <div className="flex items-center gap-4 mb-6">
             <div className="h-10 w-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
               <Bell size={18} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-(--color-text-primary) tracking-tight">Live Alerts</h3>
-              <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">Updated in real time</p>
+              <h3 className="text-xl font-semibold text-(--color-text-primary) tracking-tight">Live Alerts</h3>
+              <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-1">Updated in real time</p>
             </div>
           </div>
 
@@ -211,17 +211,17 @@ export default function CommandCenterPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="p-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl flex items-center gap-4 hover:border-primary/20 transition-all font-bold text-xs"
+                  className="p-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl flex items-center gap-4 hover:border-primary/20 transition-all font-medium text-xs"
                 >
                   <div className="h-2 w-2 rounded-full bg-success" />
-                  <span className="text-(--color-text-primary) font-bold">{alert.title}</span>
+                  <span className="text-(--color-text-primary) font-semibold">{alert.title}</span>
                   <span className="text-(--color-text-secondary)">{alert.message}</span>
                 </motion.div>
               ))}
             </AnimatePresence>
 
             {alerts.length === 0 && (
-              <div className="text-xs italic font-bold text-(--color-text-muted) opacity-50 text-center py-6">No alerts right now.</div>
+              <div className="text-xs font-medium text-(--color-text-muted) opacity-50 text-center py-6">No alerts right now.</div>
             )}
           </div>
         </div>

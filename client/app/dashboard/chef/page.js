@@ -150,7 +150,7 @@ export default function ChefDashboard() {
         <Button 
           variant="primary" 
           size="sm" 
-          className="w-full mt-4 !rounded-xl bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal"
+          className="w-full mt-4 !rounded-xl bg-primary hover:bg-primary text-[11px] font-semibold"
           onClick={() => handleUpdateStatus(order._id, 'accept')}
         >
           Accept Order
@@ -169,7 +169,7 @@ export default function ChefDashboard() {
             <Button 
               variant="primary" 
               size="sm" 
-              className="flex-1 !rounded-xl bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal"
+              className="flex-1 !rounded-xl bg-primary hover:bg-primary text-[11px] font-semibold"
               onClick={() => handleUpdateStatus(order._id, 'start')}
             >
               Start Prep
@@ -178,7 +178,7 @@ export default function ChefDashboard() {
             <Button 
               variant="primary" 
               size="sm" 
-              className="flex-1 !rounded-xl bg-success hover:bg-success text-[10px] font-bold uppercase tracking-normal"
+              className="flex-1 !rounded-xl bg-success hover:bg-success text-[11px] font-semibold"
               onClick={() => handleUpdateStatus(order._id, 'ready')}
             >
               Mark Ready
@@ -201,7 +201,7 @@ export default function ChefDashboard() {
       color: 'emerald',
       action: () => (
         <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-center">
-          <span className="text-[10px] font-bold uppercase tracking-normal text-success">Pick up</span>
+          <span className="text-[11px] font-medium text-success">Pick up</span>
         </div>
       )
     }
@@ -211,13 +211,13 @@ export default function ChefDashboard() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-10">
+      <div className="space-y-6 pb-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
-                <ChefHat size={24} className="text-(--color-on-primary)" />
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
+                <ChefHat size={20} className="text-(--color-on-primary)" />
               </div>
               Kitchen
             </h1>
@@ -227,12 +227,12 @@ export default function ChefDashboard() {
             <button
               onClick={handleManualRefresh}
               disabled={isRefreshing}
-              className="p-3 rounded-xl bg-(--color-surface) text-(--color-text-muted) hover:text-primary hover:bg-primary/10 transition-all border border-(--color-border) disabled:opacity-50"
+              className="p-2.5 rounded-xl bg-(--color-surface) text-(--color-text-muted) hover:text-primary hover:bg-primary/10 transition-all border border-(--color-border) disabled:opacity-50"
             >
-              <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+              <RefreshCcw size={18} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="flex items-center gap-2 bg-(--color-surface) p-1.5 rounded-xl border border-(--color-border)">
-               <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+               <div className="px-4 py-2 text-[11px] font-medium text-(--color-text-muted)">
                  Branch: <span className="text-primary ml-1">{selectedLocation?.name}</span>
                </div>
             </div>
@@ -245,7 +245,7 @@ export default function ChefDashboard() {
             <button
               key={l.id}
               onClick={() => setActiveLaneTab(l.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${activeLaneTab === l.id ? (l.id === 'incoming' ? 'bg-primary text-(--color-on-primary) shadow-lg ' : l.id === 'preparing' ? 'bg-primary text-white shadow-lg ' : 'bg-success text-white shadow-lg ') : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-medium transition-all duration-300 ${activeLaneTab === l.id ? (l.id === 'incoming' ? 'bg-primary text-(--color-on-primary)' : l.id === 'preparing' ? 'bg-primary text-white' : 'bg-success text-white') : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
             >
               <l.icon size={14} />
               {l.title}
@@ -254,27 +254,27 @@ export default function ChefDashboard() {
         </div>
 
         {/* Lane Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[60vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 min-h-[60vh]">
           {lanes.map((lane) => (
             <div 
               key={lane.id} 
               className={`flex flex-col h-full bg-(--color-surface-soft)/30 rounded-xl border border-(--color-border) overflow-hidden ${activeLaneTab === lane.id ? 'flex' : 'hidden lg:flex'}`}
             >
-              <div className="p-6 border-b border-(--color-border) bg-(--color-surface) flex items-center justify-between">
+              <div className="p-5 border-b border-(--color-border) bg-(--color-surface) flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`h-8 w-8 rounded-xl ${toneSoft(lane.color)} flex items-center justify-center`}>
                     <lane.icon size={16} className={toneText(lane.color)} />
                   </div>
-                  <h3 className="text-[11px] font-bold text-(--color-text-primary) uppercase tracking-normal">{lane.title}</h3>
+                  <h3 className="text-[11px] font-semibold text-(--color-text-primary) uppercase tracking-normal">{lane.title}</h3>
                 </div>
                 <div className="h-6 px-2.5 rounded-full bg-(--color-bg-soft) flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-(--color-text-muted)">
+                  <span className="text-[11px] font-medium text-(--color-text-muted)">
                     {orders.filter(o => lane.statuses.includes(o.status)).length}
                   </span>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
                 <AnimatePresence mode="popLayout">
                   {orders
                     .filter(o => lane.statuses.includes(o.status))
@@ -289,18 +289,18 @@ export default function ChefDashboard() {
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <div className="text-[10px] font-bold text-primary uppercase tracking-normal mb-1">
-                              TABLE {order.table?.tableNumber || '??'}
+                            <div className="text-[11px] font-semibold text-primary mb-1">
+                              Table {order.table?.tableNumber || '??'}
                             </div>
-                            <div className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">
+                            <div className="text-[11px] font-medium text-(--color-text-muted)">
                               ID: #{order._id.slice(-6)} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             {order.status === 'PREPARING' && (
-                              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary animate-pulse">
+                              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary">
                                 <Timer size={10} />
-                                <span className="text-[8px] font-bold uppercase">Cooking</span>
+                                <span className="text-[10px] font-medium">Cooking</span>
                               </div>
                             )}
                             {(() => {
@@ -311,7 +311,7 @@ export default function ChefDashboard() {
                               return (
                                 <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${tone}`} title="Time since placed">
                                   <Timer size={10} />
-                                  <span className="text-[8px] font-bold uppercase tracking-normal">{mins}m</span>
+                                  <span className="text-[10px] font-medium">{mins}m</span>
                                 </div>
                               );
                             })()}
@@ -325,10 +325,10 @@ export default function ChefDashboard() {
                             return (
                             <div key={item._id || i} className={`flex justify-between items-center p-2.5 rounded-xl border transition-colors ${isReady ? 'bg-success/10 border-success/20' : 'bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-(--color-border) dark:border-(--color-border)'}`}>
                               <div className="flex items-center gap-3">
-                                <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) flex items-center justify-center text-[10px] font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">
+                                <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) dark:bg-(--color-surface) flex items-center justify-center text-[11px] font-semibold text-(--color-text-secondary) dark:text-(--color-text-muted)">
                                   {item.quantity}
                                 </div>
-                                <span className={`text-[11px] font-bold ${isReady ? 'text-success line-through' : 'text-(--color-text-primary) dark:text-(--color-text-muted)'}`}>{item.menuItem?.name || 'Custom Item'}</span>
+                                <span className={`text-[11px] font-medium ${isReady ? 'text-success line-through' : 'text-(--color-text-primary) dark:text-(--color-text-muted)'}`}>{item.menuItem?.name || 'Custom Item'}</span>
                               </div>
                               {canToggle && item._id && (
                                 <button
@@ -347,7 +347,7 @@ export default function ChefDashboard() {
                         {order.chefNote && (
                           <div className="mt-4 p-3 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 rounded-xl border-l-2 border-primary flex items-start gap-2">
                             <MessageSquare size={12} className="text-primary mt-0.5 flex-shrink-0" />
-                            <p className="text-[9px] font-bold text-(--color-text-muted) leading-relaxed italic">&quot;{order.chefNote}&quot;</p>
+                            <p className="text-[11px] font-medium text-(--color-text-muted) leading-relaxed">&quot;{order.chefNote}&quot;</p>
                           </div>
                         )}
 
@@ -357,9 +357,9 @@ export default function ChefDashboard() {
                 </AnimatePresence>
 
                 {orders.filter(o => lane.statuses.includes(o.status)).length === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
-                    <Coffee size={48} strokeWidth={1} />
-                    <p className="text-[9px] font-bold uppercase tracking-normal mt-4">All done</p>
+                  <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+                    <Coffee size={32} strokeWidth={1} />
+                    <p className="text-[11px] font-medium mt-4">All done</p>
                   </div>
                 )}
               </div>
@@ -376,25 +376,25 @@ export default function ChefDashboard() {
         >
           <div className="space-y-6">
             <div className="p-4 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border border-(--color-border) dark:border-(--color-border)">
-               <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-3 block">Note / Message</label>
+               <label className="text-[11px] font-medium text-(--color-text-muted) mb-3 block">Note / Message</label>
                <textarea
-                 className="w-full bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-30 dark:text-white shadow-inner"
+                 className="w-full bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-30 dark:text-white"
                  placeholder="e.g. 5 min delay due to high volume..."
                  value={chefNote}
                  onChange={(e) => setChefNote(e.target.value)}
                />
             </div>
             <div className="flex gap-3">
-               <Button 
-                 variant="secondary" 
-                 className="flex-1 !rounded-xl text-[10px] font-bold uppercase tracking-normal"
+               <Button
+                 variant="secondary"
+                 className="flex-1 !rounded-xl text-[11px] font-medium"
                  onClick={() => setShowNoteModal(false)}
                >
                  Cancel
                </Button>
-               <Button 
-                 variant="primary" 
-                 className="flex-1 !rounded-xl bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal shadow-lg "
+               <Button
+                 variant="primary"
+                 className="flex-1 !rounded-xl bg-primary hover:bg-primary text-[11px] font-semibold"
                  onClick={handleAddNote}
                >
                  Save Note

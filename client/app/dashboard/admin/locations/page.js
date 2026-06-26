@@ -239,27 +239,27 @@ export default function BranchesPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <SlideIn direction="down">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div>
-                  <h1 className="text-3xl font-bold text-(--color-text-primary) flex items-center tracking-tight leading-none">
-                <MapPin className="mr-4 text-primary" size={36} strokeWidth={2.5} /> Branch <span className="ml-3 text-primary">Management</span>
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) flex items-center tracking-tight leading-tight">
+                <MapPin className="mr-3 text-primary" size={24} strokeWidth={2} /> Branch <span className="ml-2 text-primary">Management</span>
               </h1>
-              <p className="text-(--color-text-secondary) text-sm mt-3 font-medium flex items-center">
+              <p className="text-(--color-text-secondary) text-sm mt-2 font-medium flex items-center">
                 <Target size={14} className="mr-2 text-primary" /> Manage and track all cafe branch locations.
               </p>
             </div>
 
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1 max-w-3xl">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted)">
                   <Globe size={18} />
                 </div>
-                <input 
+                <input
                   type="text"
                   placeholder="Search by city or branch name..."
-                  className="w-full pl-12 pr-6 py-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all text-(--color-text-primary)"
+                  className="w-full pl-12 pr-6 py-2.5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all text-(--color-text-primary)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -274,7 +274,7 @@ export default function BranchesPage() {
                   setFormData({ name: '', city: '', state: '', country: 'India', pincode: '', lat: '', lng: '', status: 'active', dietaryType: 'both', cafe: cafes.length === 1 ? cafes[0]._id : '' });
                   setShowModal(true);
                 }}
-                className="flex items-center justify-center px-8 py-4 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-bold uppercase tracking-normal text-[10px] shadow-sm  hover:opacity-90 transition-all whitespace-nowrap"
+                className="flex items-center justify-center px-5 py-2.5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-semibold text-[11px] shadow-sm  hover:opacity-90 transition-all whitespace-nowrap"
               >
                 <Plus className="mr-2" size={16} /> New Branch
               </motion.button>
@@ -287,12 +287,12 @@ export default function BranchesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Info</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Location</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Type</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Status</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch Info</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Cafe</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Location</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Type</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Status</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -311,34 +311,34 @@ export default function BranchesPage() {
                     onClick={() => handleLocationClick(loc)}
                     className="group border-b border-(--color-border) hover:bg-primary/5 transition-all cursor-pointer"
                   >
-                    <td className="px-8 py-6">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-transform">
                           <MapPin size={20} />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-(--color-text-primary)">{loc.name}</p>
-                          <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {loc._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-medium text-(--color-text-primary)">{loc.name}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {loc._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-5 py-4">
                       {loc.cafe ? (
-                        <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-normal px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        <span className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                           <Store size={12} /> {loc.cafe.name || 'Cafe'}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium text-(--color-text-muted) italic">Unassigned</span>
+                        <span className="text-[11px] font-medium text-(--color-text-muted)">Unassigned</span>
                       )}
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-5 py-4">
                       <div className="flex flex-col">
-                        <p className="text-sm font-bold text-(--color-text-primary)">{loc.city}</p>
-                        <p className="text-[10px] font-medium text-(--color-text-muted)">{loc.state}, {loc.country}</p>
+                        <p className="text-sm font-medium text-(--color-text-primary)">{loc.city}</p>
+                        <p className="text-[11px] font-medium text-(--color-text-muted)">{loc.state}, {loc.country}</p>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <span className={`text-[9px] font-bold uppercase tracking-normal px-3 py-1 rounded-full border shadow-sm ${
+                    <td className="px-5 py-4">
+                      <span className={`text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 rounded-full border ${
                         loc.dietaryType === 'veg' ? 'bg-success/10 text-success border-success/20' :
                         loc.dietaryType === 'non-veg' ? 'bg-danger/10 text-danger border-danger/20' :
                         'bg-primary/10 text-primary border-primary/20'
@@ -346,16 +346,16 @@ export default function BranchesPage() {
                         {loc.dietaryType === 'both' ? 'Mixed' : loc.dietaryType === 'veg' ? 'Veg' : 'Non-Veg'}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-normal border shadow-sm ${loc.status === 'active'
+                    <td className="px-5 py-4">
+                      <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-normal border ${loc.status === 'active'
                         ? 'bg-success/10 text-success border-success/20'
                         : 'bg-danger/10 text-danger border-danger/20'
                         }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${loc.status === 'active' ? 'bg-success animate-pulse' : 'bg-danger'}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full ${loc.status === 'active' ? 'bg-success' : 'bg-danger'}`} />
                         {loc.status}
                       </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-2  transition-opacity">
                         {can(user, 'branches.modify') && (
                         <motion.button
@@ -372,7 +372,7 @@ export default function BranchesPage() {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={(e) => { e.stopPropagation(); handleStatusChange(loc._id, loc.status === 'active' ? 'inactive' : 'active'); }}
-                          className={`p-2.5 rounded-xl transition-all shadow-sm ${loc.status === 'active'
+                          className={`p-2.5 rounded-xl transition-all ${loc.status === 'active'
                             ? 'bg-danger/10 text-danger border border-danger/20'
                             : 'bg-success/10 text-success border border-success/20'
                             }`}
@@ -387,9 +387,9 @@ export default function BranchesPage() {
             </tbody>
           </table>
           {locations.length === 0 && (
-            <div className="p-20 text-center text-(--color-text-muted)">
+            <div className="p-10 text-center text-(--color-text-muted)">
               <Globe size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-bold uppercase tracking-normal">No branches found matching search</p>
+              <p className="text-sm font-medium uppercase tracking-normal">No branches found matching search</p>
             </div>
           )}
         </div>
@@ -408,11 +408,11 @@ export default function BranchesPage() {
                 initial={{ scale: 0.9, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 40 }}
-                className="bg-(--color-surface) rounded-xl p-10 max-w-2xl w-full shadow-sm relative z-10 border border-(--color-border)"
+                className="bg-(--color-surface) rounded-xl p-6 max-w-2xl w-full shadow-sm relative z-10 border border-(--color-border)"
               >
-                <div className="flex justify-between items-start mb-10">
+                <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h2 className="text-3xl font-bold text-(--color-text-primary) tracking-tight leading-none">
+                    <h2 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight leading-tight">
                       {editingId ? 'Edit' : 'Create'} <span className="text-primary">Branch</span>
                     </h2>
                     <p className="text-sm text-(--color-text-muted) mt-2 font-medium">Update branch details below.</p>
@@ -422,7 +422,7 @@ export default function BranchesPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Cafe picker: always on create; on edit only when more than one
                       cafe is available (i.e. a reassignment is actually possible). */}
                   {(!editingId || cafes.length > 1) && (
@@ -434,13 +434,13 @@ export default function BranchesPage() {
                       options={cafes.map((c) => ({ label: c.name, value: c._id }))}
                     />
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Branch Name</label>
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Branch Name</label>
                         <input
                           required
-                          className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold"
+                          className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder="e.g. Bandra Cafe"
@@ -448,19 +448,19 @@ export default function BranchesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">City</label>
+                          <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">City</label>
                           <input
                             required
-                            className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold"
+                            className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                             value={formData.city}
                             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">State</label>
+                          <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">State</label>
                           <input
                             required
-                            className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold"
+                            className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                             value={formData.state}
                             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                           />
@@ -470,12 +470,12 @@ export default function BranchesPage() {
 
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Postal Code</label>
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Postal Code</label>
                         <input
                           required
                           inputMode="numeric"
                           maxLength={6}
-                          className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold"
+                          className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                           value={formData.pincode}
                           onChange={(e) => setFormData({ ...formData, pincode: digitsOnly(e.target.value, 6) })}
                         />
@@ -508,7 +508,7 @@ export default function BranchesPage() {
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all"
+                      className="flex-1 px-6 py-4 rounded-xl text-xs font-medium uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all"
                     >
                       Cancel
                     </motion.button>
@@ -516,7 +516,7 @@ export default function BranchesPage() {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) dark:text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm  transition-all"
+                      className="flex-1 px-6 py-4 rounded-xl text-xs font-semibold uppercase tracking-normal text-(--color-on-primary) dark:text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm  transition-all"
                     >
                       {editingId ? 'Update Branch' : 'Add Branch'}
                     </motion.button>
@@ -547,14 +547,14 @@ export default function BranchesPage() {
                 aria-label={`${selectedLocation.name} branch overview`}
                 className="relative z-10 flex h-dvh w-full max-w-2xl flex-col overflow-hidden border-l border-(--color-border) bg-(--color-surface) shadow-2xl"
               >
-                <div className="flex shrink-0 items-center justify-between gap-4 border-b border-(--color-border) bg-(--color-surface) px-5 py-5 sm:px-8 sm:py-6">
+                <div className="flex shrink-0 items-center justify-between gap-4 border-b border-(--color-border) bg-(--color-surface) px-5 py-4 sm:px-8 sm:py-5">
                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-(--color-on-primary) shadow-lg">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-(--color-on-primary) shadow-sm">
                         <MapPin size={24} />
                       </div>
                       <div className="min-w-0">
-                        <h2 className="truncate text-xl font-bold leading-tight tracking-tight text-(--color-text-primary) sm:text-2xl">{selectedLocation.name}</h2>
-                        <p className="mt-1.5 truncate text-[10px] font-bold uppercase tracking-normal text-primary">
+                        <h2 className="truncate text-xl font-semibold leading-tight tracking-tight text-(--color-text-primary) sm:text-2xl">{selectedLocation.name}</h2>
+                        <p className="mt-1.5 truncate text-[11px] font-medium uppercase tracking-normal text-primary">
                           {selectedLocation.cafe?.name ? `${selectedLocation.cafe.name} · Branch Overview` : 'Branch Overview'}
                         </p>
                       </div>
@@ -568,39 +568,39 @@ export default function BranchesPage() {
                    </button>
                 </div>
 
-                <div className="custom-scrollbar flex-1 space-y-10 overflow-y-auto overscroll-contain p-5 pb-10 sm:p-8 sm:pb-12">
-                   <section className='flex flex-col gap-10'>
+                <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto overscroll-contain p-5 pb-10 sm:p-8 sm:pb-12">
+                   <section className='flex flex-col gap-6'>
                       <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+                        <h3 className="text-xs font-semibold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                           <ShieldAlert size={14} className="text-primary" /> Management
                         </h3>
                       </div>
-                      
+
                       {fetchingStaff ? (
                         <div className="h-24 bg-(--color-surface-soft) rounded-xl animate-pulse" />
                       ) : staff.filter(p => p.role === 'location_admin' || p.role === 'branch_admin').length === 0 ? (
-                        <div className="p-6 rounded-xl border border-dashed border-(--color-border) text-center text-(--color-text-muted) text-xs italic">
+                        <div className="p-6 rounded-xl border border-dashed border-(--color-border) text-center text-(--color-text-muted) text-xs">
                           No manager assigned.
                         </div>
                       ) : (
                         staff.filter(p => p.role === 'location_admin' || p.role === 'branch_admin').map(admin => (
-                          <div key={admin._id} className="p-6 bg-(--color-surface-soft) rounded-xl border border-(--color-border) flex items-center justify-between">
+                          <div key={admin._id} className="p-5 bg-(--color-surface-soft) rounded-xl border border-(--color-border) flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-semibold">
                                 {admin.name.charAt(0)}
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm font-bold text-(--color-text-primary)">{admin.name}</p>
-                                  <span className="text-[8px] font-bold uppercase tracking-normal px-2 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                                  <p className="text-sm font-medium text-(--color-text-primary)">{admin.name}</p>
+                                  <span className="text-[11px] font-medium uppercase tracking-normal px-2 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
                                     Branch Admin
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-(--color-text-muted) font-medium">{admin.email}</p>
+                                <p className="text-[11px] text-(--color-text-muted) font-medium">{admin.email}</p>
                               </div>
                             </div>
                                <div className="flex gap-2">
-                               <motion.button 
+                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 onClick={() => handleUserAction(admin._id, 'demote')}
                                 className="p-2.5 rounded-xl bg-(--color-surface) text-danger shadow-sm border border-(--color-border)" title="Demote"
@@ -616,20 +616,20 @@ export default function BranchesPage() {
                     <section>
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex flex-col">
-                          <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+                          <h3 className="text-xs font-semibold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                             <Users size={14} className={staffTab === 'staff' ? "text-primary-dark" : "text-primary"} /> Staff Members
                           </h3>
                         </div>
                         <div className="flex bg-(--color-surface-soft) p-1 rounded-xl border border-(--color-border)">
-                          <button 
+                          <button
                             onClick={() => setStaffTab('staff')}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${staffTab === 'staff' ? 'bg-(--color-surface) text-primary-dark shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-medium uppercase tracking-normal transition-all ${staffTab === 'staff' ? 'bg-(--color-surface) text-primary-dark shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                           >
                             Staff ({staff.filter(p => p.role === 'staff').length})
                           </button>
-                          <button 
+                          <button
                             onClick={() => setStaffTab('chef')}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${staffTab === 'chef' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-medium uppercase tracking-normal transition-all ${staffTab === 'chef' ? 'bg-(--color-surface) text-primary shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                           >
                             Chefs ({staff.filter(p => p.role === 'chef').length})
                           </button>
@@ -647,11 +647,11 @@ export default function BranchesPage() {
                           staff.filter(p => p.role === staffTab).map(member => (
                             <div key={member._id} className={`p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between group hover:border-primary/30 transition-all`}>
                                <div className="flex items-center gap-4">
-                                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs ${staffTab === 'staff' ? 'bg-primary-dark/10 text-primary-dark' : 'bg-primary/10 text-primary'}`}>
+                                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-semibold text-xs ${staffTab === 'staff' ? 'bg-primary-dark/10 text-primary-dark' : 'bg-primary/10 text-primary'}`}>
                                     {member.name.charAt(0)}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-bold text-(--color-text-primary)">{member.name}</p>
+                                    <p className="text-sm font-medium text-(--color-text-primary)">{member.name}</p>
                                   </div>
                                </div>
                                <div className="flex items-center gap-2 transition-opacity">
@@ -676,35 +676,35 @@ export default function BranchesPage() {
                       </div>
                    </section>
 
-                   <section className="bg-(--color-surface-soft) rounded-xl p-10 border border-(--color-border) relative overflow-hidden group">
-                      <div className="relative z-10 space-y-10">
+                   <section className="bg-(--color-surface-soft) rounded-xl p-6 border border-(--color-border) relative overflow-hidden group">
+                      <div className="relative z-10 space-y-6">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Branch Information</h3>
-                          <div className="h-2 w-2 rounded-full bg-success animate-pulse shadow-lg " />
+                          <h3 className="text-xs font-semibold uppercase tracking-normal text-(--color-text-muted)">Branch Information</h3>
+                          <div className="h-2 w-2 rounded-full bg-success" />
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-y-10 gap-x-8">
+
+                        <div className="grid grid-cols-2 gap-y-6 gap-x-5">
                            <SlideIn delay={0.1}>
-                              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Total Staff</p>
-                              <p className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                              <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Total Staff</p>
+                              <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
                                 {staff.length}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.2}>
-                              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Attendance %</p>
-                              <p className="text-4xl font-bold text-primary tracking-tight">
+                              <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Attendance %</p>
+                              <p className="text-2xl font-semibold text-primary tracking-tight">
                                 {fetchingStats ? '...' : `${branchStats?.attendanceRate?.toFixed(1) || '0.0'}%`}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.3}>
-                              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Revenue (Monthly)</p>
-                              <p className="text-2xl font-bold text-success tracking-tight italic">
+                              <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Revenue (Monthly)</p>
+                              <p className="text-2xl font-semibold text-success tracking-tight">
                                 ₹{fetchingStats ? '...' : (branchStats?.revenue || 0).toLocaleString()}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.4}>
-                              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Net Profit</p>
-                              <p className="text-2xl font-bold text-primary-dark tracking-tight italic">
+                              <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Net Profit</p>
+                              <p className="text-2xl font-semibold text-primary-dark tracking-tight">
                                 ₹{fetchingStats ? '...' : (branchStats?.profit || 0).toLocaleString()}
                               </p>
                            </SlideIn>
@@ -734,21 +734,21 @@ export default function BranchesPage() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="relative z-10 w-full max-w-lg bg-(--color-surface) rounded-xl p-10 border border-(--color-border) shadow-sm"
+                className="relative z-10 w-full max-w-lg bg-(--color-surface) rounded-xl p-6 border border-(--color-border) shadow-sm"
               >
-                <div className="flex items-center gap-4 mb-10">
-                   <div className="h-16 w-16 rounded-xl bg-(--color-surface-soft) flex items-center justify-center text-2xl font-bold text-primary uppercase">
+                <div className="flex items-center gap-4 mb-6">
+                   <div className="h-16 w-16 rounded-xl bg-(--color-surface-soft) flex items-center justify-center text-2xl font-semibold text-primary uppercase">
                      {selectedStaff.name.charAt(0)}
                    </div>
                    <div>
-                     <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight leading-none">{selectedStaff.name}</h2>
-                     <p className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mt-2">Staff Details</p>
+                     <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight leading-tight">{selectedStaff.name}</h2>
+                     <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mt-2">Staff Details</p>
                    </div>
                 </div>
 
                 <form onSubmit={handleStaffUpdate} className="space-y-6">
                    <div className="grid grid-cols-1 gap-6">
-                      <PremiumSelect 
+                      <PremiumSelect
                         label="Assigned Role"
                         value={staffFormData.role}
                         onChange={(val) => setStaffFormData({ ...staffFormData, role: val })}
@@ -758,43 +758,43 @@ export default function BranchesPage() {
                         ]}
                       />
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Monthly Salary</label>
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Monthly Salary</label>
                         <div className="relative">
-                          <input 
+                          <input
                             type="number"
-                            className="w-full pl-10 pr-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
+                            className="w-full pl-10 pr-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                             value={staffFormData.monthlySalary}
                             onChange={(e) => setStaffFormData({...staffFormData, monthlySalary: e.target.value})}
                           />
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-bold">₹</div>
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-medium">₹</div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Phone Number</label>
+                          <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Phone Number</label>
                           <input
                             type="tel"
                             inputMode="numeric"
                             maxLength={10}
-                            className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
+                            className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                             value={staffFormData.phone}
                             onChange={(e) => setStaffFormData({...staffFormData, phone: digitsOnly(e.target.value, 10)})}
                             placeholder="Phone Number"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Email Address</label>
-                          <input 
+                          <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Email Address</label>
+                          <input
                             disabled
-                            className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold outline-none opacity-50 cursor-not-allowed text-(--color-text-muted)"
+                            className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium outline-none opacity-50 cursor-not-allowed text-(--color-text-muted)"
                             value={staffFormData.email}
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Full Address</label>
-                        <input 
-                          className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Full Address</label>
+                        <input
+                          className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 text-(--color-text-primary)"
                           value={staffFormData.address1}
                           onChange={(e) => setStaffFormData({...staffFormData, address1: e.target.value})}
                           placeholder="Primary Address"
@@ -803,16 +803,16 @@ export default function BranchesPage() {
                    </div>
 
                    <div className="flex gap-4 pt-6">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setSelectedStaff(null)}
-                        className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:bg-(--color-bg-soft) transition-all border border-(--color-border)"
+                        className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:bg-(--color-bg-soft) transition-all border border-(--color-border)"
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         type="submit"
-                        className="flex-1 py-4 rounded-xl bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) text-xs font-bold uppercase tracking-normal shadow-lg  hover:opacity-90 transition-all"
+                        className="flex-1 py-4 rounded-xl bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) text-xs font-semibold uppercase tracking-normal shadow-sm  hover:opacity-90 transition-all"
                       >
                         Save Changes
                       </button>

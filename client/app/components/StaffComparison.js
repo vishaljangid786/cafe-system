@@ -67,7 +67,7 @@ function StaffPickCard({ side, report, placeholder }) {
   if (!staff) {
     return (
       <div className="rounded-xl border border-dashed border-(--color-border) bg-(--color-surface-soft)/40 p-5 text-center">
-        <p className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">{placeholder}</p>
+        <p className="text-[11px] font-medium text-(--color-text-muted)">{placeholder}</p>
       </div>
     );
   }
@@ -81,11 +81,11 @@ function StaffPickCard({ side, report, placeholder }) {
   return (
     <div className={`rounded-xl border ${wrapCls} p-5`}>
       <div className="flex items-center gap-3">
-        <div className={`h-12 w-12 rounded-xl border ${avatarCls} flex items-center justify-center font-bold text-lg overflow-hidden shrink-0`}>
+        <div className={`h-12 w-12 rounded-xl border ${avatarCls} flex items-center justify-center font-semibold text-lg overflow-hidden shrink-0`}>
           {staff.profileImageUrl ? <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" /> : (staff.name?.charAt(0) || '?')}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-(--color-text-primary) truncate">{staff.name}</p>
+          <p className="text-sm font-medium text-(--color-text-primary) truncate">{staff.name}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[10px] font-medium text-(--color-text-muted)">
             <span className="inline-flex items-center gap-1 uppercase tracking-wide"><ShieldCheck size={11} /> {String(staff.role || '').replace('_', ' ')}</span>
             <span className="inline-flex items-center gap-1"><MapPin size={11} /> {branch}</span>
@@ -105,7 +105,7 @@ function CompareRow({ label, aVal, bVal, fmt, better }) {
   const total = Math.abs(a) + Math.abs(b);
   const aPct = total > 0 ? (Math.abs(a) / total) * 100 : 50;
   const bPct = 100 - aPct;
-  const valCls = (win, isWinnable) => `text-sm font-bold ${win ? 'text-success' : isWinnable ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`;
+  const valCls = (win, isWinnable) => `text-sm font-semibold ${win ? 'text-success' : isWinnable ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`;
   const winnable = better === 'high' || better === 'low';
   return (
     <div className="py-3 border-b border-(--color-border)/60 last:border-0">
@@ -114,7 +114,7 @@ function CompareRow({ label, aVal, bVal, fmt, better }) {
           {aWin && <Trophy size={12} className="text-success shrink-0" />}
           <span className={valCls(aWin, winnable)}>{fmt(a)}</span>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-center px-2">{label}</span>
+        <span className="text-[11px] font-medium text-(--color-text-muted) text-center px-2">{label}</span>
         <div className="flex items-center justify-end gap-2">
           <span className={valCls(bWin, winnable)}>{fmt(b)}</span>
           {bWin && <Trophy size={12} className="text-success shrink-0" />}
@@ -229,7 +229,7 @@ export default function StaffComparison({ user }) {
   const bothSelected = leftId && rightId && leftReport && rightReport;
 
   return (
-    <div className="max-w-360 mx-auto pb-20 space-y-8">
+    <div className="max-w-360 mx-auto pb-10 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -241,13 +241,13 @@ export default function StaffComparison({ user }) {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-                <Users size={22} className="text-(--color-on-primary)" />
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-2.5">
+              <div className="h-6 w-6 rounded-lg bg-primary flex items-center justify-center">
+                <Users size={16} className="text-(--color-on-primary)" />
               </div>
               Staff Comparison
             </h1>
-            <p className="text-xs text-(--color-text-secondary) mt-1 font-medium ml-13">Compare two team members side-by-side on sales, profit, attendance and more.</p>
+            <p className="text-xs text-(--color-text-secondary) mt-1 font-medium ml-8.5">Compare two team members side-by-side on sales, profit, attendance and more.</p>
           </div>
         </div>
       </div>
@@ -268,12 +268,12 @@ export default function StaffComparison({ user }) {
           </div>
           <PremiumSelect label="Staff B" value={rightId} onChange={setRightId} options={rightOptions} />
           <div>
-            <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">From</label>
+            <label className="text-[11px] font-medium text-(--color-text-muted) ml-1">From</label>
             <input type="date" value={range.startDate} onChange={(e) => setRange((r) => ({ ...r, startDate: e.target.value }))}
               className="w-full px-4 py-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium text-(--color-text-primary) outline-none focus:border-primary" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">To</label>
+            <label className="text-[11px] font-medium text-(--color-text-muted) ml-1">To</label>
             <input type="date" value={range.endDate} onChange={(e) => setRange((r) => ({ ...r, endDate: e.target.value }))}
               className="w-full px-4 py-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium text-(--color-text-primary) outline-none focus:border-primary" />
           </div>
@@ -281,9 +281,9 @@ export default function StaffComparison({ user }) {
       </div>
 
       {!leftId || !rightId ? (
-        <div className="rounded-xl border border-dashed border-(--color-border) bg-(--color-surface-soft)/40 py-20 text-center">
+        <div className="rounded-xl border border-dashed border-(--color-border) bg-(--color-surface-soft)/40 py-12 text-center">
           <Users size={40} className="mx-auto text-(--color-text-muted) mb-4" />
-          <p className="text-sm font-bold text-(--color-text-muted)">Select two staff members to compare.</p>
+          <p className="text-sm font-medium text-(--color-text-muted)">Select two staff members to compare.</p>
         </div>
       ) : reportLoading && !bothSelected ? (
         <LoadingScreen fullScreen={false} />
@@ -293,8 +293,8 @@ export default function StaffComparison({ user }) {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 items-center">
             <StaffPickCard side="a" report={leftReport} placeholder="Staff A" />
             <div className="flex flex-col items-center justify-center px-2">
-              <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Wins</span>
-              <div className="flex items-center gap-2 text-lg font-bold">
+              <span className="text-[11px] font-medium text-(--color-text-muted)">Wins</span>
+              <div className="flex items-center gap-2 text-lg font-semibold">
                 <span className={tally.a > tally.b ? 'text-success' : 'text-(--color-text-muted)'}>{tally.a}</span>
                 <Minus size={14} className="text-(--color-text-muted) rotate-90" />
                 <span className={tally.b > tally.a ? 'text-success' : 'text-(--color-text-muted)'}>{tally.b}</span>
@@ -308,7 +308,7 @@ export default function StaffComparison({ user }) {
             {GROUPS.map((g) => (
               <div key={g.title} className="rounded-xl border border-(--color-border) bg-(--color-surface) overflow-hidden">
                 <div className="px-5 py-3 border-b border-(--color-border) bg-(--color-surface-soft)/40">
-                  <h3 className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-primary)">{g.title}</h3>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-(--color-text-primary)">{g.title}</h3>
                 </div>
                 <div className="px-5 py-1">
                   {g.rows.map((row) => (
@@ -331,8 +331,8 @@ export default function StaffComparison({ user }) {
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-(--color-border) py-20 text-center">
-          <p className="text-sm font-bold text-(--color-text-muted)">No data for this comparison.</p>
+        <div className="rounded-xl border border-dashed border-(--color-border) py-12 text-center">
+          <p className="text-sm font-medium text-(--color-text-muted)">No data for this comparison.</p>
         </div>
       )}
     </div>

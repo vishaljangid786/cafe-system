@@ -151,8 +151,8 @@ export default function RevenuePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <TrendingUp size={60} className="text-danger opacity-20" />
-        <h2 className="text-2xl font-bold text-(--color-text-primary) italic uppercase">Access Restricted</h2>
-        <p className="text-(--color-text-muted) font-bold text-sm tracking-normal uppercase">You do not have permission to view revenue.</p>
+        <h2 className="text-2xl font-semibold text-(--color-text-primary)">Access Restricted</h2>
+        <p className="text-(--color-text-muted) font-medium text-sm">You do not have permission to view revenue.</p>
       </div>
     );
   }
@@ -172,12 +172,12 @@ export default function RevenuePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight flex items-center gap-4 text-(--color-text-primary)">
-              <TrendingUp className="text-success" size={36} strokeWidth={2.5} />
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight flex items-center gap-3 text-(--color-text-primary)">
+              <TrendingUp className="text-success" size={24} strokeWidth={2.5} />
               Revenue <span className="text-success">Dashboard</span>
             </h1>
             <p className="text-(--color-text-muted) font-medium mt-1">Track your earnings and sales data.</p>
@@ -195,25 +195,25 @@ export default function RevenuePage() {
 
         {/* Graph Section */}
         <SlideIn delay={0.1}>
-          <div className="glass-card p-8 rounded-xl premium-shadow relative overflow-hidden">
+          <div className="glass-card p-6 rounded-xl premium-shadow relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Activity size={120} className="text-success" />
             </div>
-            <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight">Revenue Trends</h2>
-              <div className="flex gap-10">
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight">Revenue Trends</h2>
+              <div className="flex gap-5">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Revenue</p>
-                  <p className="text-2xl font-bold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted)">Total Revenue</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Average Order</p>
-                  <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight">₹{avgOrder.toFixed(0)}</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted)">Average Order</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">₹{avgOrder.toFixed(0)}</p>
                 </div>
                 {gst && (
                   <div title={`5% GST on ${gst.orders} completed orders (taxable ₹${Number(gst.taxableRevenue || 0).toLocaleString()})`}>
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">GST Collected</p>
-                    <p className="text-2xl font-bold text-primary tracking-tight">₹{Number(gst.gstCollected || 0).toLocaleString()}</p>
+                    <p className="text-[11px] font-medium text-(--color-text-muted)">GST Collected</p>
+                    <p className="text-2xl font-semibold text-primary tracking-tight">₹{Number(gst.gstCollected || 0).toLocaleString()}</p>
                   </div>
                 )}
               </div>
@@ -250,12 +250,12 @@ export default function RevenuePage() {
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
+          <div className="relative flex-1 min-w-0 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={20} />
             <input
               type="text"
               placeholder="Search by invoice or customer..."
-              className="w-full pl-12 pr-4 py-4 bg-(--color-bg-soft) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-success/20 outline-none transition-all font-bold text-sm text-(--color-text-primary) shadow-sm"
+              className="w-full pl-12 pr-4 py-2.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-success/20 outline-none transition-all font-medium text-sm text-(--color-text-primary) shadow-sm"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -263,11 +263,11 @@ export default function RevenuePage() {
               }}
             />
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto sm:shrink-0">
             <Button
               variant="secondary"
               onClick={() => setShowFilters(!showFilters)}
-              className={`!py-4 px-6 rounded-xl border-none transition-all shadow-sm ${showFilters ? 'bg-success text-(--color-bg-base)' : 'bg-success/10 text-success hover:bg-success hover:text-(--color-bg-base)'}`}
+              className={`!py-2.5 px-6 rounded-xl border-none transition-all shadow-sm ${showFilters ? 'bg-success text-(--color-bg-base)' : 'bg-success/10 text-success hover:bg-success hover:text-(--color-bg-base)'}`}
             >
               <Filter size={18} className="mr-2" /> Filters
             </Button>
@@ -287,24 +287,24 @@ export default function RevenuePage() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="glass-card p-6 rounded-xl border border-(--color-border) flex flex-wrap gap-6 items-end"
+            className="glass-card p-5 rounded-xl border border-(--color-border) flex flex-wrap gap-5 items-end"
           >
             <div>
-              <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Min Amount (₹)</label>
+              <label className="block text-[11px] font-medium text-(--color-text-muted) mb-2 ml-1">Min Amount (₹)</label>
               <input
                 type="number"
                 placeholder="0"
-                className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-success"
+                className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-success"
                 value={amountRange.min}
                 onChange={e => { setAmountRange(prev => ({ ...prev, min: e.target.value })); setCurrentPage(1); }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Max Amount (₹)</label>
+              <label className="block text-[11px] font-medium text-(--color-text-muted) mb-2 ml-1">Max Amount (₹)</label>
               <input
                 type="number"
                 placeholder="50000"
-                className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-success"
+                className="w-32 bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-success"
                 value={amountRange.max}
                 onChange={e => { setAmountRange(prev => ({ ...prev, max: e.target.value })); setCurrentPage(1); }}
               />
@@ -321,12 +321,12 @@ export default function RevenuePage() {
 
         {/* Data List */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Recent Transactions</h3>
+          <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Recent Transactions</h3>
           {refetching ? (
             <ListSkeleton rows={5} />
           ) : paginatedData.length === 0 ? (
             <div className="py-20 text-center bg-(--color-bg-soft)/40 rounded-xl border border-dashed border-(--color-border)">
-              <p className="text-(--color-text-muted) font-bold">No transactions found.</p>
+              <p className="text-(--color-text-muted) font-medium">No transactions found.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
@@ -337,33 +337,33 @@ export default function RevenuePage() {
                       onClick={() => setSelectedTransaction(t)}
                       className="glass-card p-5 rounded-xl premium-shadow flex items-center justify-between group hover:border-success/30 transition-all cursor-pointer"
                     >
-                      <div className="flex items-center gap-5">
-                        <div className="h-12 w-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success">
                           <ArrowUpRight size={20} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-(--color-text-primary) tracking-tight leading-none text-base">
+                            <h4 className="font-semibold text-(--color-text-primary) tracking-tight leading-none text-base">
                               {t.title || `Order #${t._id.substring(t._id.length - 6).toUpperCase()}`}
                             </h4>
-                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-(--color-bg-soft) text-(--color-text-muted)">
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-(--color-bg-soft) text-(--color-text-muted)">
                               {new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                             </span>
                           </div>
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="text-[8px] font-bold uppercase tracking-normal text-success bg-success/5 px-2 py-0.5 rounded-md">
+                            <span className="text-[11px] font-medium text-success bg-success/5 px-2 py-0.5 rounded-md">
                               {t.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                             </span>
-                            <span className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-1">
+                            <span className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1">
                               <MapPin size={8} /> {t.locationId?.name || 'Main Branch'}
                             </span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-5">
                         <div className="text-right">
-                          <p className="text-xl font-bold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">Confirmed</p>
+                          <p className="text-xl font-semibold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-(--color-text-muted) group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -386,8 +386,8 @@ export default function RevenuePage() {
               <ChevronRight size={18} className="rotate-180" />
             </button>
             <div className="flex items-center gap-1 bg-(--color-surface) px-3 py-1.5 rounded-xl border border-(--color-border)">
-              <span className="text-xs font-bold text-(--color-text-primary)">{currentPage}</span>
-              <span className="text-[10px] font-bold text-(--color-text-muted)">/ {totalPages}</span>
+              <span className="text-xs font-semibold text-(--color-text-primary)">{currentPage}</span>
+              <span className="text-[11px] font-medium text-(--color-text-muted)">/ {totalPages}</span>
             </div>
             <button
               disabled={currentPage === totalPages}
@@ -410,26 +410,26 @@ export default function RevenuePage() {
               {/* Header Info */}
               <div className="flex justify-between items-start">
                 <div className="flex gap-4">
-                  <div className="h-14 w-14 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success shadow-sm">
-                    <Receipt size={28} />
+                  <div className="h-12 w-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success">
+                    <Receipt size={24} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">
+                    <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
                       {selectedTransaction.title || `Order #${selectedTransaction._id.substring(selectedTransaction._id.length - 6).toUpperCase()}`}
                     </h3>
-                    <p className="text-(--color-text-muted) font-bold text-xs flex items-center gap-2 mt-1">
+                    <p className="text-(--color-text-muted) font-medium text-xs flex items-center gap-2 mt-1">
                       <Hash size={12} /> ID: {selectedTransaction._id}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Date & Time</div>
+                  <div className="text-[11px] font-medium text-(--color-text-muted) mb-1">Date & Time</div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-bold text-(--color-text-primary) flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-(--color-text-primary) flex items-center gap-1.5">
                       <Calendar size={14} className="text-success" />
                       {new Date(selectedTransaction.date).toLocaleDateString()}
                     </span>
-                    <span className="text-xs font-bold text-(--color-text-muted) flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-(--color-text-muted) flex items-center gap-1.5">
                       <Clock size={14} />
                       {new Date(selectedTransaction.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -440,28 +440,28 @@ export default function RevenuePage() {
               {/* Status & Location Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                  <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Payment Source</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Payment Source</p>
                   <div className="flex items-center gap-2">
                     <CreditCard size={16} className="text-success" />
-                    <span className="font-bold text-(--color-text-primary) text-xs">
+                    <span className="font-medium text-(--color-text-primary) text-xs">
                       {selectedTransaction.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                     </span>
                   </div>
                 </div>
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                  <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Branch</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Branch</p>
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-success" />
-                    <span className="font-bold text-(--color-text-primary) text-xs">
+                    <span className="font-medium text-(--color-text-primary) text-xs">
                       {selectedTransaction.locationId?.name || 'Main Branch'}
                     </span>
                   </div>
                 </div>
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) col-span-2 md:col-span-1">
-                  <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Status</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Status</p>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-success" />
-                    <span className="font-bold text-(--color-text-primary) text-xs uppercase tracking-wider">Payment Received</span>
+                    <span className="font-medium text-(--color-text-primary) text-xs">Payment Received</span>
                   </div>
                 </div>
               </div>
@@ -471,22 +471,22 @@ export default function RevenuePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedTransaction.customerName && (
                     <div className="p-4 rounded-xl bg-(--color-surface) border border-(--color-border)">
-                      <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-3 flex items-center gap-2">
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mb-3 flex items-center gap-2">
                         <User size={10} /> Customer Name
                       </p>
-                      <p className="text-sm font-bold text-(--color-text-primary)">{selectedTransaction.customerName}</p>
+                      <p className="text-sm font-medium text-(--color-text-primary)">{selectedTransaction.customerName}</p>
                       {selectedTransaction.tableNumber && (
-                        <p className="text-xs font-bold text-(--color-text-muted) mt-1">Table: {selectedTransaction.tableNumber}</p>
+                        <p className="text-xs font-medium text-(--color-text-muted) mt-1">Table: {selectedTransaction.tableNumber}</p>
                       )}
                     </div>
                   )}
                   {selectedTransaction.staffId && (
                     <div className="p-4 rounded-xl bg-(--color-surface) border border-(--color-border)">
-                      <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-3 flex items-center gap-2">
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mb-3 flex items-center gap-2">
                         <User size={10} /> Staff Member
                       </p>
-                      <p className="text-sm font-bold text-(--color-text-primary)">{selectedTransaction.staffId.name || 'Staff'}</p>
-                      <p className="text-xs font-bold text-(--color-text-muted) mt-1">Served the order</p>
+                      <p className="text-sm font-medium text-(--color-text-primary)">{selectedTransaction.staffId.name || 'Staff'}</p>
+                      <p className="text-xs font-medium text-(--color-text-muted) mt-1">Served the order</p>
                     </div>
                   )}
                 </div>
@@ -495,24 +495,24 @@ export default function RevenuePage() {
               {/* Order Details */}
               {selectedTransaction.orders && selectedTransaction.orders.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Order Details</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Order Details</p>
                   <div className="rounded-xl border border-(--color-border) overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-(--color-surface-soft)/50">
-                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Item</th>
-                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) text-center">Qty</th>
-                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Price</th>
-                          <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Total</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Item</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-center">Qty</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Price</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Total</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-(--color-border)">
                         {selectedTransaction.orders.map((item, i) => (
                           <tr key={i} className="hover:bg-(--color-surface-soft) transition-colors">
-                            <td className="px-4 py-3 text-xs font-bold text-(--color-text-primary)">{item.itemName}</td>
-                            <td className="px-4 py-3 text-xs font-bold text-(--color-text-muted) text-center">{item.quantity}</td>
-                            <td className="px-4 py-3 text-xs font-bold text-(--color-text-muted) text-right">₹{item.price}</td>
-                            <td className="px-4 py-3 text-xs font-bold text-(--color-text-primary) text-right">₹{item.price * item.quantity}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-primary)">{item.itemName}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-muted) text-center">{item.quantity}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-muted) text-right">₹{item.price}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-primary) text-right">₹{item.price * item.quantity}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -524,7 +524,7 @@ export default function RevenuePage() {
               {/* Description */}
               {selectedTransaction.description && (
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                  <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 flex items-center gap-2">
+                  <p className="text-[11px] font-medium text-(--color-text-muted) mb-2 flex items-center gap-2">
                     <Info size={10} /> Notes
                   </p>
                   <p className="text-sm font-medium text-(--color-text-secondary) italic">
@@ -542,13 +542,13 @@ export default function RevenuePage() {
                         <TrendingUp size={20} />
                       </div>
                       <div>
-                        <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted)">Profit</p>
-                        <p className="text-lg font-bold text-(--color-text-primary) tracking-tight">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
+                        <p className="text-[11px] font-medium text-(--color-text-muted)">Profit</p>
+                        <p className="text-lg font-semibold text-(--color-text-primary) tracking-tight">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Total Amount</p>
-                      <p className="text-3xl font-bold text-success tracking-tight">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Total Amount</p>
+                      <p className="text-3xl font-semibold text-success tracking-tight">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -558,7 +558,7 @@ export default function RevenuePage() {
               <div className="pt-4">
                 <Button
                   onClick={() => setSelectedTransaction(null)}
-                  className="w-full !py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) font-bold uppercase tracking-normal text-[10px]"
+                  className="w-full !py-3 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) font-semibold text-sm"
                 >
                   Close
                 </Button>

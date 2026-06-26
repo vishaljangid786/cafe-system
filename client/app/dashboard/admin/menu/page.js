@@ -480,12 +480,12 @@ export default function MenuManagementPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
           <div>
-            <h1 className="text-3xl font-bold text-(--color-text-primary) flex items-center tracking-tight leading-none">
-              <Utensils className="mr-4 text-primary" size={36} strokeWidth={2.5} /> Menu <span className="text-primary ml-3">Management</span>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) flex items-center tracking-tight leading-none">
+              <Utensils className="mr-3 text-primary" size={24} strokeWidth={2.5} /> Menu <span className="text-primary ml-2">Management</span>
             </h1>
             <p className="text-(--color-text-muted) text-sm mt-3 font-medium flex items-center">
               <Target size={14} className="mr-2 text-primary" /> Manage food items and categories for your branches.
@@ -494,13 +494,13 @@ export default function MenuManagementPage() {
           <div className="flex flex-wrap gap-2 sm:gap-3 bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border)">
             <button
               onClick={() => setActiveTab('items')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 ${activeTab === 'items' ? 'bg-primary text-(--color-bg-base) shadow-lg ' : 'text-(--color-text-muted) hover:bg-(--color-bg-soft)'}`}
+              className={`px-6 py-2.5 rounded-xl text-xs font-medium uppercase tracking-normal transition-all flex items-center gap-2 ${activeTab === 'items' ? 'bg-primary text-(--color-bg-base) shadow-sm ' : 'text-(--color-text-muted) hover:bg-(--color-bg-soft)'}`}
             >
               <Package size={16} /> Items
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-normal transition-all flex items-center gap-2 ${activeTab === 'categories' ? 'bg-primary text-(--color-bg-base) shadow-lg ' : 'text-(--color-text-muted) hover:bg-(--color-bg-soft)'}`}
+              className={`px-6 py-2.5 rounded-xl text-xs font-medium uppercase tracking-normal transition-all flex items-center gap-2 ${activeTab === 'categories' ? 'bg-primary text-(--color-bg-base) shadow-sm ' : 'text-(--color-text-muted) hover:bg-(--color-bg-soft)'}`}
             >
               <Layers size={16} /> Categories
             </button>
@@ -508,7 +508,7 @@ export default function MenuManagementPage() {
         </div>
 
         {/* Analytics Filters */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex flex-wrap items-center gap-4">
             {/* Time Filter */}
             <div className="flex items-center gap-3 bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar max-w-full">
@@ -516,7 +516,7 @@ export default function MenuManagementPage() {
                 <button
                   key={t}
                   onClick={() => setTimeFilter(t)}
-                  className={`px-4 py-2 text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-bg-soft)'}`}
+                  className={`px-4 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-sm ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-bg-soft)'}`}
                 >
                   {t}
                 </button>
@@ -529,34 +529,34 @@ export default function MenuManagementPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-4 p-6 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm"
+            className="flex gap-4 p-5 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm"
           >
             <div className="flex-1">
-              <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
-              <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+              <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
+              <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
-              <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+              <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
+              <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
             </div>
           </motion.div>
         )}
 
         {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="!p-8 bg-(--color-surface) border-(--color-border) shadow-sm" hover={false}>
-            <div className="flex items-center justify-between mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <Card className="!p-5 bg-(--color-surface) border-(--color-border) shadow-sm" hover={false}>
+            <div className="flex items-center justify-between mb-6">
               <CardTitle className="text-lg">Popular Categories</CardTitle>
               <div className="flex bg-(--color-bg-soft) p-1 rounded-lg border border-(--color-border) shadow-inner">
                 <button
                   onClick={() => setGraphMetric('value')}
-                  className={`px-3 py-1 text-[8px] font-bold uppercase tracking-normal rounded-md transition-all ${graphMetric === 'value' ? 'bg-primary text-(--color-bg-base) shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                  className={`px-3 py-1 text-[11px] font-medium uppercase tracking-normal rounded-md transition-all ${graphMetric === 'value' ? 'bg-primary text-(--color-bg-base) shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                 >
                   Revenue
                 </button>
                 <button
                   onClick={() => setGraphMetric('count')}
-                  className={`px-3 py-1 text-[8px] font-bold uppercase tracking-normal rounded-md transition-all ${graphMetric === 'count' ? 'bg-primary text-(--color-bg-base) shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                  className={`px-3 py-1 text-[11px] font-medium uppercase tracking-normal rounded-md transition-all ${graphMetric === 'count' ? 'bg-primary text-(--color-bg-base) shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
                 >
                   Volume
                 </button>
@@ -585,10 +585,10 @@ export default function MenuManagementPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-bold text-(--color-text-primary)">
+                <span className="text-xl font-semibold text-(--color-text-primary)">
                   {graphMetric === 'value' ? `₹${analytics?.summary?.totalRevenue?.toLocaleString()}` : analytics?.summary?.totalOrders}
                 </span>
-                <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal">
+                <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">
                   {graphMetric === 'value' ? 'Total Revenue' : 'Total Orders'}
                 </span>
               </div>
@@ -598,9 +598,9 @@ export default function MenuManagementPage() {
                 <div key={idx} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                    <span className="text-xs font-bold text-(--color-text-muted)">{cat.name}</span>
+                    <span className="text-xs font-medium text-(--color-text-muted)">{cat.name}</span>
                   </div>
-                  <span className="text-xs font-bold text-(--color-text-primary)">
+                  <span className="text-xs font-medium text-(--color-text-primary)">
                     {graphMetric === 'value' ? `₹${cat.value.toLocaleString()}` : `${cat.count} Units`}
                   </span>
                 </div>
@@ -609,13 +609,13 @@ export default function MenuManagementPage() {
           </Card>
 
           {/* Crew Spotlight */}
-          <Card className="lg:col-span-2 !p-8 bg-(--color-surface) border-(--color-border) shadow-sm overflow-hidden relative" hover={false}>
+          <Card className="lg:col-span-2 !p-5 bg-(--color-surface) border-(--color-border) shadow-sm overflow-hidden relative" hover={false}>
             <div className="absolute -right-20 -top-20 h-64 w-64 bg-primary/5 rounded-full hidden" />
 
-            <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <div>
                 <CardTitle className="text-lg">Top Staff</CardTitle>
-                <CardDescription className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Staff performance</CardDescription>
+                <CardDescription className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Staff performance</CardDescription>
               </div>
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Users size={18} />
@@ -627,22 +627,22 @@ export default function MenuManagementPage() {
                 /* Solo Hero View */
                 <div className="flex flex-col items-center justify-center py-10 text-center bg-primary/[0.02] rounded-xl border border-dashed border-primary/20">
                   <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 shadow-sm ">
-                    <Zap size={40} className="text-primary animate-pulse" />
+                    <Zap size={40} className="text-primary" />
                   </div>
-                  <h4 className="text-2xl font-bold text-(--color-text-primary) uppercase tracking-tight max-w-md">
+                  <h4 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight max-w-md">
                     <span className="text-primary">{analytics.staffPerformance[0].name}</span> is handling everything alone
                   </h4>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-2">Top Performer</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-2">Top Performer</p>
 
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-(--color-text-primary) tracking-tight">{analytics.staffPerformance[0].totalOrders}</p>
-                      <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">Orders</p>
+                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight">{analytics.staffPerformance[0].totalOrders}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Orders</p>
                     </div>
                     <div className="h-12 w-px bg-(--color-border)" />
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-(--color-text-primary) tracking-tight">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
-                      <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">Total Earnings</p>
+                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Total Earnings</p>
                     </div>
                   </div>
                 </div>
@@ -652,22 +652,22 @@ export default function MenuManagementPage() {
                   {analytics?.staffPerformance?.slice(0, 4).map((staff, idx) => (
                     <div key={idx} className="group p-5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) hover:border-primary/30 transition-all duration-500">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="h-10 w-10 rounded-xl bg-(--color-surface) border border-(--color-border) flex items-center justify-center font-bold text-primary text-xs shadow-sm">
+                        <div className="h-10 w-10 rounded-xl bg-(--color-surface) border border-(--color-border) flex items-center justify-center font-semibold text-primary text-xs shadow-sm">
                           {staff.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-(--color-text-primary) truncate">{staff.name}</span>
-                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase">Rank #{idx + 1}</span>
+                            <span className="text-sm font-medium text-(--color-text-primary) truncate">{staff.name}</span>
+                            <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase">Rank #{idx + 1}</span>
                           </div>
-                          <p className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">{staff.totalOrders} Orders</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-0.5">{staff.totalOrders} Orders</p>
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-end mb-1">
-                          <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal">Performance</span>
-                          <span className="text-xs font-bold text-(--color-text-primary)">₹{staff.revenue.toLocaleString()}</span>
+                          <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Performance</span>
+                          <span className="text-xs font-medium text-(--color-text-primary)">₹{staff.revenue.toLocaleString()}</span>
                         </div>
                         <div className="h-1.5 w-full bg-(--color-bg-soft) rounded-full overflow-hidden">
                           <motion.div
@@ -685,7 +685,7 @@ export default function MenuManagementPage() {
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
                   <Users size={32} className="mb-4" />
-                  <p className="text-[10px] font-bold uppercase tracking-normal">No Staff Data Yet</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal">No Staff Data Yet</p>
                 </div>
               )}
             </div>
@@ -694,23 +694,23 @@ export default function MenuManagementPage() {
 
         {/* Control Center */}
         <SlideIn direction="down">
-          <div className="bg-(--color-surface) p-6 md:p-10 rounded-xl border border-(--color-border) shadow-sm space-y-8">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="relative flex-1">
+          <div className="bg-(--color-surface) p-5 md:p-6 rounded-xl border border-(--color-border) shadow-sm space-y-6">
+            <div className="flex flex-col lg:flex-row gap-5">
+              <div className="relative flex-1 min-w-0">
                 <input
                   type="text"
                   placeholder={activeTab === 'items' ? "Search food items..." : "Search food categories..."}
-                  className="w-full pl-14 pr-6 py-4 bg-(--color-surface-soft) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm shadow-inner transition-all text-(--color-text-primary)"
+                  className="w-full pl-14 pr-6 py-2.5 bg-(--color-surface-soft) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm shadow-inner transition-all text-(--color-text-primary)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
 
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-3 h-14 px-6 rounded-xl border transition-all font-bold text-xs uppercase tracking-normal ${showFilters ? 'bg-primary border-primary-dark text-(--color-bg-base) shadow-lg ' : 'bg-(--color-surface) border-(--color-border) text-(--color-text-muted) hover:border-primary/30'}`}
+                  className={`flex items-center gap-3 h-14 px-6 rounded-xl border transition-all font-medium text-xs uppercase tracking-normal ${showFilters ? 'bg-primary border-primary-dark text-(--color-bg-base) shadow-sm ' : 'bg-(--color-surface) border-(--color-border) text-(--color-text-muted) hover:border-primary/30'}`}
                 >
                   <Filter size={18} />
                   Filters
@@ -734,7 +734,7 @@ export default function MenuManagementPage() {
                       className="flex-1 sm:flex-none h-14 px-8 rounded-xl bg-primary text-(--color-bg-base) border-none hover:bg-primary/90 transition-all gap-3"
                     >
                       <Plus size={20} strokeWidth={3} />
-                      <span className="font-bold text-xs uppercase tracking-normal">Add New</span>
+                      <span className="font-medium text-xs uppercase tracking-normal">Add New</span>
                     </Button>
                   )}
 
@@ -766,8 +766,8 @@ export default function MenuManagementPage() {
                   <button
                     key={f.id}
                     onClick={() => setDietaryFilter(f.id)}
-                    className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${dietaryFilter === f.id
-                      ? 'bg-primary text-(--color-bg-base) shadow-sm'
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium uppercase tracking-normal transition-all ${dietaryFilter === f.id
+                      ? 'bg-primary text-(--color-bg-base)'
                       : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
                       } ${f.color || ''}`}
                   >
@@ -780,13 +780,13 @@ export default function MenuManagementPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => router.push('/dashboard/admin/expenses')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-normal hover:bg-danger hover:text-(--color-bg-base) transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-danger/10 text-danger text-[11px] font-medium uppercase tracking-normal hover:bg-danger hover:text-(--color-bg-base) transition-all"
               >
                 <TrendingDown size={14} /> Expenses
               </button>
               <button
                 onClick={() => router.push('/dashboard/admin/revenue')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal hover:bg-success hover:text-(--color-bg-base) transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-success/10 text-success text-[11px] font-medium uppercase tracking-normal hover:bg-success hover:text-(--color-bg-base) transition-all"
               >
                 <TrendingUp size={14} /> Income
               </button>
@@ -800,8 +800,8 @@ export default function MenuManagementPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-8 mt-6 bg-(--color-surface-soft) rounded-xl border border-(--color-border) shadow-inner">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                  <div className="p-5 mt-6 bg-(--color-surface-soft) rounded-xl border border-(--color-border) shadow-inner">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
                       <PremiumSelect
                         label="Category"
                         value={selectedCategory}
@@ -826,7 +826,7 @@ export default function MenuManagementPage() {
                           />
 
                           <div className="space-y-2.5">
-                            <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Min Price</label>
+                            <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Min Price</label>
                             <div className="relative">
                               <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={14} />
                               <input
@@ -834,7 +834,7 @@ export default function MenuManagementPage() {
                                 min="0"
                                 onKeyDown={blockNegative}
                                 placeholder="Min"
-                                className="w-full pl-10 pr-4 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm shadow-sm transition-all text-(--color-text-primary)"
+                                className="w-full pl-10 pr-4 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm shadow-sm transition-all text-(--color-text-primary)"
                                 value={minPrice}
                                 onChange={(e) => setMinPrice(e.target.value)}
                               />
@@ -842,7 +842,7 @@ export default function MenuManagementPage() {
                           </div>
 
                           <div className="space-y-2.5">
-                            <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Max Price</label>
+                            <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Max Price</label>
                             <div className="relative">
                               <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={14} />
                               <input
@@ -850,7 +850,7 @@ export default function MenuManagementPage() {
                                 min="0"
                                 onKeyDown={blockNegative}
                                 placeholder="Max"
-                                className="w-full pl-10 pr-4 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm shadow-sm transition-all text-(--color-text-primary)"
+                                className="w-full pl-10 pr-4 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm shadow-sm transition-all text-(--color-text-primary)"
                                 value={maxPrice}
                                 onChange={(e) => setMaxPrice(e.target.value)}
                               />
@@ -870,7 +870,7 @@ export default function MenuManagementPage() {
                       )}
                     </div>
 
-                    <div className="mt-8 flex justify-end">
+                    <div className="mt-6 flex justify-end">
                       <button
                         onClick={() => {
                           setSearchTerm('');
@@ -881,7 +881,7 @@ export default function MenuManagementPage() {
                           setDietaryFilter('All');
                           setCurrentPage(1);
                         }}
-                        className="text-[10px] font-bold uppercase tracking-normal text-primary-dark dark:text-primary hover:opacity-80 transition-colors py-2 px-4 bg-primary/10 rounded-xl"
+                        className="text-[11px] font-medium uppercase tracking-normal text-primary-dark dark:text-primary hover:opacity-80 transition-colors py-2 px-4 bg-primary/10 rounded-xl"
                       >
                         Reset All Filters
                       </button>
@@ -915,10 +915,10 @@ export default function MenuManagementPage() {
                           </div>
                         )}
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
-                          <span className="px-3 py-1 bg-(--color-surface)/80  rounded-full text-[10px] font-bold uppercase tracking-normal border border-(--color-border) text-(--color-text-primary)">
+                          <span className="px-2.5 py-1 bg-(--color-surface)/80  rounded-full text-[11px] font-medium uppercase tracking-normal border border-(--color-border) text-(--color-text-primary)">
                             {item.category?.name || 'Uncategorized'}
                           </span>
-                          <span className={`px-3 py-1  rounded-full text-[8px] font-bold uppercase tracking-normal border self-start ${item.dietaryType === 'veg' ? 'bg-success/20 border-success/30 text-success' : 'bg-danger/20 border-danger/30 text-danger'
+                          <span className={`px-2.5 py-1  rounded-full text-[11px] font-medium uppercase tracking-normal border self-start ${item.dietaryType === 'veg' ? 'bg-success/20 border-success/30 text-success' : 'bg-danger/20 border-danger/30 text-danger'
                             }`}>
                             {item.dietaryType}
                           </span>
@@ -934,7 +934,7 @@ export default function MenuManagementPage() {
 
                         {item.discountedPrice && (
                           <div className="absolute bottom-4 left-4">
-                            <span className="px-3 py-1 bg-primary text-(--color-bg-base) rounded-full text-[10px] font-bold uppercase tracking-normal shadow-lg ">
+                            <span className="px-2.5 py-1 bg-primary text-(--color-bg-base) rounded-full text-[11px] font-medium uppercase tracking-normal ">
                               Sale
                             </span>
                           </div>
@@ -942,15 +942,15 @@ export default function MenuManagementPage() {
                       </div>
 
                       {/* Content */}
-                      <div className="p-6 md:p-8 flex-1 flex flex-col">
+                      <div className="p-5 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-xl font-bold tracking-tight line-clamp-1 text-(--color-text-primary)">{item.name}</h3>
+                          <h3 className="text-xl font-semibold tracking-tight line-clamp-1 text-(--color-text-primary)">{item.name}</h3>
                           <div className="flex flex-col items-end">
-                            <span className="text-lg font-bold text-primary flex items-center">
+                            <span className="text-lg font-semibold text-primary flex items-center">
                               <IndianRupee size={16} />{item.discountedPrice || item.price}
                             </span>
                             {(item.discountedPrice || item.originalPrice) && (
-                              <span className="text-[10px] text-(--color-text-muted) line-through font-bold">
+                              <span className="text-[11px] text-(--color-text-muted) line-through font-medium">
                                 ₹{item.originalPrice || item.price}
                               </span>
                             )}
@@ -962,7 +962,7 @@ export default function MenuManagementPage() {
                         </p>
 
                         <div className="mt-auto flex items-center justify-between border-t border-(--color-border) pt-5">
-                          <div className="flex items-center gap-2 text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">
+                          <div className="flex items-center gap-2 text-(--color-text-muted) text-[11px] font-medium uppercase tracking-normal">
                             <Clock size={14} className="text-primary-dark dark:text-primary" />
                             {item.preparationTime} Min
                           </div>
@@ -1002,23 +1002,23 @@ export default function MenuManagementPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCategories.map((cat, i) => (
               <SlideIn key={cat._id} delay={i * 0.05}>
-                <Card className="!p-8 group relative overflow-hidden border border-(--color-border) hover:border-primary/30 transition-all">
+                <Card className="!p-5 group relative overflow-hidden border border-(--color-border) hover:border-primary/30 transition-all">
                   <div className="absolute top-0 right-0 p-8 text-primary opacity-5 group-hover:opacity-10 transition-opacity">
                     <Layers size={80} />
                   </div>
 
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-xl">
                       {cat.icon || '🍽️'}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold tracking-tight text-(--color-text-primary)">{cat.name}</h3>
+                      <h3 className="text-xl font-semibold tracking-tight text-(--color-text-primary)">{cat.name}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                        <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                           Items: {menuItems.filter(m => (m.category?._id || m.category) === cat._id).length}
                         </p>
                         <div className="h-1 w-1 rounded-full bg-(--color-border)" />
-                        <p className="text-[9px] font-bold uppercase tracking-normal text-primary">
+                        <p className="text-[11px] font-medium uppercase tracking-normal text-primary">
                           Sold: {analytics.categorySales.find(cs => cs.name === cat.name)?.count || 0}
                         </p>
                       </div>
@@ -1028,7 +1028,7 @@ export default function MenuManagementPage() {
                   <p className="text-sm text-(--color-text-muted) font-medium mb-8 min-h-10">{cat.description || 'No description added.'}</p>
 
                   <div className="flex justify-between items-center pt-4 border-t border-(--color-border)">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-normal ${cat.isActive ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-normal ${cat.isActive ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                       {cat.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <div className="flex gap-2">
@@ -1063,11 +1063,11 @@ export default function MenuManagementPage() {
           title={editingItem ? "Edit Item" : "Add New Item"}
           maxWidth="max-w-5xl"
         >
-          <form onSubmit={handleItemSubmit} className="p-2 space-y-12">
+          <form onSubmit={handleItemSubmit} className="p-2 space-y-6">
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column */}
-              <div className="lg:col-span-7 space-y-10">
+              <div className="lg:col-span-7 space-y-6">
 
                 {/* Specifications */}
                 <section className="space-y-6">
@@ -1075,17 +1075,17 @@ export default function MenuManagementPage() {
                     <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                       <UtensilsCrossed size={16} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Details</h4>
+                    <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Details</h4>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Item Name</label>
+                      <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Item Name</label>
                       <input
                         name="name"
                         defaultValue={editingItem?.name}
                         required
-                        className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                        className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                         placeholder="e.g. Masala Dosa"
                       />
                     </div>
@@ -1102,7 +1102,7 @@ export default function MenuManagementPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Prep Time (Min)</label>
+                        <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Prep Time (Min)</label>
                         <div className="relative">
                           <input
                             name="preparationTime"
@@ -1111,7 +1111,7 @@ export default function MenuManagementPage() {
                             onKeyDown={blockNonInteger}
                             defaultValue={editingItem?.preparationTime || 10}
                             required
-                            className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                            className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                           />
                           <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
                         </div>
@@ -1119,18 +1119,18 @@ export default function MenuManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Description</label>
+                      <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Description</label>
                       <textarea
                         name="description"
                         defaultValue={editingItem?.description}
                         rows="3"
-                        className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all resize-none text-(--color-text-primary)"
+                        className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all resize-none text-(--color-text-primary)"
                         placeholder="Describe the item..."
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Dietary Type</label>
+                      <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Dietary Type</label>
                       <div className="flex gap-4">
                         {['veg', 'non-veg'].map((type) => {
                           const isInvalid = !isGlobalItem && selectedBranches.some(branchId => {
@@ -1154,7 +1154,7 @@ export default function MenuManagementPage() {
                                 disabled={isInvalid}
                                 className="w-4 h-4 accent-primary"
                               />
-                              <span className={`text-[10px] font-bold uppercase tracking-normal ${type === 'veg' ? 'text-success' : 'text-danger'}`}>
+                              <span className={`text-[11px] font-medium uppercase tracking-normal ${type === 'veg' ? 'text-success' : 'text-danger'}`}>
                                 {type}
                               </span>
                             </label>
@@ -1165,7 +1165,7 @@ export default function MenuManagementPage() {
                         const branch = locations.find(l => l._id === branchId);
                         return branch?.dietaryType === 'veg' || branch?.dietaryType === 'non-veg';
                       }) && (
-                          <p className="text-[8px] font-bold text-primary mt-2 uppercase tracking-tight italic">
+                          <p className="text-[11px] font-medium text-primary mt-2 uppercase tracking-tight">
                             * Some selected branches have strict dietary restrictions.
                           </p>
                         )}
@@ -1179,15 +1179,15 @@ export default function MenuManagementPage() {
                     <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center text-success">
                       <IndianRupee size={16} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Pricing</h4>
+                    <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Pricing</h4>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Base Price (₹)</label>
+                        <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Base Price (₹)</label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-bold">₹</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) font-medium">₹</span>
                           <input
                             name="price"
                             type="number"
@@ -1195,15 +1195,15 @@ export default function MenuManagementPage() {
                             onKeyDown={blockNegative}
                             defaultValue={editingItem?.price}
                             required
-                            className="w-full pl-10 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                            className="w-full pl-10 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                           />
                         </div>
                       </div>
                       {(user?.role === 'admin' || user?.role === 'location_admin' || user?.role === 'super_admin') && (
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-normal text-primary-dark dark:text-primary ml-1">Cost Price (₹)</label>
+                          <label className="text-[11px] font-medium uppercase tracking-normal text-primary-dark dark:text-primary ml-1">Cost Price (₹)</label>
                           <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 font-bold">₹</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 font-medium">₹</span>
                             <input
                               name="costPrice"
                               type="number"
@@ -1211,7 +1211,7 @@ export default function MenuManagementPage() {
                               onKeyDown={blockNegative}
                               defaultValue={editingItem?.costPrice || 0}
                               required
-                              className="w-full pl-10 pr-5 py-4 bg-primary/5 rounded-xl border border-primary/20 outline-none focus:ring-2 focus:ring-primary font-bold text-primary-dark dark:text-primary transition-all"
+                              className="w-full pl-10 pr-5 py-4 bg-primary/5 rounded-xl border border-primary/20 outline-none focus:ring-2 focus:ring-primary font-medium text-primary-dark dark:text-primary transition-all"
                             />
                           </div>
                         </div>
@@ -1220,26 +1220,26 @@ export default function MenuManagementPage() {
 
                     <div className="space-y-4 p-5 bg-(--color-surface-soft) rounded-xl border border-dashed border-(--color-border)">
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Original Price (Strikethrough ₹)</label>
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Original Price (Strikethrough ₹)</label>
                         <input
                           name="originalPrice"
                           type="number"
                           min="0"
                           onKeyDown={blockNegative}
                           defaultValue={editingItem?.originalPrice}
-                          className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                          className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                           placeholder="The 'Old' price"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Offer Price (New Payable ₹)</label>
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Offer Price (New Payable ₹)</label>
                         <input
                           name="discountedPrice"
                           type="number"
                           min="0"
                           onKeyDown={blockNegative}
                           defaultValue={editingItem?.discountedPrice}
-                          className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                          className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                           placeholder="The 'Sale' price"
                         />
                       </div>
@@ -1249,7 +1249,7 @@ export default function MenuManagementPage() {
               </div>
 
               {/* Right Column */}
-              <div className="lg:col-span-5 space-y-10">
+              <div className="lg:col-span-5 space-y-6">
 
                 {/* Visuals */}
                 <section className="space-y-6">
@@ -1257,7 +1257,7 @@ export default function MenuManagementPage() {
                     <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                       <ImageIcon size={16} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Item Photo</h4>
+                    <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Item Photo</h4>
                   </div>
 
                   <div
@@ -1271,7 +1271,7 @@ export default function MenuManagementPage() {
                           <div className="h-12 w-12 rounded-full bg-(--color-bg-base)/20  flex items-center justify-center mb-3">
                             <ImageIcon size={20} />
                           </div>
-                          <p className="text-[10px] font-bold uppercase tracking-normal">Change Image</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal">Change Image</p>
                         </div>
                       </>
                     ) : (
@@ -1280,8 +1280,8 @@ export default function MenuManagementPage() {
                           <ImageIcon size={32} />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Add Image</p>
-                          <p className="text-[8px] text-(--color-text-muted) uppercase mt-1">PNG / WEBP Supported</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Add Image</p>
+                          <p className="text-[11px] text-(--color-text-muted) uppercase mt-1">PNG / WEBP Supported</p>
                         </div>
                       </div>
                     )}
@@ -1303,11 +1303,11 @@ export default function MenuManagementPage() {
                     <div className="h-8 w-8 rounded-lg bg-(--color-text-muted)/10 flex items-center justify-center text-(--color-text-muted)">
                       <Zap size={16} />
                     </div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Settings</h4>
+                    <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Settings</h4>
                   </div>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border) cursor-pointer group">
-                      <span className="text-xs font-bold text-(--color-text-primary)">Available for ordering</span>
+                      <span className="text-xs font-medium text-(--color-text-primary)">Available for ordering</span>
                       <input
                         type="checkbox"
                         name="isAvailable"
@@ -1320,8 +1320,8 @@ export default function MenuManagementPage() {
                       <div className="space-y-4">
                         <label className="flex items-center justify-between p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border) cursor-pointer group">
                           <div>
-                            <span className="text-xs font-bold text-(--color-text-primary) block">Global Item</span>
-                            <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-tight italic">Available for every branch</span>
+                            <span className="text-xs font-medium text-(--color-text-primary) block">Global Item</span>
+                            <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-tight">Available for every branch</span>
                           </div>
                           <input
                             type="checkbox"
@@ -1334,7 +1334,7 @@ export default function MenuManagementPage() {
                         {!isGlobalItem && (
                           <>
                             <div className="space-y-3 p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border)">
-                              <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Target Branches</label>
+                              <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Target Branches</label>
                               <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 no-scrollbar">
                                 {locations.map(loc => (
                                   <label key={loc._id} className="flex items-center gap-3 p-3 bg-(--color-surface) rounded-xl border border-(--color-border) cursor-pointer hover:border-primary/20 transition-all">
@@ -1351,8 +1351,8 @@ export default function MenuManagementPage() {
                                       className="w-4 h-4 accent-primary rounded"
                                     />
                                     <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-(--color-text-primary) truncate">{loc.name}</span>
-                                      <span className={`text-[7px] font-bold uppercase tracking-tight ${loc.dietaryType === 'veg' ? 'text-success' : loc.dietaryType === 'non-veg' ? 'text-danger' : 'text-primary'}`}>
+                                      <span className="text-[11px] font-medium text-(--color-text-primary) truncate">{loc.name}</span>
+                                      <span className={`text-[11px] font-medium uppercase tracking-tight ${loc.dietaryType === 'veg' ? 'text-success' : loc.dietaryType === 'non-veg' ? 'text-danger' : 'text-primary'}`}>
                                         {loc.dietaryType}
                                       </span>
                                     </div>
@@ -1363,15 +1363,15 @@ export default function MenuManagementPage() {
 
                             {selectedBranches.length > 0 && (
                               <div className="space-y-4 p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border)">
-                                <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2">Branch Stock List</h4>
+                                <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Branch Stock List</h4>
                                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2 no-scrollbar">
                                   {locations.filter(l => selectedBranches.includes(l._id)).map(loc => {
                                     const bStock = editingItem?.branchStocks?.find(bs => bs.branch === loc._id);
                                     return (
                                       <div key={loc._id} className="flex items-center justify-between p-3 bg-(--color-surface) rounded-xl border border-(--color-border)">
                                         <div className="flex flex-col">
-                                          <span className="text-[10px] font-bold text-(--color-text-primary)">{loc.name}</span>
-                                          <span className="text-[7px] text-(--color-text-muted) uppercase tracking-normal">{loc.city}</span>
+                                          <span className="text-[11px] font-medium text-(--color-text-primary)">{loc.name}</span>
+                                          <span className="text-[11px] text-(--color-text-muted) uppercase tracking-normal">{loc.city}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                           <div className="relative w-20">
@@ -1381,7 +1381,7 @@ export default function MenuManagementPage() {
                                               onKeyDown={blockNonInteger}
                                               name={`stock_${loc._id}`}
                                               defaultValue={bStock ? bStock.stock : (editingItem?.stock || 0)}
-                                              className="w-full pl-3 pr-2 py-2 bg-(--color-surface-soft) border border-(--color-border) rounded-lg text-xs font-bold outline-none focus:ring-1 focus:ring-primary text-(--color-text-primary)"
+                                              className="w-full pl-3 pr-2 py-2 bg-(--color-surface-soft) border border-(--color-border) rounded-lg text-xs font-medium outline-none focus:ring-1 focus:ring-primary text-(--color-text-primary)"
                                             />
                                           </div>
                                         </div>
@@ -1397,7 +1397,7 @@ export default function MenuManagementPage() {
                     )}
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Current Stock Level</label>
+                      <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Current Stock Level</label>
                       <div className="relative">
                         <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
                         <input
@@ -1406,7 +1406,7 @@ export default function MenuManagementPage() {
                           min="0"
                           onKeyDown={blockNonInteger}
                           defaultValue={editingItem?.stock || 0}
-                          className="w-full pl-12 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                          className="w-full pl-12 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                         />
                       </div>
                     </div>
@@ -1417,13 +1417,13 @@ export default function MenuManagementPage() {
                 <section className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Customizations (optional)</p>
-                      <p className="text-[8px] text-(--color-text-muted) uppercase mt-0.5">Sizes, add-ons, sugar / spice level</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Customizations (optional)</p>
+                      <p className="text-[11px] text-(--color-text-muted) uppercase mt-0.5">Sizes, add-ons, sugar / spice level</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setModifierGroups((p) => [...p, { name: '', selectionType: 'single', required: false, maxSelections: 0, options: [{ label: '', priceDelta: 0 }] }])}
-                      className="flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all"
+                      className="flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all"
                     >
                       <Plus size={12} /> Add group
                     </button>
@@ -1436,7 +1436,7 @@ export default function MenuManagementPage() {
                           value={g.name}
                           onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, name: e.target.value } : x)))}
                           placeholder="Group name (e.g. Size)"
-                          className="flex-1 min-w-32 px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-xs text-(--color-text-primary)"
+                          className="flex-1 min-w-32 px-3 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-medium text-xs text-(--color-text-primary)"
                         />
                         <div className="w-32">
                           <PremiumSelect
@@ -1445,7 +1445,7 @@ export default function MenuManagementPage() {
                             options={[{ label: 'Pick one', value: 'single' }, { label: 'Pick many', value: 'multiple' }]}
                           />
                         </div>
-                        <label className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                        <label className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                           <input type="checkbox" checked={g.required} onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, required: e.target.checked } : x)))} /> Required
                         </label>
                         <button type="button" onClick={() => setModifierGroups((p) => p.filter((_, i) => i !== gi))} className="p-2 text-danger hover:bg-danger/10 rounded-lg">
@@ -1469,7 +1469,7 @@ export default function MenuManagementPage() {
                               value={o.priceDelta}
                               onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.map((y, j) => (j === oi ? { ...y, priceDelta: Number(e.target.value) || 0 } : y)) } : x)))}
                               placeholder="+ price"
-                              className="w-full pl-7 pr-2 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-bold text-xs text-(--color-text-primary)"
+                              className="w-full pl-7 pr-2 py-2 bg-(--color-surface-soft) rounded-lg border border-(--color-border) outline-none font-medium text-xs text-(--color-text-primary)"
                             />
                           </div>
                           <button type="button" onClick={() => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: x.options.filter((_, j) => j !== oi) } : x)))} className="p-2 text-(--color-text-muted) hover:text-danger">
@@ -1481,7 +1481,7 @@ export default function MenuManagementPage() {
                       <button
                         type="button"
                         onClick={() => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, options: [...x.options, { label: '', priceDelta: 0 }] } : x)))}
-                        className="ml-3 flex items-center gap-1 text-[9px] font-bold uppercase tracking-normal text-primary hover:opacity-80"
+                        className="ml-3 flex items-center gap-1 text-[11px] font-medium uppercase tracking-normal text-primary hover:opacity-80"
                       >
                         <Plus size={11} /> Add option
                       </button>
@@ -1492,16 +1492,16 @@ export default function MenuManagementPage() {
                 {/* Recipe */}
                 <div
                   onClick={() => setShowRecipeEditor(!showRecipeEditor)}
-                  className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${showRecipeEditor ? 'bg-primary/10 border-primary/30' : 'bg-(--color-bg-soft) border-(--color-border) hover:border-primary/20'}`}
+                  className={`p-5 rounded-xl border-2 cursor-pointer transition-all ${showRecipeEditor ? 'bg-primary/10 border-primary/30' : 'bg-(--color-bg-soft) border-(--color-border) hover:border-primary/20'}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-colors ${showRecipeEditor ? 'bg-primary text-(--color-bg-base)' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
-                        <FileText size={20} />
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${showRecipeEditor ? 'bg-primary text-(--color-bg-base)' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+                        <FileText size={18} />
                       </div>
                       <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-normal ${showRecipeEditor ? 'text-primary-dark dark:text-primary' : 'text-(--color-text-muted)'}`}>Recipe</p>
-                        <p className="text-[8px] text-(--color-text-muted) uppercase mt-0.5">Ingredients & Prep</p>
+                        <p className={`text-[11px] font-medium uppercase tracking-normal ${showRecipeEditor ? 'text-primary-dark dark:text-primary' : 'text-(--color-text-muted)'}`}>Recipe</p>
+                        <p className="text-[11px] text-(--color-text-muted) uppercase mt-0.5">Ingredients & Prep</p>
                       </div>
                     </div>
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center border transition-all ${showRecipeEditor ? 'bg-primary border-primary text-(--color-bg-base) rotate-180' : 'border-(--color-border) text-(--color-text-muted)'}`}>
@@ -1519,20 +1519,20 @@ export default function MenuManagementPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="space-y-10 pt-10 border-t border-(--color-border)"
+                  className="space-y-6 pt-10 border-t border-(--color-border)"
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Ingredients */}
                     <div className="space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <List size={18} className="text-primary" />
-                          <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Ingredients</h4>
+                          <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Ingredients</h4>
                         </div>
                         <button
                           type="button"
                           onClick={addIngredient}
-                          className="px-4 py-1.5 rounded-full bg-primary/10 text-[9px] font-bold uppercase text-primary-dark dark:text-primary hover:bg-primary hover:text-(--color-bg-base) transition-all"
+                          className="px-4 py-1.5 rounded-full bg-primary/10 text-[11px] font-medium uppercase text-primary-dark dark:text-primary hover:bg-primary hover:text-(--color-bg-base) transition-all"
                         >
                           + Add
                         </button>
@@ -1549,7 +1549,7 @@ export default function MenuManagementPage() {
                                 placeholder="Name"
                                 value={ing.name}
                                 onChange={(e) => updateIngredient(idx, 'name', e.target.value)}
-                                className="w-full px-4 py-2.5 bg-(--color-surface) rounded-xl border border-(--color-border) text-xs font-bold outline-none focus:ring-1 focus:ring-primary text-(--color-text-primary)"
+                                className="w-full px-4 py-2.5 bg-(--color-surface) rounded-xl border border-(--color-border) text-xs font-medium outline-none focus:ring-1 focus:ring-primary text-(--color-text-primary)"
                               />
                             </div>
                             <div className="flex-[1.5]">
@@ -1558,7 +1558,7 @@ export default function MenuManagementPage() {
                                 placeholder="Qty"
                                 value={ing.quantity}
                                 onChange={(e) => updateIngredient(idx, 'quantity', e.target.value)}
-                                className="w-full px-4 py-2.5 bg-(--color-surface) rounded-xl border border-(--color-border) text-xs font-bold text-center outline-none text-(--color-text-primary)"
+                                className="w-full px-4 py-2.5 bg-(--color-surface) rounded-xl border border-(--color-border) text-xs font-medium text-center outline-none text-(--color-text-primary)"
                               />
                             </div>
                             <div className="flex-2">
@@ -1591,12 +1591,12 @@ export default function MenuManagementPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Zap size={18} className="text-primary" />
-                          <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Steps</h4>
+                          <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Steps</h4>
                         </div>
                         <button
                           type="button"
                           onClick={addInstruction}
-                          className="px-4 py-1.5 rounded-full bg-primary/10 text-[9px] font-bold uppercase text-primary-dark dark:text-primary hover:bg-primary hover:text-(--color-bg-base) transition-all"
+                          className="px-4 py-1.5 rounded-full bg-primary/10 text-[11px] font-medium uppercase text-primary-dark dark:text-primary hover:bg-primary hover:text-(--color-bg-base) transition-all"
                         >
                           + Add
                         </button>
@@ -1604,7 +1604,7 @@ export default function MenuManagementPage() {
                       <div className="space-y-4">
                         {recipeData.instructions.map((ins, idx) => (
                           <motion.div layout key={idx} className="flex gap-4 group">
-                            <div className="h-10 w-10 rounded-[1rem] bg-primary flex items-center justify-center text-(--color-bg-base) text-xs font-bold shrink-0 shadow-lg ">
+                            <div className="h-10 w-10 rounded-[1rem] bg-primary flex items-center justify-center text-(--color-bg-base) text-xs font-semibold shrink-0 ">
                               {ins.step}
                             </div>
                             <textarea
@@ -1612,7 +1612,7 @@ export default function MenuManagementPage() {
                               value={ins.text}
                               onChange={(e) => updateInstruction(idx, e.target.value)}
                               rows="2"
-                              className="w-full px-5 py-3 bg-(--color-bg-soft) rounded-xl border border-(--color-border) text-xs font-bold resize-none outline-none focus:ring-1 focus:ring-primary transition-all text-(--color-text-primary)"
+                              className="w-full px-5 py-3 bg-(--color-bg-soft) rounded-xl border border-(--color-border) text-xs font-medium resize-none outline-none focus:ring-1 focus:ring-primary transition-all text-(--color-text-primary)"
                             />
                             <button
                               type="button"
@@ -1628,12 +1628,12 @@ export default function MenuManagementPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Notes</label>
+                    <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Notes</label>
                     <textarea
                       value={recipeData.notes}
                       onChange={(e) => setRecipeData(prev => ({ ...prev, notes: e.target.value }))}
                       rows="2"
-                      className="w-full px-6 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold resize-none text-(--color-text-primary)"
+                      className="w-full px-6 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium resize-none text-(--color-text-primary)"
                       placeholder="Special instructions..."
                     />
                   </div>
@@ -1642,11 +1642,11 @@ export default function MenuManagementPage() {
             </AnimatePresence>
 
             {/* Global Actions */}
-            <div className="pt-10 flex items-center justify-end gap-6 border-t border-(--color-border)">
+            <div className="pt-6 flex items-center justify-end gap-6 border-t border-(--color-border)">
               <button
                 type="button"
                 onClick={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); }}
-                className="px-8 py-4 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
+                className="px-8 py-4 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
               >
                 Cancel
               </button>
@@ -1654,7 +1654,7 @@ export default function MenuManagementPage() {
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-xl shadow-sm bg-primary  text-xs font-bold uppercase tracking-normal text-(--color-bg-base)"
+                className="!py-5 !px-12 !rounded-xl shadow-sm bg-primary  text-xs font-semibold uppercase tracking-normal text-(--color-bg-base)"
               >
                 {editingItem ? 'Save Updates' : 'Add Item'}
               </Button>
@@ -1669,29 +1669,29 @@ export default function MenuManagementPage() {
           title={editingCategory ? "Update Category" : "Add New Category"}
           maxWidth="max-w-2xl"
         >
-          <form onSubmit={handleCategorySubmit} className="p-2 space-y-10">
+          <form onSubmit={handleCategorySubmit} className="p-2 space-y-6">
 
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Layers size={16} />
                 </div>
-                <h4 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Category Details</h4>
+                <h4 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Category Details</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-6 space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Category Name</label>
+                  <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2.5 ml-1">Category Name</label>
                   <input
                     name="name"
                     defaultValue={editingCategory?.name}
                     required
-                    className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                    className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                     placeholder="e.g. South Indian"
                   />
                 </div>
                 <div className="md:col-span-6 space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Icon</label>
+                  <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Icon</label>
                   <div className="flex gap-3">
                     <div className="relative group shrink-0">
                       <input
@@ -1699,7 +1699,7 @@ export default function MenuManagementPage() {
                         value={categoryIcon}
                         onChange={(e) => setCategoryIcon(e.target.value)}
                         required
-                        className="w-20 px-2 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold text-center text-2xl transition-all text-(--color-text-primary)"
+                        className="w-20 px-2 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium text-center text-2xl transition-all text-(--color-text-primary)"
                       />
                     </div>
                     <div className="flex-1 bg-(--color-bg-soft) rounded-xl border border-(--color-border) p-2 overflow-hidden">
@@ -1721,25 +1721,25 @@ export default function MenuManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Description</label>
+                <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Description</label>
                 <textarea
                   name="description"
                   defaultValue={editingCategory?.description}
                   rows="3"
-                  className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all resize-none text-(--color-text-primary)"
+                  className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all resize-none text-(--color-text-primary)"
                   placeholder="Write a short description for this category..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Sort Order</label>
+                  <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Sort Order</label>
                   <input
                     name="sortOrder"
                     type="number"
                     defaultValue={editingCategory?.sortOrder || 0}
                     required
-                    className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-bold transition-all text-(--color-text-primary)"
+                    className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
                   />
                 </div>
                 <div className="flex flex-col justify-end pb-1">
@@ -1750,19 +1750,19 @@ export default function MenuManagementPage() {
                       <div className="absolute left-1 top-1 w-5 h-5 bg-(--color-bg-base) rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) group-hover:text-primary transition-colors">Active</span>
-                      <span className="text-[8px] text-(--color-text-muted) uppercase tracking-tight">Show in list</span>
+                      <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) group-hover:text-primary transition-colors">Active</span>
+                      <span className="text-[11px] text-(--color-text-muted) uppercase tracking-tight">Show in list</span>
                     </div>
                   </label>
                 </div>
               </div>
             </section>
 
-            <div className="pt-8 flex items-center justify-end gap-6 border-t border-(--color-border)">
+            <div className="pt-6 flex items-center justify-end gap-6 border-t border-(--color-border)">
               <button
                 type="button"
                 onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}
-                className="px-8 py-4 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
+                className="px-8 py-4 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
               >
                 Cancel
               </button>
@@ -1770,7 +1770,7 @@ export default function MenuManagementPage() {
                 type="submit"
                 variant="primary"
                 icon={Save}
-                className="!py-5 !px-12 !rounded-xl shadow-sm  text-xs font-bold uppercase tracking-normal bg-primary text-(--color-bg-base)"
+                className="!py-5 !px-12 !rounded-xl shadow-sm  text-xs font-semibold uppercase tracking-normal bg-primary text-(--color-bg-base)"
               >
                 {editingCategory ? 'Save Category' : 'Add Category'}
               </Button>
@@ -1781,7 +1781,7 @@ export default function MenuManagementPage() {
         {(filteredItems.length === 0 && activeTab === 'items' && !loading) || (filteredCategories.length === 0 && activeTab === 'categories' && !loading) ? (
           <div className="text-center py-32 bg-primary/[0.02] rounded-[4rem] border border-dashed border-primary/20 col-span-full w-full">
             <UtensilsCrossed size={64} className="mx-auto text-primary/10 mb-6" strokeWidth={1} />
-            <h3 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
+            <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
             <p className="text-(--color-text-muted) font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
             {can(user, 'menu.add') && (
               <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
@@ -1789,22 +1789,22 @@ export default function MenuManagementPage() {
           </div>
         ) : null}
         {activeTab === 'items' && totalPages > 1 && (
-          <div className="flex items-center justify-between px-8 py-6 bg-(--color-surface) border border-(--color-border) rounded-xl mt-10 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+          <div className="flex items-center justify-between px-5 py-4 bg-(--color-surface) border border-(--color-border) rounded-xl mt-6 shadow-sm">
+            <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:opacity-80 text-(--color-text-primary)"
+                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-[11px] font-medium uppercase tracking-normal disabled:opacity-30 transition-all hover:opacity-80 text-(--color-text-primary)"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-[10px] font-bold uppercase tracking-normal disabled:opacity-30 transition-all hover:opacity-80 text-(--color-text-primary)"
+                className="px-4 py-2 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-[11px] font-medium uppercase tracking-normal disabled:opacity-30 transition-all hover:opacity-80 text-(--color-text-primary)"
               >
                 Next
               </button>

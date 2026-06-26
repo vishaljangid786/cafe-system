@@ -61,17 +61,17 @@ export default function MonthlySummaryPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row justify-between md:items-center glass-card p-6 md:p-8 rounded-xl premium-shadow gap-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center glass-card p-5 md:p-6 rounded-xl premium-shadow gap-5">
             <div>
-              <Link href="/dashboard/admin" className="text-xs font-bold text-primary uppercase tracking-normal flex items-center mb-4 hover:translate-x-[-4px] transition-transform w-fit">
+              <Link href="/dashboard/admin" className="text-[11px] font-medium text-primary tracking-wide flex items-center mb-3 hover:translate-x-[-4px] transition-transform w-fit">
                 <ArrowLeft size={14} className="mr-2" /> Back to Dashboard
               </Link>
-              <h1 className="text-3xl font-bold text-(--color-text-primary) flex items-center tracking-tight leading-none">
-                <LayoutDashboard className="mr-3 text-primary" size={32} /> Monthly <span className="ml-2 text-primary">Summary</span>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) flex items-center tracking-tight leading-none">
+                <LayoutDashboard className="mr-3 text-primary" size={28} /> Monthly <span className="ml-2 text-primary">Summary</span>
               </h1>
-              <p className="text-(--color-text-muted) text-sm mt-3 font-medium uppercase tracking-normal text-[10px]">Staff Performance & Attendance Overview</p>
+              <p className="text-(--color-text-muted) mt-3 font-medium tracking-wide text-[11px]">Staff Performance & Attendance Overview</p>
             </div>
             <div
               onClick={() => monthInputRef.current?.showPicker()}
@@ -80,7 +80,7 @@ export default function MonthlySummaryPage() {
               <input
                 ref={monthInputRef}
                 type="month"
-                className="bg-transparent border-none outline-none p-2 text-sm font-bold text-(--color-text-primary) uppercase tracking-normal cursor-pointer"
+                className="bg-transparent border-none outline-none p-2 text-sm font-medium text-(--color-text-primary) tracking-wide cursor-pointer"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
               />
@@ -89,8 +89,8 @@ export default function MonthlySummaryPage() {
         </SlideIn>
 
         {refetching ? (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <div className="lg:col-span-2"><ChartSkeleton /></div>
               <ChartSkeleton />
             </div>
@@ -102,10 +102,10 @@ export default function MonthlySummaryPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <SlideIn className="lg:col-span-2" delay={0.1}>
-                <div className="glass-card p-8 rounded-xl premium-shadow h-full">
-                  <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight mb-8">Branch Attendance</h2>
+                <div className="glass-card p-6 rounded-xl premium-shadow h-full">
+                  <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight mb-6">Branch Attendance</h2>
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={summary} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -132,8 +132,8 @@ export default function MonthlySummaryPage() {
               </SlideIn>
 
               <SlideIn delay={0.2}>
-                <div className="glass-card p-8 rounded-xl premium-shadow h-full">
-                  <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight mb-8">Staff Count</h2>
+                <div className="glass-card p-6 rounded-xl premium-shadow h-full">
+                  <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight mb-6">Staff Count</h2>
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -165,9 +165,9 @@ export default function MonthlySummaryPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="mt-8 space-y-3">
+                  <div className="mt-6 space-y-3">
                     {summary.map((loc, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                      <div key={idx} className="flex justify-between items-center text-[11px] font-medium tracking-wide text-(--color-text-muted)">
                         <span className="flex items-center"><div className="h-2 w-2 rounded-full mr-2" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div> {loc.locationName}</span>
                         <span className="text-(--color-text-primary)">{loc.totalStaff} Staff</span>
                       </div>
@@ -188,18 +188,18 @@ export default function MonthlySummaryPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 + idx * 0.1 }}
-                      className="glass-card p-6 rounded-xl border border-(--color-border) hover:border-primary/40 transition-colors group"
+                      className="glass-card p-5 rounded-xl border border-(--color-border) hover:border-primary/40 transition-colors group"
                     >
                       <div className="flex justify-between items-start mb-6">
                         <div>
-                          <h3 className="text-xl font-bold text-(--color-text-primary) tracking-tight group-hover:text-primary transition-colors">
+                          <h3 className="text-xl font-semibold text-(--color-text-primary) tracking-tight group-hover:text-primary transition-colors">
                             {loc.locationName}
                           </h3>
-                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">
+                          <p className="text-[11px] font-medium tracking-wide text-(--color-text-muted) mt-1">
                             {loc.totalStaff} Staff Members
                           </p>
                         </div>
-                        <div className={`px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-tight shadow-sm border ${
+                        <div className={`px-2.5 py-1 rounded-xl text-[11px] font-medium tracking-tight border ${
                           percentage > 90 
                             ? 'bg-success/10 text-success border-success/20' 
                             : percentage > 75 
@@ -212,16 +212,16 @@ export default function MonthlySummaryPage() {
 
                       <div className="grid grid-cols-2 gap-4 mb-6">
                         <div className="bg-(--color-surface-soft) p-4 rounded-xl border border-(--color-border)">
-                          <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Present Days</p>
-                          <p className="text-2xl font-bold text-success">{loc.totalPresentDays}</p>
+                          <p className="text-[11px] font-medium tracking-wide text-(--color-text-muted) mb-1">Present Days</p>
+                          <p className="text-2xl font-semibold text-success">{loc.totalPresentDays}</p>
                         </div>
                         <div className="bg-(--color-surface-soft) p-4 rounded-xl border border-(--color-border)">
-                          <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Absent Days</p>
-                          <p className="text-2xl font-bold text-danger">{loc.totalAbsentDays}</p>
+                          <p className="text-[11px] font-medium tracking-wide text-(--color-text-muted) mb-1">Absent Days</p>
+                          <p className="text-2xl font-semibold text-danger">{loc.totalAbsentDays}</p>
                         </div>
                       </div>
 
-                      <div className="w-full bg-(--color-bg-soft) rounded-full h-2 overflow-hidden shadow-inner">
+                      <div className="w-full bg-(--color-bg-soft) rounded-full h-2 overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}

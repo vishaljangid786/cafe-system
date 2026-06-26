@@ -92,21 +92,21 @@ export default function BranchRevenuePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-(--color-surface) dark:bg-(--color-surface) p-5 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) gap-5">
           <div>
-            <h1 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-none">
-              <TrendingUp className="mr-4 text-success" size={36} /> Branch <span className="ml-3 text-success">Revenue</span>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-none">
+              <TrendingUp className="mr-3 text-success" size={24} /> Branch <span className="ml-2 text-success">Revenue</span>
             </h1>
             <p className="text-(--color-text-muted) dark:text-(--color-text-muted) text-sm mt-2 font-medium">Track your branch sales and earnings.</p>
           </div>
-          <div className="flex items-center gap-3 bg-(--color-surface-soft) dark:bg-(--color-bg) p-1.5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-inner">
+          <div className="flex items-center gap-2 bg-(--color-surface-soft) dark:bg-(--color-bg) p-1.5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-inner">
             {['7d', '1m', 'all'].map(t => (
               <button
                 key={t}
                 onClick={() => setTimeRange(t)}
-                className={`px-5 py-2 text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all ${timeRange === t ? 'bg-success text-white shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
+                className={`px-5 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all ${timeRange === t ? 'bg-success text-white shadow-sm font-semibold' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
               >
                 {t}
               </button>
@@ -116,16 +116,16 @@ export default function BranchRevenuePage() {
 
         {/* Graph Section */}
         <SlideIn delay={0.1}>
-          <div className="bg-white/40 dark:bg-(--color-bg)/20  p-8 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
+          <div className="bg-white/40 dark:bg-(--color-bg)/20  p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Activity size={120} className="text-success" />
             </div>
-            <div className="flex items-center justify-between mb-10 relative z-10">
-              <h2 className="text-xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">Sales Trend</h2>
-              <div className="flex gap-10">
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <h2 className="text-xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">Sales Trend</h2>
+              <div className="flex gap-5">
                 <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total Earnings</p>
-                  <p className="text-2xl font-bold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Earnings</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -149,18 +149,18 @@ export default function BranchRevenuePage() {
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
+          <div className="relative flex-1 min-w-0 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search sales..."
-              className="w-full pl-12 pr-4 py-4 bg-white/40 dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-2 focus:ring-success/20 outline-none transition-all font-bold text-sm text-(--color-text-primary) dark:text-(--color-text-primary) shadow-sm"
+              className="w-full pl-12 pr-4 py-2.5 bg-white/40 dark:bg-(--color-surface) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-2 focus:ring-success/20 outline-none transition-all font-medium text-sm text-(--color-text-primary) dark:text-(--color-text-primary) shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
-            <Button variant="secondary" className="!py-4 px-6 rounded-xl border-none bg-success/10 text-success hover:bg-success hover:text-white transition-all shadow-sm">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0 w-full md:w-auto">
+            <Button variant="secondary" className="!py-2.5 px-6 rounded-xl border-none bg-success/10 text-success hover:bg-success hover:text-white transition-all shadow-sm">
               <Filter size={18} className="mr-2" /> Filters
             </Button>
             <ExportActions 
@@ -177,14 +177,14 @@ export default function BranchRevenuePage() {
 
         {/* Data List */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Recent Sales</h3>
+          <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Recent Sales</h3>
           {refetching ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
             </div>
           ) : paginatedData.length === 0 ? (
-            <div className="py-20 text-center bg-white/40 dark:bg-(--color-bg)/40 rounded-xl border border-dashed border-(--color-border) dark:border-(--color-border)">
-              <p className="text-(--color-text-muted) font-bold">No sales found.</p>
+            <div className="py-10 text-center bg-white/40 dark:bg-(--color-bg)/40 rounded-xl border border-dashed border-(--color-border) dark:border-(--color-border)">
+              <p className="text-(--color-text-muted) font-medium">No sales found.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
@@ -198,22 +198,22 @@ export default function BranchRevenuePage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none text-base">
+                            <h4 className="font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none text-base">
                               {t.title || `Order #${t._id.substring(t._id.length - 6).toUpperCase()}`}
                             </h4>
-                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted)">
+                            <span className="text-[11px] font-medium uppercase px-2 py-0.5 rounded-full bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted)">
                               {new Date(t.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                             </span>
                           </div>
-                          <p className="text-[8px] font-bold uppercase tracking-normal text-success mt-2 bg-success/5 w-fit px-2 py-0.5 rounded">
+                          <p className="text-[11px] font-medium uppercase tracking-normal text-success mt-2 bg-success/5 w-fit px-2 py-0.5 rounded">
                             {t.type === 'POS_REVENUE' ? 'Billing Counter' : 'Manual Entry'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-8 text-right">
+                      <div className="flex items-center gap-5 text-right">
                         <div>
-                          <p className="text-xl font-bold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
-                          <p className="text-[8px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">Confirmed</p>
+                          <p className="text-xl font-semibold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-(--color-text-muted) group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -236,8 +236,8 @@ export default function BranchRevenuePage() {
               <ChevronRight size={18} className="rotate-180" />
             </button>
             <div className="flex items-center gap-1 bg-(--color-surface) dark:bg-(--color-surface) px-3 py-1.5 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-              <span className="text-xs font-bold text-(--color-text-primary) dark:text-white">{currentPage}</span>
-              <span className="text-[10px] font-bold text-(--color-text-muted)">/ {totalPages}</span>
+              <span className="text-xs font-semibold text-(--color-text-primary) dark:text-white">{currentPage}</span>
+              <span className="text-[11px] font-medium text-(--color-text-muted)">/ {totalPages}</span>
             </div>
             <button 
               disabled={currentPage === totalPages}

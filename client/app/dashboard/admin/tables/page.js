@@ -451,9 +451,9 @@ export default function AdminTablesPage() {
       <div className="space-y-6 pb-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
-                <Globe size={24} className="text-(--color-bg-base)" />
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+              <div className="h-6 w-6 rounded-xl bg-primary flex items-center justify-center">
+                <Globe size={16} className="text-(--color-bg-base)" />
               </div>
               Tables
             </h1>
@@ -471,7 +471,7 @@ export default function AdminTablesPage() {
             {can(user, 'tables.add') && (
             <Button
               variant="primary"
-              className="!rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary-dark text-[10px] font-bold uppercase tracking-normal"
+              className="!rounded-xl !py-2.5 bg-primary hover:bg-primary-dark text-[11px] font-semibold tracking-normal"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -487,7 +487,7 @@ export default function AdminTablesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {[
             { label: 'Total Tables', val: stats.total, color: 'primary', icon: Globe },
             { label: 'Active Tables', val: stats.occupied, color: 'primary', icon: Zap },
@@ -499,16 +499,16 @@ export default function AdminTablesPage() {
                   <stat.icon size={18} className={`text-[var(--color-${stat.color === 'emerald' ? 'success' : 'primary'})]`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-(--color-text-primary) leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) leading-none">{stat.val}</p>
+                  <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
           ))}
         </div>
 
-        <div className="relative z-20 glass-morphism rounded-xl border border-(--color-border) p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10">
-          <div className="relative flex-1">
+        <div className="relative z-20 glass-morphism rounded-xl border border-(--color-border) p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
             <input
               type="text"
@@ -518,7 +518,7 @@ export default function AdminTablesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-64">
+          <div className="w-full sm:w-64 sm:shrink-0">
             <PremiumSelect 
               options={locationOptions}
               value={selectedLocation}
@@ -532,8 +532,8 @@ export default function AdminTablesPage() {
         {!refetching && filteredTables.length > 0 && (
           <div className="mb-6 p-5 rounded-xl border border-(--color-border) bg-(--color-surface)/40 shadow-sm">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Floor map</h3>
-              <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-normal">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Floor map</h3>
+              <div className="flex items-center gap-3 text-[11px] font-medium tracking-normal">
                 <span className="flex items-center gap-1 text-success"><span className="h-2 w-2 rounded-full bg-success" /> Free</span>
                 <span className="flex items-center gap-1 text-primary"><span className="h-2 w-2 rounded-full bg-primary" /> Occupied</span>
                 <span className="flex items-center gap-1 text-amber-500"><span className="h-2 w-2 rounded-full bg-amber-500" /> Reserved</span>
@@ -553,7 +553,7 @@ export default function AdminTablesPage() {
                     key={t._id}
                     onClick={() => handleOpenOrder(t)}
                     title={`${t.tableName || `Table ${t.tableNumber}`} · ${free ? 'free' : reserved ? 'reserved' : 'occupied'}`}
-                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center font-bold transition-transform hover:scale-105 ${tone}`}
+                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center font-medium transition-transform hover:scale-105 ${tone}`}
                   >
                     <span className="text-sm">T{t.tableNumber}</span>
                     <span className="text-[7px] uppercase tracking-normal opacity-70">{free ? 'free' : reserved ? 'resv' : 'busy'}</span>
@@ -569,11 +569,11 @@ export default function AdminTablesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Table</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Branch</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Capacity</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Status</th>
-                <th className="px-8 py-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Table</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Capacity</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Status</th>
+                <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -586,40 +586,40 @@ export default function AdminTablesPage() {
                     transition={{ delay: i * 0.02 }}
                     className="group border-b border-(--color-border) hover:bg-primary/5 transition-all cursor-pointer"
                   >
-                    <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                    <td className="px-5 py-4" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold border transition-transform ${
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-medium border transition-transform ${
                           table.status === 'available' ? 'bg-success/10 text-success border-success/20' : 'bg-primary/10 text-primary border-primary/20'
                         }`}>
                           T{table.tableNumber}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-(--color-text-primary)">{table.tableName || `Table ${table.tableNumber}`}</p>
-                          <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5">ID: {table._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-medium text-(--color-text-primary)">{table.tableName || `Table ${table.tableNumber}`}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">ID: {table._id.slice(-6).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                    <td className="px-5 py-4" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-2 text-(--color-text-primary)">
                         <MapPin size={14} className="text-primary" />
-                        <span className="text-sm font-bold">{table.locationId?.name || table.locationName || 'Main Branch'}</span>
+                        <span className="text-sm font-medium">{table.locationId?.name || table.locationName || 'Main Branch'}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
+                    <td className="px-5 py-4" onClick={() => handleOpenOrder(table)}>
                       <div className="flex items-center gap-2 text-(--color-text-primary)">
                         <Users size={14} className="text-(--color-text-muted)" />
-                        <span className="text-sm font-bold">{table.capacity} People</span>
+                        <span className="text-sm font-medium">{table.capacity} People</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6" onClick={() => handleOpenOrder(table)}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-normal border shadow-sm ${
+                    <td className="px-5 py-4" onClick={() => handleOpenOrder(table)}>
+                      <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-normal border ${
                         table.status === 'available' ? 'bg-success/10 text-success border-success/20' : 'bg-primary/10 text-primary border-primary/20'
                       }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${table.status === 'available' ? 'bg-success animate-pulse' : 'bg-primary'}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full ${table.status === 'available' ? 'bg-success' : 'bg-primary'}`} />
                         {table.status}
                       </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-2  transition-opacity">
                         {can(user, 'tables.modify') && (
                         <motion.button
@@ -651,7 +651,7 @@ export default function AdminTablesPage() {
           {filteredTables.length === 0 && (
             <div className="p-20 text-center text-(--color-text-muted)">
               <LayoutGrid size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-bold uppercase tracking-normal">No tables found</p>
+              <p className="text-sm font-medium tracking-normal">No tables found</p>
             </div>
           )}
         </div>
@@ -669,38 +669,38 @@ export default function AdminTablesPage() {
               />
             )}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Table Number</label>
-              <input required type="number" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-bold text-(--color-text-primary)" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
+              <label className="text-[11px] font-medium text-(--color-text-muted) tracking-normal ml-1">Table Number</label>
+              <input required type="number" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-medium text-(--color-text-primary)" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Table Name</label>
-              <input type="text" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-bold text-(--color-text-primary)" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
+              <label className="text-[11px] font-medium text-(--color-text-muted) tracking-normal ml-1">Table Name</label>
+              <input type="text" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-medium text-(--color-text-primary)" value={newTableName} onChange={e => setNewTableName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Seating Capacity</label>
-              <input required type="number" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-bold text-(--color-text-primary)" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
+              <label className="text-[11px] font-medium text-(--color-text-muted) tracking-normal ml-1">Seating Capacity</label>
+              <input required type="number" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-4 text-sm font-medium text-(--color-text-primary)" value={newTableCapacity} onChange={e => setNewTableCapacity(e.target.value)} />
             </div>
-            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-sm " icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Save Changes' : 'Add Table'}</Button>
+            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-2.5 shadow-sm " icon={isEditing ? Edit3 : Plus}>{isEditing ? 'Save Changes' : 'Add Table'}</Button>
           </form>
         </Modal>
 
         <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
           {selectedTable && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[75vh]">
               <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-hidden shadow-sm">
-                <div className="p-8 border-b border-(--color-border) bg-gradient-to-br from-(--color-surface-soft) to-(--color-surface) space-y-6">
+                <div className="p-5 border-b border-(--color-border) bg-gradient-to-br from-(--color-surface-soft) to-(--color-surface) space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-bold text-primary uppercase tracking-normal flex items-center mb-1">
+                      <h3 className="text-[11px] font-semibold text-primary uppercase tracking-normal flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Current order</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Current order</p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xl font-bold text-(--color-text-primary) tracking-tight">
+                      <span className="text-xl font-semibold text-(--color-text-primary) tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal">Items</span>
+                      <span className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Items</span>
                     </div>
                   </div>
 
@@ -720,13 +720,13 @@ export default function AdminTablesPage() {
 
                   <div className="grid grid-cols-2 gap-6 p-5 bg-(--color-surface) rounded-xl border border-(--color-border) shadow-sm">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1 flex items-center gap-2">
-                        Customer Name <span className="text-danger font-bold">*</span>
+                      <label className="text-[11px] font-medium text-(--color-text-muted) tracking-normal ml-1 flex items-center gap-2">
+                        Customer Name <span className="text-danger font-medium">*</span>
                       </label>
-                      <input 
+                      <input
                         type="text"
                         placeholder="Enter name"
-                        className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-(--color-text-muted)/30 text-(--color-text-primary)"
+                        className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl px-4 py-2.5 mt-1 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-(--color-text-muted)/30 text-(--color-text-primary)"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
@@ -761,8 +761,8 @@ export default function AdminTablesPage() {
                           {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-(--color-text-muted)" />}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-(--color-text-muted) tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-medium text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
@@ -774,7 +774,7 @@ export default function AdminTablesPage() {
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-bold text-(--color-text-primary)">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-medium text-(--color-text-primary)">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
                             className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-(--color-surface) text-(--color-text-muted) transition-all"
@@ -782,7 +782,7 @@ export default function AdminTablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-bold text-primary w-16 text-right">
+                        <div className="text-sm font-semibold text-primary w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -798,13 +798,13 @@ export default function AdminTablesPage() {
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-(--color-text-muted)" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">No items added yet</p>
+                      <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">No items added yet</p>
                     </div>
                   )}
 
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-(--color-border)">
-                      <h3 className="text-[10px] font-bold text-primary uppercase tracking-normal mb-4 flex items-center gap-2">
+                      <h3 className="text-[11px] font-semibold text-primary uppercase tracking-normal mb-4 flex items-center gap-2">
                         <Zap size={14} /> Kitchen Orders
                       </h3>
                       <div className="space-y-3">
@@ -814,15 +814,15 @@ export default function AdminTablesPage() {
                               <div className="flex items-center gap-3">
                                 <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-success ' : 'bg-primary animate-pulse'}`} />
                                 <div>
-                                  <div className="text-[11px] font-bold text-(--color-text-primary) uppercase tracking-tight">#{order._id.slice(-6)}</div>
-                                  <div className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">{order.status}</div>
+                                  <div className="text-[11px] font-medium text-(--color-text-primary) uppercase tracking-tight">#{order._id.slice(-6)}</div>
+                                  <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">{order.status}</div>
                                 </div>
                               </div>
                               
                               {order.chefNote && (
                                 <div className="flex-1 mx-4 px-3 py-2 bg-primary/5 border border-primary/10 rounded-xl flex items-center gap-2 group/note relative">
                                   <MessageSquare size={12} className="text-primary flex-shrink-0" />
-                                  <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{order.chefNote}</p>
+                                  <p className="text-[11px] font-medium text-primary leading-tight line-clamp-1">{order.chefNote}</p>
                                   
                                   <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-(--color-text-primary) text-(--color-bg-base) text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">
                                     {order.chefNote}
@@ -832,7 +832,7 @@ export default function AdminTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[10px] font-bold text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[11px] font-medium text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -845,13 +845,13 @@ export default function AdminTablesPage() {
                                         toast.error('Could not generate the bill. Please try again.', { id: loadToast });
                                       }
                                     }}
-                                    className="px-3 py-1.5 bg-primary hover:bg-primary/80 text-(--color-bg-base) text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
+                                    className="px-3 py-1.5 bg-primary hover:bg-primary/80 text-(--color-bg-base) text-[11px] font-semibold uppercase tracking-normal rounded-lg transition-all"
                                   >
                                     Generate Bill
                                   </button>
                                 )}
                                 {order.isBilled && (
-                                  <div className="px-3 py-1.5 bg-success/10 text-success text-[9px] font-bold uppercase tracking-normal rounded-lg flex items-center gap-1">
+                                  <div className="px-3 py-1.5 bg-success/10 text-success text-[11px] font-medium uppercase tracking-normal rounded-lg flex items-center gap-1">
                                     <Check size={10} /> Billed
                                   </div>
                                 )}
@@ -859,29 +859,29 @@ export default function AdminTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">No orders in kitchen</div>
+                          <div className="py-4 text-center text-[11px] font-medium tracking-normal text-(--color-text-muted)">No orders in kitchen</div>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 border-t border-(--color-border) bg-(--color-surface)/50 space-y-6">
+                <div className="p-5 border-t border-(--color-border) bg-(--color-surface)/50 space-y-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                    <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       <span>Subtotal</span>
                       <span className="text-(--color-text-primary)">₹{systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-success">
+                      <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-success">
                         <span>Discount Applied</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="h-px bg-(--color-border) my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold uppercase text-primary tracking-normal mb-2">Total Amount</span>
-                      <span className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                      <span className="text-[11px] font-medium uppercase text-primary tracking-normal mb-2">Total Amount</span>
+                      <span className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -891,7 +891,7 @@ export default function AdminTablesPage() {
                     <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                       <Button
                         variant="primary"
-                        className="w-full !rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary/80 text-[10px] font-bold uppercase tracking-normal"
+                        className="w-full !rounded-xl !py-2.5 shadow-sm  bg-primary hover:bg-primary/80 text-[11px] font-semibold uppercase tracking-normal"
                         icon={Zap}
                         onClick={handleSendToKitchen}
                         disabled={pendingOrders.length === 0}
@@ -901,7 +901,7 @@ export default function AdminTablesPage() {
                       {systemOrders.length > 0 && (
                         <Button
                           variant="primary"
-                          className="w-full !rounded-xl !py-4 shadow-sm  bg-success hover:bg-success/80 text-[10px] font-bold uppercase tracking-normal"
+                          className="w-full !rounded-xl !py-2.5 shadow-sm  bg-success hover:bg-success/80 text-[11px] font-semibold uppercase tracking-normal"
                           icon={Receipt}
                           onClick={() => {
                             const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
@@ -916,7 +916,7 @@ export default function AdminTablesPage() {
                 </div>
               </div>
 
-                <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-8">
+                <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors">
                     <Search size={18} />
@@ -924,7 +924,7 @@ export default function AdminTablesPage() {
                   <input
                     type="text"
                     placeholder="Search menu items..."
-                    className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all text-(--color-text-primary) shadow-sm"
+                    className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) pl-12 pr-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-(--color-text-primary) shadow-sm"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -940,9 +940,9 @@ export default function AdminTablesPage() {
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${
-                          dietaryFilter === f.id 
-                            ? 'bg-primary text-(--color-bg-base) shadow-sm' 
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium uppercase tracking-normal transition-all ${
+                          dietaryFilter === f.id
+                            ? 'bg-primary text-(--color-bg-base) shadow-sm'
                             : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
                         } ${f.color || ''}`}
                       >
@@ -954,7 +954,7 @@ export default function AdminTablesPage() {
 
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center">
+                    <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                       <Zap size={12} className="mr-2 text-primary" /> Popular Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
@@ -974,19 +974,19 @@ export default function AdminTablesPage() {
                             )}
                             {out ? (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                                <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
                               </div>
                             ) : (
                               <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
-                                <Plus className="text-(--color-bg-base) drop-shadow-md" size={24} strokeWidth={3} />
+                                <Plus className="text-(--color-bg-base)" size={24} strokeWidth={3} />
                               </div>
                             )}
                           </div>
-                          <div className="text-[10px] font-bold text-(--color-text-primary) truncate">{item.name}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-primary) truncate">{item.name}</div>
                           <div className="flex items-center justify-between mt-1">
-                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                             {tracks && (
-                              <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                              <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                 {qty <= 0 ? 'Out' : `${qty} left`}
                               </span>
                             )}
@@ -999,7 +999,7 @@ export default function AdminTablesPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                  <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
+                  <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => {
                         const { out, tracks, qty } = stockInfo(item);
@@ -1016,26 +1016,26 @@ export default function AdminTablesPage() {
                               <div className="h-full w-full flex items-center justify-center text-(--color-text-muted)"><Coffee size={20} /></div>
                             )}
                             <div className="absolute top-2 left-2">
-                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-(--color-bg-base) ${item.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`}>
+                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-medium uppercase tracking-normal text-(--color-bg-base) ${item.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`}>
                                 {item.dietaryType || 'Food'}
                               </div>
                             </div>
                             {out ? (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                                <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-bg-base) bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
                               </div>
                             ) : (
                               <div className="absolute inset-0 bg-primary/20  flex items-center justify-center transition-all">
-                                <Plus className="text-(--color-bg-base) drop-shadow-md" size={32} strokeWidth={3} />
+                                <Plus className="text-(--color-bg-base)" size={32} strokeWidth={3} />
                               </div>
                             )}
                           </div>
                           <div>
-                            <div className="text-[11px] font-bold text-(--color-text-primary) leading-tight truncate">{item.name}</div>
+                            <div className="text-[11px] font-medium text-(--color-text-primary) leading-tight truncate">{item.name}</div>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                              <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                               {tracks ? (
-                                <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                   {qty <= 0 ? 'Out' : `${qty} left`}
                                 </span>
                               ) : (
@@ -1058,36 +1058,36 @@ export default function AdminTablesPage() {
                 <div className="p-6 bg-(--color-bg-soft) rounded-xl border border-(--color-border)">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="Enter code"
-                          className="flex-1 bg-(--color-surface) border border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all text-(--color-text-primary)"
+                          className="flex-1 bg-(--color-surface) border border-(--color-border) rounded-xl px-4 py-3 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-(--color-text-primary)"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="px-6 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-[10px] font-bold uppercase tracking-normal hover:opacity-90 transition-all shadow-lg "
+                          className="px-6 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-[11px] font-semibold uppercase tracking-normal hover:opacity-90 transition-all"
                         >
                           Verify
                         </button>
                       </div>
                     </div>
                     {appliedCoupon && (
-                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[10px] font-bold text-success flex items-center justify-between gap-2">
+                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[11px] font-medium text-success flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Check size={12} /> {appliedCoupon.code} applied
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setAppliedCoupon(null);
                             setDiscountAmount(0);
                             setCouponCode('');
                             toast.success('Coupon removed');
                           }}
-                          className="text-danger hover:opacity-80 uppercase text-[9px] font-bold"
+                          className="text-danger hover:opacity-80 uppercase text-[11px] font-medium"
                         >
                           Remove
                         </button>

@@ -22,6 +22,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { ChartSkeleton } from '@/app/components/ui/Skeleton';
 import { StatWidget } from '../../components/ui/StatWidget';
+import { CountUp } from '../../components/ui/CountUp';
 import { Card, CardTitle, CardDescription } from '../../components/ui/Card';
 import { ActivityTimeline } from '../../components/ui/ActivityTimeline';
 import { Button } from '../../components/ui/Button';
@@ -54,6 +55,8 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [recentOrdersLoading, setRecentOrdersLoading] = useState(true);
   const didInitRef = useRef(false);
   const [timeFilter, setTimeFilter] = useState('all'); // '7d', '30d', 'all', 'custom'
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
@@ -146,6 +149,23 @@ export default function AdminDashboard() {
     }
   };
 
+  // Recent 10 orders for the overview. Role-scoped by the API: super_admin sees
+  // every branch, admin/branch_admin only their own. Fetched separately so it never
+  // blocks the stat cards. When a single branch is selected, scope to it.
+  const fetchRecentOrders = async () => {
+    try {
+      setRecentOrdersLoading(true);
+      const params = new URLSearchParams({ limit: '10' });
+      if (activeLocationId !== 'all') params.append('branchId', activeLocationId);
+      const res = await api.get(`/orders?${params.toString()}`);
+      setRecentOrders(res.data?.data || []);
+    } catch (error) {
+      console.error('Failed to fetch recent orders');
+    } finally {
+      setRecentOrdersLoading(false);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchLocations();
@@ -157,15 +177,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchAnalytics();
+      fetchRecentOrders();
     }, 0);
 
     return () => clearTimeout(timer);
   }, [authLocation, timeFilter, customDates, selectedLocationIds]);
 
-  if (loading) return <LoadingScreen fullScreen={false} />;
-
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-6 pb-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-95">
         <div className="space-y-2">
@@ -175,18 +194,18 @@ export default function AdminDashboard() {
             className="flex items-center gap-3"
           >
             <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse " />
-              <span className="text-[9px] font-bold uppercase tracking-normal text-primary/80">Online</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary " />
+              <span className="text-[11px] font-medium uppercase tracking-normal text-primary/80">Online</span>
             </div>
             <div className="h-px w-8 bg-(--color-border)" />
-            <span className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+            <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
               {selectedLocationIds.length > 1 ? `Showing ${selectedLocationIds.length} Branches` : activeLocationId === 'all' ? 'Showing All Branches' : 'Showing Branch'}
             </span>
           </motion.div>
 
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-(--color-text-primary) flex flex-wrap items-baseline gap-2 sm:gap-3 uppercase italic">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) flex flex-wrap items-baseline gap-2 sm:gap-3">
             {selectedLocationIds.length > 1 ? 'Multi-Branch' : activeLocationId === 'all' ? 'Business' : (locations.find(l => l._id === activeLocationId)?.city || 'Branch')}
-            <span className="text-primary not-italic">Overview</span>
+            <span className="text-primary">Overview</span>
           </h1>
           <p className="text-sm text-(--color-text-muted) font-medium max-w-lg leading-relaxed border-l-2 border-primary/30 pl-4">
             Real-time data for {selectedLocationIds.length > 1 ? `${selectedLocationIds.length} selected branches` : activeLocationId === 'all' ? 'all your cafe branches' : (locations.find(l => l._id === activeLocationId)?.name || 'the selected branch')}.
@@ -211,7 +230,7 @@ export default function AdminDashboard() {
               <button
                 key={t}
                 onClick={() => setTimeFilter(t)}
-                className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-lg ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface)'}`}
+                className={`px-3 sm:px-4 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-sm ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface)'}`}
               >
                 {t}
               </button>
@@ -224,70 +243,70 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row gap-4 p-6 glass-card border border-(--color-border) rounded-xl premium-shadow"
+          className="flex flex-col md:flex-row gap-4 p-5 glass-card border border-(--color-border) rounded-xl premium-shadow"
         >
           <div className="flex-1">
-            <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
-            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
+            <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
+            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-bold uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
-            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
+            <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
+            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
           </div>
         </motion.div>
       )}
 
-      {refetching ? (
-        <div className="space-y-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      {(loading || refetching) ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <ChartSkeleton className="lg:col-span-2 h-100" /><ChartSkeleton className="h-100" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <CardSkeleton className="h-75" /><CardSkeleton className="h-75" />
           </div>
         </div>
       ) : (
       <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
         <Link href={ordersHref} className="contents">
-          <StatWidget label="Total Orders" value={analytics?.summary?.totalOrders || '0'} icon={ShoppingBag} color="amber" delay={0.3} />
+          <StatWidget label="Total Orders" value={<CountUp value={analytics?.summary?.totalOrders || 0} />} icon={ShoppingBag} color="amber" delay={0.3} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Total Sales" value={`₹${analytics?.summary?.totalRevenue?.toLocaleString() || '0'}`} icon={TrendingUp} color="amber" delay={0} />
+          <StatWidget label="Total Sales" value={<CountUp value={analytics?.summary?.totalRevenue || 0} prefix="₹" />} icon={TrendingUp} color="amber" delay={0} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Net Profit" value={`₹${analytics?.summary?.netProfit?.toLocaleString() || '0'}`} icon={Zap} color="green" delay={0.1} />
+          <StatWidget label="Net Profit" value={<CountUp value={analytics?.summary?.netProfit || 0} prefix="₹" />} icon={Zap} color="green" delay={0.1} />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
-          <StatWidget label="Avg Order Value" value={`₹${Math.round(analytics?.summary?.avgOrderValue || 0).toLocaleString()}`} icon={Target} color="indigo" delay={0.2} />
+          <StatWidget label="Avg Order Value" value={<CountUp value={Math.round(analytics?.summary?.avgOrderValue || 0)} prefix="₹" />} icon={Target} color="indigo" delay={0.2} />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
-          <StatWidget label="Cancel Rate" value={`${analytics?.summary?.cancellationRate || 0}%`} icon={TrendingDown} color="rose" delay={0.4} />
+          <StatWidget label="Cancel Rate" value={<CountUp value={analytics?.summary?.cancellationRate || 0} suffix="%" decimals={1} />} icon={TrendingDown} color="rose" delay={0.4} />
         </Link>
       </div>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           <Link href={`${dashPrefix}/expenses`} className="contents">
-            <StatWidget label="Expenses" value={`₹${analytics?.summary?.totalExpenses?.toLocaleString() || '0'}`} icon={Wallet} color="rose" delay={0.5} />
+            <StatWidget label="Expenses" value={<CountUp value={analytics?.summary?.totalExpenses || 0} prefix="₹" />} icon={Wallet} color="rose" delay={0.5} />
           </Link>
           <Link href={`${dashPrefix}/payroll`} className="contents">
-            <StatWidget label="Monthly Payroll" value={`₹${analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}`} icon={Users} color="indigo" delay={0.6} />
+            <StatWidget label="Monthly Payroll" value={<CountUp value={analytics?.staffStats?.totalMonthlySalary || 0} prefix="₹" />} icon={Users} color="indigo" delay={0.6} />
           </Link>
           <Link href={`${dashPrefix}/payroll`} className="contents">
-            <StatWidget label="Avg Staff Salary" value={`₹${Math.round(analytics?.staffStats?.avgSalary || 0).toLocaleString()}`} icon={DollarSign} color="amber" delay={0.7} />
+            <StatWidget label="Avg Staff Salary" value={<CountUp value={Math.round(analytics?.staffStats?.avgSalary || 0)} prefix="₹" />} icon={DollarSign} color="amber" delay={0.7} />
           </Link>
           <Link href={`${dashPrefix}/staff`} className="contents">
-            <StatWidget label="Staff Count" value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0) || '0'} icon={Activity} color="indigo" delay={0.8} />
+            <StatWidget label="Staff Count" value={<CountUp value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0)} />} icon={Activity} color="indigo" delay={0.8} />
           </Link>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 !p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Card className="lg:col-span-2 !p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <CardTitle className="text-xl">Sales Report</CardTitle>
             <TrendingUp size={20} className="text-primary" />
@@ -325,8 +344,8 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Orders Timeline */}
-        <Card className="!p-8 glass-card border-(--color-border) export-chart premium-shadow" hover={false}>
-          <div className="flex items-center justify-between mb-10">
+        <Card className="!p-5 glass-card border-(--color-border) export-chart premium-shadow" hover={false}>
+          <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Daily Orders</CardTitle>
               <CardDescription>Total orders per day.</CardDescription>
@@ -357,10 +376,94 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
+      {/* Recent Orders — last 10 across the viewer's scope (all branches for
+          super_admin, own branches for admin/branch_admin). */}
+      <Card className="!p-5 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <CardTitle className="text-xl">Recent Orders</CardTitle>
+            <CardDescription>
+              {user?.role === 'super_admin' ? 'Latest 10 orders across all branches.' : 'Latest 10 orders from your branches.'}
+            </CardDescription>
+          </div>
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <ShoppingBag size={20} />
+          </div>
+        </div>
+
+        {recentOrdersLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-(--color-surface-soft)/40 animate-pulse" />
+            ))}
+          </div>
+        ) : recentOrders.length === 0 ? (
+          <div className="text-center py-10 text-(--color-text-muted) font-medium text-sm">No recent orders found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[10px] font-semibold uppercase tracking-normal text-(--color-text-muted) border-b border-(--color-border)">
+                  <th className="py-3 pr-4">Order</th>
+                  <th className="py-3 pr-4">Branch</th>
+                  <th className="py-3 pr-4">Items</th>
+                  <th className="py-3 pr-4 text-center">Qty</th>
+                  <th className="py-3 pr-4 text-right">Amount</th>
+                  <th className="py-3 pr-4 text-center">Status</th>
+                  <th className="py-3 text-right">Time</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-(--color-border)/60">
+                {recentOrders.map((o, idx) => {
+                  const items = Array.isArray(o.items) ? o.items : [];
+                  const totalQty = items.reduce((s, it) => s + (it.quantity || 0), 0);
+                  const itemsLabel = items.slice(0, 2).map((it) => `${it.quantity}× ${it.itemName || it.menuItem?.name || 'Item'}`).join(', ');
+                  const more = items.length > 2 ? ` +${items.length - 2} more` : '';
+                  const cancelled = ['CANCELLED', 'REJECTED'].includes(o.status);
+                  const done = ['SERVED', 'COMPLETED'].includes(o.status);
+                  const statusCls = cancelled ? 'bg-danger/10 text-danger' : done ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary';
+                  return (
+                    <motion.tr
+                      key={o._id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(idx * 0.04, 0.4) }}
+                      className="hover:bg-(--color-surface-soft)/40 transition-colors"
+                    >
+                      <td className="py-3 pr-4 text-xs font-semibold text-(--color-text-primary) whitespace-nowrap">
+                        #{o._id.substring(o._id.length - 6).toUpperCase()}
+                      </td>
+                      <td className="py-3 pr-4 text-xs font-medium text-(--color-text-secondary) whitespace-nowrap">{o.branch?.name || '—'}</td>
+                      <td className="py-3 pr-4 text-xs font-medium text-(--color-text-muted) max-w-50 truncate" title={itemsLabel + more}>{itemsLabel || '—'}{more}</td>
+                      <td className="py-3 pr-4 text-xs font-semibold text-(--color-text-primary) text-center">{totalQty}</td>
+                      <td className="py-3 pr-4 text-xs font-bold text-(--color-text-primary) text-right whitespace-nowrap">₹{Number(o.totalAmount || o.grandTotal || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-3 pr-4 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-normal ${statusCls}`}>{o.status}</span>
+                      </td>
+                      <td className="py-3 text-[11px] font-medium text-(--color-text-muted) text-right whitespace-nowrap">
+                        {new Date(o.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <Button
+          variant="ghost"
+          onClick={() => router.push(ordersHref)}
+          className="w-full mt-4 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
+        >
+          View All Orders
+        </Button>
+      </Card>
+
       {/* Recent Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent Expenditures */}
-        <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
+        <Card className="!p-5 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Expenses</CardTitle>
@@ -385,31 +488,31 @@ export default function AdminDashboard() {
                       <Receipt size={18} className="text-danger" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-(--color-text-primary)">{exp.title}</h5>
-                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{exp.locationId?.name || 'Main Office'}</p>
+                      <h5 className="text-sm font-medium text-(--color-text-primary)">{exp.title}</h5>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">{exp.locationId?.name || 'Main Office'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-danger">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-(--color-text-muted) uppercase">{new Date(exp.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-semibold text-danger">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
+                    <div className="text-[11px] font-medium text-(--color-text-muted)">{new Date(exp.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-(--color-text-muted) font-medium italic text-sm">No recent expenses found.</div>
+              <div className="text-center py-10 text-(--color-text-muted) font-medium text-sm">No recent expenses found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/expenses`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
+            className="w-full mt-6 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
           >
             View All Expenses
           </Button>
         </Card>
 
         {/* Recent Revenues */}
-        <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
+        <Card className="!p-5 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Recent Sales</CardTitle>
@@ -434,26 +537,26 @@ export default function AdminDashboard() {
                       <ShoppingBag size={18} className="text-success" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-(--color-text-primary) truncate w-32 sm:w-auto">
+                      <h5 className="text-sm font-medium text-(--color-text-primary) truncate w-32 sm:w-auto">
                         Order #{rev._id.substring(rev._id.length - 6).toUpperCase()}
                       </h5>
-                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-success">+₹{rev.totalAmount.toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-(--color-text-muted) uppercase">{new Date(rev.date).toLocaleDateString()}</div>
+                    <div className="text-sm font-semibold text-success">+₹{rev.totalAmount.toLocaleString()}</div>
+                    <div className="text-[11px] font-medium text-(--color-text-muted)">{new Date(rev.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-10 text-(--color-text-muted) font-medium italic text-sm">No recent sales found.</div>
+              <div className="text-center py-10 text-(--color-text-muted) font-medium text-sm">No recent sales found.</div>
             )}
           </div>
           <Button
             variant="ghost"
             onClick={() => router.push(`${dashPrefix}/revenue`)}
-            className="w-full mt-6 text-xs font-bold uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
+            className="w-full mt-6 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-(--color-text-primary)"
           >
             View All Sales
           </Button>
@@ -461,15 +564,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Advanced Intelligence Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Smart Forecasting Chart */}
-        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
+        <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Sales Forecast</CardTitle>
               <CardDescription>Predicted sales based on past records.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary animate-pulse">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <Zap size={20} />
             </div>
           </div>
@@ -489,14 +592,14 @@ export default function AdminDashboard() {
           <div className="mt-6 p-4 bg-primary/5 border border-primary/10 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Clock className="text-primary" size={18} />
-              <span className="text-xs font-bold text-(--color-text-muted) uppercase tracking-normal">Expected Today:</span>
+              <span className="text-xs font-medium text-(--color-text-muted) uppercase tracking-normal">Expected Today:</span>
             </div>
-            <span className="text-lg font-bold text-primary">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
+            <span className="text-lg font-semibold text-primary">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
           </div>
         </Card>
 
         {/* Attendance Trend */}
-        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
+        <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <CardTitle className="text-xl">Staff Attendance</CardTitle>
@@ -520,9 +623,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Distribution Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Category Sales Distribution */}
-        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
+        <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
           <CardTitle className="text-lg mb-6">Sales by Category</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -546,7 +649,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Payment Methods */}
-        <Card className="!p-8 glass-card border-(--color-border) premium-shadow" hover={false}>
+        <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
           <CardTitle className="text-lg mb-6">Payment Methods</CardTitle>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -573,42 +676,42 @@ export default function AdminDashboard() {
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="p-2 bg-primary/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-primary">UPI</p>
-              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.upiCount}</p>
+              <p className="text-[11px] font-medium uppercase text-primary">UPI</p>
+              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.upiCount}</p>
             </div>
             <div className="p-2 bg-secondary/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-secondary">Cash</p>
-              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.cashCount}</p>
+              <p className="text-[11px] font-medium uppercase text-secondary">Cash</p>
+              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.cashCount}</p>
             </div>
             <div className="p-2 bg-(--color-amber)/5 rounded-xl text-center">
-              <p className="text-[8px] font-bold uppercase text-(--color-amber)">Other</p>
-              <p className="text-xs font-bold">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
+              <p className="text-[11px] font-medium uppercase text-(--color-amber)">Other</p>
+              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
             </div>
           </div>
         </Card>
 
         {/* Staff Performance Leaderboard */}
-        <Card className="!p-8 glass-card border-(--color-border) premium-shadow lg:col-span-1" hover={false}>
+        <Card className="!p-5 glass-card border-(--color-border) premium-shadow lg:col-span-1" hover={false}>
           <button
             type="button"
             onClick={() => setDrawerRole('staff')}
             className="w-full flex items-center justify-between mb-6 group cursor-pointer text-left"
           >
             <CardTitle className="text-lg group-hover:text-primary transition-colors">Staff Leaderboard</CardTitle>
-            <Target size={18} className="text-(--color-amber) group-hover:scale-110 transition-transform" />
+            <Target size={18} className="text-(--color-amber) transition-transform" />
           </button>
           <div className="space-y-3">
             {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
                 <div className="flex items-center gap-3">
-                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary">
                     {i + 1}
                   </div>
-                  <span className="text-xs font-bold truncate w-24">{staff.name}</span>
+                  <span className="text-xs font-medium truncate w-24">{staff.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-success">₹{staff.revenue.toLocaleString()}</p>
-                  <p className="text-[8px] font-bold text-(--color-text-muted)">{staff.totalOrders} Orders</p>
+                  <p className="text-[11px] font-semibold text-success">₹{staff.revenue.toLocaleString()}</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted)">{staff.totalOrders} Orders</p>
                 </div>
               </div>
             ))}
@@ -619,24 +722,24 @@ export default function AdminDashboard() {
       {/* Staff & Payroll Section */}
       {(user?.role === 'admin' || user?.role === 'super_admin') && analytics?.staffStats && (
         <SlideIn delay={0.4}>
-          <Card className="!p-8 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <Card className="!p-5 bg-(--color-surface)/20 border-(--color-border)" hover={false}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-secondary/10 rounded-xl text-secondary">
-                    <Users size={24} />
+                    <Users size={22} />
                   </div>
                   <CardTitle className="text-2xl">Staff & Payroll</CardTitle>
                 </div>
                 <CardDescription>Breakdown of branch staff, chefs and monthly salary obligations.</CardDescription>
               </div>
               <div className="px-6 py-3 bg-secondary/5 border border-secondary/10 rounded-xl">
-                <p className="text-[10px] font-bold uppercase tracking-normal text-secondary mb-1">Monthly Payroll Total</p>
-                <p className="text-3xl font-bold text-secondary tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
+                <p className="text-[11px] font-medium uppercase tracking-normal text-secondary mb-1">Monthly Payroll Total</p>
+                <p className="text-2xl font-semibold text-secondary tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { label: 'Total Staff', count: analytics?.staffStats?.staffCount || 0, icon: Users, roleKey: 'staff' },
                 { label: 'Total Chefs', count: analytics?.staffStats?.chefCount || 0, icon: ChefHat, roleKey: 'chef' },
@@ -646,15 +749,15 @@ export default function AdminDashboard() {
                   key={i}
                   type="button"
                   onClick={() => setDrawerRole(item.roleKey)}
-                  className="text-left p-6 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) flex items-center justify-between group hover:border-primary/30 hover:bg-(--color-surface-soft) transition-all cursor-pointer"
+                  className="text-left p-5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) flex items-center justify-between group hover:border-primary/30 hover:bg-(--color-surface-soft) transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-105">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform">
                       <item.icon size={22} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{item.label}</p>
-                      <p className="text-2xl font-bold text-(--color-text-primary)">{item.count}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">{item.label}</p>
+                      <p className="text-2xl font-semibold text-(--color-text-primary)">{item.count}</p>
                     </div>
                   </div>
                   <ChevronDown className="text-(--color-text-muted) opacity-30 group-hover:opacity-70 group-hover:text-primary -rotate-90 transition-all" size={18} />

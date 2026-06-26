@@ -150,21 +150,21 @@ export default function PayrollRecordsPage() {
             <div className="relative p-5 sm:p-6 lg:p-7">
               <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-end 2xl:justify-between">
                 <div className="min-w-0 2xl:flex-1">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-normal text-primary-dark dark:text-primary">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-medium uppercase tracking-normal text-primary-dark dark:text-primary">
                     <span className="h-2 w-2 rounded-full bg-primary " />
                     Salary Management
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-(--color-surface-soft) text-primary shadow-sm  border border-(--color-border)">
-                      <Wallet size={28} strokeWidth={2.5} />
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-(--color-surface-soft) text-primary shadow-sm  border border-(--color-border)">
+                      <Wallet size={16} strokeWidth={2.5} />
                     </div>
 
                     <div className="min-w-0">
-                      <h1 className="text-3xl font-bold leading-tight tracking-tight text-(--color-text-primary) sm:text-4xl">
+                      <h1 className="text-2xl font-semibold leading-tight tracking-tight text-(--color-text-primary) sm:text-3xl">
                         Salary <span className="text-primary-dark dark:text-primary">History</span>
                       </h1>
-                      <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-(--color-text-secondary)">
+                      <p className="mt-2 flex items-start gap-2 text-sm font-medium text-(--color-text-secondary)">
                         <Target size={15} className="mt-0.5 shrink-0 text-primary-dark dark:text-primary" />
                         <span>Manage payouts, staff compensation, and branch-wise salary history for the selected cycle.</span>
                       </p>
@@ -175,7 +175,7 @@ export default function PayrollRecordsPage() {
                 <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 2xl:w-auto 2xl:min-w-165">
                   {/* Search */}
                   <div className="relative group">
-                    <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                    <label className="mb-2 ml-1 block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       Search
                     </label>
                     <div className="relative">
@@ -185,7 +185,7 @@ export default function PayrollRecordsPage() {
                       <input
                           type="text"
                           placeholder="Search staff..."
-                          className="h-[54px] w-full rounded-xl border border-(--color-border) bg-(--color-bg-soft)/80 py-4 pl-12 pr-4 text-sm font-bold text-(--color-text-primary) outline-none transition-all placeholder:text-(--color-text-muted) focus:border-primary focus:bg-(--color-surface) focus:ring-4 focus:ring-primary/10"
+                          className="h-[54px] w-full rounded-xl border border-(--color-border) bg-(--color-bg-soft)/80 py-2.5 pl-12 pr-4 text-sm font-medium text-(--color-text-primary) outline-none transition-all placeholder:text-(--color-text-muted) focus:border-primary focus:bg-(--color-surface) focus:ring-2 focus:ring-primary/10"
                           value={searchQuery}
                           onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -197,17 +197,17 @@ export default function PayrollRecordsPage() {
 
                   {/* Month Picker */}
                   <div>
-                    <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                    <label className="mb-2 ml-1 block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       Month
                     </label>
                     <div
                         onClick={() => monthInputRef.current?.showPicker()}
-                        className="flex h-[54px] cursor-pointer items-center rounded-xl border border-(--color-border) bg-(--color-bg-soft)/80 px-4 transition-all hover:border-primary/50 focus-within:border-primary focus-within:bg-(--color-surface) focus-within:ring-4 focus-within:ring-primary/10"
+                        className="flex h-[54px] cursor-pointer items-center rounded-xl border border-(--color-border) bg-(--color-bg-soft)/80 px-4 transition-all hover:border-primary/50 focus-within:border-primary focus-within:bg-(--color-surface) focus-within:ring-2 focus-within:ring-primary/10"
                     >
                       <input
                           ref={monthInputRef}
                           type="month"
-                          className="w-full cursor-pointer border-none bg-transparent text-sm font-bold text-(--color-text-primary) outline-none"
+                          className="w-full cursor-pointer border-none bg-transparent text-sm font-medium text-(--color-text-primary) outline-none"
                           value={month}
                           onChange={(e) => {
                             setMonth(e.target.value);
@@ -221,7 +221,7 @@ export default function PayrollRecordsPage() {
               </div>
 
               {/* Role Tabs Integrated for Alignment */}
-              <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-(--color-border) pt-8">
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-(--color-border) pt-6">
                 {[
                   { id: 'staff', label: 'Staff' },
                   { id: 'chef', label: 'Chefs' },
@@ -234,9 +234,9 @@ export default function PayrollRecordsPage() {
                       setActiveTab(tab.id);
                       setPage(1);
                     }}
-                    className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all border ${
-                      activeTab === tab.id 
-                        ? `bg-(--color-text-primary) text-(--color-bg-base) border-transparent shadow-sm  scale-105` 
+                    className={`px-5 py-2.5 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all border ${
+                      activeTab === tab.id
+                        ? `bg-(--color-text-primary) text-(--color-bg-base) border-transparent shadow-sm`
                         : `bg-(--color-surface)/50 text-(--color-text-muted) border-(--color-border) hover:border-primary/30`
                     }`}
                   >
@@ -249,24 +249,24 @@ export default function PayrollRecordsPage() {
               <div className="mt-6 flex flex-col gap-4 border-t border-(--color-border) pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="rounded-xl border border-(--color-border) bg-(--color-surface)/70 px-4 py-3">
-                    <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Salary History</p>
-                    <p className="mt-1 text-sm font-bold text-(--color-text-primary)">
+                    <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Salary History</p>
+                    <p className="mt-1 text-sm font-medium text-(--color-text-primary)">
                       {filteredSalaries.length} Staff
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-(--color-border) bg-(--color-surface)/70 px-4 py-3">
-                    <p className="text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">Cycle</p>
-                    <p className="mt-1 text-sm font-bold text-(--color-text-primary)">
+                    <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Cycle</p>
+                    <p className="mt-1 text-sm font-medium text-(--color-text-primary)">
                       {month}
                     </p>
                   </div>
 
                    <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3">
-                    <p className="text-[9px] font-bold uppercase tracking-normal text-primary-dark dark:text-primary">
+                    <p className="text-[11px] font-medium uppercase tracking-normal text-primary-dark dark:text-primary">
                       Scope
                     </p>
-                    <p className="mt-1 text-sm font-bold text-primary-dark dark:text-primary">
+                    <p className="mt-1 text-sm font-medium text-primary-dark dark:text-primary">
                       {selectedLocation === 'All'
                         ? (selectedCafeName ? `${selectedCafeName} · All Branches` : 'All Branches')
                         : selectedLocation}
@@ -291,7 +291,7 @@ export default function PayrollRecordsPage() {
                         toast.error("Something went wrong. Please try again.", { id: loadToast });
                       }
                     }}
-                    className="h-[54px] px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) font-bold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-md "
+                    className="h-[54px] px-5 py-3 bg-(--color-text-primary) text-(--color-bg-base) font-semibold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-sm "
                   >
                     Calculate Monthly Salary
                   </button>
@@ -318,9 +318,9 @@ export default function PayrollRecordsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SlideIn delay={0.1}>
-            <div className="bg-primary p-6 rounded-xl shadow-lg  text-(--color-bg-base) h-full">
-              <p className="text-xs font-bold uppercase tracking-normal opacity-80">Total Salary Payout</p>
-              <p className="text-3xl font-bold mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
+            <div className="bg-primary p-5 rounded-xl shadow-sm  text-(--color-bg-base) h-full">
+              <p className="text-xs font-medium uppercase tracking-normal opacity-80">Total Salary Payout</p>
+              <p className="text-2xl font-semibold mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
               <div className="mt-4 flex items-center text-xs font-medium opacity-90">
                 <Receipt size={14} className="mr-1" /> {selectedLocation === 'All' ? 'All Branches Total' : `${selectedLocation} Total`}
               </div>
@@ -328,31 +328,31 @@ export default function PayrollRecordsPage() {
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-(--color-surface)/40  p-6 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
-              <p className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Avg Salary / Employee</p>
-              <p className="text-3xl font-bold text-(--color-text-primary) mt-1">
+            <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
+              <p className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Avg Salary / Employee</p>
+              <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">
                 ₹{filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="bg-(--color-surface)/40  p-6 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
-              <p className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Staff Count</p>
-              <p className="text-3xl font-bold text-(--color-text-primary) mt-1">{filteredSalaries.length}</p>
+            <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
+              <p className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Staff Count</p>
+              <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">{filteredSalaries.length}</p>
             </div>
           </SlideIn>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <SlideIn delay={0.4}>
-            <div className="export-chart bg-(--color-surface)/40  p-8 rounded-xl border border-(--color-border) shadow-sm transition-colors">
-              <div className="flex items-center justify-between mb-8">
+            <div className="export-chart bg-(--color-surface)/40  p-5 rounded-xl border border-(--color-border) shadow-sm transition-colors">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-bold text-(--color-text-primary) tracking-tight">
+                  <h2 className="text-lg font-semibold text-(--color-text-primary) tracking-tight">
                     {selectedLocation === 'All' ? 'Branch Breakdown' : 'Staff Breakdown'}
                   </h2>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">
+                  <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-1">
                     {selectedLocation === 'All' ? 'Payroll weight by location' : `Salary weights in ${selectedLocation}`}
                   </p>
                 </div>
@@ -380,13 +380,13 @@ export default function PayrollRecordsPage() {
           </SlideIn>
 
           <SlideIn delay={0.5}>
-            <div className="export-chart bg-(--color-surface)/40  p-8 rounded-xl border border-(--color-border) shadow-sm transition-colors">
-              <div className="flex items-center justify-between mb-8">
+            <div className="export-chart bg-(--color-surface)/40  p-5 rounded-xl border border-(--color-border) shadow-sm transition-colors">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-bold text-(--color-text-primary) tracking-tight">
+                  <h2 className="text-lg font-semibold text-(--color-text-primary) tracking-tight">
                     {selectedLocation === 'All' ? 'Comparative Cost' : 'Individual Payouts'}
                   </h2>
-                  <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-1">
+                  <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-1">
                     {selectedLocation === 'All' ? 'Direct salary payout comparison' : `Top earners in ${selectedLocation}`}
                   </p>
                 </div>
@@ -420,7 +420,7 @@ export default function PayrollRecordsPage() {
                 <div className="h-20 w-20 rounded-xl bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) mb-6">
                   <Receipt size={40} strokeWidth={1} />
                 </div>
-                <p className="text-(--color-text-muted) font-bold text-lg tracking-tight">No salary history found.</p>
+                <p className="text-(--color-text-muted) font-medium text-lg tracking-tight">No salary history found.</p>
                 <p className="text-(--color-text-muted) text-xs mt-2 font-medium">Try adjusting your filters or time range.</p>
               </div>
             ) : (
@@ -430,33 +430,33 @@ export default function PayrollRecordsPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + idx * 0.05 }}
                   key={s._id}
-                  className="bg-(--color-surface)/40  p-6 rounded-xl border border-(--color-border) flex flex-col justify-between group hover:border-primary/40 transition-all shadow-sm"
+                  className="bg-(--color-surface)/40  p-5 rounded-xl border border-(--color-border) flex flex-col justify-between group hover:border-primary/40 transition-all shadow-sm"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary-dark dark:text-primary flex items-center justify-center text-xl font-bold border border-primary/20 shadow-inner transition-transform">
+                        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary-dark dark:text-primary flex items-center justify-center text-xl font-semibold border border-primary/20 shadow-inner transition-transform">
                           {s.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-(--color-text-primary) text-base leading-tight">{s.name}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">{s.email}</p>
+                          <p className="font-medium text-(--color-text-primary) text-base leading-tight">{s.name}</p>
+                          <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted) mt-1">{s.email}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-normal px-2.5 py-1 bg-primary/10 text-primary-dark dark:text-primary rounded-lg">
+                      <span className="text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 bg-primary/10 text-primary-dark dark:text-primary rounded-lg">
                         {(s.role === 'location_admin' || s.role === 'branch_admin') ? 'Branch Admin' : s.role?.replace('_', ' ')}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between border-y border-(--color-border) py-4 my-4">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Location</p>
-                        <p className="text-sm font-bold text-(--color-text-secondary)">{s.locationName || 'Unassigned'}</p>
+                        <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Location</p>
+                        <p className="text-sm font-medium text-(--color-text-secondary)">{s.locationName || 'Unassigned'}</p>
                       </div>
                       {['staff', 'chef'].includes(activeTab) && (
                         <div className="text-right">
-                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Working Days</p>
-                          <p className="text-sm font-bold text-(--color-text-secondary)">
+                          <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Working Days</p>
+                          <p className="text-sm font-medium text-(--color-text-secondary)">
                             <span className="text-primary-dark dark:text-primary">{s.payableDays}</span> / {s.daysInMonth || 30}
                           </p>
                         </div>
@@ -473,7 +473,7 @@ export default function PayrollRecordsPage() {
                           monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
                         });
                       }}
-                      className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-surface-soft) hover:bg-primary hover:text-(--color-bg-base) text-(--color-text-muted) rounded-xl transition-colors"
+                      className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-surface-soft) hover:bg-primary hover:text-(--color-bg-base) text-(--color-text-muted) rounded-xl transition-colors"
                     >
                       {['staff', 'chef'].includes(activeTab) ? 'Edit Profile' : 'Update'}
                     </button>
@@ -481,7 +481,7 @@ export default function PayrollRecordsPage() {
                     {['staff', 'chef'].includes(activeTab) ? (
                       <div className="flex flex-wrap gap-2 flex-1">
                          {s.payrollRecord && s.payrollRecord.status === 'PAID' ? (
-                            <span className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-success/15 text-success rounded-xl text-center">
+                            <span className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-success/15 text-success rounded-xl text-center">
                               Paid
                             </span>
                          ) : s.payrollRecord ? (
@@ -492,7 +492,7 @@ export default function PayrollRecordsPage() {
                                     setAdjustingSalary(s);
                                     setAdjustForm({ type: 'deduction', amount: '', reason: '' });
                                   }}
-                                  className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-secondary) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
+                                  className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-surface-soft) text-(--color-text-secondary) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
                                 >
                                   Adjust
                                 </button>
@@ -509,7 +509,7 @@ export default function PayrollRecordsPage() {
                                       toast.error(e.response?.data?.message || "Something went wrong. Please try again.", { id: loadToast });
                                     }
                                   }}
-                                  className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-success text-(--color-bg-base) hover:bg-success/90 rounded-xl transition-all text-center"
+                                  className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-normal bg-success text-(--color-bg-base) hover:bg-success/90 rounded-xl transition-all text-center"
                                 >
                                   Approve
                                 </button>
@@ -518,7 +518,7 @@ export default function PayrollRecordsPage() {
                          ) : null}
                         <button
                           onClick={() => setViewingSalary(s)}
-                          className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
+                          className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors text-center"
                         >
                           View
                         </button>
@@ -532,7 +532,7 @@ export default function PayrollRecordsPage() {
                             monthlySalary: s.monthlySalary || '', role: s.role, address1: s.address1 || ''
                           });
                         }}
-                        className="flex-1 py-3 text-[10px] font-bold uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors"
+                        className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors"
                       >
                         View Profile
                       </button>
@@ -559,8 +559,8 @@ export default function PayrollRecordsPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`h-10 w-10 rounded-xl font-bold text-xs transition-all ${page === p
-                      ? 'bg-primary text-(--color-bg-base) shadow-lg  scale-105'
+                  className={`h-10 w-10 rounded-xl font-semibold text-xs transition-all ${page === p
+                      ? 'bg-primary text-(--color-bg-base) shadow-sm'
                       : 'bg-(--color-surface) border border-(--color-border) text-(--color-text-muted) hover:text-primary'
                     }`}
                 >
@@ -586,24 +586,24 @@ export default function PayrollRecordsPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="bg-(--color-surface) w-full max-w-lg rounded-xl shadow-sm overflow-hidden border border-(--color-border)"
             >
-              <div className="p-8 border-b border-(--color-border) flex justify-between items-start">
+              <div className="p-5 border-b border-(--color-border) flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-bold text-(--color-text-primary)">Payroll <span className="text-primary">Breakdown</span></h3>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">{month} Cycle</p>
+                  <h3 className="text-xl font-semibold text-(--color-text-primary)">Payroll <span className="text-primary">Breakdown</span></h3>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">{month} Cycle</p>
                 </div>
                 <button onClick={() => setViewingSalary(null)} className="h-10 w-10 rounded-full bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) hover:text-danger transition-colors">
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-5 space-y-6">
                 <div className="flex items-center gap-4 p-4 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
-                  <div className="h-12 w-12 rounded-xl bg-primary text-(--color-bg-base) flex items-center justify-center text-xl font-bold">
+                  <div className="h-12 w-12 rounded-xl bg-primary text-(--color-bg-base) flex items-center justify-center text-xl font-semibold">
                     {viewingSalary.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-bold text-(--color-text-primary)">{viewingSalary.name}</p>
-                    <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">
+                    <p className="font-medium text-(--color-text-primary)">{viewingSalary.name}</p>
+                    <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">
                       {viewingSalary.role === 'location_admin' || viewingSalary.role === 'branch_admin' ? 'Branch Admin' : viewingSalary.role?.replace('_', ' ')}
                     </p>
                   </div>
@@ -611,12 +611,12 @@ export default function PayrollRecordsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Fixed Salary</p>
-                    <p className="text-xl font-bold text-(--color-text-primary)">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Fixed Salary</p>
+                    <p className="text-xl font-semibold text-(--color-text-primary)">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
                   </div>
                   <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                    <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Payable Days</p>
-                    <p className="text-xl font-bold text-(--color-text-primary)">{viewingSalary.payableDays} <span className="text-[10px] text-(--color-text-muted)">/ {viewingSalary.daysInMonth}</span></p>
+                    <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Payable Days</p>
+                    <p className="text-xl font-semibold text-(--color-text-primary)">{viewingSalary.payableDays} <span className="text-[10px] text-(--color-text-muted)">/ {viewingSalary.daysInMonth}</span></p>
                   </div>
                 </div>
 
@@ -630,29 +630,29 @@ export default function PayrollRecordsPage() {
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success">
-                          <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
-                          <p className="text-xl font-bold">+ ₹{totalBonus.toLocaleString()}</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
+                          <p className="text-xl font-semibold">+ ₹{totalBonus.toLocaleString()}</p>
                         </div>
                         <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger">
-                          <p className="text-[10px] font-bold uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
-                          <p className="text-xl font-bold">- ₹{totalPenalty.toLocaleString()}</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
+                          <p className="text-xl font-semibold">- ₹{totalPenalty.toLocaleString()}</p>
                         </div>
                       </div>
 
                       {(pr.adjustments || []).length > 0 && (
                         <div className="rounded-xl border border-(--color-border) bg-(--color-surface-soft)/40 p-4">
-                          <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-3">Manual Adjustments</p>
+                          <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-3">Manual Adjustments</p>
                           <div className="space-y-2">
                             {pr.adjustments.map((a, i) => (
                               <div key={i} className="flex items-center justify-between gap-3 text-xs">
                                 <div className="min-w-0">
-                                  <span className={`font-bold ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
+                                  <span className={`font-medium ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
                                     {a.type === 'bonus' ? 'Bonus' : 'Deduction'}
                                   </span>
                                   <span className="text-(--color-text-secondary)"> — {a.reason}</span>
                                   {a.byName && <span className="text-(--color-text-muted)"> ({a.byName})</span>}
                                 </div>
-                                <span className={`shrink-0 font-bold ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
+                                <span className={`shrink-0 font-medium ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
                                   {a.type === 'bonus' ? '+' : '-'} ₹{(a.amount || 0).toLocaleString()}
                                 </span>
                               </div>
@@ -664,18 +664,18 @@ export default function PayrollRecordsPage() {
                   );
                 })()}
 
-                <div className="p-6 rounded-xl bg-primary text-(--color-bg-base) shadow-sm ">
+                <div className="p-5 rounded-xl bg-primary text-(--color-bg-base) shadow-sm ">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">Final Net Payout</span>
-                    <span className="px-2 py-0.5 bg-(--color-bg-base)/20 rounded-md text-[8px] font-bold uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
+                    <span className="text-[11px] font-medium uppercase tracking-normal opacity-80">Final Net Payout</span>
+                    <span className="px-2 py-0.5 bg-(--color-bg-base)/20 rounded-md text-[8px] font-medium uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
                   </div>
-                  <p className="text-4xl font-bold tracking-tight">
+                  <p className="text-2xl font-semibold tracking-tight">
                     ₹{(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 </div>
               </div>
 
-              <div className="p-8 bg-(--color-surface-soft)/30 border-t border-(--color-border) flex flex-col sm:flex-row gap-4">
+              <div className="p-5 bg-(--color-surface-soft)/30 border-t border-(--color-border) flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => {
                     const s = viewingSalary;
@@ -688,14 +688,14 @@ export default function PayrollRecordsPage() {
                     printWindow.document.close();
                     setTimeout(() => printWindow.print(), 500);
                   }}
-                  className="flex-1 py-4 rounded-xl bg-(--color-surface) text-(--color-text-primary) text-xs font-bold uppercase tracking-normal border border-(--color-border) shadow-sm transition-all hover:bg-(--color-surface-soft)"
+                  className="flex-1 py-4 rounded-xl bg-(--color-surface) text-(--color-text-primary) text-xs font-medium uppercase tracking-normal border border-(--color-border) shadow-sm transition-all hover:bg-(--color-surface-soft)"
                 >
                   Print Payslip
                 </button>
 
                 <button
                   onClick={() => setViewingSalary(null)}
-                  className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal transition-all  shadow-sm "
+                  className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-semibold uppercase tracking-normal transition-all  shadow-sm "
                 >
                   Close
                 </button>
@@ -709,16 +709,16 @@ export default function PayrollRecordsPage() {
              <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-full max-w-lg bg-(--color-surface) rounded-xl p-10 border border-(--color-border) shadow-sm"
+              className="relative w-full max-w-lg bg-(--color-surface) rounded-xl p-6 border border-(--color-border) shadow-sm"
             >
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center text-2xl font-bold text-(--color-bg-base) shadow-lg ">
+                    <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-2xl font-semibold text-(--color-bg-base) shadow-sm ">
                       {editingUser.name.charAt(0)}
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight leading-none">{editingUser.name}</h2>
-                      <p className="text-[10px] font-bold uppercase text-primary-dark dark:text-primary tracking-normal mt-2">Edit Details</p>
+                      <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight leading-none">{editingUser.name}</h2>
+                      <p className="text-[11px] font-medium uppercase text-primary-dark dark:text-primary tracking-normal mt-2">Edit Details</p>
                     </div>
                  </div>
                  <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-colors">
@@ -740,28 +740,28 @@ export default function PayrollRecordsPage() {
               }} className="space-y-6">
                  <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Full Name</label>
-                      <input className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
+                      <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Full Name</label>
+                      <input className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Monthly Salary (₹)</label>
-                      <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
+                      <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Monthly Salary (₹)</label>
+                      <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Contact</label>
-                        <input type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: digitsOnly(e.target.value, 10)})} />
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Contact</label>
+                        <input type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: digitsOnly(e.target.value, 10)})} />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Role</label>
-                        <input disabled className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-muted) outline-none opacity-60" value={editFormData.role} />
+                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Role</label>
+                        <input disabled className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-muted) outline-none opacity-60" value={editFormData.role} />
                       </div>
                     </div>
                  </div>
 
                  <div className="flex gap-4 pt-4">
-                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
-                    <button type="submit" className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal shadow-sm ">Update Profile</button>
+                    <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
+                    <button type="submit" className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-semibold uppercase tracking-normal shadow-sm ">Update Profile</button>
                  </div>
               </form>
             </motion.div>
@@ -773,12 +773,12 @@ export default function PayrollRecordsPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-full max-w-md bg-(--color-surface) rounded-xl p-8 border border-(--color-border) shadow-sm"
+              className="relative w-full max-w-md bg-(--color-surface) rounded-xl p-6 border border-(--color-border) shadow-sm"
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-(--color-text-primary) tracking-tight">Adjust <span className="text-primary">Salary</span></h2>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-1">
+                  <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight">Adjust <span className="text-primary">Salary</span></h2>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">
                     {adjustingSalary.name} · {month}
                   </p>
                 </div>
@@ -788,15 +788,15 @@ export default function PayrollRecordsPage() {
               </div>
 
               <div className="mb-5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) p-4 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Current Net Payout</span>
-                <span className="text-lg font-bold text-(--color-text-primary)">
+                <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Current Net Payout</span>
+                <span className="text-lg font-semibold text-(--color-text-primary)">
                   ₹{(adjustingSalary.payrollRecord?.netSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Type</label>
+                  <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Type</label>
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { id: 'deduction', label: 'Deduct (−)' },
@@ -806,7 +806,7 @@ export default function PayrollRecordsPage() {
                         key={opt.id}
                         type="button"
                         onClick={() => setAdjustForm({ ...adjustForm, type: opt.id })}
-                        className={`py-3 rounded-xl text-[11px] font-bold uppercase tracking-normal border transition-all ${
+                        className={`py-3 rounded-xl text-[11px] font-medium uppercase tracking-normal border transition-all ${
                           adjustForm.type === opt.id
                             ? (opt.id === 'bonus' ? 'bg-success text-(--color-bg-base) border-transparent' : 'bg-danger text-(--color-bg-base) border-transparent')
                             : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:border-primary/40'
@@ -819,7 +819,7 @@ export default function PayrollRecordsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Amount (₹)</label>
+                  <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Amount (₹)</label>
                   <input
                     type="number"
                     min="1"
@@ -827,12 +827,12 @@ export default function PayrollRecordsPage() {
                     value={adjustForm.amount}
                     onChange={e => setAdjustForm({ ...adjustForm, amount: e.target.value })}
                     placeholder="e.g. 500"
-                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Reason</label>
+                  <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Reason</label>
                   <textarea
                     rows={2}
                     value={adjustForm.reason}
@@ -844,8 +844,8 @@ export default function PayrollRecordsPage() {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <button type="button" onClick={() => setAdjustingSalary(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
-                <button type="button" onClick={submitAdjustment} className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-bold uppercase tracking-normal shadow-sm">Apply</button>
+                <button type="button" onClick={() => setAdjustingSalary(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
+                <button type="button" onClick={submitAdjustment} className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-semibold uppercase tracking-normal shadow-sm">Apply</button>
               </div>
             </motion.div>
           </div>

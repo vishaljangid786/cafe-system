@@ -321,7 +321,7 @@ export default function TablesPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Globe size={20} className="text-primary" />
               </div>
@@ -332,7 +332,7 @@ export default function TablesPage() {
           {can(user, 'tables.add') && (
             <Button
               variant="primary"
-              className="!rounded-xl !py-2.5 px-5 shadow-lg  whitespace-nowrap self-start sm:self-auto"
+              className="!rounded-xl !py-2.5 px-5 shadow-sm  whitespace-nowrap self-start sm:self-auto"
               icon={Plus}
               onClick={() => {
                 setIsEditing(false);
@@ -360,8 +360,8 @@ export default function TablesPage() {
                   <stat.icon size={18} className={toneText(stat.color)} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">{stat.val}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
@@ -380,7 +380,7 @@ export default function TablesPage() {
               return (
                 <SlideIn key={table._id} delay={i * 0.02} direction="up">
                   <div
-                    className={`relative group rounded-xl border-2 overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg
+                    className={`relative group rounded-xl border-2 overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-sm
                         ${isAvailable
                         ? 'border-(--color-border) dark:border-(--color-border) hover:border-success/60'
                         : isBooked
@@ -395,31 +395,31 @@ export default function TablesPage() {
                     <div className="p-4 flex flex-col items-center gap-2">
                       {/* Table number */}
                       <div className="relative mt-1">
-                        <span className="text-5xl font-bold tracking-tight text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">
+                        <span className="text-2xl font-semibold tracking-tight text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">
                           {table.tableNumber}
                         </span>
-                        <span className="absolute -top-1 -right-3 text-[9px] font-bold text-(--color-text-muted) bg-(--color-surface-soft) dark:bg-(--color-surface) px-1 rounded">T</span>
+                        <span className="absolute -top-1 -right-3 text-[11px] font-medium text-(--color-text-muted) bg-(--color-surface-soft) dark:bg-(--color-surface) px-1 rounded">T</span>
                       </div>
 
                       {/* Table Name */}
                       {table.tableName && (
-                        <span className="text-[11px] font-bold text-primary uppercase tracking-tight -mt-1">{table.tableName}</span>
+                        <span className="text-[11px] font-medium text-primary tracking-tight -mt-1">{table.tableName}</span>
                       )}
 
                       {/* Capacity */}
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-(--color-text-muted)">
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-(--color-text-muted)">
                         <Users size={10} className="text-(--color-text-muted)" />
                         <span>{table.capacity || 1} Seater</span>
                       </div>
 
                       {/* Status badge */}
-                      <span className={`text-[9px] font-bold uppercase tracking-normal px-2.5 py-1 rounded-full ${toneSoft(statusColor)} ${toneText(statusColor)}`}>
+                      <span className={`text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 rounded-full ${toneSoft(statusColor)} ${toneText(statusColor)}`}>
                         {statusLabel}
                       </span>
 
                       {/* Revenue */}
                       {isBooked && table.totalAmount > 0 && (
-                        <span className="text-sm font-bold text-primary">₹{Number(table.totalAmount).toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-primary">₹{Number(table.totalAmount).toLocaleString()}</span>
                       )}
 
                       {/* Action buttons */}
@@ -452,7 +452,7 @@ export default function TablesPage() {
         {tables.length === 0 && (
           <div className="text-center py-16 glass-morphism rounded-xl border border-dashed border-(--color-border) dark:border-(--color-border)">
             <Globe size={36} className="mx-auto text-(--color-text-muted) dark:text-(--color-text-secondary) mb-3" strokeWidth={1.5} />
-            <p className="text-(--color-text-muted) font-bold text-sm">No tables found</p>
+            <p className="text-(--color-text-muted) font-medium text-sm">No tables found</p>
           </div>
         )}
 
@@ -474,33 +474,33 @@ export default function TablesPage() {
         >
           <form onSubmit={handleAddTable} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Table Number</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Table Number</label>
               <input
                 required
                 type="number"
-                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary p-5 text-sm font-bold dark:text-(--color-text-primary) outline-none transition-all"
+                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary px-5 py-4 text-sm font-medium dark:text-(--color-text-primary) outline-none transition-all"
                 value={newTableNumber}
                 onChange={e => setNewTableNumber(e.target.value)}
                 placeholder="e.g. 101"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Table Name (Optional)</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Table Name (Optional)</label>
               <input
                 type="text"
-                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary p-5 text-sm font-bold dark:text-(--color-text-primary) outline-none transition-all"
+                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary px-5 py-4 text-sm font-medium dark:text-(--color-text-primary) outline-none transition-all"
                 value={newTableName}
                 onChange={e => setNewTableName(e.target.value)}
                 placeholder="e.g. Window Corner"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Seating Capacity</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Seating Capacity</label>
               <input
                 required
                 type="number"
                 min="1"
-                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary p-5 text-sm font-bold dark:text-(--color-text-primary) outline-none transition-all"
+                className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) focus:ring-2 focus:ring-primary px-5 py-4 text-sm font-medium dark:text-(--color-text-primary) outline-none transition-all"
                 value={newTableCapacity}
                 onChange={e => setNewTableCapacity(e.target.value)}
                 placeholder="e.g. 4"
@@ -509,7 +509,7 @@ export default function TablesPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full !rounded-xl !py-5 shadow-sm "
+              className="w-full !rounded-xl !py-3.5 shadow-sm "
               icon={isEditing ? Edit3 : Plus}
             >
               {isEditing ? 'Update Table' : 'Add Table'}
@@ -524,19 +524,19 @@ export default function TablesPage() {
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[75vh]">
               {/* Left Side: Active Registry (Order Summary) */}
               <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) dark:bg-(--color-bg)/30 rounded-xl border border-(--color-border) dark:border-(--color-border) overflow-hidden">
-                <div className="p-6 border-b border-(--color-border) dark:border-(--color-border) flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center">
+                <div className="p-5 border-b border-(--color-border) dark:border-(--color-border) flex items-center justify-between">
+                  <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                     <ShoppingBag size={14} className="mr-2 text-primary" /> Current Order
                   </h3>
-                  <span className="text-[10px] font-bold bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) px-3 py-1 rounded-full uppercase tracking-normal">
+                  <span className="text-[11px] font-medium bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) px-2.5 py-1 rounded-full uppercase tracking-normal">
                     {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)} Items
                   </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
                   {pendingOrders.map((order, idx) => (
                     <motion.div
                       layout
@@ -556,8 +556,8 @@ export default function TablesPage() {
                           )}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-(--color-text-muted) tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-medium text-(--color-text-primary) dark:text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
@@ -569,7 +569,7 @@ export default function TablesPage() {
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-semibold text-(--color-text-primary) dark:text-(--color-text-primary)">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
                             className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-(--color-surface) dark:hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-all"
@@ -577,7 +577,7 @@ export default function TablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-bold text-primary w-16 text-right">
+                        <div className="text-sm font-semibold text-primary w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -593,27 +593,27 @@ export default function TablesPage() {
                   {pendingOrders.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Order is Empty</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Order is Empty</p>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 border-t border-(--color-border) dark:border-(--color-border) bg-white/50 dark:bg-(--color-surface)/50 space-y-4">
+                <div className="p-5 border-t border-(--color-border) dark:border-(--color-border) bg-white/50 dark:bg-(--color-surface)/50 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                    <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       <span>Subtotal</span>
                       <span>₹{pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-success">
+                      <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-success">
                         <span>Discount</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="h-px bg-(--color-surface-soft) dark:bg-(--color-surface) my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Grand Total</span>
-                      <span className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
+                      <span className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Grand Total</span>
+                      <span className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
                         ₹{Math.max(0,
                           pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -623,7 +623,7 @@ export default function TablesPage() {
                   <div className="w-full">
                     <Button
                       variant="primary"
-                      className="w-full !rounded-xl !py-4 shadow-sm  bg-success hover:bg-success text-[10px] font-bold uppercase tracking-normal"
+                      className="w-full !rounded-xl !py-3.5 shadow-sm  bg-success hover:bg-success text-[11px] font-medium uppercase tracking-normal"
                       icon={Receipt}
                       onClick={() => setIsBillPreviewOpen(true)}
                     >
@@ -643,7 +643,7 @@ export default function TablesPage() {
                   <input
                     type="text"
                     placeholder="Search menu..."
-                    className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                    className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) pl-12 pr-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -652,7 +652,7 @@ export default function TablesPage() {
                 {/* Most Selling / Recommendations */}
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center">
+                    <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                       <Zap size={12} className="mr-2 text-primary" /> Best Sellers
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
@@ -675,7 +675,7 @@ export default function TablesPage() {
                             </div>
                             {out ? (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <span className="text-[9px] font-bold uppercase tracking-normal text-white bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
+                                <span className="text-[11px] font-medium uppercase tracking-normal text-white bg-danger/90 px-2 py-1 rounded-md">Out of stock</span>
                               </div>
                             ) : (
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
@@ -683,11 +683,11 @@ export default function TablesPage() {
                               </div>
                             )}
                           </div>
-                          <div className="text-[10px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
                           <div className="flex items-center justify-between mt-1">
-                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                             {tracks && (
-                              <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                              <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                 {qty <= 0 ? 'Out' : `${qty} left`}
                               </span>
                             )}
@@ -701,7 +701,7 @@ export default function TablesPage() {
 
                 {/* Main Menu Grid */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">All Items</h3>
+                  <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">All Items</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {menuItems
                       .filter(m => m.name.toLowerCase().includes(menuSearch.toLowerCase()))
@@ -726,16 +726,16 @@ export default function TablesPage() {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[11px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) leading-tight truncate">{item.name}</div>
+                            <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary) leading-tight truncate">{item.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</span>
+                              <span className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</span>
                               {tracks && (
-                                <span className={`text-[9px] font-bold uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
+                                <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                   · {qty <= 0 ? 'Out of stock' : `${qty} left`}
                                 </span>
                               )}
                               {!tracks && item.isAvailable === false && (
-                                <span className="text-[9px] font-bold uppercase tracking-normal text-danger">· Unavailable</span>
+                                <span className="text-[11px] font-medium uppercase tracking-normal text-danger">· Unavailable</span>
                               )}
                             </div>
                           </div>
@@ -749,28 +749,28 @@ export default function TablesPage() {
                 </div>
 
                 {/* Coupon Panel */}
-                <div className="p-6 bg-(--color-surface-soft) dark:bg-(--color-bg)/30 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                <div className="p-5 bg-(--color-surface-soft) dark:bg-(--color-bg)/30 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon</label>
+                      <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="Enter code"
-                          className="flex-1 bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                          className="flex-1 bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="px-6 bg-primary text-(--color-on-primary) rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-(--color-primary-hover) transition-all"
+                          className="px-6 bg-primary text-(--color-on-primary) rounded-xl text-[11px] font-medium uppercase tracking-normal hover:bg-(--color-primary-hover) transition-all"
                         >
                           Apply
                         </button>
                       </div>
                     </div>
                     {appliedCoupon && (
-                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[10px] font-bold text-success flex items-center gap-2">
+                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[11px] font-medium text-success flex items-center gap-2">
                         <Check size={12} /> {appliedCoupon.code} applied
                       </div>
                     )}

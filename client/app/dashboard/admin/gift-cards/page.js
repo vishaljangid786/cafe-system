@@ -53,7 +53,7 @@ export default function GiftCardsPage() {
 
   if (loading) return <LoadingScreen />;
 
-  const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none focus:border-primary';
+  const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none focus:border-primary';
 
   return (
     <PageTransition>
@@ -62,8 +62,8 @@ export default function GiftCardsPage() {
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-primary/10 text-primary"><Gift size={22} /></div>
             <div>
-              <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Gift Cards</h1>
-              <p className="text-[11px] font-bold text-(--color-text-muted) uppercase tracking-normal">Issue & redeem store credit</p>
+              <h1 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">Gift Cards</h1>
+              <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Issue & redeem store credit</p>
             </div>
           </div>
         </SlideIn>
@@ -72,28 +72,28 @@ export default function GiftCardsPage() {
           {/* Issue */}
           <SlideIn delay={0.05}>
             <div className="glass-card p-6 rounded-xl space-y-3 h-full">
-              <h2 className="text-sm font-bold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Issue a card</h2>
+              <h2 className="text-sm font-semibold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Issue a card</h2>
               <input type="number" min="0" onKeyDown={blockNegative} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (₹)" className={`${inputCls} w-full`} />
               <input value={form.issuedToName} onChange={(e) => setForm({ ...form, issuedToName: e.target.value })} placeholder="Recipient name (optional)" className={`${inputCls} w-full`} />
               <input type="tel" inputMode="numeric" maxLength={10} value={form.issuedToPhone} onChange={(e) => setForm({ ...form, issuedToPhone: digitsOnly(e.target.value, 10) })} placeholder="Phone (optional)" className={`${inputCls} w-full`} />
-              <button onClick={issue} disabled={busy} className="w-full py-3 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Issue card</button>
+              <button onClick={issue} disabled={busy} className="w-full py-3 bg-primary text-(--color-on-primary) text-[11px] font-semibold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Issue card</button>
             </div>
           </SlideIn>
 
           {/* Lookup (balance check) */}
           <SlideIn delay={0.1}>
             <div className="glass-card p-6 rounded-xl space-y-3 h-full">
-              <h2 className="text-sm font-bold text-(--color-text-primary) flex items-center gap-2"><Search size={15} className="text-primary" /> Check balance</h2>
+              <h2 className="text-sm font-semibold text-(--color-text-primary) flex items-center gap-2"><Search size={15} className="text-primary" /> Check balance</h2>
               <div className="flex gap-2">
                 <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Card code (e.g. GC-XXXX)" className={`${inputCls} flex-1`} />
-                <button onClick={lookup} className="px-4 py-2.5 bg-(--color-surface-soft) border border-(--color-border) text-[10px] font-bold uppercase tracking-normal rounded-xl text-(--color-text-primary)">Check</button>
+                <button onClick={lookup} className="px-4 py-2.5 bg-(--color-surface-soft) border border-(--color-border) text-[11px] font-medium uppercase tracking-normal rounded-xl text-(--color-text-primary)">Check</button>
               </div>
               {found && (
                 <div className="p-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
-                  <p className="text-xs font-bold text-(--color-text-primary)">{found.code} · balance <span className="text-primary">{money(found.balance)}</span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
+                  <p className="text-xs font-medium text-(--color-text-primary)">{found.code} · balance <span className="text-primary font-semibold">{money(found.balance)}</span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
                 </div>
               )}
-              <p className="text-[10px] text-(--color-text-muted)">To redeem, open the order in All Orders → Redeem gift card.</p>
+              <p className="text-[11px] text-(--color-text-muted)">To redeem, open the order in All Orders → Redeem gift card.</p>
             </div>
           </SlideIn>
         </div>
@@ -101,16 +101,16 @@ export default function GiftCardsPage() {
         {/* List */}
         <SlideIn delay={0.15}>
           <div className="glass-card p-6 rounded-xl space-y-3">
-            <h2 className="text-sm font-bold text-(--color-text-primary)">Issued cards</h2>
+            <h2 className="text-sm font-semibold text-(--color-text-primary)">Issued cards</h2>
             {cards.length === 0 && <p className="text-xs text-(--color-text-muted)">No gift cards yet.</p>}
             <div className="divide-y divide-(--color-border)">
               {cards.map((c) => (
                 <div key={c._id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-xs font-bold text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[9px] uppercase">· {c.issuedToName || 'guest'}</span></p>
-                    <p className="text-[10px] text-(--color-text-muted)">Issued {money(c.initialBalance)} · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
+                    <p className="text-xs font-medium text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[11px]">· {c.issuedToName || 'guest'}</span></p>
+                    <p className="text-[11px] text-(--color-text-muted)">Issued {money(c.initialBalance)} · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <span className={`text-sm font-bold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}>{money(c.balance)}</span>
+                  <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}>{money(c.balance)}</span>
                 </div>
               ))}
             </div>

@@ -22,14 +22,14 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
   };
 
   return (
-    <div className="bg-(--color-surface)/80  rounded-xl p-6 border border-(--color-border) flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="bg-(--color-surface)/80  rounded-xl p-5 border border-(--color-border) flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300">
       <div className={`h-12 w-12 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-(--color-text-muted) bg-(--color-surface-soft)'}`}>
         <Icon size={20} />
       </div>
       <div>
-        <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight leading-none">{value}</p>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-2">{label}</p>
-        {sub && <p className="text-[9px] font-bold text-(--color-text-secondary) mt-0.5">{sub}</p>}
+        <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight leading-none">{value}</p>
+        <p className="text-[11px] font-medium text-(--color-text-muted) mt-2">{label}</p>
+        {sub && <p className="text-[11px] font-medium text-(--color-text-secondary) mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -118,12 +118,12 @@ export default function StaffPerformanceDashboard({ user, role }) {
   if (!user) return null;
 
   return (
-    <div className="max-w-400 mx-auto pb-20 space-y-10">
+    <div className="max-w-400 mx-auto pb-10 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <TrendingUp size={24} className="text-(--color-on-primary)" />
             </div>
             {role === 'chef' ? 'Chef' : 'Staff'} Performance Dashboard
@@ -133,39 +133,39 @@ export default function StaffPerformanceDashboard({ user, role }) {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-(--color-surface)/80  p-8 rounded-xl border border-(--color-border) shadow-sm space-y-6">
+      <div className="bg-(--color-surface)/80  p-5 rounded-xl border border-(--color-border) shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-(--color-border)">
           <Filter size={16} className="text-primary" />
-          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">Filters</span>
+          <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Filters</span>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> From Date
             </label>
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
+              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-medium focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> To Date
             </label>
             <input
               type="date"
               value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-bold focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
+              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) text-xs font-medium focus:border-primary focus:outline-none transition-all text-(--color-text-primary)"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Bookmark size={12} /> Category
             </label>
             <PremiumSelect
@@ -180,7 +180,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Utensils size={12} /> Food Item
             </label>
             <PremiumSelect
@@ -195,7 +195,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <CreditCard size={12} /> Payment Type
             </label>
             <PremiumSelect
@@ -213,7 +213,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Ticket size={12} /> Coupon Used
             </label>
             <PremiumSelect
@@ -232,7 +232,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
               onClick={() => setFilters({
                 startDate: '', endDate: '', category: '', foodItem: '', paymentType: '', coupon: ''
               })}
-              className="w-full py-3 bg-primary text-(--color-on-primary) hover:bg-primary/80 rounded-xl text-xs font-bold uppercase tracking-normal transition-all shadow-sm"
+              className="w-full py-3 bg-primary text-(--color-on-primary) hover:bg-primary/80 rounded-xl text-xs font-semibold uppercase tracking-normal transition-all shadow-sm"
             >
               Reset Filters
             </button>
@@ -241,12 +241,12 @@ export default function StaffPerformanceDashboard({ user, role }) {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 animate-pulse">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="h-28 bg-(--color-surface-soft) rounded-xl" />)}
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <MetricCard label="Total Orders" value={stats?.totalOrders || 0} sub="Orders you handled" icon={ShoppingBag} color="amber" />
             <MetricCard label="Highest Order" value={`₹${stats?.highestValue || 0}`} sub="Your biggest bill" icon={Award} color="emerald" />
             <MetricCard label="Lowest Order" value={`₹${stats?.lowestValue || 0}`} sub="Your smallest bill" icon={XCircle} color="rose" />
@@ -261,9 +261,9 @@ export default function StaffPerformanceDashboard({ user, role }) {
             <MetricCard label="Completion Rate" value={`${stats?.successRate || 0}%`} sub="Orders served on time" icon={Award} color="emerald" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Orders by Week
               </h3>
               <div className="h-75">
@@ -285,8 +285,8 @@ export default function StaffPerformanceDashboard({ user, role }) {
               </div>
             </div>
 
-            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+            <div className="lg:col-span-6 bg-white/80 dark:bg-(--color-surface)/80  rounded-xl border border-(--color-border)/50 dark:border-(--color-border)/50 p-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Orders by Month
               </h3>
               <div className="h-75">
@@ -303,38 +303,38 @@ export default function StaffPerformanceDashboard({ user, role }) {
             </div>
           </div>
 
-          <div className="bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8">
-            <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+          <div className="bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6">
+            <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
               <History size={16} className="text-primary" /> Recent Orders
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-(--color-border)">
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Order ID</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Date</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Items</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Table</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Status</th>
-                    <th className="py-4 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Amount</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Order ID</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Date</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Items</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Table</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Status</th>
+                    <th className="py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats?.recentOrders?.map((order) => (
                     <tr key={order._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group">
-                      <td className="py-4 text-xs font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">#{order._id.slice(-6).toUpperCase()}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-muted)">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-(--color-text-muted) line-clamp-1 mt-2">{order.items?.map(it => it.menuItem?.name || 'Item').join(', ')}</td>
-                      <td className="py-4 text-xs font-bold text-primary">T{order.table?.tableNumber || 'N/A'}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">#{order._id.slice(-6).toUpperCase()}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-muted)">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-(--color-text-muted) line-clamp-1 mt-2">{order.items?.map(it => it.menuItem?.name || 'Item').join(', ')}</td>
+                      <td className="py-4 text-xs font-medium text-primary">T{order.table?.tableNumber || 'N/A'}</td>
                       <td className="py-4">
-                        <span className={`text-[9px] font-bold uppercase tracking-normal px-2 py-1 rounded-md ${
+                        <span className={`text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 rounded-md ${
                           order.status === 'SERVED' ? 'bg-success/10 text-success' :
                           order.status === 'CANCELLED' ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'
                         }`}>
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-4 text-xs font-bold text-(--color-text-primary) dark:text-white">₹{order.totalAmount}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{order.totalAmount}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -346,15 +346,15 @@ export default function StaffPerformanceDashboard({ user, role }) {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => fetchPerformance(currentPage - 1)}
-                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
+                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all"
                 >
                   Prev
                 </button>
-                <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Page {currentPage} of {totalPages}</span>
+                <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Page {currentPage} of {totalPages}</span>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => fetchPerformance(currentPage + 1)}
-                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all"
+                  className="px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) hover:bg-(--color-surface-soft) dark:hover:bg-(--color-surface-soft) disabled:opacity-40 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all"
                 >
                   Next
                 </button>

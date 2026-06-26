@@ -23,14 +23,14 @@ function MetricCard({ label, value, sub, icon: Icon, color }) {
   };
 
   return (
-    <div className="bg-(--color-surface)/80  rounded-xl p-6 border border-(--color-border) flex items-center gap-5 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className={`h-12 w-12 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-(--color-text-muted) bg-(--color-surface-soft)'}`}>
+    <div className="bg-(--color-surface)/80  rounded-xl p-5 border border-(--color-border) flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className={`h-6 w-6 rounded-xl flex items-center justify-center border ${colorMap[color] || 'text-(--color-text-muted) bg-(--color-surface-soft)'}`}>
         <Icon size={20} />
       </div>
       <div>
-        <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight leading-none">{value}</p>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-2">{label}</p>
-        {sub && <p className="text-[9px] font-bold text-(--color-text-secondary) mt-0.5">{sub}</p>}
+        <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight leading-none">{value}</p>
+        <p className="text-[11px] font-medium text-(--color-text-muted) mt-2">{label}</p>
+        {sub && <p className="text-[11px] font-medium text-(--color-text-secondary) mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -97,11 +97,11 @@ export default function PaymentInformationPage() {
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
-    <div className="max-w-400 mx-auto pb-20 space-y-10">
+    <div className="max-w-400 mx-auto pb-10 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-(--color-text-primary) tracking-tight flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg ">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight flex items-center gap-3">
+          <div className="h-6 w-6 rounded-xl bg-primary flex items-center justify-center ">
             <CreditCard size={24} className="text-white" />
           </div>
           Payment Information Dashboard
@@ -110,26 +110,26 @@ export default function PaymentInformationPage() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-(--color-surface)/80  p-8 rounded-xl border border-(--color-border) shadow-sm space-y-6">
+      <div className="bg-(--color-surface)/80  p-6 rounded-xl border border-(--color-border) shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-(--color-border)">
           <Filter size={16} className="text-primary" />
-          <span className="text-xs font-bold uppercase tracking-normal text-(--color-text-secondary)">Payment Filters</span>
+          <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-secondary)">Payment Filters</span>
         </div>
         
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Exact Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-xs font-bold focus:border-primary focus:outline-none transition-all"
+              className="w-full px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-xs font-medium focus:border-primary focus:outline-none transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Time Period
             </label>
             <PremiumSelect
@@ -147,7 +147,7 @@ export default function PaymentInformationPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Financial Year
             </label>
             <PremiumSelect
@@ -164,7 +164,7 @@ export default function PaymentInformationPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center gap-1.5 ml-2">
+            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
               <Calendar size={12} /> Custom Range
             </label>
             <div className="flex gap-2">
@@ -172,20 +172,20 @@ export default function PaymentInformationPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-1/2 px-3 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[10px] font-bold focus:border-primary focus:outline-none transition-all"
+                className="w-1/2 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[11px] font-medium focus:border-primary focus:outline-none transition-all"
               />
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="w-1/2 px-3 py-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[10px] font-bold focus:border-primary focus:outline-none transition-all"
+                className="w-1/2 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[11px] font-medium focus:border-primary focus:outline-none transition-all"
               />
             </div>
           </div>
       </div>
 
       {refetching ? (
-        <div className="space-y-10">
+        <div className="space-y-6">
           <StatGridSkeleton count={4} />
           <ChartSkeleton />
           <ChartSkeleton />
@@ -193,7 +193,7 @@ export default function PaymentInformationPage() {
       ) : (
         <>
           {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <MetricCard label="Total UPI Orders" value={stats?.totalUPIOrders || 0} sub="Paid by UPI" icon={ShoppingBag} color="violet" />
             <MetricCard label="Total Cash Orders" value={stats?.totalCashOrders || 0} sub="Paid by cash" icon={ShoppingBag} color="amber" />
             <MetricCard label="UPI Revenue" value={`₹${stats?.upiRevenue || 0}`} sub="Total from UPI payments" icon={Zap} color="violet" />
@@ -201,23 +201,23 @@ export default function PaymentInformationPage() {
           </div>
 
           {stats?.highestUPIBranch && (
-            <div className="bg-gradient-to-r from-primary to-primary p-6 rounded-xl text-white flex items-center justify-between shadow-lg">
+            <div className="bg-gradient-to-r from-primary to-primary p-5 rounded-xl text-white flex items-center justify-between shadow-sm">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80 flex items-center gap-1"><Award size={14} /> Top UPI Branch</span>
-                <p className="text-2xl font-bold mt-1">{stats.highestUPIBranch.name}</p>
+                <span className="text-[11px] font-medium uppercase tracking-normal opacity-80 flex items-center gap-1"><Award size={14} /> Top UPI Branch</span>
+                <p className="text-2xl font-semibold mt-1">{stats.highestUPIBranch.name}</p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-bold uppercase tracking-normal opacity-80">UPI Revenue</span>
-                <p className="text-2xl font-bold mt-1">₹{stats.highestUPIBranch.revenue}</p>
+                <span className="text-[11px] font-medium uppercase tracking-normal opacity-80">UPI Revenue</span>
+                <p className="text-2xl font-semibold mt-1">₹{stats.highestUPIBranch.revenue}</p>
               </div>
             </div>
           )}
 
           {/* Charts & Graphs */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Trend Graph */}
-            <div className="lg:col-span-12 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+            <div className="lg:col-span-12 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <TrendingUp size={16} className="text-primary" /> Payment Trend Over Time (₹)
               </h3>
               <div className="h-[350px]">
@@ -246,8 +246,8 @@ export default function PaymentInformationPage() {
             </div>
 
             {/* Branch Wise Mode Comparison */}
-            <div className="lg:col-span-12 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-8">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
+            <div className="lg:col-span-12 bg-(--color-surface)/80  rounded-xl border border-(--color-border) p-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-3">
                 <BarChart2 size={16} className="text-primary" /> Branch-wise Payment Split (₹)
               </h3>
               <div className="h-100">

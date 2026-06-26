@@ -174,26 +174,26 @@ export default function ImpersonatePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-20">
+      <div className="space-y-6 pb-10">
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className={`px-4 py-1.5 ${user?.isImpersonating ? 'bg-danger/10 text-danger border-danger/20' : 'bg-primary/10 text-primary border-primary/20'} text-[10px] font-bold uppercase tracking-normal rounded-full border `}>
+              <span className={`px-2.5 py-1 ${user?.isImpersonating ? 'bg-danger/10 text-danger border-danger/20' : 'bg-primary/10 text-primary border-primary/20'} text-[11px] font-medium uppercase tracking-normal rounded-full border `}>
                 {getSecurityLabel()}
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-(--color-text-muted)" />
-              <span className="text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">Log in as a user</span>
+              <span className="text-(--color-text-muted) text-[11px] font-medium uppercase tracking-normal">Log in as a user</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-3 sm:gap-4">
-              <ShieldAlert className={`${user?.isImpersonating ? 'text-danger' : 'text-primary'} h-9 w-9 sm:h-12 sm:w-12`} />
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) flex items-center gap-3">
+              <ShieldAlert className={`${user?.isImpersonating ? 'text-danger' : 'text-primary'} h-6 w-6`} />
               Login As <span className="text-(--color-text-muted)">User</span>
             </h1>
             <p className="max-w-2xl text-sm font-medium text-(--color-text-muted) leading-relaxed">
               Login as any user to help them or check issues.
-              {user?.role === 'branch_admin' && <span className="text-primary font-bold ml-1">You can only log in as staff from your own branch.</span>}
-              <span className="text-danger font-bold ml-1">Exercise caution: all actions are logged.</span>
+              {user?.role === 'branch_admin' && <span className="text-primary font-medium ml-1">You can only log in as staff from your own branch.</span>}
+              <span className="text-danger font-medium ml-1">Exercise caution: all actions are logged.</span>
             </p>
           </div>
 
@@ -213,12 +213,12 @@ export default function ImpersonatePage() {
         {/* Search + Filters */}
         <div className="card rounded-xl p-4 sm:p-5 space-y-4">
           <div className="flex flex-col lg:flex-row gap-3">
-            <div className="relative group flex-1">
+            <div className="relative group flex-1 min-w-0">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
               <input
                 type="text"
                 placeholder="Search by name, email or role..."
-                className="w-full pl-11 pr-4 py-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm font-bold text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className="w-full pl-11 pr-4 py-2.5 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -236,12 +236,12 @@ export default function ImpersonatePage() {
             </div>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-bold text-(--color-text-muted) flex items-center gap-2">
+            <span className="text-xs font-medium text-(--color-text-muted) flex items-center gap-2">
               <Filter size={13} />
               Showing {filteredUsers.length} of {users.length} {users.length === 1 ? 'user' : 'users'}
             </span>
             {(activeFilterCount > 0 || searchTerm) && (
-              <button onClick={resetFilters} className="text-xs font-bold text-primary hover:underline">
+              <button onClick={resetFilters} className="text-xs font-medium text-primary hover:underline">
                 Clear filters
               </button>
             )}
@@ -250,9 +250,9 @@ export default function ImpersonatePage() {
 
         {/* Users Table */}
         {filteredUsers.length === 0 ? (
-          <div className="card rounded-xl py-20 text-center space-y-4">
+          <div className="card rounded-xl py-10 text-center space-y-4">
             <Users className="mx-auto h-16 w-16 text-(--color-text-muted)/30" />
-            <p className="text-sm font-bold text-(--color-text-muted)">No users match your filters</p>
+            <p className="text-sm font-medium text-(--color-text-muted)">No users match your filters</p>
           </div>
         ) : (
           <div className="card rounded-xl overflow-hidden">
@@ -304,7 +304,7 @@ export default function ImpersonatePage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${u.isBlocked ? 'text-danger' : 'text-success'}`}>
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${u.isBlocked ? 'text-danger' : 'text-success'}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${u.isBlocked ? 'bg-danger' : 'bg-success'}`} />
                           {u.isBlocked ? 'Restricted' : 'Active'}
                         </span>

@@ -28,8 +28,8 @@ function Skeleton({ className }) {
 function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
   if (loading) {
     return (
-      <div className="bg-(--color-surface) p-6 rounded-xl border border-(--color-border) h-full space-y-4">
-        <Skeleton className="h-12 w-12 rounded-xl" />
+      <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) h-full space-y-4">
+        <Skeleton className="h-6 w-6 rounded-xl" />
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-8 w-32" />
       </div>
@@ -46,13 +46,13 @@ function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
 
   return (
     <CardHover>
-      <div className="bg-(--color-surface) p-6 rounded-xl border border-(--color-border) shadow-sm h-full flex flex-col group">
-        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 ${colors[color]}`}>
+      <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm h-full flex flex-col group">
+        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 ${colors[color]}`}>
           <Icon size={20} />
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">{label}</p>
-        <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight">{value}</p>
-        {sub && <p className="text-[9px] font-bold text-(--color-text-secondary) mt-2">{sub}</p>}
+        <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">{label}</p>
+        <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">{value}</p>
+        {sub && <p className="text-[11px] font-medium text-(--color-text-secondary) mt-2">{sub}</p>}
       </div>
     </CardHover>
   );
@@ -60,19 +60,19 @@ function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-6 pb-10">
       {/* Header Skeleton */}
-      <div className="bg-(--color-surface) rounded-xl p-10 border border-(--color-border) flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+      <div className="bg-(--color-surface) rounded-xl p-5 border border-(--color-border) flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-xl" />
+          <Skeleton className="h-12 w-12 rounded-xl" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-32" />
           </div>
         </div>
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-5">
           <Skeleton className="h-12 w-48 rounded-xl" />
-          <div className="flex gap-6">
+          <div className="flex gap-4">
             <Skeleton className="h-12 w-24 rounded-lg" />
             <Skeleton className="h-12 w-24 rounded-lg" />
           </div>
@@ -85,23 +85,23 @@ function DashboardSkeleton() {
       </div>
 
       {/* Charts & Content Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-10">
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-100">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) h-100">
              <Skeleton className="h-6 w-48 mb-8" />
              <Skeleton className="h-70 w-full" />
           </div>
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-75">
+          <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) h-75">
              <Skeleton className="h-6 w-48 mb-8" />
              <Skeleton className="h-45 w-full" />
           </div>
         </div>
-        <div className="lg:col-span-4 space-y-10">
+        <div className="lg:col-span-4 space-y-6">
           <div className="space-y-4">
             <Skeleton className="h-28 w-full rounded-xl" />
             <Skeleton className="h-28 w-full rounded-xl" />
           </div>
-          <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) h-100">
+          <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) h-100">
             <Skeleton className="h-6 w-40 mb-6" />
             <div className="space-y-5">
               {[1, 2, 3, 4, 5].map(i => (
@@ -207,24 +207,24 @@ export default function StaffDashboard() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
-        <div className="relative group overflow-hidden bg-(--color-surface) rounded-xl p-10 border border-(--color-border) shadow-sm ">
+        <div className="relative group overflow-hidden bg-(--color-surface) rounded-xl p-5 border border-(--color-border) shadow-sm ">
           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-1000">
             <Activity size={200} className="text-primary" strokeWidth={1} />
           </div>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10 relative z-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-lg ">
-                  <Coffee size={32} strokeWidth={2.5} />
+                <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary ">
+                  <Coffee size={24} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-(--color-text-primary) leading-none">
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) leading-none">
                     Hi, <span className="text-primary">{mounted ? user?.name?.split(' ')[0] : ''}</span>
                   </h1>
-                  <p className="text-(--color-text-muted) font-bold mt-2 flex items-center gap-2">
+                  <p className="text-(--color-text-muted) font-medium mt-2 flex items-center gap-2">
                     <Zap size={14} className="text-warning" />
                     {mounted ? user?.role?.replace('_', ' ').toUpperCase() : ''} @ {mounted ? user?.assignedLocation?.name : ''} Branch
                   </p>
@@ -232,7 +232,7 @@ export default function StaffDashboard() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
               {/* Timeframe Filter */}
               <div className="bg-(--color-surface-soft) p-1.5 rounded-xl border border-(--color-border) flex items-center gap-1">
                 {[
@@ -244,9 +244,9 @@ export default function StaffDashboard() {
                   <button
                     key={tf.id}
                     onClick={() => setTimeframe(tf.id)}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all ${
-                      timeframe === tf.id 
-                        ? 'bg-primary text-white shadow-lg ' 
+                    className={`px-4 py-2 rounded-xl text-[11px] font-medium transition-all ${
+                      timeframe === tf.id
+                        ? 'bg-primary text-white font-semibold'
                         : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
                     }`}
                   >
@@ -255,15 +255,15 @@ export default function StaffDashboard() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-5">
                 <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Payout ({timeframe})</p>
-                  <p className="text-2xl font-bold text-success tracking-tight">₹{stats?.dailyPayout || 0}</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted)">Payout ({timeframe})</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight">₹{stats?.dailyPayout || 0}</p>
                 </div>
                 <div className="h-12 w-px bg-(--color-border)" />
                 <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Success Rate</p>
-                  <p className="text-2xl font-bold text-primary tracking-tight">{stats?.successRate || 0}%</p>
+                  <p className="text-[11px] font-medium text-(--color-text-muted)">Success Rate</p>
+                  <p className="text-2xl font-semibold text-primary tracking-tight">{stats?.successRate || 0}%</p>
                 </div>
               </div>
             </div>
@@ -303,17 +303,17 @@ export default function StaffDashboard() {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 space-y-6">
             {/* Order Trend Chart */}
-            <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) shadow-sm">
+            <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
+                  <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
                     <TrendingUp size={16} className="text-primary" /> Order Trend
                   </h3>
                 </div>
-                <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-bold uppercase tracking-normal">
+                <div className="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-[11px] font-medium">
                   {timeframe === 'all' ? 'ALL TIME' : timeframe.toUpperCase()} VIEW
                 </div>
               </div>
@@ -340,8 +340,8 @@ export default function StaffDashboard() {
             </div>
 
             {/* Attendance Visualization */}
-            <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-8 flex items-center gap-3">
+            <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm">
+              <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-8 flex items-center gap-3">
                 <Calendar size={16} className="text-warning" /> Attendance ({timeframe})
               </h3>
               <div className="h-50">
@@ -365,26 +365,26 @@ export default function StaffDashboard() {
             </div>
           </div>
 
-          <div className="lg:col-span-4 space-y-10">
+          <div className="lg:col-span-4 space-y-6">
             {/* Quick Actions */}
             <div className="space-y-4">
               <Link href="/dashboard/staff/tables" className="block">
-                <div className="bg-primary hover:bg-primary p-6 rounded-xl text-white shadow-lg  transition-all active:scale-95 group">
+                <div className="bg-primary hover:bg-primary p-5 rounded-xl text-white shadow-sm transition-all active:scale-95 group">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-normal opacity-80 mb-1">Tables</p>
-                      <h4 className="text-xl font-bold tracking-tight">Active Orders</h4>
+                      <p className="text-xs font-medium uppercase tracking-normal opacity-80 mb-1">Tables</p>
+                      <h4 className="text-xl font-semibold tracking-tight">Active Orders</h4>
                     </div>
                     <ArrowRight className="group-hover:translate-x-2 transition-transform" />
                   </div>
                 </div>
               </Link>
               <Link href="/dashboard/staff/expenses" className="block">
-                <div className="bg-(--color-surface) hover:bg-(--color-surface-soft) p-6 rounded-xl border border-(--color-border) shadow-sm transition-all active:scale-95 group text-left">
+                <div className="bg-(--color-surface) hover:bg-(--color-surface-soft) p-5 rounded-xl border border-(--color-border) shadow-sm transition-all active:scale-95 group text-left">
                   <div className="flex justify-between items-center text-left">
                     <div className="text-left">
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Expenses</p>
-                      <h4 className="text-xl font-bold tracking-tight text-(--color-text-primary)">Add Expense</h4>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Expenses</p>
+                      <h4 className="text-xl font-semibold tracking-tight text-(--color-text-primary)">Add Expense</h4>
                     </div>
                     <ArrowUpRight className="text-primary group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -393,16 +393,16 @@ export default function StaffDashboard() {
             </div>
 
             {/* Recent Expenses List */}
-            <div className="bg-(--color-surface) p-8 rounded-xl border border-(--color-border) shadow-sm">
+            <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
+                <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
                   <History size={16} className="text-primary" /> Recent Expenses
                 </h3>
               </div>
               <div className="space-y-5">
                 {expenses.length === 0 ? (
                   <div className="text-center py-6 border-2 border-dashed border-(--color-border) rounded-xl">
-                    <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">No recent expenses</p>
+                    <p className="text-[11px] font-medium text-(--color-text-muted)">No recent expenses</p>
                   </div>
                 ) : (
                   expenses.map((ex) => (
@@ -412,15 +412,15 @@ export default function StaffDashboard() {
                           <IndianRupee size={16} />
                         </div>
                         <div className="text-left">
-                          <p className="text-xs font-bold text-(--color-text-primary) tracking-tight line-clamp-1">{ex.title}</p>
-                          <p className="text-[9px] font-bold text-(--color-text-muted)">{new Date(ex.date).toLocaleDateString()}</p>
+                          <p className="text-xs font-medium text-(--color-text-primary) tracking-tight line-clamp-1">{ex.title}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted)">{new Date(ex.date).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <p className="text-xs font-bold text-(--color-text-primary)">₹{ex.totalAmount}</p>
+                      <p className="text-xs font-semibold text-(--color-text-primary)">₹{ex.totalAmount}</p>
                     </div>
                   ))
                 )}
-                <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[10px] font-bold uppercase tracking-normal text-primary hover:underline">
+                <Link href="/dashboard/staff/expenses" className="block text-center pt-4 text-[11px] font-medium uppercase tracking-normal text-primary hover:underline">
                   View All Expenses
                 </Link>
               </div>

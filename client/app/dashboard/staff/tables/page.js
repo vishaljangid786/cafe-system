@@ -346,7 +346,7 @@ export default function StaffTablesPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Globe size={20} className="text-primary" />
               </div>
@@ -360,9 +360,9 @@ export default function StaffTablesPage() {
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
-                  className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-normal transition-all ${
-                    statusFilter === f 
-                      ? 'bg-primary text-(--color-on-primary) shadow-lg ' 
+                  className={`px-4 py-2 rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all ${
+                    statusFilter === f
+                      ? 'bg-primary text-(--color-on-primary) shadow-sm '
                       : 'text-(--color-text-muted) hover:text-primary'
                   }`}
                 >
@@ -381,7 +381,7 @@ export default function StaffTablesPage() {
             <div className="h-10 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-1 hidden sm:block" />
             <div className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm">
                <MapPin size={14} className="text-primary" />
-               <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{user?.assignedLocation?.name || 'Unknown'}</span>
+               <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">{user?.assignedLocation?.name || 'Unknown'}</span>
             </div>
           </div>
         </div>
@@ -399,8 +399,8 @@ export default function StaffTablesPage() {
                   <stat.icon size={18} className={toneText(stat.color)} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">{stat.val}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) leading-none">{stat.val}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-0.5">{stat.label}</p>
                 </div>
               </div>
             </SlideIn>
@@ -408,7 +408,7 @@ export default function StaffTablesPage() {
         </div>
 
         {/* Table Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           <AnimatePresence mode='popLayout'>
             {tables
               .filter(t => {
@@ -438,34 +438,34 @@ export default function StaffTablesPage() {
           maxWidth="max-w-7xl"
         >
           {selectedTable && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[75vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[75vh]">
               {/* Left Side: Active Registry (Order Summary) */}
               <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft)/30 rounded-xl border border-(--color-border) overflow-hidden">
-                <div className="p-8 border-b border-(--color-border) bg-gradient-to-br from-muted/50 to-card dark:from-(--color-surface)/50 dark:to-(--color-surface)/50 space-y-6">
+                <div className="p-5 border-b border-(--color-border) bg-gradient-to-br from-muted/50 to-card dark:from-(--color-surface)/50 dark:to-(--color-surface)/50 space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[10px] font-bold text-primary uppercase tracking-normal flex items-center mb-1">
+                      <h3 className="text-[11px] font-medium text-primary uppercase tracking-normal flex items-center mb-1">
                         <ShoppingBag size={14} className="mr-2" /> Order Details
                       </h3>
-                      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Current Order</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Current Order</p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xl font-bold text-(--color-text-primary) tracking-tight">
+                      <span className="text-xl font-semibold text-(--color-text-primary) tracking-tight">
                         {pendingOrders.reduce((acc, o) => acc + (Number(o.quantity) || 0), 0)}
                       </span>
-                      <span className="text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal">Items Added</span>
+                      <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Items Added</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6 p-5 bg-(--color-surface) rounded-xl border border-(--color-border) shadow-sm">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1 flex items-center gap-2">
-                        Customer Name <span className="text-danger font-bold">*</span>
+                      <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1 flex items-center gap-2">
+                        Customer Name <span className="text-danger font-medium">*</span>
                       </label>
-                      <input 
+                      <input
                         type="text"
                         placeholder="ENTER CUSTOMER NAME"
-                        className="w-full bg-(--color-surface-soft) border border-(--color-border) rounded-xl px-4 py-4 mt-1 text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-(--color-text-muted)/30 dark:text-white"
+                        className="w-full bg-(--color-surface-soft) border border-(--color-border) rounded-xl px-4 py-2.5 mt-1 text-xs font-medium outline-none focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-(--color-text-muted)/30 dark:text-white"
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
@@ -500,8 +500,8 @@ export default function StaffTablesPage() {
                           {order.image ? <img src={order.image} alt={order.itemName} className="h-full w-full object-cover" /> : <Coffee size={18} className="text-(--color-text-muted)" />}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
-                          <div className="text-[9px] font-bold text-(--color-text-muted) tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-xs font-medium text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
                         </div>
                       </div>
 
@@ -513,7 +513,7 @@ export default function StaffTablesPage() {
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-bold text-(--color-text-primary)">{order.quantity}</span>
+                          <span className="w-8 text-center text-xs font-medium text-(--color-text-primary)">{order.quantity}</span>
                           <button
                             onClick={() => updateQuantity(idx, 1)}
                             className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-(--color-surface) dark:hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-all"
@@ -521,7 +521,7 @@ export default function StaffTablesPage() {
                             +
                           </button>
                         </div>
-                        <div className="text-sm font-bold text-primary w-16 text-right">
+                        <div className="text-sm font-semibold text-primary w-16 text-right">
                           ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
                         </div>
                         <button
@@ -535,16 +535,16 @@ export default function StaffTablesPage() {
                   ))}
 
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
+                    <div className="h-full flex flex-col items-center justify-center opacity-40 py-10">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-(--color-text-muted)" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">No items added yet</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">No items added yet</p>
                     </div>
                   )}
 
                   {/* System Orders Section (OMS) */}
                   {(systemOrders.length > 0 || pendingOrders.length > 0) && (
                     <div className="mt-8 pt-8 border-t border-(--color-border) dark:border-(--color-border)">
-                      <h3 className="text-[10px] font-bold text-primary uppercase tracking-normal mb-4 flex items-center gap-2">
+                      <h3 className="text-[11px] font-medium text-primary uppercase tracking-normal mb-4 flex items-center gap-2">
                         <Zap size={14} /> Kitchen Orders
                       </h3>
                       <div className="space-y-3">
@@ -554,8 +554,8 @@ export default function StaffTablesPage() {
                               <div className="flex items-center gap-3">
                                 <div className={`h-2 w-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-success ' : 'bg-primary animate-pulse'}`} />
                                 <div>
-                                  <div className="text-[11px] font-bold text-(--color-text-primary) uppercase tracking-tight">#{order._id.slice(-6)}</div>
-                                  <div className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">{order.status}</div>
+                                  <div className="text-[11px] font-medium text-(--color-text-primary) uppercase tracking-tight">#{order._id.slice(-6)}</div>
+                                  <div className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">{order.status}</div>
                                 </div>
                               </div>
                               
@@ -563,7 +563,7 @@ export default function StaffTablesPage() {
                               {order.chefNote && (
                                 <div className="flex-1 mx-4 px-3 py-2 bg-primary/5 border border-primary/10 rounded-xl flex items-center gap-2 group/note relative">
                                   <MessageSquare size={12} className="text-primary flex-shrink-0" />
-                                  <p className="text-[9px] font-bold text-primary dark:text-primary leading-tight line-clamp-1">{order.chefNote}</p>
+                                  <p className="text-[11px] font-medium text-primary dark:text-primary leading-tight line-clamp-1">{order.chefNote}</p>
                                   
                                   {/* Hover expansion */}
                                   <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-(--color-text-primary) text-(--color-surface) text-[10px] font-medium rounded-xl opacity-0 group-hover/note:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">
@@ -574,7 +574,7 @@ export default function StaffTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[10px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -587,13 +587,13 @@ export default function StaffTablesPage() {
                                         toast.error('Could not generate the bill. Please try again.', { id: loadToast });
                                       }
                                     }}
-                                    className="px-3 py-1.5 bg-primary hover:bg-primary text-white text-[9px] font-bold uppercase tracking-normal rounded-lg transition-all shadow-lg "
+                                    className="px-3 py-1.5 bg-primary hover:bg-primary text-white text-[11px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-sm "
                                   >
                                     Generate Bill
                                   </button>
                                 )}
                                 {order.isBilled && (
-                                  <div className="px-3 py-1.5 bg-success/10 text-success text-[9px] font-bold uppercase tracking-normal rounded-lg flex items-center gap-1">
+                                  <div className="px-3 py-1.5 bg-success/10 text-success text-[11px] font-medium uppercase tracking-normal rounded-lg flex items-center gap-1">
                                     <Check size={10} /> Billed
                                   </div>
                                 )}
@@ -601,29 +601,29 @@ export default function StaffTablesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-4 text-center text-[9px] font-bold uppercase tracking-normal text-(--color-text-muted)">No orders sent to kitchen yet</div>
+                          <div className="py-4 text-center text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">No orders sent to kitchen yet</div>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="p-8 border-t border-(--color-border) bg-(--color-surface)/50 space-y-4">
+                <div className="p-5 border-t border-(--color-border) bg-(--color-surface)/50 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                    <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       <span>Kitchen Subtotal</span>
                       <span>₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-normal text-success">
+                      <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-success">
                         <span>Discount</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="h-px bg-(--color-surface-soft) dark:bg-(--color-surface) my-2" />
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-2">Billed Total</span>
-                      <span className="text-4xl font-bold text-(--color-text-primary) tracking-tight">
+                      <span className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Billed Total</span>
+                      <span className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
                         ₹{Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
                         ).toLocaleString()}
@@ -633,7 +633,7 @@ export default function StaffTablesPage() {
                   <div className={`grid ${systemOrders.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                     <Button
                       variant="primary"
-                      className="w-full !rounded-xl !py-4 shadow-sm  bg-primary hover:bg-primary text-[10px] font-bold uppercase tracking-normal"
+                      className="w-full !rounded-xl !py-3 shadow-sm  bg-primary hover:bg-primary text-[11px] font-semibold uppercase tracking-normal"
                       icon={Zap}
                       onClick={handleSendToKitchen}
                       disabled={pendingOrders.length === 0}
@@ -643,7 +643,7 @@ export default function StaffTablesPage() {
                     {systemOrders.length > 0 && (
                       <Button
                         variant="primary"
-                        className="w-full !rounded-xl !py-4 shadow-sm  bg-success hover:bg-success text-[10px] font-bold uppercase tracking-normal"
+                        className="w-full !rounded-xl !py-3 shadow-sm  bg-success hover:bg-success text-[11px] font-semibold uppercase tracking-normal"
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
@@ -669,7 +669,7 @@ export default function StaffTablesPage() {
                   <input
                     type="text"
                     placeholder="Search the menu..."
-                    className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) pl-12 pr-4 py-5 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                    className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) pl-12 pr-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                   />
@@ -685,9 +685,9 @@ export default function StaffTablesPage() {
                       <button
                         key={f.id}
                         onClick={() => setDietaryFilter(f.id)}
-                        className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-normal transition-all ${
-                          dietaryFilter === f.id 
-                            ? 'bg-primary text-(--color-on-primary) shadow-sm' 
+                        className={`px-4 py-1.5 rounded-lg text-[11px] font-medium uppercase tracking-normal transition-all ${
+                          dietaryFilter === f.id
+                            ? 'bg-primary text-(--color-on-primary) shadow-sm'
                             : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'
                         } ${f.color || ''}`}
                       >
@@ -700,7 +700,7 @@ export default function StaffTablesPage() {
                 {/* Most Selling / Recommendations */}
                 {!menuSearch && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal flex items-center">
+                    <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                       <Zap size={12} className="mr-2 text-primary" /> Top Selling Items
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
@@ -740,7 +740,7 @@ export default function StaffTablesPage() {
                             )}
                             {!item.isAvailable ? (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <span className="text-[9px] font-bold text-white uppercase tracking-normal px-2 py-1 border border-(--color-border) rounded-full">Sold Out</span>
+                                <span className="text-[11px] font-medium text-white uppercase tracking-normal px-2 py-1 border border-(--color-border) rounded-full">Sold Out</span>
                               </div>
                             ) : (
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
@@ -748,11 +748,11 @@ export default function StaffTablesPage() {
                               </div>
                             )}
                           </div>
-                          <div className="text-[10px] font-bold text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
+                          <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
                           <div className="flex items-center justify-between mt-1">
-                            <div className="text-[10px] font-bold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                             {item.isAvailable && item.stock !== undefined && (
-                              <span className={`text-[9px] font-bold uppercase tracking-tight ${item.stock < 10 ? 'text-danger' : 'text-success'}`}>{item.stock} left</span>
+                              <span className={`text-[11px] font-medium uppercase tracking-tight ${item.stock < 10 ? 'text-danger' : 'text-success'}`}>{item.stock} left</span>
                             )}
                           </div>
                         </div>
@@ -763,7 +763,7 @@ export default function StaffTablesPage() {
 
                 {/* Main Menu Grid — flows in the column scroll (no inner scrollbar) */}
                 <div className="space-y-6">
-                  <h3 className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
+                  <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => (
                         <div
@@ -804,33 +804,33 @@ export default function StaffTablesPage() {
                             
                             {!item.isAvailable && (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center -[2px]">
-                                <span className="text-[10px] font-bold text-white uppercase tracking-normal px-3 py-1 border border-(--color-border) rounded-full">Sold Out</span>
+                                <span className="text-[11px] font-medium text-white uppercase tracking-normal px-3 py-1 border border-(--color-border) rounded-full">Sold Out</span>
                               </div>
                             )}
 
                             <div className="absolute top-2 left-2">
-                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-normal text-white ${item.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`}>
+                              <div className={`px-2 py-0.5 rounded-full text-[7px] font-medium uppercase tracking-normal text-white ${item.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`}>
                                 {item.dietaryType || 'Food'}
                               </div>
                             </div>
                             
                             {item.isAvailable && (
                               <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                <Plus className="text-white drop-shadow-md" size={32} strokeWidth={3} />
+                                <Plus className="text-white" size={32} strokeWidth={3} />
                               </div>
                             )}
                           </div>
                           <div>
                             <div className="flex justify-between items-start gap-2">
-                              <div className="text-[11px] font-bold text-(--color-text-primary) leading-tight truncate flex-1">{item.name}</div>
+                              <div className="text-[11px] font-medium text-(--color-text-primary) leading-tight truncate flex-1">{item.name}</div>
                               {item.isAvailable && item.stock !== undefined && (
-                                <div className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-tight shrink-0 ${item.stock < 10 ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                                <div className={`text-[8px] font-medium px-1.5 py-0.5 rounded-md uppercase tracking-tight shrink-0 ${item.stock < 10 ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
                                   {item.stock} left
                                 </div>
                               )}
                             </div>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="text-[10px] font-bold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                              <div className="text-[11px] font-semibold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
                               <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) group-hover:bg-primary group-hover:text-(--color-on-primary) transition-all">
                                 {item.isAvailable ? <Plus size={12} /> : <Zap size={10} className="opacity-40" />}
                               </div>
@@ -846,39 +846,39 @@ export default function StaffTablesPage() {
                 </div>
 
                 {/* Coupon Panel */}
-                <div className="p-6 bg-(--color-surface-soft) dark:bg-(--color-bg)/30 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                <div className="p-5 bg-(--color-surface-soft) dark:bg-(--color-bg)/30 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="block text-[8px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
+                      <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Apply Coupon Code</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="ENTER CODE"
-                          className="flex-1 bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                          className="flex-1 bg-(--color-surface) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="px-6 bg-primary text-(--color-on-primary) rounded-xl text-[10px] font-bold uppercase tracking-normal hover:bg-(--color-primary-hover) transition-all"
+                          className="px-6 bg-primary text-(--color-on-primary) rounded-xl text-[11px] font-semibold uppercase tracking-normal hover:bg-(--color-primary-hover) transition-all"
                         >
                           Apply
                         </button>
                       </div>
                     </div>
                     {appliedCoupon && (
-                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[10px] font-bold text-success flex items-center justify-between gap-2">
+                      <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-xl text-[11px] font-medium text-success flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Check size={12} /> {appliedCoupon.code} Applied
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setAppliedCoupon(null);
                             setDiscountAmount(0);
                             setCouponCode('');
                             toast.success('Coupon removed');
                           }}
-                          className="text-danger hover:text-danger uppercase text-[9px] font-bold"
+                          className="text-danger hover:text-danger uppercase text-[11px] font-medium"
                         >
                           Remove
                         </button>

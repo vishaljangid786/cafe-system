@@ -59,6 +59,7 @@ const GATED_PAGES = [
   { key: 'page_revenue', paths: ['/dashboard/admin/revenue', '/dashboard/branch-admin/revenue', '/dashboard/location-admin/revenue'] },
   { key: 'page_expenses', paths: ['/dashboard/admin/expenses', '/dashboard/branch-admin/expenses', '/dashboard/location-admin/expenses', '/dashboard/staff/expenses', '/dashboard/chef/expenses'] },
   { key: 'page_staffreports', paths: ['/dashboard/admin/staff-reports', '/dashboard/branch-admin/staff-reports', '/dashboard/location-admin/staff-reports'] },
+  { key: 'page_staffcomparison', paths: ['/dashboard/admin/staff-comparison', '/dashboard/branch-admin/staff-comparison', '/dashboard/location-admin/staff-comparison'] },
   { key: 'page_feedback', paths: ['/dashboard/admin/feedback'] },
   { key: 'page_customers', paths: ['/dashboard/admin/customers'] },
   { key: 'page_branchcompare', paths: ['/dashboard/admin/location-comparison'] },
@@ -126,6 +127,7 @@ const pathForPage = (role, pageKey) => {
     page_expenses: ['staff', 'chef'].includes(role) ? `/dashboard/${role}/expenses` : `${roleBase}/expenses`,
     page_orderreports: '/dashboard/admin/orders/analytics',
     page_staffreports: `${roleBase}/staff-reports`,
+    page_staffcomparison: `${roleBase}/staff-comparison`,
     page_feedback: '/dashboard/admin/feedback',
     page_customers: '/dashboard/admin/customers',
     page_branchcompare: '/dashboard/admin/location-comparison',
@@ -263,9 +265,9 @@ export default function DashboardLayout({ children }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {user?.impersonatedBy && (
-          <div className="bg-primary text-(--color-on-primary) px-4 py-2.5 shadow-lg z-100 relative">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-normal flex items-center gap-2 text-center">
+          <div className="bg-primary text-(--color-on-primary) px-4 py-2.5 shadow-sm z-100 relative">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
+              <span className="text-[11px] sm:text-xs font-semibold flex items-center gap-2 text-center">
                 <span className="w-2 h-2 rounded-full bg-black animate-pulse shrink-0" />
                 <span className="truncate max-w-50 sm:max-w-none">
                   Impersonating: {user.name} ({user.role})
@@ -301,7 +303,7 @@ export default function DashboardLayout({ children }) {
               )}
               <button
                 onClick={exitImpersonation}
-                className="bg-black text-primary px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-normal hover:bg-(--color-bg-deep) active:scale-95 transition-all whitespace-nowrap shadow-sm"
+                className="bg-black text-primary px-4 py-1.5 rounded-full text-[11px] font-semibold hover:bg-(--color-bg-deep) active:scale-95 transition-all whitespace-nowrap"
               >
                 Exit Session
               </button>

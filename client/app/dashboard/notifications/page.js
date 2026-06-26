@@ -150,21 +150,21 @@ const NotificationsPage = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-24">
+      <div className="space-y-6 pb-10">
         {/* Header */}
-        <div className="relative group overflow-hidden bg-(--color-surface) rounded-xl p-8 border border-(--color-border) shadow-sm">
+        <div className="relative group overflow-hidden bg-(--color-surface) rounded-xl p-5 border border-(--color-border) shadow-sm">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
             <Bell size={160} className="text-primary" strokeWidth={1} />
           </div>
-          
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
+
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <Bell size={28} />
+                <div className="h-6 w-6 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                  <Bell size={16} />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-(--color-text-primary)">
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary)">
                     Notifications
                   </h1>
                   <p className="text-(--color-text-muted) font-medium mt-1 text-sm">
@@ -175,8 +175,8 @@ const NotificationsPage = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 icon={CheckCircle2}
                 onClick={handleMarkAllAsRead}
                 className="!rounded-xl !py-3 px-6"
@@ -191,7 +191,7 @@ const NotificationsPage = () => {
         <div className="flex items-center gap-6 border-b border-(--color-border) mb-2">
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'all' }))}
-            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+            className={`pb-4 px-1 text-sm font-medium transition-all relative ${
               filters.activeTab === 'all' 
                 ? 'text-primary' 
                 : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
@@ -204,7 +204,7 @@ const NotificationsPage = () => {
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'general' }))}
-            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+            className={`pb-4 px-1 text-sm font-medium transition-all relative ${
               filters.activeTab === 'general' 
                 ? 'text-primary' 
                 : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
@@ -217,7 +217,7 @@ const NotificationsPage = () => {
           </button>
           <button
             onClick={() => setFilters(prev => ({ ...prev, activeTab: 'system' }))}
-            className={`pb-4 px-1 text-sm font-bold transition-all relative ${
+            className={`pb-4 px-1 text-sm font-medium transition-all relative ${
               filters.activeTab === 'system' 
                 ? 'text-primary' 
                 : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
@@ -356,19 +356,19 @@ const NotificationsPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   key={notif._id}
-                  className={`group relative bg-(--color-surface) border ${notif.isRead ? 'border-(--color-border)' : 'border-primary/20 shadow-lg '} rounded-xl p-6 transition-all hover:shadow-md`}
+                  className={`group relative bg-(--color-surface) border ${notif.isRead ? 'border-(--color-border)' : 'border-primary/20 shadow-sm '} rounded-xl p-5 transition-all hover:shadow-md`}
                 >
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className={`h-12 w-12 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
-                      {notif.type === 'alert' ? <AlertTriangle size={20} /> : 
-                       notif.type === 'message' ? <MessageSquare size={20} /> :
-                       <Bell size={20} />}
+                  <div className="flex flex-col md:flex-row gap-5">
+                    <div className={`h-6 w-6 rounded-xl shrink-0 flex items-center justify-center border ${getPriorityStyles(notif.priority)}`}>
+                      {notif.type === 'alert' ? <AlertTriangle size={14} /> :
+                       notif.type === 'message' ? <MessageSquare size={14} /> :
+                       <Bell size={14} />}
                     </div>
 
                     <div className="flex-1 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <h3 className={`font-bold text-lg ${notif.isRead ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`}>
+                          <h3 className={`font-semibold text-lg ${notif.isRead ? 'text-(--color-text-muted)' : 'text-(--color-text-primary)'}`}>
                             {notif.title}
                           </h3>
                           <div className="flex items-center gap-3 mt-1">
@@ -383,7 +383,7 @@ const NotificationsPage = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getPriorityStyles(notif.priority)}`}>
+                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider border ${getPriorityStyles(notif.priority)}`}>
                             {notif.priority} Priority
                           </span>
                           
@@ -392,7 +392,7 @@ const NotificationsPage = () => {
                           {notif.sender && (
                             <button 
                               onClick={() => setReplyingTo(notif)}
-                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-primary text-xs font-bold rounded-xl hover:bg-primary/10 transition-all border border-primary/20"
+                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-primary text-xs font-medium rounded-xl hover:bg-primary/10 transition-all border border-primary/20"
                             >
                               <Reply size={14} />
                               Reply
@@ -402,7 +402,7 @@ const NotificationsPage = () => {
                           {!notif.isRead ? (
                             <button 
                               onClick={() => handleMarkAsRead(notif._id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all shadow-sm "
+                              className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-dark transition-all shadow-sm "
                             >
                               <CheckCircle2 size={14} />
                               Mark as Read
@@ -410,7 +410,7 @@ const NotificationsPage = () => {
                           ) : (
                             <button 
                               onClick={() => handleMarkAsUnread(notif._id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-(--color-text-muted) text-xs font-bold rounded-xl hover:bg-(--color-border) transition-all border border-(--color-border)"
+                              className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) text-(--color-text-muted) text-xs font-medium rounded-xl hover:bg-(--color-border) transition-all border border-(--color-border)"
                             >
                               <Bell size={14} />
                               Mark as Unread
@@ -428,10 +428,10 @@ const NotificationsPage = () => {
                           <div className="h-6 w-6 rounded-full bg-(--color-surface-soft) flex items-center justify-center">
                             <User size={12} className="text-(--color-text-muted)" />
                           </div>
-                          <span className="text-xs font-bold text-(--color-text-secondary)">{notif.sender?.name || 'System'}</span>
+                          <span className="text-xs font-medium text-(--color-text-secondary)">{notif.sender?.name || 'System'}</span>
                         </div>
                         <span className="h-1 w-1 bg-(--color-border) rounded-full" />
-                        <span className="text-xs font-bold text-(--color-text-muted) uppercase tracking-normal">{notif.type}</span>
+                        <span className="text-xs font-medium text-(--color-text-muted) tracking-normal">{notif.type}</span>
                       </div>
                     </div>
                   </div>
@@ -446,7 +446,7 @@ const NotificationsPage = () => {
                 <div className="h-20 w-20 rounded-full bg-(--color-surface-soft) flex items-center justify-center mb-6">
                   <Bell size={40} className="text-(--color-text-muted)/40" />
                 </div>
-                <h3 className="text-xl font-bold text-(--color-text-primary) mb-2">No notifications found</h3>
+                <h3 className="text-xl font-semibold text-(--color-text-primary) mb-2">No notifications found</h3>
                 <p className="text-(--color-text-muted) max-w-sm">
                   We couldn&apos;t find any notifications matching your current filters. Try adjusting your search criteria.
                 </p>
@@ -472,7 +472,7 @@ const NotificationsPage = () => {
                   <button
                     key={i}
                     onClick={() => fetchHistory(i + 1)}
-                    className={`h-10 w-10 rounded-xl text-sm font-bold transition-all ${
+                    className={`h-10 w-10 rounded-xl text-sm font-medium transition-all ${
                       pagination.page === i + 1 
                         ? 'bg-primary text-white'
                         : 'bg-(--color-surface) text-(--color-text-muted) hover:bg-(--color-surface-soft) border border-(--color-border)'
@@ -507,12 +507,12 @@ const NotificationsPage = () => {
         >
           <div className="space-y-6">
             <div className="p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
-              <p className="text-[10px] font-bold uppercase text-(--color-text-muted) mb-2">Original Message</p>
-              <p className="text-sm italic text-(--color-text-secondary)">&ldquo;{replyingTo?.message}&rdquo;</p>
+              <p className="text-[11px] font-medium uppercase text-(--color-text-muted) mb-2">Original Message</p>
+              <p className="text-sm text-(--color-text-secondary)">&ldquo;{replyingTo?.message}&rdquo;</p>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase text-(--color-text-muted) ml-1">Your Reply</label>
+              <label className="text-[11px] font-medium uppercase text-(--color-text-muted) ml-1">Your Reply</label>
               <textarea
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}

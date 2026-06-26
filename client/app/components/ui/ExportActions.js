@@ -365,21 +365,21 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         <div className="absolute right-0 mt-2 w-full sm:w-56 bg-(--color-surface) border border-(--color-border) rounded-lg shadow-[var(--shadow-md)] py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
           <button
             onClick={handleCSV}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
             <FileSpreadsheet size={16} className="text-success" />
             Download CSV
           </button>
           <button
             onClick={handleExcel}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
             <FileSpreadsheet size={16} className="text-success" />
             Download Excel (.xls)
           </button>
           <button
             onClick={handlePDF}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
             <FileText size={16} className="text-danger" />
             Download PDF
@@ -387,7 +387,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
           {hasCharts && (
             <button
               onClick={handleChartExport}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
             >
               <ImageIcon size={16} className="text-primary" />
               Export Charts as Images
@@ -396,7 +396,7 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
           <div className="h-px bg-(--color-border) my-1 mx-4"></div>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
           >
             <Printer size={16} className="text-primary" />
             Print Data

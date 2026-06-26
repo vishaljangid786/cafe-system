@@ -50,7 +50,7 @@ export default function SuperAdminDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen text-(--color-text-primary) p-6 lg:p-12 space-y-16 overflow-hidden relative selection:bg-primary selection:text-white">
+      <div className="min-h-screen text-(--color-text-primary) p-6 lg:p-12 space-y-6 overflow-hidden relative selection:bg-primary selection:text-white">
 
         {/* Atmospheric Smart Network */}
         {/* <div className="absolute top-0 right-0 w-200 h-200 bg-primary/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none" />
@@ -59,45 +59,45 @@ export default function SuperAdminDashboard() {
 
         {/* Global Control Header */}
         <SlideIn>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 relative z-10">
-            <div className="space-y-5 min-w-0">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
+            <div className="space-y-4 min-w-0">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-full border border-primary/30 ">
-                  <Cpu size={12} className="animate-pulse" /> Admin Dashboard
+                <div className="flex items-center gap-2 px-2.5 py-1 bg-primary/10 text-primary text-[11px] font-semibold uppercase tracking-wide rounded-full border border-primary/30 ">
+                  <Cpu size={12} /> Admin Dashboard
                 </div>
                 <div className="h-1 w-1 bg-(--color-border) rounded-full" />
-                <div className="text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">Version 4.2.0</div>
+                <div className="text-(--color-text-muted) text-[11px] font-medium uppercase tracking-wide">Version 4.2.0</div>
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-(--color-text-primary) flex items-center flex-wrap gap-x-4 gap-y-1 italic leading-none wrap-break-word">
-                <Crown className="text-primary h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16 shrink-0" />
-                ADMIN <span className="text-(--color-text-muted)">DASHBOARD</span>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary) flex items-center flex-wrap gap-x-4 gap-y-1 leading-tight wrap-break-word">
+                <Crown className="text-primary h-7 w-7 shrink-0" />
+                Admin <span className="text-(--color-text-muted)">Dashboard</span>
               </h1>
-              <div className="flex items-center gap-4 text-(--color-text-secondary) font-bold italic text-sm">
+              <div className="flex items-center gap-4 text-(--color-text-secondary) font-medium text-sm">
                 <Radio size={16} className="text-success animate-ping" />
-                <span className="text-(--color-text-primary) uppercase tracking-normal">{data?.totalBranches} branches active</span>
+                <span className="text-(--color-text-primary) tracking-normal">{data?.totalBranches} branches active</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 sm:gap-10 bg-(--color-surface)/40 p-6 sm:p-8 rounded-xl border border-(--color-border) shadow-sm relative overflow-hidden group w-full md:w-auto shrink-0">
+            <div className="grid grid-cols-2 gap-5 bg-(--color-surface)/40 p-5 rounded-xl border border-(--color-border) shadow-sm relative overflow-hidden group w-full md:w-auto shrink-0">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <div className="relative z-10">
-                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 flex items-center gap-2">
+                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wide mb-2 flex items-center gap-2">
                   <Globe size={10} /> Active Branches
                 </p>
-                <p className="text-4xl sm:text-5xl font-bold text-(--color-text-primary) tracking-tight italic">{data?.totalBranches}</p>
+                <p className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">{data?.totalBranches}</p>
               </div>
               <div className="relative z-10 text-right">
-                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-2 flex items-center justify-end gap-2">
+                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wide mb-2 flex items-center justify-end gap-2">
                   <Zap size={10} /> Uptime
                 </p>
-                <p className="text-4xl sm:text-5xl font-bold text-success tracking-tight italic">99.8%</p>
+                <p className="text-2xl sm:text-3xl font-semibold text-success tracking-tight">99.8%</p>
               </div>
             </div>
           </div>
         </SlideIn>
 
         {/* Smart Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 relative z-10">
           <Link href="/dashboard/admin/revenue" className="contents">
             <MetricCard
               title="Total Revenue"
@@ -139,34 +139,34 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Global Operations Console */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 relative z-10">
 
           {/* Branch Leaderboard */}
-          <div className="lg:col-span-2 bg-(--color-surface)/40  rounded-[4rem] border border-(--color-border) overflow-hidden shadow-sm relative">
+          <div className="lg:col-span-2 bg-(--color-surface)/40  rounded-2xl border border-(--color-border) overflow-hidden shadow-sm relative">
             <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none">
               <Terminal size={300} strokeWidth={1} />
             </div>
-            <div className="p-12 flex items-center justify-between border-b border-(--color-border)">
+            <div className="p-6 flex items-center justify-between border-b border-(--color-border)">
               <div>
-                <h2 className="text-2xl font-bold uppercase tracking-normal flex items-center gap-4 italic text-(--color-text-primary)">
+                <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-4 text-(--color-text-primary)">
                   <Map className="text-primary" /> Branch Performance
                 </h2>
-                <p className="text-(--color-text-muted) text-xs font-bold mt-2 italic">Ranking branches by sales and performance.</p>
+                <p className="text-(--color-text-muted) text-xs font-medium mt-2">Ranking branches by sales and performance.</p>
               </div>
               <Link href="/dashboard/admin/locations">
-                <button className="px-6 py-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-[10px] font-bold uppercase tracking-normal text-(--color-text-secondary) hover:text-(--color-text-primary) hover:border-primary/30 transition-all">
+                <button className="px-2.5 py-1 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-[11px] font-medium uppercase tracking-wide text-(--color-text-secondary) hover:text-(--color-text-primary) hover:border-primary/30 transition-all">
                   View All
                 </button>
               </Link>
             </div>
-            <div className="p-8 overflow-x-auto custom-scrollbar">
+            <div className="p-5 overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-separate border-spacing-y-4">
                 <thead>
-                  <tr className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-secondary) px-6">
-                    <th className="pb-6 px-6">Branch Name</th>
-                    <th className="pb-6 px-6">Sales Level</th>
-                    <th className="pb-6 px-6 text-center">Sales Share</th>
-                    <th className="pb-6 px-6 text-right">Revenue (₹)</th>
+                  <tr className="text-[11px] font-semibold uppercase tracking-wide text-(--color-text-secondary) px-6">
+                    <th className="pb-4 px-5">Branch Name</th>
+                    <th className="pb-4 px-5">Sales Level</th>
+                    <th className="pb-4 px-5 text-center">Sales Share</th>
+                    <th className="pb-4 px-5 text-right">Revenue (₹)</th>
                   </tr>
                 </thead>
                 <tbody className="space-y-4">
@@ -179,17 +179,17 @@ export default function SuperAdminDashboard() {
                       onClick={() => router.push('/dashboard/admin/locations')}
                       className="group bg-(--color-surface-soft)/50 hover:bg-(--color-surface-soft) transition-all cursor-pointer rounded-xl"
                     >
-                      <td className="p-8 rounded-l-[2rem] border-l border-t border-b border-(--color-border)/50">
+                      <td className="px-5 py-4 rounded-l-2xl border-l border-t border-b border-(--color-border)/50">
                         <div className="flex items-center gap-6">
-                          <span className={`h-14 w-14 rounded-xl flex items-center justify-center font-bold italic text-xl shadow-sm transition-transform ${idx === 0 ? 'bg-primary text-(--color-on-primary)  rotate-3' : 'bg-(--color-surface-soft) text-(--color-text-muted) border border-(--color-border)'
+                          <span className={`h-10 w-10 rounded-xl flex items-center justify-center font-semibold text-lg transition-transform ${idx === 0 ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-surface-soft) text-(--color-text-muted) border border-(--color-border)'
                             }`}>
                             0{idx + 1}
                           </span>
-                          <p className="font-bold text-lg text-(--color-text-primary) italic tracking-tight">{branch.name}</p>
+                          <p className="font-medium text-lg text-(--color-text-primary) tracking-tight">{branch.name}</p>
                         </div>
                       </td>
-                      <td className="p-8 border-t border-b border-(--color-border)/50">
-                        <div className="w-40 h-1.5 bg-(--color-bg-soft) rounded-full overflow-hidden shadow-inner">
+                      <td className="px-5 py-4 border-t border-b border-(--color-border)/50">
+                        <div className="w-40 h-1.5 bg-(--color-bg-soft) rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${(branch.revenue / data.totalRevenue) * 100}%` }}
@@ -197,13 +197,13 @@ export default function SuperAdminDashboard() {
                           />
                         </div>
                       </td>
-                      <td className="p-8 text-center border-t border-b border-(--color-border)/50">
-                        <span className="text-sm font-bold text-(--color-text-muted) italic tracking-normal">
+                      <td className="px-5 py-4 text-center border-t border-b border-(--color-border)/50">
+                        <span className="text-sm font-medium text-(--color-text-muted) tracking-normal">
                           {((branch.revenue / data.totalRevenue) * 100).toFixed(1)}%
                         </span>
                       </td>
-                      <td className="p-8 text-right rounded-r-[2rem] border-r border-t border-b border-(--color-border)/50">
-                        <p className="text-xl font-bold text-(--color-text-primary) italic tracking-tight">₹{branch.revenue?.toLocaleString()}</p>
+                      <td className="px-5 py-4 text-right rounded-r-2xl border-r border-t border-b border-(--color-border)/50">
+                        <p className="text-xl font-semibold text-(--color-text-primary) tracking-tight">₹{branch.revenue?.toLocaleString()}</p>
                       </td>
                     </motion.tr>
                   ))}
@@ -213,11 +213,11 @@ export default function SuperAdminDashboard() {
           </div>
 
           {/* Special Information Widgets */}
-          <div className="space-y-8">
+          <div className="space-y-5">
             {/* Elite Entities */}
-            <div className="bg-(--color-surface)/40  p-10 rounded-[4rem] border border-(--color-border) shadow-sm space-y-10 relative overflow-hidden">
+            <div className="bg-(--color-surface)/40  p-5 rounded-2xl border border-(--color-border) shadow-sm space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-40 w-40 bg-secondary/5 hidden rounded-full -mr-20 -mt-20" />
-              <h2 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-(--color-text-muted) flex items-center gap-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary " />
                 Top Performers
               </h2>

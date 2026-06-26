@@ -214,20 +214,20 @@ export default function OrderAnalyticsDashboard() {
 
   return (
     <PageTransition>
-      <div className="space-y-8 pb-20">
+      <div className="space-y-6 pb-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-(--color-on-primary) shadow-sm shrink-0">
-              <TrendingUp size={26} strokeWidth={2.5} />
+            <div className="h-6 w-6 rounded-2xl bg-primary flex items-center justify-center text-(--color-on-primary) shadow-sm shrink-0">
+              <TrendingUp size={16} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--color-text-primary)">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-(--color-text-primary)">
                 Order Analytics
               </h1>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/10 text-success text-[11px] font-semibold border border-success/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/10 text-success text-[11px] font-medium border border-success/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   Live
                 </span>
                 <span className="text-xs text-(--color-text-muted)">
@@ -276,12 +276,9 @@ export default function OrderAnalyticsDashboard() {
             <div className="lg:col-span-2">
               <button
                 onClick={resetFilters}
-                className="w-full h-12 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-semibold text-sm transition-colors flex items-center justify-center gap-2 group"
+                className="w-full h-12 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) font-medium text-sm transition-colors flex items-center justify-center gap-2 group"
               >
-                <FilterX
-                  size={16}
-                  className="group-hover:rotate-12 transition-transform"
-                />
+                <FilterX size={16} />
                 Clear
               </button>
             </div>
@@ -289,7 +286,7 @@ export default function OrderAnalyticsDashboard() {
         </div>
 
         {refetching ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <StatGridSkeleton count={5} />
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
               <div className="xl:col-span-8">
@@ -474,7 +471,7 @@ export default function OrderAnalyticsDashboard() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-xs text-(--color-text-muted)">Total</p>
-                    <p className="text-2xl font-bold text-(--color-text-primary)">
+                    <p className="text-2xl font-semibold text-(--color-text-primary)">
                       {data?.metrics?.totalOrders ?? 0}
                     </p>
                   </div>
@@ -495,7 +492,7 @@ export default function OrderAnalyticsDashboard() {
                       <span className="text-[11px] font-medium text-(--color-text-secondary) capitalize truncate flex-1">
                         {String(s.name).toLowerCase()}
                       </span>
-                      <span className="text-xs font-bold text-primary">
+                      <span className="text-xs font-semibold text-primary">
                         {s.value}
                       </span>
                     </div>
@@ -507,7 +504,7 @@ export default function OrderAnalyticsDashboard() {
             {/* Branch Breakdown */}
             <section className="space-y-5">
               <div>
-                <h2 className="text-xl font-bold text-(--color-text-primary)">
+                <h2 className="text-xl font-semibold text-(--color-text-primary)">
                   Branch Breakdown
                 </h2>
                 <p className="text-sm text-(--color-text-muted) mt-1">
@@ -527,17 +524,17 @@ export default function OrderAnalyticsDashboard() {
                   >
                     <div className="flex items-center justify-between mb-6">
                       <div
-                        className={`h-12 w-12 rounded-xl flex items-center justify-center ${activeBranchId === "all" ? "bg-white/15 text-(--color-on-primary)" : "bg-(--color-surface-soft) text-primary"}`}
+                        className={`h-6 w-6 rounded-xl flex items-center justify-center ${activeBranchId === "all" ? "bg-white/15 text-(--color-on-primary)" : "bg-(--color-surface-soft) text-primary"}`}
                       >
-                        <Globe size={22} strokeWidth={2.5} />
+                        <Globe size={16} strokeWidth={2.5} />
                       </div>
                       {activeBranchId === "all" && (
-                        <span className="px-2.5 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                        <span className="px-2.5 py-1 bg-white/20 rounded-full text-[11px] font-medium tracking-wide">
                           Selected
                         </span>
                       )}
                     </div>
-                    <h4 className="text-lg font-bold mb-0.5">All Branches</h4>
+                    <h4 className="text-lg font-semibold mb-0.5">All Branches</h4>
                     <p
                       className={`text-xs ${activeBranchId === "all" ? "opacity-80" : "text-(--color-text-muted)"}`}
                     >
@@ -550,7 +547,7 @@ export default function OrderAnalyticsDashboard() {
                         >
                           Total Orders
                         </p>
-                        <p className="text-2xl font-bold">
+                        <p className="text-2xl font-semibold">
                           {data?.metrics?.totalOrders ?? 0}
                         </p>
                       </div>
@@ -587,9 +584,9 @@ export default function OrderAnalyticsDashboard() {
                       >
                         <div className="flex items-center justify-between mb-6">
                           <div
-                            className={`h-12 w-12 rounded-xl flex items-center justify-center ${selected ? "bg-primary text-(--color-on-primary)" : "bg-(--color-surface-soft) text-primary"}`}
+                            className={`h-6 w-6 rounded-xl flex items-center justify-center ${selected ? "bg-primary text-(--color-on-primary)" : "bg-(--color-surface-soft) text-primary"}`}
                           >
-                            <Building size={22} strokeWidth={2.5} />
+                            <Building size={16} strokeWidth={2.5} />
                           </div>
                           <button
                             onClick={(e) => {
@@ -604,7 +601,7 @@ export default function OrderAnalyticsDashboard() {
                             <Zap size={16} />
                           </button>
                         </div>
-                        <h4 className="text-lg font-bold truncate">
+                        <h4 className="text-lg font-semibold truncate">
                           {branch.name}
                         </h4>
                         <p
@@ -619,7 +616,7 @@ export default function OrderAnalyticsDashboard() {
                             >
                               Orders
                             </p>
-                            <p className="text-xl font-bold">
+                            <p className="text-xl font-semibold">
                               {branch.totalOrders}
                             </p>
                           </div>
@@ -630,7 +627,7 @@ export default function OrderAnalyticsDashboard() {
                               Avg Prep
                             </p>
                             <p
-                              className={`text-xl font-bold ${selected ? "" : "text-primary"}`}
+                              className={`text-xl font-semibold ${selected ? "" : "text-primary"}`}
                             >
                               {branch.avgPrepTime}m
                             </p>
@@ -643,10 +640,10 @@ export default function OrderAnalyticsDashboard() {
             </section>
 
             {/* Kitchen Leaderboard */}
-            <section className="bg-(--color-surface) rounded-2xl border border-(--color-border) p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <section className="bg-(--color-surface) rounded-2xl border border-(--color-border) p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-(--color-text-primary) flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-(--color-text-primary) flex items-center gap-2">
                     <ChefHat size={20} className="text-primary" /> Kitchen
                     Leaderboard
                   </h2>
@@ -699,10 +696,10 @@ export default function OrderAnalyticsDashboard() {
                   <Building size={36} strokeWidth={1.5} />
                 </div>
                 <div className="min-w-0">
-                  <span className="inline-block px-2.5 py-0.5 bg-success/10 text-success rounded-full text-[10px] font-bold uppercase tracking-wide mb-2">
+                  <span className="inline-block px-2.5 py-0.5 bg-success/10 text-success rounded-full text-[11px] font-medium tracking-wide mb-2">
                     Active Branch
                   </span>
-                  <h3 className="text-2xl font-bold tracking-tight text-(--color-text-primary) truncate">
+                  <h3 className="text-2xl font-semibold tracking-tight text-(--color-text-primary) truncate">
                     {selectedBranchDetails.name}
                   </h3>
                   <p className="text-sm text-(--color-text-muted) flex items-center gap-1.5 mt-1">
@@ -796,7 +793,7 @@ function MetricCard({ label, value, icon: Icon, color }) {
       <p className="text-xs font-medium text-(--color-text-muted) mb-1">
         {label}
       </p>
-      <h4 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">
+      <h4 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
         {value ?? "0"}
       </h4>
     </div>
@@ -827,14 +824,14 @@ function ChefCard({ chef, rank, onClick }) {
           <BadgeIcon size={20} />
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold text-primary">Rank #{rank}</p>
+          <p className="text-xs font-semibold text-primary">Rank #{rank}</p>
           <p className="text-[11px] text-(--color-text-muted)">
             {chef.total} orders
           </p>
         </div>
       </div>
 
-      <h4 className="text-lg font-bold text-(--color-text-primary) truncate group-hover:text-primary transition-colors">
+      <h4 className="text-lg font-semibold text-(--color-text-primary) truncate group-hover:text-primary transition-colors">
         {chef.name}
       </h4>
 
@@ -842,7 +839,7 @@ function ChefCard({ chef, rank, onClick }) {
         <span className="text-[11px] font-medium text-(--color-text-muted)">
           Avg prep time
         </span>
-        <span className="text-lg font-bold text-primary">{chef.avgTime}m</span>
+        <span className="text-lg font-semibold text-primary">{chef.avgTime}m</span>
       </div>
       <div className="h-1.5 w-full bg-(--color-surface) rounded-full overflow-hidden border border-(--color-border)">
         <motion.div
@@ -879,10 +876,10 @@ function ChefDetail({ chef, kitchenAvg, totalChefOrders }) {
           <BadgeIcon size={34} strokeWidth={1.6} />
         </div>
         <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-wide mb-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-[11px] font-medium tracking-wide mb-2">
             <Hash size={11} /> Rank {chef.rank}
           </span>
-          <h3 className="text-2xl font-bold tracking-tight text-(--color-text-primary) truncate">
+          <h3 className="text-2xl font-semibold tracking-tight text-(--color-text-primary) truncate">
             {chef.name}
           </h3>
           <p className="text-sm text-(--color-text-muted) mt-1">
@@ -943,7 +940,7 @@ function ChefDetail({ chef, kitchenAvg, totalChefOrders }) {
             vs. Kitchen Average
           </span>
           <span
-            className={`text-sm font-bold ${fasterThanAvg ? "text-success" : diff === 0 ? "text-(--color-text-muted)" : "text-danger"}`}
+            className={`text-sm font-semibold ${fasterThanAvg ? "text-success" : diff === 0 ? "text-(--color-text-muted)" : "text-danger"}`}
           >
             {diff === 0
               ? "On par"
@@ -981,7 +978,7 @@ function InfoTile({ icon: Icon, label, value }) {
       </div>
       <div className="min-w-0">
         <p className="text-xs text-(--color-text-muted) mb-0.5">{label}</p>
-        <p className="text-sm font-semibold text-(--color-text-primary) break-words">
+        <p className="text-sm font-medium text-(--color-text-primary) break-words">
           {value}
         </p>
       </div>
@@ -998,7 +995,7 @@ function StatTile({ icon: Icon, label, value, accent }) {
   return (
     <div className="p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border) text-center">
       <Icon size={18} className={`mx-auto mb-2 ${accents[accent]}`} />
-      <p className="text-lg font-bold text-(--color-text-primary)">{value}</p>
+      <p className="text-lg font-semibold text-(--color-text-primary)">{value}</p>
       <p className="text-[11px] text-(--color-text-muted) mt-0.5">{label}</p>
     </div>
   );
@@ -1018,7 +1015,7 @@ function OutcomeTile({ icon: Icon, label, value, tone }) {
         <Icon size={18} />
       </div>
       <div>
-        <p className="text-xl font-bold text-(--color-text-primary) leading-none">
+        <p className="text-xl font-semibold text-(--color-text-primary) leading-none">
           {value}
         </p>
         <p className="text-[11px] text-(--color-text-muted) mt-1">{label}</p>

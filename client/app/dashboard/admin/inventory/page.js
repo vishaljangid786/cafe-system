@@ -191,14 +191,14 @@ export default function InventoryDashboard() {
 
   return (
     <PageTransition>
-      <div className="p-6 max-w-7xl mx-auto space-y-8 pb-20">
+      <div className="p-6 max-w-7xl mx-auto space-y-6 pb-10">
 
         {/* Header Section */}
         <SlideIn>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="page-title text-2xl flex items-center gap-3">
-                <Package className="text-primary h-7 w-7" />
+              <h1 className="page-title text-2xl sm:text-3xl flex items-center gap-3">
+                <Package className="text-primary h-6 w-6" />
                 Inventory
               </h1>
               <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Track ingredients and plan purchases.</p>
@@ -216,14 +216,14 @@ export default function InventoryDashboard() {
         </SlideIn>
 
         {/* Analytics Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <SlideIn delay={0.1}>
-            <div className="card p-6 relative overflow-hidden">
+            <div className="card p-5 relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-5">
                 <AlertTriangle size={120} />
               </div>
               <p className="label">Low Stock Alerts</p>
-              <p className="text-3xl font-bold text-danger mt-2">{alerts.length}</p>
+              <p className="text-3xl font-semibold text-danger mt-2">{alerts.length}</p>
               <p className="text-xs font-medium text-(--color-text-muted) mt-2 flex items-center gap-1">
                 Items running low
               </p>
@@ -231,12 +231,12 @@ export default function InventoryDashboard() {
           </SlideIn>
 
           <SlideIn delay={0.2}>
-            <div className="bg-primary p-6 rounded-xl shadow-sm text-(--color-on-primary) relative overflow-hidden">
+            <div className="bg-primary p-5 rounded-xl shadow-sm text-(--color-on-primary) relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-20">
                 <ShoppingCart size={120} />
               </div>
               <p className="text-xs font-semibold opacity-80">Items to Buy</p>
-              <p className="text-3xl font-bold mt-2">{suggestions.length}</p>
+              <p className="text-3xl font-semibold mt-2">{suggestions.length}</p>
               <p className="text-xs font-medium opacity-90 mt-2 flex items-center gap-1">
                 Suggested to buy now
               </p>
@@ -244,12 +244,12 @@ export default function InventoryDashboard() {
           </SlideIn>
 
           <SlideIn delay={0.3}>
-            <div className="card p-6 relative overflow-hidden">
+            <div className="card p-5 relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-5">
                 <RefreshCcw size={120} />
               </div>
               <p className="label">Total Ingredients</p>
-              <p className="text-3xl font-bold text-(--color-text-primary) mt-2">{inventory.length}</p>
+              <p className="text-3xl font-semibold text-(--color-text-primary) mt-2">{inventory.length}</p>
               <p className="text-xs font-medium text-success mt-2 flex items-center gap-1">
                 Items being tracked
               </p>
@@ -263,10 +263,10 @@ export default function InventoryDashboard() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-normal transition-all ${
-                activeTab === tab 
-                  ? 'bg-(--color-surface) text-primary shadow-sm scale-[1.02]' 
-                  : 'text-(--color-text-muted) hover:text-(--color-text-primary)'
+              className={`px-5 py-2.5 rounded-xl text-xs capitalize transition-all ${
+                activeTab === tab
+                  ? 'bg-(--color-surface) text-primary font-semibold shadow-sm'
+                  : 'text-(--color-text-muted) font-medium hover:text-(--color-text-primary)'
               }`}
             >
               {tab}
@@ -285,18 +285,18 @@ export default function InventoryDashboard() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4"
               >
-                <div className="flex items-center justify-between">
-                  <div className="relative w-full max-w-md">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="relative flex-1 min-w-0 max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={18} />
-                    <input 
+                    <input
                       type="text"
                       placeholder="Search ingredients..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-(--color-surface) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none text-(--color-text-primary)"
+                      className="w-full pl-12 pr-4 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none text-(--color-text-primary)"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
                     <button 
                       onClick={() => {
                         setFormData({
@@ -307,7 +307,7 @@ export default function InventoryDashboard() {
                         });
                         setIsNewIngredientModalOpen(true);
                       }}
-                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) rounded-xl text-xs font-bold uppercase tracking-normal hover:border-primary transition-colors"
+                      className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) rounded-xl text-xs font-medium hover:border-primary transition-colors"
                     >
                       <Plus size={16} /> New Ingredient
                     </button>
@@ -322,7 +322,7 @@ export default function InventoryDashboard() {
                         });
                         setIsAddModalOpen(true);
                       }}
-                      className="hidden md:flex items-center gap-2 px-5 py-3 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-xs font-bold uppercase tracking-normal"
+                      className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-xs font-semibold"
                     >
                       <Plus size={16} /> Add Stock
                     </button>
@@ -337,39 +337,39 @@ export default function InventoryDashboard() {
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-(--color-surface-soft) border-b border-(--color-border)">
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Ingredient</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Category</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) text-center">Status</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Quantity</th>
-                          <th className="p-6 text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Action</th>
+                          <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Ingredient</th>
+                          <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Category</th>
+                          <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) text-center">Status</th>
+                          <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Quantity</th>
+                          <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-(--color-border)">
                         {filteredInventory.map((item) => (
                           <tr key={item._id} className="group hover:bg-primary/[0.02] transition-colors">
-                            <td className="p-6">
-                              <p className="font-bold text-(--color-text-primary)">{item.ingredient?.name}</p>
-                              <p className="text-[10px] font-medium text-(--color-text-muted) uppercase mt-1">Cost: ₹{item.costPerUnit}/{item.ingredient?.unit}</p>
+                            <td className="px-5 py-4">
+                              <p className="font-medium text-(--color-text-primary)">{item.ingredient?.name}</p>
+                              <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">Cost: ₹{item.costPerUnit}/{item.ingredient?.unit}</p>
                             </td>
-                            <td className="p-6">
-                              <span className="px-3 py-1 bg-(--color-surface-soft) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) rounded-lg">
+                            <td className="px-5 py-4">
+                              <span className="px-2.5 py-1 bg-(--color-surface-soft) text-[11px] font-medium text-(--color-text-muted) rounded-lg">
                                 {item.ingredient?.category || 'General'}
                               </span>
                             </td>
-                            <td className="p-6 text-center">
+                            <td className="px-5 py-4 text-center">
                               {item.stock <= item.minThreshold ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-danger/10 text-danger text-[10px] font-bold uppercase rounded-lg">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-danger/10 text-danger text-[11px] font-medium rounded-lg">
                                   <AlertTriangle size={10} /> Low Stock
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase rounded-lg">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-[11px] font-medium rounded-lg">
                                   In Stock
                                 </span>
                               )}
                             </td>
-                            <td className="p-6">
-                              <p className={`text-xl font-bold ${item.stock <= item.minThreshold ? 'text-danger' : 'text-(--color-text-primary)'}`}>
-                                {item.stock} <span className="text-[10px] text-(--color-text-muted) ml-1">{item.ingredient?.unit}</span>
+                            <td className="px-5 py-4">
+                              <p className={`text-xl font-semibold ${item.stock <= item.minThreshold ? 'text-danger' : 'text-(--color-text-primary)'}`}>
+                                {item.stock} <span className="text-[11px] font-medium text-(--color-text-muted) ml-1">{item.ingredient?.unit}</span>
                               </p>
                               <div className="w-24 h-1.5 bg-(--color-surface-soft) rounded-full mt-2 overflow-hidden">
                                 <div 
@@ -378,8 +378,8 @@ export default function InventoryDashboard() {
                                 />
                               </div>
                             </td>
-                            <td className="p-6">
-                              <button 
+                            <td className="px-5 py-4">
+                              <button
                                 onClick={() => {
                                   setSelectedItem(item);
                                   setFormData({
@@ -391,7 +391,7 @@ export default function InventoryDashboard() {
                                   });
                                   setIsUpdateModalOpen(true);
                                 }}
-                                className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-bg-base) transition-all shadow-sm"
+                                className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-bg-base) transition-all"
                               >
                                 <RefreshCcw size={16} />
                               </button>
@@ -419,15 +419,15 @@ export default function InventoryDashboard() {
                     <CardSkeleton />
                   </>
                 ) : suggestions.map((sug, i) => (
-                  <div key={i} className="p-8 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors shadow-sm">
+                  <div key={i} className="p-5 bg-(--color-surface) border border-(--color-border) rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-primary mb-1">Buying Suggestion</p>
-                      <h3 className="text-2xl font-bold text-(--color-text-primary)">{sug.ingredient}</h3>
-                      <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Current: <span className="font-bold">{sug.currentStock} {sug.unit}</span> | Shortfall: <span className="text-danger font-bold">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-primary mb-1">Buying Suggestion</p>
+                      <h3 className="text-2xl font-semibold text-(--color-text-primary)">{sug.ingredient}</h3>
+                      <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Current: <span className="font-medium">{sug.currentStock} {sug.unit}</span> | Shortfall: <span className="text-danger font-medium">{sug.threshold - sug.currentStock} {sug.unit}</span></p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-(--color-text-muted) mb-1 uppercase tracking-normal">Suggested Order</p>
-                      <p className="text-3xl font-bold text-(--color-text-primary)">{sug.suggestedOrder} {sug.unit}</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mb-1 uppercase tracking-normal">Suggested Order</p>
+                      <p className="text-3xl font-semibold text-(--color-text-primary)">{sug.suggestedOrder} {sug.unit}</p>
                     </div>
                   </div>
                 ))}
@@ -439,16 +439,16 @@ export default function InventoryDashboard() {
                 key="waste"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center py-20"
+                className="text-center py-10"
               >
-                <div className="h-20 w-20 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Trash2 size={40} />
+                <div className="h-12 w-12 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Trash2 size={24} />
                 </div>
-                <h3 className="text-2xl font-bold text-(--color-text-primary)">Record Waste</h3>
+                <h3 className="text-2xl font-semibold text-(--color-text-primary)">Record Waste</h3>
                 <p className="text-(--color-text-secondary) max-w-sm mx-auto mt-2">Record spillage, expiry, and damage to keep your stock counts accurate.</p>
-                <button 
+                <button
                   onClick={() => setIsWasteModalOpen(true)}
-                  className="mt-8 px-8 py-4 bg-danger text-(--color-bg-base) rounded-xl text-xs font-bold uppercase tracking-normal  transition-transform shadow-sm "
+                  className="mt-6 px-6 py-3 bg-danger text-(--color-bg-base) rounded-xl text-xs font-semibold transition-transform"
                 >
                   Record Waste
                 </button>
@@ -488,7 +488,7 @@ export default function InventoryDashboard() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
+                <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
                 <input
                   type="number"
                   required
@@ -501,7 +501,7 @@ export default function InventoryDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Cost Per Unit</label>
+                <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Cost Per Unit</label>
                 <input
                   type="number"
                   required
@@ -516,7 +516,7 @@ export default function InventoryDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Low Stock Alert Level</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Low Stock Alert Level</label>
               <input
                 type="number"
                 min="0"
@@ -531,7 +531,7 @@ export default function InventoryDashboard() {
             <Button 
               type="submit" 
               loading={submitting} 
-              className="w-full py-4 rounded-xl font-bold uppercase tracking-normal"
+              className="w-full py-4 rounded-xl font-semibold"
             >
               {isUpdateModalOpen ? 'Update Stock' : 'Add Stock'}
             </Button>
@@ -561,7 +561,7 @@ export default function InventoryDashboard() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
+                <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Quantity</label>
                 <input
                   type="number"
                   required
@@ -587,7 +587,7 @@ export default function InventoryDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Notes</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Notes</label>
               <textarea 
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
@@ -600,7 +600,7 @@ export default function InventoryDashboard() {
               type="submit" 
               variant="danger"
               loading={submitting} 
-              className="w-full py-4 rounded-xl font-bold uppercase tracking-normal shadow-sm "
+              className="w-full py-4 rounded-xl font-semibold"
             >
               Save Waste Record
             </Button>
@@ -614,7 +614,7 @@ export default function InventoryDashboard() {
         >
           <form onSubmit={handleCreateIngredient} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Ingredient Name</label>
+              <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Ingredient Name</label>
               <input 
                 type="text"
                 required
@@ -627,7 +627,7 @@ export default function InventoryDashboard() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Unit</label>
+                <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Unit</label>
                 <input 
                   type="text"
                   required
@@ -638,7 +638,7 @@ export default function InventoryDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal ml-1">Base Cost</label>
+                <label className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal ml-1">Base Cost</label>
                 <input
                   type="number"
                   min="0"
@@ -663,7 +663,7 @@ export default function InventoryDashboard() {
             <Button 
               type="submit" 
               loading={submitting} 
-              className="w-full py-4 rounded-xl font-bold uppercase tracking-normal"
+              className="w-full py-4 rounded-xl font-semibold"
             >
               Create Ingredient
             </Button>

@@ -67,8 +67,8 @@ const EMPTY_FORM = {
   adminUserId: '',
 };
 
-const inputCls = 'w-full px-5 py-3.5 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-bold text-sm';
-const labelCls = 'block text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1';
+const inputCls = 'w-full px-5 py-2.5 rounded-xl border border-(--color-border) bg-(--color-bg-soft) text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium text-sm';
+const labelCls = 'block text-[11px] font-medium text-(--color-text-muted) mb-2 ml-1';
 
 // Full new-admin form — same fields + permissions + identity docs as Add-Member.
 // `only` renders a slice of the form so the create wizard can split it across steps:
@@ -113,15 +113,15 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
       {/* Permissions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Check size={13} className="text-primary" /> Permissions</p>
-          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
+          <p className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-2"><Check size={13} className="text-primary" /> Permissions</p>
+          <span className="text-[11px] font-medium text-(--color-text-muted)">{Object.values(permissions).filter(Boolean).length} selected</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {PERMISSION_LIST.map(({ key, label }) => {
             const checked = !!permissions[key];
             return (
               <button type="button" key={key} onClick={() => togglePerm(key)}
-                className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
+                className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-medium text-left transition-all ${checked ? 'border-primary/40 bg-primary/10 text-primary' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
                 <span>{label}</span>
                 <span className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary text-white' : 'border-(--color-border)'}`}>{checked && <Check size={12} strokeWidth={3} />}</span>
               </button>
@@ -141,14 +141,14 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
           <label className={labelCls}>Aadhaar Card Image *</label>
           <label className={`group relative flex items-center justify-center min-h-28 bg-(--color-bg-soft) border-2 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden ${admin.aadharImage ? 'border-(--color-border)' : 'border-danger/40'}`}>
             <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading.aadhar} onChange={(e) => onImage(e.target.files?.[0], 'aadharImage')} />
-            {admin.aadharImage ? <img src={admin.aadharImage} alt="Aadhaar" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-bold">{uploading.aadhar ? 'Uploading…' : 'Upload Aadhaar'}</span></div>}
+            {admin.aadharImage ? <img src={admin.aadharImage} alt="Aadhaar" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-medium">{uploading.aadhar ? 'Uploading…' : 'Upload Aadhaar'}</span></div>}
           </label>
         </div>
         <div>
           <label className={labelCls}>Profile Photo <span className="text-(--color-text-muted) normal-case font-medium">(optional)</span></label>
           <label className="group relative flex items-center justify-center min-h-28 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
             <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading.profile} onChange={(e) => onImage(e.target.files?.[0], 'profileImageUrl')} />
-            {admin.profileImageUrl ? <img src={admin.profileImageUrl} alt="Profile" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-bold">{uploading.profile ? 'Uploading…' : 'Upload photo'}</span></div>}
+            {admin.profileImageUrl ? <img src={admin.profileImageUrl} alt="Profile" className="w-full h-28 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={24} className="mb-1 group-hover:text-primary" /><span className="text-xs font-medium">{uploading.profile ? 'Uploading…' : 'Upload photo'}</span></div>}
           </label>
         </div>
       </div>
@@ -168,10 +168,10 @@ function Stepper({ steps, current }) {
         return (
           <div key={s.key} className="flex items-center gap-2 min-w-0">
             <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${active ? 'border-primary/40 bg-primary/10 text-primary' : done ? 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-secondary)' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
-              <span className={`h-5 w-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${active || done ? 'bg-primary text-white' : 'bg-(--color-border) text-(--color-text-muted)'}`}>
+              <span className={`h-5 w-5 rounded-md flex items-center justify-center text-[11px] font-semibold shrink-0 ${active || done ? 'bg-primary text-white' : 'bg-(--color-border) text-(--color-text-muted)'}`}>
                 {done ? <Check size={12} strokeWidth={3} /> : i + 1}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-normal hidden sm:inline truncate"><Icon size={11} className="inline mr-1" />{s.title}</span>
+              <span className="text-[11px] font-medium uppercase tracking-normal hidden sm:inline truncate"><Icon size={11} className="inline mr-1" />{s.title}</span>
             </div>
             {i < steps.length - 1 && <span className={`h-px w-3 sm:w-5 shrink-0 ${done ? 'bg-primary/50' : 'bg-(--color-border)'}`} />}
           </div>
@@ -501,7 +501,7 @@ export default function CafesPage() {
   // Reusable sections — shared between the create wizard and the edit form.
   const renderBrandSection = () => (
     <section className="space-y-5">
-      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Store size={14} className="text-primary" /> Brand Details</h3>
+      <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Store size={14} className="text-primary" /> Brand Details</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <label className={labelCls}>Cafe Name *</label>
@@ -521,13 +521,13 @@ export default function CafesPage() {
                 <ImageIcon size={22} className="text-(--color-text-muted)" />
               )}
               {uploadingLogo && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[9px] font-bold uppercase">…</div>
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[11px] font-medium uppercase">…</div>
               )}
               <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleLogoFile(e.target.files?.[0])} disabled={uploadingLogo} />
             </label>
             <div className="flex-1">
               <input className={inputCls} value={form.logo} onChange={(e) => setField('logo', e.target.value)} placeholder="Click the tile to upload, or paste an image URL" />
-              <p className="text-[9px] text-(--color-text-muted) mt-1.5 ml-1">PNG/JPG up to 5MB. Upload replaces the URL automatically.</p>
+              <p className="text-[11px] text-(--color-text-muted) mt-1.5 ml-1">PNG/JPG up to 5MB. Upload replaces the URL automatically.</p>
             </div>
           </div>
         </div>
@@ -537,7 +537,7 @@ export default function CafesPage() {
 
   const renderReceiptSection = () => (
     <section className="space-y-5">
-      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Receipt size={14} className="text-primary" /> Receipt Address & Contact</h3>
+      <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Receipt size={14} className="text-primary" /> Receipt Address & Contact</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2">
           <label className={labelCls}>Address Line 1</label>
@@ -556,26 +556,26 @@ export default function CafesPage() {
   // own steps; the existing-admin picker shows inline here.
   const renderAdminStep = () => (
     <section className="space-y-5">
-      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Cafe Admin (Owner)</h3>
+      <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Cafe Admin (Owner)</h3>
       {adminModeSelect([{ label: 'No admin for now', value: 'none' }])}
       {form.adminMode === 'existing' && existingAdminSelect()}
       {form.adminMode === 'new' && (
-        <p className="text-[11px] text-(--color-text-muted) italic">Continue to the next steps to fill in the new admin’s profile, permissions and documents.</p>
+        <p className="text-[11px] text-(--color-text-muted)">Continue to the next steps to fill in the new admin’s profile, permissions and documents.</p>
       )}
       {form.adminMode === 'none' && (
-        <p className="text-[11px] text-(--color-text-muted) italic">You can add an admin later from this page or the Add-Member page.</p>
+        <p className="text-[11px] text-(--color-text-muted)">You can add an admin later from this page or the Add-Member page.</p>
       )}
     </section>
   );
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <SlideIn direction="down">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div>
-              <h1 className="text-3xl font-bold text-(--color-text-primary) flex items-center tracking-tight leading-none">
-                <Store className="mr-4 text-primary" size={34} strokeWidth={2.5} /> Cafe <span className="ml-3 text-primary">Management</span>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) flex items-center tracking-tight leading-none">
+                <Store className="mr-3 text-primary" size={24} strokeWidth={2.5} /> Cafe <span className="ml-3 text-primary">Management</span>
               </h1>
               <p className="text-(--color-text-secondary) text-sm mt-3 font-medium">
                 {isSuper ? 'Create and manage every cafe (brand). Each cafe owns its own branches and bills.' : 'Manage your cafe brand details shown on receipts.'}
@@ -585,7 +585,7 @@ export default function CafesPage() {
               <motion.button
                 whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 onClick={openCreate}
-                className="flex items-center justify-center px-8 py-4 bg-primary text-(--color-on-primary) rounded-xl font-bold uppercase tracking-normal text-[10px] shadow-sm hover:opacity-90 transition-all whitespace-nowrap"
+                className="flex items-center justify-center px-5 py-3 bg-primary text-(--color-on-primary) rounded-xl font-semibold uppercase tracking-normal text-[11px] shadow-sm hover:opacity-90 transition-all whitespace-nowrap"
               >
                 <Plus className="mr-2" size={16} /> New Cafe
               </motion.button>
@@ -594,27 +594,27 @@ export default function CafesPage() {
         </SlideIn>
 
         {cafes.length === 0 ? (
-          <div className="p-20 text-center text-(--color-text-muted) rounded-xl border border-dashed border-(--color-border)">
+          <div className="p-10 text-center text-(--color-text-muted) rounded-xl border border-dashed border-(--color-border)">
             <Store size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="text-sm font-bold uppercase tracking-normal">No cafes yet</p>
+            <p className="text-sm font-medium uppercase tracking-normal">No cafes yet</p>
             {isSuper && <p className="text-xs mt-2">Click “New Cafe” to create your first brand.</p>}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {cafes.map((cafe, i) => (
               <SlideIn key={cafe._id} delay={i * 0.04} direction="up">
-                <div className="h-full rounded-xl border border-(--color-border) bg-(--color-surface)/60 p-6 flex flex-col gap-5 hover:border-primary/30 transition-all shadow-sm">
+                <div className="h-full rounded-xl border border-(--color-border) bg-(--color-surface)/60 p-5 flex flex-col gap-5 hover:border-primary/30 transition-all shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 overflow-hidden">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 overflow-hidden">
                         {cafe.logo ? <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" /> : <Store size={24} />}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-base font-bold text-(--color-text-primary) truncate">{cafe.name}</p>
+                        <p className="text-base font-semibold text-(--color-text-primary) truncate">{cafe.name}</p>
                         {cafe.gstin ? (
-                          <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mt-0.5 truncate">GSTIN: {cafe.gstin}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-0.5 truncate">GSTIN: {cafe.gstin}</p>
                         ) : (
-                          <p className="text-[10px] font-medium text-(--color-text-muted) mt-0.5 truncate">{cafe.address?.city || 'No address set'}</p>
+                          <p className="text-[11px] font-medium text-(--color-text-muted) mt-0.5 truncate">{cafe.address?.city || 'No address set'}</p>
                         )}
                       </div>
                     </div>
@@ -632,24 +632,24 @@ export default function CafesPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-(--color-surface-soft) border border-(--color-border) p-3">
-                      <div className="flex items-center gap-2 text-(--color-text-muted)"><MapPin size={13} /><span className="text-[9px] font-bold uppercase tracking-normal">Branches</span></div>
-                      <p className="text-2xl font-bold text-(--color-text-primary) mt-1">{cafe.branchCount ?? 0}</p>
+                      <div className="flex items-center gap-2 text-(--color-text-muted)"><MapPin size={13} /><span className="text-[11px] font-medium uppercase tracking-normal">Branches</span></div>
+                      <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">{cafe.branchCount ?? 0}</p>
                     </div>
                     <div className="rounded-xl bg-(--color-surface-soft) border border-(--color-border) p-3">
-                      <div className="flex items-center gap-2 text-(--color-text-muted)"><Users size={13} /><span className="text-[9px] font-bold uppercase tracking-normal">Admins</span></div>
-                      <p className="text-2xl font-bold text-(--color-text-primary) mt-1">{cafe.admins?.length ?? 0}</p>
+                      <div className="flex items-center gap-2 text-(--color-text-muted)"><Users size={13} /><span className="text-[11px] font-medium uppercase tracking-normal">Admins</span></div>
+                      <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">{cafe.admins?.length ?? 0}</p>
                     </div>
                   </div>
 
                   {cafe.admins?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {cafe.admins.slice(0, 3).map((a) => (
-                        <span key={a._id} className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        <span key={a._id} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                           <ShieldCheck size={11} /> {a.name}
                         </span>
                       ))}
                       {cafe.admins.length > 3 && (
-                        <span className="text-[10px] font-bold px-2 py-1 text-(--color-text-muted)">+{cafe.admins.length - 3} more</span>
+                        <span className="text-[11px] font-medium px-2 py-1 text-(--color-text-muted)">+{cafe.admins.length - 3} more</span>
                       )}
                     </div>
                   )}
@@ -668,22 +668,22 @@ export default function CafesPage() {
                 initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }}
                 className="bg-(--color-surface) rounded-xl max-w-3xl w-full shadow-sm relative z-10 border border-(--color-border) max-h-[90vh] flex flex-col"
               >
-                <div className="flex justify-between items-center px-8 py-6 border-b border-(--color-border) shrink-0">
-                  <h2 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">
+                <div className="flex justify-between items-center px-6 py-4 border-b border-(--color-border) shrink-0">
+                  <h2 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
                     {editing ? 'Edit' : 'Create'} <span className="text-primary">Cafe</span>
                   </h2>
                   <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-(--color-surface-soft) text-(--color-text-muted)"><X size={22} /></button>
                 </div>
 
-                <div className="overflow-y-auto custom-scrollbar p-8">
-                  <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="overflow-y-auto custom-scrollbar p-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     {editing ? (
                       <>
                         {renderBrandSection()}
                         {renderReceiptSection()}
                         <div className="flex gap-4 pt-2">
-                          <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all">Cancel</button>
-                          <button type="submit" disabled={saving} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">Save Changes</button>
+                          <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-5 py-3 rounded-xl text-xs font-medium uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all">Cancel</button>
+                          <button type="submit" disabled={saving} className="flex-1 px-5 py-3 rounded-xl text-xs font-semibold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">Save Changes</button>
                         </div>
                       </>
                     ) : (
@@ -697,17 +697,17 @@ export default function CafesPage() {
                           {createSteps[curStep].key === 'receipt' && renderReceiptSection()}
                           {createSteps[curStep].key === 'admin' && isSuper && renderAdminStep()}
                           {createSteps[curStep].key === 'admin' && !isSuper && (
-                            <p className="text-[11px] text-(--color-text-muted) italic">Only a super admin can assign a cafe owner.</p>
+                            <p className="text-[11px] text-(--color-text-muted)">Only a super admin can assign a cafe owner.</p>
                           )}
                           {createSteps[curStep].key === 'profile' && (
                             <section className="space-y-5">
-                              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><User size={14} className="text-primary" /> Admin Profile</h3>
+                              <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><User size={14} className="text-primary" /> Admin Profile</h3>
                               <NewAdminFields only="profile" admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
                             </section>
                           )}
                           {createSteps[curStep].key === 'access' && (
                             <section className="space-y-5">
-                              <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Check size={14} className="text-primary" /> Permissions & Documents</h3>
+                              <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Check size={14} className="text-primary" /> Permissions & Documents</h3>
                               <NewAdminFields only="permsdocs" admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
                             </section>
                           )}
@@ -718,17 +718,17 @@ export default function CafesPage() {
                           <button
                             type="button"
                             onClick={curStep === 0 ? () => setShowModal(false) : goBack}
-                            className="px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all inline-flex items-center gap-2"
+                            className="px-5 py-3 rounded-xl text-xs font-medium uppercase tracking-normal text-(--color-text-muted) bg-(--color-surface-soft) hover:bg-(--color-bg-soft) transition-all inline-flex items-center gap-2"
                           >
                             {curStep === 0 ? 'Cancel' : (<><ChevronLeft size={15} /> Back</>)}
                           </button>
-                          <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Step {curStep + 1} / {createSteps.length}</span>
+                          <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Step {curStep + 1} / {createSteps.length}</span>
                           {isLastStep ? (
-                            <button type="submit" disabled={saving || uploadingImg.aadhar || uploadingImg.profile} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
+                            <button type="submit" disabled={saving || uploadingImg.aadhar || uploadingImg.profile} className="flex-1 px-5 py-3 rounded-xl text-xs font-semibold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all disabled:opacity-50">
                               {saving ? 'Creating…' : 'Create Cafe'}
                             </button>
                           ) : (
-                            <button type="button" onClick={goNext} className="flex-1 px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all inline-flex items-center justify-center gap-2">
+                            <button type="button" onClick={goNext} className="flex-1 px-5 py-3 rounded-xl text-xs font-semibold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 shadow-sm transition-all inline-flex items-center justify-center gap-2">
                               Next <ChevronRight size={15} />
                             </button>
                           )}
@@ -740,16 +740,16 @@ export default function CafesPage() {
                   {/* Admin management — edit mode (super_admin only) */}
                   {editing && isSuper && (
                     <section className="mt-10 pt-8 border-t border-(--color-border) space-y-5">
-                      <h3 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Users size={14} className="text-primary" /> Cafe Admins</h3>
+                      <h3 className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><Users size={14} className="text-primary" /> Cafe Admins</h3>
                       <div className="space-y-2">
                         {(editing.admins || []).length === 0 && (
-                          <p className="text-xs text-(--color-text-muted) italic">No admins assigned yet.</p>
+                          <p className="text-xs text-(--color-text-muted)">No admins assigned yet.</p>
                         )}
                         {(editing.admins || []).map((a) => (
                           <div key={a._id} className="flex items-center justify-between p-3.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">{a.name?.charAt(0)}</div>
-                              <div className="min-w-0"><p className="text-sm font-bold text-(--color-text-primary) truncate">{a.name}</p><p className="text-[10px] text-(--color-text-muted) truncate">{a.email}</p></div>
+                              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-semibold shrink-0">{a.name?.charAt(0)}</div>
+                              <div className="min-w-0"><p className="text-sm font-medium text-(--color-text-primary) truncate">{a.name}</p><p className="text-[11px] text-(--color-text-muted) truncate">{a.email}</p></div>
                             </div>
                             <button onClick={() => handleRemoveAdmin(editing, a._id)} className="p-2 rounded-lg bg-danger/10 text-danger hover:bg-danger hover:text-white transition-all shrink-0"><X size={14} /></button>
                           </div>
@@ -757,14 +757,14 @@ export default function CafesPage() {
                       </div>
 
                       <div className="rounded-xl border border-dashed border-(--color-border) p-5 space-y-4">
-                        <p className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><UserPlus size={13} /> Add an admin</p>
+                        <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2"><UserPlus size={13} /> Add an admin</p>
                         {adminModeSelect()}
                         {form.adminMode === 'new' ? (
                           <NewAdminFields admin={form.admin} setAdmin={setAdmin} permissions={form.adminPermissions} togglePerm={togglePerm} onImage={handleAdminImage} uploading={uploadingImg} />
                         ) : (
                           existingAdminSelect()
                         )}
-                        <button type="button" onClick={() => handleAddAdmin(editing)} disabled={uploadingImg.aadhar || uploadingImg.profile} className="w-full px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 transition-all disabled:opacity-50">Add Admin</button>
+                        <button type="button" onClick={() => handleAddAdmin(editing)} disabled={uploadingImg.aadhar || uploadingImg.profile} className="w-full px-5 py-3 rounded-xl text-xs font-semibold uppercase tracking-normal text-(--color-on-primary) bg-primary hover:opacity-90 transition-all disabled:opacity-50">Add Admin</button>
                       </div>
                     </section>
                   )}

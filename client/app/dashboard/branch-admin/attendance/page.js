@@ -74,24 +74,24 @@ export default function AttendancePage() {
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <LeaveApprovals />
         <SlideIn direction="down">
-          <div className="flex flex-col md:flex-row justify-between md:items-center bg-(--color-surface) dark:bg-(--color-surface) p-8 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) gap-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center bg-(--color-surface) dark:bg-(--color-surface) p-5 rounded-xl shadow-sm border border-(--color-border) dark:border-(--color-border) gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-none">
-                <CalendarCheck className="mr-4 text-primary" size={36} /> Daily <span className="ml-3 text-primary">Attendance</span>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) flex items-center tracking-tight leading-tight">
+                <CalendarCheck className="mr-3 text-primary" size={24} /> Daily <span className="ml-2 text-primary">Attendance</span>
               </h1>
               <p className="text-(--color-text-muted) dark:text-(--color-text-muted) text-sm mt-2 font-medium">Mark daily attendance for your staff.</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <div className="relative w-full sm:w-64">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center sm:shrink-0">
+              <div className="relative flex-1 min-w-0 sm:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
                 <input
                   type="text"
                   placeholder="Search staff..."
-                  className="w-full pl-11 pr-4 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary text-xs font-bold dark:text-(--color-text-primary) outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary text-xs font-medium dark:text-(--color-text-primary) outline-none transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -99,13 +99,13 @@ export default function AttendancePage() {
 
               <div
                 onClick={() => dateInputRef.current?.showPicker()}
-                className="flex items-center space-x-3 bg-(--color-surface) dark:bg-(--color-surface) p-4 rounded-xl border border-(--color-border) cursor-pointer hover:bg-(--color-primary-hover) transition-all w-full sm:w-auto"
+                className="flex items-center space-x-3 bg-(--color-surface) dark:bg-(--color-surface) p-2.5 rounded-xl border border-(--color-border) cursor-pointer hover:bg-(--color-primary-hover) transition-all w-full sm:w-auto"
               >
                 <Calendar className="text-primary" size={20} />
                 <input
                   ref={dateInputRef}
                   type="date"
-                  className="bg-transparent outline-none text-xs font-bold text-(--color-text-primary) pr-4 cursor-pointer"
+                  className="bg-transparent outline-none text-xs font-medium text-(--color-text-primary) pr-4 cursor-pointer"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   max={new Date().toISOString().split('T')[0]}
@@ -120,24 +120,24 @@ export default function AttendancePage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-(--color-surface-soft)/50 dark:bg-(--color-surface)/50 border-b border-(--color-border) dark:border-(--color-border)">
-                  <th className="px-8 py-6 text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Staff Member</th>
-                  <th className="px-8 py-6 text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal text-center">Status</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">Action</th>
+                  <th className="px-5 py-4 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Staff Member</th>
+                  <th className="px-5 py-4 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal text-center">Status</th>
+                  <th className="px-5 py-4 text-right text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-(--color-border) dark:divide-(--color-border)">
                 {refetching ? (
                   <tr>
-                    <td colSpan="3" className="px-8 py-8">
+                    <td colSpan="3" className="px-5 py-4">
                       <TableSkeleton rows={6} cols={3} />
                     </td>
                   </tr>
                 ) : filteredStaff.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="px-8 py-24 text-center">
+                    <td colSpan="3" className="px-5 py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <UserX size={48} className="mb-4" />
-                        <p className="font-bold text-xs uppercase tracking-normal">No staff found</p>
+                        <p className="font-medium text-xs uppercase tracking-normal">No staff found</p>
                       </div>
                     </td>
                   </tr>
@@ -150,25 +150,25 @@ export default function AttendancePage() {
                         onClick={() => setViewingStaff(user)}
                         className="hover:bg-(--color-surface-soft)/50 dark:hover:bg-(--color-surface)/30 transition-colors group cursor-pointer"
                       >
-                        <td className="px-8 py-6">
+                        <td className="px-5 py-4">
                           <div className="flex items-center">
-                            <div className="h-12 w-12 rounded-xl bg-(--color-primary-soft) flex items-center justify-center font-bold text-primary border border-primary/20">
+                            <div className="h-12 w-12 rounded-xl bg-(--color-primary-soft) flex items-center justify-center font-semibold text-primary border border-primary/20">
                               {user.name.charAt(0)}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">{user.name}</div>
-                              <div className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{user.email}</div>
+                              <div className="text-sm font-medium text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">{user.name}</div>
+                              <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">{user.email}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-5 py-4">
                           <div className="flex justify-center">
                             <AnimatePresence mode="wait">
                               <motion.span
                                 key={status}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className={`px-5 py-2 inline-flex text-[10px] font-bold uppercase tracking-normal rounded-xl border shadow-sm ${status === 'present' ? 'bg-[rgba(var(--color-success-rgb),0.12)] text-success border-success dark:bg-success/10 dark:border-success/20' :
+                                className={`px-2.5 py-1 inline-flex text-[11px] font-medium uppercase tracking-normal rounded-xl border ${status === 'present' ? 'bg-[rgba(var(--color-success-rgb),0.12)] text-success border-success dark:bg-success/10 dark:border-success/20' :
                                   status === 'absent' ? 'bg-[rgba(var(--color-danger-rgb),0.12)] text-danger border-danger dark:bg-danger/10 dark:border-danger/20' :
                                     status === 'half-day' ? 'bg-(--color-primary-soft) text-primary border-primary dark:bg-primary/10 dark:border-primary/20' :
                                       'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) dark:bg-(--color-surface) dark:border-(--color-border)'
@@ -179,7 +179,7 @@ export default function AttendancePage() {
                             </AnimatePresence>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-right">
+                        <td className="px-5 py-4 text-right">
                           <div className="flex justify-end space-x-3">
                             {[
                               { id: 'present', icon: CheckCircle2, label: 'Present', active: 'bg-success text-white border-success', inactive: 'text-success bg-[rgba(var(--color-success-rgb),0.12)] hover:bg-success hover:text-white' },
@@ -193,7 +193,7 @@ export default function AttendancePage() {
                                 whileHover={{ y: -2 }}
                                 whileTap={{ y: 0 }}
                                 onClick={(e) => { e.stopPropagation(); handleMarkAttendance(user._id, btn.id); }}
-                                className={`flex items-center px-5 py-3 rounded-xl text-[9px] font-bold uppercase tracking-normal border transition-all shadow-sm ${status === btn.id ? btn.active : btn.inactive}`}
+                                className={`flex items-center px-5 py-3 rounded-xl text-[11px] font-medium uppercase tracking-normal border transition-all ${status === btn.id ? btn.active : btn.inactive}`}
                               >
                                 <btn.icon size={14} className="mr-2" />
                                 <span className="hidden lg:inline">{btn.label}</span>
@@ -219,10 +219,10 @@ export default function AttendancePage() {
         maxWidth="max-w-3xl"
       >
         {viewingStaff && (
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-5 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
               <div className="relative group">
-                <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-bold shadow-sm  transition-transform">
+                <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
                   {viewingStaff.name.charAt(0)}
                 </div>
                 <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white">
@@ -231,84 +231,84 @@ export default function AttendancePage() {
               </div>
 
               <div className="text-center md:text-left flex-1">
-                <h2 className="text-4xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-none">{viewingStaff.name}</h2>
-                <p className="text-sm font-bold text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
+                <h2 className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight leading-tight">{viewingStaff.name}</h2>
+                <p className="text-sm font-medium text-(--color-text-muted) mt-2 flex items-center justify-center md:justify-start gap-2">
                   <Mail size={14} className="text-primary" /> {viewingStaff.email}
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-full border border-primary/20">
+                  <span className="px-2.5 py-1 bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-normal rounded-full border border-primary/20">
                     {viewingStaff.role}
                   </span>
-                  <span className="px-3 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal rounded-full">
+                  <span className="px-2.5 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[11px] font-medium uppercase tracking-normal rounded-full">
                     ID: {viewingStaff._id.slice(-6).toUpperCase()}
                   </span>
-                  <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-normal rounded-full">
+                  <span className="px-2.5 py-1 bg-success/10 text-success text-[11px] font-medium uppercase tracking-normal rounded-full">
                     Active
                   </span>
                 </div>
               </div>
 
-              <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
-                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
-                <p className="text-3xl font-bold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+              <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
+                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
+                <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                  <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                     <CreditCard size={14} className="text-primary" /> Contact Details
                   </h3>
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 gap-5">
                     <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                       <Hash className="text-primary" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Aadhar Number</p>
-                        <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not provided'}</p>
+                        <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Aadhar Number</p>
+                        <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.aadharNumber || 'Not provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                       <Phone className="text-primary" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Phone Number</p>
-                        <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
+                        <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Phone Number</p>
+                        <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.phone}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
                       <Award className="text-primary" size={20} />
                       <div>
-                        <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Qualification</p>
-                        <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
+                        <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Qualification</p>
+                        <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{viewingStaff.highestQualification}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                  <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                     <Globe size={14} className="text-primary" /> Personal Information
                   </h3>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-5">
                     <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                      <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Age</p>
-                      <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
+                      <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-1">Age</p>
+                      <p className="text-lg font-semibold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.age} Years</p>
                     </div>
                     <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-4 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                      <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal mb-1">Gender</p>
-                      <p className="text-lg font-bold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
+                      <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-1">Gender</p>
+                      <p className="text-lg font-semibold text-(--color-text-primary) dark:text-(--color-text-primary)">{viewingStaff.gender}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                  <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                     <MapPin size={14} className="text-primary" /> Address
                   </h3>
-                  <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-6 rounded-xl border border-(--color-border) dark:border-(--color-border)">
-                    <p className="text-sm font-bold text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
+                  <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border)">
+                    <p className="text-sm font-medium text-(--color-text-secondary) dark:text-(--color-text-muted) leading-relaxed">
                       {viewingStaff.address1}<br />
                       {viewingStaff.address2 && <>{viewingStaff.address2}<br /></>}
                       {viewingStaff.city}, {viewingStaff.state}
@@ -317,7 +317,7 @@ export default function AttendancePage() {
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+                  <h3 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                     <Info size={14} className="text-primary" /> Aadhar Card
                   </h3>
                   {viewingStaff.aadharImage ? (
@@ -334,13 +334,13 @@ export default function AttendancePage() {
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-3 "
                       >
                         <Globe size={24} className="text-primary" />
-                        <span className="font-bold text-[10px] uppercase tracking-normal">View Full Image</span>
+                        <span className="font-medium text-[11px] uppercase tracking-normal">View Full Image</span>
                       </a>
                     </div>
                   ) : (
-                    <div className="rounded-xl border-2 border-dashed border-(--color-border) dark:border-(--color-border) p-10 flex flex-col items-center justify-center text-(--color-text-muted) aspect-video">
+                    <div className="rounded-xl border-2 border-dashed border-(--color-border) dark:border-(--color-border) p-5 flex flex-col items-center justify-center text-(--color-text-muted) aspect-video">
                       <ShieldAlert size={32} className="mb-2 opacity-20" />
-                      <p className="text-[10px] font-bold uppercase tracking-normal text-center">No Aadhar Image</p>
+                      <p className="text-[11px] font-medium uppercase tracking-normal text-center">No Aadhar Image</p>
                     </div>
                   )}
                 </div>
@@ -350,7 +350,7 @@ export default function AttendancePage() {
             <div className="pt-8 border-t border-(--color-border) dark:border-(--color-border) flex gap-4">
               <Button
                 variant="outline"
-                className="flex-1 py-5 !rounded-xl font-bold text-xs uppercase tracking-normal"
+                className="flex-1 py-5 !rounded-xl font-medium text-xs uppercase tracking-normal"
                 onClick={() => setViewingStaff(null)}
               >
                 Back to Attendance

@@ -133,8 +133,8 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-primary/10 text-primary"><SettingsIcon size={22} /></div>
               <div>
-                <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Settings</h1>
-                <p className="text-[11px] font-bold text-(--color-text-muted) uppercase tracking-normal">Configure tax, billing, payroll & loyalty</p>
+                <h1 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">Settings</h1>
+                <p className="text-[11px] font-medium text-(--color-text-muted)">Configure tax, billing, payroll & loyalty</p>
               </div>
             </div>
 
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                 <button
                   key={t.key}
                   onClick={() => setActiveTab(t.key)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-normal transition-all border ${activeTab === t.key ? 'bg-primary text-(--color-on-primary) border-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:text-(--color-text-primary)'}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-medium tracking-normal transition-all border ${activeTab === t.key ? 'bg-primary text-(--color-on-primary) border-primary font-semibold' : 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border) hover:text-(--color-text-primary)'}`}
                 >
                   <Icon size={13} /> {t.label}
                 </button>
@@ -169,11 +169,11 @@ export default function SettingsPage() {
         </SlideIn>
 
         <SlideIn delay={0.1}>
-          <div className="glass-card p-8 rounded-xl premium-shadow space-y-5">
+          <div className="glass-card p-6 rounded-xl premium-shadow space-y-5">
             {FIELDS[activeTab].map(([group, key, label, type, hint]) => (
               <div key={key} className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="text-xs font-bold text-(--color-text-primary)">{label}</p>
+                  <p className="text-xs font-medium text-(--color-text-primary)">{label}</p>
                   {hint && <p className="text-[10px] font-medium text-(--color-text-muted)">{hint}</p>}
                 </div>
                 {type === 'checkbox' ? (
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                     step={type === 'number' ? 'any' : undefined}
                     value={form[group]?.[key] ?? ''}
                     onChange={(e) => setField(group, key, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)}
-                    className="w-40 px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-bold text-(--color-text-primary) outline-none focus:border-primary text-right"
+                    className="w-40 px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:border-primary text-right"
                   />
                 )}
               </div>
@@ -201,7 +201,7 @@ export default function SettingsPage() {
           <button
             onClick={save}
             disabled={saving}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-(--color-on-primary) text-[11px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary text-(--color-on-primary) text-sm font-semibold tracking-normal rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
           >
             <Save size={15} /> {saving ? 'Saving…' : 'Save settings'}
           </button>

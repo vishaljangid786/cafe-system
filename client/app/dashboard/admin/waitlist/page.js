@@ -73,7 +73,7 @@ export default function WaitlistPage() {
 
   if (loading) return <LoadingScreen />;
 
-  const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none focus:border-primary';
+  const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none focus:border-primary';
 
   return (
     <PageTransition>
@@ -83,8 +83,8 @@ export default function WaitlistPage() {
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-primary/10 text-primary"><Users size={22} /></div>
               <div>
-                <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Waitlist</h1>
-                <p className="text-[11px] font-bold text-(--color-text-muted) uppercase tracking-normal">Walk-in queue · {entries.length} waiting</p>
+                <h1 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">Waitlist</h1>
+                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Walk-in queue · {entries.length} waiting</p>
               </div>
             </div>
             {!branchScoped && (
@@ -103,14 +103,14 @@ export default function WaitlistPage() {
         {/* Add walk-in */}
         <SlideIn delay={0.05}>
           <div className="glass-card p-6 rounded-xl space-y-3">
-            <h2 className="text-sm font-bold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Add a party</h2>
+            <h2 className="text-sm font-semibold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Add a party</h2>
             <div className="flex flex-wrap gap-2">
               <input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Name" className={`${inputCls} flex-1 min-w-32`} />
               <input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} placeholder="Phone" className={`${inputCls} w-32`} />
               <input type="number" min="1" onKeyDown={blockNonInteger} value={form.partySize} onChange={(e) => setForm({ ...form, partySize: e.target.value })} placeholder="Party" className={`${inputCls} w-20`} title="Party size" />
               <input type="number" min="0" onKeyDown={blockNonInteger} value={form.quotedWaitMinutes} onChange={(e) => setForm({ ...form, quotedWaitMinutes: e.target.value })} placeholder="~min" className={`${inputCls} w-20`} title="Quoted wait (min)" />
               {can(user, 'waitlist.add') && (
-                <button onClick={add} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[10px] font-bold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>
+                <button onClick={add} disabled={busy} className="px-6 py-2.5 bg-primary text-(--color-on-primary) text-[11px] font-semibold tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Add</button>
               )}
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function WaitlistPage() {
         {/* Queue */}
         <SlideIn delay={0.1}>
           <div className="glass-card p-6 rounded-xl space-y-3">
-            <h2 className="text-sm font-bold text-(--color-text-primary)">Waiting</h2>
+            <h2 className="text-sm font-semibold text-(--color-text-primary)">Waiting</h2>
             {entries.length === 0 && <p className="text-xs text-(--color-text-muted)">No one waiting right now.</p>}
             <div className="space-y-2">
               {entries.map((e, idx) => {
@@ -128,19 +128,19 @@ export default function WaitlistPage() {
                 return (
                   <div key={e._id} className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
                     <div className="flex items-center gap-3">
-                      <span className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">#{idx + 1}</span>
+                      <span className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">#{idx + 1}</span>
                       <div>
-                        <p className="text-xs font-bold text-(--color-text-primary)">{e.customerName} <span className="text-(--color-text-muted)">· party of {e.partySize}</span></p>
-                        <p className={`text-[10px] font-bold flex items-center gap-1 ${over ? 'text-danger' : 'text-(--color-text-muted)'}`}>
+                        <p className="text-xs font-medium text-(--color-text-primary)">{e.customerName} <span className="text-(--color-text-muted)">· party of {e.partySize}</span></p>
+                        <p className={`text-[11px] font-medium flex items-center gap-1 ${over ? 'text-danger' : 'text-(--color-text-muted)'}`}>
                           <Clock size={10} /> waiting {waited}m{e.quotedWaitMinutes > 0 ? ` / ~${e.quotedWaitMinutes}m` : ''}{e.customerPhone ? ` · ${e.customerPhone}` : ''}
                         </p>
                       </div>
                     </div>
                     {can(user, 'waitlist.modify') && (
                     <div className="flex items-center gap-2">
-                      <button disabled={busy} onClick={() => act(e._id, 'seated')} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[9px] font-bold uppercase rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Seat</button>
-                      <button disabled={busy} onClick={() => act(e._id, 'no-show')} className="flex items-center gap-1 px-3 py-2 bg-amber-500/10 text-amber-500 text-[9px] font-bold uppercase rounded-lg border border-amber-500/20 hover:bg-amber-500 hover:text-white disabled:opacity-50"><UserX size={12} /> No-show</button>
-                      <button disabled={busy} onClick={() => act(e._id, 'cancelled')} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[9px] font-bold uppercase rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50"><X size={12} /></button>
+                      <button disabled={busy} onClick={() => act(e._id, 'seated')} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[11px] font-medium rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Seat</button>
+                      <button disabled={busy} onClick={() => act(e._id, 'no-show')} className="flex items-center gap-1 px-3 py-2 bg-amber-500/10 text-amber-500 text-[11px] font-medium rounded-lg border border-amber-500/20 hover:bg-amber-500 hover:text-white disabled:opacity-50"><UserX size={12} /> No-show</button>
+                      <button disabled={busy} onClick={() => act(e._id, 'cancelled')} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[11px] font-medium rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50"><X size={12} /></button>
                     </div>
                     )}
                   </div>

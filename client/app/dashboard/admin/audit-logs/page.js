@@ -28,7 +28,7 @@ export default function AuditLogsPage() {
   const [totalLogs, setTotalLogs] = useState(0);
   const [actionFilter, setActionFilter] = useState('');
   const [searchUserId, setSearchUserId] = useState('');
-  
+
   const columns = [
     { header: 'Action', key: 'action' },
     { header: 'Done By', key: 'performedBy.name' },
@@ -78,78 +78,77 @@ export default function AuditLogsPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-10 pb-20 max-w-7xl mx-auto">
+      <div className="space-y-6 pb-10 max-w-7xl mx-auto">
 
-        {/* Global Security Header */}
+        {/* Header */}
         <SlideIn>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-full border border-primary/20 ">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-semibold uppercase tracking-wide rounded-full border border-primary/15">
                   Admin Only
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-(--color-text-muted) text-[10px] font-bold uppercase tracking-normal">Activity History</span>
+                <span className="text-(--color-text-muted) text-[11px] font-medium">Activity History</span>
               </div>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-(--color-text-primary) flex items-center gap-4">
-                <ShieldAlert className="text-primary h-12 w-12 shrink-0 drop-shadow-sm" />
-                ACTIVITY <span className="text-primary">HISTORY</span>
+              <h1 className="text-2xl font-semibold tracking-tight text-(--color-text-primary) flex items-center gap-2.5">
+                <ShieldAlert className="text-primary h-6 w-6 shrink-0" />
+                Activity History
               </h1>
-              <p className="text-sm font-medium text-(--color-text-secondary) max-w-md">A full record of every action across all branches.</p>
+              <p className="text-sm text-(--color-text-muted) max-w-md">A full record of every action across all branches.</p>
             </div>
 
-            <div className="flex items-center gap-6 bg-(--color-surface)/40  p-6 rounded-xl border border-(--color-border) shadow-sm">
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Total Actions</p>
-                <p className="text-2xl font-bold text-(--color-text-primary)">{totalLogs}</p>
+            <div className="flex items-center gap-5 bg-(--color-surface) px-5 py-3.5 rounded-xl border border-(--color-border)">
+              <div>
+                <p className="text-[11px] font-medium text-(--color-text-muted) mb-0.5">Total Actions</p>
+                <p className="text-xl font-semibold text-(--color-text-primary)">{totalLogs}</p>
               </div>
-              <div className="h-12 w-[1px] bg-(--color-border)" />
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">Status</p>
-                <p className="text-2xl font-bold text-success">ACTIVE</p>
+              <div className="h-9 w-px bg-(--color-border)" />
+              <div>
+                <p className="text-[11px] font-medium text-(--color-text-muted) mb-0.5">Status</p>
+                <p className="text-xl font-semibold text-success">Active</p>
               </div>
             </div>
           </div>
         </SlideIn>
 
         {/* Information Summaries */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SecurityCard
             title="Activity"
-            value={totalLogs > 100 ? 'HIGH' : 'NORMAL'}
-            icon={<Activity className="text-secondary" />}
+            value={totalLogs > 100 ? 'High' : 'Normal'}
+            icon={<Activity size={18} className="text-secondary" />}
             sub="Activity level across all branches"
           />
           <SecurityCard
             title="Access Level"
-            value="ADMIN"
-            icon={<User className="text-primary" />}
+            value="Admin"
+            icon={<User size={18} className="text-primary" />}
             sub="Only admins can view this page"
           />
           <SecurityCard
             title="Records"
             value="100%"
-            icon={<ShieldAlert className="text-success" />}
+            icon={<ShieldAlert size={18} className="text-success" />}
             sub="All records are saved"
           />
         </div>
 
         {/* Command Bar */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3 sticky-filter z-30">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sticky-filter z-30">
           <div className="relative flex-1 min-w-0 group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={16} />
             <input
               type="text"
               placeholder="Filter by user ID..."
               aria-label="Filter audit logs by user ID"
-              className="w-full pl-12 pr-5 py-3.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl text-sm font-bold text-(--color-text-primary) focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-primary/15 focus:border-primary transition outline-none"
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
             <PremiumSelect
-              className="min-w-45 flex-1 sm:flex-none"
+              className="flex-1 sm:flex-none sm:w-48"
               value={actionFilter}
               onChange={(val) => setActionFilter(val)}
               options={[
@@ -168,73 +167,73 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Data List */}
-        <div className="bg-(--color-surface)/40  rounded-xl border border-(--color-border) shadow-sm overflow-hidden">
+        <div className="bg-(--color-surface) rounded-xl border border-(--color-border) shadow-sm overflow-hidden">
           <div className="responsive-table-container">
             <table className="w-full text-left border-separate border-spacing-0">
               <thead>
-                <tr className="bg-(--color-surface-soft) text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
-                  <th className="px-10 py-6">Action Details</th>
-                  <th className="px-10 py-6">Done By</th>
-                  <th className="px-10 py-6 text-center">Type</th>
-                  <th className="px-10 py-6 text-right">Time</th>
+                <tr className="bg-(--color-surface-soft) text-[11px] font-semibold uppercase tracking-wide text-(--color-text-muted)">
+                  <th className="px-5 py-3.5">Action Details</th>
+                  <th className="px-5 py-3.5">Done By</th>
+                  <th className="px-5 py-3.5 text-center">Type</th>
+                  <th className="px-5 py-3.5 text-right">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y border-(--color-border)">
+              <tbody className="divide-y divide-(--color-border)">
                 <AnimatePresence mode="popLayout">
                   {refetching ? (
                     <tr>
-                      <td colSpan="4" className="px-10 py-8">
+                      <td colSpan="4" className="px-5 py-6">
                         <TableSkeleton rows={6} cols={4} />
                       </td>
                     </tr>
                   ) : logs.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-10 py-32 text-center">
+                      <td colSpan="4" className="px-5 py-24 text-center">
                         <div className="flex flex-col items-center opacity-20">
-                          <ShieldAlert size={60} />
-                          <p className="text-xs font-bold uppercase tracking-normal mt-4">No activity found</p>
+                          <ShieldAlert size={44} />
+                          <p className="text-xs font-medium mt-3">No activity found</p>
                         </div>
                       </td>
                     </tr>
                   ) : logs.map((log, idx) => (
                     <motion.tr
                       key={log._id}
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
                       transition={{ delay: idx * 0.03 }}
-                      className="group hover:bg-primary/[0.02] dark:hover:bg-primary/[0.05] transition-all cursor-pointer border-l-2 border-transparent hover:border-primary"
+                      className="group hover:bg-primary/3 transition-colors border-l-2 border-transparent hover:border-primary"
                     >
-                      <td className="px-10 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-lg transition-transform ${getActionColor(log.action)}`}>
-                            <Activity size={20} />
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${getActionColor(log.action)}`}>
+                            <Activity size={16} />
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-(--color-text-primary) italic uppercase tracking-tight">{log.action?.replace(/_/g, ' ') || 'Unknown action'}</p>
-                            <p className="text-[10px] font-bold text-(--color-text-muted) mt-1 max-w-[250px] truncate">{log.details || 'No details'}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-(--color-text-primary) truncate">{log.action?.replace(/_/g, ' ') || 'Unknown action'}</p>
+                            <p className="text-xs text-(--color-text-muted) mt-0.5 max-w-62.5 truncate">{log.details || 'No details'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-(--color-surface-soft) flex items-center justify-center font-bold text-[10px] text-(--color-text-muted) border border-(--color-border)">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-lg bg-(--color-surface-soft) flex items-center justify-center font-semibold text-[11px] text-(--color-text-muted) border border-(--color-border) shrink-0">
                             {log.performedBy?.name?.substring(0, 2).toUpperCase() || 'SY'}
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-(--color-text-primary)">{log.performedBy?.name || 'System'}</p>
-                            <p className="text-[9px] font-bold text-primary-dark dark:text-primary uppercase tracking-normal mt-0.5">{log.performedBy?.role || 'SYSTEM'}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-(--color-text-primary) truncate">{log.performedBy?.name || 'System'}</p>
+                            <p className="text-[10px] font-medium text-(--color-text-muted) uppercase tracking-wide mt-0.5">{log.performedBy?.role || 'SYSTEM'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-6 text-center">
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-normal border shadow-sm ${getActionColor(log.action)}`}>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${getActionColor(log.action)}`}>
                           {log.action?.includes('PROMOTE') ? 'Critical' : 'Operational'}
                         </span>
                       </td>
-                      <td className="px-10 py-6 text-right">
-                        <p className="text-xs font-bold text-(--color-text-primary) italic">{new Date(log.createdAt).toLocaleTimeString()}</p>
-                        <p className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-tight mt-1">{new Date(log.createdAt).toLocaleDateString()}</p>
+                      <td className="px-5 py-4 text-right">
+                        <p className="text-xs font-medium text-(--color-text-primary)">{new Date(log.createdAt).toLocaleTimeString()}</p>
+                        <p className="text-[10px] text-(--color-text-muted) mt-0.5">{new Date(log.createdAt).toLocaleDateString()}</p>
                       </td>
                     </motion.tr>
                   ))}
@@ -245,20 +244,20 @@ export default function AuditLogsPage() {
 
           {/* Quick Pagination */}
           {totalPages > 1 && (
-            <div className="px-10 py-8 bg-(--color-surface-soft)/50 flex items-center justify-between border-t border-(--color-border)">
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Page {page} of {totalPages}</p>
-              <div className="flex gap-3">
+            <div className="px-5 py-4 bg-(--color-surface-soft)/50 flex items-center justify-between border-t border-(--color-border)">
+              <p className="text-xs font-medium text-(--color-text-muted)">Page {page} of {totalPages}</p>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setPage(prev => Math.max(1, prev - 1))}
                   disabled={page === 1}
-                  className="px-6 py-2.5 bg-(--color-surface) border border-(--color-border) rounded-xl text-[10px] font-bold uppercase tracking-normal  active:scale-95 disabled:opacity-30 transition-all shadow-sm"
+                  className="px-4 py-2 bg-(--color-surface) border border-(--color-border) rounded-lg text-xs font-semibold active:scale-95 disabled:opacity-30 transition-all"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={page === totalPages}
-                  className="px-6 py-2.5 bg-(--color-text-primary) text-(--color-bg-base) rounded-xl text-[10px] font-bold uppercase tracking-normal  active:scale-95 disabled:opacity-30 transition-all shadow-sm "
+                  className="px-4 py-2 bg-(--color-text-primary) text-(--color-bg-base) rounded-lg text-xs font-semibold active:scale-95 disabled:opacity-30 transition-all"
                 >
                   Next
                 </button>
@@ -273,16 +272,16 @@ export default function AuditLogsPage() {
 
 function SecurityCard({ title, value, icon, sub }) {
   return (
-    <div className="bg-(--color-surface)/40  p-8 rounded-xl border border-(--color-border) shadow-sm group  transition-all duration-500">
-      <div className="flex items-center justify-between mb-6">
-        <div className="p-4 bg-(--color-surface-soft) rounded-xl group-hover:rotate-12 transition-transform duration-500">
+    <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) transition-colors hover:border-(--color-border-strong)">
+      <div className="flex items-center justify-between mb-4">
+        <div className="p-2.5 bg-(--color-surface-soft) rounded-lg">
           {icon}
         </div>
-        <div className="h-2 w-2 rounded-full bg-success " />
+        <div className="h-1.5 w-1.5 rounded-full bg-success" />
       </div>
-      <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">{title}</p>
-      <h3 className="text-4xl font-bold text-(--color-text-primary) tracking-tight italic">{value}</h3>
-      <p className="text-[9px] font-bold text-(--color-text-secondary) italic mt-2">{sub}</p>
+      <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">{title}</p>
+      <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">{value}</h3>
+      <p className="text-xs text-(--color-text-muted) mt-1">{sub}</p>
     </div>
   );
 }

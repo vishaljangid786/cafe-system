@@ -260,6 +260,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
       if (canView('page_orderreports')) analyticsItems.push({ name: 'Order Reports', pageKey: 'page_orderreports', href: '/dashboard/admin/orders/analytics', icon: TrendingUp });
       if (canView('page_branchcompare') && hasMultipleComparableBranches) analyticsItems.push({ name: 'Branch Compare', pageKey: 'page_branchcompare', href: '/dashboard/admin/location-comparison', icon: Target });
       if (canView('page_staffreports')) analyticsItems.push({ name: 'Staff Reports', pageKey: 'page_staffreports', href: `${roleBasePath}/staff-reports`, icon: TrendingUp });
+      if (canView('page_staffcomparison')) analyticsItems.push({ name: 'Staff Comparison', pageKey: 'page_staffcomparison', href: `${roleBasePath}/staff-comparison`, icon: Users });
       if (canView('page_feedback')) analyticsItems.push({ name: 'Feedback', pageKey: 'page_feedback', href: '/dashboard/admin/feedback', icon: Star });
       if (canView('page_paymentinsights')) analyticsItems.push({ name: 'Payment Insights', pageKey: 'page_paymentinsights', href: '/dashboard/admin/payment-intelligence', icon: CreditCard });
       if (canView('page_alerts')) analyticsItems.push({ name: 'Alerts Overview', pageKey: 'page_alerts', href: '/dashboard/admin/command-center', icon: AlertCircle });
@@ -540,7 +541,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
                                 <span className="absolute -left-3.25 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-primary" />
                               )}
                               <Icon size={16} strokeWidth={isLinkActive ? 2.5 : 2} className="shrink-0" />
-                              <span className="text-sm truncate">{link.name}</span>
+                              <span className="min-w-0 flex-1 text-sm truncate">{link.name}</span>
                               {link.badge > 0 && (
                                 <span className={`ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${isLinkActive ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-primary-soft) text-primary'}`}>
                                   {link.badge}

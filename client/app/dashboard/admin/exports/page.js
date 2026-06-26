@@ -104,22 +104,22 @@ export default function ExportCenter() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <Download size={60} className="text-danger opacity-20" />
-        <h2 className="text-2xl font-bold text-(--color-text-primary) italic uppercase">Access Restricted</h2>
-        <p className="text-(--color-text-muted) font-bold text-sm tracking-normal uppercase">You do not have permission to export reports.</p>
+        <h2 className="text-2xl font-semibold text-(--color-text-primary)">Access Restricted</h2>
+        <p className="text-(--color-text-muted) font-medium text-sm">You do not have permission to export reports.</p>
       </div>
     );
   }
 
   return (
     <PageTransition>
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-10">
-        
+      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
+
         {/* Header */}
         <SlideIn>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-(--color-text-primary) flex items-center gap-3">
-                <Download className="text-primary h-10 w-10" />
+              <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) flex items-center gap-3">
+                <Download className="text-primary h-6 w-6" />
                 Export <span className="text-primary">Reports</span>
               </h1>
               <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Download your business reports in different formats.</p>
@@ -127,12 +127,12 @@ export default function ExportCenter() {
           </div>
         </SlideIn>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
           {/* Category Selection */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-8 shadow-sm">
-              <h2 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
+            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-5 shadow-sm">
+              <h2 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-6 flex items-center gap-2">
                 <Filter size={14} /> 1. Choose What to Export
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,7 +140,7 @@ export default function ExportCenter() {
                   <button
                     key={cat.id}
                     onClick={() => setFilters({ ...filters, type: cat.id })}
-                    className={`flex items-center justify-between p-5 rounded-xl border transition-all ${
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
                       filters.type === cat.id 
                         ? 'border-primary bg-primary/5 ring-1 ring-primary'
                         : 'border-(--color-border) hover:border-primary/30'
@@ -150,7 +150,7 @@ export default function ExportCenter() {
                       <div className={`p-3 rounded-xl ${filters.type === cat.id ? 'bg-primary text-white' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
                         {cat.icon}
                       </div>
-                      <span className={`font-bold ${filters.type === cat.id ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'}`}>{cat.name}</span>
+                      <span className={`font-medium ${filters.type === cat.id ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'}`}>{cat.name}</span>
                     </div>
                     {filters.type === cat.id && <CheckCircle2 className="text-primary" size={18} />}
                   </button>
@@ -159,9 +159,9 @@ export default function ExportCenter() {
             </div>
 
             {/* Date and Branch Filters */}
-            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-8 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+                <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <Calendar size={12} /> Start Date
                 </label>
                 <input 
@@ -172,7 +172,7 @@ export default function ExportCenter() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+                <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <Calendar size={12} /> End Date
                 </label>
                 <input 
@@ -183,10 +183,10 @@ export default function ExportCenter() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
+                <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                   <MapPin size={12} /> Branch <span className="text-(--color-text-muted)/60 normal-case font-medium">(from navbar)</span>
                 </label>
-                <div className="w-full p-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-xs font-bold text-(--color-text-primary) uppercase tracking-normal truncate">
+                <div className="w-full p-3 bg-(--color-surface-soft) border border-(--color-border) rounded-xl text-xs font-medium text-(--color-text-primary) uppercase tracking-normal truncate">
                   {branchIds.length > 1
                     ? `${branchIds.length} branches selected`
                     : singleBranchId !== 'all'
@@ -199,11 +199,11 @@ export default function ExportCenter() {
 
           {/* Format and Action */}
           <div className="space-y-6">
-            <div className="bg-(--color-surface) text-(--color-text-primary) rounded-xl p-8 shadow-sm relative overflow-hidden h-full flex flex-col justify-between border border-(--color-border)">
+            <div className="bg-(--color-surface) text-(--color-text-primary) rounded-xl p-5 shadow-sm relative overflow-hidden h-full flex flex-col justify-between border border-(--color-border)">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 hidden -mr-16 -mt-16 rounded-full" />
-              
-              <div className="space-y-8 relative z-10">
-                <h2 className="text-xs font-bold uppercase tracking-normal text-(--color-text-muted)">2. Choose Format</h2>
+
+              <div className="space-y-6 relative z-10">
+                <h2 className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">2. Choose Format</h2>
                 <div className="space-y-3">
                   {formats.map((f) => (
                     <button
@@ -216,17 +216,17 @@ export default function ExportCenter() {
                       }`}
                     >
                       {f.icon}
-                      <span className="font-bold text-sm">{f.name}</span>
+                      <span className="font-medium text-sm">{f.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="pt-8 relative z-10">
+              <div className="pt-6 relative z-10">
                 <button
                   onClick={handleExport}
                   disabled={loading}
-                  className="w-full py-5 bg-primary hover:bg-secondary disabled:bg-(--color-surface-soft) disabled:text-(--color-text-muted) text-white font-bold uppercase tracking-normal rounded-xl transition-all shadow-sm  flex items-center justify-center gap-3 active:scale-95"
+                  className="w-full py-4 bg-primary hover:bg-secondary disabled:bg-(--color-surface-soft) disabled:text-(--color-text-muted) text-white font-semibold tracking-normal rounded-xl transition-all shadow-sm flex items-center justify-center gap-3 active:scale-95"
                 >
                   {loading ? (
                     <>
