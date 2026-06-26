@@ -272,6 +272,7 @@ export default function DashboardLayout({ children }) {
                 <div className="w-64 sm:w-80">
                   <PremiumSelect
                     value=""
+                    wrapOptions
                     onChange={(uid) => { if (uid) handleSwitchUser(uid); }}
                     placeholder="Switch to a user..."
                     options={[

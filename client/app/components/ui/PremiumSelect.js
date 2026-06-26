@@ -13,7 +13,8 @@ export default function PremiumSelect({
   error,
   icon: Icon,
   className = "",
-  multiple = false
+  multiple = false,
+  wrapOptions = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -159,13 +160,13 @@ export default function PremiumSelect({
                         setIsOpen(false);
                       }
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${isSelected
+                    className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${wrapOptions ? 'items-start gap-2' : 'items-center'} ${isSelected
                         ? 'bg-primary text-(--color-on-primary)'
                         : 'text-(--color-text-secondary) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'
                       }`}
                   >
-                    <span className="truncate pr-4">{optLabel}</span>
-                    {isSelected && <Check size={14} strokeWidth={3} />}
+                    <span className={wrapOptions ? 'flex-1 text-left whitespace-normal wrap-break-word' : 'truncate pr-4'}>{optLabel}</span>
+                    {isSelected && <Check size={14} strokeWidth={3} className={wrapOptions ? 'shrink-0 mt-0.5' : undefined} />}
                   </button>
                 );
               })
