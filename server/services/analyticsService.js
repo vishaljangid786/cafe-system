@@ -257,17 +257,33 @@ class AnalyticsService {
     ]);
 
     // Processing Results
+    // Sales trend is built from the Order records (every order that sold), not from
+    // till-settled transactions — so the Sales Report / Daily Orders charts match the
+    // order-based "Total Sales" stat. Cancelled/rejected orders contribute no revenue
+    // but are still counted as placed orders.
+    const ordersByDateAgg = await Order.aggregate([
+      { $match: { ...(match.locationId ? { branch: match.locationId } : {}), ...orderDateMatch } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: { $cond: [{ $in: ["$status", ["CANCELLED", "REJECTED"]] }, 0, "$totalAmount"] } },
+          orders: { $sum: 1 }
+        }
+      }
+    ]);
+
     const allExpenseDates = [...manualExpenseAgg.map(m => m._id), ...payrollAgg.map(p => `${p._id}-01`)];
-    const dates = Array.from(new Set([...transactionAgg.map(t => t._id), ...allExpenseDates])).filter(d => d && typeof d === 'string').sort();
+    const dates = Array.from(new Set([...ordersByDateAgg.map(o => o._id), ...allExpenseDates])).filter(d => d && typeof d === 'string').sort();
 
     const timeSeries = dates.map(date => {
-      const t = transactionAgg.find(item => item._id === date) || { revenue: 0, profit: 0, orders: 0 };
+      const o = ordersByDateAgg.find(item => item._id === date) || { revenue: 0, orders: 0 };
       // Expenses are sourced from the Expense collection only (Transaction EXPENSE rows
       // are mirrors of these and would double-count if added again).
       const e = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
       const monthStr = date.substring(0, 7);
       const p = date.endsWith('-01') ? (payrollAgg.find(item => item._id === monthStr)?.expenses || 0) : 0;
-      return { date, revenue: t.revenue, profit: t.profit, expenses: e + p, orders: t.orders };
+      const dayExpenses = e + p;
+      return { date, revenue: o.revenue, profit: o.revenue - dayExpenses, expenses: dayExpenses, orders: o.orders };
     });
 
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -281,13 +297,22 @@ class AnalyticsService {
     const todayEntry = forecastAgg.find(f => f._id === todayDow);
     const expectedTodayRevenue = todayEntry ? Math.round(todayEntry.totalSales / Math.max(todayEntry.count, 1)) : 0;
 
-    const totalRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
+    // billedRevenue = money actually settled at the till (approved revenue txns).
+    const billedRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
     const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0) + payrollAgg.reduce((acc, curr) => acc + curr.expenses, 0);
-    // billedOrders = orders that generated approved revenue (drives avg order value);
-    // totalOrders = every order actually placed in the window (what the user expects
-    // to see — placed orders show up even before they're served/billed).
+    // billedOrders = orders that generated approved revenue (settled at the till);
+    // totalOrders = every order actually placed in the window.
     const billedOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
     const totalOrders = orderStatusAgg.reduce((acc, curr) => acc + (curr.count || 0), 0);
+
+    // "Total Sales" = value of every order that sold (any status except
+    // CANCELLED/REJECTED), summed straight from the Order records. This shows
+    // sales for orders that have been taken but not yet settled at the till —
+    // which is what the operator means by "how much have I sold". `billedRevenue`
+    // above stays available for strict till-settled accounting.
+    const totalRevenue = orderStatusAgg
+      .filter((o) => o._id !== 'CANCELLED' && o._id !== 'REJECTED')
+      .reduce((acc, curr) => acc + (curr.revenue || 0), 0);
 
     const [staffAgg, categoryAgg, recentTransactions, recentManualExpenses, recentRevenues] = await Promise.all([
       Transaction.aggregate([
@@ -338,10 +363,11 @@ class AnalyticsService {
       forecast: { expectedTodayRevenue, nextMonthSalesTrend },
       summary: {
         totalRevenue,
+        billedRevenue,
         totalExpenses,
         totalOrders,
         billedOrders,
-        avgOrderValue: billedOrders > 0 ? totalRevenue / billedOrders : 0,
+        avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
         netProfit: totalRevenue - totalExpenses,
         cancellationRate: orderStatusAgg.find(o => o._id === 'CANCELLED')?.count || 0
       }
