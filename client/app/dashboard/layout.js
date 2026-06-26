@@ -269,7 +269,7 @@ export default function DashboardLayout({ children }) {
                 </span>
               </span>
               {canSwitchUser && switchUsers.length > 0 && (
-                <div className="w-56 sm:w-64">
+                <div className="w-64 sm:w-80">
                   <PremiumSelect
                     value=""
                     onChange={(uid) => { if (uid) handleSwitchUser(uid); }}
@@ -278,7 +278,19 @@ export default function DashboardLayout({ children }) {
                       { label: 'Switch to a user...', value: '' },
                       ...switchUsers
                         .filter((u) => String(u._id) !== String(user?._id))
-                        .map((u) => ({ label: `${u.name} - ${String(u.role || '').replace(/_/g, ' ')}`, value: u._id })),
+                        .map((u) => {
+                          const role = String(u.role || '').replace(/_/g, ' ');
+                          // Branch + cafe live on the user's assigned/accessible location.
+                          const loc = u.assignedLocation
+                            || (Array.isArray(u.accessibleLocations) ? u.accessibleLocations[0] : null);
+                          const branch = loc?.name
+                            || (Array.isArray(u.accessibleLocations) && u.accessibleLocations.length > 1
+                              ? `${u.accessibleLocations.length} branches`
+                              : '');
+                          const cafe = loc?.cafe?.name || '';
+                          const label = [u.name, role, branch, cafe].filter(Boolean).join(' · ');
+                          return { label, value: u._id };
+                        }),
                     ]}
                   />
                 </div>

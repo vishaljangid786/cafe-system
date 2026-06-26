@@ -182,8 +182,8 @@ const getUsers = asyncHandler(async (req, res) => {
     // .lean() skips getters, so aadharNumber would be the raw ciphertext — and the
     // list never needs it (the detail view fetches the decrypted value). Exclude it.
     .select('-password -aadharNumber')
-    .populate('assignedLocation', 'name city')
-    .populate('accessibleLocations', 'name city')
+    .populate({ path: 'assignedLocation', select: 'name city cafe', populate: { path: 'cafe', select: 'name' } })
+    .populate({ path: 'accessibleLocations', select: 'name city cafe', populate: { path: 'cafe', select: 'name' } })
     .sort({ createdAt: -1 })
     .skip(startIndex)
     .limit(limit)
