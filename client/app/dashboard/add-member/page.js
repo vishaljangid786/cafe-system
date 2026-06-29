@@ -361,16 +361,16 @@ export default function AddMemberPage() {
         <Section icon={User} title="Basic Information" desc="Login and identity details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field label="Full Name">
-              <input required className={inputCls} value={form.name} onChange={(e) => set('name', sanitizeName(e.target.value))} placeholder="Rahul Sharma" />
+              <input required className={inputCls} value={form.name} onChange={(e) => set('name', sanitizeName(e.target.value))} placeholder="Enter full name" />
             </Field>
             <Field label="Email Address">
-              <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" />
+              <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', sanitizeEmail(e.target.value))} placeholder="Enter email address" />
             </Field>
             <Field label="Password" hint="The member can change it after first login.">
               <input required type="text" minLength={10} className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 10 characters" />
             </Field>
             <Field label="Phone Number">
-              <input required className={inputCls} value={form.phone} maxLength={10} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" />
+              <input required className={inputCls} value={form.phone} maxLength={10} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter phone number" />
             </Field>
             <Field label="Age">
               <input type="number" min="18" max="99" onKeyDown={blockNonInteger} className={inputCls} value={form.age} onChange={(e) => set('age', e.target.value)} placeholder="24" />

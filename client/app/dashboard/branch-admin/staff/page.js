@@ -550,7 +550,7 @@ export default function BranchStaffPage() {
             </div>
             <div>
               <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Email</label>
-              <input required type="email" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: sanitizeEmail(e.target.value) }))} placeholder="email@cafe.com" />
+              <input required type="email" className="w-full px-5 py-4 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: sanitizeEmail(e.target.value) }))} placeholder="Enter email address" />
             </div>
             <div>
               <label className="block text-xs font-medium uppercase tracking-normal text-(--color-text-muted) mb-2">Password</label>

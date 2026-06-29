@@ -435,8 +435,12 @@ export default function PayrollRecordsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary-dark dark:text-primary flex items-center justify-center text-xl font-semibold border border-primary/20 shadow-inner transition-transform">
-                          {s.name.charAt(0)}
+                        <div className="h-12 w-12 rounded-xl overflow-hidden bg-primary/10 text-primary-dark dark:text-primary flex items-center justify-center text-xl font-semibold border border-primary/20 shadow-inner">
+                          {s.profileImageUrl ? (
+                            <img src={s.profileImageUrl} alt={s.name} className="h-full w-full object-cover" />
+                          ) : (
+                            s.name.charAt(0)
+                          )}
                         </div>
                         <div>
                           <p className="font-medium text-(--color-text-primary) text-base leading-tight">{s.name}</p>
@@ -598,8 +602,12 @@ export default function PayrollRecordsPage() {
 
               <div className="p-5 space-y-6">
                 <div className="flex items-center gap-4 p-4 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
-                  <div className="h-12 w-12 rounded-xl bg-primary text-(--color-bg-base) flex items-center justify-center text-xl font-semibold">
-                    {viewingSalary.name.charAt(0)}
+                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-primary text-(--color-bg-base) flex items-center justify-center text-xl font-semibold">
+                    {viewingSalary.profileImageUrl ? (
+                      <img src={viewingSalary.profileImageUrl} alt={viewingSalary.name} className="h-full w-full object-cover" />
+                    ) : (
+                      viewingSalary.name.charAt(0)
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-(--color-text-primary)">{viewingSalary.name}</p>
@@ -713,8 +721,12 @@ export default function PayrollRecordsPage() {
             >
               <div className="flex items-center justify-between mb-6">
                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-2xl font-semibold text-(--color-bg-base) shadow-sm ">
-                      {editingUser.name.charAt(0)}
+                    <div className="h-12 w-12 rounded-xl overflow-hidden bg-primary flex items-center justify-center text-2xl font-semibold text-(--color-bg-base) shadow-sm">
+                      {editingUser.profileImageUrl ? (
+                        <img src={editingUser.profileImageUrl} alt={editingUser.name} className="h-full w-full object-cover" />
+                      ) : (
+                        editingUser.name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight leading-none">{editingUser.name}</h2>

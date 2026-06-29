@@ -71,7 +71,7 @@ export default function SuperAdminDashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-5 bg-(--color-surface)/40 p-5 rounded-xl border border-(--color-border) shadow-sm relative overflow-hidden group w-full md:w-auto shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <div className="relative z-10">
                 <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wide mb-2 flex items-center gap-2">
                   <Globe size={10} /> Active Branches
@@ -103,7 +103,7 @@ export default function SuperAdminDashboard() {
             <MetricCard
               title="Today's Sales"
               value={`₹${data?.todayRevenue?.toLocaleString()}`}
-              icon={<Zap className="text-primary" />}
+              icon={<Zap className="text-white" />}
               trend="+8.2%"
               sub="Sales so far today"
               highlight
@@ -140,8 +140,8 @@ export default function SuperAdminDashboard() {
             </div>
             <div className="p-6 flex items-center justify-between border-b border-(--color-border)">
               <div>
-                <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-4 text-(--color-text-primary)">
-                  <Map className="text-primary" /> Branch Performance
+                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-3 text-(--color-text-primary)">
+                  <Map size={20} className="text-primary" /> Branch Performance
                 </h2>
                 <p className="text-(--color-text-muted) text-xs font-medium mt-2">Ranking branches by sales and performance.</p>
               </div>
@@ -172,12 +172,12 @@ export default function SuperAdminDashboard() {
                       className="group bg-(--color-surface-soft)/50 hover:bg-(--color-surface-soft) transition-all cursor-pointer rounded-xl"
                     >
                       <td className="px-5 py-4 rounded-l-2xl border-l border-t border-b border-(--color-border)/50">
-                        <div className="flex items-center gap-6">
-                          <span className={`h-10 w-10 rounded-xl flex items-center justify-center font-semibold text-lg transition-transform ${idx === 0 ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-surface-soft) text-(--color-text-muted) border border-(--color-border)'
+                        <div className="flex items-center gap-4">
+                          <span className={`h-10 w-10 rounded-xl flex items-center justify-center font-semibold text-sm ${idx === 0 ? 'bg-primary text-(--color-on-primary)' : 'bg-(--color-surface-soft) text-(--color-text-muted) border border-(--color-border)'
                             }`}>
                             0{idx + 1}
                           </span>
-                          <p className="font-medium text-lg text-(--color-text-primary) tracking-tight">{branch.name}</p>
+                          <p className="font-medium text-sm text-(--color-text-primary) tracking-tight">{branch.name}</p>
                         </div>
                       </td>
                       <td className="px-5 py-4 border-t border-b border-(--color-border)/50">
@@ -195,7 +195,7 @@ export default function SuperAdminDashboard() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right rounded-r-2xl border-r border-t border-b border-(--color-border)/50">
-                        <p className="text-xl font-semibold text-(--color-text-primary) tracking-tight">₹{branch.revenue?.toLocaleString()}</p>
+                        <p className="text-base font-semibold text-(--color-text-primary) tracking-tight">₹{branch.revenue?.toLocaleString()}</p>
                       </td>
                     </motion.tr>
                   ))}
@@ -250,17 +250,12 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Smart Update Card */}
-            <Link href="/dashboard/admin/revenue" className="relative group cursor-pointer overflow-hidden rounded-[4rem] shadow-sm block">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 10 }}
-                className="absolute inset-0 bg-gradient-to-br from-primary to-primary opacity-90 group-hover:opacity-100 transition-opacity duration-700"
-              />
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/60-lines.png')] opacity-20" />
-              <div className="relative p-12 text-white space-y-6">
-                <p className="text-[10px] font-bold uppercase tracking-normal text-white/60">Update</p>
-                <h3 className="text-3xl font-bold italic tracking-tight leading-tight">Total sales is 18% more than last week.</h3>
-                <div className="flex items-center gap-3 text-xs font-bold bg-(--color-bg-base)/50 w-fit px-6 py-3 rounded-xl  border border-(--color-border) group-hover:bg-(--color-primary-hover)/20 transition-all uppercase tracking-normal italic">
+            <Link href="/dashboard/admin/revenue" className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-sm block">
+              <div className="absolute inset-0 bg-linear-to-br from-primary to-primary-dark opacity-95 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative p-6 text-white space-y-4">
+                <p className="text-[11px] font-medium uppercase tracking-normal text-white/70">Update</p>
+                <h3 className="text-xl font-semibold tracking-tight leading-snug">Total sales is 18% more than last week.</h3>
+                <div className="inline-flex items-center gap-2 text-[11px] font-semibold bg-white/15 w-fit px-4 py-2 rounded-xl border border-white/20 group-hover:bg-white/25 transition-all uppercase tracking-normal">
                   View Details <ChevronRight size={16} />
                 </div>
               </div>
@@ -274,44 +269,44 @@ export default function SuperAdminDashboard() {
 
 function MetricCard({ title, value, icon, trend, sub, highlight, isRisk }) {
   return (
-    <div className={`p-10 rounded-[4rem] border transition-all duration-700  relative overflow-hidden group ${highlight
-        ? 'bg-primary border-primary  text-(--color-on-primary)'
-        : 'bg-(--color-surface)/40  border-(--color-border) text-(--color-text-primary) shadow-sm hover:border-primary/30'
+    <div className={`p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group ${highlight
+        ? 'bg-primary border-primary text-(--color-on-primary)'
+        : 'bg-(--color-surface)/40 border-(--color-border) text-(--color-text-primary) shadow-sm hover:border-primary/30'
       }`}>
       {highlight && (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(255,255,255,0.2),transparent_50%)]" />
       )}
-      <div className="flex items-center justify-between mb-10 relative z-10">
-        <div className={`p-5 rounded-xl transition-transform duration-700 group-hover:rotate-12 ${highlight ? 'bg-white/20' : 'bg-(--color-surface-soft) border border-(--color-border)'}`}>
+      <div className="flex items-center justify-between mb-6 relative z-10">
+        <div className={`p-3 rounded-xl transition-colors ${highlight ? 'bg-white/20' : 'bg-(--color-surface-soft) border border-(--color-border)'}`}>
           {icon}
         </div>
-        <div className={`flex items-center gap-2 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full  border ${isRisk ? 'bg-danger/20 text-danger border-danger/30' : (highlight ? 'bg-white/20 border-(--color-border) text-white' : 'bg-success/20 text-success border-success/30')
+        <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-normal px-2.5 py-1 rounded-full border ${isRisk ? 'bg-danger/10 text-danger border-danger/30' : (highlight ? 'bg-white/20 border-white/30 text-white' : 'bg-success/10 text-success border-success/30')
           }`}>
           {isRisk ? <ShieldAlert size={12} /> : <ArrowUpRight size={12} />}
           {trend}
         </div>
       </div>
-      <p className={`text-[10px] font-bold uppercase tracking-normal mb-3 relative z-10 ${highlight ? 'text-(--color-on-primary)/70' : 'text-(--color-text-muted)'}`}>{title}</p>
-      <h3 className="text-5xl font-bold italic tracking-tight mb-4 relative z-10 leading-none">{value}</h3>
-      <p className={`text-[10px] font-bold italic relative z-10 ${highlight ? 'text-(--color-on-primary)/60' : 'text-(--color-text-muted)'}`}>{sub}</p>
+      <p className={`text-[11px] font-medium uppercase tracking-normal mb-2 relative z-10 ${highlight ? 'text-(--color-on-primary)/70' : 'text-(--color-text-muted)'}`}>{title}</p>
+      <h3 className="text-3xl font-semibold tracking-tight mb-1.5 relative z-10 leading-none">{value}</h3>
+      <p className={`text-[11px] font-medium relative z-10 ${highlight ? 'text-(--color-on-primary)/60' : 'text-(--color-text-muted)'}`}>{sub}</p>
     </div>
   );
 }
 
 function EntityItem({ icon, label, name, stat }) {
   return (
-    <div className="flex items-center justify-between group cursor-pointer">
-      <div className="flex items-center gap-6">
-        <div className="p-4 bg-(--color-surface-soft) rounded-xl group-hover:bg-(--color-surface) transition-all border border-(--color-border) group-hover:border-primary/30">
+    <div className="flex items-center justify-between gap-3 group cursor-pointer">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="p-3 bg-(--color-surface-soft) rounded-xl group-hover:bg-(--color-surface) transition-all border border-(--color-border) group-hover:border-primary/30 shrink-0">
           {icon}
         </div>
-        <div>
-          <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal mb-1">{label}</p>
-          <p className="text-lg font-bold text-(--color-text-primary) group-hover:text-primary transition-colors italic tracking-tight">{name}</p>
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-0.5">{label}</p>
+          <p className="text-sm font-semibold text-(--color-text-primary) group-hover:text-primary transition-colors tracking-tight truncate">{name}</p>
         </div>
       </div>
-      <div className="text-right">
-        <p className="text-sm font-bold text-(--color-text-muted) group-hover:text-(--color-text-primary) transition-colors italic">{stat}</p>
+      <div className="text-right shrink-0">
+        <p className="text-xs font-medium text-(--color-text-muted) group-hover:text-(--color-text-primary) transition-colors">{stat}</p>
       </div>
     </div>
   );

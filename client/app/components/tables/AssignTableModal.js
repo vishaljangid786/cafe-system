@@ -64,7 +64,7 @@ export default function AssignTableModal({ isOpen, onClose, onConfirm, table }) 
                 className="w-full pl-12 pr-4 py-4 bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all font-bold text-sm"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="e.g. John Doe"
+                placeholder="Enter customer name"
               />
             </div>
           </div>

@@ -139,7 +139,13 @@
     --shadow-premium: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
   }
 
+  /* Global UI density. The app's spacing/type scales are rem-based, so setting the
+     root font-size here scales the entire app down at once (the layout felt too
+     large/bulky at the 16px browser default). Tailwind breakpoints use the initial
+     16px for their media queries, so responsive behaviour is unaffected. Bump this
+     toward 14px for a denser UI, or back to 16px to restore the default size. */
   html {
+    font-size: 15px;
     @apply transition-colors duration-300;
   }
 

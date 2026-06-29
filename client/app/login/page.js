@@ -142,7 +142,7 @@ q
                   register('email').onChange(e);
                 }}
                 className={`input ${errors.email ? '!border-danger' : ''}`}
-                placeholder="admin@cafeos.com"
+                placeholder="Enter your email"
               />
               {errors.email && <p className="text-xs text-danger font-medium mt-1 ml-0.5">{errors.email.message}</p>}
             </div>

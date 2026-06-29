@@ -367,8 +367,8 @@ function SignupContent() {
                       <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-lg bg-primary text-(--color-on-primary) flex items-center justify-center"><UserPlus size={16} /></div>
                     </div>
                   </div>
-                  <InputField label="Full Name" name="name" placeholder="Rahul Sharma" error={errors.name?.message} />
-                  <InputField label="Email Address" name="email" type="email" placeholder="rahul@cafeos.com" error={errors.email?.message} />
+                  <InputField label="Full Name" name="name" placeholder="Enter your full name" error={errors.name?.message} />
+                  <InputField label="Email Address" name="email" type="email" placeholder="Enter your email address" error={errors.email?.message} />
                   <div className="grid grid-cols-2 gap-5">
                     <InputField label="Age" name="age" type="number" placeholder="24" error={errors.age?.message} onInput={(e) => { if (e.target.value.length > 2) e.target.value = e.target.value.slice(0, 2); }} />
                     <Controller name="gender" control={control} render={({ field }) => (
@@ -398,7 +398,7 @@ function SignupContent() {
 
               {activeStep === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <InputField label="Phone Number" name="phone" placeholder="9876543210" error={errors.phone?.message} onInput={(e) => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} />
+                  <InputField label="Phone Number" name="phone" placeholder="Enter your phone number" error={errors.phone?.message} onInput={(e) => { if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10); }} />
                   <InputField label="Address Line 1" name="address1" placeholder="Building/Flat No, Street Name" error={errors.address1?.message} />
                   <InputField label="Address Line 2" name="address2" placeholder="Locality, Landmark" error={errors.address2?.message} />
                   <div className="grid grid-cols-2 gap-6">

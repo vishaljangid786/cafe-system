@@ -439,7 +439,7 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
                   className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl px-5 py-4 focus:ring-2 focus:ring-primary/30 outline-none text-(--color-text-primary) font-bold"
                   value={formData.customerName}
                   onChange={e => setFormData({ ...formData, customerName: e.target.value })}
-                  placeholder="e.g. John Wick"
+                  placeholder="Enter customer name"
                 />
               </div>
               <div className="space-y-2">

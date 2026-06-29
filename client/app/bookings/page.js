@@ -210,7 +210,7 @@ export default function BookingPage() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="label">Email</label>
-                      <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="your@email.com" className="input" />
+                      <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="Enter your email" className="input" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="label">Phone</label>

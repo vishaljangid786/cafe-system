@@ -130,6 +130,7 @@ const getSalaryAggregation = async (userIds, month, daysInMonth, stdDayMin = 480
         name: 1,
         email: 1,
         role: 1,
+        profileImageUrl: 1,
         locationName: '$location.name',
         monthlySalary: 1,
         totalPresent: 1,

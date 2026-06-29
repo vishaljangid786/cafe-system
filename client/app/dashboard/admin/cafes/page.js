@@ -82,10 +82,10 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
       {showProfile && (<>
       {/* Identity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', sanitizeName(e.target.value))} placeholder="Rahul Sharma" /></div>
-        <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={admin.email} onChange={(e) => setAdmin('email', sanitizeEmail(e.target.value))} placeholder="rahul@cafe.com" /></div>
+        <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', sanitizeName(e.target.value))} placeholder="Enter admin name" /></div>
+        <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={admin.email} onChange={(e) => setAdmin('email', sanitizeEmail(e.target.value))} placeholder="Enter admin email" /></div>
         <div><label className={labelCls}>Password *</label><input type="text" className={inputCls} value={admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="At least 10 characters" /></div>
-        <div><label className={labelCls}>Phone *</label><input type="tel" inputMode="numeric" className={inputCls} value={admin.phone} maxLength={10} onChange={(e) => setAdmin('phone', digitsOnly(e.target.value, 10))} placeholder="9876543210" /></div>
+        <div><label className={labelCls}>Phone *</label><input type="tel" inputMode="numeric" className={inputCls} value={admin.phone} maxLength={10} onChange={(e) => setAdmin('phone', digitsOnly(e.target.value, 10))} placeholder="Enter phone number" /></div>
         <div><label className={labelCls}>Age</label><input type="number" min="18" max="99" onKeyDown={blockNonInteger} className={inputCls} value={admin.age} onChange={(e) => setAdmin('age', e.target.value)} placeholder="30" /></div>
         <div>
           <PremiumSelect label="Gender" value={admin.gender} onChange={(v) => setAdmin('gender', v)}
