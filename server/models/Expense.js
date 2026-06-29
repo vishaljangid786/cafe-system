@@ -29,6 +29,14 @@ const expenseSchema = new mongoose.Schema(
       required: [true, 'Category is required'],
       default: 'misc',
     },
+    // How the expense was paid. A CASH expense is paid out of the register, so it
+    // reduces the cash drawer's expected balance; non-cash methods (UPI/card/etc.)
+    // leave the physical cash untouched and are excluded from the drawer reconcile.
+    paymentMethod: {
+      type: String,
+      enum: ['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'],
+      default: 'CASH',
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'live', 'completed'],

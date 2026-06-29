@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Modal from '../../../../components/ui/Modal';
 import PremiumSelect from '../../../../components/ui/PremiumSelect';
+import PaymentBadge from '../../../../components/ui/PaymentBadge';
 import { Zap, Printer, RotateCcw, Scissors } from 'lucide-react';
 
 const PAYMENT_CHIP = {
@@ -54,7 +55,8 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
           <div className="relative z-10 text-right">
             <p className="text-[10px] font-bold text-white/40 uppercase tracking-normal mb-1">Total Amount</p>
             <p className="text-4xl font-bold text-primary tracking-tight">₹{selectedOrder.totalAmount}</p>
-            <div className="flex justify-end gap-2 mt-2">
+            <div className="flex justify-end items-center gap-2 mt-2">
+              <PaymentBadge method={selectedOrder.paymentType || 'CASH'} size="xs" />
               <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-normal rounded border ${PAYMENT_CHIP[payStatus] || PAYMENT_CHIP.unpaid}`}>
                 {selectedOrder.isRefunded ? 'Refunded' : payStatus}
               </span>

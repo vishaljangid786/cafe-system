@@ -8,7 +8,7 @@ import {
   RefreshCcw, Coffee, Zap, TrendingUp, Activity,
   LayoutGrid, List as ListIcon, CalendarDays,
   Receipt, Wallet, History, MapPin, IndianRupee,
-  Layers, Settings2, Sparkles, FilterX
+  Layers, Settings2, Sparkles, FilterX, Smartphone
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,7 @@ import Modal from '../../../components/ui/Modal';
 import { formatDistanceToNow } from 'date-fns';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
+import PaymentBadge from '../../../components/ui/PaymentBadge';
 
 function StatCard({ label, value, icon: Icon, color }) {
   const colors = {
@@ -59,6 +60,7 @@ export default function StaffOrdersPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [orderType, setOrderType] = useState('dine-in'); // dine-in | takeaway | delivery
+  const [paymentMethod, setPaymentMethod] = useState('CASH'); // CASH | UPI — how the order is paid
   const [stagedItems, setStagedItems] = useState([]);
   const [modifierItem, setModifierItem] = useState(null); // item being customized
   const [modSel, setModSel] = useState({}); // { groupName: { label: true } }
@@ -182,7 +184,8 @@ export default function StaffOrdersPage() {
           notes: i.notes,
           modifiers: i.modifiers || []
         })),
-        totalAmount
+        totalAmount,
+        paymentType: paymentMethod
       };
       // Table only applies to dine-in; takeaway/delivery have no table.
       if (orderType === 'dine-in') payload.table = selectedTable._id;
@@ -193,6 +196,7 @@ export default function StaffOrdersPage() {
       setStagedItems([]);
       setSelectedTable(null);
       setOrderType('dine-in');
+      setPaymentMethod('CASH');
       fetchOrders();
       fetchStats();
     } catch (error) {
@@ -661,6 +665,27 @@ export default function StaffOrdersPage() {
                     <p className="text-2xl font-semibold tracking-tight text-(--color-text-primary)">₹{stagedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0).toLocaleString()}</p>
                   </div>
                 </div>
+
+                {/* Payment method — a CASH order is collected into the cash drawer on completion. */}
+                <div>
+                  <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-3">Payment Method</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { v: 'CASH', label: 'Cash', Icon: IndianRupee },
+                      { v: 'UPI', label: 'UPI', Icon: Smartphone },
+                    ].map(({ v, label, Icon }) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPaymentMethod(v); }}
+                        className={`py-2.5 rounded-xl border-2 font-medium text-[11px] flex items-center justify-center gap-2 transition-all ${paymentMethod === v ? 'border-primary bg-primary/10 text-primary font-semibold' : 'border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-primary/30'}`}
+                      >
+                        <Icon size={14} /> {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   onClick={(e) => { e.stopPropagation(); handleCreateOrder(); }}
                   className="w-full py-4 bg-primary hover:bg-primary text-white font-semibold text-xs rounded-xl shadow-sm  transition-all active:scale-95 flex items-center justify-center gap-4"
@@ -793,6 +818,9 @@ function StaffOrderCard({ order, onRefresh }) {
         </div>
         <div className="text-right">
           <p className="text-[11px] font-medium text-(--color-text-muted) opacity-40">#{order._id.slice(-6)}</p>
+          <div className="mt-2 flex justify-end">
+            <PaymentBadge method={order.paymentType || 'CASH'} size="xs" />
+          </div>
         </div>
       </div>
       <div className="space-y-3 mb-8 relative z-10 bg-(--color-surface-soft) p-5 rounded-xl border border-(--color-border) shadow-inner">
@@ -848,11 +876,12 @@ function StaffOrderListRow({ order, onRefresh }) {
           <span className="text-xl font-semibold text-(--color-text-primary)">{order.table?.tableNumber || '??'}</span>
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
             <p className="text-xs font-medium text-(--color-text-primary) tracking-tight">Order #{order._id.slice(-6).toUpperCase()}</p>
             <div className={`px-2.5 py-1 rounded-full ${toneSoft(config.color)} ${toneText(config.color)} text-[11px] font-medium border ${toneBorder(config.color)}`}>
               {config.label}
             </div>
+            <PaymentBadge method={order.paymentType || 'CASH'} size="xs" />
           </div>
           <p className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5">
             <Clock size={12} className="text-primary/50" /> {timeElapsed} ago

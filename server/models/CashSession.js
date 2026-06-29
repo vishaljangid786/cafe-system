@@ -31,7 +31,8 @@ const cashSessionSchema = new mongoose.Schema(
     countedCash: { type: Number, min: 0 },   // physical count at close
     cashSales: { type: Number, default: 0 }, // cash orders during the shift
     cashRefunds: { type: Number, default: 0 },
-    expectedCash: { type: Number },          // float + sales + in - out - refunds
+    cashExpenses: { type: Number, default: 0 }, // cash-paid expenses during the shift
+    expectedCash: { type: Number },          // float + sales + in - out - refunds - expenses
     variance: { type: Number },              // countedCash - expectedCash (- = short)
     notes: { type: String, default: '' },
   },

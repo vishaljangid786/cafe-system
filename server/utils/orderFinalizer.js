@@ -3,6 +3,7 @@ const Table = require('../models/Table');
 const Order = require('../models/Order');
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
 const { getSettings } = require('./settings');
+const { getIO } = require('../config/socket');
 
 /**
  * Finalizes an order, records revenue, and deducts ingredients.
@@ -182,6 +183,15 @@ const finalizeOrder = async (order, user) => {
     updatedTable.numberOfPeople = 0;
     updatedTable.customerName = '';
     await updatedTable.save();
+  }
+
+  // A completed CASH order is cash collected into the register — nudge any open
+  // cash-drawer view for this branch to refetch in realtime. Best-effort: a
+  // realtime failure must never break finalization.
+  if (order.paymentType === 'CASH') {
+    try {
+      getIO().to(`branch_${order.branch}`).emit('cashdrawer:update', { locationId: String(order.branch) });
+    } catch (_) { /* realtime is best-effort */ }
   }
 
   // status/isBilled were persisted atomically above — no second save needed.

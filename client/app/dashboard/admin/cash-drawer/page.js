@@ -13,7 +13,7 @@ import { Wallet, LockOpen, Lock, ArrowDownCircle, ArrowUpCircle, Plus, Minus, In
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export default function CashDrawerPage() {
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const isBranchScoped = ['staff', 'chef', 'branch_admin', 'location_admin'].includes(user?.role);
   const isSuper = user?.role === 'super_admin';
 
@@ -63,6 +63,24 @@ export default function CashDrawerPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Realtime: refetch whenever a cash event fires for the branch on screen — a
+  // cash order completing, a cash expense, a refund, or a manual pay-in/out.
+  // Branch-scoped users are auto-joined to their branch room on connect; an
+  // admin/super admin viewing a specific branch explicitly (re)joins that room
+  // (the server validates access), since switching the global location elsewhere
+  // would otherwise have left it.
+  useEffect(() => {
+    if (!socket) return;
+    if (scope) socket.emit('join_room', `branch_${scope}`);
+    const onUpdate = (payload) => {
+      if (!scope || !payload?.locationId || String(payload.locationId) === String(scope)) {
+        refresh();
+      }
+    };
+    socket.on('cashdrawer:update', onUpdate);
+    return () => socket.off('cashdrawer:update', onUpdate);
+  }, [socket, scope, refresh]);
+
   const doOpen = async () => {
     setBusy(true);
     try {
@@ -107,6 +125,7 @@ export default function CashDrawerPage() {
 
   const live = current?.live;
   const session = current?.session;
+  const entries = current?.entries || [];
 
   return (
     <PageTransition>
@@ -179,6 +198,7 @@ export default function CashDrawerPage() {
                   {[
                     ['Opening float', session.openingFloat],
                     ['Cash sales', live.cashSales],
+                    ['Cash expenses', -(live.cashExpenses || 0)],
                     ['Cash refunds', -live.cashRefunds],
                     ['Paid in', live.cashIn],
                     ['Paid out', -live.cashOut],
@@ -213,21 +233,40 @@ export default function CashDrawerPage() {
                     </button>
                   )}
                 </div>
-                {session.movements?.length > 0 && (
-                  <div className="space-y-1 pt-2">
-                    {session.movements.map((m, i) => (
-                      <div key={i} className="flex items-center justify-between text-[11px] font-medium">
-                        <span className="flex items-center gap-1.5 text-(--color-text-muted)">
-                          {m.type === 'in' ? <Plus size={11} className="text-success" /> : <Minus size={11} className="text-danger" />}
-                          {m.reason || (m.type === 'in' ? 'Pay in' : 'Pay out')}
-                        </span>
-                        <span className={m.type === 'in' ? 'text-success font-medium' : 'text-danger font-medium'}>{m.type === 'in' ? '+' : '-'}{money(m.amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </SlideIn>
+
+            {/* Unified cash activity for this shift: orders in, expenses & refunds
+                out, and manual pay-in/out — newest first, updated in realtime. */}
+            {entries.length > 0 && (
+              <SlideIn delay={0.12}>
+                <div className="glass-card p-5 rounded-xl premium-shadow space-y-3">
+                  <div className="flex items-center gap-2 text-(--color-text-primary)">
+                    <History size={18} className="text-primary" />
+                    <h2 className="text-sm font-semibold">Cash activity · this shift</h2>
+                  </div>
+                  <div className="divide-y divide-(--color-border) max-h-96 overflow-y-auto custom-scrollbar">
+                    {entries.map((e, i) => {
+                      const isIn = e.direction === 'in';
+                      return (
+                        <div key={i} className="py-2.5 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isIn ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                              {isIn ? <ArrowDownCircle size={15} /> : <ArrowUpCircle size={15} />}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-(--color-text-primary) truncate">{e.label}{e.pending ? ' · pending' : ''}</p>
+                              <p className="text-[11px] text-(--color-text-muted)">{new Date(e.at).toLocaleString('en-IN')}</p>
+                            </div>
+                          </div>
+                          <span className={`text-sm font-semibold shrink-0 ${isIn ? 'text-success' : 'text-danger'}`}>{isIn ? '+' : '-'}{money(e.amount)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </SlideIn>
+            )}
 
             {/* Close */}
             <SlideIn delay={0.15}>
@@ -277,7 +316,7 @@ export default function CashDrawerPage() {
                   <div key={s._id} className="py-3 flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <p className="text-xs font-medium text-(--color-text-primary)">{new Date(s.openedAt).toLocaleDateString('en-IN')} · {s.locationId?.name || ''}</p>
-                      <p className="text-[11px] text-(--color-text-muted)">Sales {money(s.cashSales)} · Expected {money(s.expectedCash)} · Counted {money(s.countedCash)}</p>
+                      <p className="text-[11px] text-(--color-text-muted)">Sales {money(s.cashSales)}{s.cashExpenses ? ` · Expenses ${money(s.cashExpenses)}` : ''} · Expected {money(s.expectedCash)} · Counted {money(s.countedCash)}</p>
                     </div>
                     <span className={`text-sm font-semibold ${s.variance === 0 ? 'text-success' : s.variance > 0 ? 'text-primary' : 'text-danger'}`}>
                       {money(s.variance)} {s.variance < 0 ? 'short' : s.variance > 0 ? 'over' : ''}

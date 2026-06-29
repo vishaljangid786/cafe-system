@@ -745,6 +745,10 @@ const refundOrder = asyncHandler(async (req, res) => {
 
   const io = getIO();
   io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: order.status });
+  // A cash refund pays money back out of the register — refresh the drawer view.
+  if (order.paymentType === 'CASH') {
+    io.to(`branch_${order.branch}`).emit('cashdrawer:update', { locationId: String(order.branch) });
+  }
 
   await sendNotification({
     title: 'Order Refunded',

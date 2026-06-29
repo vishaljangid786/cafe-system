@@ -1,15 +1,26 @@
 const Expense = require('../models/Expense');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
+const { getIO } = require('../config/socket');
 const { logAction } = require('../utils/auditLogger');
 const { enforceLocationAccess, escapeRegex, clampLimit, scopedLocationId } = require('../utils/accessControl');
 const TransactionService = require('../services/transactionService');
+
+const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD', 'ONLINE', 'OTHER'];
+
+// A cash expense is paid out of the register, so it changes the cash drawer's
+// expected balance — nudge any open drawer view for this branch to refetch.
+const emitCashUpdate = (locationId) => {
+  try {
+    getIO().to(`branch_${locationId}`).emit('cashdrawer:update', { locationId: String(locationId) });
+  } catch (_) { /* realtime is best-effort */ }
+};
 
 // @desc    Add an expense
 // @route   POST /api/expenses
 // @access  Private
 const addExpense = asyncHandler(async (req, res) => {
-  let { title, description, amount, date, locationId, category } = req.body;
+  let { title, description, amount, date, locationId, category, paymentMethod } = req.body;
 
   // Auto-assign locationId for branch admins/staff
   if (!locationId && (req.user.role === 'branch_admin' || req.user.role === 'staff')) {
@@ -49,6 +60,7 @@ const addExpense = asyncHandler(async (req, res) => {
     description,
     amount: numAmount,
     category: category || 'misc',
+    paymentMethod: PAYMENT_METHODS.includes(paymentMethod) ? paymentMethod : 'CASH',
     date: date || Date.now(),
     locationId,
     createdBy: req.user._id,
@@ -58,6 +70,9 @@ const addExpense = asyncHandler(async (req, res) => {
 
   // Sync to Transaction Ledger
   await TransactionService.syncExpenseToTransaction(expense);
+
+  // A cash expense reduces the register balance — refresh any open drawer view.
+  if (expense.paymentMethod === 'CASH') emitCashUpdate(expense.locationId);
 
   await sendNotification({
     title: 'New Expense Added',
@@ -88,7 +103,7 @@ const updateExpense = asyncHandler(async (req, res) => {
 
   enforceLocationAccess(req, res, expense.locationId, 'You do not have permission to update this expense');
 
-  const allowedUpdates = ['title', 'description', 'amount', 'date', 'category'];
+  const allowedUpdates = ['title', 'description', 'amount', 'date', 'category', 'paymentMethod'];
   const updateData = {};
 
   allowedUpdates.forEach(field => {
@@ -118,6 +133,8 @@ const updateExpense = asyncHandler(async (req, res) => {
 
   // Sync to Transaction Ledger
   await TransactionService.syncExpenseToTransaction(expense);
+
+  emitCashUpdate(expense.locationId);
 
   await sendNotification({
     title: 'Expense Updated',
@@ -160,6 +177,8 @@ const deleteExpense = asyncHandler(async (req, res) => {
 
   await expense.deleteOne();
   await TransactionService.deleteExpenseTransaction(expense._id);
+
+  if (expense.paymentMethod === 'CASH') emitCashUpdate(expense.locationId);
 
   await sendNotification({
     title: 'Expense Deleted',
@@ -285,6 +304,10 @@ const updateExpenseStatus = asyncHandler(async (req, res) => {
 
   // Sync to Transaction Ledger
   await TransactionService.syncExpenseToTransaction(expense);
+
+  // Approving/rejecting a cash expense changes whether it counts against the
+  // drawer (rejected = reversed), so refresh the open drawer view.
+  if (expense.paymentMethod === 'CASH') emitCashUpdate(expense.locationId);
 
   await sendNotification({
     title: `Expense ${status.charAt(0).toUpperCase() + status.slice(1)}`,

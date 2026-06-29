@@ -82,6 +82,9 @@ class TransactionService {
       existing.title = expense.title;
       existing.category = expense.category;
       existing.date = expense.date;
+      // Carry the expense's payment method so the cash drawer counts only the
+      // cash-paid expenses (the drawer reconciles physical cash).
+      existing.paymentType = expense.paymentMethod || 'CASH';
       return await existing.save();
     }
 
@@ -90,6 +93,7 @@ class TransactionService {
       expenseId: expense._id,
       type: txType,
       source: 'MANUAL',
+      paymentType: expense.paymentMethod || 'CASH',
       title: expense.title,
       description: expense.description,
       category: expense.category,

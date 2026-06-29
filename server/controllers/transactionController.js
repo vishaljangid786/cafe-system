@@ -3,7 +3,17 @@ const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
+const { getIO } = require('../config/socket');
 const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+
+const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD', 'ONLINE', 'GIFT_CARD', 'OTHER'];
+
+// A cash expense changes the register balance — refresh any open drawer view.
+const emitCashUpdate = (locationId) => {
+  try {
+    getIO().to(`branch_${locationId}`).emit('cashdrawer:update', { locationId: String(locationId) });
+  } catch (_) { /* realtime is best-effort */ }
+};
 
 // @desc    Get all transactions (unified ledger with search, filters, pagination, RBAC)
 // @route   GET /api/transactions
@@ -142,7 +152,9 @@ const getTransactions = asyncHandler(async (req, res) => {
 // @route   POST /api/transactions
 // @access  Private
 const createTransaction = asyncHandler(async (req, res) => {
-  const { type, amount, title, category, locationId, date, description } = req.body;
+  const { type, amount, title, category, locationId, date, description, paymentType, paymentMethod } = req.body;
+  const tender = paymentType || paymentMethod;
+  const finalPaymentType = PAYMENT_METHODS.includes(tender) ? tender : 'CASH';
 
   if (!type || !['MANUAL_REVENUE', 'EXPENSE'].includes(type)) {
     res.status(400);
@@ -197,6 +209,7 @@ const createTransaction = asyncHandler(async (req, res) => {
     type,
     totalAmount: numAmount,
     totalProfit: type === 'MANUAL_REVENUE' ? numAmount : -numAmount, // Expense reduces total profit
+    paymentType: finalPaymentType,
     title,
     category,
     locationId: targetLocation,
@@ -206,6 +219,9 @@ const createTransaction = asyncHandler(async (req, res) => {
     billImage,
     status
   });
+
+  // A cash expense reduces the register balance — refresh any open drawer view.
+  if (type === 'EXPENSE' && finalPaymentType === 'CASH') emitCashUpdate(targetLocation);
 
   // Notify Admins about new pending expense
   if (status === 'pending') {
@@ -272,6 +288,8 @@ const approveTransaction = asyncHandler(async (req, res) => {
   transaction.approvedBy = req.user._id;
   await transaction.save();
 
+  if (transaction.type === 'EXPENSE' && transaction.paymentType === 'CASH') emitCashUpdate(transactionLocationId);
+
   // NOTIFICATION LOGIC
   const approvalLocationId = transactionLocationId;
   const admins = await User.find({
@@ -333,6 +351,8 @@ const rejectTransaction = asyncHandler(async (req, res) => {
 
   transaction.status = 'rejected';
   await transaction.save();
+
+  if (transaction.type === 'EXPENSE' && transaction.paymentType === 'CASH') emitCashUpdate(transactionLocationId);
 
   // NOTIFICATION LOGIC
   const rejectionLocationId = transaction.locationId?._id || transaction.locationId;

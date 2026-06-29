@@ -1,8 +1,20 @@
 const asyncHandler = require('../utils/asyncHandler');
 const CashSession = require('../models/CashSession');
 const Order = require('../models/Order');
+const Transaction = require('../models/Transaction');
 const sendNotification = require('../utils/sendNotification');
+const { getIO } = require('../config/socket');
 const { canAccessLocation, endOfDay, clampLimit, userLocationIds } = require('../utils/accessControl');
+
+// Tell every client viewing this branch's drawer to refetch. Emitted whenever
+// something changes the live balance: a cash order completing, a cash expense,
+// a refund, or a manual pay-in/out. Best-effort — a noop IO (no socket server)
+// silently does nothing.
+const emitCashUpdate = (locationId) => {
+  try {
+    getIO().to(`branch_${locationId}`).emit('cashdrawer:update', { locationId: String(locationId) });
+  } catch (_) { /* realtime is best-effort; never block the request */ }
+};
 
 // Resolve which branch the request acts on. Branch-scoped roles always use their
 // assigned location; admins/super admins must pass a locationId they can access.
@@ -58,6 +70,97 @@ const movementTotals = (movements = []) => ({
   cashOut: movements.filter((m) => m.type === 'out').reduce((a, m) => a + (m.amount || 0), 0),
 });
 
+// Cash-paid expenses for a branch within a time window. Read from the unified
+// Transaction ledger (type EXPENSE) because BOTH expense paths land there — the
+// proof-based POST /api/expenses (synced to a Transaction) and the manual
+// POST /api/transactions. Only CASH expenses leave the register, so non-cash
+// methods are excluded; rejected entries are skipped (reversed, never paid out).
+const computeCashExpenses = async (locationId, from, to) => {
+  const rows = await Transaction.aggregate([
+    {
+      $match: {
+        locationId: objId(locationId),
+        type: 'EXPENSE',
+        paymentType: 'CASH',
+        status: { $ne: 'rejected' },
+        date: { $gte: from, $lte: to },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+  ]);
+  return { cashExpenses: rows[0]?.total || 0, expenseCount: rows[0]?.count || 0 };
+};
+
+// Build a single time-sorted activity feed for an open shift: every cash order
+// (in), cash refund (out), cash expense (out) and manual pay-in/out (in/out),
+// so the drawer shows the full history of what moved the balance — not just the
+// aggregate totals. Newest first.
+const buildLedgerEntries = async (locationId, session) => {
+  const from = session.openedAt;
+  const to = new Date();
+  const [orders, refunds, expenses] = await Promise.all([
+    Order.find({ branch: locationId, paymentType: 'CASH', status: 'COMPLETED', completedAt: { $gte: from, $lte: to } })
+      .select('grandTotal totalAmount amountPaid completedAt customerName table invoiceNumber')
+      .populate('table', 'tableNumber')
+      .sort({ completedAt: -1 })
+      .limit(200)
+      .lean(),
+    Order.find({ branch: locationId, paymentType: 'CASH', isRefunded: true, refundedAt: { $gte: from, $lte: to } })
+      .select('grandTotal totalAmount refundedAt customerName refundReason')
+      .sort({ refundedAt: -1 })
+      .limit(100)
+      .lean(),
+    Transaction.find({ locationId, type: 'EXPENSE', paymentType: 'CASH', status: { $ne: 'rejected' }, date: { $gte: from, $lte: to } })
+      .select('title totalAmount date category status')
+      .sort({ date: -1 })
+      .limit(200)
+      .lean(),
+  ]);
+
+  const entries = [];
+  for (const o of orders) {
+    const amount = o.grandTotal > 0 ? o.grandTotal : (o.amountPaid || o.totalAmount || 0);
+    entries.push({
+      kind: 'sale',
+      direction: 'in',
+      amount,
+      label: o.table?.tableNumber ? `Order · Table ${o.table.tableNumber}` : (o.customerName ? `Order · ${o.customerName}` : 'Cash order'),
+      at: o.completedAt,
+    });
+  }
+  for (const r of refunds) {
+    entries.push({
+      kind: 'refund',
+      direction: 'out',
+      amount: r.grandTotal > 0 ? r.grandTotal : (r.totalAmount || 0),
+      label: r.refundReason ? `Refund · ${r.refundReason}` : 'Cash refund',
+      at: r.refundedAt,
+    });
+  }
+  for (const e of expenses) {
+    entries.push({
+      kind: 'expense',
+      direction: 'out',
+      amount: e.totalAmount || 0,
+      label: `Expense · ${e.title || e.category || 'Expense'}`,
+      at: e.date,
+      pending: e.status === 'pending',
+    });
+  }
+  for (const m of session.movements || []) {
+    entries.push({
+      kind: 'movement',
+      direction: m.type,
+      amount: m.amount || 0,
+      label: m.reason || (m.type === 'in' ? 'Manual pay-in' : 'Manual pay-out'),
+      at: m.at,
+    });
+  }
+
+  entries.sort((a, b) => new Date(b.at) - new Date(a.at));
+  return entries;
+};
+
 // @desc    Open the cash drawer for a branch
 // @route   POST /api/cash-drawer/open
 const openDrawer = asyncHandler(async (req, res) => {
@@ -88,6 +191,7 @@ const openDrawer = asyncHandler(async (req, res) => {
       performedByUser: req.user,
       locationId,
     });
+    emitCashUpdate(locationId);
     res.status(201).json({ success: true, data: session });
   } catch (err) {
     // Unique partial index lost the race — another open drawer was just created.
@@ -108,12 +212,17 @@ const getCurrentDrawer = asyncHandler(async (req, res) => {
   if (!session) {
     return res.json({ success: true, data: null });
   }
-  const flow = await computeCashFlow(locationId, session.openedAt, new Date());
+  const now = new Date();
+  const [flow, exp, entries] = await Promise.all([
+    computeCashFlow(locationId, session.openedAt, now),
+    computeCashExpenses(locationId, session.openedAt, now),
+    buildLedgerEntries(locationId, session),
+  ]);
   const { cashIn, cashOut } = movementTotals(session.movements);
-  const expectedCash = session.openingFloat + flow.cashSales + cashIn - cashOut - flow.cashRefunds;
+  const expectedCash = session.openingFloat + flow.cashSales + cashIn - cashOut - flow.cashRefunds - exp.cashExpenses;
   res.json({
     success: true,
-    data: { session, live: { ...flow, cashIn, cashOut, expectedCash } },
+    data: { session, live: { ...flow, ...exp, cashIn, cashOut, expectedCash }, entries },
   });
 });
 
@@ -150,6 +259,7 @@ const addMovement = asyncHandler(async (req, res) => {
     performedByUser: req.user,
     locationId: session.locationId,
   });
+  emitCashUpdate(session.locationId);
   res.json({ success: true, data: session });
 });
 
@@ -173,9 +283,12 @@ const closeDrawer = asyncHandler(async (req, res) => {
   }
 
   const closedAt = new Date();
-  const flow = await computeCashFlow(session.locationId, session.openedAt, closedAt);
+  const [flow, exp] = await Promise.all([
+    computeCashFlow(session.locationId, session.openedAt, closedAt),
+    computeCashExpenses(session.locationId, session.openedAt, closedAt),
+  ]);
   const { cashIn, cashOut } = movementTotals(session.movements);
-  const expectedCash = session.openingFloat + flow.cashSales + cashIn - cashOut - flow.cashRefunds;
+  const expectedCash = session.openingFloat + flow.cashSales + cashIn - cashOut - flow.cashRefunds - exp.cashExpenses;
 
   session.status = 'closed';
   session.closedBy = req.user._id;
@@ -183,6 +296,7 @@ const closeDrawer = asyncHandler(async (req, res) => {
   session.countedCash = countedCash;
   session.cashSales = flow.cashSales;
   session.cashRefunds = flow.cashRefunds;
+  session.cashExpenses = exp.cashExpenses;
   session.expectedCash = expectedCash;
   session.variance = Number((countedCash - expectedCash).toFixed(2));
   session.notes = (req.body.notes || '').toString().slice(0, 500);
@@ -196,6 +310,7 @@ const closeDrawer = asyncHandler(async (req, res) => {
     locationId: session.locationId,
   });
 
+  emitCashUpdate(session.locationId);
   res.json({ success: true, data: session });
 });
 

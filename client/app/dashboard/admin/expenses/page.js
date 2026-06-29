@@ -71,6 +71,7 @@ export default function ExpensesPage() {
     customTitle: '',
     amount: '',
     category: 'Daily',
+    paymentMethod: 'CASH',
     date: new Date().toISOString().split('T')[0],
     description: '',
     locationId: ''
@@ -190,7 +191,7 @@ export default function ExpensesPage() {
       await api.post('/transactions', data);
       toast.success('Expense saved', { id: loadToast });
       setShowAddModal(false);
-      setFormData({ title: '', customTitle: '', amount: '', category: 'Daily', date: new Date().toISOString().split('T')[0], description: '', locationId: '' });
+      setFormData({ title: '', customTitle: '', amount: '', category: 'Daily', paymentMethod: 'CASH', date: new Date().toISOString().split('T')[0], description: '', locationId: '' });
       fetchExpenses();
     } catch (error) {
       toast.error(error.message || 'Error', { id: loadToast });
@@ -774,6 +775,22 @@ export default function ExpensesPage() {
                     ]}
                   />
                 </div>
+              </div>
+
+              {/* Payment method — only CASH expenses are deducted from the cash drawer. */}
+              <div className="space-y-3">
+                <PremiumSelect
+                  label="Paid With"
+                  value={formData.paymentMethod}
+                  onChange={(val) => setFormData({ ...formData, paymentMethod: val })}
+                  options={[
+                    { label: 'Cash (deducts from drawer)', value: 'CASH' },
+                    { label: 'UPI', value: 'UPI' },
+                    { label: 'Card', value: 'CARD' },
+                    { label: 'Online / Bank', value: 'ONLINE' },
+                    { label: 'Other', value: 'OTHER' }
+                  ]}
+                />
               </div>
 
               <div className="space-y-3">

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Timer, Zap } from 'lucide-react';
+import PaymentBadge from '../../../../components/ui/PaymentBadge';
 
 export default function AdminOrderCard({ order, onCancel, onForceComplete, userRole }) {
   const statusColors = {
@@ -33,6 +34,7 @@ export default function AdminOrderCard({ order, onCancel, onForceComplete, userR
               <div className="px-2.5 py-1 rounded-md text-xs font-semibold inline-block border border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted) uppercase tracking-normal">
                 {typeLabel}
               </div>
+              <PaymentBadge method={order.paymentType || 'CASH'} size="xs" />
             </div>
             <h4 className="text-xl font-bold text-(--color-text-primary) mt-3">
               {order.orderType && order.orderType !== 'dine-in'

@@ -26,6 +26,7 @@ import {
 import Modal from '../../../components/ui/Modal';
 import useConfirm from '../../../components/ui/useConfirm';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
+import PaymentBadge from '../../../components/ui/PaymentBadge';
 
 // Modular Components
 import MetricCard from './components/MetricCard';
@@ -535,9 +536,12 @@ export default function AdminOrdersDashboard() {
                                 </div>
                               </td>
                               <td className="py-4 px-5">
-                                <div className={`px-2.5 py-1 rounded-lg text-[11px] font-medium inline-flex items-center gap-2 border ${order.status === 'READY' ? 'bg-success/10 text-success border-success/20' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-danger/10 text-danger border-danger/20' : order.status === 'PLACED' ? 'bg-warning/10 text-warning border-warning/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
-                                  <div className={`w-1 h-1 rounded-full ${order.status === 'READY' ? 'bg-success' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-danger' : 'bg-primary'}`} />
-                                  {order.status}
+                                <div className="flex flex-col items-start gap-1.5">
+                                  <div className={`px-2.5 py-1 rounded-lg text-[11px] font-medium inline-flex items-center gap-2 border ${order.status === 'READY' ? 'bg-success/10 text-success border-success/20' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-danger/10 text-danger border-danger/20' : order.status === 'PLACED' ? 'bg-warning/10 text-warning border-warning/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${order.status === 'READY' ? 'bg-success' : order.status === 'CANCELLED' || order.status === 'REJECTED' ? 'bg-danger' : 'bg-primary'}`} />
+                                    {order.status}
+                                  </div>
+                                  <PaymentBadge method={order.paymentType || 'CASH'} size="xs" />
                                 </div>
                               </td>
                               <td className="py-4 px-5">
