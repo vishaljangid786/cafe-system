@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Download, FileText, Printer, FileSpreadsheet, Calendar, Image as ImageIcon } from 'lucide-react';
 import Papa from 'papaparse';
 import jsPDF from 'jspdf';
@@ -26,6 +27,43 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
   const [showOptions, setShowOptions] = useState(false);
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [menuPos, setMenuPos] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const computePos = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return { top: rect.bottom + 8, right: Math.max(16, window.innerWidth - rect.right) };
+  };
+
+  const openMenu = () => {
+    setMenuPos(computePos());
+    setShowOptions(true);
+  };
+
+  // The menu is rendered in a portal with fixed positioning so it is never
+  // clipped by an ancestor's `overflow-hidden` (e.g. card headers). Reposition
+  // on scroll/resize and close on outside click or Escape.
+  useEffect(() => {
+    if (!showOptions) return;
+    const reposition = () => setMenuPos(computePos());
+    const onPointerDown = (e) => {
+      if (menuRef.current?.contains(e.target) || triggerRef.current?.contains(e.target)) return;
+      setShowOptions(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setShowOptions(false); };
+    window.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showOptions]);
 
   // Apply basic date filtering if data has a 'date' or 'createdAt' field
   const getFilteredData = () => {
@@ -353,7 +391,8 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         </button>
 
         <button
-          onClick={() => setShowOptions(!showOptions)}
+          ref={triggerRef}
+          onClick={() => (showOptions ? setShowOptions(false) : openMenu())}
           className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-(--color-on-primary) rounded-lg font-semibold text-sm hover:bg-(--color-primary-hover) active:scale-95 transition-colors w-full sm:w-auto"
         >
           <Download size={16} />
@@ -361,8 +400,12 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
         </button>
       </div>
 
-      {showOptions && (
-        <div className="absolute right-0 mt-2 w-full sm:w-56 bg-(--color-surface) border border-(--color-border) rounded-lg shadow-[var(--shadow-md)] py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
+      {showOptions && menuPos && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}
+          className="w-56 max-w-[calc(100vw-2rem)] bg-(--color-surface) border border-(--color-border) rounded-lg shadow-(--shadow-md) py-2 flex flex-col z-100 animate-in fade-in slide-in-from-top-2"
+        >
           <button
             onClick={handleCSV}
             className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-(--color-text-secondary) hover:bg-(--color-surface-soft) transition-colors w-full text-left"
@@ -401,7 +444,8 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
             <Printer size={16} className="text-primary" />
             Print Data
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

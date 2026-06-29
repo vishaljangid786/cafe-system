@@ -145,7 +145,7 @@
      16px for their media queries, so responsive behaviour is unaffected. Bump this
      toward 14px for a denser UI, or back to 16px to restore the default size. */
   html {
-    font-size: 15px;
+    font-size: 14px;
     @apply transition-colors duration-300;
   }
 
