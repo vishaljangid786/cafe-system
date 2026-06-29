@@ -687,7 +687,7 @@ export default function AdminTablesPage() {
         <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[75vh]">
-              <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-hidden shadow-sm">
+              <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-y-auto custom-scrollbar shadow-sm">
                 <div className="p-5 border-b border-(--color-border) bg-gradient-to-br from-(--color-surface-soft) to-(--color-surface) space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -747,7 +747,7 @@ export default function AdminTablesPage() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <div className="p-6 space-y-4">
                   {pendingOrders.map((order, idx) => (
                     <motion.div
                       layout
@@ -796,7 +796,7 @@ export default function AdminTablesPage() {
                   ))}
 
                   {pendingOrders.length === 0 && systemOrders.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center opacity-40 py-20">
+                    <div className="min-h-60 flex flex-col items-center justify-center opacity-40 py-20">
                       <ShoppingBag size={48} strokeWidth={1} className="mb-4 text-(--color-text-muted)" />
                       <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">No items added yet</p>
                     </div>
@@ -916,7 +916,7 @@ export default function AdminTablesPage() {
                 </div>
               </div>
 
-                <div className="lg:col-span-7 flex flex-col h-full overflow-hidden space-y-6">
+                <div className="lg:col-span-7 flex flex-col h-full overflow-y-auto custom-scrollbar pr-2 space-y-6">
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors">
                     <Search size={18} />
@@ -952,7 +952,7 @@ export default function AdminTablesPage() {
                   </div>
                 )}
 
-                {!menuSearch && (
+                {!menuSearch && dietaryFilter === 'All' && (
                   <div className="space-y-4">
                     <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                       <Zap size={12} className="mr-2 text-primary" /> Popular Items
@@ -998,7 +998,7 @@ export default function AdminTablesPage() {
                   </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                <div className="space-y-6">
                   <h3 className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Full Menu</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                     {isModalReady ? filteredMenuItems.map((item) => {
