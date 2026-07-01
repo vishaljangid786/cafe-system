@@ -169,12 +169,20 @@ class AnalyticsService {
         },
         { $sort: { "_id": 1 } }
       ]),
-      Expense.aggregate([
-        { $match: { ...match, type: 'EXPENSE', status: { $in: ['approved', 'completed'] }, ...dateMatch } },
+      // Expenses come from the unified ledger (Transaction, type EXPENSE) — the SAME
+      // source the Expenses page and the recentExpenses list below read. All expense
+      // entry now posts to POST /transactions (the legacy Expense collection is no
+      // longer written to by the UI), so aggregating Expense here always summed to 0:
+      // the overview's Expenses total and the Sales-Report expense line stayed empty
+      // even while the Expenses page listed those very entries. Paid salaries and
+      // procurement COGS also post as EXPENSE Transactions, so they're counted here
+      // exactly once (no Payroll double-count).
+      Transaction.aggregate([
+        { $match: { ...transactionMatch, type: 'EXPENSE', status: 'approved' } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-            expenses: { $sum: "$amount" }
+            expenses: { $sum: "$totalAmount" }
           }
         }
       ]),
@@ -263,9 +271,9 @@ class AnalyticsService {
 
     const timeSeries = dates.map(date => {
       const o = ordersByDateAgg.find(item => item._id === date) || { revenue: 0, orders: 0 };
-      // Expenses are sourced from the Expense collection only. Paid salaries already
-      // live there as auto-created "Salary" Expense rows (approvePayroll), so adding
-      // the Payroll collection again would double-count every salary.
+      // Expenses come from the EXPENSE Transaction ledger (see manualExpenseAgg above).
+      // Paid salaries and procurement COGS already post there as EXPENSE Transactions,
+      // so they're counted once — no separate Payroll aggregation (which would double-count).
       const dayExpenses = manualExpenseAgg.find(item => item._id === date)?.expenses || 0;
       return { date, revenue: o.revenue, profit: o.revenue - dayExpenses, expenses: dayExpenses, orders: o.orders };
     });
@@ -283,8 +291,9 @@ class AnalyticsService {
 
     // billedRevenue = money actually settled at the till (approved revenue txns).
     const billedRevenue = transactionAgg.reduce((acc, curr) => acc + curr.revenue, 0);
-    // Paid salaries are already Expense rows (see approvePayroll), so they are inside
-    // manualExpenseAgg — re-adding the Payroll collection double-counted every salary.
+    // Paid salaries already post to the ledger as EXPENSE Transactions (see approvePayroll),
+    // so they are inside manualExpenseAgg — re-adding the Payroll collection would
+    // double-count every salary. See getLocationMetrics for the same reasoning.
     const totalExpenses = manualExpenseAgg.reduce((acc, curr) => acc + curr.expenses, 0);
     // billedOrders = orders that generated approved revenue (settled at the till);
     // totalOrders = every order actually placed in the window.
