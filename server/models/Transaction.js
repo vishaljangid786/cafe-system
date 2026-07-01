@@ -36,6 +36,13 @@ const transactionSchema = new mongoose.Schema(
       required: function() { return this.type !== 'POS_REVENUE'; }
     },
     description: String,
+    // Why a MANUAL_REVENUE entry was posted. Required (enforced in the controller)
+    // for manually-added revenue so every off-order revenue adjustment is auditable;
+    // left empty for order/POS-generated revenue.
+    reason: {
+      type: String,
+      trim: true,
+    },
     category: {
       type: String,
       required: function() { return this.type !== 'POS_REVENUE'; }

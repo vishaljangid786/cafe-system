@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { 
-  TrendingUp, IndianRupee, Search, Filter, 
-  ChevronRight, Calendar, MapPin, Target, 
-  ArrowUpRight, Activity, Wallet, Receipt
+import { can } from '../../../config/actions';
+import AddRevenueModal from '../../../components/revenue/AddRevenueModal';
+import {
+  TrendingUp, IndianRupee, Search, Filter,
+  ChevronRight, Calendar, MapPin, Target,
+  ArrowUpRight, Activity, Wallet, Receipt, Plus
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { 
@@ -29,7 +31,20 @@ export default function BranchRevenuePage() {
   const [timeRange, setTimeRange] = useState('7d');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [locations, setLocations] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   const itemsPerPage = 20;
+
+  const canAddRevenue = can(user, 'revenue.add');
+
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch branches');
+    }
+  };
 
   const fetchRevenue = async () => {
     const isInitial = !didInitRef.current;
@@ -71,6 +86,12 @@ export default function BranchRevenuePage() {
     return () => clearTimeout(timer);
   }, [timeRange]);
 
+  // Branches the admin may post revenue to (own branches; already access-scoped
+  // server-side). Fetched once the add-revenue ability resolves.
+  useEffect(() => {
+    if (canAddRevenue) fetchLocations();
+  }, [canAddRevenue]);
+
   const filteredData = transactions.filter(t => 
     t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     t.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,16 +122,28 @@ export default function BranchRevenuePage() {
             </h1>
             <p className="text-(--color-text-muted) dark:text-(--color-text-muted) text-sm mt-2 font-medium">Track your branch sales and earnings.</p>
           </div>
-          <div className="flex items-center gap-2 bg-(--color-surface-soft) dark:bg-(--color-bg) p-1.5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-inner">
-            {['7d', '1m', 'all'].map(t => (
-              <button
-                key={t}
-                onClick={() => setTimeRange(t)}
-                className={`px-5 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all ${timeRange === t ? 'bg-success text-white shadow-sm font-semibold' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-(--color-surface-soft) dark:bg-(--color-bg) p-1.5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-inner">
+              {['7d', '1m', 'all'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTimeRange(t)}
+                  className={`px-5 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all ${timeRange === t ? 'bg-success text-white shadow-sm font-semibold' : 'text-(--color-text-muted) hover:text-(--color-text-primary) dark:hover:text-(--color-text-muted)'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            {canAddRevenue && (
+              <Button
+                variant="primary"
+                icon={Plus}
+                onClick={() => setShowAddModal(true)}
+                className="!rounded-xl !py-2.5 px-5 bg-success hover:bg-success/90 active:scale-95 transition-all text-white"
               >
-                {t}
-              </button>
-            ))}
+                New Revenue
+              </Button>
+            )}
           </div>
         </div>
 
@@ -248,6 +281,15 @@ export default function BranchRevenuePage() {
             </button>
           </div>
         )}
+
+        {/* Add Revenue Modal — one or many branches, separate amount each, one reason */}
+        <AddRevenueModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          locations={locations}
+          defaultLocationId={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation && selectedLocation !== 'all' ? selectedLocation : '')}
+          onSuccess={fetchRevenue}
+        />
       </div>
     </PageTransition>
   );

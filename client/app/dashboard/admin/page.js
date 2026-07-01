@@ -32,6 +32,7 @@ import ExportActions from '../../components/ui/ExportActions';
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
+import CashDrawerWidget from './components/CashDrawerWidget';
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -308,6 +309,11 @@ export default function AdminDashboard() {
           </Link>
         </div>
       )}
+
+      {/* Cash Drawer — live register summary + last 10 shifts. Read-only here; full
+          open/close/pay-in-out lives on the Cash Drawer page. Shown to every admin
+          role that can view revenue (branch admins see this overview too). */}
+      <CashDrawerWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="lg:col-span-2 !p-5 glass-card border-(--color-border) premium-shadow" hover={false}>

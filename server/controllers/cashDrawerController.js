@@ -74,7 +74,9 @@ const movementTotals = (movements = []) => ({
 // Transaction ledger (type EXPENSE) because BOTH expense paths land there — the
 // proof-based POST /api/expenses (synced to a Transaction) and the manual
 // POST /api/transactions. Only CASH expenses leave the register, so non-cash
-// methods are excluded; rejected entries are skipped (reversed, never paid out).
+// methods are excluded. ONLY 'approved' expenses reduce the drawer: a pending
+// request has not been authorised to pay out yet, and a rejected one never will —
+// so the cash only leaves the register once an admin approves the expense.
 const computeCashExpenses = async (locationId, from, to) => {
   const rows = await Transaction.aggregate([
     {
@@ -82,7 +84,7 @@ const computeCashExpenses = async (locationId, from, to) => {
         locationId: objId(locationId),
         type: 'EXPENSE',
         paymentType: 'CASH',
-        status: { $ne: 'rejected' },
+        status: 'approved',
         date: { $gte: from, $lte: to },
       },
     },
@@ -110,7 +112,7 @@ const buildLedgerEntries = async (locationId, session) => {
       .sort({ refundedAt: -1 })
       .limit(100)
       .lean(),
-    Transaction.find({ locationId, type: 'EXPENSE', paymentType: 'CASH', status: { $ne: 'rejected' }, date: { $gte: from, $lte: to } })
+    Transaction.find({ locationId, type: 'EXPENSE', paymentType: 'CASH', status: 'approved', date: { $gte: from, $lte: to } })
       .select('title totalAmount date category status')
       .sort({ date: -1 })
       .limit(200)
@@ -144,7 +146,6 @@ const buildLedgerEntries = async (locationId, session) => {
       amount: e.totalAmount || 0,
       label: `Expense · ${e.title || e.category || 'Expense'}`,
       at: e.date,
-      pending: e.status === 'pending',
     });
   }
   for (const m of session.movements || []) {

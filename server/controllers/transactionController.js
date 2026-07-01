@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
-const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, scopedLocationId, scopedLocationIds, userLocationIds, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
 
 const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD', 'ONLINE', 'GIFT_CARD', 'OTHER'];
 
@@ -19,7 +19,7 @@ const emitCashUpdate = (locationId) => {
 // @route   GET /api/transactions
 // @access  Private
 const getTransactions = asyncHandler(async (req, res) => {
-  const { type, locationId, startDate, endDate, category, myExpenses, status, search, minAmount, maxAmount } = req.query;
+  const { type, locationId, locationIds, startDate, endDate, category, myExpenses, status, search, minAmount, maxAmount } = req.query;
 
   const query = {};
 
@@ -32,8 +32,13 @@ const getTransactions = asyncHandler(async (req, res) => {
     query.status = 'approved';
   }
 
-  // STRICT RBAC
-  const branchScope = scopedLocationId(req, locationId);
+  // STRICT RBAC — support a single `locationId` OR a multi-branch `locationIds`
+  // (comma-separated) filter. When `locationIds` is present it takes priority and
+  // every id is validated against the caller's access; the result is an { $in: [] }
+  // scoped to the branches they may see.
+  const branchScope = locationIds
+    ? scopedLocationIds(req, locationIds)
+    : scopedLocationId(req, locationId);
   if (branchScope) query.locationId = branchScope;
 
   // Scope by user role and myExpenses flag
@@ -190,20 +195,16 @@ const createTransaction = asyncHandler(async (req, res) => {
   // DESIGN NOTE (intentional overlap): this manual /transactions path coexists
   // with the Expense approval+proof model (POST /api/expenses). Both can post an
   // EXPENSE to the ledger; the Expense path additionally enforces a proof image
-  // and a richer approval workflow. We deliberately do NOT delete this path, but
-  // we harden it for parity: anyone WITHOUT editRevenue (and who is not an admin
-  // role) must land as 'pending' so it goes through approval. Only super_admin
-  // auto-approves their own entries (segregation of duties for everyone else).
+  // and a richer approval workflow. We deliberately do NOT delete this path.
+  //
+  // Approval policy: an admin or branch admin OWNS the finances of their branch(es),
+  // so their own entries post DIRECTLY (approved) with no approval step —
+  // super_admin already did. Everyone else lands 'pending' and flows through the
+  // approve/reject workflow. Segregation of duties is unaffected: it only governs
+  // approving SOMEONE ELSE'S entry (enforced in approve/reject), not your own.
   const isAdminRole = ['admin', 'branch_admin'].includes(req.user.role);
-  const hasEditRevenue = !!(req.user.permissions && req.user.permissions.editRevenue);
-  let status = 'pending';
-  if (req.user.role === 'super_admin') {
-    status = 'approved';
-  } else if (!isAdminRole && !hasEditRevenue) {
-    // Non-admin without editRevenue: force pending (defense-in-depth; the route
-    // already requires editRevenue, but this guarantees safety if that changes).
-    status = 'pending';
-  }
+  const autoApprove = req.user.role === 'super_admin' || isAdminRole;
+  const status = autoApprove ? 'approved' : 'pending';
 
   const transaction = await Transaction.create({
     type,
@@ -216,6 +217,7 @@ const createTransaction = asyncHandler(async (req, res) => {
     date: date || new Date(),
     description,
     createdBy: req.user._id,
+    approvedBy: autoApprove ? req.user._id : undefined,
     billImage,
     status
   });
@@ -248,6 +250,216 @@ const createTransaction = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     data: transaction
+  });
+});
+
+// @desc    Split one expense across several branches (one Transaction per branch)
+// @route   POST /api/transactions/split
+// @access  Private (Admin / Branch Admin / Super Admin — multi-branch owners)
+//
+// The caller supplies a `splits` array of { locationId, amount }. Each split
+// becomes its own approved EXPENSE Transaction so the per-branch ledgers,
+// analytics and cash drawers stay correct. Access to EVERY branch is validated;
+// a branch admin's chosen branches must all sit under a single admin.
+const splitTransaction = asyncHandler(async (req, res) => {
+  const { title, category, date, description, paymentType, paymentMethod, splits } = req.body;
+
+  // Only multi-branch owners may split. (staff/chef/location_admin can't.)
+  const isAdminRole = ['admin', 'branch_admin'].includes(req.user.role);
+  if (req.user.role !== 'super_admin' && !isAdminRole) {
+    res.status(403);
+    throw new Error('Only admins can split an expense across branches');
+  }
+
+  if (!title) {
+    res.status(400);
+    throw new Error('Title is required');
+  }
+  if (!category) {
+    res.status(400);
+    throw new Error('Category is required');
+  }
+  if (!Array.isArray(splits) || splits.length < 2) {
+    res.status(400);
+    throw new Error('A split expense needs at least two branches');
+  }
+
+  const tender = paymentType || paymentMethod;
+  const finalPaymentType = PAYMENT_METHODS.includes(tender) ? tender : 'CASH';
+
+  // Validate + normalize every split. Reject duplicates, bad amounts, and any
+  // branch the caller cannot access.
+  const seen = new Set();
+  const normalized = [];
+  for (const s of splits) {
+    const locId = s && s.locationId;
+    const amt = Number(s && s.amount);
+    if (!locId) {
+      res.status(400);
+      throw new Error('Each split needs a branch');
+    }
+    if (seen.has(String(locId))) {
+      res.status(400);
+      throw new Error('Each branch can appear only once in a split');
+    }
+    if (!Number.isFinite(amt) || amt <= 0) {
+      res.status(400);
+      throw new Error('Each split amount must be a positive number');
+    }
+    enforceLocationAccess(req, res, locId, 'You do not have permission for one of the selected branches');
+    seen.add(String(locId));
+    normalized.push({ locationId: locId, amount: amt });
+  }
+
+  // A branch admin may only split across branches that all belong to one admin.
+  if (req.user.role === 'branch_admin') {
+    await assertBranchesUnderOneAdmin(normalized.map((n) => n.locationId));
+  }
+
+  const when = date || new Date();
+  const docs = normalized.map((n) => ({
+    type: 'EXPENSE',
+    totalAmount: n.amount,
+    totalProfit: -n.amount,
+    paymentType: finalPaymentType,
+    title,
+    category,
+    locationId: n.locationId,
+    date: when,
+    description,
+    createdBy: req.user._id,
+    approvedBy: req.user._id, // admin/super_admin direct entry — no approval step
+    status: 'approved',
+  }));
+
+  const created = await Transaction.insertMany(docs);
+
+  // A cash split reduces each branch's register balance — refresh open drawers.
+  if (finalPaymentType === 'CASH') {
+    normalized.forEach((n) => emitCashUpdate(n.locationId));
+  }
+
+  const totalAmount = normalized.reduce((a, n) => a + n.amount, 0);
+  res.status(201).json({
+    success: true,
+    count: created.length,
+    totalAmount,
+    data: created,
+  });
+});
+
+// @desc    Add manual revenue to one OR many branches, with a separate amount per
+//          branch and a shared, mandatory reason.
+// @route   POST /api/transactions/revenue/bulk
+// @access  Private (revenue.add)
+//
+// Each entry { locationId, amount } becomes its own MANUAL_REVENUE Transaction so
+// the per-branch ledgers and analytics stay correct. Access to EVERY branch is
+// validated. Admins post directly as approved; anyone else granted revenue.add
+// lands as pending for an approver to sign off.
+const createBulkRevenue = asyncHandler(async (req, res) => {
+  const { entries, reason, title, category, date, description, paymentType, paymentMethod } = req.body;
+
+  // Reason is mandatory — every off-order revenue adjustment must be justifiable.
+  const finalReason = String(reason || '').trim();
+  if (!finalReason) {
+    res.status(400);
+    throw new Error('A reason is required when adding revenue');
+  }
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    res.status(400);
+    throw new Error('Select at least one branch and enter an amount');
+  }
+
+  const tender = paymentType || paymentMethod;
+  const finalPaymentType = PAYMENT_METHODS.includes(tender) ? tender : 'CASH';
+  const finalTitle = String(title || '').trim() || 'Manual Revenue';
+  const finalCategory = String(category || '').trim() || 'Manual';
+  const when = date ? new Date(date) : new Date();
+
+  // Validate + normalize EVERY entry before writing anything (all-or-nothing): one
+  // bad branch or amount rejects the whole batch, so no partial post slips through.
+  const seen = new Set();
+  const normalized = [];
+  for (const [idx, entry] of entries.entries()) {
+    const locId = entry && (entry.locationId || entry.location);
+    const amt = Number(entry && entry.amount);
+    if (!locId || !mongoose.Types.ObjectId.isValid(String(locId))) {
+      res.status(400);
+      throw new Error(`Invalid branch selected for entry ${idx + 1}`);
+    }
+    if (seen.has(String(locId))) {
+      res.status(400);
+      throw new Error('Each branch can appear only once');
+    }
+    if (!Number.isFinite(amt) || amt <= 0) {
+      res.status(400);
+      throw new Error('Amount for each selected branch must be a positive number');
+    }
+    enforceLocationAccess(req, res, locId, 'You do not have permission to add revenue for one of the selected branches');
+    seen.add(String(locId));
+    normalized.push({ locationId: String(locId), amount: amt });
+  }
+
+  // A branch admin may only post across branches that all belong to one admin.
+  if (req.user.role === 'branch_admin' && normalized.length > 1) {
+    await assertBranchesUnderOneAdmin(normalized.map((n) => n.locationId));
+  }
+
+  // Admins (and super_admin) post directly as approved; anyone else granted
+  // revenue.add lands as pending so an approver signs off (segregation of duties).
+  const autoApprove = ['super_admin', 'admin', 'branch_admin'].includes(req.user.role);
+  const status = autoApprove ? 'approved' : 'pending';
+
+  const docs = normalized.map((n) => ({
+    type: 'MANUAL_REVENUE',
+    totalAmount: n.amount,
+    totalProfit: n.amount, // revenue carries no cost basis here
+    paymentType: finalPaymentType,
+    title: finalTitle,
+    category: finalCategory,
+    reason: finalReason,
+    description: description || undefined,
+    locationId: n.locationId,
+    date: when,
+    createdBy: req.user._id,
+    approvedBy: status === 'approved' ? req.user._id : undefined,
+    status,
+  }));
+
+  const created = await Transaction.insertMany(docs);
+
+  // If it needs approval, notify the approvers for the affected branches.
+  if (status === 'pending') {
+    const branchIds = [...seen];
+    const admins = await User.find({
+      $or: [
+        { role: 'super_admin' },
+        { role: 'admin', accessibleLocations: { $in: branchIds } },
+        { role: 'branch_admin', $or: [{ assignedLocation: { $in: branchIds } }, { accessibleLocations: { $in: branchIds } }] },
+      ],
+    }).select('_id');
+
+    if (admins.length > 0) {
+      const label = created.length === 1 ? 'entry' : 'entries';
+      await Notification.create({
+        title: 'New Revenue Entry',
+        message: `${req.user.name} (${req.user.role}) submitted ${created.length} revenue ${label} for approval.`,
+        type: 'expense', // shared financial bucket (no dedicated 'revenue' type)
+        sender: req.user._id,
+        recipients: admins.map((a) => ({ user: a._id })),
+      });
+    }
+  }
+
+  const totalAmount = normalized.reduce((a, n) => a + n.amount, 0);
+  res.status(201).json({
+    success: true,
+    count: created.length,
+    status,
+    totalAmount,
+    data: created,
   });
 });
 
@@ -448,6 +660,8 @@ const getTransactionStats = asyncHandler(async (req, res) => {
 module.exports = {
   getTransactions,
   createTransaction,
+  splitTransaction,
+  createBulkRevenue,
   getTransactionStats,
   approveTransaction,
   rejectTransaction

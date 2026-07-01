@@ -6,12 +6,14 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
+import { can } from '../../../config/actions';
+import AddRevenueModal from '../../../components/revenue/AddRevenueModal';
 import {
   TrendingUp, IndianRupee, Search, Filter,
   ChevronRight, Calendar, MapPin, Target,
   ArrowUpRight, Activity, Wallet, Receipt,
   User, Clock, ShoppingBag, CheckCircle2,
-  Tag, CreditCard, Hash, Info
+  Tag, CreditCard, Hash, Info, Plus
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import {
@@ -52,7 +54,10 @@ export default function RevenuePage() {
 
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
   const [locations, setLocations] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   const itemsPerPage = 20;
+
+  const canAddRevenue = can(user, 'revenue.add');
 
   const isDark = theme === 'dark';
 
@@ -139,7 +144,7 @@ export default function RevenuePage() {
 
     const timer = setTimeout(() => {
       fetchRevenue();
-      if (user?.role === 'super_admin' || user?.role === 'admin') {
+      if (user?.role === 'super_admin' || user?.role === 'admin' || canAddRevenue) {
         fetchLocations();
       }
     }, 0);
@@ -190,6 +195,16 @@ export default function RevenuePage() {
               }}
               loading={refetching}
             />
+            {canAddRevenue && (
+              <Button
+                variant="primary"
+                icon={Plus}
+                onClick={() => setShowAddModal(true)}
+                className="!rounded-xl !py-2.5 px-5 bg-success hover:bg-success/90 active:scale-95 transition-all text-white"
+              >
+                New Revenue
+              </Button>
+            )}
           </div>
         </div>
 
@@ -521,6 +536,18 @@ export default function RevenuePage() {
                 </div>
               )}
 
+              {/* Reason (manual revenue) */}
+              {selectedTransaction.reason && (
+                <div className="p-4 rounded-xl bg-success/5 border border-success/20">
+                  <p className="text-[11px] font-medium text-success mb-2 flex items-center gap-2">
+                    <Info size={10} /> Reason
+                  </p>
+                  <p className="text-sm font-medium text-(--color-text-secondary)">
+                    {selectedTransaction.reason}
+                  </p>
+                </div>
+              )}
+
               {/* Description */}
               {selectedTransaction.description && (
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
@@ -566,6 +593,15 @@ export default function RevenuePage() {
             </div>
           )}
         </Modal>
+
+        {/* Add Revenue Modal — one or many branches, separate amount each, one reason */}
+        <AddRevenueModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          locations={locations}
+          defaultLocationId={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation && selectedLocation !== 'all' ? selectedLocation : '')}
+          onSuccess={fetchRevenue}
+        />
       </div>
     </PageTransition>
   );

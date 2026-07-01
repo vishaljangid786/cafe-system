@@ -2,17 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
-import { 
-  TrendingDown, Search, Filter, 
-  ChevronRight, Calendar, MapPin, 
+import {
+  TrendingDown, Search, Filter,
+  ChevronRight, Calendar, MapPin,
   ArrowDownRight, Activity, Receipt,
-  Plus, User, Info, ChevronDown, 
+  Plus, User, Info, ChevronDown,
   Sparkles, Download, Layers, Wallet, ArrowUpRight,
-  RefreshCw
+  RefreshCw, Check
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { 
@@ -49,11 +50,18 @@ export default function BranchExpensesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'mine', 'pending'
   const [selectedExpense, setSelectedExpense] = useState(null);
+  // Branches this admin manages (for the multi-branch filter + split). A single-branch
+  // branch admin gets one entry, so split/filter UI stays hidden for them.
+  const [locations, setLocations] = useState([]);
+  const [branchFilter, setBranchFilter] = useState([]); // selected locationIds; [] = all mine
   const itemsPerPage = 12;
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCustomTitle, setShowCustomTitle] = useState(false);
+  // Split-expense state (only meaningful for multi-branch branch admins).
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitAmounts, setSplitAmounts] = useState({});
   const [formData, setFormData] = useState({
     title: '',
     customTitle: '',
@@ -77,7 +85,12 @@ export default function BranchExpensesPage() {
       } else if (activeTab === 'pending') {
         query.append('status', 'pending');
       }
-      
+
+      // Multi-branch filter — server validates every id against this admin's access.
+      if (branchFilter.length > 0) {
+        query.append('locationIds', branchFilter.join(','));
+      }
+
       const now = new Date();
       let start = '';
       if (timeRange !== 'all') {
@@ -100,33 +113,113 @@ export default function BranchExpensesPage() {
     }
   };
 
+  const fetchLocations = async () => {
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch branches');
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchExpenses();
     }, 0);
     return () => clearTimeout(timer);
-  }, [timeRange, activeTab]);
+  }, [timeRange, activeTab, branchFilter]);
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  const resetAddForm = () => {
+    setShowAddModal(false);
+    setSplitMode(false);
+    setSplitAmounts({});
+    setShowCustomTitle(false);
+    setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
+  };
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
+    if (splitMode) return handleSplitExpense();
     const loadToast = toast.loading('Adding expense...');
     try {
       const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
       if (!finalTitle) throw new Error("Title is required");
 
-      const data = { 
-        ...formData, 
+      const data = {
+        ...formData,
         title: finalTitle,
-        type: 'EXPENSE' 
+        type: 'EXPENSE'
       };
-      
+
       await api.post('/transactions', data);
       toast.success('Expense saved', { id: loadToast });
-      setShowAddModal(false);
-      setFormData({ title: '', customTitle: '', amount: '', category: 'Operational', date: new Date().toISOString().split('T')[0], description: '' });
+      resetAddForm();
       fetchExpenses();
     } catch (error) {
-      toast.error(error.message || 'Could not save expense. Please try again.', { id: loadToast });
+      toast.error(error.response?.data?.message || error.message || 'Could not save expense. Please try again.', { id: loadToast });
+    }
+  };
+
+  // Split-expense helpers ---------------------------------------------------
+  const toggleSplitBranch = (locId) => {
+    setSplitAmounts((prev) => {
+      const next = { ...prev };
+      if (locId in next) delete next[locId];
+      else next[locId] = '';
+      return next;
+    });
+  };
+
+  const setSplitAmount = (locId, val) => setSplitAmounts((prev) => ({ ...prev, [locId]: val }));
+
+  const splitEqually = () => {
+    const ids = Object.keys(splitAmounts);
+    const total = Number(formData.amount);
+    if (ids.length === 0) return toast.error('Select branches to split across first');
+    if (!Number.isFinite(total) || total <= 0) return toast.error('Enter a total amount to divide');
+    const per = Math.floor((total / ids.length) * 100) / 100;
+    const next = {};
+    ids.forEach((id, i) => {
+      next[id] = i === ids.length - 1
+        ? Number((total - per * (ids.length - 1)).toFixed(2)).toString()
+        : per.toString();
+    });
+    setSplitAmounts(next);
+  };
+
+  const splitTotal = Object.values(splitAmounts).reduce((a, v) => a + (Number(v) || 0), 0);
+
+  const handleSplitExpense = async () => {
+    const loadToast = toast.loading('Splitting expense...');
+    try {
+      const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
+      if (!finalTitle) throw new Error("Title is required");
+
+      const splits = Object.entries(splitAmounts)
+        .filter(([locationId]) => locationId)
+        .map(([locationId, amount]) => ({ locationId, amount: Number(amount) }));
+
+      if (splits.length < 2) throw new Error("Select at least two branches to split across");
+      if (splits.some((s) => !Number.isFinite(s.amount) || s.amount <= 0)) {
+        throw new Error("Enter a positive amount for each selected branch");
+      }
+
+      await api.post('/transactions/split', {
+        title: finalTitle,
+        category: formData.category,
+        date: formData.date,
+        description: formData.description,
+        splits,
+      });
+      toast.success(`Expense split across ${splits.length} branches`, { id: loadToast });
+      resetAddForm();
+      fetchExpenses();
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Could not split expense', { id: loadToast });
     }
   };
 
@@ -290,6 +383,29 @@ export default function BranchExpensesPage() {
                 />
               </div>
             </div>
+
+            {/* Multi-branch filter — only for admins managing more than one branch */}
+            {locations.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted)"><Filter size={12} /> Branches:</span>
+                {locations.map(loc => {
+                  const active = branchFilter.includes(loc._id);
+                  return (
+                    <button
+                      key={loc._id}
+                      type="button"
+                      onClick={() => setBranchFilter(prev => active ? prev.filter(id => id !== loc._id) : [...prev, loc._id])}
+                      className={`rounded-xl border px-3 py-1.5 text-[11px] font-medium transition-all ${active ? 'border-danger bg-danger text-white' : 'border-(--color-border) bg-(--color-surface-soft) text-(--color-text-muted) hover:border-danger/40'}`}
+                    >
+                      {active && <Check size={11} className="mr-1 -mt-0.5 inline" />}{loc.name}
+                    </button>
+                  );
+                })}
+                {branchFilter.length > 0 && (
+                  <button type="button" onClick={() => setBranchFilter([])} className="ml-1 text-[11px] font-medium text-danger hover:underline">Clear</button>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {refetching ? (
@@ -487,7 +603,7 @@ export default function BranchExpensesPage() {
         </Modal>
 
         {/* Add Modal */}
-        <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Expense" maxWidth="max-w-xl">
+        <Modal isOpen={showAddModal} onClose={resetAddForm} title="Add New Expense" maxWidth="max-w-xl">
           <form onSubmit={handleAddExpense} className="space-y-8 p-2">
             <div className="space-y-6">
                 <PremiumSelect 
@@ -522,10 +638,10 @@ export default function BranchExpensesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[11px] font-medium uppercase tracking-wide text-danger ml-2">Amount (₹)</label>
-                  <input required type="number" className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) p-5 text-sm font-medium dark:text-white focus:ring-2 focus:ring-danger/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
+                  <label className="text-[11px] font-medium uppercase tracking-wide text-danger ml-2">{splitMode ? 'Total to Divide (₹)' : 'Amount (₹)'}</label>
+                  <input required={!splitMode} type="number" min="0" onKeyDown={blockNegative} className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) p-5 text-sm font-medium dark:text-white focus:ring-2 focus:ring-danger/10 transition-all outline-none" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
                 </div>
-                <PremiumSelect 
+                <PremiumSelect
                   label="Category"
                   value={formData.category}
                   onChange={val => setFormData({...formData, category: val})}
@@ -540,6 +656,71 @@ export default function BranchExpensesPage() {
                 />
               </div>
 
+              {/* Split toggle — only when this admin manages more than one branch */}
+              {locations.length > 1 && (
+                <div className="flex items-center justify-between rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) p-4">
+                  <div className="flex items-center gap-3">
+                    <Layers size={16} className="text-danger" />
+                    <div>
+                      <p className="text-xs font-semibold text-(--color-text-primary) dark:text-white">Split across branches</p>
+                      <p className="text-[11px] text-(--color-text-muted)">Divide this expense over multiple branches.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSplitMode(v => !v)}
+                    aria-pressed={splitMode}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${splitMode ? 'bg-danger' : 'bg-(--color-border)'}`}
+                  >
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${splitMode ? 'left-5.5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+              )}
+
+              {splitMode && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-medium uppercase tracking-wide text-danger ml-2">Branches &amp; Amounts</label>
+                    <button type="button" onClick={splitEqually} className="text-[11px] font-semibold text-danger hover:underline">Split equally</button>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                    {locations.map(loc => {
+                      const included = loc._id in splitAmounts;
+                      return (
+                        <div key={loc._id} className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${included ? 'border-danger/40 bg-danger/5' : 'border-(--color-border) bg-(--color-surface-soft) dark:bg-(--color-bg)'}`}>
+                          <button
+                            type="button"
+                            onClick={() => toggleSplitBranch(loc._id)}
+                            className={`h-5 w-5 shrink-0 rounded-md border flex items-center justify-center transition-colors ${included ? 'bg-danger border-danger text-white' : 'border-(--color-border) text-transparent'}`}
+                          >
+                            <Check size={13} />
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium text-(--color-text-primary) dark:text-white">{loc.name}</p>
+                            <p className="truncate text-[11px] text-(--color-text-muted)">{loc.city}</p>
+                          </div>
+                          <div className="relative w-28 shrink-0">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-muted) text-xs">₹</span>
+                            <input
+                              type="number" min="0" onKeyDown={blockNegative}
+                              disabled={!included}
+                              value={splitAmounts[loc._id] ?? ''}
+                              onChange={e => setSplitAmount(loc._id, e.target.value)}
+                              placeholder="0"
+                              className="w-full rounded-lg bg-(--color-surface) dark:bg-(--color-surface) border border-(--color-border) py-2 pl-6 pr-2 text-xs font-medium text-(--color-text-primary) dark:text-white outline-none focus:ring-2 focus:ring-danger/10 disabled:opacity-40"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) px-4 py-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted)">Split total · {Object.keys(splitAmounts).length} branches</span>
+                    <span className="text-sm font-semibold text-danger">₹{splitTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <label className="text-[11px] font-medium uppercase tracking-wide text-danger ml-2">Date</label>
                 <input required type="date" className="w-full rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) dark:border-(--color-border) p-5 text-sm font-medium dark:text-white focus:ring-2 focus:ring-danger/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
@@ -551,7 +732,7 @@ export default function BranchExpensesPage() {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-wide text-sm" icon={Sparkles}>Save Expense</Button>
+            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-wide text-sm" icon={Sparkles}>{splitMode ? `Split Expense${splitTotal > 0 ? ` · ₹${splitTotal.toLocaleString()}` : ''}` : 'Save Expense'}</Button>
           </form>
         </Modal>
       </div>
