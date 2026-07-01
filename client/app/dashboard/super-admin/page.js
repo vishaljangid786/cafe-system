@@ -11,10 +11,7 @@ import {
 import Link from 'next/link';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
-import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
-
-export default function SuperAdminDashboard() {
+import { motion, AnimatePresence } from 'framer-motion';export default function SuperAdminDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -25,7 +22,7 @@ export default function SuperAdminDashboard() {
       const res = await api.get('/super-admin/executive-summary');
       setData(res.data.data);
     } catch (err) {
-      toast.error('Could not load dashboard data');
+      console.error('Could not load dashboard data');
     } finally {
       setLoading(false);
     }

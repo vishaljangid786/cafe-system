@@ -55,7 +55,7 @@ const NotificationsPage = () => {
       setNotifications(res?.data?.data || []);
       setPagination(res?.data?.pagination || { page: 1, pages: 1 });
     } catch (err) {
-      toast.error('Could not load notifications');
+      console.error('Could not load notifications');
       console.error('Failed to sync archival records:', err.response?.data || err.message);
     } finally {
       didInitRef.current = true;

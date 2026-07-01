@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import ExportActions from '@/app/components/ui/ExportActions';
 
@@ -48,7 +47,7 @@ export default function AuditLogsPage() {
       setTotalPages(res.data.pagination?.pages || 1);
       setTotalLogs(res.data.pagination?.total || 0);
     } catch (err) {
-      toast.error('Could not load activity history. Please try again.');
+      console.error('Could not load activity history. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

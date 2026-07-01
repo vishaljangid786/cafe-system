@@ -83,7 +83,7 @@ export default function AdminTablesPage() {
       const res = await api.get(url);
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Could not load tables. Please try again.');
+      console.error('Could not load tables. Please try again.');
     } finally {
       didInitRef.current = true;
       if (!silent) {

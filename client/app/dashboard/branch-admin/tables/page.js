@@ -61,7 +61,7 @@ export default function TablesPage() {
       const res = await api.get('/tables');
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Could not load tables. Please try again.');
+      console.error('Could not load tables. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);

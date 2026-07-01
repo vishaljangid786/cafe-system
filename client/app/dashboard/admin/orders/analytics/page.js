@@ -104,7 +104,7 @@ export default function OrderAnalyticsDashboard() {
       setData(analyticsRes.data?.data || analyticsRes.data);
       setLocations(locRes.data?.data || locRes.data || []);
     } catch (error) {
-      toast.error("Could not load analytics. Please try again.");
+      console.error("Could not load analytics. Please try again.");
     } finally {
       didInitRef.current = true;
       setLoading(false);

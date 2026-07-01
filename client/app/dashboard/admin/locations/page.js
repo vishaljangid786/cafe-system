@@ -102,7 +102,7 @@ export default function BranchesPage() {
       const res = await api.get(`/users?locationId=${locationId}`);
       setStaff(res.data.data || []);
     } catch (error) {
-      toast.error("Could not load staff");
+      console.error("Could not load staff");
     } finally {
       setFetchingStaff(false);
     }

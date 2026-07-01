@@ -26,9 +26,7 @@ import { CountUp } from '../../components/ui/CountUp';
 import { Card, CardTitle, CardDescription } from '../../components/ui/Card';
 import { ActivityTimeline } from '../../components/ui/ActivityTimeline';
 import { Button } from '../../components/ui/Button';
-import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
-import ExportActions from '../../components/ui/ExportActions';
+import { motion, AnimatePresence } from 'framer-motion';import ExportActions from '../../components/ui/ExportActions';
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
@@ -141,7 +139,6 @@ export default function AdminDashboard() {
       if (res.data?.data) setAnalytics(res.data.data);
     } catch (error) {
       console.error("Failed to fetch analytics:", error.response?.data?.message || error.message);
-      toast.error("Could not load dashboard. Please try again.");
     } finally {
       didInitRef.current = true;
       setLoading(false);

@@ -59,7 +59,7 @@ export default function ChefDashboard() {
       const activeOrders = res.data.data.filter(o => activeStatuses.includes(o.status));
       setOrders(activeOrders);
     } catch (error) {
-      toast.error('Could not load orders. Please try again.');
+      console.error('Could not load orders. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);

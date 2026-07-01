@@ -70,7 +70,7 @@ export default function GlobalAttendancePage() {
         }
       } catch (err) {
         console.error('Failed to fetch attendance list:', err.response?.data || err.message);
-        toast.error(err.response?.data?.message || 'Could not load attendance data. Please try again.');
+        console.error(err.response?.data?.message || 'Could not load attendance data. Please try again.');
       } finally {
         didInitRef.current = true;
         setLoading(false);

@@ -226,7 +226,7 @@ export default function MenuManagementPage() {
       setTotalPages(itemsRes.data.pagination?.pages || 1);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Could not load menu items');
+      console.error('Could not load menu items');
       console.error(error);
     } finally {
       didInitRef.current = true;

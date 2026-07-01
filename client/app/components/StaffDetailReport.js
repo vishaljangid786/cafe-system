@@ -27,7 +27,6 @@ import {
   Utensils,
   WalletCards,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
 
@@ -131,7 +130,7 @@ export default function StaffDetailReport({ staffId, user }) {
         const res = await api.get(`/analytics/staff-reports/${staffId}`, { params });
         if (!ignore) setReport(res.data?.data || null);
       } catch (error) {
-        if (!ignore) toast.error(error.response?.data?.message || 'Could not load this staff report');
+        if (!ignore) console.error(error.response?.data?.message || 'Could not load this staff report');
       } finally {
         if (!ignore) {
           didInitRef.current = true;

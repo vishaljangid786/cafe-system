@@ -56,7 +56,7 @@ export default function StaffMenuPage() {
       setTotalPages(itemsRes.data.pagination?.pages || 1);
       setCategories(catsRes.data.data);
     } catch (error) {
-      toast.error('Could not load menu items. Please try again.');
+      console.error('Could not load menu items. Please try again.');
     } finally {
       setLoading(false);
     }

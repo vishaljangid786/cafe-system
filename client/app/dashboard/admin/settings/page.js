@@ -94,7 +94,7 @@ export default function SettingsPage() {
       const res = await api.get(`/settings${q}`);
       setForm(res.data.data);
     } catch (e) {
-      toast.error('Could not load settings');
+      console.error('Could not load settings');
     } finally {
       setLoading(false);
     }

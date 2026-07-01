@@ -9,8 +9,6 @@ import {
 import api from '../../../services/api';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
-import toast from 'react-hot-toast';
-
 const ROLE_META = {
   all: { label: 'All People', icon: Users },
   staff: { label: 'Staff', icon: Users },
@@ -125,7 +123,7 @@ export default function PeopleDrawer({ roleKey, onClose, currentUserRole, locati
       setTotal(res.data?.pagination?.total ?? res.data?.data?.length ?? 0);
     } catch (error) {
       if (seq !== reqSeqRef.current) return;
-      toast.error('Could not load the list. Please try again.');
+      console.error('Could not load the list. Please try again.');
       setPeople([]);
       setTotal(0);
     } finally {

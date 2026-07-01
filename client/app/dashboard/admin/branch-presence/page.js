@@ -32,7 +32,7 @@ export default function BranchPresencePage() {
       const res = await api.get('/locations');
       setLocations(res.data.data);
     } catch (err) {
-      toast.error('Could not load branches. Please try again.');
+      console.error('Could not load branches. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -51,7 +51,7 @@ export default function BranchPresencePage() {
       setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
       setAttendance(attRes.data.data);
     } catch (err) {
-      toast.error('Could not load branch details. Please try again.');
+      console.error('Could not load branch details. Please try again.');
     } finally {
       setRefetching(false);
       progress.done();

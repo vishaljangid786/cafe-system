@@ -55,7 +55,7 @@ export default function ProcurementPage() {
       setOrders(po.data.data || []);
       setIngredients(ing.data.data || []);
     } catch (e) {
-      toast.error('Could not load procurement data');
+      console.error('Could not load procurement data');
     } finally {
       setLoading(false);
     }

@@ -110,7 +110,7 @@ export default function LocationStaffPage() {
         setPagination(res.data.pagination);
       }
     } catch (error) {
-      toast.error('Could not load staff list');
+      console.error('Could not load staff list');
     } finally {
       didInitRef.current = true;
       setLoading(false);

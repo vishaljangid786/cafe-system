@@ -130,7 +130,7 @@ export default function StaffOrdersPage() {
       setTables(tableRes.data.data);
       setMenuItems(menuRes.data.data);
     } catch (error) {
-      toast.error('Could not load tables and menu. Please try again.');
+      console.error('Could not load tables and menu. Please try again.');
     }
   }, [user]);
 

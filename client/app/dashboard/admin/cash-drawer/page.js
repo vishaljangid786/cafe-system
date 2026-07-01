@@ -60,7 +60,7 @@ export default function CashDrawerPage() {
       setCurrent(cur.data.data);
       setHistory(hist.data.data || []);
     } catch (e) {
-      toast.error('Could not load cash drawer');
+      console.error('Could not load cash drawer');
     } finally {
       if (!silent) setLoading(false);
     }

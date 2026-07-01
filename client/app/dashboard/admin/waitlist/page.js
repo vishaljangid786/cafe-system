@@ -43,7 +43,7 @@ export default function WaitlistPage() {
       const q = !branchScoped && scope ? `?locationId=${scope}` : '';
       const res = await api.get(`/waitlist${q}`);
       setEntries(res.data.data || []);
-    } catch (e) { toast.error('Could not load the waitlist'); }
+    } catch (e) { console.error('Could not load the waitlist'); }
     finally { setLoading(false); }
   }, [scope, branchScoped]);
 

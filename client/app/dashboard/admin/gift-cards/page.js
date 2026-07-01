@@ -25,7 +25,7 @@ export default function GiftCardsPage() {
     try {
       const res = await api.get('/gift-cards');
       setCards(res.data.data || []);
-    } catch (e) { toast.error('Could not load gift cards'); }
+    } catch (e) { console.error('Could not load gift cards'); }
     finally { setLoading(false); }
   }, []);
 

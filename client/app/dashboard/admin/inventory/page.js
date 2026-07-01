@@ -77,7 +77,7 @@ export default function InventoryDashboard() {
 
       await fetchData({ initial: true });
     } catch (err) {
-      toast.error('Could not load the page. Please try again.');
+      console.error('Could not load the page. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

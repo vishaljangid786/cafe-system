@@ -57,7 +57,7 @@ export default function BookingsManagementPage() {
       setBookings(res.data.data);
       setTotalPages(res.data.pagination?.pages || 1);
     } catch (error) {
-      toast.error('Could not load bookings. Please try again.');
+      console.error('Could not load bookings. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

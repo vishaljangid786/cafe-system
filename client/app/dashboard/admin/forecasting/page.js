@@ -11,7 +11,6 @@ import {
   TrendingUp, Calendar, Clock, RefreshCcw, Award, Percent
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
-import toast from 'react-hot-toast';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import useBranchScope from '../../../hooks/useBranchScope';
 
@@ -32,7 +31,7 @@ export default function ForecastingDashboard() {
       const res = await api.get(`/analytics/forecasting?branchId=${singleBranchId}&period=${selectedPeriod}`);
       setForecast(res.data.data);
     } catch (err) {
-      toast.error('Could not load forecast. Please try again.');
+      console.error('Could not load forecast. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

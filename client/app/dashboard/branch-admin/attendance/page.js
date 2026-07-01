@@ -37,7 +37,7 @@ export default function AttendancePage() {
         setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         setAttendance(attRes.data.data);
       } catch (error) {
-        toast.error('Could not load staff. Please try again.');
+        console.error('Could not load staff. Please try again.');
       } finally {
         didInitRef.current = true;
         setLoading(false);

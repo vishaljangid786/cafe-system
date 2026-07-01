@@ -116,7 +116,7 @@ export default function UsersPage() {
       setUsers(data);
       setTotalPages(res.data.pagination?.pages || 1);
     } catch (err) {
-      toast.error('Could not load users');
+      console.error('Could not load users');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -190,7 +190,7 @@ export default function UsersPage() {
       setEditGender(full.gender || 'Male');
       setEditAssignedLocation(full.assignedLocation?._id || full.assignedLocation || '');
     } catch (err) {
-      toast.error('Could not load user details');
+      console.error('Could not load user details');
       setShowEditModal(false);
     } finally {
       setLoadingEdit(false);

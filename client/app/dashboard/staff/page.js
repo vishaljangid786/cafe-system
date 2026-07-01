@@ -17,10 +17,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, BarChart, Bar,
   Cell
-} from 'recharts';
-import toast from 'react-hot-toast';
-
-function Skeleton({ className }) {
+} from 'recharts';function Skeleton({ className }) {
   return (
     <div className={`animate-pulse bg-(--color-surface-soft) rounded-xl ${className}`} />
   );
@@ -184,7 +181,7 @@ export default function StaffDashboard() {
       setAttendance(attendanceRes.data.data || []);
     } catch (error) {
       console.error('Dashboard data fetch error:', error);
-      toast.error('Could not load dashboard. Please try again.');
+      console.error('Could not load dashboard. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -8,7 +8,6 @@ import {
   TrendingUp, CreditCard, ShoppingBag, Award, Zap,
   Filter, Calendar, DollarSign, BarChart2
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import useBranchScope from '../../../hooks/useBranchScope';
@@ -66,7 +65,7 @@ export default function PaymentInformationPage() {
       const res = await api.get('/analytics/payment-intelligence', { params });
       setStats(res.data.data);
     } catch (error) {
-      toast.error('Could not load payment details. Please try again.');
+      console.error('Could not load payment details. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

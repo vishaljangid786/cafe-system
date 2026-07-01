@@ -34,7 +34,7 @@ export default function LocationStaffPage() {
       const res = await api.get('/users');
       setStaff(res.data.data);
     } catch (error) {
-      toast.error('Failed to load staff list');
+      console.error('Failed to load staff list');
     } finally {
       setLoading(false);
       progress.done();

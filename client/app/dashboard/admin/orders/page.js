@@ -108,7 +108,7 @@ export default function AdminOrdersDashboard() {
       if (locRes.status === 'fulfilled') setLocations(locRes.value.data.data || []);
       if (cafeRes.status === 'fulfilled') setCafes(cafeRes.value.data.data || []);
     } catch (error) {
-      if (reqId === reqIdRef.current) toast.error('Could not load orders. Please try again.');
+      if (reqId === reqIdRef.current) console.error('Could not load orders. Please try again.');
     } finally {
       didInitRef.current = true;
       if (!silent && reqId === reqIdRef.current) {
@@ -314,7 +314,7 @@ export default function AdminOrdersDashboard() {
       setSelectedOrder(res.data.data);
       setIsWatchlistModalOpen(false);
     } catch (error) {
-      toast.error('Could not load order details. Please try again.');
+      console.error('Could not load order details. Please try again.');
     } finally {
       setLoading(false);
     }

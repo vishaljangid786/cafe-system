@@ -32,7 +32,7 @@ export default function BookingPage() {
       const res = await api.get('/locations/public');
       setLocations(res.data.data.filter(loc => loc.status === 'active'));
     } catch (error) {
-      toast.error('Failed to load locations');
+      console.error('Failed to load locations');
     }
   };
 

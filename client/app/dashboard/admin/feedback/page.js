@@ -40,7 +40,7 @@ export default function FeedbackPage() {
       setList(res.data.data || []);
       setStats(res.data.stats || null);
     } catch (e) {
-      toast.error('Could not load feedback');
+      console.error('Could not load feedback');
     } finally {
       setLoading(false);
     }

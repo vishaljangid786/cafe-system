@@ -7,7 +7,6 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import {
   ArrowLeft, ArrowLeftRight, Users, ShieldCheck, MapPin, Trophy, Minus,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
 
@@ -155,7 +154,7 @@ export default function StaffComparison({ user }) {
         const res = await api.get('/analytics/staff-reports', { params });
         setStaffList(res.data?.data || []);
       } catch (e) {
-        toast.error('Failed to load staff list');
+        console.error('Failed to load staff list');
       } finally {
         didInit.current = true;
         setListLoading(false);
@@ -185,7 +184,7 @@ export default function StaffComparison({ user }) {
           setRightReport(r.data?.data || null);
         }
       } catch (e) {
-        if (!ignore) toast.error(e.response?.data?.message || 'Could not load the comparison');
+        if (!ignore) console.error(e.response?.data?.message || 'Could not load the comparison');
       } finally {
         if (!ignore) { setReportLoading(false); progress.done(); }
       }

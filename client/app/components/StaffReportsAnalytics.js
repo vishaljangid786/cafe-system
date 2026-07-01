@@ -50,7 +50,7 @@ export default function StaffReportsAnalytics({ user }) {
       const res = await api.get('/analytics/staff-reports', { params });
       setData(res.data.data || []);
     } catch (error) {
-      toast.error('Failed to load staff reports');
+      console.error('Failed to load staff reports');
     } finally {
       didInitRef.current = true;
       setLoading(false);

@@ -16,8 +16,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
-import toast from 'react-hot-toast';
-
 export default function LocationComparisonPage() {
   const [locations, setLocations] = useState([]);
   const [loc1, setLoc1] = useState('');
@@ -50,7 +48,7 @@ export default function LocationComparisonPage() {
         setLoc1(locs[0]._id);
       }
     } catch (error) {
-      toast.error('Could not load branches. Please try again.');
+      console.error('Could not load branches. Please try again.');
     } finally {
       setLoading(false);
       progress.done();
@@ -70,7 +68,7 @@ export default function LocationComparisonPage() {
       setComparisonData(compRes.data.data);
       setDetailedData(detailRes.data.data);
     } catch (error) {
-      toast.error('Could not load comparison. Please try again.');
+      console.error('Could not load comparison. Please try again.');
     } finally {
       didInitRef.current = true;
       setRefetching(false);
@@ -85,7 +83,7 @@ export default function LocationComparisonPage() {
       const res = await api.get(`/analytics/branch-comparison-suite?period=${dateRange}`);
       setSuiteData(res.data.data);
     } catch (error) {
-      toast.error('Could not load branch comparison. Please try again.');
+      console.error('Could not load branch comparison. Please try again.');
     } finally {
       setSuiteLoading(false);
       progress.done();

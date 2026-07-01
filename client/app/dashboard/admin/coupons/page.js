@@ -79,7 +79,7 @@ export default function CouponsManagementPage() {
       setCoupons(res.data.data);
       setTotalPages(res.data.pagination?.pages || 1);
     } catch (error) {
-      toast.error('Failed to load coupons');
+      console.error('Failed to load coupons');
     } finally {
       didInitRef.current = true;
       setLoading(false);
@@ -102,7 +102,7 @@ export default function CouponsManagementPage() {
       if (catsRes.data.success) setCategories(catsRes.data.data);
     } catch (error) {
       console.error('Failed to fetch menu items:', error);
-      toast.error('Could not load menu items. Please try again.');
+      console.error('Could not load menu items. Please try again.');
     } finally {
       setItemsLoading(false);
     }

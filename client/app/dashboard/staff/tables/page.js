@@ -70,7 +70,7 @@ export default function StaffTablesPage() {
       const res = await api.get(`/tables?locationId=${locId}`);
       setTables(res.data.data);
     } catch (error) {
-      toast.error('Could not load tables. Please try again.');
+      console.error('Could not load tables. Please try again.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);

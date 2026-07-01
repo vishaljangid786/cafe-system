@@ -3,9 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
 import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, X } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
-import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { motion } from 'framer-motion';import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
@@ -55,7 +53,7 @@ export default function CustomersDashboard() {
       }
     } catch (err) {
       console.error('Failed to load CRM data', err);
-      toast.error('Could not load customer data. Please try again.');
+      console.error('Could not load customer data. Please try again.');
     } finally {
       didInitRef.current = true;
       setLoading(false);

@@ -7,10 +7,7 @@ import {
 } from 'lucide-react';
 import { PageTransition } from '../../../components/ui/AnimatedContainer';
 import { Skeleton } from '@/app/components/ui/Skeleton';
-import LoadingScreen from '@/app/components/ui/LoadingScreen';
-import toast from 'react-hot-toast';
-
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function WorkHistoryPage() {
   const { user } = useAuth();
@@ -39,7 +36,7 @@ export default function WorkHistoryPage() {
       setCurrentPage(attRes.data.pagination?.page || 1);
       setTotalPages(attRes.data.pagination?.pages || 1);
     } catch (error) {
-      toast.error('Failed to load work history');
+      console.error('Failed to load work history');
     } finally {
       setLoading(false);
     }

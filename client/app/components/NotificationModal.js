@@ -38,7 +38,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
           const res = await api.get('/notifications/targets');
           setTargets(res.data.data);
         } catch (err) {
-          toast.error('Could not load the recipient list');
+          console.error('Could not load the recipient list');
         }
       };
       fetchTargets();

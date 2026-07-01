@@ -68,7 +68,7 @@ export default function ImpersonatePage() {
 
       setUsers(filtered);
     } catch (err) {
-      toast.error('Could not load users');
+      console.error('Could not load users');
     } finally {
       setLoading(false);
       progress.done();

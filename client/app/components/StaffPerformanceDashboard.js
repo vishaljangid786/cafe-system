@@ -5,9 +5,7 @@ import {
   TrendingUp, Timer, ShoppingBag, Award, XCircle, CheckCircle2, Zap, History,
   Filter, Calendar, Bookmark, Utensils, CreditCard, Ticket
 } from 'lucide-react';
-import { PageTransition } from './ui/AnimatedContainer';
-import toast from 'react-hot-toast';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PageTransition } from './ui/AnimatedContainer';import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
 import LoadingScreen from './ui/LoadingScreen';
 import useBranchScope from '../hooks/useBranchScope';
@@ -90,7 +88,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
       setCurrentPage(res.data.data.pagination?.page || 1);
       setTotalPages(res.data.data.pagination?.pages || 1);
     } catch (error) {
-      toast.error('Could not load your performance data');
+      console.error('Could not load your performance data');
     } finally {
       setLoading(false);
     }
