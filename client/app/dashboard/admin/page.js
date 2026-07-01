@@ -283,7 +283,7 @@ export default function AdminDashboard() {
           <StatWidget label="Total Sales" value={<CountUp value={analytics?.summary?.totalRevenue || 0} prefix="₹" />} icon={TrendingUp} color="amber" delay={0} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Net Profit" value={<CountUp value={analytics?.summary?.netProfit || 0} prefix="₹" />} icon={Zap} color="green" delay={0.1} />
+          <StatWidget label="Net Profit (Revenue)" value={<CountUp value={analytics?.summary?.netProfit || 0} prefix="₹" />} icon={Zap} color="green" delay={0.1} />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Avg Order Value" value={<CountUp value={Math.round(analytics?.summary?.avgOrderValue || 0)} prefix="₹" />} icon={Target} color="indigo" delay={0.2} />

@@ -300,16 +300,17 @@ class AnalyticsService {
     const billedOrders = transactionAgg.reduce((acc, curr) => acc + curr.orders, 0);
     const totalOrders = orderStatusAgg.reduce((acc, curr) => acc + (curr.count || 0), 0);
 
-    // "Total Sales" = value of every order that sold (any status except
+    // "Order revenue" = value of every order that sold (any status except
     // CANCELLED/REJECTED), summed straight from the Order records. This shows
     // sales for orders that have been taken but not yet settled at the till —
     // which is what the operator means by "how much have I sold". `billedRevenue`
-    // above stays available for strict till-settled accounting.
-    const totalRevenue = orderStatusAgg
+    // above stays available for strict till-settled accounting. Manual revenue
+    // (added below) is folded in to form the full totalRevenue.
+    const orderRevenue = orderStatusAgg
       .filter((o) => o._id !== 'CANCELLED' && o._id !== 'REJECTED')
       .reduce((acc, curr) => acc + (curr.revenue || 0), 0);
 
-    const [staffAgg, categoryAgg, recentTransactions, recentManualExpenses, recentRevenues] = await Promise.all([
+    const [staffAgg, categoryAgg, recentExpensesTxns, recentRevenues, manualRevenueAgg] = await Promise.all([
       Transaction.aggregate([
         { $match: transactionMatch },
         { $lookup: { from: 'users', localField: 'staffId', foreignField: '_id', as: 'staff' } },
@@ -340,10 +341,22 @@ class AnalyticsService {
         { $limit: 10 }
       ]),
       Transaction.find({ ...transactionMatch, type: 'EXPENSE', status: 'approved' }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('createdBy', 'name').lean(),
-      Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('staffId', 'name').populate('createdBy', 'name').lean()
+      Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('staffId', 'name').populate('createdBy', 'name').lean(),
+      // Manual revenue = admin/branch-admin "New Revenue" entries (and any approved
+      // reservation advance income) posted straight to the ledger as MANUAL_REVENUE.
+      // Folded into totalRevenue below so it flows through to Net Profit on the overview.
+      Transaction.aggregate([
+        { $match: { ...transactionMatch, type: 'MANUAL_REVENUE', status: 'approved' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ])
     ]);
 
-    const recentExpenses = recentTransactions;
+    const recentExpenses = recentExpensesTxns;
+    const manualRevenue = manualRevenueAgg[0]?.total || 0;
+    // Total revenue the operator sees = order sales (from Order records) + manual
+    // revenue posted by admins/branch admins. Net Profit is driven by this combined
+    // figure, so every New Revenue entry immediately shows up in the overview.
+    const totalRevenue = orderRevenue + manualRevenue;
 
     return {
       timeSeries,
@@ -358,11 +371,14 @@ class AnalyticsService {
       forecast: { expectedTodayRevenue, nextMonthSalesTrend },
       summary: {
         totalRevenue,
+        orderRevenue,
+        manualRevenue,
         billedRevenue,
         totalExpenses,
         totalOrders,
         billedOrders,
-        avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+        // Avg order value stays strictly order-based (manual revenue has no order count).
+        avgOrderValue: totalOrders > 0 ? orderRevenue / totalOrders : 0,
         netProfit: totalRevenue - totalExpenses,
         cancellationRate: orderStatusAgg.find(o => o._id === 'CANCELLED')?.count || 0
       }
