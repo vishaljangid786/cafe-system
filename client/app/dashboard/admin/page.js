@@ -14,7 +14,7 @@ import {
   Coffee, Calendar, Zap, Activity, Clock,
   ArrowUpRight, Target, Flame, Layers, Filter,
   ChefHat, Utensils, Receipt, ShoppingBag,
-  ChevronDown, User, DollarSign,
+  ChevronDown, User,
   CreditCard, BarChart3, PieChart as PieChartIcon
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton';
@@ -31,6 +31,11 @@ import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
 import CashDrawerWidget from './components/CashDrawerWidget';
+import UniversalDateFilter from '../../components/ui/UniversalDateFilter';
+import { formatCompactCurrency } from '../../utils/formatNumber';
+
+// Local YYYY-MM-DD (avoids the UTC shift toISOString() causes for IST midnight).
+const fmtLocalDate = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -57,8 +62,13 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentOrdersLoading, setRecentOrdersLoading] = useState(true);
   const didInitRef = useRef(false);
-  const [timeFilter, setTimeFilter] = useState('all'); // '7d', '30d', 'all', 'custom'
-  const [customDates, setCustomDates] = useState({ start: '', end: '' });
+  // Global date range for the whole overview — driven by the reusable UniversalDateFilter
+  // (Today, week, month, specific month, quarter, half-year, year, financial year, custom).
+  // Defaults to Today; empty start/end = all time. Backend accepts arbitrary dates.
+  const [dateRange, setDateRange] = useState(() => {
+    const t = fmtLocalDate(new Date());
+    return { startDate: t, endDate: t, label: 'today' };
+  });
   // Which role's people list the drawer is showing ('' = closed; 'staff' | 'chef' | 'branch_admin' | 'all')
   const [drawerRole, setDrawerRole] = useState('');
   // Sales Report per-chart controls — independent of the global filter. A local
@@ -110,34 +120,9 @@ export default function AdminDashboard() {
         params.append('locationId', activeLocationId);
       }
 
-      const now = new Date();
-      let start = '';
-      let end = '';
-
-      // Format as a LOCAL calendar date (YYYY-MM-DD). Using toISOString() shifted
-      // IST-local midnight back to the previous UTC day, so "Today" wrongly pulled
-      // in yesterday's orders. Local date parts keep the day boundary correct.
-      const fmtLocal = (dt) =>
-        `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-
-      if (timeFilter === 'custom') {
-        start = customDates.start;
-        end = customDates.end;
-      } else if (timeFilter !== 'all') {
-        const d = new Date();
-        if (timeFilter === 'today') d.setHours(0, 0, 0, 0);
-        else if (timeFilter === '7d') d.setDate(now.getDate() - 7);
-        else if (timeFilter === '30d' || timeFilter === '1m') d.setMonth(now.getMonth() - 1);
-        else if (timeFilter === '3m') d.setMonth(now.getMonth() - 3);
-        else if (timeFilter === '6m') d.setMonth(now.getMonth() - 6);
-        else if (timeFilter === '1y') d.setFullYear(now.getFullYear() - 1);
-
-        start = fmtLocal(d);
-        end = fmtLocal(now);
-      }
-
-      if (start) params.append('startDate', start);
-      if (end) params.append('endDate', end);
+      // Date range comes from the UniversalDateFilter (dateRange). Empty = all time.
+      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
 
       const res = await api.get(`/analytics/advanced?${params.toString()}`);
       if (res.data?.data) setAnalytics(res.data.data);
@@ -183,7 +168,7 @@ export default function AdminDashboard() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [authLocation, timeFilter, customDates, selectedLocationIds]);
+  }, [authLocation, dateRange, selectedLocationIds]);
 
   // On first open show the branded full loader (no skeleton). Skeletons only ever
   // appear for a filter-triggered refetch on an already-loaded page.
@@ -264,41 +249,26 @@ export default function AdminDashboard() {
             filename="analytics_report"
             hasCharts={true}
           />
-          <div className="flex items-center gap-2 sm:gap-3 bg-(--color-surface)/40 p-1.5 rounded-xl border border-(--color-border) shadow-sm  overflow-x-auto no-scrollbar w-full md:w-auto max-w-full">
-            {['today', '7d', '30d', 'all', 'custom'].map(t => (
-              <button
-                key={t}
-                onClick={() => setTimeFilter(t)}
-                className={`px-3 sm:px-4 py-2 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all whitespace-nowrap ${timeFilter === t ? 'bg-primary text-(--color-bg-base) shadow-sm ' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface)'}`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          {/* Rich reusable date filter — Today (default), week, month, specific month,
+              quarter, half-year, year, financial year, custom. Applies on select. */}
+          <UniversalDateFilter
+            defaultFilter="today"
+            loading={refetching}
+            onFilterChange={({ startDate, endDate, filterType }) =>
+              setDateRange((prev) =>
+                prev.startDate === (startDate || '') && prev.endDate === (endDate || '')
+                  ? prev
+                  : { startDate: startDate || '', endDate: endDate || '', label: filterType }
+              )
+            }
+          />
         </div>
       </div>
 
-      {timeFilter === 'custom' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row gap-4 p-5 glass-card border border-(--color-border) rounded-xl premium-shadow"
-        >
-          <div className="flex-1">
-            <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">Start Date</label>
-            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
-          </div>
-          <div className="flex-1">
-            <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-2 ml-1">End Date</label>
-            <input type="date" className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl p-3 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
-          </div>
-        </motion.div>
-      )}
-
       {refetching ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-            <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <ChartSkeleton className="lg:col-span-2 h-100" /><ChartSkeleton className="h-100" />
@@ -309,18 +279,15 @@ export default function AdminDashboard() {
         </div>
       ) : (
       <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         <Link href={ordersHref} className="contents">
           <StatWidget label="Total Orders" value={<CountUp value={analytics?.summary?.totalOrders || 0} />} icon={ShoppingBag} color="amber" delay={0.3} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Total Sales" value={<CountUp value={analytics?.summary?.totalRevenue || 0} prefix="₹" />} icon={TrendingUp} color="amber" delay={0} />
+          <StatWidget label="Total Sales" value={<CountUp value={analytics?.summary?.totalRevenue || 0} format={formatCompactCurrency} />} icon={TrendingUp} color="amber" delay={0} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Net Profit (Revenue)" value={<CountUp value={analytics?.summary?.netProfit || 0} prefix="₹" />} icon={Zap} color="green" delay={0.1} />
-        </Link>
-        <Link href={orderAnalyticsHref} className="contents">
-          <StatWidget label="Avg Order Value" value={<CountUp value={Math.round(analytics?.summary?.avgOrderValue || 0)} prefix="₹" />} icon={Target} color="indigo" delay={0.2} />
+          <StatWidget label="Net Profit (Revenue)" value={<CountUp value={analytics?.summary?.netProfit || 0} format={formatCompactCurrency} />} icon={Zap} color="green" delay={0.1} />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Cancel Rate" value={<CountUp value={analytics?.summary?.cancellationRate || 0} suffix="%" decimals={1} />} icon={TrendingDown} color="rose" delay={0.4} />
@@ -328,15 +295,9 @@ export default function AdminDashboard() {
       </div>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Link href={`${dashPrefix}/expenses`} className="contents">
-            <StatWidget label="Expenses" value={<CountUp value={analytics?.summary?.totalExpenses || 0} prefix="₹" />} icon={Wallet} color="rose" delay={0.5} />
-          </Link>
-          <Link href={`${dashPrefix}/payroll`} className="contents">
-            <StatWidget label="Monthly Payroll" value={<CountUp value={analytics?.staffStats?.totalMonthlySalary || 0} prefix="₹" />} icon={Users} color="indigo" delay={0.6} />
-          </Link>
-          <Link href={`${dashPrefix}/payroll`} className="contents">
-            <StatWidget label="Avg Staff Salary" value={<CountUp value={Math.round(analytics?.staffStats?.avgSalary || 0)} prefix="₹" />} icon={DollarSign} color="amber" delay={0.7} />
+            <StatWidget label="Expenses" value={<CountUp value={analytics?.summary?.totalExpenses || 0} format={formatCompactCurrency} />} icon={Wallet} color="rose" delay={0.5} />
           </Link>
           <Link href={`${dashPrefix}/staff`} className="contents">
             <StatWidget label="Staff Count" value={<CountUp value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0)} />} icon={Activity} color="indigo" delay={0.8} />

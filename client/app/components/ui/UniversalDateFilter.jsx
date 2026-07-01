@@ -8,9 +8,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function UniversalDateFilter({
   onFilterChange,
   loading = false,
-  className = ""
+  className = "",
+  defaultFilter = 'all'
 }) {
-  const [filterType, setFilterType] = useState('all');
+  const [filterType, setFilterType] = useState(defaultFilter);
   const [selectedSubValue, setSelectedSubValue] = useState('');
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
 
@@ -63,18 +64,23 @@ export default function UniversalDateFilter({
   };
 
   const filterOptions = [
-    { label: 'All Time', value: 'all' },
     { label: 'Today', value: 'today' },
     { label: 'Yesterday', value: 'yesterday' },
     { label: 'Last 7 Days', value: '7d' },
+    { label: 'Last 30 Days', value: '30d' },
     { label: 'This Week', value: 'this_week' },
-    { label: 'Past Week Selector', value: 'past_week' },
+    { label: 'Past Week (pick)', value: 'past_week' },
     { label: 'This Month', value: 'this_month' },
-    { label: 'Past Month Selector', value: 'past_month' },
+    { label: 'Last Month', value: 'last_month' },
+    { label: 'Any Month (pick)', value: 'past_month' },
+    { label: 'Last 3 Months (Quarter)', value: '3m' },
+    { label: 'Last 6 Months (Half-Year)', value: '6m' },
     { label: 'This Year', value: 'this_year' },
-    { label: 'Past Year Selector', value: 'past_year' },
-    { label: 'Financial Year', value: 'financial_year' },
-    { label: 'Custom Date Range', value: 'custom' },
+    { label: 'Any Year (pick)', value: 'past_year' },
+    { label: 'This Financial Year', value: 'financial_year' },
+    { label: 'Last Financial Year', value: 'last_financial_year' },
+    { label: 'All Time', value: 'all' },
+    { label: 'Custom Range', value: 'custom' },
   ];
 
   const calculateDates = (type, subValue) => {
@@ -150,6 +156,35 @@ export default function UniversalDateFilter({
           end = formatDate(dPastYear);
         }
         break;
+      case '30d': {
+        const d = new Date();
+        d.setDate(now.getDate() - 29);
+        start = formatDate(d);
+        end = formatDate(now);
+        break;
+      }
+      case 'last_month': {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() - 1);
+        start = formatDate(d);
+        end = formatDate(new Date(d.getFullYear(), d.getMonth() + 1, 0)); // last day of that month
+        break;
+      }
+      case '3m': {
+        const d = new Date();
+        d.setMonth(now.getMonth() - 3);
+        start = formatDate(d);
+        end = formatDate(now);
+        break;
+      }
+      case '6m': {
+        const d = new Date();
+        d.setMonth(now.getMonth() - 6);
+        start = formatDate(d);
+        end = formatDate(now);
+        break;
+      }
       case 'financial_year':
         const dFY = new Date();
         const fyYear = dFY.getFullYear();
@@ -161,6 +196,15 @@ export default function UniversalDateFilter({
         start = formatDate(new Date(startFYYear, 3, 1)); // April 1
         end = formatDate(new Date(startFYYear + 1, 2, 31)); // March 31
         break;
+      case 'last_financial_year': {
+        const d = new Date();
+        // Start year of the CURRENT financial year, then step back one year.
+        const curFYStart = d.getMonth() < 3 ? d.getFullYear() - 1 : d.getFullYear();
+        const prevFYStart = curFYStart - 1;
+        start = formatDate(new Date(prevFYStart, 3, 1)); // prev April 1
+        end = formatDate(new Date(prevFYStart + 1, 2, 31)); // prev March 31
+        break;
+      }
       case 'custom':
         start = customDates.start;
         end = customDates.end;

@@ -25,7 +25,6 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [modifierKey, setModifierKey] = useState('');
   const [showBranchPanel, setShowBranchPanel] = useState(false);
-  const [pendingIds, setPendingIds] = useState([]); // draft selection inside the panel
   const branchPanelRef = useRef(null);
   
   useEffect(() => {
@@ -130,9 +129,22 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   // "All" inside the branch panel means: every branch (cafe = all) OR every
   // branch of the selected cafe (cafe = specific).
   const allBranchIds = availableBranches.map((b) => b._id || b);
+  // The APPLIED branch selection as a flat id array. A single selected branch lives
+  // in selectedLocation (multi-select collapses to single-location mode), so fold it
+  // back in here — the checkboxes/"All" state read from this, and each toggle applies
+  // immediately (no Apply button).
+  const currentBranchId = selectedLocation?._id || selectedLocation || null;
+  const currentBranchIds = selectedLocationIds.length > 0
+    ? selectedLocationIds
+    : (currentBranchId ? [currentBranchId] : []);
+  // Mirror the applied selection in a ref so a checkbox toggle always reads the
+  // freshest value even if several clicks fire before a re-render (switchLocationIds
+  // takes a full array, not a functional updater — this restores that safety).
+  const currentBranchIdsRef = useRef(currentBranchIds);
+  currentBranchIdsRef.current = currentBranchIds;
   const allBranchesActive = (!selectedCafe || selectedCafe === 'all')
-    ? pendingIds.length === 0
-    : (allBranchIds.length > 0 && allBranchIds.every((id) => pendingIds.includes(id)));
+    ? currentBranchIds.length === 0
+    : (allBranchIds.length > 0 && allBranchIds.every((id) => currentBranchIds.includes(id)));
 
   if (!user) return null;
 
@@ -193,10 +205,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               /* Multi-select panel for admin / super_admin / multi-branch branch_admin */
               <>
                 <button
-                  onClick={() => {
-                    setPendingIds(selectedLocationIds.length > 0 ? selectedLocationIds : (selectedLocation ? [selectedLocation._id || selectedLocation] : []));
-                    setShowBranchPanel(v => !v);
-                  }}
+                  onClick={() => setShowBranchPanel(v => !v)}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-sm font-medium text-(--color-text-primary) min-w-50"
                 >
                   <MapPin size={15} className="text-primary shrink-0" />
@@ -215,7 +224,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                     >
                       <div className="p-2 border-b border-(--color-border)">
                         <button
-                          onClick={() => setPendingIds(selectedCafe === 'all' ? [] : allBranchIds)}
+                          onClick={() => switchLocationIds(selectedCafe === 'all' ? [] : allBranchIds)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${allBranchesActive ? 'bg-primary text-(--color-on-primary)' : 'hover:bg-(--color-surface-soft) text-(--color-text-primary)'}`}
                         >
                           <Check size={13} className={allBranchesActive ? 'opacity-100' : 'opacity-0'} />
@@ -227,13 +236,14 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                       <div className="max-h-60 overflow-y-auto p-2 space-y-1">
                         {availableBranches.map(branch => {
                           const id = branch._id || branch;
-                          const checked = pendingIds.includes(id);
+                          const checked = currentBranchIds.includes(id);
                           return (
                             <button
                               key={id}
-                              onClick={() => setPendingIds(prev =>
-                                checked ? prev.filter(x => x !== id) : [...prev, id]
-                              )}
+                              onClick={() => {
+                                const cur = currentBranchIdsRef.current;
+                                switchLocationIds(cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]);
+                              }}
                               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${checked ? 'bg-(--color-primary-soft) text-primary' : 'hover:bg-(--color-surface-soft) text-(--color-text-primary)'}`}
                             >
                               <span className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary' : 'border-(--color-border-strong)'}`}>
@@ -243,17 +253,6 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                             </button>
                           );
                         })}
-                      </div>
-                      <div className="p-2 border-t border-(--color-border)">
-                        <button
-                          onClick={() => {
-                            switchLocationIds(pendingIds);
-                            setShowBranchPanel(false);
-                          }}
-                          className="w-full py-2 rounded-lg bg-primary text-(--color-on-primary) text-sm font-semibold hover:bg-(--color-primary-hover) transition-colors"
-                        >
-                          Apply
-                        </button>
                       </div>
                     </motion.div>
                   )}

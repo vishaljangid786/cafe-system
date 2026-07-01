@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 // Animates a number from its previous value up to `value` (starts at 0 on first
 // mount) using an ease-out curve via requestAnimationFrame. Renders a <span> so it
 // can be dropped straight into a stat card's value slot.
-export function CountUp({ value = 0, duration = 900, prefix = '', suffix = '', decimals = 0, locale = 'en-IN', className }) {
+export function CountUp({ value = 0, duration = 900, prefix = '', suffix = '', decimals = 0, locale = 'en-IN', format, className }) {
   const target = Number(value) || 0;
   const [display, setDisplay] = useState(0);
   const fromRef = useRef(0);
@@ -30,6 +30,12 @@ export function CountUp({ value = 0, duration = 900, prefix = '', suffix = '', d
     rafRef.current = requestAnimationFrame(step);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [target, duration]);
+
+  // A custom `format` function (e.g. compact ₹2.42 Cr) takes over the whole render
+  // — it already produces the final string including any unit/currency.
+  if (typeof format === 'function') {
+    return <span className={className}>{format(Number(display))}</span>;
+  }
 
   const formatted = Number(display).toLocaleString(locale, {
     minimumFractionDigits: decimals,
