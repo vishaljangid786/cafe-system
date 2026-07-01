@@ -61,6 +61,10 @@ export default function AdminDashboard() {
   const [customDates, setCustomDates] = useState({ start: '', end: '' });
   // Which role's people list the drawer is showing ('' = closed; 'staff' | 'chef' | 'branch_admin' | 'all')
   const [drawerRole, setDrawerRole] = useState('');
+  // Sales Report per-chart controls — independent of the global filter. A local
+  // trailing-window date filter + which series lines are visible (click to toggle).
+  const [salesRange, setSalesRange] = useState('all'); // 'today' | '7d' | '30d' | 'all'
+  const [salesSeries, setSalesSeries] = useState({ revenue: true, profit: true, expenses: true });
 
   // Branch scope comes solely from the Navbar global filter (AuthContext).
   // Single branch -> its id; all / multi-branch subset -> 'all' (the subset is sent via locationIds).
@@ -184,6 +188,39 @@ export default function AdminDashboard() {
   // On first open show the branded full loader (no skeleton). Skeletons only ever
   // appear for a filter-triggered refetch on an already-loaded page.
   if (loading) return <LoadingScreen fullScreen={false} />;
+
+  // Sales Report series definitions (for the click-to-toggle chips + lines).
+  const SALES_SERIES = [
+    { key: 'revenue', label: 'Revenue', color: 'var(--color-primary)' },
+    { key: 'profit', label: 'Profit', color: 'var(--color-success)' },
+    { key: 'expenses', label: 'Expenses', color: 'var(--color-danger)' },
+  ];
+
+  // Per-chart trailing-window filter for the Sales Report — applied client-side over
+  // the already-loaded series, so switching is instant and stays independent of the
+  // global time filter at the top of the page.
+  const salesData = (() => {
+    const ts = analytics?.timeSeries || [];
+    if (salesRange === 'all' || ts.length === 0) return ts;
+    const days = salesRange === 'today' ? 1 : salesRange === '7d' ? 7 : 30;
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - (days - 1));
+    return ts.filter((d) => new Date(`${d.date}T00:00:00`) >= cutoff);
+  })();
+
+  // Small "View →" affordance so every chart links to its full page. stopPropagation
+  // keeps it from triggering any click handler on a wrapping card.
+  const ViewLink = ({ href, label = 'View' }) => (
+    <Link
+      href={href}
+      onClick={(e) => e.stopPropagation()}
+      className="group/vl flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-primary/80 hover:text-primary transition-colors"
+    >
+      {label}
+      <ArrowUpRight size={13} className="transition-transform group-hover/vl:translate-x-0.5 group-hover/vl:-translate-y-0.5" />
+    </Link>
+  );
 
   return (
     <div className="space-y-6 pb-10">
@@ -314,13 +351,52 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="lg:col-span-2 !p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
-          <div className="flex items-center justify-between mb-8">
-            <CardTitle className="text-xl">Sales Report</CardTitle>
-            <TrendingUp size={20} className="text-primary" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xl">Sales Report</CardTitle>
+              <TrendingUp size={18} className="text-primary" />
+            </div>
+            <div className="flex items-center gap-3">
+              {/* Per-chart date range — independent of the global filter above */}
+              <div className="flex items-center gap-1 bg-(--color-surface-soft)/60 p-1 rounded-xl border border-(--color-border)">
+                {['today', '7d', '30d', 'all'].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setSalesRange(r)}
+                    className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all ${salesRange === r ? 'bg-primary text-(--color-bg-base)' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                  >
+                    {r === 'today' ? '1D' : r.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <ViewLink href={`${dashPrefix}/revenue`} />
+            </div>
           </div>
+
+          {/* Click a chip to show/hide that series on the chart */}
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            {SALES_SERIES.map((s) => {
+              const on = salesSeries[s.key];
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSalesSeries((prev) => ({ ...prev, [s.key]: !prev[s.key] }))}
+                  aria-pressed={on}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all ${on ? 'border-(--color-border) bg-(--color-surface-soft)/60 text-(--color-text-primary)' : 'border-dashed border-(--color-border) text-(--color-text-muted) opacity-60 hover:opacity-100'}`}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full transition-colors" style={{ backgroundColor: on ? s.color : 'var(--color-text-muted)' }} />
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="h-75 w-full">
+            {salesData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-(--color-text-muted) text-sm font-medium">No sales data for this range.</div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={analytics.timeSeries}>
+              <AreaChart data={salesData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
@@ -332,6 +408,7 @@ export default function AdminDashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} dy={10} minTickGap={20} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} tickFormatter={v => `₹${v / 1000}k`} />
                 <Tooltip
                   contentStyle={{
@@ -342,11 +419,12 @@ export default function AdminDashboard() {
                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                   }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                <Area type="monotone" dataKey="profit" stroke="var(--color-success)" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
-                <Line type="monotone" dataKey="expenses" stroke="var(--color-danger)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                {salesSeries.revenue && <Area type="monotone" dataKey="revenue" name="Revenue" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />}
+                {salesSeries.profit && <Area type="monotone" dataKey="profit" name="Profit" stroke="var(--color-success)" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />}
+                {salesSeries.expenses && <Line type="monotone" dataKey="expenses" name="Expenses" stroke="var(--color-danger)" strokeWidth={2} strokeDasharray="5 5" dot={false} />}
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </Card>
 
@@ -357,8 +435,11 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Daily Orders</CardTitle>
               <CardDescription>Total orders per day.</CardDescription>
             </div>
-            <div className="p-3 bg-primary/10 rounded-xl text-primary">
-              <Layers size={20} />
+            <div className="flex items-center gap-3">
+              <ViewLink href={orderAnalyticsHref} />
+              <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                <Layers size={20} />
+              </div>
             </div>
           </div>
           <div className="h-75 w-full">
@@ -579,8 +660,11 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Sales Forecast</CardTitle>
               <CardDescription>Predicted sales based on past records.</CardDescription>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Zap size={20} />
+            <div className="flex items-center gap-3">
+              <ViewLink href={`${dashPrefix}/revenue`} />
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Zap size={20} />
+              </div>
             </div>
           </div>
           <div className="h-75 w-full">
@@ -612,7 +696,10 @@ export default function AdminDashboard() {
               <CardTitle className="text-xl">Staff Attendance</CardTitle>
               <CardDescription>Daily present and absent trends.</CardDescription>
             </div>
-            <Activity size={20} className="text-secondary" />
+            <div className="flex items-center gap-3">
+              <ViewLink href={`${dashPrefix}/attendance`} />
+              <Activity size={20} className="text-secondary" />
+            </div>
           </div>
           <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -633,7 +720,10 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Category Sales Distribution */}
         <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
-          <CardTitle className="text-lg mb-6">Sales by Category</CardTitle>
+          <div className="flex items-center justify-between mb-6">
+            <CardTitle className="text-lg">Sales by Category</CardTitle>
+            <ViewLink href={orderAnalyticsHref} />
+          </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -657,7 +747,10 @@ export default function AdminDashboard() {
 
         {/* Payment Methods */}
         <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
-          <CardTitle className="text-lg mb-6">Payment Methods</CardTitle>
+          <div className="flex items-center justify-between mb-6">
+            <CardTitle className="text-lg">Payment Methods</CardTitle>
+            <ViewLink href={['admin', 'super_admin'].includes(user?.role) ? `${dashPrefix}/payment-intelligence` : `${dashPrefix}/revenue`} />
+          </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
