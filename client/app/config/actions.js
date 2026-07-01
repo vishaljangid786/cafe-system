@@ -87,20 +87,22 @@ export const ACTION_SCOPES = [
 
   // Revenue
   {
+    // Admins/branch admins own their branch finances → add/modify/approve by role
+    // (not only via the editRevenue toggle). Mirror of server actionPermissions.js.
     scope: 'revenue', pageKey: 'page_revenue', label: 'Revenue',
     actions: [
-      { action: 'add', label: 'Add', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'modify', label: 'Modify / Refund', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'approve', label: 'Approve', legacy: { roles: [], perms: ['editRevenue'] } },
+      { action: 'add', label: 'Add', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'modify', label: 'Modify / Refund', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'approve', label: 'Approve', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
     ],
   },
   {
     scope: 'expenses', pageKey: 'page_expenses', label: 'Expenses',
     actions: [
-      { action: 'add', label: 'Add', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'modify', label: 'Modify', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'delete', label: 'Delete', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'approve', label: 'Approve', legacy: { roles: [], perms: ['editRevenue'] } },
+      { action: 'add', label: 'Add', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'modify', label: 'Modify', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'approve', label: 'Approve', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
     ],
   },
 

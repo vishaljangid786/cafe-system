@@ -289,7 +289,8 @@ export default function ExpensesPage() {
       setSelectedExpense(null);
       fetchExpenses();
     } catch (error) {
-      toast.error('Could not approve. Please try again.', { id: loadToast });
+      const msg = error.response?.data?.message || 'Could not approve. Please try again.';
+      toast.error(msg, { id: loadToast });
     }
   };
 

@@ -104,20 +104,26 @@ const ACTION_SCOPES = [
 
   // ---- Revenue ----------------------------------------------------------------
   {
+    // An admin / branch admin OWNS their branch finances (see transactionController:
+    // their own entries auto-approve), so they may add/modify/approve revenue by
+    // ROLE — not only when the editRevenue permission happens to be toggled on. The
+    // controller still enforces branch scope + segregation of duties on approve.
     scope: 'revenue', pageKey: 'page_revenue', label: 'Revenue',
     actions: [
-      { action: 'add', label: 'Add revenue entries', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'modify', label: 'Modify / refund revenue', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'approve', label: 'Approve new revenue', legacy: { roles: [], perms: ['editRevenue'] } },
+      { action: 'add', label: 'Add revenue entries', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'modify', label: 'Modify / refund revenue', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'approve', label: 'Approve new revenue', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
     ],
   },
   {
+    // Same ownership rule as revenue: admins/branch admins manage their branch
+    // expenses (including approve/reject) by role; the controller re-checks scope.
     scope: 'expenses', pageKey: 'page_expenses', label: 'Expenses',
     actions: [
-      { action: 'add', label: 'Add expenses', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'modify', label: 'Modify expenses', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'delete', label: 'Delete expenses', legacy: { roles: [], perms: ['editRevenue'] } },
-      { action: 'approve', label: 'Approve expenses', legacy: { roles: [], perms: ['editRevenue'] } },
+      { action: 'add', label: 'Add expenses', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'modify', label: 'Modify expenses', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'delete', label: 'Delete expenses', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'approve', label: 'Approve expenses', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
     ],
   },
 
