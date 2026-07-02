@@ -6,8 +6,49 @@ const Table = require('../models/Table');
 const Order = require('../models/Order');
 const BranchStock = require('../models/BranchStock');
 const Recipe = require('../models/Recipe');
+const Reservation = require('../models/Reservation');
 const OrderService = require('../services/orderService');
 const { getSettings } = require('../utils/settings');
+
+// Which tables at a branch are FREE to order on right now: status 'available', not
+// flagged booked, and not covered by a confirmed reservation active at this moment
+// (a full-location reservation blocks every table). Used so the scan page can tell a
+// guest their scanned table is taken and offer the free ones instead.
+const getBranchTableAvailability = async (branchId) => {
+  const now = new Date();
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+  const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+  const [tables, activeReservations] = await Promise.all([
+    Table.find({ locationId: branchId })
+      .select('tableNumber tableName capacity status isBooked')
+      .sort({ tableNumber: 1 })
+      .lean(),
+    Reservation.find({
+      locationId: branchId,
+      date: today,
+      status: 'confirmed',
+      startTime: { $lte: currentTimeStr },
+      endTime: { $gte: currentTimeStr },
+    }).select('reservationType tableIds').lean(),
+  ]);
+
+  const fullLocationReserved = activeReservations.some((r) => r.reservationType === 'full-location');
+  const reservedSet = new Set();
+  activeReservations.forEach((r) => (r.tableIds || []).forEach((id) => reservedSet.add(id.toString())));
+
+  const isFree = (t) =>
+    !fullLocationReserved &&
+    t.status === 'available' &&
+    !t.isBooked &&
+    !reservedSet.has(t._id.toString());
+
+  const freeTables = tables
+    .filter(isFree)
+    .map((t) => ({ _id: t._id, tableNumber: t.tableNumber, tableName: t.tableName || '', capacity: t.capacity || 1 }));
+
+  return { tables, freeTables, isFree, fullLocationReserved };
+};
 
 // PUBLIC, UNAUTHENTICATED endpoints for customer QR / online self-ordering.
 // Everything is validated server-side; prices, stock and modifier deltas come
@@ -68,13 +109,15 @@ const getPublicMenu = asyncHandler(async (req, res) => {
     throw new Error('Branch not found');
   }
 
-  // Resolve the scanned table (if any) so the scan page can greet the guest and
-  // cap the party size to the table's real capacity.
+  // Resolve the scanned table (if any) so the scan page can greet the guest, cap the
+  // party size to the table's real capacity, and — if the table is already taken —
+  // tell the guest and offer the branch's currently-free tables to pick instead.
   let table = null;
+  let freeTables = [];
   if (tableId && mongoose.isValidObjectId(tableId)) {
-    const t = await Table.findOne({ _id: tableId, locationId: branchId })
-      .select('tableNumber tableName capacity status')
-      .lean();
+    const avail = await getBranchTableAvailability(branchId);
+    freeTables = avail.freeTables;
+    const t = avail.tables.find((x) => x._id.toString() === tableId.toString());
     if (t) {
       table = {
         _id: t._id,
@@ -82,6 +125,7 @@ const getPublicMenu = asyncHandler(async (req, res) => {
         tableName: t.tableName || '',
         capacity: t.capacity || 1,
         status: t.status,
+        available: avail.isFree(t), // false → already booked/reserved right now
       };
     }
   }
@@ -145,6 +189,7 @@ const getPublicMenu = asyncHandler(async (req, res) => {
     data: {
       branch: { _id: branch._id, name: branch.name, city: branch.city },
       table,
+      freeTables, // available tables to offer when the scanned table is taken
       payments: publicPayments(settings),
       popular,
       items,

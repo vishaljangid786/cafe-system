@@ -34,6 +34,9 @@ function OrderApp() {
   const [items, setItems] = useState([]);
   const [popular, setPopular] = useState([]);
   const [error, setError] = useState('');
+  const [freeTables, setFreeTables] = useState([]);      // available tables to offer
+  const [scannedTable, setScannedTable] = useState(null); // the table from the QR (may be taken)
+  const [needsTableChoice, setNeedsTableChoice] = useState(false); // scanned table is booked
 
   const [cart, setCart] = useState([]); // { key, menuItem, name, price, quantity, modifiers:[{groupName,label}] }
   const [modItem, setModItem] = useState(null);
@@ -64,10 +67,21 @@ function OrderApp() {
       .then((r) => {
         const d = r.data?.data || {};
         setBranchInfo(d.branch || null);
-        setTableInfo(d.table || null);
         setPayCfg(d.payments || { acceptCash: true });
         setItems(d.items || []);
         setPopular(d.popular || []);
+        setFreeTables(d.freeTables || []);
+        const t = d.table || null;
+        setScannedTable(t);
+        if (t && t.available === false) {
+          // The scanned table is already booked/in use — ask the guest to pick a free
+          // one before ordering (they can still choose to order here / takeaway).
+          setNeedsTableChoice(true);
+          setTableInfo(null);
+        } else {
+          setNeedsTableChoice(false);
+          setTableInfo(t); // available table, or null for a takeaway/branch-wide QR
+        }
       })
       .catch(() => setError('Could not load the menu. Please check the link or ask our staff.'))
       .finally(() => setLoading(false));
@@ -183,8 +197,10 @@ function OrderApp() {
     try {
       const r = await api.post('/public/order', {
         branchId: branch,
-        tableId: table || undefined,
-        orderType: table ? 'dine-in' : 'takeaway',
+        // Order on the CHOSEN table (the scanned one if it was free, or the free table
+        // the guest picked) — not necessarily the raw QR table, which may be booked.
+        tableId: tableInfo?._id || undefined,
+        orderType: tableInfo?._id ? 'dine-in' : 'takeaway',
         items: cart.map((x) => ({ menuItem: x.menuItem, quantity: x.quantity, modifiers: x.modifiers })),
         customerName: name.trim(),
         customerPhone: phone.trim(),
@@ -216,6 +232,10 @@ function OrderApp() {
     setUpiRef(''); setError(''); setName(name); // keep name for convenience
   };
 
+  // Guest resolved the "table is booked" prompt: order on a chosen table, or as takeaway.
+  const chooseTable = (t) => { setTableInfo(t); setNeedsTableChoice(false); setError(''); };
+  const orderTakeaway = () => { setTableInfo(null); setNeedsTableChoice(false); setError(''); };
+
   // ---- render helpers -------------------------------------------------------
 
   if (loading) {
@@ -236,6 +256,66 @@ function OrderApp() {
       </p>
     </div>
   );
+
+  // ===== TABLE ALREADY BOOKED → pick a free table =====
+  if (needsTableChoice) {
+    return (
+      <div className="min-h-screen bg-(--color-bg-base) p-5">
+        <div className="max-w-md mx-auto">
+          <Header />
+          <div className="rounded-2xl bg-warning/10 border border-warning/30 p-4 text-center mb-5">
+            <h2 className="text-base font-bold text-(--color-text-primary)">
+              Table {scannedTable?.tableNumber}{scannedTable?.tableName ? ` · ${scannedTable.tableName}` : ''} is already booked
+            </h2>
+            <p className="text-xs text-(--color-text-muted) mt-1">
+              {freeTables.length > 0
+                ? 'Please pick one of the free tables below to place your order.'
+                : 'No free tables are available right now.'}
+            </p>
+          </div>
+
+          {freeTables.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) px-1">Free tables</p>
+              {freeTables.map((t) => (
+                <button
+                  key={t._id}
+                  onClick={() => chooseTable(t)}
+                  className="w-full flex items-center justify-between py-3.5 px-4 rounded-xl bg-(--color-surface) border border-(--color-border) hover:border-primary active:scale-[0.99] transition-colors"
+                >
+                  <span className="flex items-center gap-2 text-sm font-bold text-(--color-text-primary)">
+                    <Utensils size={15} className="text-primary" />
+                    Table {t.tableNumber}{t.tableName ? ` · ${t.tableName}` : ''}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-(--color-text-muted)">
+                    <Users size={12} /> {t.capacity}
+                    <ArrowRight size={14} className="text-primary ml-1" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-5 space-y-2">
+            <button
+              onClick={orderTakeaway}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl active:scale-[0.99]"
+            >
+              <ShoppingBag size={16} /> Order as takeaway
+            </button>
+            {scannedTable && (
+              <button
+                onClick={() => chooseTable(scannedTable)}
+                className="w-full py-3 text-xs font-semibold text-(--color-text-muted) hover:text-(--color-text-primary) underline"
+              >
+                I&apos;m seated here — order at Table {scannedTable.tableNumber} anyway
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ===== PLACED / STATUS =====
   if (step === 'placed') {
