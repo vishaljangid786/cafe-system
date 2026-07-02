@@ -1,14 +1,15 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, User, FileSpreadsheet, Navigation, 
-  ChevronRight, Command, X, Shield, Eye
+import {
+  Search, User, Navigation,
+  ChevronRight, Command, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import useConfirm from './useConfirm';
+import useNavGroups from '../../hooks/useNavGroups';
 
 export default function CommandPalette() {
   const { confirm, confirmDialog } = useConfirm();
@@ -20,6 +21,14 @@ export default function CommandPalette() {
   const { user: currentUser, impersonate } = useAuth();
   const router = useRouter();
   const inputRef = useRef(null);
+
+  // Only the pages THIS user can actually open — the same access-filtered,
+  // role-aware nav the sidebar renders (shared hook, so they never drift).
+  const navGroups = useNavGroups();
+  const navLinks = useMemo(
+    () => navGroups.flatMap((g) => g.items).filter((i) => i.href),
+    [navGroups]
+  );
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -54,13 +63,10 @@ export default function CommandPalette() {
       }
       setLoading(true);
       try {
-        // Search local navigation and users
-        const navItems = [
-          { type: 'nav', name: 'Go to Dashboard', path: '/dashboard/admin', icon: Navigation },
-          { type: 'nav', name: 'Staff List', path: '/dashboard/admin/users', icon: User },
-          { type: 'nav', name: 'Menu & Items', path: '/dashboard/admin/menu', icon: FileSpreadsheet },
-          { type: 'nav', name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
-        ].filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+        // Search only the pages this user may open (access-filtered nav).
+        const navItems = navLinks
+          .filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))
+          .map((item) => ({ type: 'nav', name: item.name, path: item.href, icon: item.icon || Navigation }));
 
         let userResults = [];
         // Switch-user (impersonate) is a super_admin tool. It ALSO stays available
@@ -105,7 +111,7 @@ export default function CommandPalette() {
 
     const debounce = setTimeout(fetchResults, 300);
     return () => clearTimeout(debounce);
-  }, [search, currentUser]);
+  }, [search, currentUser, navLinks]);
 
   const handleSelect = async (item) => {
     if (item.type === 'nav') {
@@ -185,22 +191,23 @@ export default function CommandPalette() {
                   <div className="p-2 space-y-3">
                     <div className="label px-2">Quick Navigation</div>
                     <div className="grid grid-cols-1 gap-1">
-                      {[
-                        { name: 'Staff List', path: '/dashboard/admin/users', icon: User },
-                        { name: 'Dashboard', path: '/dashboard/admin', icon: Navigation },
-                        { name: 'Expenses', path: '/dashboard/admin/expenses', icon: Shield },
-                      ].map((item, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleSelect({ type: 'nav', path: item.path })}
-                          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-(--color-surface-soft) transition-colors text-left"
-                        >
-                          <div className="w-9 h-9 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted)">
-                            <item.icon size={18} />
-                          </div>
-                          <span className="text-sm font-medium text-(--color-text-secondary)">{item.name}</span>
-                        </button>
-                      ))}
+                      {navLinks.length === 0 ? (
+                        <div className="px-2.5 py-3 text-sm text-(--color-text-muted)">No pages available.</div>
+                      ) : navLinks.map((item) => {
+                        const Icon = item.icon || Navigation;
+                        return (
+                          <button
+                            key={item.href}
+                            onClick={() => handleSelect({ type: 'nav', path: item.href })}
+                            className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-(--color-surface-soft) transition-colors text-left"
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted)">
+                              <Icon size={18} />
+                            </div>
+                            <span className="text-sm font-medium text-(--color-text-secondary)">{item.name}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
