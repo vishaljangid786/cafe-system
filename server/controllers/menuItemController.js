@@ -6,6 +6,16 @@ const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
 const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds } = require('../utils/accessControl');
 
+// Coerce a form value to a number, treating blank/invalid input as "not provided".
+// Multipart form fields arrive as strings — an empty optional field is '' (not
+// undefined), and Number('') is NaN, which Mongoose then rejects. This guards
+// every optional numeric field so a blank input is simply ignored.
+const toNumberOrUndefined = (v) => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isNaN(n) ? undefined : n;
+};
+
 // Parse + sanitize modifier groups (sent as JSON, or a JSON string via FormData).
 // Drops malformed entries so a bad payload can't corrupt the menu item.
 const parseModifierGroups = (raw) => {
@@ -179,11 +189,15 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     isGlobal, availableBranches
   } = req.body;
 
+  // Normalize optional numeric fields up front (blank → undefined, not NaN).
+  const originalPriceNum = toNumberOrUndefined(originalPrice);
+  const discountedPriceNum = toNumberOrUndefined(discountedPrice);
+
   // Validate discountedPrice < originalPrice before creating
   if (
-    discountedPrice !== undefined &&
-    originalPrice !== undefined &&
-    Number(discountedPrice) >= Number(originalPrice)
+    discountedPriceNum !== undefined &&
+    originalPriceNum !== undefined &&
+    discountedPriceNum >= originalPriceNum
   ) {
     res.status(400);
     throw new Error('Discounted price must be less than original price');
@@ -241,8 +255,8 @@ const createMenuItem = asyncHandler(async (req, res, next) => {
     createdBy: req.user._id,
   };
 
-  if (originalPrice !== undefined) itemData.originalPrice = Number(originalPrice);
-  if (discountedPrice !== undefined) itemData.discountedPrice = Number(discountedPrice);
+  if (originalPriceNum !== undefined) itemData.originalPrice = originalPriceNum;
+  if (discountedPriceNum !== undefined) itemData.discountedPrice = discountedPriceNum;
 
   const parsedModifiers = parseModifierGroups(req.body.modifierGroups);
   if (parsedModifiers !== undefined) itemData.modifierGroups = parsedModifiers;
@@ -318,9 +332,11 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     isGlobal, availableBranches
   } = req.body;
 
-  // Validate discountedPrice < originalPrice
-  const newOriginal = originalPrice !== undefined ? Number(originalPrice) : item.originalPrice;
-  const newDiscounted = discountedPrice !== undefined ? Number(discountedPrice) : item.discountedPrice;
+  // Validate discountedPrice < originalPrice (blank → undefined, never NaN).
+  const uOriginal = toNumberOrUndefined(originalPrice);
+  const uDiscounted = toNumberOrUndefined(discountedPrice);
+  const newOriginal = uOriginal !== undefined ? uOriginal : item.originalPrice;
+  const newDiscounted = uDiscounted !== undefined ? uDiscounted : item.discountedPrice;
 
   if (
     newDiscounted !== undefined &&
@@ -334,15 +350,15 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
   const updates = {};
   if (name !== undefined) updates.name = name;
   if (category !== undefined) updates.category = category;
-  if (price !== undefined) updates.price = Number(price);
-  if (costPrice !== undefined) updates.costPrice = Number(costPrice);
-  if (originalPrice !== undefined) updates.originalPrice = Number(originalPrice);
-  if (discountedPrice !== undefined) updates.discountedPrice = Number(discountedPrice);
+  if (toNumberOrUndefined(price) !== undefined) updates.price = toNumberOrUndefined(price);
+  if (toNumberOrUndefined(costPrice) !== undefined) updates.costPrice = toNumberOrUndefined(costPrice);
+  if (uOriginal !== undefined) updates.originalPrice = uOriginal;
+  if (uDiscounted !== undefined) updates.discountedPrice = uDiscounted;
   if (description !== undefined) updates.description = description;
   if (isAvailable !== undefined) {
     updates.isAvailable = isAvailable === 'on' || isAvailable === 'true' || isAvailable === true;
   }
-  if (preparationTime !== undefined) updates.preparationTime = Number(preparationTime);
+  if (toNumberOrUndefined(preparationTime) !== undefined) updates.preparationTime = toNumberOrUndefined(preparationTime);
   const parsedModifiers = parseModifierGroups(req.body.modifierGroups);
   if (parsedModifiers !== undefined) updates.modifierGroups = parsedModifiers;
 

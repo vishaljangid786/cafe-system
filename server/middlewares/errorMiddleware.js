@@ -30,6 +30,21 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
+  // Multer upload errors (file too large, unexpected field, etc.) are user errors.
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'File is too large. Please upload an image under 5MB.'
+      : `Upload error: ${err.message}`;
+  }
+
+  // Cloudinary (image host) rejections come back with an http_code — usually a
+  // bad/unsupported file. Surface a clear, actionable message instead of a 500.
+  if (err.http_code || /cloudinary/i.test(err.message || '') || /allowed formats|Invalid image file/i.test(err.message || '')) {
+    statusCode = 400;
+    message = 'Image upload failed. Please use a valid JPG, PNG or WEBP image under 5MB.';
+  }
+
   // In production, never leak internal error details for server-side (>=500)
   // failures — these are typically unexpected/non-operational. Known 4xx errors
   // (validation, not-found, etc.) keep their specific, user-safe messages.

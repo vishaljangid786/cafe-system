@@ -6,11 +6,14 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'cafe_management',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'pdf'],
+    // Keep this in sync with the UI hint ("PNG / WEBP Supported"). WebP/GIF are
+    // common formats (esp. images saved from the web); leaving them out made
+    // Cloudinary reject the upload and surface an opaque 500 to the user.
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf'],
   },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
@@ -19,7 +22,9 @@ const upload = multer({
     if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
+      const err = new Error('Invalid file type. Please upload an image (JPG, PNG, WEBP) or PDF.');
+      err.statusCode = 400;
+      cb(err, false);
     }
   }
 });

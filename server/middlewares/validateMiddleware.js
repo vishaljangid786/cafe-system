@@ -37,10 +37,13 @@ const signupSchema = [
 const menuItemSchema = [
   body('name').trim().notEmpty().withMessage('Item name is required'),
   body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
-  body('originalPrice').optional().isFloat({ min: 0 }).withMessage('Original price must be a positive number'),
-  body('discountedPrice').optional().isFloat({ min: 0 }).withMessage('Discounted price must be a positive number')
+  // Original/Offer price are OPTIONAL — checkFalsy so a blank field ('') is
+  // skipped instead of failing "must be a positive number".
+  body('originalPrice').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Original price must be a positive number'),
+  body('discountedPrice').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Discounted price must be a positive number')
     .custom((value, { req }) => {
-      if (value && req.body.originalPrice && value >= req.body.originalPrice) {
+      // Compare as numbers — string comparison ('9' >= '10') gives wrong results.
+      if (value && req.body.originalPrice && Number(value) >= Number(req.body.originalPrice)) {
         throw new Error('Discounted price must be less than original price');
       }
       return true;
