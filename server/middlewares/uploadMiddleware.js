@@ -6,10 +6,12 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'cafe_management',
-    // Keep this in sync with the UI hint ("PNG / WEBP Supported"). WebP/GIF are
-    // common formats (esp. images saved from the web); leaving them out made
-    // Cloudinary reject the upload and surface an opaque 500 to the user.
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf'],
+    // No format whitelist on purpose: accept ANY image (png / jpg / jpeg / webp /
+    // gif / avif / heic / bmp / svg / tiff …) plus PDF. The real gate is the
+    // multer `fileFilter` below (image/* or application/pdf), so a whitelist here
+    // only caused surprise "upload failed" errors for perfectly valid images.
+    // resource_type 'auto' lets Cloudinary detect images vs. PDFs correctly.
+    resource_type: 'auto',
   },
 });
 

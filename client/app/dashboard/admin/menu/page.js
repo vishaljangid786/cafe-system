@@ -1338,7 +1338,7 @@ export default function MenuManagementPage() {
                         </div>
                         <div>
                           <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Add Image</p>
-                          <p className="text-[11px] text-(--color-text-muted) uppercase mt-1">PNG / WEBP Supported</p>
+                          <p className="text-[11px] text-(--color-text-muted) uppercase mt-1">JPG / PNG / WEBP / GIF · Max 5MB</p>
                         </div>
                       </div>
                     )}
