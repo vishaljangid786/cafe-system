@@ -87,7 +87,7 @@ function OrderApp() {
     if (liveStatus?.confirmed || liveStatus?.declined) return;
     const tick = async () => {
       try {
-        const r = await api.get(`/public/order/${placed.orderId}`);
+        const r = await api.get(`/public/order/${placed.orderId}?branchId=${branch}`);
         setLiveStatus(r.data?.data || null);
       } catch { /* keep polling */ }
     };
@@ -383,7 +383,7 @@ function OrderApp() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Phone (optional)</label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="numeric" placeholder="For order updates & rewards" className="w-full px-4 py-3 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" />
+              <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" maxLength={10} placeholder="10-digit mobile (for updates & rewards)" className="w-full px-4 py-3 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
           </div>
 

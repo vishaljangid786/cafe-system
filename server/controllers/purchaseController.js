@@ -78,7 +78,15 @@ const updateSupplier = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Supplier not found');
   }
-  if (supplier.locationId && req.user.role !== 'super_admin' && !canAccessLocation(req.user, supplier.locationId)) {
+  if (!supplier.locationId) {
+    // Shared / org-wide (null-location) supplier — only a super_admin may modify it.
+    // Previously the guard was skipped entirely for null-location suppliers, so any
+    // branch admin could rename or deactivate a supplier used by every branch.
+    if (req.user.role !== 'super_admin') {
+      res.status(403);
+      throw new Error('Only a super admin can modify a shared supplier');
+    }
+  } else if (req.user.role !== 'super_admin' && !canAccessLocation(req.user, supplier.locationId)) {
     res.status(403);
     throw new Error('You do not have access to this supplier');
   }

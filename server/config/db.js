@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 const { runStartupMigrations } = require('../utils/startupMigrations');
 
+// Mongoose 9 auto-attaches a transaction's session to every query in the same
+// async context (transactionAsyncLocalStorage). This code threads `session`
+// explicitly into every transactional query, so we don't need that — and it was
+// harmful: post-commit side effects (e.g. sending the "new order — approve it"
+// notification) ran AFTER session.endSession() and inherited the dead session,
+// throwing MongoExpiredSessionError and failing order placement. Turn it off so a
+// query only uses a session when one is explicitly passed.
+mongoose.set('transactionAsyncLocalStorage', false);
+
 let connectionPromise;
 let startupMigrationsPromise;
 

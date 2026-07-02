@@ -25,7 +25,12 @@ const DEFAULTS = {
     tierPlatinum: 50000,
   },
   invoice: { prefix: 'INV', nextNumber: 1 },
-  billing: { serviceChargeRate: 0, roundBill: true },
+  // autoSettleOnComplete: when true (default, preserving legacy behavior) an order
+  // that is still 'unpaid' at completion is assumed paid in full (amountPaid =
+  // grandTotal). Set false for branches that complete-then-collect (e.g. running
+  // tabs / credit) so completing an order does NOT book phantom cash into the
+  // drawer — the order stays 'unpaid' until a real payment is recorded.
+  billing: { serviceChargeRate: 0, roundBill: true, autoSettleOnComplete: true },
   general: { currency: 'INR', timezone: 'Asia/Kolkata' },
   // QR / self-order payment config. upiVpa + upiName build the upi:// intent the
   // customer scans to prepay. Toggles decide which options the scan page offers.

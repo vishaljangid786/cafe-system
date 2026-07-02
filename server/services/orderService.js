@@ -123,15 +123,30 @@ class OrderService {
         // If it's a Stocked Item (no recipe), we deduct from BranchStock now.
         if (!recipe) {
           if (branchStock) {
-            if (branchStock.stock < item.quantity) {
-              throw new Error(`Insufficient stock for ${menuItem.name}.`);
-            }
             if (!branchStock.isAvailable) {
               throw new Error(`Item ${menuItem.name} is currently unavailable.`);
             }
-            branchStock.stock -= item.quantity;
-            if (branchStock.stock <= 0) branchStock.isAvailable = false;
-            await branchStock.save({ session });
+            // Atomic guarded decrement: only succeeds if enough stock remains, so two
+            // concurrent orders can't both pass a read-check and oversell. This was a
+            // plain read-modify-write (branchStock.stock -= qty; save()), which is
+            // unsafe on the standalone (non-transactional) fallback path. Mirrors the
+            // global-item decrement below.
+            const BranchStock = require('../models/BranchStock');
+            const updatedBranch = await BranchStock.findOneAndUpdate(
+              { _id: branchStock._id, stock: { $gte: item.quantity } },
+              { $inc: { stock: -item.quantity } },
+              { new: true, session }
+            );
+            if (!updatedBranch) {
+              throw new Error(`Insufficient stock for ${menuItem.name}.`);
+            }
+            // Mark sold-out so it drops off the menu (previous behavior).
+            if (updatedBranch.stock <= 0 && updatedBranch.isAvailable) {
+              await BranchStock.updateOne({ _id: branchStock._id }, { $set: { isAvailable: false } }, { session });
+              updatedBranch.isAvailable = false;
+            }
+            branchStock.stock = updatedBranch.stock;
+            branchStock.isAvailable = updatedBranch.isAvailable;
           } else if (menuItem.isGlobal) {
             if (!menuItem.isAvailable) {
               throw new Error(`Item ${menuItem.name} is currently unavailable.`);
@@ -367,10 +382,15 @@ class OrderService {
           .to(`branch_${branch}_admin`)
           .to('role_super_admin')
           .emit('order:pending_approval', { orderId: createdOrder._id, branchId: branch });
-        // Persistent bell notification for the same audience (best-effort).
-        this._notifyPendingApproval(createdOrder).catch((e) =>
-          console.error('[OrderService] pending-approval notification failed:', e.message)
-        );
+        // Persistent bell notification for the same audience (best-effort). Awaited
+        // so it finishes inside the request — a serverless host can freeze the
+        // function right after the response, killing a dangling fire-and-forget
+        // query mid-flight. Wrapped so a notification failure never fails the order.
+        try {
+          await this._notifyPendingApproval(createdOrder);
+        } catch (e) {
+          console.error('[OrderService] pending-approval notification failed:', e.message);
+        }
       } else {
         io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
         // Scope to THIS branch's admins/branch-admins (+ super_admins who oversee
@@ -882,8 +902,16 @@ class OrderService {
     const order = await Order.findById(orderId);
     if (!order) throw new Error('Order not found');
 
+    const prevStatus = order.status;
     order.status = 'CANCELLED';
-    await this._restoreStockForItems(order);
+    // Only restore stock if the goods were NOT already served. Cancelling a SERVED
+    // order is a void of food that has physically left the kitchen — restoring stock
+    // would inflate inventory for items that are gone. (Recipe items aren't affected
+    // either way: their ingredients are only deducted at completion, which a cancelled
+    // order never reached.) Coupon usage is still returned since the sale didn't stand.
+    if (prevStatus !== 'SERVED') {
+      await this._restoreStockForItems(order);
+    }
     await this._restoreCouponUsage(order);
     order.statusHistory.push({
       status: 'CANCELLED',

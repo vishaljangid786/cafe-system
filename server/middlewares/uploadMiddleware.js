@@ -21,10 +21,15 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+    // SVG is technically image/* but can embed <script> (stored XSS if ever served
+    // inline from our own origin), so it is explicitly excluded.
+    const isSvg = file.mimetype === 'image/svg+xml';
+    if (!isSvg && (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf')) {
       cb(null, true);
     } else {
-      const err = new Error('Invalid file type. Please upload an image (JPG, PNG, WEBP) or PDF.');
+      const err = new Error(isSvg
+        ? 'SVG images are not allowed. Please upload a JPG, PNG, WEBP or PDF.'
+        : 'Invalid file type. Please upload an image (JPG, PNG, WEBP) or PDF.');
       err.statusCode = 400;
       cb(err, false);
     }

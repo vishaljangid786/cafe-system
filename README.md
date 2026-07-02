@@ -30,8 +30,8 @@
 .
 ├── client/                     # Frontend Application (Next.js)
 │   ├── app/                    # App Router, Context, Components, Services
-│   ├── middleware.js           # Route guarding & RBAC
-│   ├── next.config.mjs         # Framework config
+│   ├── middleware.js           # Matcher stub (auth is enforced by the API + AuthContext)
+│   ├── next.config.mjs         # Framework config + security headers + API proxy
 │   └── public/                 # Static assets
 ├── server/                     # Backend API (Express.js)
 │   ├── controllers/            # Business logic
@@ -41,9 +41,13 @@
 │   ├── utils/                  # Access Control & Logging
 │   └── scripts/                # Database Seeders & Migrations
 ├── README.md                   # Master Documentation
-├── COMPREHENSIVE_AUDIT_REPORT.md # Full Security & Quality Audit
-└── VULNERABILITY_AUDIT_REPORT.md # Risk Assessment & Mitigations
+└── bugs.md                     # Known-issues / test log
 ```
+
+> **Note on auth:** route protection is enforced server-side by the Express API
+> (every endpoint re-checks role/permission) and mirrored client-side by
+> `AuthContext`. `client/middleware.js` is intentionally a passthrough — Next.js
+> edge middleware can't reliably read the API-owned cookie across domains.
 
 ---
 
@@ -73,7 +77,7 @@ The system ensures strict data privacy between branches:
 - **Theme Identity**: Premium Blue/Indigo aesthetic with full Dark/Light mode support.
 - **Glassmorphism**: Translucent surfaces using `.glass-card` and `.backdrop-blur`.
 - **Monitor Matrix**: High-density dashboards featuring Recharts visualizations and real-time "Signal Probes" for order inspection.
-- **Input Safety**: Global protection against invalid numeric inputs (-, ., e) via `ThemeContext` event listeners.
+- **Input Safety**: Per-field numeric validation via `utils/inputValidation.js` (`blockNegative` allows decimals for money/price fields; `blockNonInteger` for integer-only fields like age/quantity), plus server-side validation. (A previous global key-blocking listener was removed because it also blocked decimal prices.)
 
 ---
 

@@ -74,7 +74,12 @@ api.interceptors.response.use(
     // For GET requests returning 404, treat it as "no data found" rather than a
     // hard failure. Pages that do setData(res.data?.data || []) will just render
     // an empty state instead of firing a "could not load" toast.
+    // NOTE: this can mask a genuinely broken/mistyped endpoint as "empty", so in
+    // development we log the swallowed 404 to keep real bugs visible.
     if (status === 404 && error.config?.method === 'get') {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[api] GET ${error.config?.url} returned 404 — treating as empty data. Verify the endpoint is correct.`);
+      }
       return Promise.resolve({ data: { success: true, data: null } });
     }
 

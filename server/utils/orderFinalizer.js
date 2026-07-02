@@ -21,6 +21,10 @@ const finalizeOrder = async (order, user) => {
   const gstFraction = (Number(settings?.tax?.gstRate) || 0) / 100;
   const svcFraction = (Number(settings?.billing?.serviceChargeRate) || 0) / 100;
   const roundBill = settings?.billing?.roundBill !== false;
+  // Default true (legacy behavior): a still-unpaid order is assumed paid at
+  // completion. Branches that complete-then-collect can set this false so
+  // completion never books uncollected cash into the drawer.
+  const autoSettleOnComplete = settings?.billing?.autoSettleOnComplete !== false;
   // Multi-stage pipeline: derive the bill the same way generateOrderBill does so
   // the stored taxAmount / serviceCharge / grandTotal agree with the printed bill,
   // and a still-unpaid order is settled at the real amount the customer pays
@@ -51,10 +55,14 @@ const finalizeOrder = async (order, user) => {
       },
       {
         // A still-unpaid order is assumed settled at completion (amountPaid =
-        // grandTotal). An order already partly settled (e.g. a gift card tendered
-        // before completion) keeps its amountPaid.
+        // grandTotal) ONLY when autoSettleOnComplete is enabled (the default). An
+        // order already partly settled (e.g. a gift card tendered before completion)
+        // always keeps its amountPaid. When auto-settle is off, an unpaid order stays
+        // unpaid so completion doesn't record cash that was never collected.
         $set: {
-          amountPaid: { $cond: [{ $eq: ['$paymentStatus', 'unpaid'] }, '$grandTotal', '$amountPaid'] },
+          amountPaid: autoSettleOnComplete
+            ? { $cond: [{ $eq: ['$paymentStatus', 'unpaid'] }, '$grandTotal', '$amountPaid'] }
+            : '$amountPaid',
         },
       },
       {

@@ -402,7 +402,7 @@ const buildPayrollsForMonth = async (month, branchScope = null) => {
     const payCfg = (await getSettings(branchId)).payroll;
     const stdDayMin = num(payCfg.standardDayMinutes, 480) || 480; // guard div-by-zero
     const raws = await getSalaryAggregation(ids, month, daysInMonth, stdDayMin);
-    raws.forEach((r) => rawSalaries.push({ ...r, _payCfg: payCfg, _stdDayMin: stdDayMin }));
+    raws.forEach((r) => rawSalaries.push({ ...r, _payCfg: payCfg, _stdDayMin: stdDayMin, _branchId: branchId }));
   }
 
   const processedPayrolls = [];
@@ -457,6 +457,10 @@ const buildPayrollsForMonth = async (month, branchScope = null) => {
         dailyRate,
         payableDays,
         baseSalary,
+        // Capture the branch this payroll belongs to AT GENERATION time, so a later
+        // transfer doesn't re-attribute the salary expense to the employee's new
+        // branch on approval.
+        locationId: raw._branchId || undefined,
         penalties: { lateMark: latePenalties, absent: absentPenalties, leave: 0 },
         bonuses: { topSeller: topSellerBonus, performance: performanceBonus, extraShifts: overtimePay },
         adjustments: [],
@@ -601,7 +605,10 @@ const approvePayroll = asyncHandler(async (req, res) => {
     throw new Error('Payroll record not found');
   }
 
-  enforceLocationAccess(req, res, payroll.user?.assignedLocation, 'You do not have permission to approve this payroll');
+  // Attribute to the branch the payroll was generated for; fall back to the employee's
+  // current branch for legacy records that predate payroll.locationId.
+  const payrollBranch = payroll.locationId || payroll.user?.assignedLocation;
+  enforceLocationAccess(req, res, payrollBranch, 'You do not have permission to approve this payroll');
 
   const { reject, reason } = req.body || {};
 

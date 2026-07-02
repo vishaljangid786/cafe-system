@@ -20,6 +20,12 @@ const tableLabel = (t) => (t.tableName ? `${t.tableName} · T${t.tableNumber}` :
 const branchIdOf = (t) => t.locationId?._id || t.locationId;
 const safe = (s) => (s || 'qr').toString().replace(/[^\w]+/g, '-');
 
+// Escape any user-controlled string before it goes into the print-window HTML.
+// Branch and table names are staff-settable, so an unescaped name like
+// `<img src=x onerror=...>` would execute as script in the print popup (stored XSS).
+const escapeHtml = (s) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 const PRINT_CSS = `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; color: #0f172a; }
@@ -37,17 +43,17 @@ const PRINT_CSS = `
 const printCards = (cardsHtml, title) => {
   const w = window.open('', '_blank', 'width=820,height=920');
   if (!w) { toast.error('Please allow pop-ups to print QR codes'); return; }
-  w.document.write(`<!doctype html><html><head><title>${title}</title><meta charset="utf-8"><style>${PRINT_CSS}</style></head><body>${cardsHtml}<script>window.onload=function(){setTimeout(function(){window.print();},250);};</script></body></html>`);
+  w.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><meta charset="utf-8"><style>${PRINT_CSS}</style></head><body>${cardsHtml}<script>window.onload=function(){setTimeout(function(){window.print();},250);};</script></body></html>`);
   w.document.close();
 };
 
 const cardHtml = ({ branchName, label, url, svg }) => `
   <div class="card">
-    <h1>${branchName || 'Scan &amp; Order'}</h1>
-    <h2>${label}</h2>
+    <h1>${escapeHtml(branchName || 'Scan & Order')}</h1>
+    <h2>${escapeHtml(label)}</h2>
     <div class="qr">${svg || ''}</div>
     <p>Scan to view the menu &amp; order</p>
-    <p class="url">${url}</p>
+    <p class="url">${escapeHtml(url)}</p>
   </div>`;
 
 // ---- Download helpers -------------------------------------------------------

@@ -1,6 +1,5 @@
 'use client';
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import toast from 'react-hot-toast';
 
 const ThemeContext = createContext({
   theme: 'dark',
@@ -38,46 +37,16 @@ export function ThemeProvider({ children }) {
 
     mediaQuery.addEventListener('change', handleChange);
 
-    // Global Number Input Validation System Rules
-    const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-        const forbiddenKeys = {
-          '-': 'Negative numbers are not allowed here',
-          '.': 'Please enter a whole number',
-          'e': 'Only numbers are allowed here',
-          'E': 'Only numbers are allowed here'
-        };
-
-        if (forbiddenKeys[e.key]) {
-          e.preventDefault();
-          toast.error(forbiddenKeys[e.key], {
-            id: 'global-input-lock',
-            duration: 2000
-          });
-        }
-      }
-    };
-
-    const handlePaste = (e) => {
-      if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-        const paste = e.clipboardData.getData('text');
-        if (/[-.eE]/.test(paste)) {
-          e.preventDefault();
-          toast.error('Please enter a whole number greater than zero', {
-            id: 'global-input-lock',
-            duration: 2000
-          });
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('paste', handlePaste);
+    // NOTE: A previous "global number input validation" listener here blocked the
+    // '.', '-', 'e' keys on EVERY <input type="number"> app-wide. That made it
+    // impossible to type decimal prices/amounts (e.g. ₹149.50) on menu, expense,
+    // salary and gift-card fields, and contradicted the per-field helpers. Number
+    // input policy is now enforced per field via app/utils/inputValidation.js
+    // (blockNegative allows decimals for money; blockNonInteger for integer-only
+    // fields like age/quantity) plus server-side validation.
 
     return () => {
       clearTimeout(mountedTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('paste', handlePaste);
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);

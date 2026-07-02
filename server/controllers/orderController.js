@@ -362,6 +362,27 @@ const recordPayment = asyncHandler(async (req, res) => {
   }
   ensureOrderAccess(req, res, order);
 
+  // A refunded order's payment must not be rewritten — the refund already zeroed
+  // amountPaid and reversed its revenue.
+  if (order.isRefunded) {
+    res.status(400);
+    throw new Error('Cannot record a payment against a refunded order');
+  }
+  // Gift-card settlements are owned by the gift-card redeem/refund flow, which keeps
+  // the card ledger and the order's amountPaid in sync. Overwriting amountPaid here
+  // (an absolute set, not an increment) would erase the gift-card contribution and
+  // mis-attribute it to cash in the drawer.
+  if (order.paymentType === 'GIFT_CARD') {
+    res.status(400);
+    throw new Error('This order was settled with a gift card. Use the gift-card flow to adjust its payment.');
+  }
+  // Nothing to record on an already fully-paid order; blocking prevents an accidental
+  // overwrite that would corrupt cash-drawer reconciliation.
+  if (order.paymentStatus === 'paid') {
+    res.status(400);
+    throw new Error('This order is already fully paid');
+  }
+
   if (amountPaid !== undefined) {
     const paid = Number(amountPaid);
     if (!Number.isFinite(paid) || paid < 0) {
@@ -614,8 +635,23 @@ const splitOrder = asyncHandler(async (req, res) => {
   }
 
   const recalc = (its) => its.reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
-  order.totalAmount = recalc(order.items);
-  if (order.discountAmount) order.discountAmount = Math.min(order.discountAmount, order.totalAmount);
+  const remainingTotal = recalc(order.items);
+  const movedTotal = recalc(movedItems);
+  const combinedTotal = remainingTotal + movedTotal;
+
+  // Allocate any order-level discount proportionally by subtotal so splitting doesn't
+  // silently shrink the customer's total discount. Previously the whole discount stayed
+  // on the original (and the new order got none), so the combined discount could drop.
+  // Each part is clamped to its own subtotal, and the two parts always sum to the
+  // original discount.
+  const originalDiscount = Number(order.discountAmount) || 0;
+  let movedDiscount = combinedTotal > 0 ? Math.round((originalDiscount * movedTotal / combinedTotal) * 100) / 100 : 0;
+  movedDiscount = Math.min(movedDiscount, movedTotal);
+  let remainingDiscount = Math.min(originalDiscount - movedDiscount, remainingTotal);
+  if (remainingDiscount < 0) remainingDiscount = 0;
+
+  order.totalAmount = remainingTotal;
+  order.discountAmount = remainingDiscount;
   await order.save();
 
   const newOrder = await Order.create({
@@ -625,7 +661,8 @@ const splitOrder = asyncHandler(async (req, res) => {
     customerPhone: order.customerPhone,
     customerName: order.customerName,
     items: movedItems,
-    totalAmount: recalc(movedItems),
+    totalAmount: movedTotal,
+    discountAmount: movedDiscount,
     createdBy: req.user._id,
     status: order.status,
     statusHistory: [{ status: order.status, timestamp: new Date(), updatedBy: req.user._id }],
@@ -725,7 +762,13 @@ const getGstReport = asyncHandler(async (req, res) => {
     { $group: {
         _id: null,
         gstCollected: { $sum: { $ifNull: ['$taxAmount', 0] } },
-        taxableRevenue: { $sum: { $max: [0, { $subtract: ['$totalAmount', { $ifNull: ['$discountAmount', 0] }] }] } },
+        // Taxable base must match how finalizeOrder charges GST: (totalAmount − discount)
+        // PLUS serviceCharge. Omitting serviceCharge made taxableRevenue × rate fail to
+        // reconcile with gstCollected whenever a service charge was configured.
+        taxableRevenue: { $sum: { $add: [
+          { $max: [0, { $subtract: ['$totalAmount', { $ifNull: ['$discountAmount', 0] }] }] },
+          { $ifNull: ['$serviceCharge', 0] },
+        ] } },
         orders: { $sum: 1 },
     } },
   ]);
@@ -751,10 +794,27 @@ const refundOrder = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Only completed, billed orders can be refunded');
   }
-  if (order.isRefunded) {
+
+  // Atomically CLAIM the refund so two concurrent refund requests can't both run the
+  // reversals below — the gift-card re-credit and coupon-return are read-modify-write
+  // and would otherwise double-credit the card / double-return the coupon use. Only
+  // the request that flips isRefunded false->true proceeds; the loser is told it is
+  // already refunded. (Mirrors the isBilled claim in finalizeOrder.)
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, status: 'COMPLETED', isBilled: true, isRefunded: { $ne: true } },
+    { $set: { isRefunded: true, refundReason: reason || '', refundedAt: new Date(), paymentStatus: 'unpaid', amountPaid: 0 } },
+    { new: true }
+  );
+  if (!claimed) {
     res.status(400);
     throw new Error('This order is already refunded');
   }
+  // Keep the in-memory doc consistent for the emits/logging below.
+  order.isRefunded = true;
+  order.refundReason = reason || '';
+  order.refundedAt = claimed.refundedAt;
+  order.paymentStatus = 'unpaid';
+  order.amountPaid = 0;
 
   // Reverse the revenue: drop the order's REVENUE transaction out of the books by
   // marking it rejected (analytics/P&L count only approved revenue). The order
@@ -794,12 +854,8 @@ const refundOrder = asyncHandler(async (req, res) => {
     await Coupon.updateOne({ _id: order.coupon, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
   }
 
-  order.isRefunded = true;
-  order.refundReason = reason || '';
-  order.refundedAt = new Date();
-  order.paymentStatus = 'unpaid'; // money returned to customer
-  order.amountPaid = 0;
-  await order.save();
+  // isRefunded / refundedAt / paymentStatus / amountPaid were already persisted
+  // atomically by the claim above — no second save needed.
 
   await logActivity(
     req.user,

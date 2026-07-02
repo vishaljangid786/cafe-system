@@ -82,8 +82,16 @@ const issueGiftCard = asyncHandler(async (req, res) => {
 // @desc    Look up a gift card by code (balance check before redeeming)
 // @route   GET /api/gift-cards/lookup/:code
 const lookupGiftCard = asyncHandler(async (req, res) => {
-  const card = await GiftCard.findOne({ code: (req.params.code || '').toUpperCase() }).select('code balance isActive expiresAt issuedToName');
+  const card = await GiftCard.findOne({ code: (req.params.code || '').toUpperCase() }).select('code balance isActive expiresAt issuedToName locationId');
   if (!card) {
+    res.status(404);
+    throw new Error('Gift card not found');
+  }
+  // A branch-scoped card is only visible to users who can access its branch — stops
+  // staff at one branch probing another branch's card balances by code. Global
+  // (null-location) cards stay visible to any authorized user. Use 404 (not 403) so
+  // the response doesn't confirm the card exists elsewhere.
+  if (card.locationId && req.user.role !== 'super_admin' && !canAccessLocation(req.user, card.locationId)) {
     res.status(404);
     throw new Error('Gift card not found');
   }
@@ -153,21 +161,37 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     throw new Error(`Insufficient balance (available ₹${existing.balance})`);
   }
 
-  // Settle the order: record the gift card as the tender so it can't be double-paid.
-  // The card debit and order write aren't one DB transaction, so if the order
-  // write fails we COMPENSATE by re-crediting the card (no money lost / orphaned).
-  const newPaid = Number(order.amountPaid || 0) + redeemValue;
+  // Settle the order ATOMICALLY. The card debit and the order write are not one DB
+  // transaction, so guarding the order update on the amountPaid we observed turns it
+  // into a compare-and-set: if another payment/redemption changed the order in the
+  // meantime, the update matches nothing and we COMPENSATE the card debit instead of
+  // silently losing money. (Previously this was a stale read-modify-write —
+  // order.amountPaid = old + value; order.save() — so two DIFFERENT cards settling
+  // the same order concurrently both debited but only one was credited to the order.)
+  const observedPaid = Number(order.amountPaid || 0);
+  const newPaid = observedPaid + redeemValue;
+  const newStatus = newPaid >= orderTotal ? 'paid' : 'partial';
+
+  let settled = null;
   try {
-    order.amountPaid = newPaid;
-    order.paymentType = 'GIFT_CARD';
-    order.paymentStatus = newPaid >= orderTotal ? 'paid' : 'partial';
-    await order.save();
+    settled = await Order.findOneAndUpdate(
+      { _id: order._id, isRefunded: { $ne: true }, amountPaid: observedPaid },
+      { $set: { amountPaid: newPaid, paymentType: 'GIFT_CARD', paymentStatus: newStatus } },
+      { new: true }
+    );
   } catch (err) {
+    settled = null;
+  }
+
+  if (!settled) {
+    // Order write failed or lost a concurrency race — re-credit the card so no
+    // balance is orphaned, then ask the caller to retry against the fresh order.
     await GiftCard.updateOne(
       { _id: card._id },
-      { $inc: { balance: redeemValue }, $push: { transactions: { type: 'topup', amount: redeemValue, orderId: order._id, by: req.user._id, note: 'auto-reversal: order settle failed' } } }
+      { $inc: { balance: redeemValue }, $push: { transactions: { type: 'topup', amount: redeemValue, orderId: order._id, by: req.user._id, note: 'auto-reversal: order settle failed/raced' } } }
     ).catch(() => {});
-    throw err;
+    res.status(409);
+    throw new Error('This order was just updated by another payment. Please refresh and try again.');
   }
 
   await sendNotification({
@@ -178,7 +202,7 @@ const redeemGiftCard = asyncHandler(async (req, res) => {
     locationId: order.branch,
   });
 
-  res.json({ success: true, data: { code: card.code, redeemed: redeemValue, balance: card.balance, orderPaid: newPaid, orderStatus: order.paymentStatus } });
+  res.json({ success: true, data: { code: card.code, redeemed: redeemValue, balance: card.balance, orderPaid: settled.amountPaid, orderStatus: settled.paymentStatus } });
 });
 
 // @desc    Top up a gift card

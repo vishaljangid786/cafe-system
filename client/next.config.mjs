@@ -17,7 +17,22 @@
 const API_PROXY_TARGET =
   process.env.API_PROXY_TARGET || 'https://cafe-system-three.vercel.app';
 
+// Security response headers applied to every route. These are all safe/non-breaking.
+// A strict script Content-Security-Policy is intentionally NOT set here yet: the app
+// uses an inline theme-init script (layout.js) plus libraries that would need a nonce,
+// so a wrong CSP would break the UI. Add a nonce-based CSP as a follow-up.
+const securityHeaders = [
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' }, // clickjacking
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+];
+
 const nextConfig = {
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }];
+  },
   async rewrites() {
     return [
       {

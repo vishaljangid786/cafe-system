@@ -7,6 +7,15 @@ const payrollSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // Branch this payroll belongs to, captured at generation. Used for the approver's
+    // access check and to attribute the salary Expense to the correct branch ledger,
+    // even if the employee is later transferred. Legacy records (pre-this-field) fall
+    // back to the employee's current assignedLocation at approval time.
+    locationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Location',
+      default: null,
+    },
     month: {
       type: String, // YYYY-MM
       required: true,

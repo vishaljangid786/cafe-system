@@ -248,6 +248,9 @@ const applyCoupon = asyncHandler(async (req, res) => {
   let discount = 0;
   if (coupon.discountType === 'percentage') {
     discount = (applicableSubtotal * coupon.discountValue) / 100;
+    // Never let a percentage discount exceed the eligible subtotal (e.g. a
+    // misconfigured >100% coupon) — mirrors the fixed-amount clamp below.
+    if (discount > applicableSubtotal) discount = applicableSubtotal;
   } else {
     discount = coupon.discountValue;
     if (discount > applicableSubtotal) discount = applicableSubtotal;

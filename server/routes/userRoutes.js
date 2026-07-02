@@ -13,13 +13,24 @@ const {
 } = require('../controllers/userController');
 const { verifyToken, checkRoles, checkPermissions, checkRoleOrPermission } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
+
+// Throttle password changes: the current-password check is a brute-force target for
+// anyone holding a stolen session. Tight per-IP cap on top of the global limiter.
+const changePasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many password change attempts. Please try again later.' },
+});
 
 router.use(verifyToken);
 
 router.put('/update-profile', upload.single('profileImage'), updateProfile);
-router.put('/change-password', changePassword);
+router.put('/change-password', changePasswordLimiter, changePassword);
 
 // Staff Management Routes - Require manageStaff permission
 router.use(checkPermissions('manageStaff'));

@@ -19,7 +19,9 @@ const getRequestToken = (req) => {
 };
 
 const attachUserFromToken = async (req, res, token) => {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // Pin the algorithm so a token can't be presented under a different alg than the
+  // one we sign with (defense-in-depth against algorithm-confusion attacks).
+  const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
   req.user = await User.findById(decoded.id).select('-password');
 

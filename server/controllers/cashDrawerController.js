@@ -50,7 +50,12 @@ const computeCashFlow = async (locationId, from, to) => {
   const returned = { $cond: [{ $gt: [{ $ifNull: ['$grandTotal', 0] }, 0] }, '$grandTotal', { $ifNull: ['$totalAmount', 0] }] };
   const [sales, refunds] = await Promise.all([
     Order.aggregate([
-      { $match: { branch: objId(locationId), paymentType: 'CASH', status: 'COMPLETED', completedAt: { $gte: from, $lte: to } } },
+      // Exclude orders that completed while still explicitly 'unpaid' (only possible
+      // when billing.autoSettleOnComplete is off) — no cash was collected for those,
+      // so they must not inflate expected cash. With auto-settle on (default) a
+      // completed order is never 'unpaid', and legacy orders with an unset
+      // paymentStatus are unaffected, so default reconciliation is unchanged.
+      { $match: { branch: objId(locationId), paymentType: 'CASH', status: 'COMPLETED', paymentStatus: { $ne: 'unpaid' }, completedAt: { $gte: from, $lte: to } } },
       { $group: { _id: null, total: { $sum: collected }, count: { $sum: 1 } } },
     ]),
     Order.aggregate([

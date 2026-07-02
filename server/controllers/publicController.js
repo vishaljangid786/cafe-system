@@ -270,7 +270,7 @@ const createPublicOrder = asyncHandler(async (req, res) => {
     tableId: type === 'dine-in' ? tableId : null,
     items: cleanItems,
     customerName: (customerName || 'Guest').toString().slice(0, 120),
-    customerPhone: (customerPhone || '').toString().slice(0, 20),
+    customerPhone: (customerPhone || '').toString().replace(/\D/g, '').slice(0, 15),
     members: cleanMembers,
     numberOfPeople: people,
     orderType: type,
@@ -305,11 +305,16 @@ const createPublicOrder = asyncHandler(async (req, res) => {
 // @route   GET /api/public/order/:id
 const getPublicOrderStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  if (!mongoose.isValidObjectId(id)) {
+  const { branchId } = req.query;
+  if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(branchId)) {
     res.status(400);
     throw new Error('Invalid order');
   }
-  const order = await Order.findById(id)
+  // Bind the lookup to the branch the customer scanned. Without this, an anonymous
+  // caller could iterate ObjectIds and read the status/total of ANY order in ANY
+  // branch or cafe (cross-tenant enumeration). The scan page already knows branchId
+  // from the QR, so this is transparent to the real customer.
+  const order = await Order.findOne({ _id: id, branch: branchId })
     .select('status paymentApproval.status paymentStatus totalAmount')
     .lean();
   if (!order) {

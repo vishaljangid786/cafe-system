@@ -28,11 +28,27 @@ const deductIngredientsFromRecipe = async (order, branchId) => {
 
       for (const ingredientInfo of recipe.ingredients) {
         const deductionQuantity = ingredientInfo.quantity * item.quantity;
-        // Clamp at 0 — physical stock can't go negative even if an order exceeds it.
-        await BranchInventory.findOneAndUpdate(
-          { branch: branchId, ingredient: ingredientInfo.ingredient },
-          [{ $set: { stock: { $max: [0, { $subtract: ['$stock', deductionQuantity] }] } } }]
+        if (!(deductionQuantity > 0)) continue;
+        // Atomic guarded decrement: only succeeds when enough stock remains, so
+        // concurrent completions can't over-consume the same ingredient.
+        const ok = await BranchInventory.findOneAndUpdate(
+          { branch: branchId, ingredient: ingredientInfo.ingredient, stock: { $gte: deductionQuantity } },
+          { $inc: { stock: -deductionQuantity } },
+          { new: true }
         );
+        if (!ok) {
+          // Not enough stock (a real shortfall). Clamp to 0 — physical stock can't go
+          // negative — but SURFACE it instead of hiding the stock-out, so ops can
+          // reconcile (previously this was silently clamped and looked like plenty).
+          const clamped = await BranchInventory.findOneAndUpdate(
+            { branch: branchId, ingredient: ingredientInfo.ingredient },
+            { $set: { stock: 0 } },
+            { new: true }
+          );
+          if (clamped) {
+            console.warn(`[InventoryService] Ingredient shortfall on order ${order._id}: ingredient ${ingredientInfo.ingredient} needed ${deductionQuantity} at branch ${branchId} but had less — clamped to 0.`);
+          }
+        }
       }
     }
     return true;

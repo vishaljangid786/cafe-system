@@ -294,6 +294,9 @@ const demoteUser = asyncHandler(async (req, res) => {
 
   user.role = prevRole;
   await user.save();
+  // Force-disconnect live sockets so they reconnect with the demoted role's scope
+  // (a stale socket was authorized at the old role at handshake).
+  require('../config/socket').disconnectUser(user._id);
 
   const { logSecurityAction } = require('../utils/auditLogger');
   await logSecurityAction(req, 'USER_DEMOTED', { oldRole, newRole: prevRole }, user._id, 'User');
@@ -427,6 +430,19 @@ const updateUser = asyncHandler(async (req, res) => {
   const { logSecurityAction } = require('../utils/auditLogger');
   await logSecurityAction(req, 'USER_UPDATED', { changedFields: Object.keys(updateData) }, user._id, 'User');
 
+  // If this update deactivated the account or changed its role, end its live sessions.
+  // Deactivation also bumps sessionVersion to kill any outstanding HTTP token; a
+  // role change just force-disconnects sockets so they reconnect with fresh scope
+  // (HTTP already reloads role from the DB on every request).
+  const wasDeactivated = updateData.active === false;
+  const roleChanged = updateData.role && updateData.role !== user.role;
+  if (wasDeactivated) {
+    await User.updateOne({ _id: user._id }, { $inc: { sessionVersion: 1 } });
+  }
+  if (wasDeactivated || roleChanged) {
+    require('../config/socket').disconnectUser(user._id);
+  }
+
   // Notify the affected user + the branch's managers about the change.
   let updateMessage;
   if (updateData.active === false) {
@@ -534,7 +550,16 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
   ensureCanManageUserLocation(req, res, user, 'You do not have permission to block users from other branches');
 
   user.isBlocked = !user.isBlocked;
+  // When blocking, kill the user's live sessions immediately: bump sessionVersion to
+  // invalidate any outstanding HTTP token, and force-disconnect their sockets (only
+  // authorized at handshake, so a live one would keep streaming branch/role events).
+  if (user.isBlocked) {
+    user.sessionVersion = (user.sessionVersion || 1) + 1;
+  }
   await user.save();
+  if (user.isBlocked) {
+    require('../config/socket').disconnectUser(user._id);
+  }
 
   await sendNotification({
     title: user.isBlocked ? 'User Blocked' : 'User Unblocked',
@@ -815,6 +840,9 @@ const updateUserPermissions = asyncHandler(async (req, res) => {
   user.allowedPages = nextAllowedPages;
   if (nextActionPermissions !== undefined) user.actionPermissions = nextActionPermissions;
   await user.save();
+  // Force-disconnect live sockets so they reconnect and re-derive their room/scope
+  // from the new permissions (sockets are only authorized at handshake).
+  require('../config/socket').disconnectUser(user._id);
 
   await sendNotification({
     title: 'Permissions Updated',

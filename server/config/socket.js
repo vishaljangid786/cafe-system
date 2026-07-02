@@ -71,7 +71,7 @@ module.exports = {
           return next(new Error('Socket authentication required'));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         const user = await User.findById(decoded.id).select('-password');
         if (!user || user.isBlocked || user.active === false) {
           return next(new Error('Socket authentication failed'));
@@ -98,5 +98,18 @@ module.exports = {
       return createNoopIO();
     }
     return io;
+  },
+  // Force-disconnect every live socket belonging to a user. Each socket joins a room
+  // named by its user._id at connect, so this targets exactly that user. Used after a
+  // user is blocked/deactivated/demoted/permission-changed: the socket is only
+  // authorized at handshake, so without this a live connection keeps streaming
+  // branch/role events. On disconnect the client auto-reconnects and re-runs the
+  // handshake — a blocked/inactive user then fails to reconnect, and a demoted user
+  // reconnects with fresh role/branch scope. Best-effort; never throws into callers.
+  disconnectUser: (userId) => {
+    if (!io || !userId) return;
+    try {
+      io.to(String(userId)).disconnectSockets(true);
+    } catch (_) { /* realtime is best-effort */ }
   },
 };

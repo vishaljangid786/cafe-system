@@ -19,10 +19,23 @@ const {
   getForecastingAnalytics
 } = require('../controllers/analyticsController');
 const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
+// Analytics endpoints run heavy DB aggregations (forecasting, command-center,
+// branch-comparison). Cap them below the global limiter to blunt a hammering DoS,
+// while staying generous enough for a dashboard that fires several calls per load.
+const analyticsLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many analytics requests, please slow down.' },
+});
+
 router.use(verifyToken);
+router.use(analyticsLimiter);
 router.use(checkPermissions('viewAnalytics'));
 
 router.route('/advanced')
