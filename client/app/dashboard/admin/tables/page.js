@@ -1160,7 +1160,7 @@ export default function AdminTablesPage() {
         <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name} />
         <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={filteredTables} branchName={selBranchName} />
         <BranchQRModal isOpen={showBranchQr} onClose={() => setShowBranchQr(false)} branches={locations} branchId={selectedLocation !== 'All' ? selectedLocation : undefined} branchName={selBranchName} />
-        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={selectedLocation} branchName={selBranchName} menuHref="/dashboard/admin/menu" />
+        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={selectedLocation} branchName={selBranchName} branches={locations} menuHref="/dashboard/admin/menu" />
       </div>
     </PageTransition>
   );

@@ -2,7 +2,6 @@
 import { useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
 import { Printer, Download, Copy, QrCode, Link2, Image as ImageIcon, Store } from 'lucide-react';
 import Modal from '../ui/Modal';
@@ -51,59 +50,92 @@ const cardHtml = ({ branchName, label, url, svg }) => `
     <p class="url">${url}</p>
   </div>`;
 
-// Rasterize a DOM node (the white QR poster) to a PNG data URL.
-const nodeToCanvas = (node) => html2canvas(node, { scale: 2, backgroundColor: '#ffffff' });
+// ---- Download helpers -------------------------------------------------------
+// These render straight from the QR's <svg>, NOT via html2canvas — html2canvas
+// 1.x can't parse Tailwind v4's oklch() colors and throws, which was breaking
+// every download. Drawing the SVG onto a plain canvas sidesteps that entirely.
 
-const downloadPng = async (node, filename) => {
-  if (!node) return;
-  const t = toast.loading('Preparing image…');
-  try {
-    const canvas = await nodeToCanvas(node);
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `${filename}.png`;
-    a.click();
-    toast.success('Image downloaded', { id: t });
-  } catch { toast.error('Could not create the image', { id: t }); }
-};
+const svgFrom = (nodeOrSvg) =>
+  (nodeOrSvg && nodeOrSvg.tagName && nodeOrSvg.tagName.toLowerCase() === 'svg')
+    ? nodeOrSvg
+    : (nodeOrSvg?.querySelector ? nodeOrSvg.querySelector('svg') : null);
 
-const downloadPdf = async (node, filename) => {
-  if (!node) return;
-  const t = toast.loading('Preparing PDF…');
-  try {
-    const canvas = await nodeToCanvas(node);
-    const img = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pw = pdf.internal.pageSize.getWidth();
-    const props = pdf.getImageProperties(img);
-    const w = Math.min(360, pw - 80);
-    const h = (w * props.height) / props.width;
-    pdf.addImage(img, 'PNG', (pw - w) / 2, 60, w, h);
-    pdf.save(`${filename}.pdf`);
-    toast.success('PDF downloaded', { id: t });
-  } catch { toast.error('Could not create the PDF', { id: t }); }
-};
-
-// Convert an already-rendered <svg> QR into a white PNG data URL (for multi-QR PDFs).
-const svgToPng = (svgEl, size = 512) => new Promise((resolve, reject) => {
+const loadQrImage = (svgEl) => new Promise((resolve, reject) => {
   try {
     const xml = new XMLSerializer().serializeToString(svgEl);
     const src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
     const img = new Image();
-    img.onload = () => {
-      const c = document.createElement('canvas');
-      c.width = size; c.height = size;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
-      ctx.drawImage(img, 0, 0, size, size);
-      resolve(c.toDataURL('image/png'));
-    };
+    img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
   } catch (e) { reject(e); }
 });
 
-// Small action button used across the QR modals.
+// A clean white poster canvas (title, subtitle, QR, footnote) for PNG/PDF export.
+const buildPosterCanvas = async (svgEl, { title, subtitle, footnote } = {}) => {
+  const img = await loadQrImage(svgEl);
+  const W = 640, qr = 470, top = 150;
+  const H = top + qr + 84;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  const font = (weight, size) => `${weight} ${size}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = '#0f172a';
+  ctx.font = font(600, 26);
+  ctx.fillText(title || 'Scan & Order', W / 2, 64);
+  ctx.font = font(700, 36);
+  ctx.fillText(subtitle || '', W / 2, 112);
+  ctx.drawImage(img, (W - qr) / 2, top, qr, qr);
+  ctx.fillStyle = '#64748b';
+  ctx.font = font(400, 18);
+  ctx.fillText(footnote || 'Scan to view the menu & order', W / 2, top + qr + 44);
+  return c;
+};
+
+const downloadPng = async (nodeOrSvg, meta, filename) => {
+  const svg = svgFrom(nodeOrSvg);
+  if (!svg) { toast.error('QR is not ready yet'); return; }
+  const t = toast.loading('Preparing image…');
+  try {
+    const c = await buildPosterCanvas(svg, meta);
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = `${filename}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast.success('Image downloaded', { id: t });
+  } catch { toast.error('Could not create the image', { id: t }); }
+};
+
+const downloadPdf = async (nodeOrSvg, meta, filename) => {
+  const svg = svgFrom(nodeOrSvg);
+  if (!svg) { toast.error('QR is not ready yet'); return; }
+  const t = toast.loading('Preparing PDF…');
+  try {
+    const c = await buildPosterCanvas(svg, meta);
+    const png = c.toDataURL('image/png');
+    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pw = pdf.internal.pageSize.getWidth();
+    const w = Math.min(360, pw - 80);
+    const h = (w * c.height) / c.width;
+    pdf.addImage(png, 'PNG', (pw - w) / 2, 60, w, h);
+    pdf.save(`${filename}.pdf`);
+    toast.success('PDF downloaded', { id: t });
+  } catch { toast.error('Could not create the PDF', { id: t }); }
+};
+
+// A square white PNG of just the QR (for laying many into one PDF).
+const svgToPng = async (svgEl, size = 512) => {
+  const img = await loadQrImage(svgEl);
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+  ctx.drawImage(img, 0, 0, size, size);
+  return c.toDataURL('image/png');
+};
+
 const QRAction = ({ icon: Icon, label, onClick, primary }) => (
   <button
     onClick={onClick}
@@ -117,6 +149,7 @@ const QRAction = ({ icon: Icon, label, onClick, primary }) => (
 function QRPoster({ title, subtitle, url, footnote = 'Scan to view the menu & order' }) {
   const cardRef = useRef(null);
   const fileBase = safe(`${title}-${subtitle}`);
+  const meta = { title, subtitle, footnote };
 
   const copyLink = async () => {
     try { await navigator.clipboard.writeText(url); toast.success('Link copied'); }
@@ -144,8 +177,8 @@ function QRPoster({ title, subtitle, url, footnote = 'Scan to view the menu & or
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <QRAction icon={Printer} label="Print" primary onClick={print} />
-        <QRAction icon={Download} label="PDF" onClick={() => downloadPdf(cardRef.current, `${fileBase}-qr`)} />
-        <QRAction icon={ImageIcon} label="PNG" onClick={() => downloadPng(cardRef.current, `${fileBase}-qr`)} />
+        <QRAction icon={Download} label="PDF" onClick={() => downloadPdf(cardRef.current, meta, `${fileBase}-qr`)} />
+        <QRAction icon={ImageIcon} label="PNG" onClick={() => downloadPng(cardRef.current, meta, `${fileBase}-qr`)} />
         <QRAction icon={Copy} label="Copy" onClick={copyLink} />
       </div>
     </div>
@@ -167,8 +200,7 @@ export function TableQRModal({ isOpen, onClose, table, branchName }) {
 }
 
 // ---------------------------------------------------------------------------
-// Branch (cafe-wide) takeaway / parcel QR — no table. Scanning it opens the menu
-// in takeaway mode so a customer can order & go without booking a table.
+// Branch (cafe-wide) takeaway / parcel QR — no table.
 // ---------------------------------------------------------------------------
 export function BranchQRModal({ isOpen, onClose, branchId, branchName, branches = [] }) {
   const list = Array.isArray(branches) ? branches : [];
@@ -254,9 +286,9 @@ export function TableQRBulkModal({ isOpen, onClose, tables = [], branchName }) {
     } catch { toast.error('Could not build the PDF', { id: t }); }
   };
 
-  const downloadOne = (t) => {
-    const node = gridRef.current?.querySelector(`[data-qr="${t._id}"]`);
-    downloadPng(node, `${safe(tableLabel(t))}-qr`);
+  const downloadOne = (tbl) => {
+    const svg = gridRef.current?.querySelector(`[data-qr="${tbl._id}"] svg`);
+    downloadPng(svg, { title: branchName, subtitle: tableLabel(tbl) }, `${safe(tableLabel(tbl))}-qr`);
   };
 
   return (
