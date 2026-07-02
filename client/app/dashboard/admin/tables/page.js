@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw, MapPin, QrCode, Package } from 'lucide-react';
-import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw, MapPin, QrCode, Package, Store } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
 import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -39,6 +39,7 @@ export default function AdminTablesPage() {
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
   const [qrTable, setQrTable] = useState(null);
   const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showBranchQr, setShowBranchQr] = useState(false);
   const [showStock, setShowStock] = useState(false);
   const [isModalReady, setIsModalReady] = useState(false);
   
@@ -480,6 +481,14 @@ export default function AdminTablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-border) mx-2 hidden sm:block" />
+            <Button
+              variant="outline"
+              className="!rounded-xl !py-2.5 text-[11px] font-semibold tracking-normal"
+              icon={Store}
+              onClick={() => setShowBranchQr(true)}
+            >
+              Cafe QR
+            </Button>
             <Button
               variant="outline"
               className="!rounded-xl !py-2.5 text-[11px] font-semibold tracking-normal"
@@ -1150,6 +1159,7 @@ export default function AdminTablesPage() {
 
         <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name} />
         <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={filteredTables} branchName={selBranchName} />
+        <BranchQRModal isOpen={showBranchQr} onClose={() => setShowBranchQr(false)} branches={locations} branchId={selectedLocation !== 'All' ? selectedLocation : undefined} branchName={selBranchName} />
         <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={selectedLocation} branchName={selBranchName} menuHref="/dashboard/admin/menu" />
       </div>
     </PageTransition>

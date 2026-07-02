@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Search, Globe, ShieldAlert, QrCode, Package } from 'lucide-react';
-import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Search, Globe, ShieldAlert, QrCode, Package, Store } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
 import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -45,6 +45,7 @@ export default function TablesPage() {
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
   const [qrTable, setQrTable] = useState(null);
   const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showBranchQr, setShowBranchQr] = useState(false);
   const [showStock, setShowStock] = useState(false);
 
   const fetchTables = async () => {
@@ -339,6 +340,7 @@ export default function TablesPage() {
             <p className="text-xs text-(--color-text-muted) mt-1 font-medium">Manage tables and orders</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={Store} onClick={() => setShowBranchQr(true)}>Cafe QR</Button>
             <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={QrCode} onClick={() => setShowBulkQr(true)}>Print QR</Button>
             <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={Package} onClick={() => setShowStock(true)}>Stock</Button>
             {can(user, 'tables.add') && (
@@ -822,6 +824,7 @@ export default function TablesPage() {
 
         <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
         <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <BranchQRModal isOpen={showBranchQr} onClose={() => setShowBranchQr(false)} branchId={branchId !== 'All' ? branchId : undefined} branchName={branchName} />
         <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/location-admin/menu" />
       </div>
     </PageTransition>

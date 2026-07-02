@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw, QrCode, Package } from 'lucide-react';
-import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw, QrCode, Package, Store } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
 import StockManager from '@/app/components/menu/StockManager';
 import { Skeleton } from '@/app/components/ui/Skeleton';
@@ -42,6 +42,7 @@ export default function StaffTablesPage() {
   const [isModalReady, setIsModalReady] = useState(false);
   const [qrTable, setQrTable] = useState(null);
   const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showBranchQr, setShowBranchQr] = useState(false);
   const [showStock, setShowStock] = useState(false);
   const selectedTableRef = useRef(null);
   const syncTimeoutRef = useRef(null);
@@ -379,6 +380,7 @@ export default function StaffTablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-10 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-1 hidden sm:block" />
+            <Button variant="outline" className="!rounded-xl text-[11px] font-medium tracking-normal" icon={Store} onClick={() => setShowBranchQr(true)}>Cafe QR</Button>
             <Button variant="outline" className="!rounded-xl text-[11px] font-medium tracking-normal" icon={QrCode} onClick={() => setShowBulkQr(true)}>Print QR</Button>
             <Button variant="outline" className="!rounded-xl text-[11px] font-medium tracking-normal" icon={Package} onClick={() => setShowStock(true)}>Stock</Button>
             <div className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm">
@@ -436,6 +438,7 @@ export default function StaffTablesPage() {
         {/* Modals */}
         <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
         <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <BranchQRModal isOpen={showBranchQr} onClose={() => setShowBranchQr(false)} branchId={branchId !== 'All' ? branchId : undefined} branchName={branchName} />
         <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/staff/menu" />
 
         <BillPreview isOpen={isBillPreviewOpen} onClose={() => setIsBillPreviewOpen(false)} onComplete={handleFinalizeSession} table={selectedTable} systemOrders={systemOrders} />

@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, MessageSquare, RefreshCcw, QrCode, Package } from 'lucide-react';
-import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, MessageSquare, RefreshCcw, QrCode, Package, Store } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
 import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -49,6 +49,7 @@ export default function TablesPage() {
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, occupied
   const [qrTable, setQrTable] = useState(null);
   const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showBranchQr, setShowBranchQr] = useState(false);
   const [showStock, setShowStock] = useState(false);
   const syncTimeoutRef = useRef(null);
   const selectedTableRef = useRef(null);
@@ -473,6 +474,14 @@ export default function TablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-2 hidden sm:block" />
+            <Button
+              variant="outline"
+              className="!rounded-xl text-[11px] font-medium tracking-normal"
+              icon={Store}
+              onClick={() => setShowBranchQr(true)}
+            >
+              Cafe QR
+            </Button>
             <Button
               variant="outline"
               className="!rounded-xl text-[11px] font-medium tracking-normal"
@@ -1108,6 +1117,7 @@ export default function TablesPage() {
 
         <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
         <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <BranchQRModal isOpen={showBranchQr} onClose={() => setShowBranchQr(false)} branchId={branchId !== 'All' ? branchId : undefined} branchName={branchName} />
         <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/branch-admin/menu" />
       </div>
     </PageTransition>
