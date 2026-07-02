@@ -74,6 +74,12 @@ export default function QuickLogin() {
   const [open, setOpen] = useState(true);
   const [pendingEmail, setPendingEmail] = useState(null);
 
+  // NEVER expose demo accounts / the shared demo password in a production build.
+  // process.env.NODE_ENV is inlined at build time, so this whole panel (and the
+  // hardcoded credentials) is tree-shaken out of the production bundle. Hooks are
+  // declared above this line so the rules-of-hooks are not violated.
+  if (process.env.NODE_ENV === 'production') return null;
+
   const handleQuickLogin = async (email) => {
     if (pendingEmail) return;
     setPendingEmail(email);

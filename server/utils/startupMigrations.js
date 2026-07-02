@@ -151,6 +151,13 @@ const backfillCafes = async () => {
 //      rest bail. Without this, concurrent boots could each see 0 users and seed
 //      in parallel, producing duplicate data.
 const bootstrapSeedIfEmpty = async () => {
+  // NEVER auto-seed a production database. The demo seed provisions accounts with
+  // publicly-known credentials (super@cafeos.com / password123), so running it on
+  // an empty prod DB would hand an attacker super_admin. In production the first
+  // account is created through the initial-setup registration flow instead
+  // (registerUser makes the very first user a super_admin — see authController).
+  if (process.env.NODE_ENV === 'production') return;
+
   const User = require('../models/User');
   const count = await User.estimatedDocumentCount();
   if (count > 0) return; // already has data — never re-seed

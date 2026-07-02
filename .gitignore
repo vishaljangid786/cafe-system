@@ -5,6 +5,10 @@
 **/.env.*
 !**/.env.example
 
+# Bootstrap fixtures that carry credentials/PII — never commit
+super-admin.json
+*-admin.json
+
 # Dependencies
 node_modules/
 **/node_modules/

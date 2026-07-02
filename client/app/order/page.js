@@ -6,7 +6,7 @@ import QRCode from 'react-qr-code';
 import api from '../services/api';
 import {
   Plus, Minus, ShoppingBag, CheckCircle2, X, Users, Flame, Utensils,
-  Loader2, Smartphone, Wallet, ArrowLeft, ArrowRight, Clock, XCircle,
+  Loader2, Smartphone, Wallet, ArrowLeft, ArrowRight, Clock, XCircle, Trash2,
 } from 'lucide-react';
 
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -149,8 +149,16 @@ function OrderApp() {
   };
 
   const changeQty = (key, d) => setCart((c) => c.map((x) => x.key === key ? { ...x, quantity: x.quantity + d } : x).filter((x) => x.quantity > 0));
+  const removeLine = (key) => setCart((c) => c.filter((x) => x.key !== key));
   const cartCount = cart.reduce((a, x) => a + x.quantity, 0);
   const total = cart.reduce((a, x) => a + x.price * x.quantity, 0);
+
+  // Quantity is controlled in ONE place — the menu card. These helpers drive its
+  // stepper: `plain` = the cart line for this item with no modifiers.
+  const plainLine = (it) => cart.find((x) => x.menuItem === it._id && (!x.modifiers || x.modifiers.length === 0));
+  const plainQty = (it) => plainLine(it)?.quantity || 0;
+  const totalQtyOf = (it) => cart.filter((x) => x.menuItem === it._id).reduce((a, x) => a + x.quantity, 0);
+  const decPlain = (it) => { const l = plainLine(it); if (l) changeQty(l.key, -1); };
 
   // Keep member-name slots in sync with the party size.
   const setParty = (n) => {
@@ -336,6 +344,37 @@ function OrderApp() {
 
           {error && <div className="mb-3 p-3 rounded-xl bg-danger/10 text-danger text-xs font-bold text-center">{error}</div>}
 
+          {/* Your order — review + direct remove per line */}
+          <div className="mb-4 bg-(--color-surface) border border-(--color-border) rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Your order · {cartCount} item{cartCount > 1 ? 's' : ''}</h2>
+              <button onClick={() => setStep('menu')} className="text-[11px] font-bold text-primary flex items-center gap-1"><Plus size={12} /> Add more</button>
+            </div>
+            {cart.length === 0 ? (
+              <p className="text-sm text-(--color-text-muted) text-center py-4">Your cart is empty. Add items from the menu.</p>
+            ) : (
+              <>
+                <div className="space-y-2.5">
+                  {cart.map((x) => (
+                    <div key={x.key} className="flex items-center gap-3">
+                      <span className="h-6 min-w-6 px-1.5 rounded-md bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">{x.quantity}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-(--color-text-primary) truncate">{x.name}</p>
+                        {x.modifiers?.length > 0 && <p className="text-[11px] text-(--color-text-muted) truncate">{x.modifiers.map((m) => m.label).join(', ')}</p>}
+                      </div>
+                      <span className="text-sm font-bold text-(--color-text-primary) shrink-0">{money(x.price * x.quantity)}</span>
+                      <button onClick={() => removeLine(x.key)} title="Remove" className="h-8 w-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center shrink-0 active:scale-90"><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-(--color-border)">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Total</span>
+                  <span className="text-lg font-bold text-(--color-text-primary)">{money(total)}</span>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Your details */}
           <div className="space-y-3 bg-(--color-surface) border border-(--color-border) rounded-2xl p-4">
             <div className="space-y-1.5">
@@ -416,9 +455,9 @@ function OrderApp() {
         {/* Sticky proceed bar */}
         <div className="fixed bottom-0 inset-x-0 bg-(--color-surface) border-t border-(--color-border) shadow-2xl">
           <div className="max-w-md mx-auto p-4">
-            <button onClick={proceedFromCheckout} disabled={placing} className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl active:scale-[0.99] disabled:opacity-50">
+            <button onClick={proceedFromCheckout} disabled={placing || cart.length === 0} className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl active:scale-[0.99] disabled:opacity-50">
               {placing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              {payChoice === 'pay_now_upi' ? `Continue to UPI · ${money(total)}` : `Place order · ${money(total)}`}
+              {cart.length === 0 ? 'Add items to continue' : payChoice === 'pay_now_upi' ? `Continue to UPI · ${money(total)}` : `Place order · ${money(total)}`}
             </button>
           </div>
         </div>
@@ -432,32 +471,69 @@ function OrderApp() {
     const q = Number(it.stock) || 0;
     return (
       <span className={`text-[10px] font-bold uppercase tracking-wide ${q <= 0 ? 'text-danger' : q <= 5 ? 'text-warning' : 'text-success'}`}>
-        {q <= 0 ? 'Out of stock' : `${q} left`}
+        {q <= 0 ? 'Out' : `${q} left`}
       </span>
     );
   };
 
-  const MenuRow = (it) => {
-    const inCartQty = cart.filter((x) => x.menuItem === it._id).reduce((a, x) => a + x.quantity, 0);
+  // A veg / non-veg square marker (the familiar Indian food indicator).
+  const DietDot = ({ type }) => (
+    <span className={`h-4 w-4 rounded-[4px] border flex items-center justify-center bg-white/90 ${type === 'veg' ? 'border-success' : 'border-danger'}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${type === 'veg' ? 'bg-success' : 'bg-danger'}`} />
+    </span>
+  );
+
+  // Image-forward menu card with an inline quantity stepper (the single place to
+  // add / remove qty). − turns into a trash at qty 1 so removing is one tap.
+  const MenuCard = (it) => {
+    const hasMods = it.modifierGroups?.length > 0;
     const soldOut = it.tracksStock && (Number(it.stock) || 0) <= 0;
+    const q = hasMods ? totalQtyOf(it) : plainQty(it);
     return (
-      <div key={it._id} className={`flex items-center justify-between gap-3 p-3 rounded-xl bg-(--color-surface) border border-(--color-border) ${soldOut ? 'opacity-50' : ''}`}>
-        <div className="flex items-center gap-3 min-w-0">
+      <div key={it._id} className={`rounded-2xl bg-(--color-surface) border border-(--color-border) overflow-hidden flex flex-col ${soldOut ? 'opacity-60' : ''}`}>
+        <div className="relative aspect-square bg-(--color-bg-soft)">
           {it.image
-            ? <img src={it.image} alt={it.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
-            : <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${it.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`} />}
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-(--color-text-primary) truncate">{it.name}</p>
-            <p className="text-[11px] font-bold text-(--color-text-muted) flex items-center gap-1.5 flex-wrap">
-              <span>{money(priceOf(it))}</span>
-              {it.modifierGroups?.length ? <span>· customizable</span> : null}
-              <StockTag it={it} />
-            </p>
+            ? <img src={it.image} alt={it.name} className="h-full w-full object-cover" />
+            : <div className="h-full w-full flex items-center justify-center text-(--color-text-muted)"><Utensils size={26} /></div>}
+          <span className="absolute top-2 left-2"><DietDot type={it.dietaryType} /></span>
+          {it.tracksStock && !soldOut && (Number(it.stock) || 0) <= 5 && (
+            <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wide bg-warning/90 text-white px-1.5 py-0.5 rounded-md">{it.stock} left</span>
+          )}
+          {soldOut && (
+            <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-white bg-danger/90 px-2 py-1 rounded-md">Sold out</span>
+            </div>
+          )}
+        </div>
+
+        <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+          <p className="text-[13px] font-bold text-(--color-text-primary) leading-tight line-clamp-2 min-h-[2.4em]">{it.name}</p>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-bold text-primary">{money(priceOf(it))}</span>
+            {it.discountedPrice && it.discountedPrice < it.price && (
+              <span className="text-[10px] font-medium text-(--color-text-muted) line-through">{money(it.price)}</span>
+            )}
+          </div>
+          {hasMods && <span className="text-[10px] font-bold text-(--color-text-muted) -mt-0.5">customizable</span>}
+
+          <div className="mt-auto pt-1">
+            {soldOut ? (
+              <button disabled className="w-full py-2 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) text-xs font-bold">Unavailable</button>
+            ) : (!hasMods && q > 0) ? (
+              <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/25 p-1">
+                <button onClick={() => decPlain(it)} className="h-8 w-8 rounded-lg bg-(--color-surface) text-primary flex items-center justify-center active:scale-90 shadow-sm">
+                  {q > 1 ? <Minus size={15} /> : <Trash2 size={14} />}
+                </button>
+                <span className="text-sm font-bold text-primary tabular-nums">{q}</span>
+                <button onClick={() => addItem(it)} className="h-8 w-8 rounded-lg bg-primary text-(--color-on-primary) flex items-center justify-center active:scale-90 shadow-sm"><Plus size={15} /></button>
+              </div>
+            ) : (
+              <button onClick={() => addItem(it)} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-(--color-on-primary) text-xs font-bold active:scale-95 shadow-sm">
+                <Plus size={14} /> Add{hasMods && q > 0 ? ` · ${q}` : ''}
+              </button>
+            )}
           </div>
         </div>
-        <button onClick={() => addItem(it)} disabled={soldOut} className="shrink-0 flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide rounded-lg border border-primary/20 active:scale-95 disabled:opacity-50">
-          <Plus size={13} /> {inCartQty > 0 ? inCartQty : 'Add'}
-        </button>
       </div>
     );
   };
@@ -489,34 +565,23 @@ function OrderApp() {
           </div>
         )}
 
-        <h2 className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) mb-2">Menu</h2>
-        <div className="space-y-2">
-          {items.map((it) => MenuRow(it))}
-          {items.length === 0 && <p className="text-center text-sm text-(--color-text-muted) py-8">No items available right now.</p>}
-        </div>
+        <h2 className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) mb-3">Menu</h2>
+        {items.length === 0 ? (
+          <p className="text-center text-sm text-(--color-text-muted) py-8">No items available right now.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((it) => MenuCard(it))}
+          </div>
+        )}
       </div>
 
-      {/* Cart bar */}
+      {/* Cart bar — single review CTA (quantity is managed on the cards) */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 bg-(--color-surface) border-t border-(--color-border) shadow-2xl">
-          <div className="max-w-lg mx-auto p-4 space-y-3">
-            <div className="max-h-40 overflow-y-auto space-y-1.5">
-              {cart.map((x) => (
-                <div key={x.key} className="flex items-center justify-between gap-2 text-xs">
-                  <div className="min-w-0">
-                    <span className="font-bold text-(--color-text-primary)">{x.name}</span>
-                    {x.modifiers?.length > 0 && <span className="text-(--color-text-muted)"> · {x.modifiers.map((m) => m.label).join(', ')}</span>}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => changeQty(x.key, -1)} className="h-6 w-6 rounded-lg bg-(--color-bg-soft) text-(--color-text-muted) flex items-center justify-center"><Minus size={12} /></button>
-                    <span className="w-5 text-center font-bold text-(--color-text-primary)">{x.quantity}</span>
-                    <button onClick={() => changeQty(x.key, 1)} className="h-6 w-6 rounded-lg bg-(--color-bg-soft) text-(--color-text-muted) flex items-center justify-center"><Plus size={12} /></button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => { setError(''); setStep('checkout'); }} className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl active:scale-[0.99]">
-              <ShoppingBag size={16} /> Review &amp; pay · {cartCount} item{cartCount > 1 ? 's' : ''} · {money(total)}
+        <div className="fixed bottom-0 inset-x-0 bg-(--color-surface)/95 backdrop-blur border-t border-(--color-border) shadow-2xl">
+          <div className="max-w-lg mx-auto p-4">
+            <button onClick={() => { setError(''); setStep('checkout'); }} className="w-full flex items-center justify-between py-3.5 px-5 bg-primary text-(--color-on-primary) rounded-xl active:scale-[0.99] shadow-sm">
+              <span className="flex items-center gap-2 text-sm font-bold"><ShoppingBag size={17} /> {cartCount} item{cartCount > 1 ? 's' : ''}</span>
+              <span className="flex items-center gap-2 text-sm font-bold">Review &amp; pay · {money(total)} <ArrowRight size={16} /></span>
             </button>
           </div>
         </div>
