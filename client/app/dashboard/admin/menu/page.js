@@ -157,6 +157,16 @@ export default function MenuManagementPage() {
   const [isGlobalItem, setIsGlobalItem] = useState(false);
   const [itemDietaryType, setItemDietaryType] = useState('veg');
   const [modifierGroups, setModifierGroups] = useState([]); // [{name, selectionType, required, maxSelections, options:[{label, priceDelta}]}]
+  const [itemErrors, setItemErrors] = useState({}); // { name, category, price, costPrice, preparationTime, image, branches }
+
+  // Clear a single field's error as soon as the user starts fixing it.
+  const clearItemError = (field) =>
+    setItemErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -297,10 +307,44 @@ export default function MenuManagementPage() {
     e.preventDefault();
     const formData = new FormData(e.target);
 
-    // Image requirement check for new items
-    if (!editingItem && !itemFileRef.current?.files[0]) {
-      return toast.error("Image is required for new items");
+    // Cost price is only shown (and therefore only required) for these roles.
+    const showCostPrice = user?.role === 'admin' || user?.role === 'location_admin' || user?.role === 'super_admin';
+
+    // Field-by-field validation — every missing required field gets its own clear message.
+    const errors = {};
+    const isBlankNumber = (v) => v === null || v === '' || isNaN(parseFloat(v));
+
+    if (!formData.get('name')?.trim()) {
+      errors.name = 'Please enter the item name.';
     }
+    if (!itemCategory) {
+      errors.category = 'Please select a category.';
+    }
+    if (isBlankNumber(formData.get('price'))) {
+      errors.price = 'Please enter the base price.';
+    } else if (parseFloat(formData.get('price')) < 0) {
+      errors.price = 'Base price cannot be negative.';
+    }
+    if (showCostPrice && isBlankNumber(formData.get('costPrice'))) {
+      errors.costPrice = 'Please enter the cost price (use 0 if not tracking).';
+    }
+    if (isBlankNumber(formData.get('preparationTime'))) {
+      errors.preparationTime = 'Please enter the prep time in minutes.';
+    }
+    if (!editingItem && !itemFileRef.current?.files[0]) {
+      errors.image = 'Please add an item image.';
+    }
+    if (!isGlobalItem && selectedBranches.length === 0) {
+      errors.branches = 'Please select at least one target branch (or mark it Global).';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setItemErrors(errors);
+      // Point the user at the first thing to fix.
+      toast.error(Object.values(errors)[0]);
+      return;
+    }
+    setItemErrors({});
 
     formData.set('isGlobal', isGlobalItem);
     formData.delete('availableBranches'); // Clean up any existing
@@ -323,7 +367,9 @@ export default function MenuManagementPage() {
     const discPrice = formData.get('discountedPrice') ? parseFloat(formData.get('discountedPrice')) : null;
 
     if (originalPrice && discPrice && discPrice >= originalPrice) {
-      return toast.error(`Offer Price (₹${discPrice}) cannot be higher than the Original Price (₹${originalPrice})`);
+      const msg = `Offer Price (₹${discPrice}) must be lower than the Original Price (₹${originalPrice}).`;
+      setItemErrors({ discountedPrice: msg });
+      return toast.error(msg);
     }
 
     const loadToast = toast.loading(editingItem ? 'Updating item...' : 'Adding item...');
@@ -356,6 +402,7 @@ export default function MenuManagementPage() {
       setEditingItem(null);
       setImagePreview(null);
       setShowRecipeEditor(false);
+      setItemErrors({});
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
@@ -389,6 +436,7 @@ export default function MenuManagementPage() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      clearItemError('image');
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
@@ -725,6 +773,7 @@ export default function MenuManagementPage() {
                         if (activeTab === 'items') {
                           setEditingItem(null);
                           setImagePreview(null);
+                          setItemErrors({});
                           setShowItemModal(true);
                         } else {
                           setEditingCategory(null);
@@ -973,6 +1022,7 @@ export default function MenuManagementPage() {
                                   setEditingItem(item);
                                   setShowItemModal(true);
                                   setImagePreview(item.image);
+                                  setItemErrors({});
                                   fetchRecipe(item._id);
                                 }}
                                 className="p-3 rounded-xl bg-(--color-surface-soft) hover:bg-primary text-(--color-text-muted) hover:text-(--color-bg-base) transition-all shadow-sm"
@@ -1059,11 +1109,11 @@ export default function MenuManagementPage() {
         {/* Item Modal */}
         <Modal
           isOpen={showItemModal}
-          onClose={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); setShowRecipeEditor(false); }}
+          onClose={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); setShowRecipeEditor(false); setItemErrors({}); }}
           title={editingItem ? "Edit Item" : "Add New Item"}
           maxWidth="max-w-5xl"
         >
-          <form onSubmit={handleItemSubmit} className="p-2 space-y-6">
+          <form onSubmit={handleItemSubmit} noValidate className="p-2 space-y-6">
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column */}
@@ -1084,10 +1134,11 @@ export default function MenuManagementPage() {
                       <input
                         name="name"
                         defaultValue={editingItem?.name}
-                        required
-                        className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
+                        onChange={() => clearItemError('name')}
+                        className={`w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary) ${itemErrors.name ? 'border-danger' : 'border-(--color-border)'}`}
                         placeholder="e.g. Masala Dosa"
                       />
+                      {itemErrors.name && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.name}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1096,8 +1147,9 @@ export default function MenuManagementPage() {
                         <PremiumSelect
                           label="Category"
                           value={itemCategory}
-                          onChange={(val) => setItemCategory(val)}
+                          onChange={(val) => { setItemCategory(val); clearItemError('category'); }}
                           placeholder="Select Category"
+                          error={itemErrors.category}
                           options={categories.map(cat => ({ label: cat.name, value: cat._id }))}
                         />
                       </div>
@@ -1109,12 +1161,13 @@ export default function MenuManagementPage() {
                             type="number"
                             min="0"
                             onKeyDown={blockNonInteger}
+                            onChange={() => clearItemError('preparationTime')}
                             defaultValue={editingItem?.preparationTime || 10}
-                            required
-                            className="w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
+                            className={`w-full px-5 py-4 bg-(--color-bg-soft) rounded-xl border outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary) ${itemErrors.preparationTime ? 'border-danger' : 'border-(--color-border)'}`}
                           />
                           <Clock className="absolute right-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" size={16} />
                         </div>
+                        {itemErrors.preparationTime && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.preparationTime}</p>}
                       </div>
                     </div>
 
@@ -1193,11 +1246,12 @@ export default function MenuManagementPage() {
                             type="number"
                             min="0"
                             onKeyDown={blockNegative}
+                            onChange={() => clearItemError('price')}
                             defaultValue={editingItem?.price}
-                            required
-                            className="w-full pl-10 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
+                            className={`w-full pl-10 pr-5 py-4 bg-(--color-bg-soft) rounded-xl border outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary) ${itemErrors.price ? 'border-danger' : 'border-(--color-border)'}`}
                           />
                         </div>
+                        {itemErrors.price && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.price}</p>}
                       </div>
                       {(user?.role === 'admin' || user?.role === 'location_admin' || user?.role === 'super_admin') && (
                         <div className="space-y-2">
@@ -1209,11 +1263,12 @@ export default function MenuManagementPage() {
                               type="number"
                               min="0"
                               onKeyDown={blockNegative}
+                              onChange={() => clearItemError('costPrice')}
                               defaultValue={editingItem?.costPrice || 0}
-                              required
-                              className="w-full pl-10 pr-5 py-4 bg-primary/5 rounded-xl border border-primary/20 outline-none focus:ring-2 focus:ring-primary font-medium text-primary-dark dark:text-primary transition-all"
+                              className={`w-full pl-10 pr-5 py-4 bg-primary/5 rounded-xl border outline-none focus:ring-2 focus:ring-primary font-medium text-primary-dark dark:text-primary transition-all ${itemErrors.costPrice ? 'border-danger' : 'border-primary/20'}`}
                             />
                           </div>
+                          {itemErrors.costPrice && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.costPrice}</p>}
                         </div>
                       )}
                     </div>
@@ -1238,10 +1293,12 @@ export default function MenuManagementPage() {
                           type="number"
                           min="0"
                           onKeyDown={blockNegative}
+                          onChange={() => clearItemError('discountedPrice')}
                           defaultValue={editingItem?.discountedPrice}
-                          className="w-full px-4 py-3 bg-(--color-surface) rounded-xl border border-(--color-border) outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary)"
+                          className={`w-full px-4 py-3 bg-(--color-surface) rounded-xl border outline-none focus:ring-2 focus:ring-primary/30 font-medium transition-all text-(--color-text-primary) ${itemErrors.discountedPrice ? 'border-danger' : 'border-(--color-border)'}`}
                           placeholder="The 'Sale' price"
                         />
+                        {itemErrors.discountedPrice && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.discountedPrice}</p>}
                       </div>
                     </div>
                   </div>
@@ -1262,7 +1319,7 @@ export default function MenuManagementPage() {
 
                   <div
                     onClick={() => itemFileRef.current.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed border-(--color-border) flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all overflow-hidden relative group"
+                    className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all overflow-hidden relative group ${itemErrors.image ? 'border-danger' : 'border-(--color-border)'}`}
                   >
                     {imagePreview ? (
                       <>
@@ -1286,15 +1343,15 @@ export default function MenuManagementPage() {
                       </div>
                     )}
                   </div>
-                  <input 
-                    type="file" 
-                    name="image" 
-                    ref={itemFileRef} 
-                    onChange={handleImageChange} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    name="image"
+                    ref={itemFileRef}
+                    onChange={handleImageChange}
+                    className="hidden"
                     accept="image/*"
-                    required={!editingItem}
                   />
+                  {itemErrors.image && <p className="text-[11px] font-medium text-danger ml-1">{itemErrors.image}</p>}
                 </section>
 
                 {/* Status */}
@@ -1333,8 +1390,9 @@ export default function MenuManagementPage() {
 
                         {!isGlobalItem && (
                           <>
-                            <div className="space-y-3 p-5 bg-(--color-bg-soft) rounded-xl border border-(--color-border)">
+                            <div className={`space-y-3 p-5 bg-(--color-bg-soft) rounded-xl border ${itemErrors.branches ? 'border-danger' : 'border-(--color-border)'}`}>
                               <label className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Target Branches</label>
+                              {itemErrors.branches && <p className="text-[11px] font-medium text-danger">{itemErrors.branches}</p>}
                               <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 no-scrollbar">
                                 {locations.map(loc => (
                                   <label key={loc._id} className="flex items-center gap-3 p-3 bg-(--color-surface) rounded-xl border border-(--color-border) cursor-pointer hover:border-primary/20 transition-all">
@@ -1342,6 +1400,7 @@ export default function MenuManagementPage() {
                                       type="checkbox"
                                       checked={selectedBranches.includes(loc._id)}
                                       onChange={(e) => {
+                                        clearItemError('branches');
                                         if (e.target.checked) {
                                           setSelectedBranches([...selectedBranches, loc._id]);
                                         } else {
@@ -1645,7 +1704,7 @@ export default function MenuManagementPage() {
             <div className="pt-6 flex items-center justify-end gap-6 border-t border-(--color-border)">
               <button
                 type="button"
-                onClick={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); }}
+                onClick={() => { setShowItemModal(false); setEditingItem(null); setImagePreview(null); setItemErrors({}); }}
                 className="px-8 py-4 text-xs font-medium uppercase tracking-normal text-(--color-text-muted) hover:text-danger transition-all"
               >
                 Cancel
@@ -1784,7 +1843,7 @@ export default function MenuManagementPage() {
             <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">No {activeTab === 'items' ? 'Items' : 'Categories'} Found</h3>
             <p className="text-(--color-text-muted) font-medium mt-2 max-w-sm mx-auto">The {activeTab === 'items' ? 'menu' : 'category'} list is currently empty for the selected filters. Add a new {activeTab === 'items' ? 'item' : 'category'} to begin.</p>
             {can(user, 'menu.add') && (
-              <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
+              <Button variant="outline" className="mt-8 px-10 rounded-xl" icon={Plus} onClick={() => { if (activeTab === 'items') { setEditingItem(null); setImagePreview(null); setItemErrors({}); setShowItemModal(true); } else setShowCategoryModal(true); }}>Add {activeTab === 'items' ? 'Item' : 'Category'}</Button>
             )}
           </div>
         ) : null}
