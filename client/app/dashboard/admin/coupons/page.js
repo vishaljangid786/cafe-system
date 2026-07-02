@@ -319,6 +319,7 @@ export default function CouponsManagementPage() {
             </div>
           ) : (
           <>
+          <div className="responsive-table-container">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-(--color-surface-soft) border-b border-(--color-border)">
@@ -400,7 +401,8 @@ export default function CouponsManagementPage() {
               ))}
             </tbody>
           </table>
-          
+          </div>
+
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-5 py-4 bg-(--color-surface-soft) border-t border-(--color-border)">

@@ -448,7 +448,7 @@ export default function TablesPage() {
             </h1>
             <p className="text-xs text-(--color-text-muted) font-medium ml-13">Manage your tables and live orders</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <div className="flex items-center bg-(--color-surface-soft) dark:bg-(--color-surface) p-1 rounded-xl border border-(--color-border) dark:border-(--color-border)">
               {['all', 'available', 'occupied'].map((f) => (
                 <button

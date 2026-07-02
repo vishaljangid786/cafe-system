@@ -304,7 +304,7 @@ export default function BranchStaffPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <div>
                 <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">Phone</label>
                 <input required type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.phone} onChange={e => setFormData({ ...formData, phone: digitsOnly(e.target.value, 10) })} />
@@ -332,7 +332,7 @@ export default function BranchStaffPage() {
               <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.address1} onChange={e => setFormData({ ...formData, address1: e.target.value })} />
             </div>
 
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
               <div>
                 <label className="block text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-2 ml-1">City</label>
                 <input required className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface)/50 border-none focus:ring-2 focus:ring-primary transition-all text-sm font-medium dark:text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />

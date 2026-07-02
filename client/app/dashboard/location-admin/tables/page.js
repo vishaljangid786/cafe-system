@@ -338,7 +338,7 @@ export default function TablesPage() {
             </h1>
             <p className="text-xs text-(--color-text-muted) mt-1 font-medium">Manage tables and orders</p>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={QrCode} onClick={() => setShowBulkQr(true)}>Print QR</Button>
             <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={Package} onClick={() => setShowStock(true)}>Stock</Button>
             {can(user, 'tables.add') && (

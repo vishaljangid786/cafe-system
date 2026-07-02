@@ -469,7 +469,7 @@ export default function AdminTablesPage() {
             </h1>
             <p className="text-xs text-(--color-text-muted) font-medium ml-13">Manage all tables across all branches</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
