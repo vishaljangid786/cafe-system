@@ -37,7 +37,11 @@ const notificationSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // Optional: system-generated notifications (e.g. a customer QR self-order
+      // awaiting approval) have no human sender. The client renders these as
+      // "System" and hides the Reply action.
+      required: false,
+      default: null,
     },
     // Scoping for broadcast
     roleTarget: {

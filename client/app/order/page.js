@@ -110,6 +110,12 @@ function OrderApp() {
 
   const addItem = (it) => {
     if (!it) return;
+    if (it.tracksStock && (Number(it.stock) || 0) <= 0) { setError(`${it.name} is out of stock`); return; }
+    if (it.tracksStock) {
+      const inCart = cart.filter((x) => x.menuItem === it._id).reduce((a, x) => a + x.quantity, 0);
+      if (inCart >= Number(it.stock)) { setError(`Only ${it.stock} ${it.name} available`); return; }
+    }
+    setError('');
     if (Array.isArray(it.modifierGroups) && it.modifierGroups.length > 0) {
       setModSel({}); setModItem(it); return;
     }
@@ -421,20 +427,35 @@ function OrderApp() {
   }
 
   // ===== MENU =====
+  const StockTag = ({ it }) => {
+    if (!it.tracksStock) return null;
+    const q = Number(it.stock) || 0;
+    return (
+      <span className={`text-[10px] font-bold uppercase tracking-wide ${q <= 0 ? 'text-danger' : q <= 5 ? 'text-warning' : 'text-success'}`}>
+        {q <= 0 ? 'Out of stock' : `${q} left`}
+      </span>
+    );
+  };
+
   const MenuRow = (it) => {
     const inCartQty = cart.filter((x) => x.menuItem === it._id).reduce((a, x) => a + x.quantity, 0);
+    const soldOut = it.tracksStock && (Number(it.stock) || 0) <= 0;
     return (
-      <div key={it._id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+      <div key={it._id} className={`flex items-center justify-between gap-3 p-3 rounded-xl bg-(--color-surface) border border-(--color-border) ${soldOut ? 'opacity-50' : ''}`}>
         <div className="flex items-center gap-3 min-w-0">
           {it.image
             ? <img src={it.image} alt={it.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
             : <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${it.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`} />}
           <div className="min-w-0">
             <p className="text-sm font-bold text-(--color-text-primary) truncate">{it.name}</p>
-            <p className="text-[11px] font-bold text-(--color-text-muted)">{money(priceOf(it))}{it.modifierGroups?.length ? ' · customizable' : ''}</p>
+            <p className="text-[11px] font-bold text-(--color-text-muted) flex items-center gap-1.5 flex-wrap">
+              <span>{money(priceOf(it))}</span>
+              {it.modifierGroups?.length ? <span>· customizable</span> : null}
+              <StockTag it={it} />
+            </p>
           </div>
         </div>
-        <button onClick={() => addItem(it)} className="shrink-0 flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide rounded-lg border border-primary/20 active:scale-95">
+        <button onClick={() => addItem(it)} disabled={soldOut} className="shrink-0 flex items-center gap-1 px-3 py-2 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide rounded-lg border border-primary/20 active:scale-95 disabled:opacity-50">
           <Plus size={13} /> {inCartQty > 0 ? inCartQty : 'Add'}
         </button>
       </div>
@@ -458,7 +479,10 @@ function OrderApp() {
                     {it.image ? <img src={it.image} alt={it.name} className="h-full w-full object-cover" /> : <Utensils size={20} className="text-(--color-text-muted)" />}
                   </div>
                   <p className="text-xs font-bold text-(--color-text-primary) truncate">{it.name}</p>
-                  <p className="text-[11px] font-bold text-primary">{money(priceOf(it))}</p>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-[11px] font-bold text-primary">{money(priceOf(it))}</p>
+                    <StockTag it={it} />
+                  </div>
                 </button>
               ))}
             </div>

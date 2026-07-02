@@ -381,6 +381,8 @@ export default function AdminTablesPage() {
 
   const handleMerge = async (sourceId, targetTableId) => {
     if (!targetTableId) return;
+    const target = tables.find((t) => t._id === targetTableId);
+    if (!window.confirm(`Merge this table's order into T${target?.tableNumber ?? ''}? This moves all items and frees the current table.`)) return;
     const loadToast = toast.loading('Merging tables...');
     try {
       await api.put(`/tables/${sourceId}/merge`, { targetTableId });
@@ -749,7 +751,13 @@ export default function AdminTablesPage() {
                       <PremiumSelect
                         value=""
                         onChange={(v) => { if (v) handleMerge(selectedTable._id, v); }}
-                        options={mergeTargets.map((t) => ({ label: `T${t.tableNumber}${t.tableName ? ` · ${t.tableName}` : ''}`, value: t._id }))}
+                        // A leading empty option keeps this at 2+ options so
+                        // PremiumSelect never auto-selects the lone target and
+                        // silently merges the table when the modal opens.
+                        options={[
+                          { label: 'Merge this table into…', value: '' },
+                          ...mergeTargets.map((t) => ({ label: `T${t.tableNumber}${t.tableName ? ` · ${t.tableName}` : ''}`, value: t._id })),
+                        ]}
                         placeholder="Merge this table into…"
                       />
                     );

@@ -367,6 +367,10 @@ class OrderService {
           .to(`branch_${branch}_admin`)
           .to('role_super_admin')
           .emit('order:pending_approval', { orderId: createdOrder._id, branchId: branch });
+        // Persistent bell notification for the same audience (best-effort).
+        this._notifyPendingApproval(createdOrder).catch((e) =>
+          console.error('[OrderService] pending-approval notification failed:', e.message)
+        );
       } else {
         io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
         // Scope to THIS branch's admins/branch-admins (+ super_admins who oversee
@@ -528,6 +532,57 @@ class OrderService {
     io.to(`branch_${order.branch}`).emit('order:declined', { orderId: order._id });
 
     return order;
+  }
+
+  /**
+   * Persist + deliver a bell notification when a customer self-order is placed and
+   * needs staff confirmation. Audience = super admins + branch managers with access
+   * to the branch + staff assigned to the branch (chefs are excluded — they only
+   * see the order once it's confirmed). Best-effort; never blocks the order.
+   */
+  async _notifyPendingApproval(order) {
+    const branchId = order.branch;
+    const branchIdStr = branchId.toString();
+
+    let tableLabel = '';
+    if (order.table) {
+      const t = await Table.findById(order.table).select('tableNumber tableName').lean();
+      if (t) tableLabel = ` on Table T${t.tableNumber}${t.tableName ? ` (${t.tableName})` : ''}`;
+    }
+
+    const [supers, managers, staff] = await Promise.all([
+      User.find({ role: 'super_admin' }).select('_id'),
+      User.find({
+        role: { $in: ['admin', 'branch_admin', 'location_admin'] },
+        $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }],
+      }).select('_id'),
+      User.find({
+        role: 'staff',
+        $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }],
+      }).select('_id'),
+    ]);
+
+    const seen = new Set();
+    const recipients = [];
+    [...supers, ...managers, ...staff].forEach((u) => {
+      const id = u._id.toString();
+      if (!seen.has(id)) { seen.add(id); recipients.push({ user: u._id, isRead: false }); }
+    });
+    if (recipients.length === 0) return;
+
+    const amount = Math.round(Number(order.grandTotal || order.totalAmount) || 0);
+    const notification = await Notification.create({
+      title: 'New table order — approve it',
+      message: `${order.customerName || 'A guest'} placed a self-order${tableLabel} (₹${amount}, ${order.paymentApproval?.method || 'CASH'}). Confirm the payment to send it to the kitchen.`,
+      type: 'order_action',
+      priority: 'high',
+      sender: null,
+      locationTarget: branchId,
+      recipients,
+    });
+
+    const io = getIO();
+    recipients.forEach(({ user }) => io.to(user.toString()).emit('new_notification', notification));
   }
 
   /**

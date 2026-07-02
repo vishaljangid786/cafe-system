@@ -4,6 +4,8 @@ const MenuItem = require('../models/MenuItem');
 const Location = require('../models/Location');
 const Table = require('../models/Table');
 const Order = require('../models/Order');
+const BranchStock = require('../models/BranchStock');
+const Recipe = require('../models/Recipe');
 const OrderService = require('../services/orderService');
 const { getSettings } = require('../utils/settings');
 
@@ -84,17 +86,59 @@ const getPublicMenu = asyncHandler(async (req, res) => {
     }
   }
 
-  const [items, settings, popular] = await Promise.all([
+  const [rawItems, settings, popular] = await Promise.all([
     MenuItem.find({
       isAvailable: true,
       $or: [{ isGlobal: true }, { availableBranches: branchId }],
     })
       .populate('category', 'name icon')
-      .select('name price discountedPrice image description category dietaryType modifierGroups')
+      .select('name price discountedPrice image description category dietaryType modifierGroups isGlobal stock recipeId')
       .lean(),
     getSettings(branchId),
     getPopularItems(branchId),
   ]);
+
+  // Merge per-branch stock so the customer sees live quantities, and DROP anything
+  // that can't actually be ordered right now (out of stock / not stocked here).
+  const ids = rawItems.map((i) => i._id);
+  const [branchStocks, recipes] = await Promise.all([
+    BranchStock.find({ branch: branchId, menuItem: { $in: ids } }).select('menuItem stock isAvailable').lean(),
+    Recipe.find({ menuItemId: { $in: ids } }).select('menuItemId').lean(),
+  ]);
+  const stockMap = new Map(branchStocks.map((s) => [s.menuItem.toString(), s]));
+  const recipeSet = new Set(recipes.map((r) => r.menuItemId.toString()));
+
+  const items = [];
+  for (const it of rawItems) {
+    const idStr = it._id.toString();
+    const bs = stockMap.get(idStr);
+    const isRecipe = recipeSet.has(idStr) || it.recipeId != null;
+
+    let orderable = false;
+    let stock = null;      // number of units left, when the item is stock-tracked
+    let tracksStock = false;
+
+    if (bs) {
+      tracksStock = true;
+      stock = bs.stock;
+      orderable = bs.isAvailable !== false && bs.stock > 0;
+    } else if (isRecipe) {
+      // Made-to-order (ingredient-based) — no unit stock to show.
+      orderable = true;
+    } else if (it.isGlobal) {
+      tracksStock = true;
+      stock = it.stock || 0;
+      orderable = (it.stock || 0) > 0;
+    } else {
+      // Not stocked at this branch → can't be ordered here.
+      orderable = false;
+    }
+
+    if (!orderable) continue; // hide out-of-stock / unavailable items entirely
+
+    const { isGlobal, stock: _s, recipeId, ...pub } = it;
+    items.push({ ...pub, tracksStock, ...(tracksStock ? { stock } : {}) });
+  }
 
   res.json({
     success: true,
