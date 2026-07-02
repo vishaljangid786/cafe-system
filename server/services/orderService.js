@@ -22,6 +22,18 @@ const isTransactionUnsupportedError = (error) => {
   );
 };
 
+// True when a transaction failed TRANSIENTLY — a write conflict or lock timeout
+// (codes 112 / 24), extremely common on a single-node replica set (local
+// `mongod --replSet`, Atlas free/shared tiers) under even light concurrency.
+// MongoDB tags these 'TransientTransactionError' and GUARANTEES the transaction was
+// aborted (never committed), so the whole operation is safe to retry with no risk of
+// a duplicate order. Without this, every such order 500'd as "Something went wrong".
+const isTransientTransactionError = (error) => {
+  if (!error) return false;
+  if (typeof error.hasErrorLabel === 'function' && error.hasErrorLabel('TransientTransactionError')) return true;
+  return Array.isArray(error.errorLabels) && error.errorLabels.includes('TransientTransactionError');
+};
+
 /**
  * Order Service
  * Handles business logic for orders to keep controllers thin.
@@ -31,19 +43,36 @@ class OrderService {
    * Create a new order with stock deduction and table update.
    *
    * The work spans several writes (stock, order doc, table) so it runs inside a
-   * MongoDB transaction for atomicity. Transactions require a replica set /
-   * mongos — on a STANDALONE MongoDB the transaction throws and NO order can ever
-   * be placed (staff just see "Something went wrong"). Detect that single case
-   * and transparently retry the same logic non-atomically, so orders still work.
+   * MongoDB transaction for atomicity. Two deployment realities are handled so an
+   * order is NEVER lost to infrastructure:
+   *   1. STANDALONE MongoDB can't run transactions at all → the same logic is run
+   *      non-atomically (every stock/coupon mutation is an individually guarded
+   *      atomic update, so it stays race-safe).
+   *   2. On a REPLICA SET, transactions can fail TRANSIENTLY (write conflict / lock
+   *      timeout) under even light concurrency — especially single-node replica sets.
+   *      MongoDB guarantees an aborted transaction here, so we RETRY a few times, then
+   *      fall back to the non-transactional path. Previously any transient failure
+   *      surfaced as a 500 ("Something went wrong") and the customer couldn't order.
    */
   async createOrder(params) {
-    try {
-      return await this._createOrder(params, true);
-    } catch (error) {
-      if (isTransactionUnsupportedError(error)) {
-        return await this._createOrder(params, false);
+    const MAX_ATTEMPTS = 4;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        return await this._createOrder(params, true);
+      } catch (error) {
+        // Standalone deployment: no transactions at all → run the same logic without one.
+        if (isTransactionUnsupportedError(error)) {
+          return await this._createOrder(params, false);
+        }
+        // Transient (write conflict / lock timeout): the transaction was aborted, so
+        // retry it; after a few tries, fall back to the (race-safe) non-transactional path.
+        if (isTransientTransactionError(error)) {
+          if (attempt < MAX_ATTEMPTS) continue;
+          return await this._createOrder(params, false);
+        }
+        // A genuine business/validation error (out of stock, invalid coupon, …) — surface it.
+        throw error;
       }
-      throw error;
     }
   }
 
