@@ -5,6 +5,7 @@ const { getIO } = require('../config/socket');
 const { enforceLocationAccess, scopedLocationId } = require('../utils/accessControl');
 
 const Order = require('../models/Order');
+const OrderService = require('../services/orderService');
 
 // @desc    Get all tables for a location
 // @route   GET /api/tables
@@ -366,24 +367,35 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.billImage = req.file.path;
   table.status = 'completed';
 
-  // Finalize only orders that have actually been served/are ready to bill.
-  // Finalizing PLACED/ACCEPTED/PREPARING orders would record revenue (and deduct
-  // inventory) for food that was never delivered to the customer.
+  // A FORCED bill (the cashier explicitly chose to finish the bill despite unserved
+  // orders) completes EVERY non-terminal order on the table. A normal bill only
+  // finalizes orders that reached READY/SERVED — finalizing PLACED/ACCEPTED/PREPARING
+  // records revenue + deducts inventory for food not yet delivered, so it needs the
+  // explicit force. Either way, finalizeOrder marks each order COMPLETED, which drops
+  // it off the kitchen (chef) board.
+  const force = req.body.force === 'true' || req.body.force === true;
+  const billableStatuses = force
+    ? ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED']
+    : ['READY', 'SERVED', 'COMPLETED'];
+
   const sessionOrders = await Order.find({
     table: table._id,
-    status: { $in: ['READY', 'SERVED', 'COMPLETED'] },
+    status: { $in: billableStatuses },
     isBilled: { $ne: true },
   }).populate('items.menuItem');
 
-  // Refuse to bill while live (not-yet-served) kitchen orders remain — clearing
-  // the table would orphan them and lose their revenue/inventory accounting.
-  const liveOrder = await Order.findOne({
-    table: table._id,
-    status: { $in: ['PLACED', 'ACCEPTED', 'PREPARING'] },
-  });
-  if (liveOrder) {
-    res.status(400);
-    throw new Error('This table still has active kitchen orders that have not been served. Serve, complete, or cancel them before billing.');
+  // Without force, refuse to bill while live (not-yet-served) kitchen orders remain —
+  // clearing the table would orphan them and lose their revenue/inventory accounting.
+  // With force, those orders are included above and finalized.
+  if (!force) {
+    const liveOrder = await Order.findOne({
+      table: table._id,
+      status: { $in: ['PLACED', 'ACCEPTED', 'PREPARING'] },
+    });
+    if (liveOrder) {
+      res.status(400);
+      throw new Error('This table still has active kitchen orders that have not been served. Serve, complete, or cancel them before billing.');
+    }
   }
 
   // Stamp the chosen tender on the orders being billed (DB + the in-memory docs
@@ -475,6 +487,9 @@ const uploadBill = asyncHandler(async (req, res) => {
 
   const io = getIO();
   io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'bill' });
+  // The billed orders were finalized (COMPLETED) — nudge the kitchen (chef) board to
+  // refetch so those orders drop off it in realtime (it listens for 'order:update').
+  io.to(`branch_${table.locationId}`).emit('order:update', { tableId: table._id, action: 'bill' });
 
   res.json({
     success: true,
@@ -628,6 +643,63 @@ const completeOrder = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Cancel a table: cancel its active orders and free it
+// @route   PUT /api/tables/:id/cancel
+// @access  Private (Super Admin, Admin, Branch Admin, Location Admin, Staff)
+const cancelTable = asyncHandler(async (req, res) => {
+  const table = await Table.findById(req.params.id);
+
+  if (!table) {
+    res.status(404);
+    throw new Error('Table not found');
+  }
+
+  enforceLocationAccess(req, res, table.locationId, 'You do not have permission to cancel tables from other locations');
+
+  // Cancel every active (non-terminal) order on this table. Reuse the order-cancel
+  // cascade so stock/coupons are restored, activeOrdersCount is decremented, and it
+  // emits. COMPLETED orders are excluded so their revenue stands.
+  const orders = await Order.find({
+    table: table._id,
+    status: { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED'] },
+  });
+  for (const o of orders) {
+    try {
+      await OrderService.cancelOrder(o._id, req.user._id);
+    } catch (e) {
+      console.error(`Failed to cancel order ${o._id} while cancelling table ${table._id}:`, e);
+    }
+  }
+
+  // Free the table to a clean available state.
+  table.status = 'available';
+  table.isBooked = false;
+  table.orders = [];
+  table.totalAmount = 0;
+  table.numberOfPeople = 0;
+  table.customerName = '';
+  table.activeOrdersCount = 0;
+  table.appliedCoupon = null;
+
+  await table.save();
+
+  await sendNotification({
+    title: 'Table Cancelled',
+    message: `Table ${table.tableNumber} was cancelled and freed by ${req.user.name}.`,
+    type: 'table_action',
+    performedByUser: req.user,
+    locationId: table.locationId,
+  });
+
+  const io = getIO();
+  io.to(`branch_${table.locationId}`).emit('table:update', { tableId: table._id, action: 'cancel' });
+
+  res.json({
+    success: true,
+    data: table,
+  });
+});
+
 // @desc    Update table details
 // @route   PUT /api/tables/:id
 // @access  Private (Admin, Branch Admin)
@@ -676,5 +748,6 @@ module.exports = {
   deleteTable,
   completeOrder,
   mergeTable,
+  cancelTable,
   updateTable,
 };

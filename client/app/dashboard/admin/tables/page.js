@@ -37,6 +37,7 @@ export default function AdminTablesPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [forceBill, setForceBill] = useState(false);
   const [qrTable, setQrTable] = useState(null);
   const [showBulkQr, setShowBulkQr] = useState(false);
   const [showBranchQr, setShowBranchQr] = useState(false);
@@ -366,6 +367,7 @@ export default function AdminTablesPage() {
     const data = new FormData();
     data.append('billImage', file);
     data.append('paymentType', paymentType);
+    if (forceBill) data.append('force', 'true');
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -393,6 +395,20 @@ export default function AdminTablesPage() {
       fetchTables();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not merge tables', { id: loadToast });
+    }
+  };
+
+  const handleCancelTable = async (id) => {
+    if (!window.confirm('Cancel this table and free it? All active orders will be cancelled.')) return;
+    const loadToast = toast.loading('Cancelling table...');
+    try {
+      await api.put(`/tables/${id}/cancel`);
+      toast.success('Table freed', { id: loadToast });
+      setShowOrderModal(false);
+      setSelectedTable(null);
+      fetchTables();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not cancel the table', { id: loadToast });
     }
   };
 
@@ -959,7 +975,8 @@ export default function AdminTablesPage() {
                           icon={Receipt}
                           onClick={() => {
                             const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                            if (!allReady) return toast.error('All orders must be served before you can finish the bill');
+                            if (!allReady && !window.confirm('Some orders on this table are not served yet. Forcefully complete them and finish the bill?')) return;
+                            setForceBill(!allReady);
                             setIsBillPreviewOpen(true);
                           }}
                         >
@@ -967,6 +984,16 @@ export default function AdminTablesPage() {
                         </Button>
                       )}
                     </div>
+                    {selectedTable && selectedTable.status !== 'available' && (
+                      <Button
+                        variant="outline"
+                        className="w-full mt-4 !rounded-xl !py-2.5 text-[11px] font-semibold uppercase tracking-normal hover:border-danger/50 hover:text-danger"
+                        icon={Trash2}
+                        onClick={() => handleCancelTable(selectedTable._id)}
+                      >
+                        Cancel & Free Table
+                      </Button>
+                    )}
                 </div>
               </div>
 

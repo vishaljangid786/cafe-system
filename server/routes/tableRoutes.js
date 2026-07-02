@@ -9,6 +9,7 @@ const {
   deleteTable,
   completeOrder,
   mergeTable,
+  cancelTable,
   updateTable
 } = require('../controllers/tableController');
 const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
@@ -41,5 +42,8 @@ router.route('/:id/merge')
 
 router.route('/:id/bill')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef'), upload.single('billImage'), uploadBill);
+
+router.route('/:id/cancel')
+  .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'staff'), cancelTable);
 
 module.exports = router;

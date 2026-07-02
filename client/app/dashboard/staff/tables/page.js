@@ -28,6 +28,7 @@ export default function StaffTablesPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [forceBill, setForceBill] = useState(false);
   const [pendingOrders, setPendingOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [menuSearch, setMenuSearch] = useState('');
@@ -165,6 +166,18 @@ export default function StaffTablesPage() {
     setShowOrderModal(true);
   };
 
+  const handleCancelTable = async (table) => {
+    if (!window.confirm('Cancel this table and free it? All active orders will be cancelled.')) return;
+    const loadToast = toast.loading('Cancelling table...');
+    try {
+      await api.put(`/tables/${table._id}/cancel`);
+      toast.success('Table freed', { id: loadToast });
+      fetchTables();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not cancel the table. Please try again.', { id: loadToast });
+    }
+  };
+
   const handleStageOrder = (e) => {
     e.preventDefault();
     if (!orderItem.itemName || !orderItem.price) return toast.error('Please select an item');
@@ -241,6 +254,7 @@ export default function StaffTablesPage() {
     const data = new FormData();
     data.append('billImage', file);
     data.append('paymentType', paymentType);
+    if (forceBill) data.append('force', 'true');
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -428,6 +442,7 @@ export default function StaffTablesPage() {
                     table={table}
                     onAssign={handleBookTable}
                     onManage={handleOpenOrder}
+                    onCancel={handleCancelTable}
                     onQr={setQrTable}
                   />
                 </SlideIn>
@@ -659,7 +674,8 @@ export default function StaffTablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('All orders must be served before you can finish the bill');
+                          if (!allReady && !window.confirm('Some orders on this table are not served yet. Forcefully complete them and finish the bill?')) return;
+                          setForceBill(!allReady);
                           setIsBillPreviewOpen(true);
                         }}
                       >

@@ -300,6 +300,20 @@ export default function TablesPage() {
     }
   };
 
+  const handleCancelTable = async (table) => {
+    if (!window.confirm('Cancel this table and free it? All active orders will be cancelled.')) return;
+    const loadToast = toast.loading('Cancelling table...');
+    try {
+      await api.put(`/tables/${table._id}/cancel`);
+      toast.success('Table freed', { id: loadToast });
+      setShowOrderModal(false);
+      setSelectedTable(null);
+      fetchTables();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not cancel the table', { id: loadToast });
+    }
+  };
+
   const stats = {
     total: tables.length,
     occupied: tables.filter(t => t.status !== 'available').length,
@@ -464,6 +478,15 @@ export default function TablesPage() {
                             className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-danger/50 hover:bg-danger/5 transition-all text-(--color-text-muted) hover:text-danger"
                           >
                             <Trash2 size={14} />
+                          </button>
+                        )}
+                        {!isAvailable && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCancelTable(table); }}
+                            title="Cancel & free table"
+                            className="h-8 w-8 rounded-xl border border-(--color-border) dark:border-(--color-border) flex items-center justify-center hover:border-danger/50 hover:bg-danger/5 transition-all text-(--color-text-muted) hover:text-danger"
+                          >
+                            <X size={14} />
                           </button>
                         )}
                       </div>

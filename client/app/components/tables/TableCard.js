@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CardHover } from '../ui/AnimatedContainer';
 import { Button } from '../ui/Button';
 
-export default function TableCard({ table, onAssign, onManage, onEdit, onDelete, onQr }) {
+export default function TableCard({ table, onAssign, onManage, onEdit, onDelete, onQr, onCancel }) {
   const isAvailable = table.status === 'available';
   const isOccupied = table.status === 'occupied' || table.status === 'booked';
   const isReserved = table.status === 'reserved';
@@ -171,6 +171,16 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete,
           >
             {isAvailable ? 'Assign Table' : 'Manage Order'}
           </Button>
+          {!isAvailable && onCancel && (
+            <Button
+              variant="outline"
+              className="w-full mt-2 !rounded-[1.5rem] !py-3 text-xs font-bold uppercase tracking-normal transition-all hover:border-danger/50 hover:text-danger"
+              icon={Trash}
+              onClick={() => onCancel(table)}
+            >
+              Cancel & Free Table
+            </Button>
+          )}
         </div>
       </div>
     </CardHover>

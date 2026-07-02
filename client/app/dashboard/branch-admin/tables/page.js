@@ -45,6 +45,7 @@ export default function TablesPage() {
   const [showMenuGrid, setShowMenuGrid] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [forceBill, setForceBill] = useState(false);
   const [systemOrders, setSystemOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, occupied
   const [qrTable, setQrTable] = useState(null);
@@ -396,6 +397,7 @@ export default function TablesPage() {
     const data = new FormData();
     data.append('billImage', file);
     data.append('paymentType', paymentType);
+    if (forceBill) data.append('force', 'true');
     try {
       await api.put(`/tables/${selectedTable._id}/bill`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -407,6 +409,20 @@ export default function TablesPage() {
       toast.success('Bill saved', { id: loadToast });
     } catch (error) {
       toast.error('Could not save the bill. Please try again.', { id: loadToast });
+    }
+  };
+
+  const handleCancelTable = async (table) => {
+    if (!window.confirm('Cancel this table and free it? All active orders will be cancelled.')) return;
+    const loadToast = toast.loading('Cancelling table...');
+    try {
+      await api.put(`/tables/${table._id}/cancel`);
+      toast.success('Table freed', { id: loadToast });
+      setShowOrderModal(false);
+      setSelectedTable(null);
+      fetchTables();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not cancel the table', { id: loadToast });
     }
   };
 
@@ -622,6 +638,17 @@ export default function TablesPage() {
                               className="p-2.5 rounded-xl bg-success/10 text-success border border-success/20 hover:bg-success hover:text-white transition-all"
                             >
                               <ShoppingBag size={18} />
+                            </motion.button>
+                          )}
+                          {table.status !== 'available' && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); handleCancelTable(table); }}
+                              title="Cancel & free table"
+                              className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all"
+                            >
+                              <X size={18} />
                             </motion.button>
                           )}
                           {can(user, 'tables.modify') && (
@@ -927,7 +954,8 @@ export default function TablesPage() {
                         icon={Receipt}
                         onClick={() => {
                           const allReady = systemOrders.every(o => ['SERVED', 'COMPLETED'].includes(o.status));
-                          if (!allReady) return toast.error('All orders must be served before you can finish the bill');
+                          if (!allReady && !window.confirm('Some orders on this table are not served yet. Forcefully complete them and finish the bill?')) return;
+                          setForceBill(!allReady);
                           setIsBillPreviewOpen(true);
                         }}
                       >
