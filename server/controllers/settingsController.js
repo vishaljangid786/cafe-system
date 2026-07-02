@@ -3,7 +3,7 @@ const Settings = require('../models/Settings');
 const { getSettings } = require('../utils/settings');
 const { canAccessLocation } = require('../utils/accessControl');
 
-const GROUPS = ['tax', 'payroll', 'loyalty', 'invoice', 'billing', 'general'];
+const GROUPS = ['tax', 'payroll', 'loyalty', 'invoice', 'billing', 'general', 'payments'];
 
 // @desc    Get effective settings (defaults < global < branch) for a branch
 // @route   GET /api/settings

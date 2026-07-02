@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw, MapPin } from 'lucide-react';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, LayoutGrid, MessageSquare, RefreshCcw, MapPin, QrCode, Package } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import PendingApprovals from '@/app/components/orders/PendingApprovals';
+import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
@@ -34,6 +37,9 @@ export default function AdminTablesPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [qrTable, setQrTable] = useState(null);
+  const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showStock, setShowStock] = useState(false);
   const [isModalReady, setIsModalReady] = useState(false);
   
   // Form States
@@ -444,6 +450,10 @@ export default function AdminTablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   }), [tables]);
 
+  const selBranchName = selectedLocation === 'All'
+    ? 'All branches'
+    : (locations.find(l => (l._id || l) === selectedLocation)?.name || 'Branch');
+
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
@@ -468,6 +478,22 @@ export default function AdminTablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-border) mx-2 hidden sm:block" />
+            <Button
+              variant="outline"
+              className="!rounded-xl !py-2.5 text-[11px] font-semibold tracking-normal"
+              icon={QrCode}
+              onClick={() => setShowBulkQr(true)}
+            >
+              Print QR
+            </Button>
+            <Button
+              variant="outline"
+              className="!rounded-xl !py-2.5 text-[11px] font-semibold tracking-normal"
+              icon={Package}
+              onClick={() => setShowStock(true)}
+            >
+              Stock
+            </Button>
             {can(user, 'tables.add') && (
             <Button
               variant="primary"
@@ -486,6 +512,8 @@ export default function AdminTablesPage() {
             )}
           </div>
         </div>
+
+        <PendingApprovals branchId={selectedLocation} />
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {[
@@ -621,6 +649,15 @@ export default function AdminTablesPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-2  transition-opacity">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setQrTable(table)}
+                          title="Table QR code"
+                          className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all"
+                        >
+                          <QrCode size={16} />
+                        </motion.button>
                         {can(user, 'tables.modify') && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -1102,6 +1139,10 @@ export default function AdminTablesPage() {
 
         <ConfirmDialog isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} onConfirm={handleDeleteTable} title="Delete Table?" message="This table will be permanently removed. This cannot be undone." />
         <BillPreview isOpen={isBillPreviewOpen} onClose={() => setIsBillPreviewOpen(false)} onComplete={handleFinalizeSession} table={selectedTable} systemOrders={systemOrders} />
+
+        <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name} />
+        <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={filteredTables} branchName={selBranchName} />
+        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={selectedLocation} branchName={selBranchName} menuHref="/dashboard/admin/menu" />
       </div>
     </PageTransition>
   );

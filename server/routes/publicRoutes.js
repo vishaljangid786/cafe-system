@@ -1,7 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
-const { getPublicMenu, createPublicOrder } = require('../controllers/publicController');
+const { getPublicMenu, createPublicOrder, getPublicOrderStatus } = require('../controllers/publicController');
 
 // PUBLIC (no auth). Tight rate limits on top of the global API limiter to curb
 // abuse of these unauthenticated endpoints.
@@ -20,7 +20,18 @@ const orderLimiter = rateLimit({
   message: { success: false, message: 'Too many orders, please try again shortly.' },
 });
 
+// Status polling — allow a generous cadence since the scan page polls every few
+// seconds while it waits for staff to confirm the payment.
+const statusLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please slow down.' },
+});
+
 router.get('/menu', menuLimiter, getPublicMenu);
 router.post('/order', orderLimiter, createPublicOrder);
+router.get('/order/:id', statusLimiter, getPublicOrderStatus);
 
 module.exports = router;

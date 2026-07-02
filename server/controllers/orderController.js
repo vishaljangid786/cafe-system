@@ -99,7 +99,7 @@ const getOrders = asyncHandler(async (req, res) => {
   const { status, orderType, branchId, cafeId, tableId, isBilled, createdBy, startDate, endDate, search } = req.query;
   const filter = {};
 
-  const VALID_ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
+  const VALID_ORDER_STATUSES = ['AWAITING_APPROVAL', 'PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
   if (status && VALID_ORDER_STATUSES.includes(status)) filter.status = status;
   // Filter by order type (Dine-in / Takeaway / Delivery).
   const VALID_ORDER_TYPES = ['dine-in', 'takeaway', 'delivery'];
@@ -407,6 +407,72 @@ const recordPayment = asyncHandler(async (req, res) => {
   });
 
   res.json({ success: true, data: order });
+});
+
+// @desc    Confirm a QR/self-order's payment and release it to the kitchen
+// @route   PATCH /api/orders/:id/approve-payment
+// @access  Private (orders.approve — staff / branch_admin / admin / super_admin)
+const approvePayment = asyncHandler(async (req, res) => {
+  const { method, amountPaid, upiRef, note } = req.body || {};
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+  ensureOrderAccess(req, res, order);
+
+  let updated;
+  try {
+    updated = await OrderService.approvePayment(
+      order._id,
+      { method, amountPaid, upiRef, note, markPaid: true },
+      req.user
+    );
+  } catch (err) {
+    if (!err.statusCode && err.name === 'Error') err.statusCode = 400;
+    throw err;
+  }
+
+  await sendNotification({
+    title: 'Self-Order Confirmed',
+    message: `Payment confirmed for order #${shortOrderId(updated._id)} (${updated.paymentType}) by ${req.user.name}. Sent to kitchen.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: updated.branch,
+  });
+
+  res.json({ success: true, data: updated });
+});
+
+// @desc    Decline a QR/self-order awaiting approval (payment not received)
+// @route   PATCH /api/orders/:id/decline
+// @access  Private (orders.approve)
+const declineOrder = asyncHandler(async (req, res) => {
+  const { reason } = req.body || {};
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+  ensureOrderAccess(req, res, order);
+
+  let updated;
+  try {
+    updated = await OrderService.declinePublicOrder(order._id, reason, req.user);
+  } catch (err) {
+    if (!err.statusCode && err.name === 'Error') err.statusCode = 400;
+    throw err;
+  }
+
+  await sendNotification({
+    title: 'Self-Order Declined',
+    message: `Order #${shortOrderId(updated._id)} was declined by ${req.user.name}${reason ? ` (${reason})` : ''}.`,
+    type: 'order_action',
+    performedByUser: req.user,
+    locationId: updated.branch,
+  });
+
+  res.json({ success: true, data: updated });
 });
 
 // @desc    Re-order a rejected/cancelled order (places a fresh order from its items)
@@ -1459,6 +1525,8 @@ module.exports = {
   forceCompleteOrder,
   generateOrderBill,
   recordPayment,
+  approvePayment,
+  declineOrder,
   refundOrder,
   getGstReport,
   updateItemStatus,

@@ -36,6 +36,48 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: null
     },
+    // Party members seated at the table for a QR/self order. Names are optional —
+    // the customer can just pick a headcount — so this may be empty even when
+    // numberOfPeople > 0.
+    members: {
+      type: [String],
+      default: [],
+    },
+    // Headcount for this order's party (dine-in). Mirrors Table.numberOfPeople but
+    // is snapshotted on the order so reporting stays correct after the table clears.
+    numberOfPeople: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // True when the customer paid up-front (prepaid) via UPI before the order was
+    // confirmed. Pay-at-counter / pay-later orders stay false until settled.
+    prepaid: {
+      type: Boolean,
+      default: false,
+    },
+    // Customer self-orders (QR/online) are placed in AWAITING_APPROVAL and are NOT
+    // sent to the kitchen until a staff member / branch admin confirms the payment
+    // (cash received, or UPI reference verified). Staff POS orders skip this and
+    // default to not_required.
+    paymentApproval: {
+      status: {
+        type: String,
+        enum: ['not_required', 'pending', 'approved', 'rejected'],
+        default: 'not_required',
+        index: true,
+      },
+      method: {
+        type: String,
+        enum: ['CASH', 'UPI'],
+        default: 'CASH',
+      },
+      // UTR / reference the customer typed after paying via a UPI app (optional).
+      upiRef: { type: String, default: null },
+      note: { type: String, default: null },
+      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+      approvedAt: { type: Date, default: null },
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -109,6 +151,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        'AWAITING_APPROVAL',
         'PLACED',
         'ACCEPTED',
         'PREPARING',

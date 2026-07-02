@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
-import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw } from 'lucide-react';
+import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw, QrCode, Package } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import PendingApprovals from '@/app/components/orders/PendingApprovals';
+import StockManager from '@/app/components/menu/StockManager';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
@@ -37,6 +40,9 @@ export default function StaffTablesPage() {
   const [systemOrders, setSystemOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, occupied
   const [isModalReady, setIsModalReady] = useState(false);
+  const [qrTable, setQrTable] = useState(null);
+  const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showStock, setShowStock] = useState(false);
   const selectedTableRef = useRef(null);
   const syncTimeoutRef = useRef(null);
 
@@ -328,6 +334,9 @@ export default function StaffTablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   };
 
+  const branchId = (selectedLocation?._id || selectedLocation) || (user?.assignedLocation?._id || user?.assignedLocation) || 'All';
+  const branchName = user?.assignedLocation?.name || 'Your branch';
+
   if (loading) return <LoadingScreen fullScreen={false} />;
 
   return (
@@ -370,12 +379,16 @@ export default function StaffTablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-10 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-1 hidden sm:block" />
+            <Button variant="outline" className="!rounded-xl text-[11px] font-medium tracking-normal" icon={QrCode} onClick={() => setShowBulkQr(true)}>Print QR</Button>
+            <Button variant="outline" className="!rounded-xl text-[11px] font-medium tracking-normal" icon={Package} onClick={() => setShowStock(true)}>Stock</Button>
             <div className="flex items-center gap-2 px-4 py-2 bg-(--color-surface-soft) dark:bg-(--color-surface) rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm">
                <MapPin size={14} className="text-primary" />
                <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">{user?.assignedLocation?.name || 'Unknown'}</span>
             </div>
           </div>
         </div>
+
+        <PendingApprovals branchId={branchId} />
 
         {/* Stats Strip */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -413,6 +426,7 @@ export default function StaffTablesPage() {
                     table={table}
                     onAssign={handleBookTable}
                     onManage={handleOpenOrder}
+                    onQr={setQrTable}
                   />
                 </SlideIn>
               ))}
@@ -420,6 +434,10 @@ export default function StaffTablesPage() {
         </div>
 
         {/* Modals */}
+        <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
+        <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/staff/menu" />
+
         <BillPreview isOpen={isBillPreviewOpen} onClose={() => setIsBillPreviewOpen(false)} onComplete={handleFinalizeSession} table={selectedTable} systemOrders={systemOrders} />
 
         <Modal

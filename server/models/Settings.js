@@ -54,6 +54,18 @@ const settingsSchema = new mongoose.Schema(
       currency: { type: String, default: 'INR' },
       timezone: { type: String, default: 'Asia/Kolkata' },
     },
+
+    // QR / customer self-order payments. The UPI VPA + payee name are used to build
+    // the `upi://pay` intent shown on the scan page for prepaid orders. The toggles
+    // control which tender options the customer is offered; requireApprovalForQr
+    // gates every QR order behind staff confirmation before it reaches the kitchen.
+    payments: {
+      upiVpa: { type: String, default: '', trim: true },
+      upiName: { type: String, default: '', trim: true },
+      acceptUpi: { type: Boolean, default: true },
+      acceptCash: { type: Boolean, default: true },
+      requireApprovalForQr: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

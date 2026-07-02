@@ -1,7 +1,10 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, MessageSquare, RefreshCcw } from 'lucide-react';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, MessageSquare, RefreshCcw, QrCode, Package } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import PendingApprovals from '@/app/components/orders/PendingApprovals';
+import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
@@ -44,6 +47,9 @@ export default function TablesPage() {
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
   const [systemOrders, setSystemOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, occupied
+  const [qrTable, setQrTable] = useState(null);
+  const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showStock, setShowStock] = useState(false);
   const syncTimeoutRef = useRef(null);
   const selectedTableRef = useRef(null);
 
@@ -409,6 +415,9 @@ export default function TablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   };
 
+  const branchId = user?.assignedLocation?._id || user?.assignedLocation || 'All';
+  const branchName = user?.assignedLocation?.name || tables[0]?.locationId?.name || 'Your branch';
+
 
 
   const handleDeleteTable = async () => {
@@ -464,6 +473,22 @@ export default function TablesPage() {
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <div className="h-12 w-px bg-(--color-surface-soft) dark:bg-(--color-surface) mx-2 hidden sm:block" />
+            <Button
+              variant="outline"
+              className="!rounded-xl text-[11px] font-medium tracking-normal"
+              icon={QrCode}
+              onClick={() => setShowBulkQr(true)}
+            >
+              Print QR
+            </Button>
+            <Button
+              variant="outline"
+              className="!rounded-xl text-[11px] font-medium tracking-normal"
+              icon={Package}
+              onClick={() => setShowStock(true)}
+            >
+              Stock
+            </Button>
             {can(user, 'tables.add') && (
               <Button
                 variant="primary"
@@ -482,6 +507,8 @@ export default function TablesPage() {
             )}
           </div>
         </div>
+
+        <PendingApprovals branchId={branchId} />
 
         {/* Stats Strip */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -560,6 +587,15 @@ export default function TablesPage() {
                       </td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2 transition-opacity">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); setQrTable(table); }}
+                            title="Table QR code"
+                            className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all"
+                          >
+                            <QrCode size={18} />
+                          </motion.button>
                           {table.status === 'available' ? (
                             <motion.button
                               whileHover={{ scale: 1.1 }}
@@ -1069,6 +1105,10 @@ export default function TablesPage() {
           table={selectedTable}
           systemOrders={systemOrders}
         />
+
+        <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
+        <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/branch-admin/menu" />
       </div>
     </PageTransition>
   );

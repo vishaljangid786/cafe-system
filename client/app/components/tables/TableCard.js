@@ -1,10 +1,10 @@
 "use client"
-import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash, Trash2, CalendarClock } from 'lucide-react';
+import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash, Trash2, CalendarClock, QrCode } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CardHover } from '../ui/AnimatedContainer';
 import { Button } from '../ui/Button';
 
-export default function TableCard({ table, onAssign, onManage, onEdit, onDelete }) {
+export default function TableCard({ table, onAssign, onManage, onEdit, onDelete, onQr }) {
   const isAvailable = table.status === 'available';
   const isOccupied = table.status === 'occupied' || table.status === 'booked';
   const isReserved = table.status === 'reserved';
@@ -50,7 +50,27 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete 
             >
               <Trash2 size={14} className="text-danger/70" />
             </button>
+            {onQr && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onQr(table); }}
+                title="Table QR code"
+                className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-white shadow-sm transition-all"
+              >
+                <QrCode size={14} />
+              </button>
+            )}
           </div>
+        )}
+
+        {/* Standalone QR button when there are no admin controls (e.g. staff view) */}
+        {!isAdmin && onQr && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onQr(table); }}
+            title="Table QR code"
+            className="absolute top-8 left-8 h-8 w-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-white shadow-sm transition-all z-10"
+          >
+            <QrCode size={14} />
+          </button>
         )}
 
         {/* Status Indicator */}

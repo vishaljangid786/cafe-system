@@ -7,6 +7,11 @@ const { enforceLocationAccess } = require('../utils/accessControl');
  */
 
 const ALLOWED_TRANSITIONS = {
+  // Customer self-orders (QR/online) land here first and only enter the kitchen
+  // flow once a staff member confirms payment (→ PLACED via approve-payment) or
+  // declines it. A chef can't ACCEPT an unconfirmed order directly — payment must
+  // be confirmed first.
+  'AWAITING_APPROVAL': ['PLACED', 'REJECTED', 'CANCELLED'],
   'PLACED': ['ACCEPTED', 'REJECTED', 'CANCELLED'],
   'ACCEPTED': ['PREPARING', 'CANCELLED'],
   'PREPARING': ['READY', 'CANCELLED'],
@@ -18,6 +23,9 @@ const ALLOWED_TRANSITIONS = {
 };
 
 const ROLE_PERMISSIONS = {
+  // Confirming a self-order's payment (AWAITING_APPROVAL → PLACED) is a
+  // front-of-house action, so staff/branch admins can do it as well as admins.
+  'PLACED': ['staff', 'branch_admin', 'location_admin', 'admin', 'super_admin'],
   'ACCEPTED': ['chef', 'admin', 'super_admin', 'branch_admin'],
   'PREPARING': ['chef', 'admin', 'super_admin', 'branch_admin'],
   'READY': ['chef', 'admin', 'super_admin', 'branch_admin'],

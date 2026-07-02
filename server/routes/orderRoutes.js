@@ -20,6 +20,8 @@ const {
   markServed,
   generateOrderBill,
   recordPayment,
+  approvePayment,
+  declineOrder,
   refundOrder,
   getGstReport,
   updateItemStatus,
@@ -69,6 +71,9 @@ router.patch('/:id/move-table', checkAction('orders.modify'), moveOrderTable);
 router.post('/:id/split', checkAction('orders.modify'), splitOrder);
 router.post('/:id/reorder', checkAction('orders.modify'), reorderOrder);
 router.patch('/:id/payment', checkAction('orders.modify'), recordPayment);
+// Confirm / decline a QR self-order's payment (front-of-house action).
+router.patch('/:id/approve-payment', checkAction('orders.approve'), approvePayment);
+router.patch('/:id/decline', checkAction('orders.approve'), declineOrder);
 router.patch('/:id/refund', checkAction('revenue.modify'), refundOrder);
 router.post('/:id/generate-bill', checkAction('orders.modify'), generateOrderBill);
 

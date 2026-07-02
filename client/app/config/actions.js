@@ -14,6 +14,7 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Add', legacy: { roles: [], perms: ['manageOrders'] } },
       { action: 'modify', label: 'Modify', legacy: { roles: [], perms: ['manageOrders'] } },
+      { action: 'approve', label: 'Confirm QR Payments', legacy: { roles: ['admin', 'branch_admin', 'location_admin', 'staff'], perms: ['manageOrders'] } },
       { action: 'delete', label: 'Delete', legacy: { roles: ['admin'], perms: [] } },
     ],
   },

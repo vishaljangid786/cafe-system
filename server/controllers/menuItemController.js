@@ -639,6 +639,60 @@ const updateStock = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Increment / decrement branch stock by a delta (quick +/- controls)
+// @route   PATCH /api/menu/:id/stock/adjust
+// @access  Private
+const adjustStock = asyncHandler(async (req, res) => {
+  const delta = Math.trunc(Number(req.body.delta));
+  if (!Number.isFinite(delta) || delta === 0) {
+    res.status(400);
+    throw new Error('A non-zero whole-number delta is required');
+  }
+
+  const branchId = req.body.branchId ||
+    (['staff', 'branch_admin', 'location_admin', 'chef'].includes(req.user.role)
+      ? req.user.assignedLocation?.toString()
+      : null);
+
+  const item = await MenuItem.findById(req.params.id);
+  if (!item) {
+    res.status(404);
+    throw new Error('Menu item not found');
+  }
+
+  if (branchId) {
+    enforceLocationAccess(req, res, branchId, 'You do not have permission to update stock for this branch');
+
+    // Read-modify-write so we can clamp at zero (a decrement can never drive stock
+    // negative) and derive availability from the resulting quantity.
+    const existing = await BranchStock.findOne({ menuItem: item._id, branch: branchId });
+    const current = existing ? Number(existing.stock) || 0 : 0;
+    const next = Math.max(0, current + delta);
+
+    const branchStock = await BranchStock.findOneAndUpdate(
+      { menuItem: item._id, branch: branchId },
+      { $set: { stock: next, isAvailable: next > 0 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    return res.json({
+      success: true,
+      data: branchStock,
+      message: `${item.name}: stock ${delta > 0 ? 'increased' : 'decreased'} to ${next}.`,
+    });
+  }
+
+  // Global item fallback (no branch context).
+  const nextGlobal = Math.max(0, (Number(item.stock) || 0) + delta);
+  item.stock = nextGlobal;
+  await item.save();
+  res.json({
+    success: true,
+    data: item,
+    message: `${item.name}: global stock set to ${nextGlobal}.`,
+  });
+});
+
 module.exports = {
   getMenuItems,
   getMenuItem,
@@ -647,4 +701,5 @@ module.exports = {
   deleteMenuItem,
   toggleAvailability,
   updateStock,
+  adjustStock,
 };

@@ -7,11 +7,12 @@ import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
-import { Settings as SettingsIcon, Save, Percent, Receipt, Users, Clock, Building2 } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, Receipt, Users, Clock, Building2, Smartphone } from 'lucide-react';
 
 const TABS = [
   { key: 'tax', label: 'Tax (GST)', icon: Percent },
   { key: 'billing', label: 'Billing', icon: Receipt },
+  { key: 'payments', label: 'QR & Payments', icon: Smartphone },
   { key: 'payroll', label: 'Payroll & Attendance', icon: Clock },
   { key: 'loyalty', label: 'Loyalty', icon: Users },
   { key: 'invoice', label: 'Invoice', icon: Receipt },
@@ -27,6 +28,13 @@ const FIELDS = {
   billing: [
     ['billing', 'serviceChargeRate', 'Service charge (%)', 'number', '0 to disable'],
     ['billing', 'roundBill', 'Round final bill to nearest rupee', 'checkbox', ''],
+  ],
+  payments: [
+    ['payments', 'upiVpa', 'UPI ID / VPA', 'text', 'e.g. cafe@okhdfcbank — customers scan this to prepay'],
+    ['payments', 'upiName', 'UPI payee name', 'text', 'Shown to the customer while paying'],
+    ['payments', 'acceptUpi', 'Accept UPI (QR self-order prepay)', 'checkbox', 'Needs a UPI ID above'],
+    ['payments', 'acceptCash', 'Accept cash at counter', 'checkbox', ''],
+    ['payments', 'requireApprovalForQr', 'Confirm payment before sending to kitchen', 'checkbox', 'Recommended — a QR order waits for staff confirmation'],
   ],
   payroll: [
     ['payroll', 'shiftStart', 'Shift start (HH:mm)', 'text', 'e.g. 09:00'],
@@ -113,6 +121,7 @@ export default function SettingsPage() {
         locationId: scope === 'global' ? null : scope,
         tax: form.tax, billing: form.billing, payroll: form.payroll,
         loyalty: form.loyalty, invoice: form.invoice, general: form.general,
+        payments: form.payments,
       };
       await api.put('/settings', payload);
       toast.success('Settings saved');

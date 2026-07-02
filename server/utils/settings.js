@@ -27,6 +27,15 @@ const DEFAULTS = {
   invoice: { prefix: 'INV', nextNumber: 1 },
   billing: { serviceChargeRate: 0, roundBill: true },
   general: { currency: 'INR', timezone: 'Asia/Kolkata' },
+  // QR / self-order payment config. upiVpa + upiName build the upi:// intent the
+  // customer scans to prepay. Toggles decide which options the scan page offers.
+  payments: {
+    upiVpa: '',
+    upiName: '',
+    acceptUpi: true,
+    acceptCash: true,
+    requireApprovalForQr: true,
+  },
 };
 
 // Shallow-merge each known group so a branch doc that only sets `tax` still

@@ -31,6 +31,7 @@ const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Add (create orders)', legacy: { roles: [], perms: ['manageOrders'] } },
       { action: 'modify', label: 'Modify (status, items, payment)', legacy: { roles: [], perms: ['manageOrders'] } },
+      { action: 'approve', label: 'Confirm QR self-order payments', legacy: { roles: ['admin', 'branch_admin', 'location_admin', 'staff'], perms: ['manageOrders'] } },
       { action: 'delete', label: 'Delete orders', legacy: { roles: ['admin'], perms: [] } },
     ],
   },

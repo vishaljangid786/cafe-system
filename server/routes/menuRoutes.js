@@ -7,6 +7,7 @@ const {
   deleteMenuItem,
   toggleAvailability,
   updateStock,
+  adjustStock,
 } = require('../controllers/menuItemController');
 const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
@@ -42,5 +43,10 @@ router.route('/:id/availability')
 
 router.route('/:id/stock')
   .put(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin', 'chef', 'staff'), updateStock);
+
+// Quick +/- stock adjustment (delta). Uses the menu.modify action so it follows
+// the same grant model as editing an item.
+router.route('/:id/stock/adjust')
+  .patch(checkAction('menu.modify'), adjustStock);
 
 module.exports = router;

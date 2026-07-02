@@ -1,7 +1,10 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Search, Globe, ShieldAlert } from 'lucide-react';
+import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Search, Globe, ShieldAlert, QrCode, Package } from 'lucide-react';
+import { TableQRModal, TableQRBulkModal } from '@/app/components/tables/TableQR';
+import PendingApprovals from '@/app/components/orders/PendingApprovals';
+import StockManager from '@/app/components/menu/StockManager';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
@@ -40,6 +43,9 @@ export default function TablesPage() {
   const [showMenuGrid, setShowMenuGrid] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [qrTable, setQrTable] = useState(null);
+  const [showBulkQr, setShowBulkQr] = useState(false);
+  const [showStock, setShowStock] = useState(false);
 
   const fetchTables = async () => {
     progress.start();
@@ -299,6 +305,9 @@ export default function TablesPage() {
     revenue: tables.reduce((acc, t) => acc + (Number(t.totalAmount) || 0), 0)
   };
 
+  const branchId = user?.assignedLocation?._id || user?.assignedLocation || 'All';
+  const branchName = user?.assignedLocation?.name || tables[0]?.locationId?.name || 'Your branch';
+
 
 
   const handleDeleteTable = async () => {
@@ -329,23 +338,29 @@ export default function TablesPage() {
             </h1>
             <p className="text-xs text-(--color-text-muted) mt-1 font-medium">Manage tables and orders</p>
           </div>
-          {can(user, 'tables.add') && (
-            <Button
-              variant="primary"
-              className="!rounded-xl !py-2.5 px-5 shadow-sm  whitespace-nowrap self-start sm:self-auto"
-              icon={Plus}
-              onClick={() => {
-                setIsEditing(false);
-                setNewTableNumber('');
-                setNewTableName('');
-                setNewTableCapacity('1');
-                setShowAddModal(true);
-              }}
-            >
-              Add Table
-            </Button>
-          )}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={QrCode} onClick={() => setShowBulkQr(true)}>Print QR</Button>
+            <Button variant="outline" className="!rounded-xl !py-2.5 text-[11px] font-medium tracking-normal" icon={Package} onClick={() => setShowStock(true)}>Stock</Button>
+            {can(user, 'tables.add') && (
+              <Button
+                variant="primary"
+                className="!rounded-xl !py-2.5 px-5 shadow-sm  whitespace-nowrap"
+                icon={Plus}
+                onClick={() => {
+                  setIsEditing(false);
+                  setNewTableNumber('');
+                  setNewTableName('');
+                  setNewTableCapacity('1');
+                  setShowAddModal(true);
+                }}
+              >
+                Add Table
+              </Button>
+            )}
+          </div>
         </div>
+
+        <PendingApprovals branchId={branchId} />
 
         {/* Stats Strip */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -391,6 +406,15 @@ export default function TablesPage() {
                   >
                     {/* Status stripe */}
                     <div className={`h-1 w-full ${toneBg(statusColor)} ${isBooked ? 'animate-pulse' : ''}`} />
+
+                    {/* QR code button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setQrTable(table); }}
+                      title="Table QR code"
+                      className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all z-10"
+                    >
+                      <QrCode size={13} />
+                    </button>
 
                     <div className="p-4 flex flex-col items-center gap-2">
                       {/* Table number */}
@@ -795,6 +819,10 @@ export default function TablesPage() {
           onComplete={handleFinalizeSession}
           table={selectedTable}
         />
+
+        <TableQRModal isOpen={!!qrTable} onClose={() => setQrTable(null)} table={qrTable} branchName={qrTable?.locationId?.name || branchName} />
+        <TableQRBulkModal isOpen={showBulkQr} onClose={() => setShowBulkQr(false)} tables={tables} branchName={branchName} />
+        <StockManager isOpen={showStock} onClose={() => setShowStock(false)} branchId={branchId} branchName={branchName} menuHref="/dashboard/location-admin/menu" />
       </div>
     </PageTransition>
   );

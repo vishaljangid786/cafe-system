@@ -47,7 +47,7 @@ class OrderService {
     }
   }
 
-  async _createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff' }, useTransaction = true) {
+  async _createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff', members = [], numberOfPeople = 0, prepaid = false, amountPaid = 0, paymentStatus = 'unpaid', initialStatus = 'PLACED', paymentApproval = null }, useTransaction = true) {
     const Reservation = require('../models/Reservation');
     const isDineIn = orderType === 'dine-in';
 
@@ -298,6 +298,9 @@ class OrderService {
       }
 
       // 4. Order Creation
+      const cleanMembers = Array.isArray(members)
+        ? members.map((m) => (m || '').toString().trim()).filter(Boolean).slice(0, 50)
+        : [];
       const order = await Order.create([{
         branch,
         table: tableId || undefined,
@@ -305,16 +308,22 @@ class OrderService {
         reservationId: linkedReservationId,
         customerPhone,
         customerName,
+        members: cleanMembers,
+        numberOfPeople: Math.max(0, Math.floor(Number(numberOfPeople) || 0)),
+        prepaid: !!prepaid,
         items: itemsWithSnapshots,
         totalAmount: subtotal,
         discountAmount: finalDiscount,
         coupon: appliedCoupon,
         paymentType,
+        amountPaid: Math.max(0, Number(amountPaid) || 0),
+        paymentStatus: ['unpaid', 'partial', 'paid'].includes(paymentStatus) ? paymentStatus : 'unpaid',
+        paymentApproval: paymentApproval || undefined,
         createdBy: userId || undefined,
         source,
-        status: 'PLACED',
+        status: initialStatus,
         statusHistory: [{
-          status: 'PLACED',
+          status: initialStatus,
           timestamp: new Date(),
           updatedBy: userId || undefined
         }]
@@ -322,10 +331,21 @@ class OrderService {
 
       // 5. Table Update — dine-in only (takeaway/delivery have no table).
       if (tableId) {
-        await Table.findByIdAndUpdate(tableId, {
+        const tableUpdate = {
           status: 'ongoing',
-          $inc: { activeOrdersCount: 1 }
-        }, { session, runValidators: false });
+          $inc: { activeOrdersCount: 1 },
+        };
+        // For a customer self-order, reflect who is seated on the table so staff
+        // see the party without opening the order. Only set the name/headcount when
+        // the customer supplied them and the table doesn't already have a name.
+        if (source !== 'staff') {
+          const seatUpdate = {};
+          if (customerName) seatUpdate.customerName = customerName;
+          if (Number(numberOfPeople) > 0) seatUpdate.numberOfPeople = Math.floor(Number(numberOfPeople));
+          seatUpdate.isBooked = true;
+          Object.assign(tableUpdate, seatUpdate);
+        }
+        await Table.findByIdAndUpdate(tableId, tableUpdate, { session, runValidators: false });
       }
 
       if (session) {
@@ -337,11 +357,23 @@ class OrderService {
 
       // Real-time signals
       const io = getIO();
-      io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
-      // Scope to THIS branch's admins/branch-admins (+ super_admins who oversee
-      // all branches). Previously emitted to global role_admin, leaking other
-      // branches' order activity to every admin.
-      io.to(`branch_${branch}_admin`).to(`branch_${branch}_branch_admin`).to('role_super_admin').emit('order:new', { orderId: createdOrder._id, branchId: branch });
+      if (createdOrder.status === 'AWAITING_APPROVAL') {
+        // Unconfirmed self-order: alert front-of-house (staff + branch admins/admins
+        // + super admins) to review & confirm the payment. The kitchen is NOT told
+        // yet — the order only reaches chefs once payment is approved.
+        io.to(`branch_${branch}_staff`)
+          .to(`branch_${branch}_branch_admin`)
+          .to(`branch_${branch}_location_admin`)
+          .to(`branch_${branch}_admin`)
+          .to('role_super_admin')
+          .emit('order:pending_approval', { orderId: createdOrder._id, branchId: branch });
+      } else {
+        io.to(`branch_${branch}_chef`).emit('order:new', { orderId: createdOrder._id });
+        // Scope to THIS branch's admins/branch-admins (+ super_admins who oversee
+        // all branches). Previously emitted to global role_admin, leaking other
+        // branches' order activity to every admin.
+        io.to(`branch_${branch}_admin`).to(`branch_${branch}_branch_admin`).to('role_super_admin').emit('order:new', { orderId: createdOrder._id, branchId: branch });
+      }
 
       return createdOrder;
     } catch (error) {
@@ -408,6 +440,92 @@ class OrderService {
     if (status === 'READY') {
       io.to(`branch_${branchId}_staff`).emit('order:ready', { orderId: order._id, message: 'Order Ready!' });
     }
+
+    return order;
+  }
+
+  /**
+   * Confirm the payment on a customer self-order (QR/online) that is waiting in
+   * AWAITING_APPROVAL, and release it into the kitchen flow (→ PLACED). A staff
+   * member does this once they've seen the cash / verified the UPI reference.
+   */
+  async approvePayment(orderId, { method, amountPaid, upiRef, note, markPaid = true } = {}, user) {
+    const order = await Order.findById(orderId);
+    if (!order) throw new Error('Order not found');
+
+    if (order.status !== 'AWAITING_APPROVAL') {
+      throw new Error('This order is not awaiting payment approval');
+    }
+
+    const tender = ['CASH', 'UPI'].includes(method)
+      ? method
+      : (order.paymentApproval?.method || 'CASH');
+    const total = Number(order.totalAmount) || 0;
+    const paid = markPaid
+      ? (amountPaid !== undefined && amountPaid !== null && amountPaid !== '' ? Number(amountPaid) : total)
+      : Number(order.amountPaid) || 0;
+
+    order.paymentType = tender;
+    order.amountPaid = Math.max(0, Number.isFinite(paid) ? paid : total);
+    order.paymentStatus = order.amountPaid <= 0 ? 'unpaid' : (order.amountPaid < total ? 'partial' : 'paid');
+    order.prepaid = order.paymentStatus === 'paid';
+    order.paymentApproval = {
+      status: 'approved',
+      method: tender,
+      upiRef: upiRef || order.paymentApproval?.upiRef || null,
+      note: note || order.paymentApproval?.note || null,
+      approvedBy: user?._id || null,
+      approvedAt: new Date(),
+    };
+
+    order.status = 'PLACED';
+    order.statusHistory.push({ status: 'PLACED', timestamp: new Date(), updatedBy: user?._id });
+    await order.save();
+
+    const branchId = order.branch.toString();
+    const io = getIO();
+    // Now the kitchen may see it, and everyone watching the branch gets the update.
+    io.to(`branch_${branchId}_chef`).emit('order:new', { orderId: order._id });
+    io.to(`branch_${branchId}`).emit('order:update', { orderId: order._id, status: order.status });
+    io.to(`branch_${branchId}`).emit('order:approved', { orderId: order._id });
+
+    return order;
+  }
+
+  /**
+   * Decline a customer self-order awaiting approval (payment not received / wrong).
+   * Marks it rejected, restores stock + coupon, and frees the table counter.
+   */
+  async declinePublicOrder(orderId, reason, user) {
+    const order = await Order.findById(orderId);
+    if (!order) throw new Error('Order not found');
+
+    if (!['AWAITING_APPROVAL', 'PLACED'].includes(order.status)) {
+      throw new Error('This order can no longer be declined');
+    }
+
+    order.status = 'REJECTED';
+    order.rejectReason = reason || 'Payment not received';
+    order.paymentApproval = {
+      ...(order.paymentApproval ? order.paymentApproval.toObject?.() || order.paymentApproval : {}),
+      status: 'rejected',
+      approvedBy: user?._id || null,
+      approvedAt: new Date(),
+      note: reason || order.paymentApproval?.note || null,
+    };
+
+    await this._restoreStockForItems(order);
+    await this._restoreCouponUsage(order);
+    order.statusHistory.push({ status: 'REJECTED', timestamp: new Date(), updatedBy: user?._id });
+
+    if (order.table) {
+      await Table.findByIdAndUpdate(order.table, { $inc: { activeOrdersCount: -1 } }, { runValidators: false });
+    }
+    await order.save();
+
+    const io = getIO();
+    io.to(`branch_${order.branch}`).emit('order:update', { orderId: order._id, status: 'REJECTED' });
+    io.to(`branch_${order.branch}`).emit('order:declined', { orderId: order._id });
 
     return order;
   }
