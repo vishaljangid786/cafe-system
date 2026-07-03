@@ -74,11 +74,16 @@ export default function QuickLogin() {
   const [open, setOpen] = useState(true);
   const [pendingEmail, setPendingEmail] = useState(null);
 
-  // NEVER expose demo accounts / the shared demo password in a production build.
-  // process.env.NODE_ENV is inlined at build time, so this whole panel (and the
-  // hardcoded credentials) is tree-shaken out of the production bundle. Hooks are
-  // declared above this line so the rules-of-hooks are not violated.
-  if (process.env.NODE_ENV === 'production') return null;
+  // The panel exposes seeded demo accounts + a shared password, so it is hidden in
+  // production builds BY DEFAULT. For a public demo deployment it can be explicitly
+  // opted-in by setting NEXT_PUBLIC_ENABLE_QUICK_LOGIN=true at build time. Both env
+  // vars are inlined by Next at build time, so when the flag is unset the whole panel
+  // (and the hardcoded credentials) is still tree-shaken out of a production bundle.
+  // Hooks are declared above this line so the rules-of-hooks are not violated.
+  const quickLoginEnabled =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.NEXT_PUBLIC_ENABLE_QUICK_LOGIN === 'true';
+  if (!quickLoginEnabled) return null;
 
   const handleQuickLogin = async (email) => {
     if (pendingEmail) return;
@@ -99,7 +104,7 @@ export default function QuickLogin() {
       >
         <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
           <Zap size={13} className="text-primary" />
-          Quick Login (Dev)
+          Quick Login (Demo)
         </span>
         <ChevronDown
           size={16}
