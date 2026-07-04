@@ -13,8 +13,13 @@ export default function DateRangeFilter({
   loading = false,
   iconClassName = 'text-primary',
   className = '',
+  allowFuture = false,
 }) {
   const hasValue = Boolean(startDate || endDate);
+  // Revenue/expenses are past events — capping the pickers at today stops a future
+  // range from silently returning nothing (which reads as "the filter is broken").
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+  const ceiling = allowFuture ? undefined : today;
 
   return (
     <div className={`inline-flex items-center gap-1 p-1 pl-3 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm ${className}`}>
@@ -29,7 +34,7 @@ export default function DateRangeFilter({
         <input
           type="date"
           value={startDate || ''}
-          max={endDate || undefined}
+          max={endDate || ceiling}
           onChange={(e) => onChange?.({ startDate: e.target.value, endDate })}
           className="bg-transparent text-xs font-medium outline-none text-(--color-text-primary) w-32 cursor-pointer"
         />
@@ -43,6 +48,7 @@ export default function DateRangeFilter({
           type="date"
           value={endDate || ''}
           min={startDate || undefined}
+          max={ceiling}
           onChange={(e) => onChange?.({ startDate, endDate: e.target.value })}
           className="bg-transparent text-xs font-medium outline-none text-(--color-text-primary) w-32 cursor-pointer"
         />
