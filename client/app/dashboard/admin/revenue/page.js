@@ -25,7 +25,7 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import { useTheme } from '../../../context/ThemeContext';
-import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
+import DateRangeFilter from '../../../components/ui/DateRangeFilter';
 
 export default function RevenuePage() {
   const { theme } = useTheme();
@@ -188,12 +188,16 @@ export default function RevenuePage() {
             <p className="text-(--color-text-muted) font-medium mt-1">Track your earnings and sales data.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <UniversalDateFilter
-              onFilterChange={({ startDate, endDate }) => {
+            <DateRangeFilter
+              startDate={startDate}
+              endDate={endDate}
+              onChange={({ startDate, endDate }) => {
                 setStartDate(startDate);
                 setEndDate(endDate);
+                setCurrentPage(1);
               }}
               loading={refetching}
+              iconClassName="text-success"
             />
             {canAddRevenue && (
               <Button

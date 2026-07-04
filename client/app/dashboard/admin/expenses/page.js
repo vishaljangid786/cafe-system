@@ -26,6 +26,7 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import DateRangeFilter from '../../../components/ui/DateRangeFilter';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -347,16 +348,29 @@ export default function ExpensesPage() {
 
               </div>
 
-              <div className="flex items-center mt-6 gap-1.5 bg-(--color-surface-soft) p-1.5 rounded-[1.5rem] border border-(--color-border) shadow-inner">
-                {['7d', '1m', '3m', 'all', 'custom'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTimeRange(t)}
-                    className={`px-6 py-2.5 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all duration-500 ${timeRange === t ? 'bg-danger text-(--color-bg-base) scale-105' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center mt-6 gap-3">
+                <div className="flex items-center gap-1.5 bg-(--color-surface-soft) p-1.5 rounded-[1.5rem] border border-(--color-border) shadow-inner">
+                  {['7d', '1m', '3m', 'all'].map(t => (
+                    <button
+                      key={t}
+                      onClick={() => { setTimeRange(t); setCustomDates({ start: '', end: '' }); setCurrentPage(1); }}
+                      className={`px-6 py-2.5 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all duration-500 ${timeRange === t ? 'bg-danger text-(--color-bg-base) scale-105' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <DateRangeFilter
+                  startDate={customDates.start}
+                  endDate={customDates.end}
+                  onChange={({ startDate, endDate }) => {
+                    setCustomDates({ start: startDate, end: endDate });
+                    setTimeRange(startDate || endDate ? 'custom' : 'all');
+                    setCurrentPage(1);
+                  }}
+                  loading={refetching}
+                  iconClassName="text-danger"
+                />
               </div>
             </div>
 
@@ -374,23 +388,6 @@ export default function ExpensesPage() {
               )}
             </div>
           </div>
-
-          {timeRange === 'custom' && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-4 mt-6 p-5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl relative z-20"
-            >
-               <div className="flex-1">
-                <label className="block text-[11px] font-medium text-(--color-text-muted) mb-2 ml-2">Start Date</label>
-                <input type="date" className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl p-4 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-danger/10 transition-all" value={customDates.start} onChange={e => setCustomDates({ ...customDates, start: e.target.value })} />
-              </div>
-              <div className="flex-1">
-                <label className="block text-[11px] font-medium text-(--color-text-muted) mb-2 ml-2">End Date</label>
-                <input type="date" className="w-full bg-(--color-surface) border border-(--color-border) rounded-xl p-4 text-xs font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-danger/10 transition-all" value={customDates.end} onChange={e => setCustomDates({ ...customDates, end: e.target.value })} />
-              </div>
-            </motion.div>
-          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-(--color-border)">
             <div className="space-y-1">

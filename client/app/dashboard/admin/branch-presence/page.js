@@ -134,25 +134,27 @@ export default function BranchPresencePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div
-                  onClick={() => dateInputRef.current?.showPicker()}
-                  className="px-5 py-3 rounded-xl bg-(--color-bg-soft) border border-(--color-border) flex items-center gap-3 cursor-pointer hover:border-primary/40 transition-all"
-                >
-                  <Clock className="text-primary" size={18} />
-                  <input
-                    ref={dateInputRef}
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="bg-transparent outline-none text-xs font-medium tracking-normal text-(--color-text-primary) cursor-pointer"
-                  />
+              {selectedLocation && (
+                <div className="flex items-center gap-4">
+                  <div
+                    onClick={() => dateInputRef.current?.showPicker()}
+                    className="px-5 py-3 rounded-xl bg-(--color-bg-soft) border border-(--color-border) flex items-center gap-3 cursor-pointer hover:border-primary/40 transition-all"
+                  >
+                    <Clock className="text-primary" size={18} />
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="bg-transparent outline-none text-xs font-medium tracking-normal text-(--color-text-primary) cursor-pointer"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             
             {/* Decoration */}
-            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+            <div className="absolute top-0 right-0 w-1/3 h-full bg-linear-to-l from-primary/5 to-transparent pointer-events-none" />
           </div>
         </SlideIn>
 
@@ -276,7 +278,7 @@ export default function BranchPresencePage() {
                         filteredStaff.map((user) => {
                           const status = getAttendanceStatus(user._id);
                           return (
-                            <tr key={user._id} className="hover:bg-primary/[0.02] transition-colors group">
+                            <tr key={user._id} className="hover:bg-primary/2 transition-colors group">
                               <td className="px-5 py-4">
                                 <div className="flex items-center">
                                   <div className="h-14 w-14 rounded-[1.2rem] bg-(--color-bg-soft) flex items-center justify-center font-semibold text-xl text-primary border border-(--color-border) transition-transform">
