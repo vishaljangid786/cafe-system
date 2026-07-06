@@ -3,6 +3,12 @@ import Modal from '../../../../components/ui/Modal';
 import PremiumSelect from '../../../../components/ui/PremiumSelect';
 import PaymentBadge from '../../../../components/ui/PaymentBadge';
 import { Zap, Printer, RotateCcw, Scissors } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+// Minimal HTML escaping so item names / ids can't break out of the print markup.
+const esc = (val) => String(val ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
 
 const PAYMENT_CHIP = {
   paid: 'text-success bg-success/10 border-success/20',
@@ -31,6 +37,80 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
   // users); fall back to the legacy role check when the props aren't supplied.
   const canRefund = canRefundProp !== undefined ? canRefundProp : ['admin', 'super_admin', 'branch_admin'].includes(userRole);
   const canDeleteOrder = canDelete !== undefined ? canDelete : ['admin', 'super_admin'].includes(userRole);
+
+  const handlePrint = () => {
+    const rows = (selectedOrder.items || []).map((item) => {
+      const name = item.menuItem?.name || item.itemName || 'Item';
+      const price = Number(item.menuItem?.price || item.price || 0);
+      const qty = Number(item.quantity || 0);
+      return `<tr>
+        <td class="uppercase font-bold">${esc(name)}</td>
+        <td class="text-center">${qty}</td>
+        <td class="text-center">&#8377;${price.toLocaleString('en-IN')}</td>
+        <td class="text-right">&#8377;${(price * qty).toLocaleString('en-IN')}</td>
+      </tr>`;
+    }).join('');
+
+    const statusLabel = selectedOrder.isRefunded ? 'REFUNDED' : String(payStatus).toUpperCase();
+
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) {
+      toast.error('Please allow pop-ups to print the order.');
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Order ${esc(selectedOrder._id)}</title>
+          <style>
+            @page { size: auto; margin: 0mm; }
+            body { font-family: 'Courier New', Courier, monospace; width: 320px; margin: 20px auto; padding: 16px; font-size: 12px; color: #000; background: #fff; }
+            .text-center { text-align: center; } .text-right { text-align: right; }
+            .font-bold { font-weight: 900; } .uppercase { text-transform: uppercase; } .italic { font-style: italic; }
+            .muted { color: #555; }
+            .flex { display: flex; justify-content: space-between; }
+            .divider { border-top: 1px dashed #000; margin: 12px 0; }
+            .big { font-size: 16px; font-weight: 900; }
+            table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+            th { border-bottom: 1px solid #000; font-weight: 900; text-align: left; padding-bottom: 4px; }
+            td { padding: 4px 0; vertical-align: top; }
+            @media print { body { width: 320px; margin: 0 auto; padding: 8mm; } }
+          </style>
+        </head>
+        <body>
+          <div class="text-center">
+            <h2 class="big uppercase" style="margin:0;">${esc(selectedOrder.branch?.name || 'CafeOS')}</h2>
+            <p class="muted" style="margin:2px 0;">${esc(orderTypeLabel)}</p>
+            <p class="muted" style="margin:2px 0;">${esc(new Date(selectedOrder.createdAt).toLocaleString())}</p>
+          </div>
+          <div class="divider"></div>
+          <div class="flex"><span class="font-bold">ORDER ID:</span><span>#${esc(selectedOrder._id)}</span></div>
+          <div class="flex"><span class="font-bold">PAYMENT:</span><span>${esc(selectedOrder.paymentType || 'CASH')} / ${esc(statusLabel)}</span></div>
+          <div class="divider"></div>
+          <table>
+            <thead>
+              <tr><th>ITEM</th><th class="text-center">QTY</th><th class="text-center">RATE</th><th class="text-right">AMT</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="divider"></div>
+          <div class="flex big"><span>TOTAL:</span><span>&#8377;${Number(selectedOrder.totalAmount || 0).toLocaleString('en-IN')}</span></div>
+          <div class="divider"></div>
+          <div class="text-center italic muted">
+            <p style="margin:2px 0;">Thank you!</p>
+            <p style="margin:2px 0;">*** End of Receipt ***</p>
+          </div>
+          <script>
+            window.onload = function () {
+              setTimeout(function () { window.print(); window.close(); }, 400);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   return (
     <Modal
@@ -232,7 +312,10 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
               Delete Order
             </button>
           )}
-          <button className="w-full py-4 text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2">
+          <button
+            onClick={handlePrint}
+            className="w-full py-4 text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal hover:text-primary transition-colors flex items-center justify-center gap-2"
+          >
             <Printer size={14} /> Print Order
           </button>
         </div>

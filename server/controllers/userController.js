@@ -2,7 +2,6 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, normalizeIdList, userLocationIds, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
-const { encrypt } = require('../utils/encryption');
 
 const targetUserLocations = (user) => userLocationIds(user);
 
@@ -361,12 +360,10 @@ const updateUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // The aadharNumber schema setter (encrypt) does NOT run on findByIdAndUpdate —
-  // Mongoose skips setters on query updates — so encrypt it explicitly here to keep
-  // the value encrypted at rest. The model getter/validator handle decryption.
-  if (updateData.aadharNumber) {
-    updateData.aadharNumber = encrypt(updateData.aadharNumber);
-  }
+  // Do NOT encrypt aadharNumber here: Mongoose 9 runs schema setters on
+  // findByIdAndUpdate, so the model's `set: encrypt` already encrypts it once.
+  // Encrypting again here would double-encrypt it — the validator decrypts a
+  // single layer, sees ciphertext instead of 12 digits, and rejects every save.
 
   // Role-change rules by actor:
   //  - super_admin: any role

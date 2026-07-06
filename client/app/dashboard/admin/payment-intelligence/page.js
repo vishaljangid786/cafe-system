@@ -6,7 +6,8 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, ChartSkeleton } from '@/app/components/ui/Skeleton';
 import {
   TrendingUp, CreditCard, ShoppingBag, Award, Zap,
-  Filter, Calendar, DollarSign, BarChart2
+  Filter, Calendar, DollarSign, BarChart2,
+  Clock, CalendarRange, CalendarClock, RotateCcw
 } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
@@ -93,7 +94,28 @@ export default function PaymentInformationPage() {
     });
   };
 
+  const resetFilters = () => setFilters({ date: '', period: '', startDate: '', endDate: '', financialYear: '' });
+
   if (loading) return <LoadingScreen fullScreen={false} />;
+
+  const activeDate = !!filters.date;
+  const activePeriod = !!filters.period;
+  const activeFY = !!filters.financialYear;
+  const activeRange = !!(filters.startDate || filters.endDate);
+  const anyActive = activeDate || activePeriod || activeFY || activeRange;
+
+  const cardCls = (active) =>
+    `rounded-xl border p-4 space-y-2.5 transition-all ${
+      active
+        ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/25'
+        : 'border-(--color-border) bg-(--color-surface-soft)/40 hover:border-(--color-border-strong)'
+    }`;
+  const labelCls = (active) =>
+    `text-[11px] font-medium uppercase tracking-normal flex items-center gap-1.5 ${
+      active ? 'text-primary' : 'text-(--color-text-muted)'
+    }`;
+  const dateInputCls =
+    'w-full px-3.5 py-2.5 rounded-lg bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary/30 focus:outline-none transition-colors';
 
   return (
     <div className="max-w-400 mx-auto pb-10 space-y-6">
@@ -109,27 +131,49 @@ export default function PaymentInformationPage() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-(--color-surface)/80  p-6 rounded-xl border border-(--color-border) shadow-sm space-y-6">
-        <div className="flex items-center gap-2 pb-4 border-b border-(--color-border)">
-          <Filter size={16} className="text-primary" />
-          <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-secondary)">Payment Filters</span>
+      <div className="bg-(--color-surface)/80 p-5 sm:p-6 rounded-xl border border-(--color-border) shadow-sm space-y-5">
+        <div className="flex items-center justify-between gap-3 pb-4 border-b border-(--color-border)">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Filter size={15} className="text-primary" />
+            </div>
+            <div>
+              <span className="block text-[11px] font-semibold uppercase tracking-normal text-(--color-text-secondary)">Payment Filters</span>
+              <span className="block text-[10px] font-medium text-(--color-text-muted)">Pick one filter — choosing another clears the rest.</span>
+            </div>
+            {anyActive && (
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold uppercase tracking-normal">Active</span>
+            )}
+          </div>
+          {anyActive && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium text-(--color-text-muted) hover:text-danger hover:bg-danger/5 border border-transparent hover:border-danger/20 transition-all"
+            >
+              <RotateCcw size={13} /> Reset
+            </button>
+          )}
         </div>
-        
-          <div className="space-y-2">
-            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Exact Date
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Exact Date */}
+          <div className={cardCls(activeDate)}>
+            <label className={labelCls(activeDate)}>
+              <Calendar size={13} /> Exact Date
             </label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-xs font-medium focus:border-primary focus:outline-none transition-all"
+              className={dateInputCls}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Time Period
+          {/* Time Period */}
+          <div className={cardCls(activePeriod)}>
+            <label className={labelCls(activePeriod)}>
+              <Clock size={13} /> Time Period
             </label>
             <PremiumSelect
               value={filters.period}
@@ -145,9 +189,10 @@ export default function PaymentInformationPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Financial Year
+          {/* Financial Year */}
+          <div className={cardCls(activeFY)}>
+            <label className={labelCls(activeFY)}>
+              <CalendarClock size={13} /> Financial Year
             </label>
             <PremiumSelect
               value={filters.financialYear}
@@ -162,25 +207,30 @@ export default function PaymentInformationPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1.5 ml-2">
-              <Calendar size={12} /> Custom Range
+          {/* Custom Range */}
+          <div className={cardCls(activeRange)}>
+            <label className={labelCls(activeRange)}>
+              <CalendarRange size={13} /> Custom Range
             </label>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-1/2 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[11px] font-medium focus:border-primary focus:outline-none transition-all"
+                aria-label="From date"
+                className={dateInputCls}
               />
+              <span className="text-[11px] font-medium text-(--color-text-muted) shrink-0">to</span>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="w-1/2 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-(--color-text-primary) text-[11px] font-medium focus:border-primary focus:outline-none transition-all"
+                aria-label="To date"
+                className={dateInputCls}
               />
             </div>
           </div>
+        </div>
       </div>
 
       {refetching ? (
