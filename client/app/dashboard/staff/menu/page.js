@@ -18,6 +18,7 @@ import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money } from '@/app/components/ui/Money';
 
 export default function StaffMenuPage() {
   const { selectedLocation, user } = useAuth();
@@ -267,7 +268,7 @@ export default function StaffMenuPage() {
                             </span>
                             {item.discountedPrice && (
                               <span className="text-[11px] text-(--color-text-muted) line-through font-medium">
-                                ₹{item.price}
+                                <Money value={item.price} />
                               </span>
                             )}
                           </div>

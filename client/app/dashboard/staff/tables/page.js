@@ -18,6 +18,7 @@ import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/tone';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { Money } from '@/app/components/ui/Money';
 
 export default function StaffTablesPage() {
   const { user, socket, selectedLocation } = useAuth();
@@ -411,7 +412,7 @@ export default function StaffTablesPage() {
           {[
             { label: 'Total Tables', val: stats.total, color: 'amber', icon: Globe },
             { label: 'Occupied', val: stats.occupied, color: 'amber', icon: Zap },
-            { label: 'Current Sales', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
+            { label: 'Current Sales', val: <Money value={stats.revenue} />, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
               <div className="glass-morphism rounded-xl border border-(--color-border) dark:border-(--color-border) p-4 flex items-center gap-4">
@@ -528,7 +529,7 @@ export default function StaffTablesPage() {
                         </div>
                         <div>
                           <div className="text-xs font-medium text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
-                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal uppercase mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal uppercase mt-0.5"><Money value={Number(order.price)} /> / unit</div>
                         </div>
                       </div>
 
@@ -549,7 +550,7 @@ export default function StaffTablesPage() {
                           </button>
                         </div>
                         <div className="text-sm font-semibold text-primary w-16 text-right">
-                          ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
+                          <Money value={Number(order.quantity) * Number(order.price)} />
                         </div>
                         <button
                           onClick={() => handleRemoveStagedItem(idx)}
@@ -601,7 +602,7 @@ export default function StaffTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary)"><Money value={Number(order.totalAmount)} /></div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -639,21 +640,21 @@ export default function StaffTablesPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       <span>Kitchen Subtotal</span>
-                      <span>₹{systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0).toLocaleString()}</span>
+                      <span><Money value={systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0)} /></span>
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-success">
                         <span>Discount</span>
-                        <span>-₹{discountAmount.toLocaleString()}</span>
+                        <span><Money value={discountAmount} prefix="-" /></span>
                       </div>
                     )}
                     <div className="h-px bg-(--color-surface-soft) dark:bg-(--color-surface) my-2" />
                     <div className="flex justify-between items-end">
                       <span className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Billed Total</span>
                       <span className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
-                        ₹{Math.max(0,
+                        <Money value={Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
-                        ).toLocaleString()}
+                        )} />
                       </span>
                     </div>
                   </div>
@@ -778,7 +779,7 @@ export default function StaffTablesPage() {
                           </div>
                           <div className="text-[11px] font-medium text-(--color-text-primary) dark:text-(--color-text-primary) truncate">{item.name}</div>
                           <div className="flex items-center justify-between mt-1">
-                            <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold text-primary"><Money value={Number(item.discountedPrice || item.price)} /></div>
                             {item.isAvailable && item.stock !== undefined && (
                               <span className={`text-[11px] font-medium uppercase tracking-tight ${item.stock < 10 ? 'text-danger' : 'text-success'}`}>{item.stock} left</span>
                             )}
@@ -858,7 +859,7 @@ export default function StaffTablesPage() {
                               )}
                             </div>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="text-[11px] font-semibold text-accent">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                              <div className="text-[11px] font-semibold text-accent"><Money value={Number(item.discountedPrice || item.price)} /></div>
                               <div className="h-6 w-6 rounded-lg bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) group-hover:bg-primary group-hover:text-(--color-on-primary) transition-all">
                                 {item.isAvailable ? <Plus size={12} /> : <Zap size={10} className="opacity-40" />}
                               </div>

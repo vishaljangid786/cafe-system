@@ -23,6 +23,7 @@ import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { Money } from '@/app/components/ui/Money';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -268,7 +269,7 @@ export default function StaffExpensesPage() {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className={`text-xl font-semibold tracking-tight leading-none ${t.status === 'rejected' ? 'text-(--color-text-muted) line-through' : 'text-danger'}`}>-₹{t.totalAmount.toLocaleString()}</p>
+                          <p className={`text-xl font-semibold tracking-tight leading-none ${t.status === 'rejected' ? 'text-(--color-text-muted) line-through' : 'text-danger'}`}><Money value={t.totalAmount} prefix="-" /></p>
                           <p className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted) mt-2">Expense</p>
                         </div>
                       </div>
@@ -321,7 +322,7 @@ export default function StaffExpensesPage() {
                   </div>
                   <div className="border-t border-(--color-border) dark:border-(--color-border) pt-6">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted)">Total Spent</p>
-                    <p className="text-2xl font-semibold tracking-tight mt-1 text-danger">₹{totalExpenditure.toLocaleString()}</p>
+                    <p className="text-2xl font-semibold tracking-tight mt-1 text-danger"><Money value={totalExpenditure} /></p>
                   </div>
                 </div>
               </div>
@@ -358,7 +359,7 @@ export default function StaffExpensesPage() {
                   </div>
                 </div>
                 <div className="text-left md:text-right bg-(--color-surface-soft) dark:bg-(--color-bg) p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) min-w-50">
-                  <p className="text-2xl font-semibold text-danger tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-danger tracking-tight"><Money value={selectedExpense.totalAmount} /></p>
                   <p className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted) mt-2">Total Amount</p>
                 </div>
               </div>

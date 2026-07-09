@@ -8,6 +8,7 @@ import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { AlertCircle } from 'lucide-react';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import { Money } from '@/app/components/ui/Money';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import toast from 'react-hot-toast';
@@ -135,7 +136,7 @@ export default function SalaryPage() {
                 <DollarSign size={120} />
               </div>
               <p className="text-[11px] font-medium uppercase tracking-normal opacity-70 mb-4">Total Salary Payout</p>
-              <div className="text-2xl font-semibold tracking-tight">₹{totalPayout.toLocaleString()}</div>
+              <div className="text-2xl font-semibold tracking-tight"><Money value={totalPayout} /></div>
               <div className="mt-6 flex items-center text-[11px] font-medium uppercase bg-white/10 w-fit px-2.5 py-1 rounded-full border border-(--color-border)">
                 <TrendingUp size={12} className="mr-2" /> {salaries.length} staff this month
               </div>
@@ -162,7 +163,7 @@ export default function SalaryPage() {
             <div className="bg-(--color-surface) dark:bg-(--color-surface) p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) shadow-sm relative overflow-hidden">
               <p className="text-[11px] font-medium text-(--color-text-muted) dark:text-(--color-text-muted) uppercase tracking-normal mb-4">Average Salary</p>
               <div className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
-                ₹{salaries.length > 0 ? Math.round(totalPayout / salaries.length).toLocaleString() : 0}
+                <Money value={salaries.length > 0 ? Math.round(totalPayout / salaries.length) : 0} />
               </div>
               <p className="mt-6 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal flex items-center">
                 <Info size={14} className="mr-2 text-primary" /> Per regular employee
@@ -314,7 +315,7 @@ export default function SalaryPage() {
                 <div className="text-right">
                   <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
                   <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">
-                    ₹{(Number(viewingUser.monthlySalary) || 0).toLocaleString()}
+                    <Money value={Number(viewingUser.monthlySalary) || 0} />
                   </p>
                   <p className="text-[11px] font-medium text-primary uppercase mt-1">Per Month</p>
                 </div>
@@ -351,7 +352,7 @@ export default function SalaryPage() {
                       <Wallet size={80} />
                     </div>
                     <p className="text-[11px] font-medium uppercase tracking-normal opacity-60 mb-4">Net Salary to Pay</p>
-                    <div className="text-2xl font-semibold tracking-tight mb-2">₹{Math.round(Number(viewingUser.calculatedSalary) || 0).toLocaleString()}</div>
+                    <div className="text-2xl font-semibold tracking-tight mb-2"><Money value={Math.round(Number(viewingUser.calculatedSalary) || 0)} /></div>
                     <p className="text-[11px] font-medium uppercase tracking-normal opacity-60">
                       Based on {viewingUser.payableDays} Effective Days
                     </p>

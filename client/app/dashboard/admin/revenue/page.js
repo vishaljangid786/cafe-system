@@ -5,6 +5,8 @@ import api from '../../../services/api';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { ListSkeleton } from '@/app/components/ui/Skeleton';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 import { useAuth } from '../../../context/AuthContext';
 import { can } from '../../../config/actions';
 import AddRevenueModal from '../../../components/revenue/AddRevenueModal';
@@ -223,16 +225,16 @@ export default function RevenuePage() {
               <div className="flex gap-5">
                 <div>
                   <p className="text-[11px] font-medium text-(--color-text-muted)">Total Revenue</p>
-                  <p className="text-2xl font-semibold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight"><Money value={totalRevenue} /></p>
                 </div>
                 <div>
                   <p className="text-[11px] font-medium text-(--color-text-muted)">Average Order</p>
-                  <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">₹{avgOrder.toFixed(0)}</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight"><Money value={avgOrder} /></p>
                 </div>
                 {gst && (
-                  <div title={`5% GST on ${gst.orders} completed orders (taxable ₹${Number(gst.taxableRevenue || 0).toLocaleString()})`}>
+                  <div title={`5% GST on ${gst.orders} completed orders (taxable ${formatIndianCompact(Number(gst.taxableRevenue || 0), { currency: true })})`}>
                     <p className="text-[11px] font-medium text-(--color-text-muted)">GST Collected</p>
-                    <p className="text-2xl font-semibold text-primary tracking-tight">₹{Number(gst.gstCollected || 0).toLocaleString()}</p>
+                    <p className="text-2xl font-semibold text-primary tracking-tight"><Money value={Number(gst.gstCollected || 0)} /></p>
                   </div>
                 )}
               </div>
@@ -250,6 +252,7 @@ export default function RevenuePage() {
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'black', fill: chartColors.text }} dy={10} />
                   <YAxis hide domain={['auto', 'auto']} />
                   <Tooltip
+                    formatter={(v) => formatIndianCompact(v, { currency: true })}
                     contentStyle={{
                       backgroundColor: chartColors.tooltipBg,
                       borderColor: chartColors.tooltipBorder,
@@ -381,7 +384,7 @@ export default function RevenuePage() {
                       </div>
                       <div className="flex items-center gap-5">
                         <div className="text-right">
-                          <p className="text-xl font-semibold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-xl font-semibold text-success tracking-tight"><Money value={t.totalAmount} prefix="+" /></p>
                           <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-(--color-text-muted) group-hover:translate-x-1 transition-transform" />
@@ -530,8 +533,8 @@ export default function RevenuePage() {
                           <tr key={i} className="hover:bg-(--color-surface-soft) transition-colors">
                             <td className="px-4 py-3 text-xs font-medium text-(--color-text-primary)">{item.itemName}</td>
                             <td className="px-4 py-3 text-xs font-medium text-(--color-text-muted) text-center">{item.quantity}</td>
-                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-muted) text-right">₹{item.price}</td>
-                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-primary) text-right">₹{item.price * item.quantity}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-muted) text-right"><Money value={item.price} /></td>
+                            <td className="px-4 py-3 text-xs font-medium text-(--color-text-primary) text-right"><Money value={item.price * item.quantity} /></td>
                           </tr>
                         ))}
                       </tbody>
@@ -574,12 +577,12 @@ export default function RevenuePage() {
                       </div>
                       <div>
                         <p className="text-[11px] font-medium text-(--color-text-muted)">Profit</p>
-                        <p className="text-lg font-semibold text-(--color-text-primary) tracking-tight">₹{selectedTransaction.totalProfit?.toLocaleString() || '0'}</p>
+                        <p className="text-lg font-semibold text-(--color-text-primary) tracking-tight"><Money value={selectedTransaction.totalProfit || 0} /></p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Total Amount</p>
-                      <p className="text-3xl font-semibold text-success tracking-tight">₹{selectedTransaction.totalAmount.toLocaleString()}</p>
+                      <p className="text-3xl font-semibold text-success tracking-tight"><Money value={selectedTransaction.totalAmount} /></p>
                     </div>
                   </div>
                 </div>

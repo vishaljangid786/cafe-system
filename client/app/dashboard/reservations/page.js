@@ -4,6 +4,7 @@ import axios from 'axios';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import { Money, Num } from '@/app/components/ui/Money';
 import {
   CalendarDays, Plus, Search, Filter,
   MapPin, Clock, Users, Phone,
@@ -223,7 +224,7 @@ export default function ReservationsPage() {
               <div className="p-2 rounded-lg" style={{ backgroundColor: `${stat.color}1a`, color: stat.color }}>
                 <stat.icon size={20} />
               </div>
-              <span className="text-2xl font-semibold text-(--color-text-primary)">{stat.value}</span>
+              <span className="text-2xl font-semibold text-(--color-text-primary)"><Num value={stat.value} /></span>
             </div>
             <p className="text-xs font-medium text-(--color-text-muted) mt-2 uppercase tracking-wider">{stat.label}</p>
           </div>
@@ -341,7 +342,7 @@ export default function ReservationsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium">₹{res.totalAmount}</div>
+                      <div className="text-sm font-medium"><Money value={res.totalAmount} /></div>
                       <span className={`text-[11px] font-medium tracking-tight ${res.paymentStatus === 'paid' ? 'text-success' : res.paymentStatus === 'partial' ? 'text-primary' : 'text-(--color-text-muted)'}`}>
                         {res.paymentStatus}
                       </span>

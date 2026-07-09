@@ -6,6 +6,7 @@ import { Mail, MapPin, Phone, Users, Trash2, Plus, Edit3, UserCheck, ShieldAlert
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { Money } from '@/app/components/ui/Money';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
@@ -315,7 +316,7 @@ export default function LocationStaffPage() {
 
                 <div className="bg-(--color-surface-soft) dark:bg-(--color-surface)/50 p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) text-right min-w-45">
                   <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mb-1">Monthly Salary</p>
-                  <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">₹{viewingStaff.monthlySalary?.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight"><Money value={viewingStaff.monthlySalary} /></p>
                 </div>
               </div>
 

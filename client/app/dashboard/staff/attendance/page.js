@@ -9,6 +9,7 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import { Money } from '@/app/components/ui/Money';
 import toast from 'react-hot-toast';
 
 export default function StaffAttendancePage() {
@@ -239,7 +240,7 @@ export default function StaffAttendancePage() {
                     <span className="text-[11px] font-medium uppercase tracking-normal text-primary/80">Salary for this month</span>
                   </div>
                   <h2 className="text-3xl font-semibold tracking-tight mb-2">
-                    ₹{Math.round(salaryData?.calculatedSalary || 0).toLocaleString()}
+                    <Money value={Math.round(salaryData?.calculatedSalary || 0)} />
                   </h2>
                   <p className="text-(--color-text-muted) font-medium text-sm">Estimated payout for <span className="text-white font-medium">{new Date(month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>.</p>
                 </div>
@@ -247,7 +248,7 @@ export default function StaffAttendancePage() {
                 <div className="flex flex-wrap gap-4">
                   <div className="px-5 py-3 rounded-xl bg-white/5 border border-(--color-border) ">
                     <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Basic Salary</p>
-                    <p className="text-sm font-semibold tracking-tight">₹{user.monthlySalary?.toLocaleString()}</p>
+                    <p className="text-sm font-semibold tracking-tight"><Money value={user.monthlySalary} /></p>
                   </div>
                   <div className="px-5 py-3 rounded-xl bg-white/5 border border-(--color-border) ">
                     <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Paid Days</p>

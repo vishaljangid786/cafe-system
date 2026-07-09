@@ -16,6 +16,7 @@ import PremiumSelect from '../../../components/ui/PremiumSelect';
 import AssignTableModal from '../../../components/tables/AssignTableModal';
 import BillPreview from '../../../components/tables/BillPreview';
 import { Button } from '@/app/components/ui/Button';
+import { Money } from '@/app/components/ui/Money';
 import TableCard from '@/app/components/tables/TableCard';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
@@ -546,7 +547,7 @@ export default function AdminTablesPage() {
           {[
             { label: 'Total Tables', val: stats.total, color: 'primary', icon: Globe },
             { label: 'Active Tables', val: stats.occupied, color: 'primary', icon: Zap },
-            { label: 'Total Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: 'emerald', icon: Receipt }
+            { label: 'Total Revenue', val: <Money value={stats.revenue} />, color: 'emerald', icon: Receipt }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.05}>
               <div className="glass-morphism rounded-xl border border-(--color-border) p-4 flex items-center gap-4">
@@ -832,7 +833,7 @@ export default function AdminTablesPage() {
                         </div>
                         <div>
                           <div className="text-xs font-medium text-(--color-text-primary) line-clamp-1">{order.itemName}</div>
-                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5">₹{Number(order.price).toLocaleString()} / unit</div>
+                          <div className="text-[11px] font-medium text-(--color-text-muted) tracking-normal mt-0.5"><Money value={Number(order.price)} /> / unit</div>
                         </div>
                       </div>
 
@@ -853,7 +854,7 @@ export default function AdminTablesPage() {
                           </button>
                         </div>
                         <div className="text-sm font-semibold text-primary w-16 text-right">
-                          ₹{(Number(order.quantity) * Number(order.price)).toLocaleString()}
+                          <Money value={Number(order.quantity) * Number(order.price)} />
                         </div>
                         <button
                           onClick={() => handleRemoveStagedItem(idx)}
@@ -902,7 +903,7 @@ export default function AdminTablesPage() {
                               )}
 
                               <div className="flex items-center gap-4">
-                                <div className="text-[11px] font-medium text-(--color-text-primary)">₹{Number(order.totalAmount).toLocaleString()}</div>
+                                <div className="text-[11px] font-medium text-(--color-text-primary)"><Money value={Number(order.totalAmount)} /></div>
                                 {order.status === 'COMPLETED' && !order.isBilled && (
                                   <button
                                     onClick={async () => {
@@ -940,21 +941,21 @@ export default function AdminTablesPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                       <span>Subtotal</span>
-                      <span className="text-(--color-text-primary)">₹{systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0).toLocaleString()}</span>
+                      <span className="text-(--color-text-primary)"><Money value={systemOrders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0)} /></span>
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-[11px] font-medium uppercase tracking-normal text-success">
                         <span>Discount Applied</span>
-                        <span>-₹{discountAmount.toLocaleString()}</span>
+                        <span><Money value={discountAmount} prefix="-" /></span>
                       </div>
                     )}
                     <div className="h-px bg-(--color-border) my-2" />
                     <div className="flex justify-between items-end">
                       <span className="text-[11px] font-medium uppercase text-primary tracking-normal mb-2">Total Amount</span>
                       <span className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">
-                        ₹{Math.max(0,
+                        <Money value={Math.max(0,
                           systemOrders.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0) - Number(discountAmount || 0)
-                        ).toLocaleString()}
+                        )} />
                       </span>
                     </div>
                   </div>
@@ -1065,7 +1066,7 @@ export default function AdminTablesPage() {
                           </div>
                           <div className="text-[11px] font-medium text-(--color-text-primary) truncate">{item.name}</div>
                           <div className="flex items-center justify-between mt-1">
-                            <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold text-primary"><Money value={Number(item.discountedPrice || item.price)} /></div>
                             {tracks && (
                               <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                 {qty <= 0 ? 'Out' : `${qty} left`}
@@ -1114,7 +1115,7 @@ export default function AdminTablesPage() {
                           <div>
                             <div className="text-[11px] font-medium text-(--color-text-primary) leading-tight truncate">{item.name}</div>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="text-[11px] font-semibold text-primary">₹{Number(item.discountedPrice || item.price).toLocaleString()}</div>
+                              <div className="text-[11px] font-semibold text-primary"><Money value={Number(item.discountedPrice || item.price)} /></div>
                               {tracks ? (
                                 <span className={`text-[11px] font-medium uppercase tracking-normal ${qty <= 0 ? 'text-danger' : qty < 10 ? 'text-warning' : 'text-success'}`}>
                                   {qty <= 0 ? 'Out' : `${qty} left`}

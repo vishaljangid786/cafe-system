@@ -22,6 +22,8 @@ import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 import toast from 'react-hot-toast';
 
 export default function LocationExpensesPage() {
@@ -168,7 +170,7 @@ export default function LocationExpensesPage() {
               <h2 className="text-xl font-semibold text-(--color-text-primary) dark:text-(--color-text-primary) tracking-tight">Expense Trend</h2>
               <div className="text-right">
                 <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted)">Total Spend</p>
-                <p className="text-2xl font-semibold text-danger tracking-tight">₹{totalExpenditure.toLocaleString()}</p>
+                <p className="text-2xl font-semibold text-danger tracking-tight"><Money value={totalExpenditure} /></p>
               </div>
             </div>
             <div className="h-[250px] w-full relative z-10">
@@ -181,7 +183,7 @@ export default function LocationExpensesPage() {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'black', fill: '#71717a' }} dy={10} />
-                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '16px', border: '1px solid #27272a' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '16px', border: '1px solid #27272a' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                   <Area type="monotone" dataKey="amount" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorExpL)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -260,7 +262,7 @@ export default function LocationExpensesPage() {
                       </div>
                       <div className="flex items-center gap-5 text-right">
                         <div>
-                          <p className="text-xl font-semibold text-danger tracking-tight">-₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-xl font-semibold text-danger tracking-tight"><Money value={t.totalAmount} prefix="-" /></p>
                           <p className="text-[11px] font-medium tracking-normal text-(--color-text-muted) mt-1">Settled</p>
                         </div>
                         <ChevronRight size={18} className="text-(--color-text-muted) group-hover:translate-x-1 transition-transform" />

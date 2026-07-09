@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money, Num } from '@/app/components/ui/Money';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
@@ -256,7 +257,7 @@ export default function StaffDashboard() {
               <div className="flex items-center gap-5">
                 <div className="text-right">
                   <p className="text-[11px] font-medium text-(--color-text-muted)">Payout ({timeframe})</p>
-                  <p className="text-2xl font-semibold text-success tracking-tight">₹{stats?.dailyPayout || 0}</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight"><Money value={stats?.dailyPayout || 0} /></p>
                 </div>
                 <div className="h-12 w-px bg-(--color-border)" />
                 <div className="text-right">
@@ -272,14 +273,14 @@ export default function StaffDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             label="Total Orders"
-            value={stats?.totalOrders || 0}
+            value={<Num value={stats?.totalOrders || 0} />}
             icon={ShoppingBag}
             color="blue"
             sub={`All-time total`}
           />
           <MetricCard
             label="Total Sales"
-            value={`₹${stats?.totalSales || 0}`}
+            value={<Money value={stats?.totalSales || 0} />}
             icon={IndianRupee}
             color="emerald"
             sub="Sales you brought in"
@@ -414,7 +415,7 @@ export default function StaffDashboard() {
                           <p className="text-[11px] font-medium text-(--color-text-muted)">{new Date(ex.date).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <p className="text-xs font-semibold text-(--color-text-primary)">₹{ex.totalAmount}</p>
+                      <p className="text-xs font-semibold text-(--color-text-primary)"><Money value={ex.totalAmount} /></p>
                     </div>
                   ))
                 )}

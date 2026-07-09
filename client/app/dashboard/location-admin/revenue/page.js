@@ -19,6 +19,8 @@ import ExportActions from '../../../components/ui/ExportActions';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function LocationRevenuePage() {
   const { user, selectedLocation } = useAuth();
@@ -125,7 +127,7 @@ export default function LocationRevenuePage() {
               <div className="flex gap-5">
                 <div className="text-right">
                   <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Revenue</p>
-                  <p className="text-2xl font-semibold text-success tracking-tight">₹{totalRevenue.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-success tracking-tight"><Money value={totalRevenue} /></p>
                 </div>
               </div>
             </div>
@@ -139,7 +141,7 @@ export default function LocationRevenuePage() {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'black', fill: '#71717a' }} dy={10} />
-                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '16px', border: '1px solid #27272a' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '16px', border: '1px solid #27272a' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                   <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRevL)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -212,7 +214,7 @@ export default function LocationRevenuePage() {
                       </div>
                       <div className="flex items-center gap-8 text-right">
                         <div>
-                          <p className="text-xl font-semibold text-success tracking-tight">+₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-xl font-semibold text-success tracking-tight"><Money value={t.totalAmount} prefix="+" /></p>
                           <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Confirmed</p>
                         </div>
                         <ChevronRight size={18} className="text-(--color-text-muted) group-hover:translate-x-1 transition-transform" />

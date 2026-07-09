@@ -21,6 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 import PaymentBadge from '../../../components/ui/PaymentBadge';
+import { Money, Num } from '../../../components/ui/Money';
 
 function StatCard({ label, value, icon: Icon, color }) {
   const colors = {
@@ -36,7 +37,7 @@ function StatCard({ label, value, icon: Icon, color }) {
         <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 ${colors[color]}`}>
           <Icon size={20} strokeWidth={2.5} />
         </div>
-        <p className="text-[28px] font-semibold text-(--color-text-primary) tracking-tight leading-none mb-1">{value}</p>
+        <p className="text-[28px] font-semibold text-(--color-text-primary) tracking-tight leading-none mb-1"><Num value={value} /></p>
         <p className="text-[11px] font-medium text-(--color-text-muted)">{label}</p>
       </div>
     </CardHover>
@@ -509,7 +510,7 @@ export default function StaffOrdersPage() {
                     <div className="p-5 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
                       <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Amount</p>
                       <p className="text-sm font-semibold text-success flex items-center gap-1">
-                        <IndianRupee size={14} /> {selectedOrder.totalAmount.toLocaleString()}
+                        <Money value={selectedOrder.totalAmount} />
                       </p>
                     </div>
                   </div>
@@ -551,7 +552,7 @@ export default function StaffOrdersPage() {
                       </div>
                       <div className="text-right">
                          <p className="text-xs font-medium text-primary">{item.quantity} Unit(s)</p>
-                         <p className="text-[11px] font-medium text-(--color-text-muted) mt-0.5">₹{item.price} each</p>
+                         <p className="text-[11px] font-medium text-(--color-text-muted) mt-0.5"><Money value={item.price} /> each</p>
                       </div>
                     </div>
                   ))}
@@ -627,7 +628,7 @@ export default function StaffOrdersPage() {
                         {item.modifiers?.length > 0 && (
                           <p className="text-[11px] font-medium text-(--color-text-muted) mt-0.5">{item.modifiers.map(m => m.label).join(', ')}</p>
                         )}
-                        <p className="text-[11px] font-medium text-success mt-1">₹{item.price} × {item.quantity}</p>
+                        <p className="text-[11px] font-medium text-success mt-1"><Money value={item.price} /> × {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="flex items-center bg-(--color-surface-soft) rounded-xl p-1.5 border border-(--color-border)">
@@ -662,7 +663,7 @@ export default function StaffOrdersPage() {
                 <div className="flex justify-between items-end">
                   <div>
                     <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Estimated Total</p>
-                    <p className="text-2xl font-semibold tracking-tight text-(--color-text-primary)">₹{stagedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0).toLocaleString()}</p>
+                    <p className="text-2xl font-semibold tracking-tight text-(--color-text-primary)"><Money value={stagedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0)} /></p>
                   </div>
                 </div>
 
@@ -724,7 +725,7 @@ export default function StaffOrdersPage() {
                       </div>
                       <div className="px-2">
                         <h4 className="text-[11px] font-medium text-(--color-text-primary) truncate">{item.name}</h4>
-                        <p className="text-[11px] font-medium text-primary mt-1">₹{item.discountedPrice || item.price}</p>
+                        <p className="text-[11px] font-medium text-primary mt-1"><Money value={item.discountedPrice || item.price} /></p>
                       </div>
                     </div>
                   ))}
@@ -759,7 +760,7 @@ export default function StaffOrdersPage() {
                             {on && <CheckCircle2 size={15} />}
                             {o.label}
                           </span>
-                          {o.priceDelta !== 0 && <span className="text-xs">{o.priceDelta > 0 ? '+' : ''}₹{o.priceDelta}</span>}
+                          {o.priceDelta !== 0 && <span className="text-xs"><Money value={o.priceDelta} prefix={o.priceDelta > 0 ? '+' : ''} /></span>}
                         </button>
                       );
                     })}
@@ -900,7 +901,7 @@ function StaffOrderListRow({ order, onRefresh }) {
       <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
         <div className="text-right">
           <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">Subtotal</p>
-          <p className="text-xl font-semibold text-(--color-text-primary) tracking-tight">₹{order.totalAmount.toLocaleString()}</p>
+          <p className="text-xl font-semibold text-(--color-text-primary) tracking-tight"><Money value={order.totalAmount} /></p>
         </div>
         
         {order.status === 'READY' ? (

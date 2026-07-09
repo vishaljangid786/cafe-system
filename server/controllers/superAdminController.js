@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const Location = require('../models/Location');
+const Cafe = require('../models/Cafe');
+const Customer = require('../models/Customer');
 const AuditLog = require('../models/AuditLog');
 const asyncHandler = require('../utils/asyncHandler');
 const mongoose = require('mongoose');
@@ -10,95 +12,223 @@ const mongoose = require('mongoose');
 // @route   GET /api/super-admin/executive-summary
 // @access  Private (Super Admin)
 const getExecutiveSummary = asyncHandler(async (req, res) => {
-  // 1. Core Metrics
-  const totalRevenueData = await Order.aggregate([
-    { $match: { status: 'COMPLETED' } },
-    { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-  ]);
-  const totalRevenue = totalRevenueData[0]?.total || 0;
+  const { startDate, endDate, cafeId } = req.query;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayRevenueData = await Order.aggregate([
-    { $match: { status: 'COMPLETED', createdAt: { $gte: today } } },
-    { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-  ]);
-  const todayRevenue = todayRevenueData[0]?.total || 0;
+  // ---- Optional scope filters (date range + cafe) so the dashboard is drillable ----
+  const dateMatch = {};
+  if (startDate) dateMatch.$gte = new Date(startDate);
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    dateMatch.$lte = end;
+  }
+  const hasDate = Object.keys(dateMatch).length > 0;
 
-  const totalBranches = await Location.countDocuments();
-  
-  // Approximate net profit (revenue - costs, simplified for demo)
-  const netProfit = totalRevenue * 0.4; 
+  // A cafe filter resolves to the set of branches owned by that cafe.
+  let branchIds = null;
+  if (cafeId && mongoose.isValidObjectId(cafeId)) {
+    const branches = await Location.find({ cafe: cafeId }).select('_id').lean();
+    branchIds = branches.map((b) => b._id);
+  }
+  const branchScope = branchIds ? { branch: { $in: branchIds } } : {};
 
-  // 2. Branch Ranking
-  const branchRanking = await Order.aggregate([
-    { $match: { status: 'COMPLETED' } },
+  // Base match reused across order aggregations.
+  const baseMatch = { ...branchScope };
+  if (hasDate) baseMatch.createdAt = dateMatch;
+  const completedMatch = { ...baseMatch, status: 'COMPLETED' };
+
+  // ---- 1. Core revenue metrics ----
+  const [revenueAgg] = await Order.aggregate([
+    { $match: completedMatch },
     {
       $group: {
-        _id: '$branch',
-        revenue: { $sum: '$totalAmount' }
-      }
+        _id: null,
+        total: { $sum: '$totalAmount' },
+        orders: { $sum: 1 },
+        tax: { $sum: '$taxAmount' },
+        discount: { $sum: '$discountAmount' },
+      },
     },
+  ]);
+  const totalRevenue = revenueAgg?.total || 0;
+  const completedOrders = revenueAgg?.orders || 0;
+  const totalTax = revenueAgg?.tax || 0;
+  const totalDiscount = revenueAgg?.discount || 0;
+  const avgOrderValue = completedOrders ? totalRevenue / completedOrders : 0;
+  // Approximate net profit (revenue - costs, simplified for demo)
+  const netProfit = totalRevenue * 0.4;
+
+  // Today's numbers are always "today" regardless of the selected range.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [todayAgg] = await Order.aggregate([
+    { $match: { ...branchScope, status: 'COMPLETED', createdAt: { $gte: today } } },
+    { $group: { _id: null, total: { $sum: '$totalAmount' }, orders: { $sum: 1 } } },
+  ]);
+  const todayRevenue = todayAgg?.total || 0;
+  const todayOrders = todayAgg?.orders || 0;
+
+  // ---- 2. Entity counts ----
+  const [totalBranches, totalCafes, totalCustomers, totalMenuItems, totalStaff, pendingApprovals, totalOrders] =
+    await Promise.all([
+      Location.countDocuments(branchIds ? { _id: { $in: branchIds } } : {}),
+      Cafe.countDocuments(),
+      Customer.countDocuments(),
+      MenuItem.countDocuments(),
+      User.countDocuments({ role: { $in: ['staff', 'chef'] } }),
+      Order.countDocuments({ ...baseMatch, 'paymentApproval.status': 'pending' }),
+      Order.countDocuments(baseMatch),
+    ]);
+
+  // ---- 3. Branch ranking (top 5 by revenue) ----
+  const branchRanking = await Order.aggregate([
+    { $match: completedMatch },
+    { $group: { _id: '$branch', revenue: { $sum: '$totalAmount' }, orders: { $sum: 1 } } },
     { $sort: { revenue: -1 } },
     { $limit: 5 },
-    {
-      $lookup: {
-        from: 'locations',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'locationDetails'
-      }
-    },
-    { $unwind: '$locationDetails' },
-    {
-      $project: {
-        name: '$locationDetails.name',
-        revenue: 1
-      }
-    }
+    { $lookup: { from: 'locations', localField: '_id', foreignField: '_id', as: 'loc' } },
+    { $unwind: '$loc' },
+    { $project: { name: '$loc.name', city: '$loc.city', revenue: 1, orders: 1 } },
   ]);
 
-  // 3. Top Performers
+  // ---- 4. Payment split (cash / UPI / card / …) ----
+  const paymentSplit = await Order.aggregate([
+    { $match: completedMatch },
+    { $group: { _id: '$paymentType', total: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+    { $sort: { total: -1 } },
+    { $project: { _id: 0, type: '$_id', total: 1, count: 1 } },
+  ]);
+
+  // ---- 5. Top UPI branch (fills a widget the UI already expects) ----
+  const [upiLeader] = await Order.aggregate([
+    { $match: { ...completedMatch, paymentType: 'UPI' } },
+    { $group: { _id: '$branch', total: { $sum: '$totalAmount' } } },
+    { $sort: { total: -1 } },
+    { $limit: 1 },
+    { $lookup: { from: 'locations', localField: '_id', foreignField: '_id', as: 'loc' } },
+    { $unwind: '$loc' },
+    { $project: { _id: 0, branchName: '$loc.name', total: 1 } },
+  ]);
+
+  // ---- 6. Highest coupon-using branch ----
+  const [highestCouponBranch] = await Order.aggregate([
+    { $match: { ...baseMatch, coupon: { $ne: null } } },
+    { $group: { _id: '$branch', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 1 },
+    { $lookup: { from: 'locations', localField: '_id', foreignField: '_id', as: 'loc' } },
+    { $unwind: '$loc' },
+    { $project: { _id: 0, name: '$loc.name', count: 1 } },
+  ]);
+
+  // ---- 7. Top performers (top 3 chefs & staff) ----
   const topChefs = await Order.aggregate([
+    { $match: { ...baseMatch, assignedChef: { $ne: null } } },
     { $group: { _id: '$assignedChef', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
-    { $limit: 1 },
-    { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' } },
-    { $unwind: '$userDetails' },
-    { $project: { name: '$userDetails.name', orderCount: 1 } }
+    { $limit: 3 },
+    { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'u' } },
+    { $unwind: '$u' },
+    { $project: { name: '$u.name', orderCount: 1 } },
   ]);
-
   const topStaff = await Order.aggregate([
+    { $match: { ...baseMatch, createdBy: { $ne: null } } },
     { $group: { _id: '$createdBy', orderCount: { $sum: 1 } } },
     { $sort: { orderCount: -1 } },
-    { $limit: 1 },
-    { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' } },
-    { $unwind: '$userDetails' },
-    { $project: { name: '$userDetails.name', orderCount: 1 } }
+    { $limit: 3 },
+    { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'u' } },
+    { $unwind: '$u' },
+    { $project: { name: '$u.name', orderCount: 1 } },
   ]);
 
-  // 4. Alerts & Anomalies
+  // ---- 8. Best-selling menu items ----
+  const topMenuItems = await Order.aggregate([
+    { $match: completedMatch },
+    { $unwind: '$items' },
+    {
+      $group: {
+        _id: '$items.itemName',
+        quantity: { $sum: '$items.quantity' },
+        revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+      },
+    },
+    { $sort: { quantity: -1 } },
+    { $limit: 5 },
+    { $project: { _id: 0, name: '$_id', quantity: 1, revenue: 1 } },
+  ]);
+
+  // ---- 9. Orders by status ----
+  const ordersByStatus = await Order.aggregate([
+    { $match: baseMatch },
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+    { $project: { _id: 0, status: '$_id', count: 1 } },
+  ]);
+
+  // ---- 10. Revenue trend (selected range, or the last 14 days by default) ----
+  const trendStart = hasDate && dateMatch.$gte ? new Date(dateMatch.$gte) : new Date(Date.now() - 13 * 24 * 60 * 60 * 1000);
+  trendStart.setHours(0, 0, 0, 0);
+  const revenueTrend = await Order.aggregate([
+    {
+      $match: {
+        ...branchScope,
+        status: 'COMPLETED',
+        createdAt: { $gte: trendStart, ...(dateMatch.$lte ? { $lte: dateMatch.$lte } : {}) },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        revenue: { $sum: '$totalAmount' },
+        orders: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $project: { _id: 0, date: '$_id', revenue: 1, orders: 1 } },
+  ]);
+
+  // ---- 11. Alerts & anomalies ----
   const lowStockCount = await MenuItem.countDocuments({ status: 'Out of Stock' });
-  const recentCancellations = await Order.countDocuments({ 
+  const recentCancellations = await Order.countDocuments({
+    ...branchScope,
     status: 'CANCELLED',
-    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
   });
 
   res.json({
     success: true,
     data: {
+      // core
       totalRevenue,
       todayRevenue,
+      todayOrders,
       totalBranches,
       netProfit,
+      completedOrders,
+      totalOrders,
+      avgOrderValue,
+      totalTax,
+      totalDiscount,
+      // entities
+      totalCafes,
+      totalCustomers,
+      totalMenuItems,
+      totalStaff,
+      pendingApprovals,
+      // breakdowns
       branchRanking,
+      paymentSplit,
+      upiLeader: upiLeader || null,
+      highestCouponBranch: highestCouponBranch || null,
       topChefs,
       topStaff,
+      topMenuItems,
+      ordersByStatus,
+      revenueTrend,
       alerts: {
         lowStockItems: lowStockCount,
-        recentCancellations
-      }
-    }
+        recentCancellations,
+      },
+    },
   });
 });
 

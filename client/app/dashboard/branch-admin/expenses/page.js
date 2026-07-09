@@ -6,6 +6,8 @@ import { blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 import { useAuth } from '../../../context/AuthContext';
 import {
   TrendingDown, Search, Filter,
@@ -441,7 +443,7 @@ export default function BranchExpensesPage() {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xl font-semibold text-danger tracking-tight leading-none">-₹{t.totalAmount.toLocaleString()}</p>
+                          <p className="text-xl font-semibold text-danger tracking-tight leading-none"><Money value={t.totalAmount} prefix="-" /></p>
                           <p className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted) mt-2">Paid</p>
                         </div>
                       </div>
@@ -469,7 +471,7 @@ export default function BranchExpensesPage() {
                   </div>
                   <div className="border-t border-(--color-border) pt-6">
                     <p className="text-[11px] font-medium uppercase tracking-wide opacity-60">Total Expense</p>
-                    <p className="text-2xl font-semibold tracking-tight mt-1 text-danger">₹{totalExpenditure.toLocaleString()}</p>
+                    <p className="text-2xl font-semibold tracking-tight mt-1 text-danger"><Money value={totalExpenditure} /></p>
                   </div>
                 </div>
               </div>
@@ -506,7 +508,7 @@ export default function BranchExpensesPage() {
                   </div>
                 </div>
                 <div className="text-left md:text-right bg-(--color-surface-soft) dark:bg-(--color-bg) p-5 rounded-xl border border-(--color-border) dark:border-(--color-border) min-w-50">
-                  <p className="text-2xl font-semibold text-danger tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-danger tracking-tight"><Money value={selectedExpense.totalAmount} /></p>
                   <p className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted) mt-2">Total Amount</p>
                 </div>
               </div>
@@ -716,7 +718,7 @@ export default function BranchExpensesPage() {
                   </div>
                   <div className="flex items-center justify-between rounded-xl bg-(--color-surface-soft) dark:bg-(--color-bg) border border-(--color-border) px-4 py-3">
                     <span className="text-[11px] font-medium uppercase tracking-wide text-(--color-text-muted)">Split total · {Object.keys(splitAmounts).length} branches</span>
-                    <span className="text-sm font-semibold text-danger">₹{splitTotal.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-danger"><Money value={splitTotal} /></span>
                   </div>
                 </div>
               )}
@@ -732,7 +734,7 @@ export default function BranchExpensesPage() {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-wide text-sm" icon={Sparkles}>{splitMode ? `Split Expense${splitTotal > 0 ? ` · ₹${splitTotal.toLocaleString()}` : ''}` : 'Save Expense'}</Button>
+            <Button type="submit" variant="primary" className="w-full bg-primary !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-wide text-sm" icon={Sparkles}>{splitMode ? `Split Expense${splitTotal > 0 ? ` · ${formatIndianCompact(splitTotal, { currency: true })}` : ''}` : 'Save Expense'}</Button>
           </form>
         </Modal>
       </div>

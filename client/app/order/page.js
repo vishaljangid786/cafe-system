@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import QRCode from 'react-qr-code';
 import api from '../services/api';
+import { Money } from '../components/ui/Money';
+import { formatIndianCompact } from '../utils/formatNumber';
 import {
   Plus, Minus, ShoppingBag, CheckCircle2, X, Users, Flame, Utensils,
   Loader2, Smartphone, Wallet, ArrowLeft, ArrowRight, Clock, XCircle, Trash2,
 } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 // Build a standard UPI intent URL that any UPI app (GPay/PhonePe/Paytm) can open.
 const buildUpiUrl = ({ vpa, name, amount, note }) => {
@@ -357,7 +357,7 @@ function OrderApp() {
           {placed?.total != null && (
             <div className="rounded-2xl bg-(--color-surface) border border-(--color-border) p-4 text-left">
               <div className="flex justify-between text-sm"><span className="text-(--color-text-muted)">Order</span><span className="font-bold text-(--color-text-primary)">#{String(placed.orderId).slice(-6).toUpperCase()}</span></div>
-              <div className="flex justify-between text-sm mt-1"><span className="text-(--color-text-muted)">Amount</span><span className="font-bold text-(--color-text-primary)">{money(placed.total)}</span></div>
+              <div className="flex justify-between text-sm mt-1"><span className="text-(--color-text-muted)">Amount</span><span className="font-bold text-(--color-text-primary)"><Money value={placed.total} /></span></div>
               <div className="flex justify-between text-sm mt-1"><span className="text-(--color-text-muted)">Payment</span><span className="font-bold text-(--color-text-primary)">{placed.method === 'UPI' ? 'UPI' : 'Cash'}</span></div>
             </div>
           )}
@@ -377,7 +377,7 @@ function OrderApp() {
         <div className="max-w-md mx-auto">
           <button onClick={() => setStep('checkout')} className="flex items-center gap-1.5 text-xs font-bold text-(--color-text-muted) mb-2"><ArrowLeft size={14} /> Back</button>
           <div className="text-center space-y-1 mb-5">
-            <h1 className="text-xl font-bold text-(--color-text-primary)">Pay {money(total)} via UPI</h1>
+            <h1 className="text-xl font-bold text-(--color-text-primary)">Pay <Money value={total} /> via UPI</h1>
             <p className="text-xs text-(--color-text-muted)">Scan with any UPI app, or tap the button on your phone.</p>
           </div>
 
@@ -442,14 +442,14 @@ function OrderApp() {
                         <p className="text-sm font-bold text-(--color-text-primary) truncate">{x.name}</p>
                         {x.modifiers?.length > 0 && <p className="text-[11px] text-(--color-text-muted) truncate">{x.modifiers.map((m) => m.label).join(', ')}</p>}
                       </div>
-                      <span className="text-sm font-bold text-(--color-text-primary) shrink-0">{money(x.price * x.quantity)}</span>
+                      <span className="text-sm font-bold text-(--color-text-primary) shrink-0"><Money value={x.price * x.quantity} /></span>
                       <button onClick={() => removeLine(x.key)} title="Remove" className="h-8 w-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center shrink-0 active:scale-90"><Trash2 size={14} /></button>
                     </div>
                   ))}
                 </div>
                 <div className="flex justify-between items-center mt-3 pt-3 border-t border-(--color-border)">
                   <span className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Total</span>
-                  <span className="text-lg font-bold text-(--color-text-primary)">{money(total)}</span>
+                  <span className="text-lg font-bold text-(--color-text-primary)"><Money value={total} /></span>
                 </div>
               </>
             )}
@@ -537,7 +537,7 @@ function OrderApp() {
           <div className="max-w-md mx-auto p-4">
             <button onClick={proceedFromCheckout} disabled={placing || cart.length === 0} className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl active:scale-[0.99] disabled:opacity-50">
               {placing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              {cart.length === 0 ? 'Add items to continue' : payChoice === 'pay_now_upi' ? `Continue to UPI · ${money(total)}` : `Place order · ${money(total)}`}
+              {cart.length === 0 ? 'Add items to continue' : payChoice === 'pay_now_upi' ? `Continue to UPI · ${formatIndianCompact(total, { currency: true })}` : `Place order · ${formatIndianCompact(total, { currency: true })}`}
             </button>
           </div>
         </div>
@@ -589,9 +589,9 @@ function OrderApp() {
         <div className="p-2.5 flex flex-col gap-1.5 flex-1">
           <p className="text-[13px] font-bold text-(--color-text-primary) leading-tight line-clamp-2 min-h-[2.4em]">{it.name}</p>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-bold text-primary">{money(priceOf(it))}</span>
+            <span className="text-sm font-bold text-primary"><Money value={priceOf(it)} /></span>
             {it.discountedPrice && it.discountedPrice < it.price && (
-              <span className="text-[10px] font-medium text-(--color-text-muted) line-through">{money(it.price)}</span>
+              <span className="text-[10px] font-medium text-(--color-text-muted) line-through"><Money value={it.price} /></span>
             )}
           </div>
           {hasMods && <span className="text-[10px] font-bold text-(--color-text-muted) -mt-0.5">customizable</span>}
@@ -636,7 +636,7 @@ function OrderApp() {
                   </div>
                   <p className="text-xs font-bold text-(--color-text-primary) truncate">{it.name}</p>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[11px] font-bold text-primary">{money(priceOf(it))}</p>
+                    <p className="text-[11px] font-bold text-primary"><Money value={priceOf(it)} /></p>
                     <StockTag it={it} />
                   </div>
                 </button>
@@ -661,7 +661,7 @@ function OrderApp() {
           <div className="max-w-lg mx-auto p-4">
             <button onClick={() => { setError(''); setStep('checkout'); }} className="w-full flex items-center justify-between py-3.5 px-5 bg-primary text-(--color-on-primary) rounded-xl active:scale-[0.99] shadow-sm">
               <span className="flex items-center gap-2 text-sm font-bold"><ShoppingBag size={17} /> {cartCount} item{cartCount > 1 ? 's' : ''}</span>
-              <span className="flex items-center gap-2 text-sm font-bold">Review &amp; pay · {money(total)} <ArrowRight size={16} /></span>
+              <span className="flex items-center gap-2 text-sm font-bold">Review &amp; pay · <Money value={total} /> <ArrowRight size={16} /></span>
             </button>
           </div>
         </div>
@@ -682,7 +682,7 @@ function OrderApp() {
                   const on = !!(modSel[g.name] && modSel[g.name][o.label]);
                   return (
                     <button key={oi} onClick={() => toggleMod(g, o.label)} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-bold ${on ? 'bg-primary/10 border-primary text-primary' : 'bg-(--color-bg-soft) border-(--color-border) text-(--color-text-primary)'}`}>
-                      <span>{o.label}</span>{o.priceDelta ? <span className="text-xs">+{money(o.priceDelta)}</span> : null}
+                      <span>{o.label}</span>{o.priceDelta ? <span className="text-xs"><Money value={o.priceDelta} prefix="+" /></span> : null}
                     </button>
                   );
                 })}

@@ -8,6 +8,8 @@ import {
 import { PageTransition } from '../../../components/ui/AnimatedContainer';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function WorkHistoryPage() {
   const { user } = useAuth();
@@ -118,7 +120,7 @@ export default function WorkHistoryPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-semibold text-success tracking-tight">₹{Math.round(entry.calculatedSalary).toLocaleString()}</p>
+                        <p className="text-2xl font-semibold text-success tracking-tight"><Money value={Math.round(entry.calculatedSalary)} /></p>
                         <p className="text-[11px] font-medium text-(--color-text-muted) mt-1 flex items-center gap-1 justify-end">
                           Paid <CheckCircle2 size={10} className="text-success" />
                         </p>
@@ -147,8 +149,8 @@ export default function WorkHistoryPage() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#27272a30" />
                       <XAxis dataKey="month" stroke="#71717a" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#71717a" fontSize={10} tickLine={false} />
-                      <Tooltip contentStyle={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '1rem', color: 'var(--color-text-primary)', fontSize: '12px' }} />
+                      <YAxis stroke="#71717a" fontSize={10} width={70} tickLine={false} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
+                      <Tooltip contentStyle={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '1rem', color: 'var(--color-text-primary)', fontSize: '12px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                       <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSalary)" />
                     </AreaChart>
                   </ResponsiveContainer>

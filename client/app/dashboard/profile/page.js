@@ -15,6 +15,7 @@ import { PageTransition, SlideIn, CardHover } from '../../components/ui/Animated
 import { Button } from '../../components/ui/Button';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import { Money } from '@/app/components/ui/Money';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -256,7 +257,7 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="label">Base Salary</p>
-                        <p className="text-xl font-semibold text-success mt-1 tracking-tight">₹{user.monthlySalary?.toLocaleString() || '0'}</p>
+                        <p className="text-xl font-semibold text-success mt-1 tracking-tight"><Money value={user.monthlySalary || 0} /></p>
                       </div>
                       <div>
                         <p className="label">Branch</p>
