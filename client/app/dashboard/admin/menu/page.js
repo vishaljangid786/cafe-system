@@ -34,6 +34,8 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
 import useConfirm from '@/app/components/ui/useConfirm';
+import { Money, Num } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 const SUGGESTED_ICONS = [
@@ -367,7 +369,7 @@ export default function MenuManagementPage() {
     const discPrice = formData.get('discountedPrice') ? parseFloat(formData.get('discountedPrice')) : null;
 
     if (originalPrice && discPrice && discPrice >= originalPrice) {
-      const msg = `Offer Price (₹${discPrice}) must be lower than the Original Price (₹${originalPrice}).`;
+      const msg = `Offer Price (${formatIndianCompact(discPrice, { currency: true })}) must be lower than the Original Price (${formatIndianCompact(originalPrice, { currency: true })}).`;
       setItemErrors({ discountedPrice: msg });
       return toast.error(msg);
     }
@@ -629,12 +631,13 @@ export default function MenuManagementPage() {
                   <Tooltip
                     itemStyle={{ color: 'var(--color-primary)', fontSize: '12px', fontWeight: '900' }}
                     labelStyle={{ display: 'none' }}
+                    formatter={(v) => formatIndianCompact(v, { currency: graphMetric === 'value' })}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-xl font-semibold text-(--color-text-primary)">
-                  {graphMetric === 'value' ? `₹${analytics?.summary?.totalRevenue?.toLocaleString()}` : analytics?.summary?.totalOrders}
+                  {graphMetric === 'value' ? <Money value={analytics?.summary?.totalRevenue} /> : <Num value={analytics?.summary?.totalOrders} />}
                 </span>
                 <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">
                   {graphMetric === 'value' ? 'Total Revenue' : 'Total Orders'}
@@ -649,7 +652,7 @@ export default function MenuManagementPage() {
                     <span className="text-xs font-medium text-(--color-text-muted)">{cat.name}</span>
                   </div>
                   <span className="text-xs font-medium text-(--color-text-primary)">
-                    {graphMetric === 'value' ? `₹${cat.value.toLocaleString()}` : `${cat.count} Units`}
+                    {graphMetric === 'value' ? <Money value={cat.value} /> : `${cat.count} Units`}
                   </span>
                 </div>
               ))}
@@ -684,12 +687,12 @@ export default function MenuManagementPage() {
 
                   <div className="flex gap-12 mt-10">
                     <div className="text-center">
-                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight">{analytics.staffPerformance[0].totalOrders}</p>
+                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight"><Num value={analytics.staffPerformance[0].totalOrders} /></p>
                       <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Orders</p>
                     </div>
                     <div className="h-12 w-px bg-(--color-border)" />
                     <div className="text-center">
-                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight">₹{analytics.staffPerformance[0].revenue.toLocaleString()}</p>
+                      <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight"><Money value={analytics.staffPerformance[0].revenue} /></p>
                       <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">Total Earnings</p>
                     </div>
                   </div>
@@ -715,7 +718,7 @@ export default function MenuManagementPage() {
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-end mb-1">
                           <span className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Performance</span>
-                          <span className="text-xs font-medium text-(--color-text-primary)">₹{staff.revenue.toLocaleString()}</span>
+                          <span className="text-xs font-medium text-(--color-text-primary)"><Money value={staff.revenue} /></span>
                         </div>
                         <div className="h-1.5 w-full bg-(--color-bg-soft) rounded-full overflow-hidden">
                           <motion.div
@@ -1000,7 +1003,7 @@ export default function MenuManagementPage() {
                             </span>
                             {(item.discountedPrice || item.originalPrice) && (
                               <span className="text-[11px] text-(--color-text-muted) line-through font-medium">
-                                ₹{item.originalPrice || item.price}
+                                <Money value={item.originalPrice || item.price} />
                               </span>
                             )}
                           </div>

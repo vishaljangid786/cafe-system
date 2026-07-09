@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../../../../components/ui/Modal';
 import PremiumSelect from '../../../../components/ui/PremiumSelect';
 import PaymentBadge from '../../../../components/ui/PaymentBadge';
+import { Money } from '../../../../components/ui/Money';
 import { Zap, Printer, RotateCcw, Scissors } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -134,7 +135,7 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
           </div>
           <div className="relative z-10 text-right">
             <p className="text-[10px] font-bold text-white/40 uppercase tracking-normal mb-1">Total Amount</p>
-            <p className="text-4xl font-bold text-primary tracking-tight">₹{selectedOrder.totalAmount}</p>
+            <p className="text-4xl font-bold text-primary tracking-tight"><Money value={selectedOrder.totalAmount} /></p>
             <div className="flex justify-end items-center gap-2 mt-2">
               <PaymentBadge method={selectedOrder.paymentType || 'CASH'} size="xs" />
               <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-normal rounded border ${PAYMENT_CHIP[payStatus] || PAYMENT_CHIP.unpaid}`}>
@@ -158,10 +159,10 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
                   </div>
                   <div>
                     <p className="text-sm font-bold text-(--color-text-primary)">{item.menuItem?.name}</p>
-                    <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{item.quantity} x ₹{item.menuItem?.price}</p>
+                    <p className="text-[10px] font-bold text-(--color-text-muted) uppercase tracking-normal">{item.quantity} x <Money value={item.menuItem?.price} /></p>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-(--color-text-primary)">₹{item.quantity * (item.menuItem?.price || 0)}</span>
+                <span className="text-xs font-bold text-(--color-text-primary)"><Money value={item.quantity * (item.menuItem?.price || 0)} /></span>
               </div>
             ))}
           </div>

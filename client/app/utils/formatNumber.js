@@ -30,3 +30,21 @@ export function formatIndianCompact(value, { currency = false, decimals = 2 } = 
 
 // Convenience wrapper for money stat cards (prefixes ₹).
 export const formatCompactCurrency = (value) => formatIndianCompact(value, { currency: true });
+
+// The exact, fully-grouped value — used for hover tooltips so the real figure is
+// always one hover away from the compact display (e.g. ₹12,34,56,78,912). Keeps up
+// to 2 decimals only when the number actually has a fractional part.
+export function formatIndianFull(value, { currency = false, decimals } = {}) {
+  const n = Number(value);
+  const cur = currency ? '₹' : '';
+  if (!Number.isFinite(n)) return `${cur}0`;
+  const opts =
+    decimals != null
+      ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals }
+      : { maximumFractionDigits: 2 };
+  return `${cur}${n.toLocaleString('en-IN', opts)}`;
+}
+
+// True when formatIndianCompact would abbreviate this value (i.e. it exceeds
+// 5 digits / ≥ 1 lakh). Callers use it to decide whether a hover tooltip is useful.
+export const isCompacted = (value) => Math.abs(Number(value) || 0) >= 1e5;

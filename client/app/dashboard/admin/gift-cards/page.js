@@ -6,9 +6,8 @@ import { digitsOnly, blockNegative } from '@/app/utils/inputValidation';
 import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money } from '@/app/components/ui/Money';
 import { Gift, Plus, Search, IndianRupee } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export default function GiftCardsPage() {
   const [loading, setLoading] = useState(true);
@@ -90,7 +89,7 @@ export default function GiftCardsPage() {
               </div>
               {found && (
                 <div className="p-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
-                  <p className="text-xs font-medium text-(--color-text-primary)">{found.code} · balance <span className="text-primary font-semibold">{money(found.balance)}</span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
+                  <p className="text-xs font-medium text-(--color-text-primary)">{found.code} · balance <span className="text-primary font-semibold"><Money value={found.balance} /></span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
                 </div>
               )}
               <p className="text-[11px] text-(--color-text-muted)">To redeem, open the order in All Orders → Redeem gift card.</p>
@@ -108,9 +107,9 @@ export default function GiftCardsPage() {
                 <div key={c._id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <p className="text-xs font-medium text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[11px]">· {c.issuedToName || 'guest'}</span></p>
-                    <p className="text-[11px] text-(--color-text-muted)">Issued {money(c.initialBalance)} · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
+                    <p className="text-[11px] text-(--color-text-muted)">Issued <Money value={c.initialBalance} /> · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}>{money(c.balance)}</span>
+                  <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}><Money value={c.balance} /></span>
                 </div>
               ))}
             </div>

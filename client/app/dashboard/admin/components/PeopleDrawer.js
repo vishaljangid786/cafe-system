@@ -9,6 +9,7 @@ import {
 import api from '../../../services/api';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money } from '@/app/components/ui/Money';
 const ROLE_META = {
   all: { label: 'All People', icon: Users },
   staff: { label: 'Staff', icon: Users },
@@ -326,7 +327,7 @@ export default function PeopleDrawer({ roleKey, onClose, currentUserRole, locati
                       {member.monthlySalary != null && (
                         <div className="text-right shrink-0">
                           <p className="text-[8px] font-bold uppercase text-(--color-text-muted) tracking-normal">Salary</p>
-                          <p className="text-sm font-bold text-(--color-text-primary)">₹{Number(member.monthlySalary).toLocaleString()}</p>
+                          <p className="text-sm font-bold text-(--color-text-primary)"><Money value={Number(member.monthlySalary)} /></p>
                         </div>
                       )}
                     </div>

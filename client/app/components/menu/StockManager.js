@@ -7,11 +7,11 @@ import { useAuth } from '@/app/context/AuthContext';
 import { can } from '@/app/config/actions';
 import Modal from '../ui/Modal';
 import PremiumSelect from '../ui/PremiumSelect';
+import { Money } from '../ui/Money';
 import {
   Plus, Minus, Search, Coffee, Trash2, Loader2, Eye, EyeOff, PackageOpen, ExternalLink,
 } from 'lucide-react';
 
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const isSpecific = (id) => id && id !== 'All' && id !== 'all';
 
 // Per-branch stock console: see live stock, bump it up/down, toggle availability,
@@ -153,7 +153,7 @@ export default function StockManager({ isOpen, onClose, branchId, branchName, me
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-(--color-text-primary) truncate">{it.name}</p>
                         <p className="text-[11px] font-bold text-(--color-text-muted)">
-                          {money(it.discountedPrice || it.price)}
+                          <Money value={it.discountedPrice || it.price} />
                           {out && <span className="ml-2 text-danger uppercase">out of stock</span>}
                         </p>
                       </div>

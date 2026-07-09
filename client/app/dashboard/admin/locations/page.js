@@ -10,6 +10,7 @@ import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, User
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money } from '@/app/components/ui/Money';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -699,13 +700,13 @@ export default function BranchesPage() {
                            <SlideIn delay={0.3}>
                               <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Revenue (Monthly)</p>
                               <p className="text-2xl font-semibold text-success tracking-tight">
-                                ₹{fetchingStats ? '...' : (branchStats?.revenue || 0).toLocaleString()}
+                                {fetchingStats ? '₹...' : <Money value={branchStats?.revenue || 0} />}
                               </p>
                            </SlideIn>
                            <SlideIn delay={0.4}>
                               <p className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal mb-2">Net Profit</p>
                               <p className="text-2xl font-semibold text-primary-dark tracking-tight">
-                                ₹{fetchingStats ? '...' : (branchStats?.profit || 0).toLocaleString()}
+                                {fetchingStats ? '₹...' : <Money value={branchStats?.profit || 0} />}
                               </p>
                            </SlideIn>
                         </div>

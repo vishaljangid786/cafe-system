@@ -7,8 +7,7 @@ import { can } from '@/app/config/actions';
 import {
   BellRing, CheckCircle2, XCircle, Smartphone, Wallet, Users, Loader2, Clock,
 } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+import { Money } from '@/app/components/ui/Money';
 
 // Front-of-house queue of customer QR/self-orders waiting for a staff member to
 // confirm the payment (cash seen / UPI reference verified). Confirming releases
@@ -145,7 +144,7 @@ export default function PendingApprovals({ branchId }) {
                     className="w-20 bg-transparent py-2 px-1 text-sm font-bold text-(--color-text-primary) outline-none"
                   />
                 </div>
-                <span className="text-xs font-bold text-(--color-text-primary) mr-1">of {money(o.totalAmount)}</span>
+                <span className="text-xs font-bold text-(--color-text-primary) mr-1">of <Money value={o.totalAmount} /></span>
                 <button onClick={() => approve(o)} disabled={busy}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success text-white text-[11px] font-bold uppercase tracking-wide active:scale-95 disabled:opacity-50">
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Confirm

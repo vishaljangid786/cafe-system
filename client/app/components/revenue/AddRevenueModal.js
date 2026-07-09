@@ -8,6 +8,7 @@ import api from '../../services/api';
 import Modal from '../ui/Modal';
 import { Button } from '../ui/Button';
 import PremiumSelect from '../ui/PremiumSelect';
+import { Money } from '../ui/Money';
 import toast from 'react-hot-toast';
 
 const REVENUE_TITLES = [
@@ -313,7 +314,7 @@ export default function AddRevenueModal({
             <span className="flex items-center gap-1.5">
               <Layers size={12} /> {selectedIds.length} branch{selectedIds.length === 1 ? '' : 'es'} selected
             </span>
-            <span className="text-success font-semibold">Total: ₹{total.toLocaleString()}</span>
+            <span className="text-success font-semibold">Total: <Money value={total} /></span>
           </div>
         </div>
 

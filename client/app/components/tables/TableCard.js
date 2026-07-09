@@ -3,6 +3,7 @@ import { Coffee, Users, Zap, Plus, Clock, Receipt, MessageSquare, Pencil, Trash,
 import { motion } from 'framer-motion';
 import { CardHover } from '../ui/AnimatedContainer';
 import { Button } from '../ui/Button';
+import { Money } from '../ui/Money';
 
 export default function TableCard({ table, onAssign, onManage, onEdit, onDelete, onQr, onCancel }) {
   const isAvailable = table.status === 'available';
@@ -154,7 +155,7 @@ export default function TableCard({ table, onAssign, onManage, onEdit, onDelete,
               <div className="flex items-center justify-between bg-(--color-bg-soft)/50 p-4 rounded-xl border border-(--color-border)">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-(--color-text-muted) uppercase tracking-normal">Running Bill</span>
-                  <span className="text-2xl font-bold text-primary tracking-tight">₹{safeTotal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-primary tracking-tight"><Money value={safeTotal} /></span>
                 </div>
                 <Receipt className="text-(--color-text-muted)/30" size={24} />
               </div>

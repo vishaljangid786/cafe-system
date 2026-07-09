@@ -17,6 +17,7 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import Modal from '@/app/components/ui/Modal';
 import { Button } from '@/app/components/ui/Button';
 import ExportActions from '@/app/components/ui/ExportActions';
+import { Money } from '@/app/components/ui/Money';
 import useBranchScope from '../../../hooks/useBranchScope';
 
 export default function InventoryDashboard() {
@@ -349,7 +350,7 @@ export default function InventoryDashboard() {
                           <tr key={item._id} className="group hover:bg-primary/[0.02] transition-colors">
                             <td className="px-5 py-4">
                               <p className="font-medium text-(--color-text-primary)">{item.ingredient?.name}</p>
-                              <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">Cost: ₹{item.costPerUnit}/{item.ingredient?.unit}</p>
+                              <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">Cost: <Money value={item.costPerUnit} />/{item.ingredient?.unit}</p>
                             </td>
                             <td className="px-5 py-4">
                               <span className="px-2.5 py-1 bg-(--color-surface-soft) text-[11px] font-medium text-(--color-text-muted) rounded-lg">

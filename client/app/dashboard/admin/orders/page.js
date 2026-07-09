@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 import {
@@ -277,7 +279,7 @@ export default function AdminOrdersDashboard() {
     if (!code || !amount || Number(amount) <= 0) { toast.error('Enter a card code and amount'); return; }
     try {
       const res = await api.post('/gift-cards/redeem', { orderId: id, code, amount: Number(amount) });
-      toast.success(`Redeemed ₹${res.data.data.redeemed} · card balance ₹${res.data.data.balance}`);
+      toast.success(`Redeemed ${formatIndianCompact(res.data.data.redeemed, { currency: true })} · card balance ${formatIndianCompact(res.data.data.balance, { currency: true })}`);
       setSelectedOrder(null);
       fetchData();
     } catch (error) {
@@ -563,7 +565,7 @@ export default function AdminOrdersDashboard() {
                                 </p>
                               </td>
                               <td className="py-4 px-5 text-right">
-                                <span className="text-sm font-semibold text-(--color-text-primary)">₹{order.totalAmount}</span>
+                                <span className="text-sm font-semibold text-(--color-text-primary)"><Money value={order.totalAmount} /></span>
                               </td>
                               <td className="py-4 px-5 text-right">
                                 <div className="flex items-center justify-end gap-2 transition-opacity">

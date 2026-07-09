@@ -9,9 +9,8 @@ import toast from 'react-hot-toast';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import { Money } from '@/app/components/ui/Money';
 import { Truck, Package, Plus, Trash2, Check, X, Building2 } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export default function ProcurementPage() {
   const { user } = useAuth();
@@ -174,7 +173,7 @@ export default function ProcurementPage() {
                       <input type="number" min="0" onKeyDown={blockNonInteger} value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} placeholder="Qty" className={`${inputCls} w-20`} />
                       <span className="text-[10px] text-(--color-text-muted) uppercase">{it.unit}</span>
                       <input type="number" min="0" onKeyDown={blockNegative} value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="₹/unit" className={`${inputCls} w-24`} />
-                      <span className="text-xs font-semibold text-(--color-text-primary) w-20 text-right">{money((Number(it.quantity) || 0) * (Number(it.unitCost) || 0))}</span>
+                      <span className="text-xs font-semibold text-(--color-text-primary) w-20 text-right"><Money value={(Number(it.quantity) || 0) * (Number(it.unitCost) || 0)} /></span>
                       {poItems.length > 1 && (
                         <button onClick={() => setPoItems((p) => p.filter((_, i) => i !== idx))} className="p-2 text-danger hover:bg-danger/10 rounded-lg"><Trash2 size={14} /></button>
                       )}
@@ -186,7 +185,7 @@ export default function ProcurementPage() {
 
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <input value={poNotes} onChange={(e) => setPoNotes(e.target.value)} placeholder="Notes (optional)" className={`${inputCls} flex-1 min-w-40`} />
-                  <p className="text-sm font-medium text-(--color-text-primary)">Total: <span className="font-semibold text-primary">{money(poTotal)}</span></p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">Total: <span className="font-semibold text-primary"><Money value={poTotal} /></span></p>
                   {can(user, 'procurement.add') && (
                     <button onClick={createPO} disabled={busy} className="px-6 py-3 bg-primary text-(--color-on-primary) text-[11px] font-semibold tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Create PO</button>
                   )}
@@ -203,7 +202,7 @@ export default function ProcurementPage() {
                   {orders.map((po) => (
                     <div key={po._id} className="py-3 flex items-center justify-between flex-wrap gap-3">
                       <div>
-                        <p className="text-xs font-medium text-(--color-text-primary)">{po.supplier?.name || 'Supplier'} · {money(po.totalAmount)} <span className="text-(--color-text-muted) text-[11px]">· {po.items?.length} items</span></p>
+                        <p className="text-xs font-medium text-(--color-text-primary)">{po.supplier?.name || 'Supplier'} · <Money value={po.totalAmount} /> <span className="text-(--color-text-muted) text-[11px]">· {po.items?.length} items</span></p>
                         <p className="text-[10px] text-(--color-text-muted)">{po.locationId?.name || ''} · {new Date(po.createdAt).toLocaleDateString('en-IN')}</p>
                       </div>
                       <div className="flex items-center gap-2">

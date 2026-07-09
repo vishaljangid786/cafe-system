@@ -13,6 +13,8 @@ import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -275,8 +277,8 @@ export default function StaffReportsAnalytics({ user }) {
                   <BarChart data={data.slice(0, 10)} margin={{ left: -10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />
                     <XAxis dataKey="name" stroke="#71717a" fontSize={10} />
-                    <YAxis stroke="#71717a" fontSize={10} />
-                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} />
+                    <YAxis stroke="#71717a" fontSize={10} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
+                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                     <Bar dataKey="totalSales" fill="#f59e0b" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -304,7 +306,7 @@ export default function StaffReportsAnalytics({ user }) {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} />
+                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -348,13 +350,13 @@ export default function StaffReportsAnalytics({ user }) {
                       <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-(--color-text-primary) group-hover:text-primary transition-colors">{staff.name} <span className="opacity-0 group-hover:opacity-60 text-[10px]">›</span></td>
                       <td className="py-4 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wider">{staff.role}</td>
                       <td className="py-4 text-xs font-medium text-(--color-text-muted)">{staff.branchName}</td>
-                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{staff.totalSales}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white"><Money value={staff.totalSales} /></td>
                       <td className="py-4 text-xs font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.ordersHandled}</td>
                       <td className="py-4 text-xs font-medium text-(--color-text-secondary) dark:text-(--color-text-muted)">{staff.couponUsageCount}</td>
-                      <td className="py-4 text-xs font-medium text-(--color-text-muted)">₹{staff.couponDiscountAmount}</td>
-                      <td className="py-4 text-xs font-medium text-success">₹{staff.estimatedProfitContribution}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-muted)"><Money value={staff.couponDiscountAmount} /></td>
+                      <td className="py-4 text-xs font-medium text-success"><Money value={staff.estimatedProfitContribution} /></td>
                       <td className="py-4 text-xs font-medium text-danger">{staff.cancelledRatio}</td>
-                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{staff.avgOrderValue}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white"><Money value={staff.avgOrderValue} /></td>
                     </tr>
                   ))}
                   {data.length === 0 && (

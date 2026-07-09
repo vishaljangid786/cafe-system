@@ -247,13 +247,13 @@ export default function UniversalDateFilter({
 
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      <div className="relative">
+      <div className="relative w-full h-full">
         <PremiumSelect
           icon={Calendar}
           value={filterType}
           onChange={(val) => setFilterType(val)}
           options={filterOptions}
-          className="w-full"
+          className="w-full h-full"
           placeholder="Select Range"
         />
 

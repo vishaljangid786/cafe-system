@@ -13,6 +13,8 @@ import {
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import useBranchScope from '../../../hooks/useBranchScope';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function ForecastingDashboard() {
   const { singleBranchId } = useBranchScope();
@@ -97,7 +99,7 @@ export default function ForecastingDashboard() {
           <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <Calendar size={24} className="opacity-80" />
             <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Expected Today Revenue</p>
-            <h2 className="text-2xl font-semibold mt-2 tracking-tight">₹{forecast?.expectedTodayRevenue?.toLocaleString() || 0}</h2>
+            <h2 className="text-2xl font-semibold mt-2 tracking-tight"><Money value={forecast?.expectedTodayRevenue || 0} /></h2>
             <div className="mt-4 flex items-center gap-2 text-xs font-medium opacity-90">
               <Percent size={14} /> Confidence {forecast?.confidenceScore}%
             </div>
@@ -106,7 +108,7 @@ export default function ForecastingDashboard() {
           <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
             <TrendingUp size={24} className="opacity-80" />
             <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Weekly Revenue Estimate</p>
-            <h2 className="text-2xl font-semibold mt-2 tracking-tight">₹{forecast?.weeklyRevenueEstimate?.toLocaleString() || 0}</h2>
+            <h2 className="text-2xl font-semibold mt-2 tracking-tight"><Money value={forecast?.weeklyRevenueEstimate || 0} /></h2>
             <div className="mt-4 flex items-center gap-2 text-xs font-medium opacity-90">
               <Percent size={14} /> Based on recent sales
             </div>
@@ -155,8 +157,8 @@ export default function ForecastingDashboard() {
               <BarChart data={forecast?.nextMonthSalesTrend || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="day" fontSize={10} stroke="var(--color-text-muted)" />
-                <YAxis fontSize={10} stroke="var(--color-text-muted)" />
-                <Tooltip contentStyle={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '1rem', color: 'var(--color-text-primary)', fontSize: '11px' }} />
+                <YAxis fontSize={10} stroke="var(--color-text-muted)" width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
+                <Tooltip contentStyle={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '1rem', color: 'var(--color-text-primary)', fontSize: '11px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                 <Bar dataKey="projected" fill="var(--color-primary)" radius={[6,6,0,0]} />
               </BarChart>
             </ResponsiveContainer>

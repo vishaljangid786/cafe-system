@@ -15,6 +15,7 @@ import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import ExportActions from '@/app/components/ui/ExportActions';
+import { Num } from '@/app/components/ui/Money';
 
 export default function AuditLogsPage() {
   const { user } = useAuth();
@@ -99,7 +100,7 @@ export default function AuditLogsPage() {
             <div className="flex items-center gap-5 bg-(--color-surface) px-5 py-3.5 rounded-xl border border-(--color-border)">
               <div>
                 <p className="text-[11px] font-medium text-(--color-text-muted) mb-0.5">Total Actions</p>
-                <p className="text-xl font-semibold text-(--color-text-primary)">{totalLogs}</p>
+                <p className="text-xl font-semibold text-(--color-text-primary)"><Num value={totalLogs} /></p>
               </div>
               <div className="h-9 w-px bg-(--color-border)" />
               <div>

@@ -78,25 +78,25 @@ export default function DashboardFilters({
         </div>
 
         {/* Temporal Controller */}
-        <div className="lg:col-span-3 flex items-center">
+        <div className="lg:col-span-3 h-11">
           <UniversalDateFilter
             onFilterChange={({ startDate, endDate }) => setDateRange({ start: startDate, end: endDate })}
             loading={loading}
-            className="w-full"
+            className="w-full h-full"
           />
         </div>
 
         {/* View Toggle */}
-        <div className="lg:col-span-2 bg-(--color-surface-soft) rounded-xl p-1.5 border border-(--color-border) flex items-center justify-center gap-1">
+        <div className="lg:col-span-2 h-11 bg-(--color-surface-soft) rounded-xl p-1 border border-(--color-border) flex items-center justify-center gap-1">
           <button
             onClick={() => setViewMode('grid')}
-            className={`flex-1 h-11 rounded-xl flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-primary text-(--color-on-primary) shadow-lg shadow-primary/20' : 'text-(--color-text-muted) hover:text-primary'}`}
+            className={`flex-1 h-full rounded-lg flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-primary text-(--color-on-primary) shadow-sm shadow-primary/20' : 'text-(--color-text-muted) hover:text-primary'}`}
           >
             <LayoutGrid size={18} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`flex-1 h-11 rounded-xl flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-primary text-(--color-on-primary) shadow-lg shadow-primary/20' : 'text-(--color-text-muted) hover:text-primary'}`}
+            className={`flex-1 h-full rounded-lg flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-primary text-(--color-on-primary) shadow-sm shadow-primary/20' : 'text-(--color-text-muted) hover:text-primary'}`}
           >
             <List size={18} />
           </button>
@@ -106,9 +106,10 @@ export default function DashboardFilters({
         <div className="lg:col-span-1">
           <button
             onClick={resetFilters}
-            className="w-full h-14 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) flex items-center justify-center transition-all group"
+            title="Reset filters"
+            className="w-full h-11 bg-(--color-surface-soft) hover:bg-danger/10 hover:text-danger hover:border-danger/30 rounded-xl border border-(--color-border) text-(--color-text-muted) flex items-center justify-center transition-all group"
           >
-            <FilterX size={20} className="group-hover:rotate-12 transition-transform" />
+            <FilterX size={18} className="group-hover:rotate-12 transition-transform" />
           </button>
         </div>
       </div>

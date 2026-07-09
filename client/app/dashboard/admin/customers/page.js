@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';import LoadingScreen from '@/app/compone
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
+import { Money, Num } from '@/app/components/ui/Money';
 
 export default function CustomersDashboard() {
   // Scope CRM data to the global top-navbar cafe/branch selector (previously the
@@ -129,7 +130,7 @@ export default function CustomersDashboard() {
                   <Users size={120} />
                 </div>
                 <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Customers</p>
-                <p className="text-2xl font-semibold text-(--color-text-primary) mt-2">{analytics.totalCustomers}</p>
+                <p className="text-2xl font-semibold text-(--color-text-primary) mt-2"><Num value={analytics.totalCustomers} /></p>
                 <p className="text-xs font-medium text-success mt-2 flex items-center gap-1">
                   All registered customers
                 </p>
@@ -155,7 +156,7 @@ export default function CustomersDashboard() {
                   <Award size={120} />
                 </div>
                 <p className="text-[11px] font-medium uppercase tracking-normal opacity-80">Reward Points</p>
-                <p className="text-2xl font-semibold mt-2">{analytics.totalRewardPoints?.toLocaleString()}</p>
+                <p className="text-2xl font-semibold mt-2"><Num value={analytics.totalRewardPoints} /></p>
                 <p className="text-xs font-medium opacity-90 mt-2 flex items-center gap-1">
                   Total reward points
                 </p>
@@ -165,7 +166,7 @@ export default function CustomersDashboard() {
             <SlideIn delay={0.4}>
               <div className="bg-danger/10 p-6 rounded-xl border border-danger/20 relative overflow-hidden">
                 <p className="text-[11px] font-medium uppercase tracking-normal text-danger">At Risk (Inactive)</p>
-                <p className="text-2xl font-semibold text-danger mt-2">{analytics.inactiveCustomersCount}</p>
+                <p className="text-2xl font-semibold text-danger mt-2"><Num value={analytics.inactiveCustomersCount} /></p>
                 <p className="text-xs font-medium text-danger mt-2 flex items-center gap-1">
                    30 days since last visit
                 </p>
@@ -218,7 +219,7 @@ export default function CustomersDashboard() {
                             </span>
                           </td>
                           <td className="px-5 py-4">
-                            <p className="text-lg font-semibold text-(--color-text-primary)">₹{cust.totalSpend?.toLocaleString()}</p>
+                            <p className="text-lg font-semibold text-(--color-text-primary)"><Money value={cust.totalSpend} /></p>
                           </td>
                           <td className="px-5 py-4">
                             <p className="font-medium text-(--color-text-secondary)">{cust.visits}x</p>
@@ -306,7 +307,7 @@ export default function CustomersDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-success/10 border border-success/20">
                   <p className="text-[11px] font-medium uppercase tracking-normal text-success mb-1">Lifetime Value</p>
-                  <p className="text-2xl font-semibold text-success">₹{viewingCustomer.totalSpend?.toLocaleString()}</p>
+                  <p className="text-2xl font-semibold text-success"><Money value={viewingCustomer.totalSpend} /></p>
                 </div>
                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
                   <p className="text-[11px] font-medium uppercase tracking-normal text-primary mb-1 flex items-center gap-1"><Award size={12}/> Reward Points</p>

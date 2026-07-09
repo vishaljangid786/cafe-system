@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import { Money, Num } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 import useBranchScope from '../../../hooks/useBranchScope';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
@@ -115,7 +117,7 @@ export default function PaymentInformationPage() {
       active ? 'text-primary' : 'text-(--color-text-muted)'
     }`;
   const dateInputCls =
-    'w-full px-3.5 py-2.5 rounded-lg bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary/30 focus:outline-none transition-colors';
+    'w-full min-w-0 px-3.5 py-2.5 rounded-lg bg-(--color-surface) border border-(--color-border) text-(--color-text-primary) text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary/30 focus:outline-none transition-colors';
 
   return (
     <div className="max-w-400 mx-auto pb-10 space-y-6">
@@ -156,7 +158,7 @@ export default function PaymentInformationPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Exact Date */}
           <div className={cardCls(activeDate)}>
             <label className={labelCls(activeDate)}>
@@ -208,7 +210,7 @@ export default function PaymentInformationPage() {
           </div>
 
           {/* Custom Range */}
-          <div className={cardCls(activeRange)}>
+          <div className={`${cardCls(activeRange)} sm:col-span-2 lg:col-span-2`}>
             <label className={labelCls(activeRange)}>
               <CalendarRange size={13} /> Custom Range
             </label>
@@ -243,10 +245,10 @@ export default function PaymentInformationPage() {
         <>
           {/* Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <MetricCard label="Total UPI Orders" value={stats?.totalUPIOrders || 0} sub="Paid by UPI" icon={ShoppingBag} color="violet" />
-            <MetricCard label="Total Cash Orders" value={stats?.totalCashOrders || 0} sub="Paid by cash" icon={ShoppingBag} color="amber" />
-            <MetricCard label="UPI Revenue" value={`₹${stats?.upiRevenue || 0}`} sub="Total from UPI payments" icon={Zap} color="violet" />
-            <MetricCard label="Cash Revenue" value={`₹${stats?.cashRevenue || 0}`} sub="Total from cash payments" icon={DollarSign} color="amber" />
+            <MetricCard label="Total UPI Orders" value={<Num value={stats?.totalUPIOrders || 0} />} sub="Paid by UPI" icon={ShoppingBag} color="violet" />
+            <MetricCard label="Total Cash Orders" value={<Num value={stats?.totalCashOrders || 0} />} sub="Paid by cash" icon={ShoppingBag} color="amber" />
+            <MetricCard label="UPI Revenue" value={<Money value={stats?.upiRevenue || 0} />} sub="Total from UPI payments" icon={Zap} color="violet" />
+            <MetricCard label="Cash Revenue" value={<Money value={stats?.cashRevenue || 0} />} sub="Total from cash payments" icon={DollarSign} color="amber" />
           </div>
 
           {stats?.highestUPIBranch && (
@@ -257,7 +259,7 @@ export default function PaymentInformationPage() {
               </div>
               <div className="text-right">
                 <span className="text-[11px] font-medium uppercase tracking-normal opacity-80">UPI Revenue</span>
-                <p className="text-2xl font-semibold mt-1">₹{stats.highestUPIBranch.revenue}</p>
+                <p className="text-2xl font-semibold mt-1"><Money value={stats.highestUPIBranch.revenue} /></p>
               </div>
             </div>
           )}
@@ -284,8 +286,8 @@ export default function PaymentInformationPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />
                     <XAxis dataKey="date" stroke="#71717a" fontSize={10} />
-                    <YAxis stroke="#71717a" fontSize={10} />
-                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} />
+                    <YAxis stroke="#71717a" fontSize={10} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
+                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                     <Legend iconType="circle" />
                     <Area type="monotone" dataKey="upi" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#colorUpi)" name="UPI" />
                     <Area type="monotone" dataKey="cash" stroke="#f59e0b" strokeWidth={2.5} fill="url(#colorCash)" name="Cash" />
@@ -304,8 +306,8 @@ export default function PaymentInformationPage() {
                   <BarChart data={stats?.branchUPIStats || []} margin={{ left: -10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />
                     <XAxis dataKey="branchName" stroke="#71717a" fontSize={10} />
-                    <YAxis stroke="#71717a" fontSize={10} />
-                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} />
+                    <YAxis stroke="#71717a" fontSize={10} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
+                    <Tooltip contentStyle={{ background: '#18181b', borderColor: '#27272a', borderRadius: '1rem', color: '#fff', fontSize: '11px' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                     <Legend iconType="circle" />
                     <Bar dataKey="upiRevenue" fill="#8b5cf6" name="UPI Revenue (₹)" radius={[6, 6, 0, 0]} />
                     <Bar dataKey="cashRevenue" fill="#f59e0b" name="Cash Revenue (₹)" radius={[6, 6, 0, 0]} />

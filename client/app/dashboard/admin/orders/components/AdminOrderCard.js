@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Timer, Zap } from 'lucide-react';
 import PaymentBadge from '../../../../components/ui/PaymentBadge';
+import { Money } from '../../../../components/ui/Money';
 
 export default function AdminOrderCard({ order, onCancel, onForceComplete, userRole }) {
   const statusColors = {
@@ -60,7 +61,7 @@ export default function AdminOrderCard({ order, onCancel, onForceComplete, userR
                 <div className={`w-2 h-2 rounded-full ${item.menuItem?.dietaryType === 'veg' ? 'bg-success' : 'bg-danger'}`} />
                 <span className="text-sm font-medium text-(--color-text-primary)">{item.quantity}x {item.menuItem?.name}</span>
               </div>
-              <span className="text-xs font-semibold text-(--color-text-muted)">₹{item.menuItem?.price * item.quantity}</span>
+              <span className="text-xs font-semibold text-(--color-text-muted)"><Money value={item.menuItem?.price * item.quantity} /></span>
             </div>
           ))}
         </div>

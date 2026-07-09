@@ -2,6 +2,7 @@ import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ValueVisibilityProvider } from "./context/ValueVisibilityContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import TopProgressBar, { RouteProgress } from "./components/ui/TopProgressBar";
@@ -40,6 +41,11 @@ export default function RootLayout({ children }) {
                   } else {
                     document.documentElement.classList.remove('dark');
                   }
+                  // Restore the "hide values" privacy preference before paint so real
+                  // numbers never flash before React masks them (see globals.css).
+                  if (localStorage.getItem('cafe:valuesHidden') === '1') {
+                    document.documentElement.classList.add('values-hidden');
+                  }
                 } catch (e) {}
               })();
             `,
@@ -48,6 +54,7 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning className="font-sans text-(--color-text-primary) antialiased transition-colors duration-300">
         <ThemeProvider>
+          <ValueVisibilityProvider>
           <DateInputEnhancer />
           <TopProgressBar />
           <AuthProvider>
@@ -65,6 +72,7 @@ export default function RootLayout({ children }) {
               </div>
             </NotificationProvider>
           </AuthProvider>
+          </ValueVisibilityProvider>
         </ThemeProvider>
       </body>
     </html>

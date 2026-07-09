@@ -188,7 +188,7 @@ export default function PremiumSelect({
       <button
         type="button"
         onClick={toggleOpen}
-        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200 text-left relative ${error
+        className={`w-full h-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors duration-200 text-left relative ${error
             ? 'bg-(--color-surface) border-danger'
             : isOpen
             ? 'bg-(--color-surface) border-primary'

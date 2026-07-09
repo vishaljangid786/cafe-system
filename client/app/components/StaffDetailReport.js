@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 const ORDER_STATUSES = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
 const PAYMENT_TYPES = ['CASH', 'CARD', 'UPI', 'ONLINE', 'GIFT_CARD', 'OTHER'];
@@ -36,7 +38,6 @@ const ORDER_TYPES = ['dine-in', 'takeaway', 'delivery'];
 const RESERVATION_STATUSES = ['pending', 'confirmed', 'cancelled', 'no-show'];
 const EXPENSE_STATUSES = ['pending', 'approved', 'rejected', 'live', 'completed'];
 
-const inr = (value) => `INR ${Math.round(Number(value) || 0).toLocaleString('en-IN')}`;
 const shortDateTime = (value) => (value ? new Date(value).toLocaleString() : '-');
 const shortDate = (value) => (value ? new Date(value).toLocaleDateString() : '-');
 const activityText = (entry) => {
@@ -277,12 +278,12 @@ export default function StaffDetailReport({ staffId, user }) {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <Stat icon={ShoppingBag} label="Orders Touched" value={summary.orders || 0} sub={`${summary.completedOrders || 0} completed`} />
-        <Stat icon={IndianRupee} label="Sales" value={inr(summary.totalSales)} sub={`Avg ${inr(summary.averageOrderValue)}`} />
-        <Stat icon={Ticket} label="Coupons Used" value={summary.couponsUsed || 0} sub={`${inr(summary.totalDiscount)} discount`} tone="warning" />
-        <Stat icon={CalendarCheck} label="Reservations" value={summary.reservations || 0} sub={`${inr(summary.reservationAdvance)} advance`} />
+        <Stat icon={IndianRupee} label="Sales" value={<Money value={summary.totalSales} />} sub={`Avg ${formatIndianCompact(summary.averageOrderValue, { currency: true })}`} />
+        <Stat icon={Ticket} label="Coupons Used" value={summary.couponsUsed || 0} sub={`${formatIndianCompact(summary.totalDiscount, { currency: true })} discount`} tone="warning" />
+        <Stat icon={CalendarCheck} label="Reservations" value={summary.reservations || 0} sub={`${formatIndianCompact(summary.reservationAdvance, { currency: true })} advance`} />
         <Stat icon={BadgeCheck} label="Attendance" value={`${summary.attendance?.present || 0} present`} sub={`${summary.attendance?.halfDay || 0} half-day, ${summary.attendance?.absent || 0} absent`} />
-        <Stat icon={ReceiptText} label="Expenses" value={summary.expenses?.count || 0} sub={inr(summary.expenses?.total)} />
-        <Stat icon={ArrowLeftRight} label="Ledger Entries" value={summary.transactions?.count || 0} sub={`${inr(summary.transactions?.revenue)} in / ${inr(summary.transactions?.expense)} out`} />
+        <Stat icon={ReceiptText} label="Expenses" value={summary.expenses?.count || 0} sub={<Money value={summary.expenses?.total} />} />
+        <Stat icon={ArrowLeftRight} label="Ledger Entries" value={summary.transactions?.count || 0} sub={`${formatIndianCompact(summary.transactions?.revenue, { currency: true })} in / ${formatIndianCompact(summary.transactions?.expense, { currency: true })} out`} />
         <Stat icon={Trash2} label="Waste Logged" value={summary.waste?.count || 0} sub={`${Math.round((summary.waste?.quantity || 0) * 100) / 100} units`} tone="danger" />
       </div>
 
@@ -328,7 +329,7 @@ export default function StaffDetailReport({ staffId, user }) {
           {coupons.map((coupon) => (
             <div key={coupon.code} className="px-3 py-2 rounded-xl bg-warning/10 border border-warning/20 text-[11px] font-medium text-warning">
               {coupon.code} <span className="opacity-70">x{coupon.count}</span>
-              {coupon.discount > 0 && <span className="text-(--color-text-muted) ml-1">({inr(coupon.discount)})</span>}
+              {coupon.discount > 0 && <span className="text-(--color-text-muted) ml-1">(<Money value={coupon.discount} />)</span>}
             </div>
           ))}
           {coupons.length === 0 && <p className="text-xs text-(--color-text-muted) italic">No coupons or manual discounts in this filter.</p>}
@@ -360,9 +361,9 @@ export default function StaffDetailReport({ staffId, user }) {
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted) max-w-80 truncate">
                     {(order.items || []).map((item) => `${item.quantity}x ${item.menuItem?.name || item.itemName || 'Item'}`).join(', ')}
                   </td>
-                  <td className="py-3 px-5 text-[11px] font-medium text-warning">{order.coupon?.code || (Number(order.discountAmount) > 0 ? inr(order.discountAmount) : '-')}</td>
+                  <td className="py-3 px-5 text-[11px] font-medium text-warning">{order.coupon?.code || (Number(order.discountAmount) > 0 ? <Money value={order.discountAmount} /> : '-')}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{order.paymentType || '-'}</td>
-                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(order.grandTotal ?? order.totalAmount)}</td>
+                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)"><Money value={order.grandTotal ?? order.totalAmount} /></td>
                 </tr>
               ))}
               {orders.length === 0 && <EmptyRow colSpan={8} text="No orders found for this staff member in the selected filters." />}
@@ -394,7 +395,7 @@ export default function StaffDetailReport({ staffId, user }) {
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{reservation.startTime}{reservation.endTime ? `-${reservation.endTime}` : ''}</td>
                   <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{reservation.locationId?.name || '-'}</td>
                   <td className="py-3 px-5 text-[11px] font-medium uppercase">{reservation.status}</td>
-                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(reservation.totalAmount)}</td>
+                  <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)"><Money value={reservation.totalAmount} /></td>
                 </tr>
               ))}
               {reservations.length === 0 && <EmptyRow colSpan={7} text="No reservations created by this staff member in the selected filters." />}
@@ -451,7 +452,7 @@ export default function StaffDetailReport({ staffId, user }) {
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(expense.date)}</td>
                     <td className="py-3 px-5 text-[11px] font-medium uppercase">{expense.type}</td>
                     <td className="py-3 px-5 text-[11px] font-medium uppercase">{expense.status}</td>
-                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(expense.amount)}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)"><Money value={expense.amount} /></td>
                   </tr>
                 ))}
                 {expenses.length === 0 && <EmptyRow colSpan={5} text="No expenses or income records created by this staff member." />}
@@ -479,7 +480,7 @@ export default function StaffDetailReport({ staffId, user }) {
                     <td className="py-3 px-5 text-[11px] text-(--color-text-secondary)">{shortDateTime(session.openedAt)}</td>
                     <td className="py-3 px-5 text-[11px] font-medium uppercase">{session.status}</td>
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{session.locationId?.name || '-'}</td>
-                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(session.variance)}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)"><Money value={session.variance} /></td>
                   </tr>
                 ))}
                 {cashSessions.length === 0 && <EmptyRow colSpan={4} text="No cash drawer activity for this staff member." />}
@@ -526,7 +527,7 @@ export default function StaffDetailReport({ staffId, user }) {
                     <td className="py-3 px-5 text-[11px] text-(--color-text-muted)">{shortDate(txn.date)}</td>
                     <td className="py-3 px-5 text-[11px] font-medium uppercase">{String(txn.type || '-').replace(/_/g, ' ')}</td>
                     <td className="py-3 px-5 text-[11px] font-medium uppercase">{txn.status}</td>
-                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)">{inr(txn.totalAmount)}</td>
+                    <td className="py-3 px-5 text-right text-sm font-semibold text-(--color-text-primary)"><Money value={txn.totalAmount} /></td>
                   </tr>
                 ))}
                 {transactions.length === 0 && <EmptyRow colSpan={5} text="No ledger entries recorded by this staff member." />}

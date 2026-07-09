@@ -14,6 +14,7 @@ import useBranchScope from '../../../hooks/useBranchScope';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { progress } from '../../../components/ui/TopProgressBar';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
+import { formatIndianCompact } from '../../../utils/formatNumber';
 
 const SOCKET_URL = getSocketUrl();
 
@@ -131,7 +132,7 @@ export default function CommandCenterPage() {
             { label: 'New Orders Now', value: stats?.ordersIncomingNow || 0, icon: ShoppingBag, color: 'from-primary to-secondary', anim: stats?.ordersIncomingNow > 0 },
             { label: 'Kitchen Busy Level', value: stats?.kitchenBusyLevel || 0, icon: Flame, color: 'from-danger to-(--color-danger-dark)', anim: stats?.kitchenBusyLevel > 5 },
             { label: 'Tables Occupied', value: stats?.tablesOccupied || 0, icon: Users, color: 'from-primary-dark to-primary' },
-            { label: "Today's Revenue", value: `₹${stats?.revenueTodayLive?.toLocaleString() || 0}`, icon: DollarSign, color: 'from-success to-(--color-success-dark)' }
+            { label: "Today's Revenue", value: formatIndianCompact(stats?.revenueTodayLive || 0, { currency: true }), icon: DollarSign, color: 'from-success to-(--color-success-dark)' }
           ].map((stat, i) => (
             <SlideIn key={i} delay={i * 0.1}>
               <div className={`p-5 bg-gradient-to-br ${stat.color} rounded-xl text-white shadow-sm relative overflow-hidden group`}>

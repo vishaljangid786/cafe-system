@@ -3,12 +3,13 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useValueVisibility } from '../context/ValueVisibilityContext';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationPanel from './NotificationPanel';
 import {
   Bell, User as UserIcon, Sun, Moon,
   Menu, MapPin, Store, Zap, Search,
-  ChevronLeft, ChevronRight, RefreshCw, Check, ChevronDown
+  ChevronLeft, ChevronRight, RefreshCw, Check, ChevronDown, Eye, EyeOff
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../services/api';
@@ -20,6 +21,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   const router = useRouter();
   const { user, selectedLocation, selectedLocationIds, switchLocation, switchLocationIds, locations, refreshLocations, cafes, selectedCafe, switchCafe, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { hidden: valuesHidden, toggle: toggleValues } = useValueVisibility();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -278,6 +280,15 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
 
         {/* Action Controls */}
         <div className="relative flex items-center gap-1">
+          <button
+            onClick={toggleValues}
+            className={`p-2.5 transition-colors rounded-lg hover:bg-(--color-surface-soft) ${valuesHidden ? 'text-primary bg-(--color-surface-soft)' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
+            title={valuesHidden ? 'Show values' : 'Hide values'}
+            aria-label={valuesHidden ? 'Show values' : 'Hide values'}
+            aria-pressed={valuesHidden}
+          >
+            {valuesHidden ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
           <button
             onClick={toggleTheme}
             className="p-2.5 text-(--color-text-muted) hover:text-(--color-text-primary) transition-colors rounded-lg hover:bg-(--color-surface-soft)"

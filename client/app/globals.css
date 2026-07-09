@@ -636,3 +636,16 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Privacy "hide values" mode. The <html class="values-hidden"> flag is restored by
+   the inline head script before paint; this blurs any real figure the server rendered
+   until React re-renders it as a dot mask (.is-masked), so numbers never flash. Once
+   masked, .is-masked opts back out of the blur. */
+html.values-hidden .cafe-money:not(.is-masked) {
+  filter: blur(7px);
+  transition: none;
+  user-select: none;
+}
+.cafe-money.is-masked {
+  letter-spacing: 0.08em;
+}

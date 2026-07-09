@@ -9,6 +9,7 @@ import { PageTransition } from './ui/AnimatedContainer';import { AreaChart, Are
 import PremiumSelect from './ui/PremiumSelect';
 import LoadingScreen from './ui/LoadingScreen';
 import useBranchScope from '../hooks/useBranchScope';
+import { Money, Num } from './ui/Money';
 
 function MetricCard({ label, value, sub, icon: Icon, color }) {
   const colorMap = {
@@ -248,15 +249,15 @@ export default function StaffPerformanceDashboard({ user, role }) {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <MetricCard label="Total Orders" value={stats?.totalOrders || 0} sub="Orders you handled" icon={ShoppingBag} color="amber" />
-            <MetricCard label="Highest Order" value={`₹${stats?.highestValue || 0}`} sub="Your biggest bill" icon={Award} color="emerald" />
-            <MetricCard label="Lowest Order" value={`₹${stats?.lowestValue || 0}`} sub="Your smallest bill" icon={XCircle} color="rose" />
-            <MetricCard label="Completed" value={stats?.completedOrders || 0} sub="Successfully served" icon={CheckCircle2} color="emerald" />
-            <MetricCard label="Cancelled" value={stats?.cancelledOrders || 0} sub="Orders cancelled" icon={XCircle} color="rose" />
-            <MetricCard label="Ignored/Unaccepted" value={stats?.unacceptedOrders || 0} sub="Not yet accepted" icon={Timer} color="amber" />
-            <MetricCard label="Avg Ticket Size" value={`₹${stats?.avgTicketSize || 0}`} sub="Average bill amount" icon={TrendingUp} color="amber" />
-            <MetricCard label="Total Sales" value={`₹${stats?.totalSales || 0}`} sub="Total sales amount" icon={Zap} color="violet" />
-            <MetricCard label="Daily Payout" value={`₹${stats?.dailyPayout || 0}`} sub="Your daily pay" icon={CreditCard} color="fuchsia" />
+            <MetricCard label="Total Orders" value={<Num value={stats?.totalOrders || 0} />} sub="Orders you handled" icon={ShoppingBag} color="amber" />
+            <MetricCard label="Highest Order" value={<Money value={stats?.highestValue || 0} />} sub="Your biggest bill" icon={Award} color="emerald" />
+            <MetricCard label="Lowest Order" value={<Money value={stats?.lowestValue || 0} />} sub="Your smallest bill" icon={XCircle} color="rose" />
+            <MetricCard label="Completed" value={<Num value={stats?.completedOrders || 0} />} sub="Successfully served" icon={CheckCircle2} color="emerald" />
+            <MetricCard label="Cancelled" value={<Num value={stats?.cancelledOrders || 0} />} sub="Orders cancelled" icon={XCircle} color="rose" />
+            <MetricCard label="Ignored/Unaccepted" value={<Num value={stats?.unacceptedOrders || 0} />} sub="Not yet accepted" icon={Timer} color="amber" />
+            <MetricCard label="Avg Ticket Size" value={<Money value={stats?.avgTicketSize || 0} />} sub="Average bill amount" icon={TrendingUp} color="amber" />
+            <MetricCard label="Total Sales" value={<Money value={stats?.totalSales || 0} />} sub="Total sales amount" icon={Zap} color="violet" />
+            <MetricCard label="Daily Payout" value={<Money value={stats?.dailyPayout || 0} />} sub="Your daily pay" icon={CreditCard} color="fuchsia" />
             <MetricCard label="Top Category" value={stats?.bestSellingCategory || 'None'} sub="Best-selling category" icon={Bookmark} color="amber" />
             <MetricCard label="Top Item" value={stats?.bestSellingItem || 'None'} sub="Best-selling item" icon={Utensils} color="amber" />
             <MetricCard label="Completion Rate" value={`${stats?.successRate || 0}%`} sub="Orders served on time" icon={Award} color="emerald" />
@@ -335,7 +336,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white">₹{order.totalAmount}</td>
+                      <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-white"><Money value={order.totalAmount} /></td>
                     </tr>
                   ))}
                 </tbody>

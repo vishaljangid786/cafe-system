@@ -9,8 +9,9 @@ import {
 } from 'lucide-react';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
-const inr = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
+const inr = (n) => formatIndianCompact(n, { currency: true });
 const num = (n) => (Number(n) || 0).toLocaleString('en-IN');
 
 // Metric groups compared side-by-side. `better`: 'high' = bigger wins,

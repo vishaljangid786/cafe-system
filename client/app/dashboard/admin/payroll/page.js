@@ -19,6 +19,8 @@ import {
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function PayrollRecordsPage() {
   const monthInputRef = useRef(null);
@@ -320,7 +322,7 @@ export default function PayrollRecordsPage() {
           <SlideIn delay={0.1}>
             <div className="bg-primary p-5 rounded-xl shadow-sm  text-(--color-bg-base) h-full">
               <p className="text-xs font-medium uppercase tracking-normal opacity-80">Total Salary Payout</p>
-              <p className="text-2xl font-semibold mt-1">₹{filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0).toLocaleString()}</p>
+              <p className="text-2xl font-semibold mt-1"><Money value={filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0)} /></p>
               <div className="mt-4 flex items-center text-xs font-medium opacity-90">
                 <Receipt size={14} className="mr-1" /> {selectedLocation === 'All' ? 'All Branches Total' : `${selectedLocation} Total`}
               </div>
@@ -331,7 +333,7 @@ export default function PayrollRecordsPage() {
             <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
               <p className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Avg Salary / Employee</p>
               <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">
-                ₹{filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
+                <Money value={filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length) : 0} decimals={0} />
               </p>
             </div>
           </SlideIn>
@@ -372,7 +374,7 @@ export default function PayrollRecordsPage() {
                         <Cell key={`cell-${index}`} fill={['var(--color-primary)', 'var(--color-secondary)', 'var(--color-success)', 'var(--color-danger)', 'var(--color-primary-dark)'][index % 5]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -399,8 +401,8 @@ export default function PayrollRecordsPage() {
                     : filteredSalaries.slice(0, 8).map(s => ({ name: s.name.split(' ')[0], value: s.calculatedSalary }))
                   }>
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-text-muted)' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-text-muted)' }} />
-                    <Tooltip cursor={{ fill: 'var(--color-surface-soft)' }} />
+                    <YAxis axisLine={false} tickLine={false} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-text-muted)' }} />
+                    <Tooltip cursor={{ fill: 'var(--color-surface-soft)' }} formatter={(v) => formatIndianCompact(v, { currency: true })} />
                     <Bar dataKey="value" fill="var(--color-primary)" radius={[6, 6, 0, 0]} barSize={selectedLocation === 'All' ? 40 : 20} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -620,7 +622,7 @@ export default function PayrollRecordsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
                     <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Fixed Salary</p>
-                    <p className="text-xl font-semibold text-(--color-text-primary)">₹{viewingSalary.monthlySalary?.toLocaleString()}</p>
+                    <p className="text-xl font-semibold text-(--color-text-primary)"><Money value={viewingSalary.monthlySalary} /></p>
                   </div>
                   <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
                     <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-1">Payable Days</p>
@@ -639,11 +641,11 @@ export default function PayrollRecordsPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success">
                           <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Total Bonuses</p>
-                          <p className="text-xl font-semibold">+ ₹{totalBonus.toLocaleString()}</p>
+                          <p className="text-xl font-semibold"><Money value={totalBonus} prefix="+ " /></p>
                         </div>
                         <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger">
                           <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Total Penalties</p>
-                          <p className="text-xl font-semibold">- ₹{totalPenalty.toLocaleString()}</p>
+                          <p className="text-xl font-semibold"><Money value={totalPenalty} prefix="- " /></p>
                         </div>
                       </div>
 
@@ -661,7 +663,7 @@ export default function PayrollRecordsPage() {
                                   {a.byName && <span className="text-(--color-text-muted)"> ({a.byName})</span>}
                                 </div>
                                 <span className={`shrink-0 font-medium ${a.type === 'bonus' ? 'text-success' : 'text-danger'}`}>
-                                  {a.type === 'bonus' ? '+' : '-'} ₹{(a.amount || 0).toLocaleString()}
+                                  <Money value={a.amount || 0} prefix={a.type === 'bonus' ? '+ ' : '- '} />
                                 </span>
                               </div>
                             ))}
@@ -678,7 +680,7 @@ export default function PayrollRecordsPage() {
                     <span className="px-2 py-0.5 bg-(--color-bg-base)/20 rounded-md text-[8px] font-medium uppercase">{viewingSalary.payrollRecord?.status?.replace(/_/g, ' ') || 'Calculated'}</span>
                   </div>
                   <p className="text-2xl font-semibold tracking-tight">
-                    ₹{(viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <Money value={viewingSalary.payrollRecord?.netSalary || viewingSalary.calculatedSalary || 0} decimals={0} />
                   </p>
                 </div>
               </div>
@@ -802,7 +804,7 @@ export default function PayrollRecordsPage() {
               <div className="mb-5 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) p-4 flex items-center justify-between">
                 <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Current Net Payout</span>
                 <span className="text-lg font-semibold text-(--color-text-primary)">
-                  ₹{(adjustingSalary.payrollRecord?.netSalary || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  <Money value={adjustingSalary.payrollRecord?.netSalary || 0} decimals={0} />
                 </span>
               </div>
 

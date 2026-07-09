@@ -27,6 +27,8 @@ import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import DateRangeFilter from '../../../components/ui/DateRangeFilter';
+import { Money } from '../../../components/ui/Money';
+import { formatIndianCompact } from '../../../utils/formatNumber';
 import toast from 'react-hot-toast';
 
 const EXPENSE_TITLES = [
@@ -392,11 +394,11 @@ export default function ExpensesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-(--color-border)">
             <div className="space-y-1">
               <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Expenses</p>
-              <p className="text-3xl font-semibold text-danger tracking-tight">₹{totalExpenditure.toLocaleString()}</p>
+              <p className="text-3xl font-semibold text-danger tracking-tight"><Money value={totalExpenditure} /></p>
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Average Expense</p>
-              <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight">₹{avgExpense.toFixed(0)}</p>
+              <p className="text-3xl font-semibold text-(--color-text-primary) tracking-tight"><Money value={avgExpense} decimals={0} /></p>
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Total Entries (View)</p>
@@ -576,7 +578,7 @@ export default function ExpensesPage() {
                             </div>
                           </div>
                           <div className="text-right relative z-10 shrink-0">
-                            <p className="text-xl font-semibold text-danger tracking-tight leading-none transition-transform">-₹{t.totalAmount.toLocaleString()}</p>
+                            <p className="text-xl font-semibold text-danger tracking-tight leading-none transition-transform"><Money value={t.totalAmount} prefix="-" /></p>
                             <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-2">Verified</p>
                           </div>
                         </div>
@@ -637,7 +639,7 @@ export default function ExpensesPage() {
                   <div className="flex justify-between items-end border-t border-(--color-bg-base)/20 pt-6">
                     <div>
                       <p className="text-[11px] font-medium uppercase tracking-normal opacity-60">Today&apos;s Total</p>
-                      <p className="text-2xl font-semibold tracking-tight mt-1">₹{totalExpenditure.toLocaleString()}</p>
+                      <p className="text-2xl font-semibold tracking-tight mt-1"><Money value={totalExpenditure} /></p>
                     </div>
                     <div className="h-10 w-10 rounded-xl bg-(--color-bg-base)/10 flex items-center justify-center  border border-(--color-bg-base)/10">
                       <ArrowUpRight size={20} />
@@ -707,7 +709,7 @@ export default function ExpensesPage() {
                   </div>
                 </div>
                 <div className="text-left md:text-right bg-(--color-bg-soft) p-5 rounded-xl border border-(--color-border) min-w-50">
-                  <p className="text-3xl font-semibold text-danger tracking-tight">₹{selectedExpense.totalAmount.toLocaleString()}</p>
+                  <p className="text-3xl font-semibold text-danger tracking-tight"><Money value={selectedExpense.totalAmount} /></p>
                   <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-2">Total Amount</p>
                 </div>
               </div>
@@ -962,7 +964,7 @@ export default function ExpensesPage() {
                   </div>
                   <div className="flex items-center justify-between rounded-xl bg-(--color-bg-soft) border border-(--color-border) px-4 py-3">
                     <span className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Split total · {Object.keys(splitAmounts).length} branches</span>
-                    <span className="text-sm font-semibold text-danger">₹{splitTotal.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-danger"><Money value={splitTotal} sensitive={false} /></span>
                   </div>
                 </div>
               )}
@@ -978,7 +980,7 @@ export default function ExpensesPage() {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-normal text-sm bg-danger text-(--color-bg-base)" icon={Sparkles}>{splitMode ? `Split Expense${splitTotal > 0 ? ` · ₹${splitTotal.toLocaleString()}` : ''}` : 'Add Expense'}</Button>
+            <Button type="submit" variant="primary" className="w-full !rounded-xl !py-4 shadow-sm  font-semibold uppercase tracking-normal text-sm bg-danger text-(--color-bg-base)" icon={Sparkles}>{splitMode ? `Split Expense${splitTotal > 0 ? ` · ${formatIndianCompact(splitTotal, { currency: true })}` : ''}` : 'Add Expense'}</Button>
           </form>
         </Modal>
       </div>

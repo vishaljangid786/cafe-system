@@ -32,7 +32,8 @@ import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
 import CashDrawerWidget from './components/CashDrawerWidget';
 import UniversalDateFilter from '../../components/ui/UniversalDateFilter';
-import { formatCompactCurrency } from '../../utils/formatNumber';
+import { formatIndianCompact } from '../../utils/formatNumber';
+import { Money, Num } from '@/app/components/ui/Money';
 
 // Local YYYY-MM-DD (avoids the UTC shift toISOString() causes for IST midnight).
 const fmtLocalDate = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
@@ -281,13 +282,13 @@ export default function AdminDashboard() {
       <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         <Link href={ordersHref} className="contents">
-          <StatWidget label="Total Orders" value={<CountUp value={analytics?.summary?.totalOrders || 0} />} icon={ShoppingBag} color="amber" delay={0.3} />
+          <StatWidget label="Total Orders" value={<Num value={analytics?.summary?.totalOrders || 0} animate />} icon={ShoppingBag} color="amber" delay={0.3} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Total Sales" value={<CountUp value={analytics?.summary?.totalRevenue || 0} format={formatCompactCurrency} />} icon={TrendingUp} color="amber" delay={0} />
+          <StatWidget label="Total Sales" value={<Money value={analytics?.summary?.totalRevenue || 0} animate />} icon={TrendingUp} color="amber" delay={0} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Net Profit (Revenue)" value={<CountUp value={analytics?.summary?.netProfit || 0} format={formatCompactCurrency} />} icon={Zap} color="green" delay={0.1} />
+          <StatWidget label="Net Profit (Revenue)" value={<Money value={analytics?.summary?.netProfit || 0} animate />} icon={Zap} color="green" delay={0.1} />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Cancel Rate" value={<CountUp value={analytics?.summary?.cancellationRate || 0} suffix="%" decimals={1} />} icon={TrendingDown} color="rose" delay={0.4} />
@@ -297,7 +298,7 @@ export default function AdminDashboard() {
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Link href={`${dashPrefix}/expenses`} className="contents">
-            <StatWidget label="Expenses" value={<CountUp value={analytics?.summary?.totalExpenses || 0} format={formatCompactCurrency} />} icon={Wallet} color="rose" delay={0.5} />
+            <StatWidget label="Expenses" value={<Money value={analytics?.summary?.totalExpenses || 0} animate />} icon={Wallet} color="rose" delay={0.5} />
           </Link>
           <Link href={`${dashPrefix}/staff`} className="contents">
             <StatWidget label="Staff Count" value={<CountUp value={(analytics?.staffStats?.staffCount || 0) + (analytics?.staffStats?.chefCount || 0)} />} icon={Activity} color="indigo" delay={0.8} />
@@ -370,8 +371,9 @@ export default function AdminDashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} dy={10} minTickGap={20} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} tickFormatter={v => `₹${v / 1000}k`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
                 <Tooltip
+                  formatter={(v) => formatIndianCompact(v, { currency: true })}
                   contentStyle={{
                     backgroundColor: chartColors.tooltipBg,
                     borderColor: chartColors.tooltipBorder,
@@ -485,7 +487,7 @@ export default function AdminDashboard() {
                       <td className="py-3 pr-4 text-xs font-medium text-(--color-text-secondary) whitespace-nowrap">{o.branch?.name || '—'}</td>
                       <td className="py-3 pr-4 text-xs font-medium text-(--color-text-muted) max-w-50 truncate" title={itemsLabel + more}>{itemsLabel || '—'}{more}</td>
                       <td className="py-3 pr-4 text-xs font-semibold text-(--color-text-primary) text-center">{totalQty}</td>
-                      <td className="py-3 pr-4 text-xs font-bold text-(--color-text-primary) text-right whitespace-nowrap">₹{Number(o.totalAmount || o.grandTotal || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-3 pr-4 text-xs font-bold text-(--color-text-primary) text-right whitespace-nowrap"><Money value={Number(o.totalAmount || o.grandTotal || 0)} /></td>
                       <td className="py-3 pr-4 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-normal ${statusCls}`}>{o.status}</span>
                       </td>
@@ -542,7 +544,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-danger">-₹{(exp.totalAmount || 0).toLocaleString()}</div>
+                    <div className="text-sm font-semibold text-danger"><Money value={exp.totalAmount || 0} prefix="-" /></div>
                     <div className="text-[11px] font-medium text-(--color-text-muted)">{new Date(exp.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
@@ -593,7 +595,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-success">+₹{rev.totalAmount.toLocaleString()}</div>
+                    <div className="text-sm font-semibold text-success"><Money value={rev.totalAmount} prefix="+" /></div>
                     <div className="text-[11px] font-medium text-(--color-text-muted)">{new Date(rev.date).toLocaleDateString()}</div>
                   </div>
                 </motion.div>
@@ -633,8 +635,9 @@ export default function AdminDashboard() {
               <BarChart data={analytics?.forecast?.nextMonthSalesTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} width={70} tickFormatter={(v) => formatIndianCompact(v, { currency: true })} />
                 <Tooltip
+                  formatter={(v) => formatIndianCompact(v, { currency: true })}
                   contentStyle={{ backgroundColor: chartColors.tooltipBg, borderColor: chartColors.tooltipBorder, borderRadius: '12px' }}
                 />
                 <Bar dataKey="projected" fill="var(--color-primary)" radius={[6, 6, 0, 0]} opacity={0.8} />
@@ -646,7 +649,7 @@ export default function AdminDashboard() {
               <Clock className="text-primary" size={18} />
               <span className="text-xs font-medium text-(--color-text-muted) uppercase tracking-normal">Expected Today:</span>
             </div>
-            <span className="text-lg font-semibold text-primary">₹{analytics?.forecast?.expectedTodayRevenue?.toLocaleString()}</span>
+            <span className="text-lg font-semibold text-primary"><Money value={analytics?.forecast?.expectedTodayRevenue} /></span>
           </div>
         </Card>
 
@@ -699,7 +702,7 @@ export default function AdminDashboard() {
                     <Cell key={`cell-${index}`} fill={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'][index % 5]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(v) => formatIndianCompact(v, { currency: true })} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
               </PieChart>
             </ResponsiveContainer>
@@ -771,7 +774,7 @@ export default function AdminDashboard() {
                   <span className="text-xs font-medium truncate w-24">{staff.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold text-success">₹{staff.revenue.toLocaleString()}</p>
+                  <p className="text-[11px] font-semibold text-success"><Money value={staff.revenue} /></p>
                   <p className="text-[11px] font-medium text-(--color-text-muted)">{staff.totalOrders} Orders</p>
                 </div>
               </div>
@@ -796,7 +799,7 @@ export default function AdminDashboard() {
               </div>
               <div className="px-6 py-3 bg-secondary/5 border border-secondary/10 rounded-xl">
                 <p className="text-[11px] font-medium uppercase tracking-normal text-secondary mb-1">Monthly Payroll Total</p>
-                <p className="text-2xl font-semibold text-secondary tracking-tight">₹{analytics?.staffStats?.totalMonthlySalary?.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-semibold text-secondary tracking-tight"><Money value={analytics?.staffStats?.totalMonthlySalary || 0} /></p>
               </div>
             </div>
 

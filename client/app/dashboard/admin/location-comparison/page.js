@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 export default function LocationComparisonPage() {
   const [locations, setLocations] = useState([]);
   const [loc1, setLoc1] = useState('');
@@ -311,11 +313,11 @@ export default function LocationComparisonPage() {
                      <div className="flex flex-col gap-4 mt-6">
                        <div className="flex justify-between items-center">
                          <span className="text-xs font-medium text-(--color-text-muted)">{l1Data?.name || 'Branch A'}</span>
-                         <span className="text-xs font-semibold text-(--color-text-primary)">₹{l1Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-semibold text-(--color-text-primary)"><Money value={l1Data?.[item.field] || 0} /></span>
                        </div>
                        <div className="flex justify-between items-center">
                          <span className="text-xs font-medium text-(--color-text-muted)">{l2Data?.name || 'Branch B'}</span>
-                         <span className="text-xs font-semibold text-(--color-text-primary)">₹{l2Data?.[item.field] || 0}</span>
+                         <span className="text-xs font-semibold text-(--color-text-primary)"><Money value={l2Data?.[item.field] || 0} /></span>
                        </div>
                        <div className="pt-3 border-t border-(--color-border) flex justify-between items-center">
                          <span className="text-[11px] font-medium truncate text-primary">{winner?.name}</span>
@@ -357,7 +359,7 @@ export default function LocationComparisonPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#27272a15" />
                       <XAxis dataKey="subject" fontSize={10} />
                       <YAxis hide />
-                      <Tooltip />
+                      <Tooltip formatter={(v) => formatIndianCompact(v, { currency: true })} />
                       <Legend wrapperStyle={{ fontSize: 10 }} />
                       <Bar name={l1Data?.name} dataKey="A" fill="#f59e0b" radius={[6,6,0,0]} />
                       <Bar name={l2Data?.name} dataKey="B" fill="#f97316" radius={[6,6,0,0]} />
@@ -385,7 +387,7 @@ export default function LocationComparisonPage() {
                     <Award size={24} className="opacity-80" />
                     <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Most Profitable</p>
                     <p className="text-2xl font-semibold mt-1 truncate">{suiteData?.outliers?.mostProfitable?.name || 'N/A'}</p>
-                    <p className="text-sm font-medium mt-2 opacity-90">₹{suiteData?.outliers?.mostProfitable?.value}</p>
+                    <p className="text-sm font-medium mt-2 opacity-90"><Money value={suiteData?.outliers?.mostProfitable?.value} /></p>
                   </div>
 
                   <div className="p-5 bg-gradient-to-br from-primary to-primary rounded-xl text-white shadow-sm">
@@ -399,7 +401,7 @@ export default function LocationComparisonPage() {
                     <TrendingDown size={24} className="opacity-80" />
                     <p className="text-[11px] font-medium uppercase tracking-normal mt-4 opacity-80">Lowest Performing</p>
                     <p className="text-2xl font-semibold mt-1 truncate">{suiteData?.outliers?.lowestPerforming?.name || 'N/A'}</p>
-                    <p className="text-sm font-medium mt-2 opacity-90">₹{suiteData?.outliers?.lowestPerforming?.value}</p>
+                    <p className="text-sm font-medium mt-2 opacity-90"><Money value={suiteData?.outliers?.lowestPerforming?.value} /></p>
                   </div>
                 </div>
 
@@ -430,15 +432,15 @@ export default function LocationComparisonPage() {
                           <tr key={branch._id} className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/50 transition-all font-medium text-xs">
                             <td className="py-4 text-(--color-text-primary)">{branch.name}</td>
                             <td className="py-4 text-primary">{branch.cafeName || '—'}</td>
-                            <td className="py-4 text-(--color-text-primary)">₹{branch.revenue}</td>
+                            <td className="py-4 text-(--color-text-primary)"><Money value={branch.revenue} /></td>
                             <td className="py-4 text-(--color-text-muted)">{branch.orders}</td>
                             <td className={`py-4 font-medium ${Number(branch.growthPercent) >= 0 ? 'text-success' : 'text-danger'}`}>{branch.growthPercent}%</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.upiPercent}%</td>
-                            <td className="py-4 text-(--color-text-primary)">₹{branch.avgOrderValue}</td>
+                            <td className="py-4 text-(--color-text-primary)"><Money value={branch.avgOrderValue} /></td>
                             <td className="py-4 text-(--color-text-muted)">{branch.staffEfficiency}</td>
                             <td className="py-4 text-danger">{branch.cancellationRate}%</td>
                             <td className="py-4 text-(--color-text-muted)">{branch.couponUsage}</td>
-                            <td className="py-4 text-success font-semibold">₹{branch.profitability}</td>
+                            <td className="py-4 text-success font-semibold"><Money value={branch.profitability} /></td>
                           </tr>
                         ))}
                       </tbody>

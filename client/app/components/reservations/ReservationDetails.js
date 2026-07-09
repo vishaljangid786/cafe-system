@@ -6,6 +6,7 @@ import {
   FileText, Hash, DollarSign, CalendarDays
 } from 'lucide-react';
 import Modal from '../ui/Modal';
+import { Money } from '../ui/Money';
 import { format } from 'date-fns';
 
 export default function ReservationDetails({ isOpen, onClose, reservation, onModify, canModify = true }) {
@@ -47,7 +48,7 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) mb-1">Total Amount</span>
             <span className="text-3xl font-bold text-(--color-text-primary)">
-              ₹{reservation.totalAmount}
+              <Money value={reservation.totalAmount} />
             </span>
           </div>
         </div>
@@ -135,12 +136,12 @@ export default function ReservationDetails({ isOpen, onClose, reservation, onMod
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-(--color-bg-soft)/30">
                   <span className="text-xs font-bold text-(--color-text-muted)">Advance Paid</span>
-                  <span className="font-bold text-primary">₹{reservation.advancePayment}</span>
+                  <span className="font-bold text-primary"><Money value={reservation.advancePayment} /></span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-(--color-bg-soft)/30">
                   <span className="text-xs font-bold text-(--color-text-muted)">Pending Amount</span>
                   <span className="font-bold text-(--color-text-primary)">
-                    ₹{reservation.totalAmount - reservation.advancePayment}
+                    <Money value={reservation.totalAmount - reservation.advancePayment} />
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-(--color-bg-soft)/30">

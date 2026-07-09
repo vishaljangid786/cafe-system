@@ -12,8 +12,8 @@ import {
   Wallet, LockOpen, Lock, ArrowDownCircle, ArrowUpCircle, IndianRupee, History,
   Banknote, Coins, ShoppingBag, Receipt, RotateCcw, RefreshCcw, TrendingUp, ScrollText,
 } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+import { Money } from '@/app/components/ui/Money';
+import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function CashDrawerPage() {
   const { user, socket } = useAuth();
@@ -124,7 +124,7 @@ export default function CashDrawerPage() {
     try {
       const res = await api.post(`/cash-drawer/${current.session._id}/close`, { countedCash: Number(countedCash), notes: closeNotes });
       const v = res.data.data.variance;
-      toast.success(v === 0 ? 'Drawer balanced — closed' : `Closed · variance ${money(v)}`);
+      toast.success(v === 0 ? 'Drawer balanced — closed' : `Closed · variance ${formatIndianCompact(v, { currency: true })}`);
       setCountedCash(''); setCloseNotes('');
       refresh({ silent: true });
     } catch (e) {
@@ -244,7 +244,7 @@ export default function CashDrawerPage() {
                       <TrendingUp size={16} />
                       <p className="text-[11px] font-semibold uppercase tracking-wide">Expected in drawer</p>
                     </div>
-                    <p className="mt-3 text-4xl font-semibold tracking-tight text-(--color-text-primary)">{money(live.expectedCash)}</p>
+                    <p className="mt-3 text-4xl font-semibold tracking-tight text-(--color-text-primary)"><Money value={live.expectedCash} /></p>
                     <p className="mt-2 text-[11px] font-medium text-(--color-text-muted)">Float + sales + pay-ins − expenses, refunds &amp; pay-outs</p>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export default function CashDrawerPage() {
                       <div key={i} className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-sm">
                         <div className={`mb-3 flex h-8 w-8 items-center justify-center rounded-lg ${chipCls}`}><Icon size={15} /></div>
                         <p className="text-[11px] font-medium text-(--color-text-muted)">{s.label}</p>
-                        <p className={`mt-0.5 text-lg font-semibold tracking-tight ${valueCls}`}>{money(signed)}</p>
+                        <p className={`mt-0.5 text-lg font-semibold tracking-tight ${valueCls}`}><Money value={signed} /></p>
                       </div>
                     );
                   })}
@@ -303,7 +303,7 @@ export default function CashDrawerPage() {
                       <Lock size={16} />
                       <h2 className="text-sm font-semibold">Close drawer (Z-report)</h2>
                     </div>
-                    <p className="text-xs text-(--color-text-muted)">Count the physical cash and enter it. We&apos;ll compare it to the expected <span className="font-semibold text-(--color-text-secondary)">{money(live.expectedCash)}</span>.</p>
+                    <p className="text-xs text-(--color-text-muted)">Count the physical cash and enter it. We&apos;ll compare it to the expected <span className="font-semibold text-(--color-text-secondary)"><Money value={live.expectedCash} /></span>.</p>
                     <div className="space-y-3">
                       <div className="relative">
                         <IndianRupee size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-(--color-text-muted)" />
@@ -314,7 +314,7 @@ export default function CashDrawerPage() {
                         <div className="flex items-center justify-between rounded-xl border border-(--color-border) bg-(--color-surface-soft) px-4 py-3">
                           <span className="text-[11px] font-medium text-(--color-text-muted)">Variance</span>
                           <span className={`text-sm font-semibold ${diff === 0 ? 'text-success' : diff > 0 ? 'text-primary' : 'text-danger'}`}>
-                            {money(diff)} <span className="text-[11px] font-medium text-(--color-text-muted)">{diff < 0 ? '(short)' : diff > 0 ? '(over)' : '(balanced)'}</span>
+                            <Money value={diff} /> <span className="text-[11px] font-medium text-(--color-text-muted)">{diff < 0 ? '(short)' : diff > 0 ? '(over)' : '(balanced)'}</span>
                           </span>
                         </div>
                       )}
@@ -357,7 +357,7 @@ export default function CashDrawerPage() {
                                 <p className="text-[11px] text-(--color-text-muted)">{new Date(e.at).toLocaleString('en-IN')}</p>
                               </div>
                             </div>
-                            <span className={`shrink-0 text-sm font-semibold ${isIn ? 'text-success' : 'text-danger'}`}>{isIn ? '+' : '−'}{money(e.amount)}</span>
+                            <span className={`shrink-0 text-sm font-semibold ${isIn ? 'text-success' : 'text-danger'}`}><Money value={e.amount} prefix={isIn ? '+' : '−'} /></span>
                           </div>
                         );
                       })}
@@ -382,10 +382,10 @@ export default function CashDrawerPage() {
                   <div key={s._id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-(--color-text-primary)">{new Date(s.openedAt).toLocaleDateString('en-IN')} · {s.locationId?.name || ''}</p>
-                      <p className="text-[11px] text-(--color-text-muted)">Sales {money(s.cashSales)}{s.cashExpenses ? ` · Expenses ${money(s.cashExpenses)}` : ''} · Expected {money(s.expectedCash)} · Counted {money(s.countedCash)}</p>
+                      <p className="text-[11px] text-(--color-text-muted)">Sales <Money value={s.cashSales} />{s.cashExpenses ? <> · Expenses <Money value={s.cashExpenses} /></> : ''} · Expected <Money value={s.expectedCash} /> · Counted <Money value={s.countedCash} /></p>
                     </div>
                     <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${s.variance === 0 ? 'bg-success/10 text-success' : s.variance > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
-                      {money(s.variance)} {s.variance < 0 ? 'short' : s.variance > 0 ? 'over' : 'balanced'}
+                      <Money value={s.variance} /> {s.variance < 0 ? 'short' : s.variance > 0 ? 'over' : 'balanced'}
                     </span>
                   </div>
                 ))}

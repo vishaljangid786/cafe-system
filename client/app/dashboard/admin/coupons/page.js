@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
 import useConfirm from '@/app/components/ui/useConfirm';
+import { Money } from '@/app/components/ui/Money';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { can } from '@/app/config/actions';
@@ -621,7 +622,7 @@ export default function CouponsManagementPage() {
                         </p>
                         {previewData.maxDiscount > 0 && (
                           <p className="text-[11px] font-medium text-primary/50 uppercase tracking-normal mt-1">
-                            Capped at ₹{previewData.maxDiscount}
+                            Capped at <Money value={previewData.maxDiscount} />
                           </p>
                         )}
                       </div>

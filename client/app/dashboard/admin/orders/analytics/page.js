@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import LoadingScreen from "@/app/components/ui/LoadingScreen";
 import { progress } from "@/app/components/ui/TopProgressBar";
+import { Num } from "@/app/components/ui/Money";
 import {
   StatGridSkeleton,
   ChartSkeleton,
@@ -308,7 +309,7 @@ export default function OrderAnalyticsDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <MetricCard
                 label="Total Orders"
-                value={data?.metrics?.totalOrders}
+                value={<Num value={data?.metrics?.totalOrders ?? 0} />}
                 icon={BagIcon}
                 color="blue"
               />
@@ -472,7 +473,7 @@ export default function OrderAnalyticsDashboard() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-xs text-(--color-text-muted)">Total</p>
                     <p className="text-2xl font-semibold text-(--color-text-primary)">
-                      {data?.metrics?.totalOrders ?? 0}
+                      <Num value={data?.metrics?.totalOrders ?? 0} />
                     </p>
                   </div>
                 </div>
@@ -548,7 +549,7 @@ export default function OrderAnalyticsDashboard() {
                           Total Orders
                         </p>
                         <p className="text-2xl font-semibold">
-                          {data?.metrics?.totalOrders ?? 0}
+                          <Num value={data?.metrics?.totalOrders ?? 0} />
                         </p>
                       </div>
                       <ArrowRight size={18} className="opacity-60" />
@@ -617,7 +618,7 @@ export default function OrderAnalyticsDashboard() {
                               Orders
                             </p>
                             <p className="text-xl font-semibold">
-                              {branch.totalOrders}
+                              <Num value={branch.totalOrders} />
                             </p>
                           </div>
                           <div>

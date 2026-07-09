@@ -11,8 +11,8 @@ import {
   Wallet, RefreshCcw, TrendingUp, Coins, ShoppingBag, Receipt, RotateCcw,
   ArrowDownCircle, ArrowUpCircle, History as HistoryIcon, ScrollText, ArrowUpRight,
 } from 'lucide-react';
-
-const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+import { Money } from '../../../components/ui/Money';
+import { formatIndianCompact } from '../../../utils/formatNumber';
 
 // Overview cash-drawer widget: a READ-ONLY live summary of a branch's register plus
 // its last 10 shifts (Z-reports). Admins/super admins pick a branch (defaulting to
@@ -161,7 +161,7 @@ export default function CashDrawerWidget() {
                     <TrendingUp size={15} />
                     <p className="text-[11px] font-semibold uppercase tracking-wide">Expected in drawer</p>
                   </div>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-(--color-text-primary)">{money(live.expectedCash)}</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-(--color-text-primary)"><Money value={live.expectedCash} /></p>
                   <p className="mt-1.5 text-[11px] font-medium text-(--color-text-muted)">
                     Opened by {session.openedBy?.name || '—'} · {new Date(session.openedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -177,7 +177,7 @@ export default function CashDrawerWidget() {
                         <Icon size={12} />
                         <p className="text-[10px] font-medium uppercase tracking-wide">{s.label}</p>
                       </div>
-                      <p className={`text-sm font-semibold tracking-tight ${valueCls}`}>{money(s.value)}</p>
+                      <p className={`text-sm font-semibold tracking-tight ${valueCls}`}><Money value={s.value} /></p>
                     </div>
                   );
                 })}
@@ -229,14 +229,14 @@ export default function CashDrawerWidget() {
                           {s.locationId?.name ? <span className="text-(--color-text-muted)"> · {s.locationId.name}</span> : ''}
                         </p>
                         <p className="text-[11px] text-(--color-text-muted)">
-                          {open ? 'In progress' : `Counted ${money(s.countedCash)} · Expected ${money(s.expectedCash)}`}
+                          {open ? 'In progress' : `Counted ${formatIndianCompact(s.countedCash, { currency: true })} · Expected ${formatIndianCompact(s.expectedCash, { currency: true })}`}
                         </p>
                       </div>
                       {open ? (
                         <span className="shrink-0 rounded-lg bg-success/10 px-2 py-1 text-[10px] font-semibold uppercase text-success">Open</span>
                       ) : (
                         <span className={`shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold ${variance === 0 ? 'bg-success/10 text-success' : variance > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
-                          {money(variance)} {variance < 0 ? 'short' : variance > 0 ? 'over' : ''}
+                          <Money value={variance} /> {variance < 0 ? 'short' : variance > 0 ? 'over' : ''}
                         </span>
                       )}
                     </motion.div>
