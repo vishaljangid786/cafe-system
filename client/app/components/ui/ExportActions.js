@@ -363,29 +363,35 @@ export default function ExportActions({ data = [], columns = [], filename = 'exp
     <div className="relative z-40 w-full sm:w-auto">
       <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
         {showDateFilter && (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-(--color-surface) border border-(--color-border) rounded-xl p-2 shadow-sm w-full sm:w-auto">
-            <input 
-              type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
-              value={dateFilter.startDate}
-              onChange={e => setDateFilter({...dateFilter, startDate: e.target.value})}
-              title="Start Date"
-            />
-            <span className="text-(--color-text-muted) text-xs hidden sm:inline">-</span>
-            <input 
-              type="date" 
-              className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
-              value={dateFilter.endDate}
-              onChange={e => setDateFilter({...dateFilter, endDate: e.target.value})}
-              title="End Date"
-            />
+          <div className="flex flex-col gap-1.5 bg-(--color-surface) border border-(--color-border) rounded-xl p-2.5 shadow-sm w-full sm:w-auto">
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+              <Download size={11} /> Export date range
+            </span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                type="date"
+                className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
+                value={dateFilter.startDate}
+                onChange={e => setDateFilter({...dateFilter, startDate: e.target.value})}
+                title="Export from date"
+              />
+              <span className="text-(--color-text-muted) text-xs hidden sm:inline">-</span>
+              <input
+                type="date"
+                className="px-2 py-1.5 text-xs bg-transparent border border-(--color-border) sm:border-none rounded-lg sm:rounded-none outline-none text-(--color-text-primary) w-full sm:w-auto"
+                value={dateFilter.endDate}
+                onChange={e => setDateFilter({...dateFilter, endDate: e.target.value})}
+                title="Export until date"
+              />
+            </div>
+            <span className="text-[10px] font-medium text-(--color-text-muted)">Applies to the exported file only — not this page.</span>
           </div>
         )}
-        
+
         <button
           onClick={() => setShowDateFilter(!showDateFilter)}
           className={`p-2.5 rounded-xl border transition-all ${showDateFilter ? 'bg-primary/10 border-primary text-primary' : 'bg-(--color-surface) border-(--color-border) text-(--color-text-muted) hover:border-primary hover:text-primary'}`}
-          title="Date Range Filter"
+          title="Filter export by date range"
         >
           <Calendar size={18} />
         </button>

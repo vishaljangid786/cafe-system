@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
-import { digitsOnly, blockNegative } from '@/app/utils/inputValidation';
+import { blockNegative } from '@/app/utils/inputValidation';
 import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Wallet, Filter, MapPin, ChevronRight, Download, Receipt, PieChart as PieIcon, Activity, FileText, Target, X } from 'lucide-react';
@@ -481,7 +481,7 @@ export default function PayrollRecordsPage() {
                       }}
                       className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-surface-soft) hover:bg-primary hover:text-(--color-bg-base) text-(--color-text-muted) rounded-xl transition-colors"
                     >
-                      {['staff', 'chef'].includes(activeTab) ? 'Edit Profile' : 'Update'}
+                      Edit Salary
                     </button>
 
                     {['staff', 'chef'].includes(activeTab) ? (
@@ -540,7 +540,7 @@ export default function PayrollRecordsPage() {
                         }}
                         className="flex-1 py-3 text-[11px] font-medium uppercase tracking-normal bg-(--color-text-primary) text-(--color-bg-base) hover:bg-primary hover:text-(--color-bg-base) rounded-xl transition-colors"
                       >
-                        View Profile
+                        Edit Salary
                       </button>
                     )}
                   </div>
@@ -732,7 +732,7 @@ export default function PayrollRecordsPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-semibold text-(--color-text-primary) tracking-tight leading-none">{editingUser.name}</h2>
-                      <p className="text-[11px] font-medium uppercase text-primary-dark dark:text-primary tracking-normal mt-2">Edit Details</p>
+                      <p className="text-[11px] font-medium uppercase text-primary-dark dark:text-primary tracking-normal mt-2">Update Salary</p>
                     </div>
                  </div>
                  <button onClick={() => setEditingUser(null)} className="p-2 rounded-full hover:bg-(--color-surface-soft) text-(--color-text-muted) transition-colors">
@@ -742,40 +742,44 @@ export default function PayrollRecordsPage() {
 
               <form onSubmit={async (e) => {
                 e.preventDefault();
-                const loadToast = toast.loading("Updating user profile...");
+                // Payroll only edits the salary — sending the full profile here failed
+                // validation (required phone / empty salary cast), so we PATCH just the
+                // monthly salary as a proper Number.
+                const salary = Number(editFormData.monthlySalary);
+                if (editFormData.monthlySalary === '' || !Number.isFinite(salary) || salary < 0) {
+                  toast.error('Enter a valid salary amount');
+                  return;
+                }
+                const loadToast = toast.loading("Updating salary...");
                 try {
-                  await api.put(`/users/${editingUser._id || editingUser.userId}`, editFormData);
-                  toast.success("Profile updated successfully", { id: loadToast });
+                  await api.put(`/users/${editingUser._id || editingUser.userId}`, { monthlySalary: salary });
+                  toast.success("Salary updated successfully", { id: loadToast });
                   setEditingUser(null);
                   window.location.reload();
                 } catch (error) {
-                  toast.error("Update failed", { id: loadToast });
+                  toast.error(error.response?.data?.message || "Update failed", { id: loadToast });
                 }
               }} className="space-y-6">
                  <div className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Full Name</label>
-                      <input className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
-                    </div>
-                    <div>
                       <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Monthly Salary (₹)</label>
-                      <input type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.monthlySalary} onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Contact</label>
-                        <input type="tel" inputMode="numeric" maxLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20" value={editFormData.phone} onChange={e => setEditFormData({...editFormData, phone: digitsOnly(e.target.value, 10)})} />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mb-2 ml-1">Role</label>
-                        <input disabled className="w-full px-5 py-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm font-medium text-(--color-text-muted) outline-none opacity-60" value={editFormData.role} />
-                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        autoFocus
+                        onKeyDown={blockNegative}
+                        placeholder="e.g. 28000"
+                        className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm font-medium text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary/20"
+                        value={editFormData.monthlySalary}
+                        onChange={e => setEditFormData({...editFormData, monthlySalary: e.target.value})}
+                      />
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mt-2 ml-1">Only the monthly salary is edited here. To change name, contact or role, use the Staff page.</p>
                     </div>
                  </div>
 
                  <div className="flex gap-4 pt-4">
                     <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 rounded-xl bg-(--color-surface-soft) text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Cancel</button>
-                    <button type="submit" className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-semibold uppercase tracking-normal shadow-sm ">Update Profile</button>
+                    <button type="submit" className="flex-1 py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-semibold uppercase tracking-normal shadow-sm ">Update Salary</button>
                  </div>
               </form>
             </motion.div>
