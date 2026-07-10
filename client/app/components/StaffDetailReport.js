@@ -49,10 +49,13 @@ const activityText = (entry) => {
 };
 
 function Stat({ icon: Icon, label, value, sub, tone = 'primary' }) {
+  // Static tone -> class map: a dynamic `text-${tone}` gets purged by Tailwind, so the
+  // tone colors never render. This keeps the icon tint working.
+  const tones = { primary: 'text-primary', warning: 'text-warning', danger: 'text-danger', success: 'text-success' };
   return (
     <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-5 min-h-30">
       <div className="flex items-center gap-2 text-(--color-text-muted)">
-        <Icon size={14} className={`text-${tone}`} />
+        <Icon size={14} className={tones[tone] || 'text-primary'} />
         <span className="text-[11px] font-medium uppercase tracking-normal">{label}</span>
       </div>
       <p className="text-2xl font-semibold text-(--color-text-primary) mt-2 break-words">{value}</p>
@@ -276,7 +279,7 @@ export default function StaffDetailReport({ staffId, user }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat icon={ShoppingBag} label="Orders Touched" value={summary.orders || 0} sub={`${summary.completedOrders || 0} completed`} />
         <Stat icon={IndianRupee} label="Sales" value={<Money value={summary.totalSales} />} sub={`Avg ${formatIndianCompact(summary.averageOrderValue, { currency: true })}`} />
         <Stat icon={Ticket} label="Coupons Used" value={summary.couponsUsed || 0} sub={`${formatIndianCompact(summary.totalDiscount, { currency: true })} discount`} tone="warning" />
