@@ -101,6 +101,7 @@ export default function PermissionManager({ className = "" }) {
   const fetchSubordinates = async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await api.get('/users');
       const allUsers = res.data.data || [];
 
@@ -128,6 +129,11 @@ export default function PermissionManager({ className = "" }) {
           allowedRoles.includes(u.role) &&
           allowedBranchSet.has((u.assignedLocation?._id || u.assignedLocation)?.toString())
         );
+      } else {
+        // Any other role granted access here (e.g. location_admin, or a staff/chef
+        // with manageStaff): the backend already scopes /users to exactly what they
+        // may manage, so trust that list instead of dropping everyone to empty.
+        filtered = allUsers.filter(u => u._id !== currentUser?._id);
       }
 
       setSubordinates(filtered);
@@ -441,7 +447,13 @@ export default function PermissionManager({ className = "" }) {
         </div>
       </div>
 
-      {filteredUsers.length === 0 ? (
+      {error && subordinates.length === 0 ? (
+        <div className="card rounded-xl p-16 text-center space-y-4">
+          <Shield className="mx-auto h-14 w-14 text-danger/50" />
+          <p className="text-danger font-medium">{error}</p>
+          <Button variant="outline" onClick={fetchSubordinates}>Retry</Button>
+        </div>
+      ) : filteredUsers.length === 0 ? (
         <div className="card rounded-xl p-16 text-center space-y-4">
           <Shield className="mx-auto h-14 w-14 text-(--color-text-muted)/40" />
           <p className="text-(--color-text-muted)">No team members to manage here yet.</p>

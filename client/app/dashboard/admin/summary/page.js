@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import useBranchScope from '../../../hooks/useBranchScope';
+import { toMonthInput } from '@/app/utils/dateInput';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { LayoutDashboard, Users, Calendar, Wallet, Loader2, ArrowLeft } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -13,12 +15,13 @@ import { ChartSkeleton, CardSkeleton } from '@/app/components/ui/Skeleton';
 
 export default function MonthlySummaryPage() {
   const { theme } = useTheme();
+  const { singleBranchId, scopeKey } = useBranchScope();
   const monthInputRef = useRef(null);
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(toMonthInput());
 
   const isDark = theme === 'dark';
 
@@ -37,7 +40,9 @@ export default function MonthlySummaryPage() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/attendance/monthly-summary?month=${month}`);
+      const params = new URLSearchParams({ month });
+      if (singleBranchId && singleBranchId !== 'all') params.append('locationId', singleBranchId);
+      const res = await api.get(`/attendance/monthly-summary?${params.toString()}`);
       setSummary(res.data.data);
     } catch (error) {
       console.error('Failed to fetch monthly summary:', error);
@@ -55,7 +60,7 @@ export default function MonthlySummaryPage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [month]);
+  }, [month, scopeKey]);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
