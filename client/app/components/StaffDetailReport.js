@@ -239,11 +239,11 @@ export default function StaffDetailReport({ staffId, user }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div>
-            <label className="block text-[11px] font-medium uppercase text-(--color-text-muted) mb-1.5 ml-1">Date Range</label>
+            <label className="label block mb-1.5 ml-0.5">Date Range</label>
             <div className="flex items-center gap-2">
-              <input type="date" className={`${inputCls} flex-1 min-w-0`} value={filters.startDate} onChange={(e) => setFilters((f) => ({ ...f, startDate: e.target.value }))} />
+              <input type="date" className={`${inputCls} flex-1 min-w-0 h-11`} value={filters.startDate} onChange={(e) => setFilters((f) => ({ ...f, startDate: e.target.value }))} />
               <span className="text-(--color-text-muted) text-xs shrink-0">–</span>
-              <input type="date" className={`${inputCls} flex-1 min-w-0`} value={filters.endDate} onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value }))} />
+              <input type="date" className={`${inputCls} flex-1 min-w-0 h-11`} value={filters.endDate} onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value }))} />
             </div>
           </div>
           <PremiumSelect
