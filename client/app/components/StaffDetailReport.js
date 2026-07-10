@@ -246,36 +246,51 @@ export default function StaffDetailReport({ staffId, user }) {
               <input type="date" className={`${inputCls} flex-1 min-w-0 h-11`} value={filters.endDate} onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value }))} />
             </div>
           </div>
-          <PremiumSelect
-            label="Order Status"
-            value={filters.status}
-            onChange={(value) => setFilters((f) => ({ ...f, status: value }))}
-            options={[{ label: 'All Order Statuses', value: '' }, ...ORDER_STATUSES.map((status) => ({ label: status, value: status }))]}
-          />
-          <PremiumSelect
-            label="Payment"
-            value={filters.paymentType}
-            onChange={(value) => setFilters((f) => ({ ...f, paymentType: value }))}
-            options={[{ label: 'All Payments', value: '' }, ...PAYMENT_TYPES.map((type) => ({ label: type, value: type }))]}
-          />
-          <PremiumSelect
-            label="Order Type"
-            value={filters.orderType}
-            onChange={(value) => setFilters((f) => ({ ...f, orderType: value }))}
-            options={[{ label: 'All Order Types', value: '' }, ...ORDER_TYPES.map((type) => ({ label: type, value: type }))]}
-          />
-          <PremiumSelect
-            label="Reservation"
-            value={filters.reservationStatus}
-            onChange={(value) => setFilters((f) => ({ ...f, reservationStatus: value }))}
-            options={[{ label: 'All Reservations', value: '' }, ...RESERVATION_STATUSES.map((status) => ({ label: status, value: status }))]}
-          />
-          <PremiumSelect
-            label="Expense"
-            value={filters.expenseStatus}
-            onChange={(value) => setFilters((f) => ({ ...f, expenseStatus: value }))}
-            options={[{ label: 'All Expenses', value: '' }, ...EXPENSE_STATUSES.map((status) => ({ label: status, value: status }))]}
-          />
+          <div>
+            <label className="label block mb-1.5 ml-0.5">Order Status</label>
+            <PremiumSelect
+              className="h-11"
+              value={filters.status}
+              onChange={(value) => setFilters((f) => ({ ...f, status: value }))}
+              options={[{ label: 'All Order Statuses', value: '' }, ...ORDER_STATUSES.map((status) => ({ label: status, value: status }))]}
+            />
+          </div>
+          <div>
+            <label className="label block mb-1.5 ml-0.5">Payment</label>
+            <PremiumSelect
+              className="h-11"
+              value={filters.paymentType}
+              onChange={(value) => setFilters((f) => ({ ...f, paymentType: value }))}
+              options={[{ label: 'All Payments', value: '' }, ...PAYMENT_TYPES.map((type) => ({ label: type, value: type }))]}
+            />
+          </div>
+          <div>
+            <label className="label block mb-1.5 ml-0.5">Order Type</label>
+            <PremiumSelect
+              className="h-11"
+              value={filters.orderType}
+              onChange={(value) => setFilters((f) => ({ ...f, orderType: value }))}
+              options={[{ label: 'All Order Types', value: '' }, ...ORDER_TYPES.map((type) => ({ label: type, value: type }))]}
+            />
+          </div>
+          <div>
+            <label className="label block mb-1.5 ml-0.5">Reservation</label>
+            <PremiumSelect
+              className="h-11"
+              value={filters.reservationStatus}
+              onChange={(value) => setFilters((f) => ({ ...f, reservationStatus: value }))}
+              options={[{ label: 'All Reservations', value: '' }, ...RESERVATION_STATUSES.map((status) => ({ label: status, value: status }))]}
+            />
+          </div>
+          <div>
+            <label className="label block mb-1.5 ml-0.5">Expense</label>
+            <PremiumSelect
+              className="h-11"
+              value={filters.expenseStatus}
+              onChange={(value) => setFilters((f) => ({ ...f, expenseStatus: value }))}
+              options={[{ label: 'All Expenses', value: '' }, ...EXPENSE_STATUSES.map((status) => ({ label: status, value: status }))]}
+            />
+          </div>
         </div>
       </div>
 
