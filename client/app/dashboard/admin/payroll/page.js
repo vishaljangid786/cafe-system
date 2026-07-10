@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { blockNegative } from '@/app/utils/inputValidation';
@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
-import { CardSkeleton } from '@/app/components/ui/Skeleton';
+import { CardSkeleton, StatGridSkeleton, PageHeaderSkeleton } from '@/app/components/ui/Skeleton';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 
@@ -75,42 +75,46 @@ export default function PayrollRecordsPage() {
   }, [currentUser, router]);
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const isInitial = !didInitRef.current;
-      if (isInitial) setLoading(true);
-      else setRefetching(true);
-      progress.start();
-      try {
-        const [salRes, locRes, payRes] = await Promise.all([
-          api.get(`/salary/all?month=${month}&locationId=${singleBranchId === 'all' ? '' : singleBranchId}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
-          api.get('/locations'),
-          api.get(`/salary/payroll/history?month=${month}`)
-        ]);
-        
-        const mergedSalaries = salRes.data.data.map(s => {
-          const payroll = payRes.data.data?.find(p => p.user?._id === s._id);
-          return { ...s, payrollRecord: payroll };
-        });
+  // Extracted so actions (approve / adjust / update / generate) can refresh the data
+  // IN PLACE — after the first load this sets `refetching` (skeletons), never a full
+  // window reload.
+  const fetchData = useCallback(async () => {
+    const isInitial = !didInitRef.current;
+    if (isInitial) setLoading(true);
+    else setRefetching(true);
+    progress.start();
+    try {
+      const [salRes, locRes, payRes] = await Promise.all([
+        api.get(`/salary/all?month=${month}&locationId=${singleBranchId === 'all' ? '' : singleBranchId}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
+        api.get('/locations'),
+        api.get(`/salary/payroll/history?month=${month}`)
+      ]);
 
-        setSalaries(mergedSalaries);
-        setStats({
-          totalPayroll: salRes.data.totalPayrollCost,
-          locationTotals: salRes.data.locationTotals
-        });
-        if (salRes.data.pagination) setPagination(salRes.data.pagination);
-        setLocations(locRes.data.data);
-      } catch (err) {
-        console.error('Failed to fetch records');
-      } finally {
-        didInitRef.current = true;
-        setLoading(false);
-        setRefetching(false);
-        progress.done();
-      }
-    };
-    fetchData();
+      const mergedSalaries = salRes.data.data.map(s => {
+        const payroll = payRes.data.data?.find(p => p.user?._id === s._id);
+        return { ...s, payrollRecord: payroll };
+      });
+
+      setSalaries(mergedSalaries);
+      setStats({
+        totalPayroll: salRes.data.totalPayrollCost,
+        locationTotals: salRes.data.locationTotals
+      });
+      if (salRes.data.pagination) setPagination(salRes.data.pagination);
+      setLocations(locRes.data.data);
+    } catch (err) {
+      console.error('Failed to fetch records');
+    } finally {
+      didInitRef.current = true;
+      setLoading(false);
+      setRefetching(false);
+      progress.done();
+    }
   }, [month, singleBranchId, activeTab, searchQuery, page, selectedCafe]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Reset to the first page whenever the global Navbar scope (cafe/branch) changes.
   useEffect(() => {
@@ -132,13 +136,24 @@ export default function PayrollRecordsPage() {
         reason: adjustForm.reason.trim(),
       });
       toast.success('Adjustment applied', { id: loadToast });
-      setTimeout(() => window.location.reload(), 900);
+      setAdjustingSalary(null);
+      fetchData();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast });
     }
   };
 
-  if (loading) return <LoadingScreen fullScreen={false} />;
+  if (loading) return (
+    <PageTransition>
+      <div className="space-y-6">
+        <PageHeaderSkeleton />
+        <StatGridSkeleton count={3} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      </div>
+    </PageTransition>
+  );
 
   return (
     <PageTransition>
@@ -288,7 +303,7 @@ export default function PayrollRecordsPage() {
                           cafeId: selectedCafe && selectedCafe !== 'all' ? selectedCafe : 'all',
                         });
                         toast.success("Salary details saved successfully", { id: loadToast });
-                        setTimeout(() => window.location.reload(), 1000);
+                        fetchData();
                       } catch (e) {
                         toast.error("Something went wrong. Please try again.", { id: loadToast });
                       }
@@ -510,7 +525,7 @@ export default function PayrollRecordsPage() {
                                     try {
                                       await api.patch(`/salary/payroll/${s.payrollRecord._id}/approve`);
                                       toast.success("Salary approved & paid", { id: loadToast });
-                                      setTimeout(() => window.location.reload(), 1000);
+                                      fetchData();
                                     } catch (e) {
                                       toast.error(e.response?.data?.message || "Something went wrong. Please try again.", { id: loadToast });
                                     }
@@ -755,7 +770,7 @@ export default function PayrollRecordsPage() {
                   await api.put(`/users/${editingUser._id || editingUser.userId}`, { monthlySalary: salary });
                   toast.success("Salary updated successfully", { id: loadToast });
                   setEditingUser(null);
-                  window.location.reload();
+                  fetchData();
                 } catch (error) {
                   toast.error(error.response?.data?.message || "Update failed", { id: loadToast });
                 }

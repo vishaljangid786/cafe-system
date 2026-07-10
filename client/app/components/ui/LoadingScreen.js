@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Coffee } from 'lucide-react';
+import { CardSkeleton, StatGridSkeleton, PageHeaderSkeleton } from './Skeleton';
 
 const DEFAULT_STAGES = [
   'Connecting securely',
@@ -59,6 +60,21 @@ export default function LoadingScreen({
 
   const label = message ?? stages[stageIndex] ?? 'Loading';
   const pct = Math.min(99, Math.round(progress));
+
+  // In-page loading (fullScreen=false) shows a skeleton of the view instead of a
+  // spinner — it reads as "content is arriving" rather than "everything stopped".
+  // The branded orbit loader is reserved for the full-screen auth/initial splash.
+  if (!fullScreen) {
+    return (
+      <div className={`w-full space-y-6 ${className}`}>
+        <PageHeaderSkeleton />
+        <StatGridSkeleton count={4} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
