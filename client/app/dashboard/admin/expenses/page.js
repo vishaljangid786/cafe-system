@@ -14,7 +14,7 @@ import {
   ChevronRight, Calendar, MapPin,
   ArrowDownRight, Activity, Receipt,
   Plus, User, Info, ChevronDown,
-  AlertCircle, Sparkles,
+  AlertCircle, Sparkles, Download,
   Layers, Wallet, ArrowUpRight, RefreshCw, Check
 } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -308,6 +308,50 @@ export default function ExpensesPage() {
     } catch (error) {
       toast.error('Could not reject. Please try again.', { id: loadToast });
     }
+  };
+
+  // Open a clean, print-ready expense receipt (used when there's no uploaded bill
+  // image). Print/receipt output keeps EXACT full amounts, never the compact form.
+  const printExpenseReceipt = (exp) => {
+    if (!exp) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+    const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const cafe = esc(exp.locationId?.cafe?.name || 'CafeOS');
+    const branch = esc(exp.locationId?.name || 'Main Office');
+    const city = esc(exp.locationId?.city || '');
+    const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+    const row = (label, val) => `<div class="row"><span class="muted">${label}</span><span>${val}</span></div>`;
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Expense Receipt</title><style>
+      body{font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:24px auto;padding:0 24px}
+      h1{font-size:20px;margin:0}
+      .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px dashed #ccc;padding-bottom:14px}
+      .tag{color:#c0392b;font-weight:bold;text-transform:uppercase;font-size:12px}
+      .muted{color:#777}
+      .row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+      .item{border-top:2px dashed #ccc;margin-top:16px;padding-top:14px}
+      .total{display:flex;justify-content:space-between;border-top:2px solid #111;margin-top:14px;padding-top:14px;font-size:18px;font-weight:bold}
+    </style></head><body>
+      <div class="hdr">
+        <div><h1>${cafe}</h1><div class="muted">${branch}${city ? ` · ${city}` : ''}</div></div>
+        <div style="text-align:right"><div class="tag">Expense Receipt</div><div class="muted">#${esc(String(exp._id || '').slice(-8).toUpperCase())}</div></div>
+      </div>
+      <div style="margin-top:16px">
+        ${row('Date', esc(new Date(exp.date).toLocaleDateString()))}
+        ${row('Category', esc(exp.category || ''))}
+        ${row('Payment', esc(exp.paymentMethod || 'CASH'))}
+        ${row('Created by', `${esc(exp.createdBy?.name || 'System')}${exp.createdBy?.role ? ` (${esc(exp.createdBy.role.replace('_', ' '))})` : ''}`)}
+        ${row('Status', esc(exp.status || ''))}
+        ${exp.approvedBy ? row('Approved by', esc(exp.approvedBy.name)) : ''}
+      </div>
+      <div class="item">
+        <div class="row"><strong>${esc(exp.title || 'Expense')}</strong><span>${fmt(exp.totalAmount)}</span></div>
+        ${exp.description ? `<div class="muted" style="font-size:12px;margin-top:4px">${esc(exp.description)}</div>` : ''}
+      </div>
+      <div class="total"><span>TOTAL</span><span>${fmt(exp.totalAmount)}</span></div>
+      <script>window.onload=function(){window.print()}</script>
+    </body></html>`);
+    win.document.close();
   };
 
   // Server-side filtering paginated data
@@ -770,17 +814,77 @@ export default function ExpensesPage() {
                 </div>
               </div>
 
-              {selectedExpense.billImage && (
-                <div className="space-y-6">
-                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2 ml-2">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between ml-2">
+                  <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) flex items-center gap-2">
                     <Sparkles size={12} className="text-danger" /> Bill / Receipt
                   </p>
+                  {!selectedExpense.billImage && (
+                    <button
+                      onClick={() => printExpenseReceipt(selectedExpense)}
+                      className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-normal text-danger hover:text-danger/80 bg-danger/5 hover:bg-danger/10 px-2.5 py-1.5 rounded-lg border border-danger/20 transition-colors"
+                    >
+                      <Download size={12} /> Download
+                    </button>
+                  )}
+                </div>
+
+                {selectedExpense.billImage ? (
                   <div className="rounded-xl overflow-hidden border-4 border-(--color-surface-soft) bg-(--color-surface) p-3 shadow-sm relative group">
                     <img src={selectedExpense.billImage} alt="Receipt" className="w-full h-auto rounded-xl transition-all duration-1000" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
-                </div>
-              )}
+                ) : (
+                  /* No uploaded bill — render a generated receipt from the expense details. */
+                  <div className="rounded-xl border border-(--color-border) bg-(--color-surface) overflow-hidden shadow-sm">
+                    <div className="flex items-start justify-between gap-4 bg-(--color-surface-soft) px-5 py-4 border-b border-dashed border-(--color-border)">
+                      <div className="min-w-0">
+                        <p className="text-base font-bold text-(--color-text-primary) tracking-tight truncate">{selectedExpense.locationId?.cafe?.name || 'CafeOS'}</p>
+                        <p className="text-[11px] text-(--color-text-muted) truncate">
+                          {selectedExpense.locationId?.name || 'Main Office'}{selectedExpense.locationId?.city ? ` · ${selectedExpense.locationId.city}` : ''}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-danger">Expense Receipt</p>
+                        <p className="text-[10px] font-mono text-(--color-text-muted) mt-0.5">#{String(selectedExpense._id || '').slice(-8).toUpperCase()}</p>
+                      </div>
+                    </div>
+
+                    <div className="px-5 py-4 space-y-2 text-xs">
+                      {[
+                        ['Date', new Date(selectedExpense.date).toLocaleDateString()],
+                        ['Category', selectedExpense.category],
+                        ['Payment', selectedExpense.paymentMethod || 'CASH'],
+                        ['Created by', `${selectedExpense.createdBy?.name || 'System'}${selectedExpense.createdBy?.role ? ` (${selectedExpense.createdBy.role.replace('_', ' ')})` : ''}`],
+                        ['Status', selectedExpense.status],
+                        ...(selectedExpense.approvedBy ? [['Approved by', selectedExpense.approvedBy.name]] : []),
+                      ].map(([label, val]) => (
+                        <div key={label} className="flex items-center justify-between gap-4">
+                          <span className="text-(--color-text-muted) font-medium">{label}</span>
+                          <span className="text-(--color-text-primary) font-medium text-right capitalize truncate">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="px-5 py-3 border-t border-dashed border-(--color-border)">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-(--color-text-primary) truncate">{selectedExpense.title}</p>
+                          {selectedExpense.description && (
+                            <p className="text-[11px] text-(--color-text-muted) mt-0.5 line-clamp-2">{selectedExpense.description}</p>
+                          )}
+                        </div>
+                        <span className="text-sm font-semibold text-(--color-text-primary) shrink-0"><Money value={selectedExpense.totalAmount} /></span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between px-5 py-4 bg-danger/5 border-t border-(--color-border)">
+                      <span className="text-[11px] font-bold uppercase tracking-normal text-(--color-text-muted)">Total</span>
+                      <span className="text-xl font-bold text-danger"><Money value={selectedExpense.totalAmount} /></span>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {selectedExpense.status === 'pending' && can(user, 'revenue.approve') ? (
                 <div className="flex gap-4 pt-4">
