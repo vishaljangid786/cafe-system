@@ -20,7 +20,7 @@ const PAYMENT_CHIP = {
 export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, handleRedeemGiftCard, tables = [], userRole, canDelete, canRefund: canRefundProp }) {
   const [showSplit, setShowSplit] = useState(false);
   const [splitQty, setSplitQty] = useState({}); // itemId -> qty to split off
-  useEffect(() => { setShowSplit(false); setSplitQty({}); setGcCode(''); setGcAmount(''); }, [selectedOrder?._id]);
+  useEffect(() => { setShowSplit(false); setSplitQty({}); }, [selectedOrder?._id]);
 
   if (!selectedOrder) return null;
 
