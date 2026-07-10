@@ -53,6 +53,13 @@ const getNotifications = asyncHandler(async (req, res) => {
 
   if (type) query.type = type;
 
+  // Free-text search across the notification title and message.
+  if (req.query.search) {
+    const safe = String(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = { $regex: safe, $options: 'i' };
+    query.$or = [{ title: rx }, { message: rx }];
+  }
+
   if (startDate || endDate) {
     query.createdAt = {};
     if (startDate) query.createdAt.$gte = new Date(startDate);

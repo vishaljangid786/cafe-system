@@ -11,14 +11,20 @@ import {
   TrendingUp, Calendar, Clock, RefreshCcw, Award, Percent
 } from 'lucide-react';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
-import PremiumSelect from '@/app/components/ui/PremiumSelect';
+import UniversalDateFilter from '@/app/components/ui/UniversalDateFilter';
 import useBranchScope from '../../../hooks/useBranchScope';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 export default function ForecastingDashboard() {
   const { singleBranchId } = useBranchScope();
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const fmtLocalDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // Same rich date filter as the Overview page (Today, Last 7 Days, month, quarter,
+  // year, financial year, custom, …). Defaults to Today.
+  const [dateRange, setDateRange] = useState(() => {
+    const t = fmtLocalDate(new Date());
+    return { startDate: t, endDate: t, label: 'today' };
+  });
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -30,7 +36,10 @@ export default function ForecastingDashboard() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/analytics/forecasting?branchId=${singleBranchId}&period=${selectedPeriod}`);
+      const params = new URLSearchParams({ branchId: singleBranchId });
+      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
+      const res = await api.get(`/analytics/forecasting?${params.toString()}`);
       setForecast(res.data.data);
     } catch (err) {
       console.error('Could not load forecast. Please try again.');
@@ -48,7 +57,7 @@ export default function ForecastingDashboard() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [singleBranchId, selectedPeriod]);
+  }, [singleBranchId, dateRange]);
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
@@ -67,19 +76,19 @@ export default function ForecastingDashboard() {
             </div>
 
             <div className="flex items-center gap-4">
-              <PremiumSelect
-                value={selectedPeriod}
-                onChange={(val) => setSelectedPeriod(val)}
-                options={[
-                  { label: 'Today', value: 'today' },
-                  { label: 'Weekly', value: 'week' },
-                  { label: 'Monthly', value: 'month' },
-                  { label: 'Financial Year', value: 'FY' }
-                ]}
-                className="min-w-[150px]"
+              <UniversalDateFilter
+                defaultFilter="today"
+                loading={refetching}
+                onFilterChange={({ startDate, endDate, filterType }) =>
+                  setDateRange((prev) =>
+                    prev.startDate === (startDate || '') && prev.endDate === (endDate || '')
+                      ? prev
+                      : { startDate: startDate || '', endDate: endDate || '', label: filterType }
+                  )
+                }
               />
 
-              <button onClick={fetchForecast} className="p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 text-(--color-text-muted)">
+              <button onClick={fetchForecast} className="p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 text-(--color-text-muted) shrink-0">
                 <RefreshCcw size={16} />
               </button>
             </div>

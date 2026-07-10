@@ -48,6 +48,7 @@ const NotificationsPage = () => {
         limit: 15,
         status: filters.status !== 'all' ? filters.status : '',
         type: filters.type,
+        search: filters.search,
         startDate: filters.startDate,
         endDate: filters.endDate
       });
@@ -105,13 +106,16 @@ const NotificationsPage = () => {
     }
   };
 
+  // Any filter change resets to page 1; the pagination buttons call fetchHistory
+  // directly, so page number is intentionally not a dependency here.
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchHistory(pagination.page);
+      fetchHistory(1);
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [filters, pagination.page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const getPriorityStyles = (priority) => {
     switch (priority) {

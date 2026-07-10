@@ -749,7 +749,7 @@ export default function AdminTablesPage() {
           </form>
         </Modal>
 
-        <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}`} maxWidth="max-w-7xl">
+        <Modal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} title={`Table Details: T${selectedTable?.tableNumber}${selectedTable?.tableName ? ` · ${selectedTable.tableName}` : ''}`} maxWidth="max-w-7xl">
           {selectedTable && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[75vh]">
               <div className="lg:col-span-5 flex flex-col h-full bg-(--color-surface-soft) rounded-xl border border-(--color-border) overflow-y-auto custom-scrollbar shadow-sm">

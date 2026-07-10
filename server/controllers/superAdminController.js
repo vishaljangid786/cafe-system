@@ -248,8 +248,12 @@ const getAuditLogs = asyncHandler(async (req, res) => {
   const branch = scopedLocationId(req, req.query.locationId);
   if (branch) query.locationId = branch;
 
-  if (req.query.actionType) query.action = req.query.actionType;
-  if (req.query.userId) query.performedBy = req.query.userId;
+  // actionType is a broad category (e.g. "PROMOTE") matched against the specific
+  // stored action string (e.g. "USER_PROMOTED") — use a case-insensitive contains.
+  if (req.query.actionType) query.action = { $regex: escapeRegex(req.query.actionType), $options: 'i' };
+  // performedBy is an ObjectId; ignore non-ObjectId input so a stray search string
+  // can't trigger a Mongoose CastError and 500 the whole page.
+  if (req.query.userId && mongoose.isValidObjectId(req.query.userId)) query.performedBy = req.query.userId;
   if (req.query.role) query.role = req.query.role;
 
   // Date Range
@@ -259,9 +263,10 @@ const getAuditLogs = asyncHandler(async (req, res) => {
     if (req.query.endDate) query.createdAt.$lte = new Date(req.query.endDate);
   }
 
-  // Text Search in details
+  // Free-text search across the action and the details.
   if (req.query.search) {
-    query.details = { $regex: escapeRegex(req.query.search), $options: 'i' };
+    const rx = { $regex: escapeRegex(req.query.search), $options: 'i' };
+    query.$or = [{ action: rx }, { details: rx }];
   }
 
   const logs = await AuditLog.find(query)

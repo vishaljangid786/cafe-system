@@ -274,12 +274,6 @@ export default function LocationStaffPage() {
           style={{ marginLeft: `${level * 40}px` }}
         >
           <div className="flex items-center gap-4 flex-1">
-            {hasChildren ? (
-              isExpanded ? <ChevronDown size={20} className="text-primary-dark dark:text-primary" /> : <ChevronRight size={20} className="text-(--color-text-muted)" />
-            ) : (
-              <div className="w-5" />
-            )}
-
             <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-semibold border ${member.role === 'system_group' ? 'bg-(--color-surface-soft) text-(--color-text-muted) border-(--color-border)' : 'bg-primary/10 text-primary-dark dark:text-primary border-primary/10'
               }`}>
               {member.role === 'system_group' ? <Layers size={20} /> : member.name.charAt(0)}
@@ -341,6 +335,9 @@ export default function LocationStaffPage() {
                 </>
               )}
             </div>
+            {hasChildren && (
+              isExpanded ? <ChevronDown size={20} className="text-primary-dark dark:text-primary shrink-0" /> : <ChevronRight size={20} className="text-(--color-text-muted) shrink-0" />
+            )}
           </div>
         </div>
 

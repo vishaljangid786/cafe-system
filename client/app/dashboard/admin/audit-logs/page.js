@@ -43,7 +43,7 @@ export default function AuditLogsPage() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/super-admin/audit-logs?page=${page}&actionType=${actionFilter}&userId=${searchUserId}`);
+      const res = await api.get(`/super-admin/audit-logs?page=${page}&actionType=${actionFilter}&search=${encodeURIComponent(searchUserId)}`);
       setLogs(res.data.data);
       setTotalPages(res.data.pagination?.pages || 1);
       setTotalLogs(res.data.pagination?.total || 0);
@@ -139,8 +139,8 @@ export default function AuditLogsPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={16} />
             <input
               type="text"
-              placeholder="Filter by user ID..."
-              aria-label="Filter audit logs by user ID"
+              placeholder="Search by action or details..."
+              aria-label="Search audit logs by action or details"
               className="w-full pl-10 pr-4 py-2.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-primary/15 focus:border-primary transition outline-none"
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
@@ -211,7 +211,7 @@ export default function AuditLogsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-(--color-text-primary) truncate">{log.action?.replace(/_/g, ' ') || 'Unknown action'}</p>
-                            <p className="text-xs text-(--color-text-muted) mt-0.5 max-w-62.5 truncate">{log.details || 'No details'}</p>
+                            <p className="text-xs text-(--color-text-muted) mt-0.5 max-w-62.5 truncate">{log.details == null ? 'No details' : (typeof log.details === 'string' ? log.details : JSON.stringify(log.details))}</p>
                           </div>
                         </div>
                       </td>

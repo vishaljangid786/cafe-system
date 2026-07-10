@@ -1334,20 +1334,31 @@ const getCommandCenterStats = asyncHandler(async (req, res) => {
 });
 
 const getForecastingAnalytics = asyncHandler(async (req, res) => {
-  const { branchId, period } = req.query;
+  const { branchId, period, startDate, endDate } = req.query;
   const filter = { status: { $in: ['SERVED', 'COMPLETED'] } };
 
   const branchScope = scopedLocationId(req, branchId);
   if (branchScope) filter.branch = branchScope;
 
-  let days = 90; // Default lookback
-  if (period === 'today') days = 1;
-  else if (period === 'week') days = 7;
-  else if (period === 'month') days = 30;
-  else if (period === 'year' || period === 'FY') days = 365;
-
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  filter.createdAt = { $gte: startDate };
+  // Prefer an explicit date range (from the UniversalDateFilter on the dashboard);
+  // fall back to the legacy `period` lookback window when no range is supplied.
+  let start;
+  if (startDate) {
+    start = new Date(startDate);
+  } else {
+    let days = 90; // Default lookback
+    if (period === 'today') days = 1;
+    else if (period === 'week') days = 7;
+    else if (period === 'month') days = 30;
+    else if (period === 'year' || period === 'FY') days = 365;
+    start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  }
+  filter.createdAt = { $gte: start };
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    filter.createdAt.$lte = end;
+  }
 
   const pastOrders = await Order.find(filter).lean();
 
