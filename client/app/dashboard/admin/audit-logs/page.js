@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import ExportActions from '@/app/components/ui/ExportActions';
 import { Num } from '@/app/components/ui/Money';
+import Modal from '@/app/components/ui/Modal';
 
 export default function AuditLogsPage() {
   const { user } = useAuth();
@@ -27,7 +28,9 @@ export default function AuditLogsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalLogs, setTotalLogs] = useState(0);
   const [actionFilter, setActionFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [searchUserId, setSearchUserId] = useState('');
+  const [selectedLog, setSelectedLog] = useState(null);
 
   const columns = [
     { header: 'Action', key: 'action' },
@@ -64,6 +67,13 @@ export default function AuditLogsPage() {
 
     return () => clearTimeout(timer);
   }, [page, actionFilter, searchUserId]);
+
+  // Debounce the search box: apply it (and jump to page 1) shortly after typing stops,
+  // so the whole list doesn't refetch + re-animate on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => { setSearchUserId(searchInput); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const getActionColor = (type) => {
     if (!type || typeof type !== 'string') return 'text-secondary bg-secondary/10';
@@ -142,15 +152,15 @@ export default function AuditLogsPage() {
               placeholder="Search by action or details..."
               aria-label="Search audit logs by action or details"
               className="w-full pl-10 pr-4 py-2.5 bg-(--color-bg-soft) border border-(--color-border) rounded-xl text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-primary/15 focus:border-primary transition outline-none"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
             <PremiumSelect
               className="flex-1 sm:flex-none sm:w-48"
               value={actionFilter}
-              onChange={(val) => setActionFilter(val)}
+              onChange={(val) => { setActionFilter(val); setPage(1); }}
               options={[
                 { label: 'All Actions', value: '' },
                 { label: 'Promotion', value: 'PROMOTE' },
@@ -201,8 +211,9 @@ export default function AuditLogsPage() {
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ delay: idx * 0.03 }}
-                      className="group hover:bg-primary/3 transition-colors border-l-2 border-transparent hover:border-primary"
+                      transition={{ delay: Math.min(idx * 0.03, 0.25) }}
+                      onClick={() => setSelectedLog(log)}
+                      className="group hover:bg-primary/5 transition-colors border-l-2 border-transparent hover:border-primary cursor-pointer"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
@@ -266,6 +277,51 @@ export default function AuditLogsPage() {
           )}
         </div>
       </div>
+
+      <Modal isOpen={!!selectedLog} onClose={() => setSelectedLog(null)} title="Activity Details" maxWidth="max-w-lg">
+        {selectedLog && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <div className={`h-11 w-11 rounded-lg flex items-center justify-center shrink-0 ${getActionColor(selectedLog.action)}`}>
+                <Activity size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-(--color-text-primary) truncate">{selectedLog.action?.replace(/_/g, ' ') || 'Unknown action'}</p>
+                <p className="text-xs text-(--color-text-muted)">{new Date(selectedLog.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {[
+                ['Performed by', selectedLog.performedBy?.name || 'System'],
+                ['Email', selectedLog.performedBy?.email || '—'],
+                ['Role', (selectedLog.performedBy?.role || selectedLog.role || 'system').replace(/_/g, ' ')],
+              ].map(([label, val]) => (
+                <div key={label} className="flex items-start justify-between gap-4 text-sm">
+                  <span className="text-(--color-text-muted) font-medium shrink-0">{label}</span>
+                  <span className="text-(--color-text-primary) font-medium text-right capitalize break-words">{val}</span>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-(--color-text-muted) mb-2">Details</p>
+              <div className="p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs text-(--color-text-secondary) whitespace-pre-wrap break-words font-mono max-h-64 overflow-auto">
+                {selectedLog.details == null ? 'No details' : (typeof selectedLog.details === 'string' ? selectedLog.details : JSON.stringify(selectedLog.details, null, 2))}
+              </div>
+            </div>
+
+            {selectedLog.metadata != null && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-(--color-text-muted) mb-2">Metadata</p>
+                <div className="p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs text-(--color-text-secondary) whitespace-pre-wrap break-words font-mono max-h-64 overflow-auto">
+                  {typeof selectedLog.metadata === 'string' ? selectedLog.metadata : JSON.stringify(selectedLog.metadata, null, 2)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </PageTransition>
   );
 }

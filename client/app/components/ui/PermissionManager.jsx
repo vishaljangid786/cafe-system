@@ -424,13 +424,13 @@ export default function PermissionManager({ className = "" }) {
       </div>
 
       {/* Search + role filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
         <div className="relative group flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--color-text-muted) group-focus-within:text-primary transition-colors" size={18} />
           <input
             type="text"
             placeholder="Search by name, email or role..."
-            className="input pl-10"
+            className="input pl-10 h-11"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
