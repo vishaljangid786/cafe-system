@@ -183,7 +183,7 @@ const NotificationsPage = () => {
                 variant="secondary"
                 icon={CheckCircle2}
                 onClick={handleMarkAllAsRead}
-                className="!rounded-xl !py-3 px-6"
+                className="rounded-xl1 1py-3! px-6"
               >
                 Mark all as read
               </Button>
@@ -391,7 +391,7 @@ const NotificationsPage = () => {
                             {notif.priority} Priority
                           </span>
                           
-                          <div className="h-8 w-[1px] bg-(--color-border) mx-1" />
+                          <div className="h-8 w-px bg-(--color-border) mx-1" />
 
                           {notif.sender && (
                             <button 
@@ -467,7 +467,7 @@ const NotificationsPage = () => {
                 icon={ChevronLeft}
                 disabled={pagination.page === 1}
                 onClick={() => fetchHistory(pagination.page - 1)}
-                className="!rounded-xl"
+                className="rounded-xl!"
               >
                 Previous
               </Button>
@@ -492,7 +492,7 @@ const NotificationsPage = () => {
                 iconPosition="right"
                 disabled={pagination.page === pagination.pages}
                 onClick={() => fetchHistory(pagination.page + 1)}
-                className="!rounded-xl"
+                className="rounded-xl!"
               >
                 Next
               </Button>
@@ -521,7 +521,7 @@ const NotificationsPage = () => {
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 placeholder="Type your response here..."
-                className="w-full min-h-[150px] p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+                className="w-full min-h-37.5 p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-sm text-(--color-text-primary) outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
               />
             </div>
 

@@ -35,7 +35,7 @@ export default function BookingsManagementPage() {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState(todayInput());
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
 
   // Modal state
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -189,7 +189,7 @@ export default function BookingsManagementPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="hover:bg-primary/[0.02] transition-colors group"
+                      className="hover:bg-primary/2 transition-colors group"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-4">
@@ -263,7 +263,7 @@ export default function BookingsManagementPage() {
             {filteredBookings.map((booking, i) => (
               <SlideIn key={booking._id} delay={i * 0.05}>
                 <CardHover>
-                  <Card className="!p-5 group relative overflow-hidden border-(--color-border) bg-(--color-surface)/40 shadow-sm transition-colors">
+                  <Card className="p-5! group relative overflow-hidden border-(--color-border) bg-(--color-surface)/40 shadow-sm transition-colors">
                     <div className={`absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity`}>
                       <CalendarDays size={80} className="text-primary" />
                     </div>
@@ -394,7 +394,7 @@ export default function BookingsManagementPage() {
                     <Button
                       variant="primary"
                       icon={Check}
-                      className="flex-1 !py-3.5 shadow-sm  bg-success hover:bg-(--color-success-dark) text-(--color-on-primary) dark:text-(--color-on-primary)"
+                      className="flex-1 py-3.5! shadow-sm  bg-success hover:bg-(--color-success-dark) text-(--color-on-primary) dark:text-(--color-on-primary)"
                       onClick={() => updateStatus(selectedBooking._id, 'confirmed')}
                     >
                       Confirm Booking
@@ -402,7 +402,7 @@ export default function BookingsManagementPage() {
                     <Button
                       variant="outline"
                       icon={X}
-                      className="flex-1 !py-3.5 text-danger border-danger/20 hover:bg-danger/10"
+                      className="flex-1 py-3.5! text-danger border-danger/20 hover:bg-danger/10"
                       onClick={() => updateStatus(selectedBooking._id, 'cancelled')}
                     >
                       Cancel Booking
@@ -412,7 +412,7 @@ export default function BookingsManagementPage() {
                   <Button
                     variant="primary"
                     icon={CheckCircle2}
-                    className="w-full !py-3.5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) hover:opacity-90"
+                    className="w-full py-3.5! bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) hover:opacity-90"
                     onClick={() => updateStatus(selectedBooking._id, 'completed')}
                   >
                     Mark as Completed
@@ -428,7 +428,7 @@ export default function BookingsManagementPage() {
         </Modal>
 
         {filteredBookings.length === 0 && !loading && !refetching && (
-          <div className="text-center py-20 bg-primary/[0.02] rounded-2xl border border-dashed border-(--color-border)">
+          <div className="text-center py-20 bg-primary/2 rounded-2xl border border-dashed border-(--color-border)">
             <Calendar size={48} className="mx-auto text-(--color-text-muted) mb-6" strokeWidth={1} />
             <h3 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">No Bookings Found</h3>
             <p className="text-(--color-text-muted) font-medium mt-2 max-w-sm mx-auto">The list is currently empty for the selected filters.</p>

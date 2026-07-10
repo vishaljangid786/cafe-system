@@ -224,7 +224,7 @@ export default function AttendancePage() {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-5 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
               <div className="relative group">
-                <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
+                <div className="h-32 w-32 rounded-xl bg-linear-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
                   {viewingStaff.name.charAt(0)}
                 </div>
                 <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white">
@@ -352,7 +352,7 @@ export default function AttendancePage() {
             <div className="pt-8 border-t border-(--color-border) dark:border-(--color-border) flex gap-4">
               <Button
                 variant="outline"
-                className="flex-1 py-5 !rounded-xl font-medium text-xs uppercase tracking-normal"
+                className="flex-1 py-5 rounded-xl! font-medium text-xs uppercase tracking-normal"
                 onClick={() => setViewingStaff(null)}
               >
                 Back to Attendance
