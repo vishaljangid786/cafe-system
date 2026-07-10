@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { todayInput } from '@/app/utils/dateInput';
 import { CalendarCheck, UserCheck, UserX, CheckCircle2, XCircle, Clock, Calendar, Search, Mail, Phone, MapPin, CreditCard, Hash, Globe, Info, Award, ShieldAlert } from 'lucide-react';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import LeaveApprovals from '../../../components/attendance/LeaveApprovals';
@@ -20,7 +21,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayInput());
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingStaff, setViewingStaff] = useState(null);
 

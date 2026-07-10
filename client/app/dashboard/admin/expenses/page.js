@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { todayInput, toDateInput } from '@/app/utils/dateInput';
 import { blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
@@ -82,7 +83,7 @@ export default function ExpensesPage() {
     amount: '',
     category: 'Daily',
     paymentMethod: 'CASH',
-    date: new Date().toISOString().split('T')[0],
+    date: todayInput(),
     description: '',
     locationId: ''
   });
@@ -127,22 +128,22 @@ export default function ExpensesPage() {
         start = customDates.start;
         end = customDates.end;
       } else if (timeRange === 'today') {
-        start = now.toISOString().split('T')[0];
+        start = toDateInput(now);
         end = start;
       } else if (timeRange === 'this_week') {
         const d = new Date();
         d.setDate(now.getDate() - now.getDay());
-        start = d.toISOString().split('T')[0];
+        start = toDateInput(d);
       } else if (timeRange === 'this_month') {
         const d = new Date();
         d.setDate(1);
-        start = d.toISOString().split('T')[0];
+        start = toDateInput(d);
       } else if (timeRange !== 'all') {
         const d = new Date();
         if (timeRange === '7d') d.setDate(now.getDate() - 7);
         else if (timeRange === '1m') d.setMonth(now.getMonth() - 1);
         else if (timeRange === '3m') d.setMonth(now.getMonth() - 3);
-        start = d.toISOString().split('T')[0];
+        start = toDateInput(d);
       }
 
       if (start) query.append('startDate', start);
@@ -192,7 +193,7 @@ export default function ExpensesPage() {
     setSplitMode(false);
     setSplitAmounts({});
     setShowCustomTitle(false);
-    setFormData({ title: '', customTitle: '', amount: '', category: 'Daily', paymentMethod: 'CASH', date: new Date().toISOString().split('T')[0], description: '', locationId: '' });
+    setFormData({ title: '', customTitle: '', amount: '', category: 'Daily', paymentMethod: 'CASH', date: todayInput(), description: '', locationId: '' });
   };
 
   const handleAddExpense = async (e) => {

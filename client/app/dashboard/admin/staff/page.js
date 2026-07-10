@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
+import { todayInput } from '@/app/utils/dateInput';
 import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, Mail, Phone, MapPin, Edit3, Trash2, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
@@ -51,7 +52,7 @@ export default function LocationStaffPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [attendanceStaff, setAttendanceStaff] = useState(null);
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceDate, setAttendanceDate] = useState(todayInput());
   const [attendanceStatus, setAttendanceStatus] = useState('present');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const limit = 9; // Show 9 per page (3x3 grid)

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
 import api from '../../../services/api';
+import { todayInput } from '@/app/utils/dateInput';
 import { useAuth } from '../../../context/AuthContext';
 import { can } from '@/app/config/actions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -34,7 +35,7 @@ export default function BookingsManagementPage() {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFilter, setDateFilter] = useState(todayInput());
 
   // Modal state
   const [selectedBooking, setSelectedBooking] = useState(null);

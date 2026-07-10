@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { todayInput } from '@/app/utils/dateInput';
 import { 
   CalendarCheck, MapPin, CheckCircle2, XCircle, 
   Activity, Search, Users, ChevronRight, 
@@ -22,7 +23,7 @@ export default function BranchPresencePage() {
   const [refetching, setRefetching] = useState(false);
   const [markingLoading, setMarkingLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayInput());
   const dateInputRef = useRef(null);
   const didInitRef = useRef(false);
 
