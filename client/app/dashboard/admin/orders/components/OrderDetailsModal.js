@@ -20,8 +20,6 @@ const PAYMENT_CHIP = {
 export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, handleRedeemGiftCard, tables = [], userRole, canDelete, canRefund: canRefundProp }) {
   const [showSplit, setShowSplit] = useState(false);
   const [splitQty, setSplitQty] = useState({}); // itemId -> qty to split off
-  const [gcCode, setGcCode] = useState('');
-  const [gcAmount, setGcAmount] = useState('');
   useEffect(() => { setShowSplit(false); setSplitQty({}); setGcCode(''); setGcAmount(''); }, [selectedOrder?._id]);
 
   if (!selectedOrder) return null;
@@ -257,33 +255,6 @@ export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel
               >
                 Re-order (place again)
               </button>
-            </div>
-          )}
-
-          {handleRedeemGiftCard && !selectedOrder.isRefunded && !['CANCELLED', 'REJECTED'].includes(selectedOrder.status) && selectedOrder.paymentStatus !== 'paid' && (
-            <div className="rounded-xl border border-(--color-border) p-4 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">Redeem gift card</p>
-              <div className="flex gap-2">
-                <input
-                  value={gcCode}
-                  onChange={(e) => setGcCode(e.target.value.toUpperCase())}
-                  placeholder="Card code"
-                  className="flex-1 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none"
-                />
-                <input
-                  type="number"
-                  value={gcAmount}
-                  onChange={(e) => setGcAmount(e.target.value)}
-                  placeholder="₹"
-                  className="w-24 px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-bold text-(--color-text-primary) outline-none"
-                />
-                <button
-                  onClick={() => handleRedeemGiftCard(selectedOrder._id, gcCode, gcAmount)}
-                  className="px-4 py-2.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-normal rounded-xl border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all"
-                >
-                  Apply
-                </button>
-              </div>
             </div>
           )}
 
