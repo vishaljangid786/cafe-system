@@ -79,7 +79,7 @@ const getLeaveRequests = asyncHandler(async (req, res) => {
   const limit = clampLimit(req.query.limit, 50, 200);
   const requests = await LeaveRequest.find(filter)
     .populate('user', 'name role')
-    .populate('reviewedBy', 'name')
+    .populate('reviewedBy', 'name deletedAt')
     .sort({ createdAt: -1 })
     .limit(limit);
 

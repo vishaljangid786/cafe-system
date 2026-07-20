@@ -12,7 +12,7 @@ const getCategories = asyncHandler(async (req, res) => {
 
   const categories = await Category.find(filter)
     .sort({ sortOrder: 1, name: 1 })
-    .populate('createdBy', 'name');
+    .populate('createdBy', 'name deletedAt');
 
   res.json({
     success: true,
@@ -27,7 +27,7 @@ const getCategories = asyncHandler(async (req, res) => {
 const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find()
     .sort({ sortOrder: 1, name: 1 })
-    .populate('createdBy', 'name');
+    .populate('createdBy', 'name deletedAt');
 
   res.json({
     success: true,

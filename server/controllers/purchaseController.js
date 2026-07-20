@@ -162,7 +162,7 @@ const getPurchaseOrders = asyncHandler(async (req, res) => {
 
   const pos = await PurchaseOrder.find(filter)
     .populate('supplier', 'name')
-    .populate('createdBy', 'name')
+    .populate('createdBy', 'name deletedAt')
     .populate('locationId', 'name')
     .sort({ createdAt: -1 })
     .limit(clampLimit(req.query.limit, 50, 200));

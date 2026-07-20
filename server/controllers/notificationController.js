@@ -71,7 +71,7 @@ const getNotifications = asyncHandler(async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const notifications = await Notification.find(query)
-    .populate('sender', 'name role profileImageUrl')
+    .populate('sender', 'name role profileImageUrl deletedAt')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limitNum)

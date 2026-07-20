@@ -359,8 +359,8 @@ class AnalyticsService {
         { $sort: { value: -1 } },
         { $limit: 10 }
       ]),
-      Transaction.find({ ...transactionMatch, type: 'EXPENSE', status: 'approved' }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('createdBy', 'name').lean(),
-      Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('staffId', 'name').populate('createdBy', 'name').lean(),
+      Transaction.find({ ...transactionMatch, type: 'EXPENSE', status: 'approved' }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('createdBy', 'name deletedAt').lean(),
+      Transaction.find({ ...transactionMatch, type: { $ne: 'EXPENSE' } }).sort({ date: -1, createdAt: -1 }).limit(5).populate('locationId', 'name city').populate('staffId', 'name deletedAt').populate('createdBy', 'name deletedAt').lean(),
       // Manual revenue = admin/branch-admin "New Revenue" entries (and any approved
       // reservation advance income) posted straight to the ledger as MANUAL_REVENUE.
       // Folded into totalRevenue below so it flows through to Net Profit on the overview.

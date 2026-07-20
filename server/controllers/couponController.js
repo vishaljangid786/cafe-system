@@ -23,7 +23,7 @@ const getCoupons = asyncHandler(async (req, res) => {
   const total = await Coupon.countDocuments(filter);
 
   const coupons = await Coupon.find(filter)
-    .populate('createdBy', 'name')
+    .populate('createdBy', 'name deletedAt')
     .skip(skip)
     .limit(limit);
 
@@ -325,7 +325,7 @@ const applyCoupon = asyncHandler(async (req, res) => {
 // @desc    Get single coupon
 // @route   GET /api/coupons/:id
 const getCoupon = asyncHandler(async (req, res) => {
-  const coupon = await Coupon.findById(req.params.id).populate('createdBy', 'name');
+  const coupon = await Coupon.findById(req.params.id).populate('createdBy', 'name deletedAt');
   if (!coupon) {
     res.status(404);
     throw new Error('Coupon not found');

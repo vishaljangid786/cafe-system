@@ -299,7 +299,7 @@ const getAuditLogs = asyncHandler(async (req, res) => {
   }
 
   const logs = await AuditLog.find(query)
-    .populate('performedBy', 'name email role')
+    .populate('performedBy', 'name email role deletedAt')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limitNum);

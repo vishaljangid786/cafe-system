@@ -84,9 +84,9 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   const transactions = await Transaction.find(query)
     .populate('locationId', 'name city')
-    .populate('staffId', 'name')
-    .populate('createdBy', 'name role profileImageUrl')
-    .populate('approvedBy', 'name role')
+    .populate('staffId', 'name deletedAt')
+    .populate('createdBy', 'name role profileImageUrl deletedAt')
+    .populate('approvedBy', 'name role deletedAt')
     .sort({ date: -1, createdAt: -1 })
     .skip(startIndex)
     .limit(limit)
@@ -470,7 +470,7 @@ const createBulkRevenue = asyncHandler(async (req, res) => {
 // @access  Private (Admin/Branch Admin)
 const approveTransaction = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findById(req.params.id)
-    .populate('createdBy', 'name role')
+    .populate('createdBy', 'name role deletedAt')
     .populate('locationId', 'name');
 
   if (!transaction) {
@@ -584,7 +584,7 @@ const rejectTransaction = asyncHandler(async (req, res) => {
   if (admins.length > 0) {
     // Populate for message context
     const populated = await Transaction.findById(transaction._id)
-      .populate('createdBy', 'name')
+      .populate('createdBy', 'name deletedAt')
       .populate('locationId', 'name');
 
     await Notification.create({

@@ -843,9 +843,9 @@ const getStaffReportDetail = asyncHandler(async (req, res) => {
     Order.find(orderQuery)
       .populate('branch', 'name city')
       .populate('table', 'tableNumber')
-      .populate('createdBy', 'name role')
-      .populate('assignedChef', 'name role')
-      .populate('servedBy', 'name role')
+      .populate('createdBy', 'name role deletedAt')
+      .populate('assignedChef', 'name role deletedAt')
+      .populate('servedBy', 'name role deletedAt')
       .populate('coupon', 'code discountType discountValue')
       .populate({ path: 'items.menuItem', select: 'name price costPrice category', populate: { path: 'category', select: 'name' } })
       .populate('statusHistory.updatedBy', 'name role')
@@ -860,7 +860,7 @@ const getStaffReportDetail = asyncHandler(async (req, res) => {
       .lean(),
     Attendance.find(attendanceQuery)
       .populate('locationId', 'name city')
-      .populate('markedBy', 'name role')
+      .populate('markedBy', 'name role deletedAt')
       .sort({ date: -1 })
       .limit(limit)
       .lean(),
@@ -871,8 +871,8 @@ const getStaffReportDetail = asyncHandler(async (req, res) => {
       .lean(),
     CashSession.find(cashSessionQuery)
       .populate('locationId', 'name city')
-      .populate('openedBy', 'name role')
-      .populate('closedBy', 'name role')
+      .populate('openedBy', 'name role deletedAt')
+      .populate('closedBy', 'name role deletedAt')
       .populate('movements.by', 'name role')
       .sort({ openedAt: -1 })
       .limit(limit)

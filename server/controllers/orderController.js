@@ -196,8 +196,8 @@ const getOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find(filter)
     .populate({ path: 'branch', select: 'name city cafe', populate: { path: 'cafe', select: 'name' } })
     .populate('table', 'tableNumber')
-    .populate('createdBy', 'name')
-    .populate('assignedChef', 'name')
+    .populate('createdBy', 'name deletedAt')
+    .populate('assignedChef', 'name deletedAt')
     .populate('coupon', 'code discountType discountValue')
     .populate('items.menuItem', 'name price dietaryType category')
     .sort({ createdAt: -1 })
@@ -1133,7 +1133,7 @@ const getOrderAnalytics = asyncHandler(async (req, res) => {
 
   // Fetch all orders within the authorized scope
   const allOrders = await Order.find(query)
-    .populate('assignedChef', 'name')
+    .populate('assignedChef', 'name deletedAt')
     .populate('table', 'tableNumber')
     .populate('branch', 'name city')
     .lean();
@@ -1285,8 +1285,8 @@ const getOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
     .populate('branch', 'name city')
     .populate('table', 'tableNumber')
-    .populate('createdBy', 'name')
-    .populate('assignedChef', 'name')
+    .populate('createdBy', 'name deletedAt')
+    .populate('assignedChef', 'name deletedAt')
     .populate('items.menuItem', 'name price dietaryType');
   if (!order) {
     res.status(404);

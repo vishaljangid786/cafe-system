@@ -97,7 +97,7 @@ const getMenuItems = asyncHandler(async (req, res) => {
 
   const items = await MenuItem.find(filter)
     .populate('category', 'name icon')
-    .populate('createdBy', 'name')
+    .populate('createdBy', 'name deletedAt')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -156,7 +156,7 @@ const getMenuItems = asyncHandler(async (req, res) => {
 const getMenuItem = asyncHandler(async (req, res) => {
   const item = await MenuItem.findById(req.params.id)
     .populate('category', 'name icon description')
-    .populate('createdBy', 'name');
+    .populate('createdBy', 'name deletedAt');
 
   if (!item) {
     res.status(404);

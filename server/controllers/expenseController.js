@@ -253,7 +253,7 @@ const getExpenses = asyncHandler(async (req, res) => {
     .sort({ date: -1 })
     .skip(startIndex)
     .limit(limit)
-    .populate('createdBy', 'name email role profileImageUrl')
+    .populate('createdBy', 'name email role profileImageUrl deletedAt')
     .populate({ path: 'locationId', select: 'name city cafe', populate: { path: 'cafe', select: 'name' } })
     .lean();
 

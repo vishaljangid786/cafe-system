@@ -46,7 +46,7 @@ const getLocations = asyncHandler(async (req, res) => {
 
   // 1. Fetch Locations
   const locations = await Location.find(query)
-    .populate('createdBy', 'name email')
+    .populate('createdBy', 'name email deletedAt')
     .populate('cafe', 'name logo')
     .lean();
 

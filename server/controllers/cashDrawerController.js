@@ -224,7 +224,7 @@ const openDrawer = asyncHandler(async (req, res) => {
 const getCurrentDrawer = asyncHandler(async (req, res) => {
   const locationId = resolveBranch(req, res);
   const session = await CashSession.findOne({ locationId, status: 'open' })
-    .populate('openedBy', 'name');
+    .populate('openedBy', 'name deletedAt');
   if (!session) {
     return res.json({ success: true, data: null });
   }
@@ -359,8 +359,8 @@ const getDrawerHistory = asyncHandler(async (req, res) => {
 
   const limit = clampLimit(req.query.limit, 50, 200);
   const sessions = await CashSession.find(match)
-    .populate('openedBy', 'name')
-    .populate('closedBy', 'name')
+    .populate('openedBy', 'name deletedAt')
+    .populate('closedBy', 'name deletedAt')
     .populate('locationId', 'name')
     .sort({ openedAt: -1 })
     .limit(limit);
