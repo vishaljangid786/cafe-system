@@ -37,6 +37,11 @@ const permissionPresetSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    cafes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cafe',
+      index: true,
+    }],
   },
   { timestamps: true }
 );

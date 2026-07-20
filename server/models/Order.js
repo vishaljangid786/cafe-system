@@ -187,6 +187,15 @@ const orderSchema = new mongoose.Schema(
     rejectReason: {
       type: String,
     },
+    // Resolved CRM identity for this order. Stamped at completion (and at creation
+    // for QR orders that carry a customerToken). `customerPhone` stays as-is — it
+    // remains the fallback join key for historical orders placed before this field.
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer',
+      default: null,
+      index: true,
+    },
     totalAmount: {
       type: Number,
       required: true,

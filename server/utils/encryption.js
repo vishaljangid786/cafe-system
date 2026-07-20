@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
-const ALGORITHM = 'aes-256-cbc';
+const LEGACY_ALGORITHM = 'aes-256-cbc';
+const ALGORITHM = 'aes-256-gcm';
 if (!process.env.ENCRYPTION_KEY) {
   const msg = 'ENCRYPTION_KEY is not set — the in-source fallback key is committed, so stored Aadhaar PII would be trivially decryptable.';
   // Fail closed in production: never run real PII on the public fallback key.
@@ -10,7 +11,8 @@ if (!process.env.ENCRYPTION_KEY) {
   console.warn(`[security] ${msg} Using a dev fallback; set ENCRYPTION_KEY before deploying.`);
 }
 const KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY || 'cafe-system-secure-key-2026', 'salt', 32);
-const IV_LENGTH = 16;
+const IV_LENGTH = 12;
+const LEGACY_IV_LENGTH = 16;
 
 const encrypt = (text) => {
   if (!text) return text;
@@ -18,16 +20,30 @@ const encrypt = (text) => {
   const cipher = crypto.createCipheriv(ALGORITHM, KEY, iv);
   let encrypted = cipher.update(text);
   encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
+  const tag = cipher.getAuthTag();
+  return `gcm:${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
 };
 
 const decrypt = (text) => {
   if (!text || !text.includes(':')) return text;
   try {
     const textParts = text.split(':');
+    if (textParts[0] === 'gcm') {
+      textParts.shift();
+      const iv = Buffer.from(textParts.shift(), 'hex');
+      const tag = Buffer.from(textParts.shift(), 'hex');
+      const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+      const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
+      decipher.setAuthTag(tag);
+      let decrypted = decipher.update(encryptedText);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      return decrypted.toString();
+    }
+
     const iv = Buffer.from(textParts.shift(), 'hex');
+    if (iv.length !== LEGACY_IV_LENGTH) return '';
     const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
+    const decipher = crypto.createDecipheriv(LEGACY_ALGORITHM, KEY, iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();

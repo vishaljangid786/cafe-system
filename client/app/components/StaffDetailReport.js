@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { routeForPage } from '../config/routes';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 
@@ -95,9 +96,7 @@ function EmptyRow({ colSpan, text }) {
 
 export default function StaffDetailReport({ staffId, user }) {
   const router = useRouter();
-  const basePath = user?.role === 'branch_admin' ? '/dashboard/branch-admin'
-    : user?.role === 'location_admin' ? '/dashboard/location-admin'
-      : '/dashboard/admin';
+  const reportsHref = routeForPage(user?.role, 'page_staffreports');
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +192,7 @@ export default function StaffDetailReport({ staffId, user }) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <button
-            onClick={() => router.push(`${basePath}/staff-reports`)}
+            onClick={() => router.push(reportsHref)}
             className="p-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:text-primary transition-all shrink-0"
             title="Back to staff reports"
           >

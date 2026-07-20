@@ -8,9 +8,12 @@ import PageTransition from '../components/ui/PageTransition';
 import { useAuth } from '../context/AuthContext';
 import CommandPalette from '../components/ui/CommandPalette';
 import LoadingScreen from '../components/ui/LoadingScreen';
+import CafeBlockedScreen from '../components/ui/CafeBlockedScreen';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '../services/api';
 import PremiumSelect from '../components/ui/PremiumSelect';
+import { gatedEntries } from '../config/routes';
+import { getLandingPath } from '../config/navigation';
 
 const BRANCH_ADMIN_SHARED_PAGES = [
   '/dashboard/admin/procurement',
@@ -36,48 +39,8 @@ const SHARED_PREFIXES = [
   '/dashboard/profile',
 ];
 
-const GATED_PAGES = [
-  { key: 'page_overview', paths: ['/dashboard/admin', '/dashboard/admin/summary', '/dashboard/branch-admin', '/dashboard/location-admin', '/dashboard/staff'] },
-  { key: 'page_orders', paths: ['/dashboard/chef'] },
-  { key: 'page_branchpresence', paths: ['/dashboard/admin/branch-presence'] },
-  { key: 'page_users', paths: ['/dashboard/admin/users'] },
-  { key: 'page_staff', paths: ['/dashboard/admin/staff', '/dashboard/branch-admin/staff', '/dashboard/location-admin/staff'] },
-  { key: 'page_attendance', paths: ['/dashboard/admin/attendance', '/dashboard/branch-admin/attendance', '/dashboard/location-admin/attendance'] },
-  { key: 'page_myattendance', paths: ['/dashboard/staff/attendance'] },
-  { key: 'page_salaries', paths: ['/dashboard/admin/payroll', '/dashboard/branch-admin/salary', '/dashboard/location-admin/salary'] },
-  { key: 'page_orderreports', paths: ['/dashboard/admin/orders/analytics'] },
-  { key: 'page_orders', paths: ['/dashboard/admin/orders', '/dashboard/staff/orders'] },
-  { key: 'page_reservations', paths: ['/dashboard/reservations', '/dashboard/bookings', '/dashboard/admin/bookings', '/dashboard/branch-admin/bookings', '/dashboard/location-admin/bookings'] },
-  { key: 'page_tables', paths: ['/dashboard/admin/tables', '/dashboard/branch-admin/tables', '/dashboard/location-admin/tables', '/dashboard/staff/tables'] },
-  { key: 'page_menu', paths: ['/dashboard/admin/menu', '/dashboard/branch-admin/menu', '/dashboard/location-admin/menu', '/dashboard/staff/menu'] },
-  { key: 'page_inventory', paths: ['/dashboard/admin/inventory'] },
-  { key: 'page_procurement', paths: ['/dashboard/admin/procurement'] },
-  { key: 'page_cashdrawer', paths: ['/dashboard/admin/cash-drawer', '/dashboard/staff/cash-drawer'] },
-  { key: 'page_waitlist', paths: ['/dashboard/admin/waitlist', '/dashboard/staff/waitlist'] },
-  { key: 'page_coupons', paths: ['/dashboard/admin/coupons'] },
-  { key: 'page_giftcards', paths: ['/dashboard/admin/gift-cards'] },
-  { key: 'page_revenue', paths: ['/dashboard/admin/revenue', '/dashboard/branch-admin/revenue', '/dashboard/location-admin/revenue'] },
-  { key: 'page_expenses', paths: ['/dashboard/admin/expenses', '/dashboard/branch-admin/expenses', '/dashboard/location-admin/expenses', '/dashboard/staff/expenses', '/dashboard/chef/expenses'] },
-  { key: 'page_staffreports', paths: ['/dashboard/admin/staff-reports', '/dashboard/branch-admin/staff-reports', '/dashboard/location-admin/staff-reports'] },
-  { key: 'page_staffcomparison', paths: ['/dashboard/admin/staff-comparison', '/dashboard/branch-admin/staff-comparison', '/dashboard/location-admin/staff-comparison'] },
-  { key: 'page_feedback', paths: ['/dashboard/admin/feedback'] },
-  { key: 'page_customers', paths: ['/dashboard/admin/customers'] },
-  { key: 'page_branchcompare', paths: ['/dashboard/admin/location-comparison'] },
-  { key: 'page_paymentinsights', paths: ['/dashboard/admin/payment-intelligence'] },
-  { key: 'page_alerts', paths: ['/dashboard/admin/command-center'] },
-  { key: 'page_forecast', paths: ['/dashboard/admin/forecasting'] },
-  { key: 'page_exports', paths: ['/dashboard/admin/exports'] },
-  { key: 'page_myperformance', paths: ['/dashboard/staff/performance', '/dashboard/chef/performance'] },
-  { key: 'page_workhistory', paths: ['/dashboard/staff/work-history'] },
-  { key: 'page_addmember', paths: ['/dashboard/add-member'] },
-  { key: 'page_permissions', paths: ['/dashboard/admin/permissions', '/dashboard/branch-admin/permissions'] },
-  { key: 'page_settings', paths: ['/dashboard/admin/settings'] },
-  { key: 'page_cafes', paths: ['/dashboard/admin/cafes'] },
-  { key: 'page_branches', paths: ['/dashboard/admin/locations'] },
-  { key: 'page_auditlogs', paths: ['/dashboard/admin/audit-logs'] },
-  { key: 'page_impersonate', paths: ['/dashboard/admin/impersonate'] },
-  { key: 'page_admincenter', paths: ['/dashboard/super-admin'] },
-];
+// Every path variant of every page, from the shared route registry.
+const GATED_PAGES = gatedEntries();
 
 const matchGatedPage = (pathname) => {
   let matched = null;
@@ -93,83 +56,16 @@ const matchGatedPage = (pathname) => {
   return matched;
 };
 
-const getRoleBasePath = (role) => {
-  if (role === 'super_admin' || role === 'admin') return '/dashboard/admin';
-  if (role === 'branch_admin') return '/dashboard/branch-admin';
-  if (role === 'location_admin') return '/dashboard/location-admin';
-  if (role === 'chef') return '/dashboard/chef';
-  return '/dashboard/staff';
-};
-
-const pathForPage = (role, pageKey) => {
-  const roleBase = getRoleBasePath(role);
-  const branchLike = ['branch_admin', 'location_admin'].includes(role);
-
-  const byKey = {
-    page_overview: role === 'chef' ? '/dashboard/chef' : roleBase,
-    page_branchpresence: '/dashboard/admin/branch-presence',
-    page_users: '/dashboard/admin/users',
-    page_staff: `${roleBase}/staff`,
-    page_attendance: `${roleBase}/attendance`,
-    page_myattendance: '/dashboard/staff/attendance',
-    page_salaries: role === 'branch_admin' ? '/dashboard/branch-admin/salary' : role === 'location_admin' ? '/dashboard/location-admin/salary' : '/dashboard/admin/payroll',
-    page_orders: role === 'chef' ? '/dashboard/chef' : role === 'staff' ? '/dashboard/staff/orders' : '/dashboard/admin/orders',
-    page_reservations: '/dashboard/reservations',
-    page_tables: branchLike ? `${roleBase}/tables` : role === 'staff' ? '/dashboard/staff/tables' : '/dashboard/admin/tables',
-    page_menu: branchLike ? `${roleBase}/menu` : ['staff', 'chef'].includes(role) ? '/dashboard/staff/menu' : '/dashboard/admin/menu',
-    page_inventory: '/dashboard/admin/inventory',
-    page_procurement: '/dashboard/admin/procurement',
-    page_cashdrawer: role === 'staff' ? '/dashboard/staff/cash-drawer' : '/dashboard/admin/cash-drawer',
-    page_waitlist: role === 'staff' ? '/dashboard/staff/waitlist' : '/dashboard/admin/waitlist',
-    page_coupons: '/dashboard/admin/coupons',
-    page_giftcards: '/dashboard/admin/gift-cards',
-    page_revenue: `${roleBase}/revenue`,
-    page_expenses: ['staff', 'chef'].includes(role) ? `/dashboard/${role}/expenses` : `${roleBase}/expenses`,
-    page_orderreports: '/dashboard/admin/orders/analytics',
-    page_staffreports: `${roleBase}/staff-reports`,
-    page_staffcomparison: `${roleBase}/staff-comparison`,
-    page_feedback: '/dashboard/admin/feedback',
-    page_customers: '/dashboard/admin/customers',
-    page_branchcompare: '/dashboard/admin/location-comparison',
-    page_paymentinsights: '/dashboard/admin/payment-intelligence',
-    page_alerts: '/dashboard/admin/command-center',
-    page_forecast: '/dashboard/admin/forecasting',
-    page_exports: '/dashboard/admin/exports',
-    page_myperformance: role === 'chef' ? '/dashboard/chef/performance' : '/dashboard/staff/performance',
-    page_workhistory: '/dashboard/staff/work-history',
-    page_addmember: '/dashboard/add-member',
-    page_permissions: role === 'branch_admin' ? '/dashboard/branch-admin/permissions' : '/dashboard/admin/permissions',
-    page_settings: '/dashboard/admin/settings',
-    page_cafes: '/dashboard/admin/cafes',
-    page_branches: '/dashboard/admin/locations',
-    page_auditlogs: '/dashboard/admin/audit-logs',
-    page_impersonate: '/dashboard/admin/impersonate',
-    page_admincenter: '/dashboard/super-admin',
-  };
-
-  return byKey[pageKey] || '';
-};
-
-const getFallbackPath = (user) => {
-  if (!user) return '/login';
-  if (user.role === 'super_admin') return '/dashboard/admin';
-
-  for (const pageKey of user.allowedPages || []) {
-    const path = pathForPage(user.role, pageKey);
-    if (path) return path;
-  }
-
-  return '/dashboard/profile';
-};
-
 export default function DashboardLayout({ children }) {
-  const { user, loading, exitImpersonation, impersonate } = useAuth();
+  const { user, loading, exitImpersonation, impersonate, logout, locations = [] } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Non-null once the server reports this user's cafe is blocked.
+  const [cafeSuspension, setCafeSuspension] = useState(null);
   const [switchUsers, setSwitchUsers] = useState([]);
 
   const canSwitchUser = !!user?.impersonatedBy &&
@@ -229,7 +125,7 @@ export default function DashboardLayout({ children }) {
       const isShared = SHARED_PREFIXES.some((p) => pathname.startsWith(p));
       if (!allowed || isShared) return;
 
-      const fallback = getFallbackPath(user);
+      const fallback = getLandingPath(user, locations);
       const gated = matchGatedPage(pathname);
 
       if (gated) {
@@ -242,12 +138,31 @@ export default function DashboardLayout({ children }) {
         router.replace(fallback);
       }
     }
-  }, [loading, user, router, pathname]);
+  }, [loading, user, router, pathname, locations]);
+
+  // The server answers every route with 403 + code CAFE_SUSPENDED once a cafe is
+  // blocked. The api layer turns that into this event so the lock is raised once
+  // here, instead of each page independently failing to load and firing a toast.
+  useEffect(() => {
+    const onSuspended = (e) => setCafeSuspension(e.detail || {});
+    window.addEventListener('cafe-suspended', onSuspended);
+    return () => window.removeEventListener('cafe-suspended', onSuspended);
+  }, []);
 
   const handleToggleSidebar = (val) => {
     setIsSidebarExpanded(val);
     localStorage.setItem('sidebar-expanded', val);
   };
+
+  if (cafeSuspension) {
+    return (
+      <CafeBlockedScreen
+        cafeName={cafeSuspension.cafeName}
+        reason={cafeSuspension.reason}
+        onLogout={logout}
+      />
+    );
+  }
 
   if (!mounted || loading || !user) {
     return <LoadingScreen message="Loading workspace" />;

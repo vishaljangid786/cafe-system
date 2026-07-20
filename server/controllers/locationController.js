@@ -15,7 +15,12 @@ const getLocations = asyncHandler(async (req, res) => {
   const { status, city, cafeId } = req.query;
 
   let query = { isPermanentlyDeleted: false };
+  // Branches use a two-stage delete: status 'deleted' (soft) then
+  // isPermanentlyDeleted. Filtering only on the latter left soft-deleted branches
+  // showing up in every listing and downstream analytics. Hide them by default,
+  // while still honouring an explicit ?status=deleted request.
   if (status) query.status = status;
+  else query.status = { $ne: 'deleted' };
   if (city) query.city = city;
 
   // Filter based on user access
@@ -50,7 +55,8 @@ const getLocations = asyncHandler(async (req, res) => {
   const personnelCounts = await User.aggregate([
     {
       $match: {
-        assignedLocation: { $in: locationIds }
+        assignedLocation: { $in: locationIds },
+        deletedAt: null
       }
     },
     {
@@ -330,15 +336,35 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     throw new Error('Only administrators can delete locations');
   }
 
-  location.status = 'deleted';
-  await location.save();
+  // `force` completes the second stage the two-stage design always described but
+  // never implemented: the branch and everything that exists only because of it
+  // (tables, its own menu, stock, suppliers, forward bookings) are removed for
+  // good. Orders, revenue, expenses and payroll are preserved by construction.
+  const force = req.body?.force === true || req.query?.force === 'true';
+  if (force && req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only a Super Admin can permanently delete a branch');
+  }
+
+  const staffMode = req.body?.staffMode === 'delete' ? 'delete' : 'detach';
+  let summary = { performed: [], staffAffected: 0 };
+
+  if (force) {
+    const { executeLocationPurge } = require('../services/cascadeDelete');
+    summary = await executeLocationPurge([location._id], { actorId: req.user._id, staffMode });
+    // The branch→cafe map backing the lockout check is now stale.
+    require('../utils/tenantStatus').invalidateTenantCache();
+  } else {
+    location.status = 'deleted';
+    await location.save();
+  }
 
   await logActivity(
     req.user,
     'LOCATION_DELETE',
-    `Soft-deleted branch: ${location.city} - ${location.name}`,
+    `${force ? 'Permanently deleted' : 'Soft-deleted'} branch: ${location.city} - ${location.name}`,
     req,
-    { locationId: location._id }
+    { locationId: location._id, force, staffMode, removed: summary.performed }
   );
 
   await sendNotification({
@@ -352,7 +378,45 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Location marked as deleted',
+    message: force
+      ? `Branch permanently deleted. Financial and audit records were preserved.`
+      : 'Location marked as deleted',
+    data: summary,
+  });
+});
+
+// @desc    What a branch deletion would touch
+// @route   GET /api/locations/:id/impact
+// @access  Private (Admin, Super Admin)
+const getLocationImpact = asyncHandler(async (req, res) => {
+  const location = await Location.findById(req.params.id);
+  if (!location || location.isPermanentlyDeleted) {
+    res.status(404);
+    throw new Error('Location not found');
+  }
+
+  if (req.user.role === 'admin') {
+    const isAccessible = req.user.accessibleLocations?.some(
+      (loc) => loc.toString() === location._id.toString()
+    );
+    if (!isAccessible) {
+      res.status(403);
+      throw new Error('You do not have permission to view this branch');
+    }
+  } else if (req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only administrators can delete branches');
+  }
+
+  const { previewLocationImpact } = require('../services/cascadeDelete');
+  const impact = await previewLocationImpact([location._id]);
+
+  res.json({
+    success: true,
+    data: {
+      ...impact,
+      subject: { type: 'branch', id: String(location._id), name: `${location.city} - ${location.name}` },
+    },
   });
 });
 
@@ -361,4 +425,5 @@ module.exports = {
   createLocation,
   updateLocation,
   softDeleteLocation,
+  getLocationImpact,
 };

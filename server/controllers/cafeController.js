@@ -96,7 +96,7 @@ const getCafes = asyncHandler(async (req, res) => {
       { $match: { cafe: { $in: cafeIds }, isPermanentlyDeleted: { $ne: true } } },
       { $group: { _id: '$cafe', count: { $sum: 1 } } },
     ]),
-    User.find({ role: 'admin', cafes: { $in: cafeIds } }).select('name email cafes').lean(),
+    User.find({ role: 'admin', cafes: { $in: cafeIds }, deletedAt: null }).select('name email cafes').lean(),
   ]);
 
   const branchMap = new Map(branchCounts.map((b) => [b._id.toString(), b.count]));
@@ -133,7 +133,7 @@ const getCafe = asyncHandler(async (req, res) => {
   const [branches, admins] = await Promise.all([
     Location.find({ cafe: cafe._id, isPermanentlyDeleted: { $ne: true } })
       .select('name city status maxCapacity').lean(),
-    User.find({ role: 'admin', cafes: cafe._id }).select('name email phone').lean(),
+    User.find({ role: 'admin', cafes: cafe._id, deletedAt: null }).select('name email phone').lean(),
   ]);
 
   res.json({ success: true, data: { ...cafe, branches, admins } });
@@ -383,8 +383,28 @@ const removeCafeAdmin = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Admin removed from cafe' });
 });
 
-// @desc    Soft-delete a cafe (must have no active branches first)
+// @desc    Everything a cafe deletion would touch
+// @route   GET /api/cafes/:id/impact   (super_admin)
+const getCafeImpact = asyncHandler(async (req, res) => {
+  const cafe = await Cafe.findById(req.params.id);
+  if (!cafe || cafe.status === 'deleted') {
+    res.status(404);
+    throw new Error('Cafe not found');
+  }
+
+  const { previewCafeImpact } = require('../services/cascadeDelete');
+  const impact = await previewCafeImpact(cafe._id);
+
+  res.json({ success: true, data: { ...impact, subject: { type: 'cafe', id: String(cafe._id), name: cafe.name } } });
+});
+
+// @desc    Delete a cafe
 // @route   DELETE /api/cafes/:id   (super_admin)
+//
+// Without `force` the original guard stands: branches must be cleared first.
+// With `force` (super_admin only) the cafe goes along with its branches and all
+// of their configuration in one pass. Financial and audit records never go —
+// see `dependencyGraph.js` — so revenue history keeps reconciling afterwards.
 const deleteCafe = asyncHandler(async (req, res) => {
   const cafe = await Cafe.findById(req.params.id);
   if (!cafe || cafe.status === 'deleted') {
@@ -392,26 +412,54 @@ const deleteCafe = asyncHandler(async (req, res) => {
     throw new Error('Cafe not found');
   }
 
+  const force = req.body?.force === true || req.query?.force === 'true';
+  // `staffMode: 'delete'` removes the cafe's people too; the default keeps them
+  // and merely detaches the dead cafe from their access lists.
+  const staffMode = req.body?.staffMode === 'delete' ? 'delete' : 'detach';
+
+  if (force && req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only a Super Admin can force-delete a cafe with its branches');
+  }
+
   const branchCount = await Location.countDocuments({
     cafe: cafe._id,
     isPermanentlyDeleted: { $ne: true },
     status: { $ne: 'deleted' },
   });
-  if (branchCount > 0) {
+
+  if (branchCount > 0 && !force) {
     res.status(400);
     throw new Error('This cafe still has branches. Remove or reassign them before deleting the cafe.');
   }
 
-  cafe.status = 'deleted';
-  await cafe.save();
-  // Detach every admin AND prune the cafe's branch ids from their
-  // accessibleLocations (keeping branches still reachable via another cafe).
-  const affected = await User.find({ cafes: cafe._id }).select('_id').lean();
-  for (const u of affected) {
-    await removeAdminFromCafe(cafe._id, u._id);
+  let summary = { performed: [], branchCount: 0, staffAffected: 0 };
+
+  if (force) {
+    const { executeCafePurge } = require('../services/cascadeDelete');
+    summary = await executeCafePurge(cafe._id, { actorId: req.user._id, staffMode });
+  } else {
+    cafe.status = 'deleted';
+    await cafe.save();
+    // Detach every admin AND prune the cafe's branch ids from their
+    // accessibleLocations (keeping branches still reachable via another cafe).
+    const affected = await User.find({ cafes: cafe._id }).select('_id').lean();
+    for (const u of affected) {
+      await removeAdminFromCafe(cafe._id, u._id);
+    }
   }
 
-  await logActivity(req.user, 'CAFE_DELETE', `Deleted cafe: ${cafe.name}`, req, { cafeId: cafe._id });
+  // A deleted cafe must drop out of the suspended-cafe cache, or its (now
+  // absent) users would keep being told the cafe is merely blocked.
+  require('../utils/tenantStatus').invalidateTenantCache();
+
+  await logActivity(
+    req.user,
+    'CAFE_DELETE',
+    `Deleted cafe: ${cafe.name}${force ? ` (forced, ${summary.branchCount} branch(es))` : ''}`,
+    req,
+    { cafeId: cafe._id, force, staffMode, removed: summary.performed }
+  );
 
   await sendNotification({
     title: 'Cafe Deleted',
@@ -421,7 +469,90 @@ const deleteCafe = asyncHandler(async (req, res) => {
     performedByUser: req.user,
   });
 
-  res.json({ success: true, message: 'Cafe deleted' });
+  res.json({
+    success: true,
+    message: force
+      ? `${cafe.name} and ${summary.branchCount} branch(es) were deleted. Financial and audit records were preserved.`
+      : 'Cafe deleted',
+    data: summary,
+  });
+});
+
+// @desc    Block or unblock an entire cafe
+// @route   PATCH /api/cafes/:id/suspension   (super_admin)
+//
+// A blocked cafe is frozen end to end: nobody who belongs to it can use the
+// dashboard, live sockets are dropped, and its public QR menu and bookings stop
+// serving. Only a super_admin can lift it.
+const setCafeSuspension = asyncHandler(async (req, res) => {
+  const cafe = await Cafe.findById(req.params.id);
+  if (!cafe || cafe.status === 'deleted') {
+    res.status(404);
+    throw new Error('Cafe not found');
+  }
+
+  const suspend = req.body?.suspended === true;
+  const reason = String(req.body?.reason || '').trim().slice(0, 300);
+
+  if (suspend && cafe.status === 'suspended') {
+    res.status(400);
+    throw new Error('This cafe is already blocked');
+  }
+  if (!suspend && cafe.status !== 'suspended') {
+    res.status(400);
+    throw new Error('This cafe is not blocked');
+  }
+
+  cafe.status = suspend ? 'suspended' : 'active';
+  cafe.suspendedAt = suspend ? new Date() : null;
+  cafe.suspendedBy = suspend ? req.user._id : null;
+  cafe.suspendedReason = suspend ? reason : '';
+  await cafe.save();
+
+  // Take effect on this instance immediately rather than after the cache TTL.
+  require('../utils/tenantStatus').invalidateTenantCache();
+
+  // Drop live sockets so an open dashboard stops receiving events at once,
+  // instead of lingering until its next HTTP request hits the gate.
+  if (suspend) {
+    try {
+      const branchIds = (await Location.find({ cafe: cafe._id }).select('_id').lean()).map((l) => l._id);
+      const victims = await User.find({
+        deletedAt: null,
+        role: { $ne: 'super_admin' },
+        $or: [
+          { cafes: cafe._id },
+          { assignedLocation: { $in: branchIds } },
+          { accessibleLocations: { $in: branchIds } },
+        ],
+      })
+        .select('_id')
+        .lean();
+      const { disconnectUser } = require('../config/socket');
+      victims.forEach((u) => disconnectUser(u._id));
+    } catch {
+      // The HTTP gate is authoritative; losing the socket sweep only delays the
+      // lock for an idle tab, so it must never fail the suspension itself.
+    }
+  }
+
+  await logActivity(
+    req.user,
+    suspend ? 'CAFE_SUSPENDED' : 'CAFE_UNSUSPENDED',
+    `${suspend ? 'Blocked' : 'Unblocked'} cafe: ${cafe.name}${reason ? ` — ${reason}` : ''}`,
+    req,
+    { cafeId: cafe._id, reason }
+  );
+
+  res.json({
+    success: true,
+    message: suspend ? `${cafe.name} is now blocked` : `${cafe.name} is active again`,
+    data: {
+      status: cafe.status,
+      suspendedAt: cafe.suspendedAt,
+      suspendedReason: cafe.suspendedReason,
+    },
+  });
 });
 
 // @desc    Upload a cafe logo image → returns the hosted URL (used by the
@@ -443,6 +574,8 @@ module.exports = {
   addCafeAdmin,
   removeCafeAdmin,
   deleteCafe,
+  getCafeImpact,
+  setCafeSuspension,
   uploadCafeLogo,
   canAccessCafe,
   resolveUserCafeIds,

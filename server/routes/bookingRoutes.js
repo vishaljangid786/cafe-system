@@ -1,5 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { withRateLimitStore } = require('../utils/rateLimitStore');
 const router = express.Router();
 const {
   checkAvailability,
@@ -15,11 +16,11 @@ const { bookingSchema, validate } = require('../middlewares/validateMiddleware')
 // prevents a single IP from exhausting a location's capacity or scraping
 // availability with automated requests. Keyed per IP, well below the global
 // /api/ limiter.
-const bookingLimiter = rateLimit({
+const bookingLimiter = rateLimit(withRateLimitStore({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 15, // 15 booking-related requests per IP per hour
   message: 'Too many booking requests from this IP, please try again later.'
-});
+}, 'bookings'));
 
 // Public endpoints — no auth required for guests
 router.get('/check-availability', bookingLimiter, checkAvailability);

@@ -3,22 +3,29 @@ const { registerUser, loginUser, getProfile, impersonateUser, exitImpersonation,
 const { verifyToken, checkRoles, checkRoleOrPermission, canImpersonate } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const { signupSchema, loginSchema, validate } = require('../middlewares/validateMiddleware');
+const { isInitialSetupAuthorized } = require('../utils/setupAuth');
 
 const User = require('../models/User');
 
 const rateLimit = require('express-rate-limit');
+const { withRateLimitStore } = require('../utils/rateLimitStore');
 const router = express.Router();
 
-const authLimiter = rateLimit({
+const authLimiter = rateLimit(withRateLimitStore({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 requests per window
   message: { message: 'Too many login attempts, please try again after 15 minutes' }
-});
+}, 'auth'));
 
 // Middleware to skip auth ONLY if no users exist (Initial Setup)
 const maybeVerifyToken = async (req, res, next) => {
   const userCount = await User.countDocuments();
   if (userCount === 0) {
+    if (!isInitialSetupAuthorized(req)) {
+      res.status(403);
+      return next(new Error('Initial setup is locked. Provide a valid setup secret.'));
+    }
+    req.initialSetupAuthorized = true;
     return next();
   }
   return verifyToken(req, res, next);

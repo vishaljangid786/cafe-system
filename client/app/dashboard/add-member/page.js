@@ -367,7 +367,7 @@ export default function AddMemberPage() {
               <input required type="email" className={inputCls} value={form.email} onChange={(e) => set('email', sanitizeEmail(e.target.value))} placeholder="Enter email address" />
             </Field>
             <Field label="Password" hint="The member can change it after first login.">
-              <input required type="text" minLength={10} className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 10 characters" />
+              <input required type="password" autoComplete="new-password" minLength={10} className={inputCls} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="At least 10 characters" />
             </Field>
             <Field label="Phone Number">
               <input required className={inputCls} value={form.phone} maxLength={10} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter phone number" />

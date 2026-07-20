@@ -46,7 +46,9 @@ export default function BranchPresencePage() {
     progress.start();
     try {
       const [staffRes, attRes] = await Promise.all([
-        api.get(`/users?locationId=${selectedLocation._id}`),
+        // Explicit high limit: GET /users pages at 10 by default, which silently
+        // capped this roster to the branch's first 10 staff.
+        api.get(`/users?limit=1000&locationId=${selectedLocation._id}`),
         api.get(`/attendance/location?locationId=${selectedLocation._id}&date=${date}`)
       ]);
       setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));

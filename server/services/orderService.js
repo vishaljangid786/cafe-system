@@ -7,6 +7,42 @@ const Coupon = require('../models/Coupon');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { getIO } = require('../config/socket');
+const { normalizePhone } = require('../utils/phone');
+
+// Server-authoritative modifier snapshot for one order line. Ignores client
+// prices, enforces required groups + single/max selection rules, and returns the
+// chosen options with their priceDeltas plus the summed delta. Shared by BOTH
+// createOrder and updateItems so an edited order keeps its paid modifiers instead
+// of being silently repriced at base (the two paths previously drifted).
+const buildModifierSnapshot = (menuItem, clientModifiers) => {
+  const modSnapshot = [];
+  let modDelta = 0;
+  if (Array.isArray(menuItem.modifierGroups) && menuItem.modifierGroups.length) {
+    const clientByGroup = {};
+    if (Array.isArray(clientModifiers)) {
+      for (const sel of clientModifiers) {
+        const gname = sel?.groupName || sel?.group;
+        if (!gname || !sel?.label) continue;
+        (clientByGroup[gname] = clientByGroup[gname] || new Set()).add(sel.label);
+      }
+    }
+    for (const grp of menuItem.modifierGroups) {
+      const wanted = clientByGroup[grp.name] ? [...clientByGroup[grp.name]] : []; // deduped
+      let chosen = wanted.map(l => grp.options.find(o => o.label === l)).filter(Boolean);
+      if (grp.required && chosen.length === 0) {
+        throw new Error(`Please choose ${grp.name} for ${menuItem.name}.`);
+      }
+      if (grp.selectionType === 'single') chosen = chosen.slice(0, 1);
+      else if (grp.maxSelections > 0) chosen = chosen.slice(0, grp.maxSelections);
+      for (const opt of chosen) {
+        const delta = Number(opt.priceDelta) || 0;
+        modSnapshot.push({ groupName: grp.name, label: opt.label, priceDelta: delta });
+        modDelta += delta;
+      }
+    }
+  }
+  return { modSnapshot, modDelta };
+};
 
 // True only when a write failed specifically because the MongoDB deployment
 // can't run transactions (standalone server, not a replica set / mongos). Used
@@ -76,7 +112,11 @@ class OrderService {
     }
   }
 
-  async _createOrder({ branch, tableId, items, customerPhone, customerName, discountAmount = 0, couponId = null, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff', members = [], numberOfPeople = 0, prepaid = false, amountPaid = 0, paymentStatus = 'unpaid', initialStatus = 'PLACED', paymentApproval = null }, useTransaction = true) {
+  // NOTE: `serverDiscountAmount` is exactly what its name says — a value the SERVER
+  // computed (the CRM new-customer intro discount). It is deliberately NOT named
+  // `discountAmount` and is never populated from a request body: a client-supplied
+  // discount must never be trusted, which is why the old pass-through was removed.
+  async _createOrder({ branch, tableId, items, customerPhone, customerName, couponId = null, serverDiscountAmount = 0, paymentType = 'CASH', orderType = 'dine-in', userId, source = 'staff', members = [], numberOfPeople = 0, prepaid = false, amountPaid = 0, paymentStatus = 'unpaid', initialStatus = 'PLACED', paymentApproval = null }, useTransaction = true) {
     const Reservation = require('../models/Reservation');
     const isDineIn = orderType === 'dine-in';
 
@@ -224,32 +264,7 @@ class OrderService {
         // priceDelta into the unit price. Enforces required / single-select /
         // maxSelections and dedupes labels so a client can't stack repeated or
         // extra (negative-delta) options to underpay. Client prices are ignored.
-        const modSnapshot = [];
-        let modDelta = 0;
-        if (Array.isArray(menuItem.modifierGroups) && menuItem.modifierGroups.length) {
-          const clientByGroup = {};
-          if (Array.isArray(item.modifiers)) {
-            for (const sel of item.modifiers) {
-              const gname = sel?.groupName || sel?.group;
-              if (!gname || !sel?.label) continue;
-              (clientByGroup[gname] = clientByGroup[gname] || new Set()).add(sel.label);
-            }
-          }
-          for (const grp of menuItem.modifierGroups) {
-            const wanted = clientByGroup[grp.name] ? [...clientByGroup[grp.name]] : []; // deduped
-            let chosen = wanted.map(l => grp.options.find(o => o.label === l)).filter(Boolean);
-            if (grp.required && chosen.length === 0) {
-              throw new Error(`Please choose ${grp.name} for ${menuItem.name}.`);
-            }
-            if (grp.selectionType === 'single') chosen = chosen.slice(0, 1);
-            else if (grp.maxSelections > 0) chosen = chosen.slice(0, grp.maxSelections);
-            for (const opt of chosen) {
-              const delta = Number(opt.priceDelta) || 0;
-              modSnapshot.push({ groupName: grp.name, label: opt.label, priceDelta: delta });
-              modDelta += delta;
-            }
-          }
-        }
+        const { modSnapshot, modDelta } = buildModifierSnapshot(menuItem, item.modifiers);
         // Honour an active discount (discountedPrice when set below price), matching
         // what the menu/cart shows everywhere else — the server is the price authority.
         const base = (menuItem.discountedPrice != null && menuItem.discountedPrice < menuItem.price)
@@ -271,8 +286,12 @@ class OrderService {
       const subtotal = itemsWithSnapshots.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
       // 3. Coupon finalization (atomic within transaction)
-      // Server recomputes discount — never trust client-provided discountAmount
-      let finalDiscount = 0;
+      // Server recomputes discount — never trust client-provided discountAmount.
+      // The CRM intro discount arrives already computed by the server (from the
+      // branch's crm settings + the customer's membership) and is the floor a
+      // coupon can improve on; the two are not stacked.
+      const introDiscount = Math.max(0, Number(serverDiscountAmount) || 0);
+      let finalDiscount = introDiscount;
       let appliedCoupon = couponId || null;
       if (couponId) {
         // Read + validate FIRST; claim the usage LAST (the $inc below). Previously the
@@ -323,6 +342,9 @@ class OrderService {
           finalDiscount = coupon.maxDiscount;
         }
         finalDiscount = Math.min(finalDiscount, subtotal); // cannot exceed subtotal
+        // A coupon REPLACES rather than stacks with the CRM intro discount, so the
+        // customer keeps whichever of the two is worth more to them.
+        finalDiscount = Math.max(finalDiscount, Math.min(introDiscount, subtotal));
         finalDiscount = Number(finalDiscount.toFixed(2));
 
         // Claim the usage LAST, atomically — the only coupon side effect. Still
@@ -340,6 +362,11 @@ class OrderService {
         );
         if (!claimed) throw new Error('Coupon usage limit reached');
       }
+
+      // Final safety clamp. The coupon branch clamps internally, but an intro
+      // discount applied with NO coupon reaches here unclamped — it must never
+      // exceed the subtotal (which would make the order total negative).
+      finalDiscount = Number(Math.min(Math.max(finalDiscount, 0), subtotal).toFixed(2));
 
       // 4. Order Creation
       const cleanMembers = Array.isArray(members)
@@ -600,12 +627,14 @@ class OrderService {
     }
 
     const [supers, managers, staff] = await Promise.all([
-      User.find({ role: 'super_admin' }).select('_id'),
+      User.find({ role: 'super_admin', deletedAt: null }).select('_id'),
       User.find({
+        deletedAt: null,
         role: { $in: ['admin', 'branch_admin', 'location_admin'] },
         $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }],
       }).select('_id'),
       User.find({
+        deletedAt: null,
         role: 'staff',
         $or: [{ assignedLocation: branchId }, { accessibleLocations: branchId }],
       }).select('_id'),
@@ -666,20 +695,101 @@ class OrderService {
         }
       });
 
-      // Atomic upsert — eliminates the findOne -> new -> save race that could
-      // lose concurrent visit/spend/point updates or violate the unique phone index.
-      const customer = await Customer.findOneAndUpdate(
-        { phone: order.customerPhone },
+      const now = new Date();
+      const phone = normalizePhone(order.customerPhone);
+      if (!phone) return;
+
+      // The cafe that owns this branch — memberships are per CAFE, not per branch.
+      const Location = require('../models/Location');
+      const branchDoc = await Location.findById(order.branch).select('cafe').lean();
+      const cafeId = branchDoc?.cafe || null;
+
+      // Atomic upsert on the GLOBAL identity (phone). Eliminates the
+      // findOne -> new -> save race that could lose concurrent visit/spend/point
+      // updates. On the rare concurrent-insert duplicate-key race, retry once: the
+      // second attempt finds the row the winner just created.
+      const upsertCustomer = () => Customer.findOneAndUpdate(
+        { phone },
         {
           $inc: inc,
-          $set: { lastVisit: new Date() },
+          $set: { lastVisit: now },
           $setOnInsert: {
             name: order.customerName || 'Valued Customer',
-            branch: order.branch
+            branch: order.branch,
+            source: 'pos',
           }
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      let customer;
+      try {
+        customer = await upsertCustomer();
+      } catch (err) {
+        if (err && err.code === 11000) customer = await upsertCustomer();
+        else throw err;
+      }
+
+      if (customer && cafeId) {
+        // 1) Ensure a membership row exists for this cafe. The `$ne` filter makes
+        //    the push idempotent under concurrency — a second completer no-ops.
+        await Customer.updateOne(
+          { _id: customer._id, 'memberships.cafe': { $ne: cafeId } },
+          {
+            $push: {
+              memberships: {
+                cafe: cafeId,
+                status: 'new',
+                branches: [],
+                firstBranch: order.branch,
+                joinedAt: now,
+              },
+            },
+          }
+        );
+
+        // 2) ONE-SHOT: claim the intro discount and flip new -> existing. The
+        //    $elemMatch on newCustomerDiscountUsed:false is what guarantees a
+        //    concurrent double-complete can't grant the discount twice — the same
+        //    conditional-claim pattern used for the loyalty points below.
+        //    firstOrderAt is $set (not $min) here precisely because this branch only
+        //    ever runs once: $min against the null default would keep null, since
+        //    null sorts before every Date in BSON.
+        await Customer.updateOne(
+          {
+            _id: customer._id,
+            memberships: { $elemMatch: { cafe: cafeId, newCustomerDiscountUsed: false } },
+          },
+          {
+            $set: {
+              'memberships.$.newCustomerDiscountUsed': true,
+              'memberships.$.status': 'existing',
+              'memberships.$.firstOrderAt': now,
+            },
+          }
+        );
+
+        // 3) Per-membership counters, applied on every completed order.
+        await Customer.updateOne(
+          { _id: customer._id, 'memberships.cafe': cafeId },
+          {
+            $inc: {
+              'memberships.$.orderCount': 1,
+              'memberships.$.totalSpend': order.totalAmount,
+              'memberships.$.loyaltyPoints': pointsEarned,
+            },
+            $set: { 'memberships.$.lastVisit': now },
+            $addToSet: { 'memberships.$.branches': order.branch },
+          }
+        );
+      }
+
+      // Stamp the resolved identity onto the order so CRM reporting can join on it
+      // directly instead of falling back to the phone string.
+      if (customer && !order.customerId) {
+        order.customerId = customer._id;
+        await Order.updateOne({ _id: order._id }, { $set: { customerId: customer._id } });
+      }
 
       // Atomically claim the reward threshold worth of points only if the balance
       // is high enough. The conditional filter guarantees a single concurrent
@@ -687,7 +797,7 @@ class OrderService {
       const threshold = Number(L.rewardThresholdPoints) || 100;
       if (customer && customer.loyaltyPoints >= threshold) {
         const claimed = await Customer.findOneAndUpdate(
-          { phone: order.customerPhone, loyaltyPoints: { $gte: threshold } },
+          { _id: customer._id, loyaltyPoints: { $gte: threshold } },
           { $inc: { loyaltyPoints: -threshold } },
           { new: true }
         );
@@ -766,19 +876,25 @@ class OrderService {
         if (!menuItem) {
           throw new Error(`Item ${item.menuItem} not found.`);
         }
+        // Server-authoritative modifier snapshot + price delta — mirrors the create
+        // path so an edited order keeps its paid modifiers (e.g. +₹50 extra cheese)
+        // instead of being repriced at base and losing the KOT detail.
+        const { modSnapshot, modDelta } = buildModifierSnapshot(menuItem, item.modifiers);
         // Honour an active discount (matches the create path + what the menu shows).
-        const unitPrice = (menuItem.discountedPrice != null && menuItem.discountedPrice < menuItem.price)
+        const base = (menuItem.discountedPrice != null && menuItem.discountedPrice < menuItem.price)
           ? menuItem.discountedPrice
           : (menuItem.price || 0);
+        const effectivePrice = Math.max(0, base + modDelta);
         updatedItemsWithSnapshots.push({
           menuItem: menuItem._id,
           itemName: menuItem.name,
-          price: unitPrice,
+          price: effectivePrice,
           costPrice: menuItem.costPrice || 0,
           quantity: item.quantity,
-          notes: item.notes
+          notes: item.notes,
+          modifiers: modSnapshot,
         });
-        recalculatedTotal += unitPrice * item.quantity;
+        recalculatedTotal += effectivePrice * item.quantity;
       }
 
       // Apply guarded stock deltas inside the transaction.
@@ -1023,11 +1139,12 @@ class OrderService {
     
     const [branchAdmins, admins, supers] = await Promise.all([
       User.find({
+        deletedAt: null,
         role: 'branch_admin',
         $or: [{ assignedLocation: order.branch }, { accessibleLocations: order.branch }]
       }),
-      User.find({ role: 'admin', accessibleLocations: order.branch }),
-      User.find({ role: 'super_admin' })
+      User.find({ role: 'admin', accessibleLocations: order.branch, deletedAt: null }),
+      User.find({ role: 'super_admin', deletedAt: null })
     ]);
 
     branchAdmins.forEach(u => recipients.push({ user: u._id, isRead: false }));

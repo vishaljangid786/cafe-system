@@ -35,12 +35,12 @@ before(async () => {
   loc = await Location.create({ name: 'Test Cafe', city: 'Pune', state: 'MH', country: 'IN', pincode: '411001', createdBy: new mongoose.Types.ObjectId(), maxCapacity: 20, status: 'active' });
   admin = await User.create({ name: 'Admin', email: 'admin@test.com', password: 'Secret123!', phone: '9999999999', gender: 'Male', address1: 'Addr', city: 'Pune', assignedLocation: loc._id, accessibleLocations: [loc._id], role: 'super_admin' });
   category = await Category.create({ name: 'Mains', createdBy: admin._id });
-});
+}, { timeout: 60000 });
 
 after(async () => {
   await mongoose.disconnect();
-  await replset.stop();
-});
+  if (replset) await replset.stop();
+}, { timeout: 30000 });
 
 // Helper: a branch-stocked menu item (non-recipe) + its BranchStock row.
 async function stockedItem({ price, discountedPrice, modifierGroups, stock = 100 }) {
@@ -147,7 +147,7 @@ test('order: modifier price cannot be tampered (server uses stored delta, ignore
 // fire-and-forget (doesn't return its promise), so we resolve when res.json or
 // next() is actually invoked.
 function callController(handler, { body = {}, params = {}, query = {} } = {}) {
-  const req = { body, params, query, user: admin };
+  const req = { body, params, query, user: admin, headers: {}, ip: '127.0.0.1' };
   return new Promise((resolve, reject) => {
     let statusCode = 200;
     const res = {

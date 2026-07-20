@@ -3,8 +3,11 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { withRateLimitStore } = require('./utils/rateLimitStore');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
+const mongoose = require('mongoose');
+const crypto = require('crypto');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 // Route imports
@@ -41,7 +44,6 @@ const giftCardRoutes = require('./routes/giftCardRoutes');
 const waitlistRoutes = require('./routes/waitlistRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const seedRoutes = require('./routes/seedRoutes');
-const { renderHome } = require('./controllers/seedController');
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -66,12 +68,6 @@ const configuredCorsOrigins = parseOrigins(process.env.CORS_ORIGIN);
 const allowedOrigins = new Set([
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  // Hard-coded client deployment. The same-origin Next.js proxy forwards the
-  // browser's Origin header to this Express server on every non-GET request,
-  // and this origin must be allowed or the cors() middleware fires an error
-  // with no statusCode set, which errorHandler maps to 500. Add new client
-  // domains here, or set CLIENT_URL in the Vercel project's env vars.
-  'https://cafe-orgaization-system-by-vishal.vercel.app',
   ...parseOrigins(process.env.CLIENT_URL),
   ...configuredCorsOrigins,
   ...getVercelOrigin(),
@@ -130,28 +126,49 @@ app.use((req, res, next) => {
     res.status(403);
     return next(new Error('Cross-site request blocked (CSRF protection)'));
   }
+  const csrfCookie = req.cookies.csrfToken;
+  const csrfHeader = req.get('x-csrf-token');
+  const left = Buffer.from(String(csrfCookie || ''));
+  const right = Buffer.from(String(csrfHeader || ''));
+  const csrfOk = left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
+  if (!csrfOk) {
+    res.status(403);
+    return next(new Error('Invalid CSRF token'));
+  }
   next();
 });
 
 // Rate Limiting
-const limiter = rateLimit({
+const limiter = rateLimit(withRateLimitStore({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // limit each IP to 500 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
-});
+}, 'api'));
 app.use('/api/', limiter);
 
 // Specific Rate Limiter for Login
-const loginLimiter = rateLimit({
+const loginLimiter = rateLimit(withRateLimitStore({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 20, // limit each IP to 20 login attempts per hour
   message: 'Too many login attempts, please try again in an hour.'
-});
+}, 'login'));
 app.use('/api/auth/login', loginLimiter);
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.get('/healthz', (req, res) => {
+  res.json({ success: true, status: 'ok' });
+});
+
+app.get('/readyz', (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({
+    success: ready,
+    mongo: ready ? 'connected' : 'not_connected',
+  });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -189,9 +206,8 @@ app.use('/api/public', publicRoutes);
 app.use('/api/seed', seedRoutes);
 
 
-// Base route — landing page with a one-click "Seed Sample Data" button.
 app.get('/', (req, res) => {
-  res.type('html').send(renderHome());
+  res.json({ success: true, service: 'CafeOS API', health: '/healthz', readiness: '/readyz' });
 });
 
 // Error Handling Middlewares

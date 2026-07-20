@@ -197,6 +197,7 @@ const getLocationSalary = asyncHandler(async (req, res) => {
   const users = await User.find({
     assignedLocation: targetLocationId,
     role: { $in: salaryVisibleRoles(req.user.role) },
+    deletedAt: null,
   }).select('_id');
   const userIds = users.map(u => u._id);
   
@@ -330,7 +331,10 @@ const getMySalaryHistory = asyncHandler(async (req, res) => {
   
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const month = d.toISOString().slice(0, 7);
+    // Build YYYY-MM from LOCAL components. toISOString() converts local midnight
+    // to UTC, which in any timezone ahead of UTC (e.g. IST +05:30) lands on the
+    // previous day — shifting every label back a whole month.
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     last6Months.push(month);
   }
 
@@ -381,7 +385,7 @@ const getMySalary = asyncHandler(async (req, res) => {
 // PENDING_APPROVAL payroll for each staff/chef, skipping any record already past
 // pending. No req/res — returns the processed payroll docs.
 const buildPayrollsForMonth = async (month, branchScope = null) => {
-  const userQuery = { role: { $in: ['staff', 'chef'] } };
+  const userQuery = { role: { $in: ['staff', 'chef'] }, deletedAt: null };
   if (branchScope) userQuery.assignedLocation = branchScope;
 
   const users = await User.find(userQuery).lean();
@@ -522,7 +526,7 @@ const runMonthlyPayrollGeneration = async (month) => {
   try {
     const [systemSender, recipients] = await Promise.all([
       User.findOne({ role: 'super_admin' }).select('_id'),
-      User.find({ role: { $in: ['admin', 'branch_admin', 'super_admin'] } }).select('_id'),
+      User.find({ role: { $in: ['admin', 'branch_admin', 'super_admin'] }, deletedAt: null }).select('_id'),
     ]);
     if (systemSender && recipients.length) {
       await Notification.create({
@@ -651,7 +655,10 @@ const approvePayroll = asyncHandler(async (req, res) => {
   payroll.approvedBy = req.user._id;
   payroll.approvedAt = new Date();
 
-  if (!payroll.ledgerExpenseId && payroll.user?.assignedLocation) {
+  // Book the salary against the branch the payroll was GENERATED for (payrollBranch),
+  // not the employee's current branch — otherwise transferring an employee after
+  // generation retroactively charges the cost to their new branch's P&L.
+  if (!payroll.ledgerExpenseId && payrollBranch) {
     const [year, mon] = String(payroll.month).split('-');
     const expenseDate = (year && mon) ? new Date(Number(year), Number(mon) - 1, 28) : new Date();
     const expense = await Expense.create({
@@ -662,7 +669,7 @@ const approvePayroll = asyncHandler(async (req, res) => {
       category: 'Salary',
       status: 'approved',
       date: expenseDate,
-      locationId: payroll.user.assignedLocation,
+      locationId: payrollBranch,
       createdBy: req.user._id,
       proofImage: 'payroll-auto',
     });
@@ -694,6 +701,7 @@ const getPayrollHistory = asyncHandler(async (req, res) => {
     const users = await User.find({
       assignedLocation: branchScope,
       role: { $in: salaryVisibleRoles(req.user.role) },
+      deletedAt: null,
     }).select('_id');
     filter.user = { $in: users.map(u => u._id) };
   }

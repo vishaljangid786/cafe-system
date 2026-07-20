@@ -8,6 +8,8 @@ const {
   addCafeAdmin,
   removeCafeAdmin,
   deleteCafe,
+  getCafeImpact,
+  setCafeSuspension,
   uploadCafeLogo,
 } = require('../controllers/cafeController');
 const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
@@ -45,6 +47,11 @@ router
   .get(getCafe)
   .patch(updateCafeValidator, validate, updateCafe) // access checked in controller (super_admin or cafe admin)
   .delete(checkAction('cafes.delete'), deleteCafe);
+
+// Blast-radius preview for the delete confirmation, and the cafe-wide lockout.
+// Both are platform-level acts, so neither is delegable through actionPermissions.
+router.get('/:id/impact', checkRoles('super_admin'), getCafeImpact);
+router.patch('/:id/suspension', checkRoles('super_admin'), setCafeSuspension);
 
 router.post('/:id/admins', checkRoles('super_admin'), addAdminValidator, validate, addCafeAdmin);
 router.delete('/:id/admins/:userId', checkRoles('super_admin'), removeCafeAdmin);

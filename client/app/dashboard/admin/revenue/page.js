@@ -8,7 +8,8 @@ import { ListSkeleton } from '@/app/components/ui/Skeleton';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 import { useAuth } from '../../../context/AuthContext';
-import { can } from '../../../config/actions';
+import useBranchScope from '../../../hooks/useBranchScope';
+import { useCan, useCanPage } from '../../../hooks/usePermissions';
 import AddRevenueModal from '../../../components/revenue/AddRevenueModal';
 import {
   TrendingUp, IndianRupee, Search, Filter,
@@ -27,13 +28,20 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import { useTheme } from '../../../context/ThemeContext';
-import DateRangeFilter from '../../../components/ui/DateRangeFilter';
+import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 
 export default function RevenuePage() {
   const { theme } = useTheme();
-  const { user, selectedLocation, globalSearch } = useAuth();
-  
-  const hasAccess = user?.role === 'super_admin' || user?.permissions?.viewRevenue === true;
+  const { user, locations: accessibleLocations } = useAuth();
+  const { singleBranchId, scopeKey } = useBranchScope();
+  const canDo = useCan();
+  const canPage = useCanPage();
+
+  // Page gate: allowedPages key (canViewPage covers super_admin) + legacy viewRevenue boolean fallback.
+  const hasAccess = canPage('page_revenue') || user?.permissions?.viewRevenue === true;
+
+  // Branch chips/columns assume multi-branch; hide them for single-branch accounts.
+  const hasMultipleBranches = (accessibleLocations?.length || 0) > 1;
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +67,7 @@ export default function RevenuePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const itemsPerPage = 20;
 
-  const canAddRevenue = can(user, 'revenue.add');
+  const canAddRevenue = canDo('revenue.add');
 
   const isDark = theme === 'dark';
 
@@ -87,9 +95,10 @@ export default function RevenuePage() {
     try {
       const query = new URLSearchParams();
 
-      const locId = typeof selectedLocation === 'object' ? selectedLocation?._id : selectedLocation;
-      if (locId && locId !== 'all') {
-        query.append('locationId', locId);
+      // Scope comes from the Navbar global filter via useBranchScope; the server
+      // re-validates, so a single in-scope branch maps to an explicit locationId.
+      if (singleBranchId && singleBranchId !== 'all') {
+        query.append('locationId', singleBranchId);
       }
 
       let start = startDate;
@@ -124,7 +133,7 @@ export default function RevenuePage() {
       // GST collected for the same scope/period (optional — never blocks revenue).
       try {
         const gstQ = new URLSearchParams();
-        if (locId && locId !== 'all') gstQ.append('branchId', locId);
+        if (singleBranchId && singleBranchId !== 'all') gstQ.append('branchId', singleBranchId);
         if (start) gstQ.append('startDate', start);
         if (end) gstQ.append('endDate', end);
         const gstRes = await api.get(`/orders/gst-report?${gstQ.toString()}`);
@@ -152,7 +161,7 @@ export default function RevenuePage() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [selectedLocation, startDate, endDate, currentPage, searchQuery, amountRange]);
+  }, [scopeKey, startDate, endDate, currentPage, searchQuery, amountRange]);
 
   if (!hasAccess && user) {
     return (
@@ -190,16 +199,14 @@ export default function RevenuePage() {
             <p className="text-(--color-text-muted) font-medium mt-1">Track your earnings and sales data.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <DateRangeFilter
-              startDate={startDate}
-              endDate={endDate}
-              onChange={({ startDate, endDate }) => {
+            <UniversalDateFilter
+              defaultFilter="this_month"
+              loading={refetching}
+              onFilterChange={({ startDate, endDate }) => {
                 setStartDate(startDate);
                 setEndDate(endDate);
                 setCurrentPage(1);
               }}
-              loading={refetching}
-              iconClassName="text-success"
             />
             {canAddRevenue && (
               <Button
@@ -376,9 +383,11 @@ export default function RevenuePage() {
                             <span className="text-[11px] font-medium text-success bg-success/5 px-2 py-0.5 rounded-md">
                               {t.type === 'POS_REVENUE' ? 'POS Billing' : 'Manual Entry'}
                             </span>
-                            <span className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1">
-                              <MapPin size={8} /> {t.locationId?.name || 'Main Branch'}
-                            </span>
+                            {hasMultipleBranches && (
+                              <span className="text-[11px] font-medium text-(--color-text-muted) flex items-center gap-1">
+                                <MapPin size={8} /> {t.locationId?.name || 'Main Branch'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -460,7 +469,7 @@ export default function RevenuePage() {
               </div>
 
               {/* Status & Location Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className={`grid grid-cols-2 ${hasMultipleBranches ? 'md:grid-cols-3' : ''} gap-4`}>
                 <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
                   <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Payment Source</p>
                   <div className="flex items-center gap-2">
@@ -470,16 +479,18 @@ export default function RevenuePage() {
                     </span>
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
-                  <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Branch</p>
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-success" />
-                    <span className="font-medium text-(--color-text-primary) text-xs">
-                      {selectedTransaction.locationId?.name || 'Main Branch'}
-                    </span>
+                {hasMultipleBranches && (
+                  <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border)">
+                    <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Branch</p>
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} className="text-success" />
+                      <span className="font-medium text-(--color-text-primary) text-xs">
+                        {selectedTransaction.locationId?.name || 'Main Branch'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) col-span-2 md:col-span-1">
+                )}
+                <div className={`p-4 rounded-xl bg-(--color-surface-soft)/50 border border-(--color-border) ${hasMultipleBranches ? 'col-span-2 md:col-span-1' : ''}`}>
                   <p className="text-[11px] font-medium text-(--color-text-muted) mb-2">Status</p>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-success" />
@@ -606,7 +617,7 @@ export default function RevenuePage() {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           locations={locations}
-          defaultLocationId={typeof selectedLocation === 'object' ? selectedLocation?._id : (selectedLocation && selectedLocation !== 'all' ? selectedLocation : '')}
+          defaultLocationId={singleBranchId !== 'all' ? singleBranchId : ''}
           onSuccess={fetchRevenue}
         />
       </div>

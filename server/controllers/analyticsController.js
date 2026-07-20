@@ -275,7 +275,17 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
   }
 
   const transactionAgg = await Transaction.aggregate([
-    { $match: dateMatch }, // Use dynamic date filter
+    {
+      // Revenue must count ONLY approved revenue transactions. Matching on the
+      // date/location filter alone folded EXPENSE rows and unapproved (pending /
+      // rejected) transactions into each branch's "revenue" and counted them as
+      // orders, skewing the whole comparison.
+      $match: {
+        ...dateMatch,
+        type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+        status: 'approved',
+      },
+    },
     {
       $group: {
         _id: "$locationId",
@@ -285,7 +295,8 @@ const getUnderperformingLocations = asyncHandler(async (req, res) => {
     }
   ]);
 
-  const locationFilter = { isPermanentlyDeleted: false };
+  // Exclude soft-deleted branches so closed outlets don't pad the comparison.
+  const locationFilter = { isPermanentlyDeleted: false, status: { $ne: 'deleted' } };
   if (allowedForQuery) locationFilter._id = { $in: allowedForQuery };
   const locations = await Location.find(locationFilter, 'name city status');
 
@@ -407,8 +418,16 @@ const getComparisonDetails = asyncHandler(async (req, res) => {
   ]);
 
   // 3. Attendance Aggregation
+  // Attendance.date is a 'YYYY-MM-DD' STRING, so this window is built from string
+  // bounds (lexicographic ordering is correct for that format) rather than the
+  // Date-based dateMatch used above. It now honours endDate/period — previously it
+  // was open-ended, so attendance covered a different window than the revenue it
+  // is compared against.
+  const attWindowDays = Number(period) || 30;
+  const attStart = String(startDate || new Date(Date.now() - attWindowDays * 24 * 60 * 60 * 1000).toISOString()).slice(0, 10);
+  const attEnd = String(endDate || new Date().toISOString()).slice(0, 10);
   const attendanceAgg = await Attendance.aggregate([
-    { $match: { locationId: { $in: ids }, date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } },
+    { $match: { locationId: { $in: ids }, date: { $gte: attStart, $lte: attEnd } } },
     {
       $group: {
         _id: { locationId: "$locationId", status: "$status" },
@@ -585,6 +604,7 @@ const getStaffReports = asyncHandler(async (req, res) => {
     const allowedIds = allowedLocationFilter(req.user);
     userQuery.assignedLocation = { $in: allowedIds };
   }
+  userQuery.deletedAt = null; // a removed person is no longer current staff
   const users = await User.find(userQuery).populate('assignedLocation', 'name');
   const userIds = users.map(u => u._id.toString());
 
@@ -1176,7 +1196,7 @@ const getBranchComparisonSuite = asyncHandler(async (req, res) => {
 
   const compAllowed = allowedLocationFilter(req.user);
   const locQuery = { isPermanentlyDeleted: false };
-  const staffQuery = { role: { $in: ['staff', 'chef', 'branch_admin'] } };
+  const staffQuery = { role: { $in: ['staff', 'chef', 'branch_admin'] }, deletedAt: null };
   if (compAllowed) {
     locQuery._id = { $in: compAllowed };
     staffQuery.assignedLocation = { $in: compAllowed };
@@ -1439,6 +1459,129 @@ const getForecastingAnalytics = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Cash flow (money in vs money out) for a single month
+// @route   GET /api/analytics/cash-flow
+// @access  Private (all roles; staff/chef are scoped to their own activity)
+// Money in  = approved revenue transactions (sales collected).
+// Money out = approved expenses (split into stock purchases vs other).
+// Udhaar    = outstanding balance on completed unpaid/partial orders.
+const getCashFlow = asyncHandler(async (req, res) => {
+  const { month, locationId, category } = req.query;
+  const role = req.user.role;
+  const isStaff = role === 'staff' || role === 'chef';
+
+  // Resolve the [start, end) window for the requested YYYY-MM (default: this month).
+  const now = new Date();
+  let year = now.getFullYear();
+  let mon = now.getMonth();
+  if (/^\d{4}-\d{2}$/.test(month || '')) {
+    const [y, m] = month.split('-').map(Number);
+    if (m >= 1 && m <= 12) { year = y; mon = m - 1; }
+  }
+  const start = new Date(year, mon, 1, 0, 0, 0, 0);
+  const end = new Date(year, mon + 1, 1, 0, 0, 0, 0); // exclusive
+
+  // Location scoping. Transactions/Expenses key off `locationId`, Orders off `branch`.
+  // Staff/chef ignore location and are pinned to their own records instead.
+  const txnLocMatch = {};
+  const orderLocMatch = {};
+  if (!isStaff) {
+    const scoped = scopedLocationId(req, locationId); // string id | { $in: [...] } | null (super_admin all) | throws 403
+    if (scoped) {
+      const toId = (v) => new mongoose.Types.ObjectId(v);
+      if (scoped.$in) {
+        txnLocMatch.locationId = { $in: scoped.$in.map(toId) };
+        orderLocMatch.branch = { $in: scoped.$in.map(toId) };
+      } else {
+        txnLocMatch.locationId = toId(scoped);
+        orderLocMatch.branch = toId(scoped);
+      }
+    }
+  }
+
+  // Ownership scoping for staff/chef. POS revenue is attributed via staffId, other
+  // records via createdBy.
+  const uid = new mongoose.Types.ObjectId(req.user._id);
+  const txnOwnerMatch = isStaff ? { $or: [{ createdBy: uid }, { staffId: uid }] } : {};
+  const ownerMatch = isStaff ? { createdBy: uid } : {};
+
+  // Money in — approved revenue transactions (mirrors the P&L convention).
+  const revenueAgg = await Transaction.aggregate([
+    {
+      $match: {
+        ...txnLocMatch,
+        ...txnOwnerMatch,
+        type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+        status: 'approved',
+        date: { $gte: start, $lt: end },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+  ]);
+  const moneyIn = revenueAgg[0]?.total || 0;
+
+  // Money out — approved expenses grouped by category (INCOME-typed excluded so
+  // reservation advances aren't double-counted against revenue).
+  const expenseAgg = await Expense.aggregate([
+    {
+      $match: {
+        ...txnLocMatch,
+        ...ownerMatch,
+        status: 'approved',
+        type: { $ne: 'INCOME' },
+        date: { $gte: start, $lt: end },
+      },
+    },
+    { $group: { _id: '$category', total: { $sum: '$amount' } } },
+    { $sort: { total: -1 } },
+  ]);
+  const byCategory = expenseAgg.map((r) => ({ category: r._id || 'Uncategorized', total: r.total }));
+  const stockPurchases = byCategory.filter((c) => c.category === 'Inventory').reduce((s, c) => s + c.total, 0);
+  const otherExpenses = byCategory.filter((c) => c.category !== 'Inventory').reduce((s, c) => s + c.total, 0);
+  // A category filter narrows the money-out headline but leaves byCategory intact for the chips.
+  const moneyOut = category && category !== 'all'
+    ? byCategory.filter((c) => c.category === category).reduce((s, c) => s + c.total, 0)
+    : stockPurchases + otherExpenses;
+
+  // Udhaar — outstanding on completed orders left unpaid or partly paid this month.
+  const udhaarAgg = await Order.aggregate([
+    {
+      $match: {
+        ...orderLocMatch,
+        ...ownerMatch,
+        status: 'COMPLETED',
+        paymentStatus: { $in: ['unpaid', 'partial'] },
+        createdAt: { $gte: start, $lt: end },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        outstanding: {
+          $sum: {
+            $max: [{ $subtract: [{ $ifNull: ['$grandTotal', '$totalAmount'] }, { $ifNull: ['$amountPaid', 0] }] }, 0],
+          },
+        },
+      },
+    },
+  ]);
+  const udhaar = udhaarAgg[0]?.outstanding || 0;
+
+  res.json({
+    success: true,
+    data: {
+      month: `${year}-${String(mon + 1).padStart(2, '0')}`,
+      moneyIn,
+      moneyOut,
+      stockPurchases,
+      otherExpenses,
+      byCategory,
+      udhaar,
+      netCashFlow: moneyIn - moneyOut,
+    },
+  });
+});
+
 module.exports = {
   getLocationAnalytics,
   getAllAnalytics,
@@ -1456,5 +1599,6 @@ module.exports = {
   getPaymentInfo,
   getBranchComparisonSuite,
   getCommandCenterStats,
-  getForecastingAnalytics
+  getForecastingAnalytics,
+  getCashFlow
 };

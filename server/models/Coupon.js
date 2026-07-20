@@ -52,10 +52,38 @@ const couponSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+
+    // ── Scoping (additive; null/empty preserves the legacy org-wide behaviour) ──
+    cafe: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cafe',
+      default: null, // null = valid at every cafe
+    },
+    branches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }], // empty = all branches of `cafe`
+
+    // ── Audience targeting ─────────────────────────────────────────────────
+    // 'public'   — anyone may redeem (legacy behaviour)
+    // 'birthday' — generated for a birthday batch, redeemable only by its owner
+    // 'targeted' — manually assigned to specific customers
+    audience: {
+      type: String,
+      enum: ['public', 'birthday', 'targeted'],
+      default: 'public',
+    },
+    assignedCustomers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Customer' }],
+
+    // Provenance for generated batches, so a whole campaign can be listed/deactivated.
+    campaign: {
+      batchId: { type: String, default: null, index: true },
+      kind: { type: String, enum: ['birthday', 'manual'], default: 'manual' },
+      generatedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );
 
 couponSchema.index({ isActive: 1 });
+couponSchema.index({ cafe: 1, isActive: 1 });
+couponSchema.index({ audience: 1, 'campaign.batchId': 1 });
 
 module.exports = mongoose.model('Coupon', couponSchema);

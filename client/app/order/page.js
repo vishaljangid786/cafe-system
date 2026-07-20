@@ -22,10 +22,23 @@ const buildUpiUrl = ({ vpa, name, amount, note }) => {
   return `upi://pay?${p.toString()}`;
 };
 
+const OrderHeader = ({ branchInfo, tableInfo }) => (
+  <div className="text-center pt-6 pb-4">
+    <div className="mx-auto mb-2 h-11 w-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+      <Utensils size={20} className="text-primary" />
+    </div>
+    <h1 className="text-xl font-bold text-(--color-text-primary) tracking-tight">{branchInfo?.name || 'Order'}</h1>
+    <p className="text-[11px] font-bold text-(--color-text-muted) uppercase tracking-wide mt-0.5">
+      {tableInfo ? `Table ${tableInfo.tableNumber}${tableInfo.tableName ? ` · ${tableInfo.tableName}` : ''} · seats up to ${tableInfo.capacity}` : 'Takeaway · scan & order'}
+    </p>
+  </div>
+);
+
 function OrderApp() {
   const params = useSearchParams();
   const branch = params.get('branch') || params.get('branchId') || '';
   const table = params.get('table') || params.get('tableId') || '';
+  const qrToken = params.get('token') || params.get('qrToken') || '';
 
   const [loading, setLoading] = useState(true);
   const [branchInfo, setBranchInfo] = useState(null);
@@ -56,18 +69,32 @@ function OrderApp() {
   const [liveStatus, setLiveStatus] = useState(null); // { confirmed, declined, status, approvalStatus }
   const pollRef = useRef(null);
 
+  // ── Customer identity (CRM) ────────────────────────────────────────────────
+  // The browser holds an opaque HMAC token, never a phone lookup key. A recognised
+  // customer is greeted and never asked to fill the form again.
+  const [crmCfg, setCrmCfg] = useState({ askProfileOnScan: true, profileRequired: false });
+  const [customerToken, setCustomerToken] = useState(null);
+  const [profile, setProfile] = useState(null);      // { name, phone, gender, dob, email, dobLocked }
+  const [offer, setOffer] = useState({ discountPercent: 0, maxDiscount: null, minOrder: 0, label: '' });
+  const [showProfileSheet, setShowProfileSheet] = useState(false);
+  const [profileMode, setProfileMode] = useState('new'); // 'new' | 'edit'
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [pForm, setPForm] = useState({ name: '', phone: '', gender: '', dob: '', email: '' });
+
   const capacity = tableInfo?.capacity || 12;
 
   useEffect(() => {
     if (!branch) { setLoading(false); return; }
     const url = table
-      ? `/public/menu?branchId=${branch}&tableId=${table}`
+      ? `/public/menu?branchId=${branch}&tableId=${table}&token=${encodeURIComponent(qrToken)}`
       : `/public/menu?branchId=${branch}`;
     api.get(url)
       .then((r) => {
         const d = r.data?.data || {};
         setBranchInfo(d.branch || null);
         setPayCfg(d.payments || { acceptCash: true });
+        setCrmCfg(d.crm || { askProfileOnScan: true, profileRequired: false });
         setItems(d.items || []);
         setPopular(d.popular || []);
         setFreeTables(d.freeTables || []);
@@ -85,7 +112,119 @@ function OrderApp() {
       })
       .catch(() => setError('Could not load the menu. Please check the link or ask our staff.'))
       .finally(() => setLoading(false));
-  }, [branch, table]);
+  }, [branch, table, qrToken]);
+
+  // Recognise a returning customer (or decide to ask). Runs once the branch is known.
+  useEffect(() => {
+    if (!branch || loading) return;
+    let cancelled = false;
+
+    const stored = (() => {
+      try { return localStorage.getItem('cafeos_customer_token'); } catch { return null; }
+    })();
+
+    const askIfAllowed = () => {
+      if (cancelled) return;
+      // Only ask when the branch wants it, and not again in this browsing session
+      // after they dismissed it.
+      let dismissed = false;
+      try { dismissed = sessionStorage.getItem('cafeos_profile_skipped') === '1'; } catch { /* ignore */ }
+      if (crmCfg.askProfileOnScan && !dismissed) {
+        setProfileMode('new');
+        setShowProfileSheet(true);
+      }
+    };
+
+    if (!stored) { askIfAllowed(); return undefined; }
+
+    api.get(`/public/customer/me?token=${encodeURIComponent(stored)}&branchId=${branch}`)
+      .then((r) => {
+        if (cancelled) return;
+        const d = r.data?.data || {};
+        if (d.known) {
+          setCustomerToken(stored);
+          setProfile(d.profile);
+          setOffer(d.offer || { discountPercent: 0 });
+          // Pre-fill checkout so a known customer never retypes their details.
+          if (d.profile?.name) setName(d.profile.name);
+        } else {
+          // Stale/foreign token — drop it and treat as a first visit.
+          try { localStorage.removeItem('cafeos_customer_token'); } catch { /* ignore */ }
+          askIfAllowed();
+        }
+      })
+      .catch(() => { if (!cancelled) askIfAllowed(); });
+
+    return () => { cancelled = true; };
+  }, [branch, loading, crmCfg.askProfileOnScan]);
+
+  const openProfileEditor = () => {
+    setProfileError('');
+    setProfileMode('edit');
+    setPForm({
+      name: profile?.name || '',
+      phone: '', // never round-trip the masked value back as an edit
+      gender: profile?.gender || '',
+      dob: profile?.dob ? String(profile.dob).slice(0, 10) : '',
+      email: profile?.email || '',
+    });
+    setShowProfileSheet(true);
+  };
+
+  const submitProfile = async () => {
+    setProfileError('');
+    const digits = (pForm.phone || '').replace(/\D/g, '');
+    if (profileMode === 'new') {
+      if (!pForm.name.trim()) return setProfileError('Please enter your name');
+      if (digits.length < 10) return setProfileError('Please enter a valid 10-digit mobile number');
+    }
+    setSavingProfile(true);
+    try {
+      if (profileMode === 'new') {
+        const r = await api.post('/public/customer/profile', {
+          branchId: branch,
+          tableId: table || undefined,
+          qrToken: qrToken || undefined,
+          name: pForm.name.trim(),
+          phone: digits,
+          gender: pForm.gender || undefined,
+          dob: pForm.dob || undefined,
+          email: pForm.email || undefined,
+        });
+        const d = r.data?.data || {};
+        try { localStorage.setItem('cafeos_customer_token', d.customerToken); } catch { /* ignore */ }
+        setCustomerToken(d.customerToken);
+        setProfile(d.profile);
+        setOffer(d.offer || { discountPercent: 0 });
+        setName(d.profile?.name || pForm.name.trim());
+        setPhone(digits);
+      } else {
+        const body = { token: customerToken, branchId: branch, name: pForm.name.trim() };
+        if (pForm.gender) body.gender = pForm.gender;
+        if (pForm.email !== undefined) body.email = pForm.email;
+        if (digits.length >= 10) body.phone = digits;
+        if (!profile?.dobLocked && pForm.dob) body.dob = pForm.dob;
+        const r = await api.patch('/public/customer/profile', body);
+        const d = r.data?.data || {};
+        setProfile(d.profile);
+        setOffer(d.offer || offer);
+        setName(d.profile?.name || pForm.name.trim());
+      }
+      setShowProfileSheet(false);
+    } catch (err) {
+      setProfileError(err.response?.data?.message || 'Could not save your details. Please try again.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const skipProfile = async () => {
+    try { sessionStorage.setItem('cafeos_profile_skipped', '1'); } catch { /* ignore */ }
+    setShowProfileSheet(false);
+    // Fire-and-forget: with no token this records nothing and creates no customer.
+    api.post('/public/customer/skip', { branchId: branch, token: customerToken || undefined })
+      .catch(() => { /* dismissing a form must never surface an error */ });
+  };
 
   // Default the pay choice once we know what the branch accepts.
   useEffect(() => {
@@ -201,6 +340,7 @@ function OrderApp() {
         // the guest picked) — not necessarily the raw QR table, which may be booked.
         tableId: tableInfo?._id || undefined,
         orderType: tableInfo?._id ? 'dine-in' : 'takeaway',
+        qrToken: tableInfo?._id ? (tableInfo.qrToken || qrToken) : undefined,
         items: cart.map((x) => ({ menuItem: x.menuItem, quantity: x.quantity, modifiers: x.modifiers })),
         customerName: name.trim(),
         customerPhone: phone.trim(),
@@ -209,6 +349,9 @@ function OrderApp() {
         paymentChoice: payChoice,
         payLaterMethod: payChoice === 'pay_later' ? laterMethod : undefined,
         upiRef: payChoice === 'pay_now_upi' ? upiRef.trim() : undefined,
+        // Identity only — the server resolves the customer and computes any
+        // discount itself. The browser never sends a discount amount.
+        customerToken: customerToken || undefined,
       });
       const data = r.data?.data;
       setPlaced(data);
@@ -262,7 +405,7 @@ function OrderApp() {
     return (
       <div className="min-h-screen bg-(--color-bg-base) p-5">
         <div className="max-w-md mx-auto">
-          <Header />
+          <OrderHeader branchInfo={branchInfo} tableInfo={tableInfo} />
           <div className="rounded-2xl bg-warning/10 border border-warning/30 p-4 text-center mb-5">
             <h2 className="text-base font-bold text-(--color-text-primary)">
               Table {scannedTable?.tableNumber}{scannedTable?.tableName ? ` · ${scannedTable.tableName}` : ''} is already booked
@@ -447,6 +590,21 @@ function OrderApp() {
                     </div>
                   ))}
                 </div>
+                {/* Display only — the authoritative discount comes back on the
+                    order response, because the server computes it. */}
+                {offer.discountPercent > 0 && total >= (offer.minOrder || 0) && (
+                  <div className="flex justify-between items-center mt-3 text-success">
+                    <span className="text-[11px] font-bold uppercase tracking-wide">
+                      New customer −{offer.discountPercent}%
+                    </span>
+                    <span className="text-xs font-bold">
+                      −<Money value={Math.min(
+                        (total * offer.discountPercent) / 100,
+                        offer.maxDiscount == null ? Infinity : Number(offer.maxDiscount)
+                      )} />
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mt-3 pt-3 border-t border-(--color-border)">
                   <span className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Total</span>
                   <span className="text-lg font-bold text-(--color-text-primary)"><Money value={total} /></span>
@@ -471,7 +629,7 @@ function OrderApp() {
           {tableInfo && (
             <div className="mt-4 bg-(--color-surface) border border-(--color-border) rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) flex items-center gap-1.5"><Users size={13} /> Who's at the table?</label>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) flex items-center gap-1.5"><Users size={13} /> Who&apos;s at the table?</label>
                 <div className="flex items-center gap-2">
                   <button onClick={() => setParty(partySize - 1)} className="h-7 w-7 rounded-lg bg-(--color-bg-soft) text-(--color-text-primary) flex items-center justify-center"><Minus size={13} /></button>
                   <span className="w-6 text-center text-sm font-bold text-(--color-text-primary)">{partySize}</span>
@@ -621,7 +779,30 @@ function OrderApp() {
   return (
     <div className="min-h-screen bg-(--color-bg-base) pb-32">
       <div className="max-w-lg mx-auto px-5">
-        <Header />
+        <OrderHeader branchInfo={branchInfo} tableInfo={tableInfo} />
+
+        {/* Recognised customer: greet, never re-ask for details. */}
+        {profile && (
+          <div className="mb-3 flex items-center justify-between gap-3 p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-(--color-text-primary) truncate">
+                Welcome back, {profile.name}
+              </p>
+              {offer.discountPercent > 0 && (
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold">
+                  {offer.discountPercent}% off your first order here
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={openProfileEditor}
+              className="shrink-0 text-[11px] font-bold text-primary underline underline-offset-2"
+            >
+              Edit details
+            </button>
+          </div>
+        )}
 
         {error && <div className="mb-3 p-3 rounded-xl bg-danger/10 text-danger text-xs font-bold text-center">{error}</div>}
 
@@ -689,6 +870,142 @@ function OrderApp() {
               </div>
             ))}
             <button onClick={confirmMods} className="w-full py-3.5 bg-primary text-(--color-on-primary) text-sm font-bold rounded-xl">Add to order</button>
+          </div>
+        </div>
+      )}
+
+      {/* First-visit / edit sheet. Rendered OVER the menu so a guest can still
+          browse; only dismissable when the branch has not made it mandatory. */}
+      {showProfileSheet && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-(--color-surface) rounded-t-2xl sm:rounded-2xl p-5 max-h-[92vh] overflow-y-auto">
+            <h3 className="text-base font-bold text-(--color-text-primary)">
+              {profileMode === 'edit' ? 'Your details' : `Welcome to ${branchInfo?.name || 'our cafe'}`}
+            </h3>
+            {profileMode === 'new' && (
+              <p className="text-xs text-(--color-text-muted) mt-1">
+                {offer.discountPercent > 0 || crmCfg.askProfileOnScan
+                  ? 'Tell us who you are so we can set up your rewards.'
+                  : 'Tell us who you are.'}
+              </p>
+            )}
+
+            <div className="space-y-3 mt-4">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Name</label>
+                <input
+                  value={pForm.name}
+                  onChange={(e) => setPForm({ ...pForm, name: e.target.value })}
+                  placeholder="Your name"
+                  className="mt-1 w-full px-3 py-2.5 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">
+                  Mobile {profileMode === 'edit' && <span className="normal-case font-medium">(currently {profile?.phone})</span>}
+                </label>
+                <input
+                  value={pForm.phone}
+                  onChange={(e) => setPForm({ ...pForm, phone: e.target.value.replace(/\D/g, '').slice(0, 15) })}
+                  inputMode="numeric"
+                  placeholder={profileMode === 'edit' ? 'Enter a new number to change it' : '10-digit mobile number'}
+                  className="mt-1 w-full px-3 py-2.5 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Gender</label>
+                <div className="mt-1 grid grid-cols-4 gap-1.5">
+                  {[
+                    { v: 'male', l: 'Male' }, { v: 'female', l: 'Female' },
+                    { v: 'other', l: 'Other' }, { v: 'prefer_not_to_say', l: 'Skip' },
+                  ].map((g) => (
+                    <button
+                      key={g.v}
+                      type="button"
+                      onClick={() => setPForm({ ...pForm, gender: g.v })}
+                      className={`py-2 rounded-lg text-[11px] font-bold transition-colors ${
+                        pForm.gender === g.v
+                          ? 'bg-primary text-(--color-on-primary)'
+                          : 'bg-(--color-bg-soft) text-(--color-text-muted)'
+                      }`}
+                    >
+                      {g.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted) flex items-center gap-1.5">
+                  Date of birth {profile?.dobLocked && <span title="Locked once set">🔒</span>}
+                </label>
+                <input
+                  type="date"
+                  value={pForm.dob}
+                  disabled={!!profile?.dobLocked}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setPForm({ ...pForm, dob: e.target.value })}
+                  className={`mt-1 w-full px-3 py-2.5 rounded-xl border border-(--color-border) text-sm outline-none focus:border-primary ${
+                    profile?.dobLocked ? 'bg-(--color-bg-soft)/50 text-(--color-text-muted) cursor-not-allowed' : 'bg-(--color-bg-soft)'
+                  }`}
+                />
+                <p className="mt-1 text-[10px] text-(--color-text-muted)">
+                  Birthday par special offers ke liye. Ek baar set hone ke baad change nahi hoga.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Email (optional)</label>
+                <input
+                  type="email"
+                  value={pForm.email}
+                  onChange={(e) => setPForm({ ...pForm, email: e.target.value })}
+                  placeholder="you@example.com"
+                  className="mt-1 w-full px-3 py-2.5 rounded-xl bg-(--color-bg-soft) border border-(--color-border) text-sm outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {profileError && (
+              <p className="mt-3 p-2.5 rounded-lg bg-danger/10 text-danger text-[11px] font-bold text-center">{profileError}</p>
+            )}
+
+            <div className="mt-4 flex gap-2">
+              {profileMode === 'new' && !crmCfg.profileRequired && (
+                <button
+                  type="button"
+                  onClick={skipProfile}
+                  className="px-4 py-3 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) text-sm font-bold"
+                >
+                  Skip
+                </button>
+              )}
+              {profileMode === 'edit' && (
+                <button
+                  type="button"
+                  onClick={() => setShowProfileSheet(false)}
+                  className="px-4 py-3 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) text-sm font-bold"
+                >
+                  Close
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={submitProfile}
+                disabled={savingProfile}
+                className="flex-1 py-3 rounded-xl bg-primary text-(--color-on-primary) text-sm font-bold disabled:opacity-60"
+              >
+                {savingProfile
+                  ? 'Saving…'
+                  : profileMode === 'edit'
+                    ? 'Save changes'
+                    : offer.discountPercent > 0
+                      ? `Get ${offer.discountPercent}% off`
+                      : 'Continue'}
+              </button>
+            </div>
           </div>
         </div>
       )}

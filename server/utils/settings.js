@@ -1,7 +1,9 @@
 // Resolved configuration helper. Returns the effective settings for a branch by
-// layering: code DEFAULTS  <  global settings doc  <  branch settings doc.
+// layering: code DEFAULTS  <  global doc  <  CAFE doc  <  branch doc.
 // Any code that needs a configurable value (GST %, shift, loyalty, payroll rules,
-// invoice numbering) should read it from here instead of hardcoding.
+// invoice numbering, CRM discounts) should read it from here instead of hardcoding.
+// The cafe tier is what lets a super admin configure any cafe, an admin their own,
+// and a branch admin just their branch, through a single mechanism.
 
 const DEFAULTS = {
   tax: { gstRate: 5, gstin: '' },
@@ -41,34 +43,88 @@ const DEFAULTS = {
     acceptCash: true,
     requireApprovalForQr: true,
   },
+  // Customer CRM. The intro discount is granted once per customer PER CAFE and is
+  // always computed server-side; askProfileOnScan drives the QR first-visit sheet.
+  crm: {
+    newCustomerDiscountEnabled: true,
+    newCustomerDiscountPercent: 20,
+    newCustomerMaxDiscount: null, // ₹ cap, null = uncapped
+    newCustomerMinOrder: 0,
+    askProfileOnScan: true,
+    profileRequired: false, // false = customer can Skip
+  },
 };
 
 // Shallow-merge each known group so a branch doc that only sets `tax` still
-// inherits `payroll`/`loyalty`/etc. from global/defaults.
-const mergeGroups = (...sources) => {
-  const out = {};
+// inherits `payroll`/`loyalty`/etc. from the cafe/global/defaults beneath it.
+// Also records which tier supplied each key, so the UI can show "inherited from…".
+const mergeLayers = (layers) => {
+  const settings = {};
+  const sources = {};
   for (const group of Object.keys(DEFAULTS)) {
-    out[group] = { ...DEFAULTS[group] };
-    for (const src of sources) {
-      if (src && src[group] && typeof src[group] === 'object') {
-        for (const [k, v] of Object.entries(src[group])) {
-          if (v !== undefined && v !== null) out[group][k] = v;
+    settings[group] = { ...DEFAULTS[group] };
+    for (const key of Object.keys(DEFAULTS[group])) sources[`${group}.${key}`] = 'default';
+    for (const { level, doc } of layers) {
+      if (doc && doc[group] && typeof doc[group] === 'object') {
+        for (const [k, v] of Object.entries(doc[group])) {
+          if (v !== undefined && v !== null) {
+            settings[group][k] = v;
+            sources[`${group}.${k}`] = level;
+          }
         }
       }
     }
   }
-  return out;
+  return { settings, sources };
+};
+
+// Back-compat shape used by the original two-arg callers.
+const mergeGroups = (...docs) => mergeLayers(docs.map((doc) => ({ level: 'unknown', doc }))).settings;
+
+// Load the raw docs for each tier. `locationId` resolves its own cafe unless one
+// is passed explicitly (the settings UI asks for a cafe without a branch).
+const loadLayers = async (locationId = null, explicitCafeId = null) => {
+  const Settings = require('../models/Settings');
+  const Location = require('../models/Location');
+
+  let cafeId = explicitCafeId || null;
+  if (!cafeId && locationId) {
+    const loc = await Location.findById(locationId).select('cafe').lean();
+    cafeId = loc?.cafe || null;
+  }
+
+  // NOTE: the global doc must be matched on BOTH nulls. Querying `{ locationId: null }`
+  // alone would also match every cafe-tier doc (they all have locationId null) and
+  // return an arbitrary one as "global".
+  const [globalDoc, cafeDoc, branchDoc] = await Promise.all([
+    Settings.findOne({ locationId: null, cafeId: null }).lean(),
+    cafeId ? Settings.findOne({ locationId: null, cafeId }).lean() : null,
+    locationId ? Settings.findOne({ locationId }).lean() : null,
+  ]);
+
+  return {
+    cafeId,
+    layers: [
+      { level: 'global', doc: globalDoc },
+      { level: 'cafe', doc: cafeDoc },
+      { level: 'branch', doc: branchDoc },
+    ],
+  };
 };
 
 const getSettings = async (locationId = null) => {
-  const Settings = require('../models/Settings');
   // Do NOT swallow query errors: on a money path we must fail loudly rather than
   // silently bill/pay with hardcoded defaults instead of the org's configured rates.
-  const [globalDoc, branchDoc] = await Promise.all([
-    Settings.findOne({ locationId: null }).lean(),
-    locationId ? Settings.findOne({ locationId }).lean() : null,
-  ]);
-  return mergeGroups(globalDoc, branchDoc);
+  const { layers } = await loadLayers(locationId);
+  return mergeLayers(layers).settings;
+};
+
+// Same resolution, but also reports the tier each key came from. Used by the CRM
+// discount-config screen to render "Currently inherited from: Global default".
+const getSettingsWithSources = async ({ locationId = null, cafeId = null } = {}) => {
+  const { layers, cafeId: resolvedCafeId } = await loadLayers(locationId, cafeId);
+  const { settings, sources } = mergeLayers(layers);
+  return { settings, sources, cafeId: resolvedCafeId };
 };
 
 // Coerce a configured numeric value, preserving a legitimate 0 (unlike `x || d`,
@@ -88,4 +144,4 @@ const loyaltyTier = (totalSpend = 0, loyaltyCfg = DEFAULTS.loyalty) => {
   return 'Bronze';
 };
 
-module.exports = { getSettings, DEFAULTS, num, loyaltyTier };
+module.exports = { getSettings, getSettingsWithSources, mergeGroups, DEFAULTS, num, loyaltyTier };

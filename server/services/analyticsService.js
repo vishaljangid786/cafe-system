@@ -188,7 +188,7 @@ class AnalyticsService {
       ]),
       (async () => {
         if (userRole !== 'admin' && userRole !== 'super_admin') return null;
-        const userMatch = { role: { $in: ['branch_admin', 'staff', 'chef'] } };
+        const userMatch = { role: { $in: ['branch_admin', 'staff', 'chef'] }, deletedAt: null };
         if (match.locationId) userMatch.assignedLocation = match.locationId;
         const personnelAgg = await User.aggregate([
           { $match: userMatch },
@@ -209,7 +209,24 @@ class AnalyticsService {
         return stats;
       })(),
       Attendance.aggregate([
-        { $match: { ...match, ...(dateMatch.date ? { date: { $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } } : {}) } },
+        {
+          // Scope attendance by LOCATION only. `match` may carry createdBy (the
+          // adminId filter), but Attendance has no such field, so spreading it
+          // matched nothing and silently zeroed every attendance figure.
+          // The window is built from 'YYYY-MM-DD' strings (Attendance.date is a
+          // string) and is bounded at both ends so it tracks the selected range.
+          $match: {
+            ...(match.locationId ? { locationId: match.locationId } : {}),
+            ...(dateMatch.date
+              ? {
+                date: {
+                  $gte: String(startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).slice(0, 10),
+                  $lte: String(endDate || new Date().toISOString()).slice(0, 10),
+                },
+              }
+              : {}),
+          },
+        },
         {
           $group: {
             _id: "$date",
@@ -222,11 +239,13 @@ class AnalyticsService {
         { $limit: 30 }
       ]),
       Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
+        // Only approved revenue counts — pending/rejected transactions previously
+        // padded both the source breakdown and the payment-method split.
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         { $group: { _id: "$source", count: { $sum: 1 }, revenue: { $sum: "$totalAmount" } } }
       ]),
       Transaction.aggregate([
-        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' } } },
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         {
           $group: {
             _id: null,
@@ -496,7 +515,7 @@ class AnalyticsService {
       Order.countDocuments({ ...orderFilter, status: 'PLACED' }),
       Order.countDocuments({ ...orderFilter, status: 'PREPARING' }),
       Table.countDocuments({ ...tableFilter, status: { $in: ['occupied', 'ongoing'] } }),
-      User.countDocuments({ ...(orderFilter.branch ? { assignedLocation: orderFilter.branch } : {}), role: { $in: ['staff', 'chef'] }, isBlocked: false }),
+      User.countDocuments({ ...(orderFilter.branch ? { assignedLocation: orderFilter.branch } : {}), role: { $in: ['staff', 'chef'] }, isBlocked: false, deletedAt: null }),
       Order.aggregate([
         { $match: { ...orderFilter, status: { $in: ['SERVED', 'COMPLETED'] }, createdAt: { $gte: todayStart } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }

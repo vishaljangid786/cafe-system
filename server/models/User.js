@@ -202,6 +202,44 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // ---- Soft delete ------------------------------------------------------
+    // A removed person is never physically dropped while any record still
+    // references them: orders, bills, expenses and payroll rows must keep
+    // resolving a name so history stays readable. `deletedAt` is the single
+    // source of truth — every listing, lookup, login and socket handshake
+    // treats a non-null value as "this account no longer exists".
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    deletedReason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    // `email` carries a plain unique index, so a soft-deleted account would
+    // squat on its address forever and block re-hiring the same person. On
+    // delete we namespace the live value and park the original here, which
+    // frees the address and still allows an exact restore.
+    deletedEmail: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    // Set when a super_admin runs the irreversible purge. The document may
+    // survive (stripped of every personal field) purely to keep historical
+    // references resolvable; when nothing references it, it is dropped
+    // outright and this field is never observed.
+    purgedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -241,6 +279,34 @@ userSchema.index({ role: 1, assignedLocation: 1 });
 userSchema.index({ accessibleLocations: 1 });
 // Cafe membership lookups ("who administers this cafe").
 userSchema.index({ cafes: 1 });
+// Every listing filters out removed accounts, so this is on the hot path.
+userSchema.index({ deletedAt: 1 });
+
+// Namespace the address so the unique index stops reserving it, and keep the
+// original for restore. Idempotent: re-running on an already-deleted user is a
+// no-op, so a double delete can't produce `deleted.<id>.deleted.<id>.foo@x.com`.
+// The namespaced form still satisfies the schema's email regex, so the write
+// survives validation.
+userSchema.methods.releaseEmail = function () {
+  if (this.deletedEmail) return;
+  this.deletedEmail = this.email;
+  this.email = `deleted.${this._id}.${this.email}`;
+};
+
+// Restore the original address. Returns false when the address was taken by
+// somebody else in the meantime, leaving the caller to decide what to do rather
+// than throwing a duplicate-key error deep inside a save.
+userSchema.methods.reclaimEmail = async function () {
+  if (!this.deletedEmail) return true;
+  const taken = await this.constructor.exists({
+    email: this.deletedEmail,
+    _id: { $ne: this._id },
+  });
+  if (taken) return false;
+  this.email = this.deletedEmail;
+  this.deletedEmail = null;
+  return true;
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

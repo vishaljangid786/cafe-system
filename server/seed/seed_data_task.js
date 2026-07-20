@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const AuditLog = require('./models/AuditLog');
-const Attendance = require('./models/Attendance');
-const User = require('./models/User');
-const Location = require('./models/Location');
+const AuditLog = require('../models/AuditLog');
+const Attendance = require('../models/Attendance');
+const User = require('../models/User');
+const Location = require('../models/Location');
 
 dotenv.config();
 

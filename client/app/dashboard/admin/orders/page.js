@@ -275,18 +275,6 @@ export default function AdminOrdersDashboard() {
     }
   };
 
-  const handleRedeemGiftCard = async (id, code, amount) => {
-    if (!code || !amount || Number(amount) <= 0) { toast.error('Enter a card code and amount'); return; }
-    try {
-      const res = await api.post('/gift-cards/redeem', { orderId: id, code, amount: Number(amount) });
-      toast.success(`Redeemed ${formatIndianCompact(res.data.data.redeemed, { currency: true })} · card balance ${formatIndianCompact(res.data.data.balance, { currency: true })}`);
-      setSelectedOrder(null);
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not redeem gift card');
-    }
-  };
-
   const handleSplit = async (id, items) => {
     if (!items || items.length === 0) return;
     try {
@@ -627,7 +615,6 @@ export default function AdminOrdersDashboard() {
           handleReorder={handleReorder}
           handleMoveTable={handleMoveTable}
           handleSplit={handleSplit}
-          handleRedeemGiftCard={handleRedeemGiftCard}
           tables={tables}
           userRole={user?.role}
           canDelete={can(user, 'orders.delete')}

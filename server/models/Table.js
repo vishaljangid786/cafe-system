@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const orderItemSchema = new mongoose.Schema({
   menuItemId: {
@@ -57,6 +58,13 @@ const tableSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Captured alongside the name when the table session starts, so POS orders
+    // carry a CRM identity (rewards + new-customer offer) the way QR orders do.
+    customerPhone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     orders: [orderItemSchema],
     totalAmount: {
       type: Number,
@@ -82,6 +90,11 @@ const tableSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    },
+    publicOrderToken: {
+      type: String,
+      default: () => crypto.randomBytes(16).toString('hex'),
+      index: true,
     },
   },
   {

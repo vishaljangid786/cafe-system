@@ -52,11 +52,25 @@ const errorHandler = (err, req, res, next) => {
     message = 'Something went wrong. Please try again later.';
   }
 
-  res.status(statusCode).json({
+  const body = {
     success: false,
     message,
     stack: null,
-  });
+  };
+
+  // Machine-readable account/tenant states. The client cannot tell a routine
+  // permission denial from "your cafe was blocked" by status code alone — both
+  // are 403 — so these drive the full-screen lock instead of a toast.
+  if (typeof err.code === 'string') body.code = err.code;
+  if (err.suspension) {
+    body.suspension = {
+      cafeName: err.suspension.name,
+      reason: err.suspension.reason || '',
+      suspendedAt: err.suspension.at || null,
+    };
+  }
+
+  res.status(statusCode).json(body);
 };
 
 module.exports = { notFound, errorHandler };

@@ -1,4 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const MenuItem = require('../models/MenuItem');
 const Location = require('../models/Location');
@@ -9,6 +10,21 @@ const Recipe = require('../models/Recipe');
 const Reservation = require('../models/Reservation');
 const OrderService = require('../services/orderService');
 const { getSettings } = require('../utils/settings');
+const { normalizePhone } = require('../utils/phone');
+const { signCustomerToken, verifyCustomerToken } = require('../utils/customerToken');
+
+const safeTokenEquals = (a, b) => {
+  const left = Buffer.from(String(a || ''));
+  const right = Buffer.from(String(b || ''));
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+};
+
+const assertValidTableQrToken = (res, table, token) => {
+  if (!table?.publicOrderToken || !token || !safeTokenEquals(table.publicOrderToken, token)) {
+    res.status(403);
+    throw new Error('Invalid table QR link. Please scan the latest QR code.');
+  }
+};
 
 // Which tables at a branch are FREE to order on right now: status 'available', not
 // flagged booked, and not covered by a confirmed reservation active at this moment
@@ -21,7 +37,7 @@ const getBranchTableAvailability = async (branchId) => {
 
   const [tables, activeReservations] = await Promise.all([
     Table.find({ locationId: branchId })
-      .select('tableNumber tableName capacity status isBooked')
+      .select('tableNumber tableName capacity status isBooked publicOrderToken')
       .sort({ tableNumber: 1 })
       .lean(),
     Reservation.find({
@@ -45,7 +61,13 @@ const getBranchTableAvailability = async (branchId) => {
 
   const freeTables = tables
     .filter(isFree)
-    .map((t) => ({ _id: t._id, tableNumber: t.tableNumber, tableName: t.tableName || '', capacity: t.capacity || 1 }));
+    .map((t) => ({
+      _id: t._id,
+      tableNumber: t.tableNumber,
+      tableName: t.tableName || '',
+      capacity: t.capacity || 1,
+      qrToken: t.publicOrderToken,
+    }));
 
   return { tables, freeTables, isFree, fullLocationReserved };
 };
@@ -62,6 +84,360 @@ const publicPayments = (settings) => ({
   acceptUpi: settings.payments?.acceptUpi !== false && !!settings.payments?.upiVpa,
   acceptCash: settings.payments?.acceptCash !== false,
   requireApproval: settings.payments?.requireApprovalForQr !== false,
+});
+
+// Sibling of publicPayments: only the CRM bits the scan page needs to decide
+// whether to show the first-visit sheet. Never leaks the discount economics of
+// other cafes/branches.
+const publicCrm = (settings) => ({
+  askProfileOnScan: settings.crm?.askProfileOnScan !== false,
+  profileRequired: settings.crm?.profileRequired === true,
+});
+
+// ── Customer identity (public scan flow) ─────────────────────────────────────
+// Everything below is deliberately token-gated: there is NO endpoint that maps a
+// bare phone number to a profile, because that would let anyone enumerate numbers
+// and harvest names, emails and dates of birth.
+
+// Show a customer only the last 4 digits of their own number back.
+const maskOwnPhone = (phone) => {
+  const d = String(phone || '');
+  return d.length <= 4 ? d : `••••••${d.slice(-4)}`;
+};
+
+const publicProfile = (customer) => ({
+  name: customer.name || '',
+  phone: maskOwnPhone(customer.phone),
+  gender: customer.gender || null,
+  dob: customer.dob || null,
+  email: customer.email || null,
+  dobLocked: !!customer.dobLockedAt,
+});
+
+// The intro offer for THIS customer at THIS branch. Computed from the resolved
+// crm settings (DEFAULTS < global < cafe < branch) AND the membership, so it is
+// zero the moment the customer has already ordered at this cafe.
+const computeOffer = (settings, membership) => {
+  const crm = settings.crm || {};
+  const eligible = crm.newCustomerDiscountEnabled !== false
+    && (!membership || (membership.status === 'new' && !membership.newCustomerDiscountUsed));
+  const percent = eligible ? Number(crm.newCustomerDiscountPercent) || 0 : 0;
+  return {
+    discountPercent: percent,
+    maxDiscount: crm.newCustomerMaxDiscount ?? null,
+    minOrder: Number(crm.newCustomerMinOrder) || 0,
+    label: percent > 0 ? `${percent}% off your first order here` : '',
+  };
+};
+
+// Resolve the branch (and its cafe) for a public request, mirroring the exact
+// active-branch check used by getPublicMenu / createPublicOrder.
+/**
+ * A blocked cafe stops serving guests as well as staff. Without this, customers
+ * could keep scanning QR codes and placing orders into a cafe nobody can log in
+ * to and nobody is watching.
+ */
+const assertCafeServing = async (res, cafeId) => {
+  if (!cafeId) return;
+  const { getSuspendedCafes } = require('../utils/tenantStatus');
+  const suspended = await getSuspendedCafes();
+  if (suspended.has(String(cafeId))) {
+    res.status(403);
+    const err = new Error('This cafe is not accepting orders right now. Please ask a member of staff.');
+    err.code = 'CAFE_SUSPENDED';
+    throw err;
+  }
+};
+
+const resolvePublicBranch = async (res, branchId) => {
+  if (!mongoose.isValidObjectId(branchId)) {
+    res.status(400);
+    throw new Error('A valid branch is required');
+  }
+  const branch = await Location.findById(branchId).select('_id status cafe').lean();
+  if (!branch || branch.status === 'deleted' || branch.status === 'inactive') {
+    res.status(404);
+    throw new Error('Branch not found');
+  }
+  await assertCafeServing(res, branch.cafe);
+  return branch;
+};
+
+const membershipFor = (customer, cafeId) => {
+  if (!customer || !cafeId) return null;
+  return (customer.memberships || []).find((m) => String(m.cafe) === String(cafeId)) || null;
+};
+
+// @desc    Recognise a returning customer from their opaque token
+// @route   GET /api/public/customer/me?token=&branchId=
+const getPublicCustomerMe = asyncHandler(async (req, res) => {
+  const { token, branchId } = req.query;
+  const customerId = verifyCustomerToken(token);
+  if (!customerId) return res.json({ success: true, data: { known: false } });
+
+  const Customer = require('../models/Customer');
+  const customer = await Customer.findById(customerId).lean();
+  if (!customer) return res.json({ success: true, data: { known: false } });
+
+  const branch = await resolvePublicBranch(res, branchId);
+  const settings = await getSettings(branch._id);
+  const membership = membershipFor(customer, branch.cafe);
+
+  res.json({
+    success: true,
+    data: {
+      known: true,
+      profile: publicProfile(customer),
+      membership: {
+        status: membership?.status || 'new',
+        isNewHere: !membership || membership.status === 'new',
+      },
+      offer: computeOffer(settings, membership),
+      crm: publicCrm(settings),
+    },
+  });
+});
+
+// @desc    First-visit registration (or re-linking an existing number)
+// @route   POST /api/public/customer/profile
+const upsertPublicCustomerProfile = asyncHandler(async (req, res) => {
+  const { branchId, tableId, qrToken, name, phone, gender, dob, email } = req.body || {};
+
+  const branch = await resolvePublicBranch(res, branchId);
+
+  // If they scanned a table, the QR must be the current one — same guarantee the
+  // ordering endpoint enforces, so a stale/forged QR can't register against a table.
+  if (tableId) {
+    if (!mongoose.isValidObjectId(tableId)) {
+      res.status(400);
+      throw new Error('Invalid table');
+    }
+    const table = await Table.findOne({ _id: tableId, locationId: branch._id }).select('publicOrderToken');
+    if (!table) {
+      res.status(400);
+      throw new Error('Invalid table');
+    }
+    assertValidTableQrToken(res, table, qrToken);
+  }
+
+  const cleanPhone = normalizePhone(phone);
+  if (cleanPhone.length < 10) {
+    res.status(400);
+    throw new Error('Please enter a valid 10-digit mobile number');
+  }
+  const cleanName = String(name || '').trim().slice(0, 120);
+  if (!cleanName) {
+    res.status(400);
+    throw new Error('Please enter your name');
+  }
+
+  const allowedGenders = ['male', 'female', 'other', 'prefer_not_to_say'];
+  const cleanGender = allowedGenders.includes(gender) ? gender : null;
+
+  let cleanEmail = null;
+  if (email) {
+    cleanEmail = String(email).trim().toLowerCase().slice(0, 160);
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      res.status(400);
+      throw new Error('Please enter a valid email address');
+    }
+  }
+
+  let cleanDob = null;
+  if (dob) {
+    const d = new Date(dob);
+    if (Number.isNaN(d.getTime())) {
+      res.status(400);
+      throw new Error('Please enter a valid date of birth');
+    }
+    const years = (Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (d.getTime() > Date.now() || years < 5 || years > 120) {
+      res.status(400);
+      throw new Error('Please enter a valid date of birth');
+    }
+    cleanDob = d;
+  }
+
+  const Customer = require('../models/Customer');
+  const now = new Date();
+
+  const set = { name: cleanName, profileCompletedAt: now };
+  if (cleanGender) set.gender = cleanGender;
+  if (cleanEmail) set.email = cleanEmail;
+
+  const setOnInsert = { branch: branch._id, source: 'qr' };
+  // dob is write-once: only offer it on INSERT here. An existing customer with a
+  // locked dob would otherwise trip the model's immutability guard on every scan.
+  const existing = await Customer.findOne({ phone: cleanPhone }).select('dobLockedAt').lean();
+  if (cleanDob && !existing?.dobLockedAt) set.dob = cleanDob;
+
+  const upsert = { $set: set, $setOnInsert: setOnInsert };
+
+  let customer;
+  const doUpsert = () => Customer.findOneAndUpdate(
+    { phone: cleanPhone },
+    upsert,
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+  try {
+    customer = await doUpsert();
+  } catch (err) {
+    if (err && err.code === 11000) customer = await doUpsert();
+    else throw err;
+  }
+
+  // Ensure a membership for this cafe, and record the branch they scanned at.
+  if (branch.cafe) {
+    await Customer.updateOne(
+      { _id: customer._id, 'memberships.cafe': { $ne: branch.cafe } },
+      {
+        $push: {
+          memberships: {
+            cafe: branch.cafe,
+            status: 'new',
+            branches: [branch._id],
+            firstBranch: branch._id,
+            joinedAt: now,
+          },
+        },
+      }
+    );
+    await Customer.updateOne(
+      { _id: customer._id, 'memberships.cafe': branch.cafe },
+      { $addToSet: { 'memberships.$.branches': branch._id } }
+    );
+    customer = await Customer.findById(customer._id).lean();
+  } else {
+    customer = customer.toObject ? customer.toObject() : customer;
+  }
+
+  const settings = await getSettings(branch._id);
+  const membership = membershipFor(customer, branch.cafe);
+
+  res.status(201).json({
+    success: true,
+    data: {
+      customerToken: signCustomerToken(customer._id),
+      profile: publicProfile(customer),
+      membership: {
+        status: membership?.status || 'new',
+        isNewHere: !membership || membership.status === 'new',
+      },
+      offer: computeOffer(settings, membership),
+    },
+  });
+});
+
+// @desc    Edit own details. DOB is rejected once locked.
+// @route   PATCH /api/public/customer/profile
+const patchPublicCustomerProfile = asyncHandler(async (req, res) => {
+  const { token, branchId, name, gender, email, phone, dob } = req.body || {};
+  const customerId = verifyCustomerToken(token);
+  if (!customerId) {
+    res.status(401);
+    throw new Error('Please register again to edit your details');
+  }
+
+  const Customer = require('../models/Customer');
+  const customer = await Customer.findById(customerId);
+  if (!customer) {
+    res.status(404);
+    throw new Error('Customer not found');
+  }
+
+  if (dob !== undefined && dob !== null && dob !== '') {
+    if (customer.dobLockedAt) {
+      res.status(400);
+      throw new Error('Date of birth cannot be changed once set');
+    }
+    const d = new Date(dob);
+    const years = (Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (Number.isNaN(d.getTime()) || d.getTime() > Date.now() || years < 5 || years > 120) {
+      res.status(400);
+      throw new Error('Please enter a valid date of birth');
+    }
+    customer.dob = d;
+  }
+
+  if (name !== undefined) {
+    const cleanName = String(name || '').trim().slice(0, 120);
+    if (!cleanName) {
+      res.status(400);
+      throw new Error('Please enter your name');
+    }
+    customer.name = cleanName;
+  }
+  if (gender !== undefined) {
+    const allowed = ['male', 'female', 'other', 'prefer_not_to_say'];
+    customer.gender = allowed.includes(gender) ? gender : null;
+  }
+  if (email !== undefined) {
+    if (!email) customer.email = null;
+    else {
+      const cleanEmail = String(email).trim().toLowerCase().slice(0, 160);
+      if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+        res.status(400);
+        throw new Error('Please enter a valid email address');
+      }
+      customer.email = cleanEmail;
+    }
+  }
+  if (phone !== undefined) {
+    const cleanPhone = normalizePhone(phone);
+    if (cleanPhone.length < 10) {
+      res.status(400);
+      throw new Error('Please enter a valid 10-digit mobile number');
+    }
+    if (cleanPhone !== customer.phone) {
+      // Never silently merge two identities — the other row may have its own
+      // spend/points history belonging to a different human.
+      const clash = await Customer.findOne({ phone: cleanPhone }).select('_id').lean();
+      if (clash && String(clash._id) !== String(customer._id)) {
+        res.status(409);
+        throw new Error('That number is already registered');
+      }
+      customer.phone = cleanPhone;
+    }
+  }
+
+  await customer.save();
+
+  let offer = { discountPercent: 0, maxDiscount: null, minOrder: 0, label: '' };
+  let membership = null;
+  if (branchId && mongoose.isValidObjectId(branchId)) {
+    const branch = await Location.findById(branchId).select('_id cafe').lean();
+    if (branch) {
+      const settings = await getSettings(branch._id);
+      membership = membershipFor(customer.toObject(), branch.cafe);
+      offer = computeOffer(settings, membership);
+    }
+  }
+
+  res.json({
+    success: true,
+    data: {
+      profile: publicProfile(customer),
+      membership: {
+        status: membership?.status || 'new',
+        isNewHere: !membership || membership.status === 'new',
+      },
+      offer,
+    },
+  });
+});
+
+// @desc    Remember that the customer dismissed the first-visit sheet.
+// @route   POST /api/public/customer/skip
+const skipPublicCustomerProfile = asyncHandler(async (req, res) => {
+  const { token } = req.body || {};
+  const customerId = verifyCustomerToken(token);
+  // No token => no customer row is created. Dismissing a form must never
+  // manufacture a ghost customer.
+  if (customerId) {
+    const Customer = require('../models/Customer');
+    await Customer.updateOne({ _id: customerId }, { $set: { skippedAt: new Date() } });
+  }
+  res.json({ success: true, data: { ok: true } });
 });
 
 // Top items for a branch over the last 45 days, from orders that actually reached
@@ -99,15 +475,17 @@ const getPopularItems = async (branchId, limit = 6) => {
 // @route   GET /api/public/menu?branchId=&tableId=
 const getPublicMenu = asyncHandler(async (req, res) => {
   const { branchId, tableId } = req.query;
+  const tableQrToken = req.query.token || req.query.qrToken;
   if (!mongoose.isValidObjectId(branchId)) {
     res.status(400);
     throw new Error('A valid branch is required');
   }
-  const branch = await Location.findById(branchId).select('name city status');
+  const branch = await Location.findById(branchId).select('name city status cafe');
   if (!branch || branch.status === 'deleted' || branch.status === 'inactive') {
     res.status(404);
     throw new Error('Branch not found');
   }
+  await assertCafeServing(res, branch.cafe);
 
   // Resolve the scanned table (if any) so the scan page can greet the guest, cap the
   // party size to the table's real capacity, and — if the table is already taken —
@@ -118,6 +496,11 @@ const getPublicMenu = asyncHandler(async (req, res) => {
     const avail = await getBranchTableAvailability(branchId);
     freeTables = avail.freeTables;
     const t = avail.tables.find((x) => x._id.toString() === tableId.toString());
+    if (!t) {
+      res.status(404);
+      throw new Error('Table not found');
+    }
+    assertValidTableQrToken(res, t, tableQrToken);
     if (t) {
       table = {
         _id: t._id,
@@ -126,6 +509,7 @@ const getPublicMenu = asyncHandler(async (req, res) => {
         capacity: t.capacity || 1,
         status: t.status,
         available: avail.isFree(t), // false → already booked/reserved right now
+        qrToken: t.publicOrderToken,
       };
     }
   }
@@ -191,6 +575,7 @@ const getPublicMenu = asyncHandler(async (req, res) => {
       table,
       freeTables, // available tables to offer when the scanned table is taken
       payments: publicPayments(settings),
+      crm: publicCrm(settings),
       popular,
       items,
     },
@@ -203,18 +588,25 @@ const createPublicOrder = asyncHandler(async (req, res) => {
   const {
     branchId, tableId, orderType, items,
     customerName, customerPhone, members, numberOfPeople,
-    paymentChoice, payLaterMethod, upiRef,
+    paymentChoice, payLaterMethod, upiRef, qrToken,
+    // Opaque identity token from a previous scan. Used ONLY to look the customer
+    // up server-side — the browser can never send a discount.
+    customerToken,
   } = req.body || {};
 
   if (!mongoose.isValidObjectId(branchId)) {
     res.status(400);
     throw new Error('A valid branch is required');
   }
-  const branch = await Location.findById(branchId).select('_id status');
-  if (!branch || branch.status === 'deleted') {
+  // Mirror the public menu's check: an inactive (closed/deactivated) branch must
+  // not accept orders either. Previously only 'deleted' was rejected here, so a
+  // customer could still place an order at a branch whose menu refuses to load.
+  const branch = await Location.findById(branchId).select('_id status cafe');
+  if (!branch || branch.status === 'deleted' || branch.status === 'inactive') {
     res.status(404);
     throw new Error('Branch not found');
   }
+  await assertCafeServing(res, branch.cafe);
   if (!Array.isArray(items) || items.length === 0) {
     res.status(400);
     throw new Error('Your cart is empty');
@@ -223,6 +615,12 @@ const createPublicOrder = asyncHandler(async (req, res) => {
   if (items.length > 50) {
     res.status(400);
     throw new Error('Too many items in one order');
+  }
+  const cleanCustomerName = (customerName || 'Guest').toString().trim().slice(0, 120) || 'Guest';
+  const cleanCustomerPhone = (customerPhone || '').toString().replace(/\D/g, '').slice(0, 15);
+  if (customerPhone && cleanCustomerPhone.length < 10) {
+    res.status(400);
+    throw new Error('Please provide a valid phone number');
   }
 
   const type = ['dine-in', 'takeaway'].includes(orderType) ? orderType : (tableId ? 'dine-in' : 'takeaway');
@@ -234,17 +632,18 @@ const createPublicOrder = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('A valid table is required for dine-in');
     }
-    tableDoc = await Table.findOne({ _id: tableId, locationId: branchId }).select('_id capacity');
+    tableDoc = await Table.findOne({ _id: tableId, locationId: branchId }).select('_id capacity publicOrderToken');
     if (!tableDoc) {
       res.status(400);
       throw new Error('That table does not belong to this branch');
     }
+    assertValidTableQrToken(res, tableDoc, qrToken);
   }
 
   // Party members + headcount, clamped to the table capacity.
   const capacity = tableDoc?.capacity || 50;
   const cleanMembers = Array.isArray(members)
-    ? members.map((m) => (m || '').toString().trim()).filter(Boolean).slice(0, capacity)
+    ? members.map((m) => (m || '').toString().trim().slice(0, 80)).filter(Boolean).slice(0, capacity)
     : [];
   let people = Math.floor(Number(numberOfPeople) || 0);
   if (people < 0) people = 0;
@@ -310,22 +709,62 @@ const createPublicOrder = asyncHandler(async (req, res) => {
     approvedAt: null,
   };
 
+  // ── New-customer intro discount, computed SERVER-SIDE ──────────────────────
+  // The browser may send a customerToken, never a discount. We resolve the
+  // customer ourselves, confirm the membership for this cafe is still 'new' with
+  // an unclaimed offer, and derive the rupee amount from the branch's settings.
+  let serverDiscountAmount = 0;
+  let resolvedCustomerId = null;
+  try {
+    const tokenCustomerId = verifyCustomerToken(customerToken);
+    if (tokenCustomerId) {
+      const Customer = require('../models/Customer');
+      const branchDoc = await Location.findById(branchId).select('cafe').lean();
+      const known = await Customer.findById(tokenCustomerId).lean();
+      if (known) {
+        resolvedCustomerId = known._id;
+        const membership = membershipFor(known, branchDoc?.cafe);
+        const offer = computeOffer(settings, membership);
+        if (offer.discountPercent > 0) {
+          const subtotal = cleanItems.reduce(
+            (acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 0),
+            0
+          );
+          if (subtotal >= (offer.minOrder || 0)) {
+            let amount = (subtotal * offer.discountPercent) / 100;
+            if (offer.maxDiscount != null) amount = Math.min(amount, Number(offer.maxDiscount) || 0);
+            serverDiscountAmount = Number(Math.max(0, amount).toFixed(2));
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // A CRM lookup must never block a customer from ordering.
+    console.error('[publicController] intro-discount resolution failed:', err.message);
+  }
+
   const order = await OrderService.createOrder({
     branch: branchId,
     tableId: type === 'dine-in' ? tableId : null,
     items: cleanItems,
-    customerName: (customerName || 'Guest').toString().slice(0, 120),
-    customerPhone: (customerPhone || '').toString().replace(/\D/g, '').slice(0, 15),
+    customerName: cleanCustomerName,
+    customerPhone: cleanCustomerPhone,
     members: cleanMembers,
     numberOfPeople: people,
     orderType: type,
     paymentType: method,
+    serverDiscountAmount,
     prepaid: false, // becomes true only once staff confirm a full UPI prepayment
     userId: null,
     source: 'qr',
     initialStatus,
     paymentApproval,
   });
+
+  // Stamp the identity now so the order is attributable even before completion.
+  if (resolvedCustomerId && order?._id) {
+    await Order.updateOne({ _id: order._id }, { $set: { customerId: resolvedCustomerId } });
+  }
 
   const message = requireApproval
     ? (wantsUpiNow
@@ -378,4 +817,12 @@ const getPublicOrderStatus = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getPublicMenu, createPublicOrder, getPublicOrderStatus };
+module.exports = {
+  getPublicMenu,
+  createPublicOrder,
+  getPublicOrderStatus,
+  getPublicCustomerMe,
+  upsertPublicCustomerProfile,
+  patchPublicCustomerProfile,
+  skipPublicCustomerProfile,
+};

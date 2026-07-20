@@ -4,12 +4,12 @@ import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
 import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import { todayInput } from '@/app/utils/dateInput';
-import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, Mail, Phone, MapPin, Edit3, Trash2, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
+import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, UserX, Mail, Phone, MapPin, Edit3, Trash2, Shield, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import Modal from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
-import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import ImpactDeleteModal from '../../../components/ui/ImpactDeleteModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -19,12 +19,26 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { Money } from '@/app/components/ui/Money';
+import { canViewPage } from '@/app/config/pages';
+import { routeForPage } from '@/app/config/routes';
+import UserPermissionEditor from '@/app/components/ui/UserPermissionEditor';
 
 
-export default function LocationStaffPage() {
+// Unified People page: canonical staff directory for every admin role. The
+// admin/users page and the branch-admin / location-admin staff pages are thin
+// wrappers around this component — the server scopes GET /users per requester.
+export default function StaffTeamPage() {
   const router = useRouter();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, locations: authLocations } = useAuth();
   const canManageStaff = currentUser?.role === 'super_admin' || currentUser?.permissions?.manageStaff === true;
+  // Block/Unblock + role/branch reassignment keep their historical admin/users reach.
+  const isTopAdmin = ['super_admin', 'admin'].includes(currentUser?.role);
+  // Per-row permission editing: same actors the Permissions page serves
+  // (location_admin is barred from PUT /users/:id/permissions server-side).
+  const canEditPermissions = ['super_admin', 'admin', 'branch_admin'].includes(currentUser?.role)
+    && canViewPage(currentUser, 'page_permissions');
+  const staffReportsBase = routeForPage(currentUser?.role, 'page_staffreports');
+  const addMemberRoute = routeForPage(currentUser?.role, 'page_addmember');
 
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +63,10 @@ export default function LocationStaffPage() {
   const [salaryFilter, setSalaryFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [permissionUser, setPermissionUser] = useState(null); // row whose access is being edited
+  const [editRole, setEditRole] = useState('staff');
+  const [editBranchIds, setEditBranchIds] = useState([]);
+  const [editAssignedLocation, setEditAssignedLocation] = useState('');
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [attendanceStaff, setAttendanceStaff] = useState(null);
   const [attendanceDate, setAttendanceDate] = useState(todayInput());
@@ -125,24 +142,32 @@ export default function LocationStaffPage() {
   // Fetch the single-user record (decrypted Aadhaar + full details) for edit/view.
   const handleEdit = async (member) => {
     setEditingStaff(member);
-    const fill = (m) => setFormData({
-      name: m.name || '',
-      email: m.email || '',
-      password: '',
-      phone: m.phone || '',
-      age: m.age || '',
-      gender: m.gender || 'Male',
-      address1: m.address1 || '',
-      city: m.city || '',
-      state: m.state || '',
-      pincode: m.pincode || '',
-      monthlySalary: m.monthlySalary || '',
-      aadharNumber: m.aadharNumber || ''
-    });
+    const fill = (m) => {
+      setFormData({
+        name: m.name || '',
+        email: m.email || '',
+        password: '',
+        phone: m.phone || '',
+        age: m.age || '',
+        gender: m.gender || 'Male',
+        address1: m.address1 || '',
+        city: m.city || '',
+        state: m.state || '',
+        country: m.country || 'India',
+        pincode: m.pincode || '',
+        monthlySalary: m.monthlySalary || '',
+        aadharNumber: m.aadharNumber || '',
+        highestQualification: m.highestQualification || '12th Pass'
+      });
+      setEditRole(m.role || 'staff');
+      setEditBranchIds(getMemberBranchIds(m));
+      setEditAssignedLocation(m.assignedLocation?._id || m.assignedLocation || '');
+    };
     fill(member);
     setShowEditModal(true);
     try {
       const res = await api.get(`/users/${member._id}`);
+      setEditingStaff(res.data.data); // full record: decrypted Aadhaar + card image
       fill(res.data.data);
     } catch (err) { /* keep list data */ }
   };
@@ -157,60 +182,48 @@ export default function LocationStaffPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const loadToast = toast.loading('Saving changes...');
     try {
-      await api.put(`/users/${editingStaff._id}`, formData);
+      const payload = { ...formData };
+      if (isTopAdmin) {
+        // Role + branch reassignment (the server only honors these fields for
+        // super_admin/admin actors — same reach the old Users page had).
+        const role = editRole || editingStaff?.role || 'staff';
+        payload.role = role;
+        if (role === 'branch_admin') {
+          const branchIds = editBranchIds.length > 0 ? editBranchIds : (editAssignedLocation ? [editAssignedLocation] : []);
+          payload.assignedLocation = branchIds[0] || '';
+          payload.accessibleLocations = branchIds;
+        } else if (role === 'admin') {
+          payload.accessibleLocations = editBranchIds;
+          delete payload.assignedLocation;
+        } else {
+          payload.assignedLocation = editAssignedLocation;
+        }
+        // Don't send empty optional fields (avoids ObjectId cast errors on the backend).
+        if (payload.assignedLocation === '') delete payload.assignedLocation;
+      }
+      if (payload.monthlySalary === '') delete payload.monthlySalary;
+      await api.put(`/users/${editingStaff._id}`, payload);
       toast.success('Staff details updated', { id: loadToast });
       setShowEditModal(false);
       fetchStaff();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not update. Please try again.', { id: loadToast });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    // The backend requires a real password (min 10 chars). Previously a default
-    // 'Staff@123' was posted silently — it failed validation and, if it hadn't,
-    // would have created accounts with a shared, guessable password.
-    if (!formData.password || formData.password.length < 10) {
-      toast.error('Password must be at least 10 characters.');
-      return;
-    }
-    if (!/^[0-9]{10}$/.test(formData.phone || '')) {
-      toast.error('Please enter a valid 10-digit phone number.');
-      return;
-    }
-    setIsSubmitting(true);
-    const loadToast = toast.loading('Adding new staff member...');
+  const handleToggleBlock = async (member) => {
+    const loadToast = toast.loading(member.isBlocked ? 'Unblocking user...' : 'Blocking user...');
     try {
-      const selectedBranchIds = formData.role === 'branch_admin'
-        ? (formData.accessibleLocations?.length ? formData.accessibleLocations : (formData.assignedLocation ? [formData.assignedLocation] : []))
-        : [];
-      const data = {
-        ...formData,
-        confirmPassword: formData.password,
-        role: formData.role || 'staff',
-        assignedLocation: formData.role === 'branch_admin'
-          ? (selectedBranchIds[0] || locationFilter || '')
-          : (formData.assignedLocation || locationFilter || ''),
-        accessibleLocations: formData.role === 'branch_admin' ? selectedBranchIds : []
-      };
-
-      await api.post('/auth/register', data);
-      toast.success('Staff member has been added', { id: loadToast });
-      setShowAddModal(false);
+      await api.patch(`/users/${member._id}/toggle-block`);
+      toast.success(member.isBlocked ? 'User unblocked' : 'User blocked', { id: loadToast });
       fetchStaff();
-      // Reset form
-      setFormData({
-        name: '', email: '', password: '', phone: '', age: '', gender: 'Male',
-        address1: '', city: '', state: '', country: 'India', pincode: '', monthlySalary: '',
-        role: 'staff', assignedLocation: '', accessibleLocations: [], aadharNumber: '', highestQualification: '12th Pass'
-      });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not add staff. Please try again.', { id: loadToast });
-    } finally {
-      setIsSubmitting(false);
+      toast.error(error.response?.data?.message || 'Could not update user. Please try again.', { id: loadToast });
     }
   };
 
@@ -229,17 +242,19 @@ export default function LocationStaffPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async ({ mode, replacementId }) => {
     if (!showDeleteConfirm) return;
-    const loadToast = toast.loading('Deleting staff record...');
+    const loadToast = toast.loading('Removing staff record...');
     try {
-      await api.delete(`/users/${showDeleteConfirm}`);
-      setStaff(staff.filter(s => s._id !== showDeleteConfirm));
-      toast.success('Staff member deleted', { id: loadToast });
+      const res = await api.delete(`/users/${showDeleteConfirm}`, { data: { mode, replacementId } });
+      // A cascade removes the team as well, so refetch instead of splicing one
+      // row out of local state and leaving the rest of the list stale.
+      if (mode === 'cascade' || mode === 'reassign') fetchStaff();
+      else setStaff(staff.filter((s) => s._id !== showDeleteConfirm));
+      toast.success(res.data?.message || 'Staff member removed', { id: loadToast, duration: 6000 });
+      setShowDeleteConfirm(null);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not delete. Please try again.', { id: loadToast });
-    } finally {
-      setShowDeleteConfirm(null);
     }
   };
 
@@ -311,12 +326,21 @@ export default function LocationStaffPage() {
                     <Info size={18} />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/staff-reports/${member._id}`); }}
+                    onClick={(e) => { e.stopPropagation(); router.push(`${staffReportsBase}/${member._id}`); }}
                     className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
                     title="View report"
                   >
                     <Award size={18} />
                   </button>
+                  {canEditPermissions && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPermissionUser(member); }}
+                      className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
+                      title="Edit permissions"
+                    >
+                      <Shield size={18} />
+                    </button>
+                  )}
                   {canManageStaff && (
                     <>
                       <button
@@ -445,7 +469,7 @@ export default function LocationStaffPage() {
       roots = [...mappedAdmins, ...independentBranches, ...independentStaff];
     } else if (currentUser?.role === 'admin') {
       roots = getAdminChildren(currentUser);
-    } else if (currentUser?.role === 'branch_admin') {
+    } else if (currentUser?.role === 'branch_admin' || currentUser?.role === 'location_admin') {
       const myLocIds = getMemberBranchIds(currentUser);
       const myLocName = currentUser.assignedLocation?.name?.toLowerCase().trim();
 
@@ -543,7 +567,7 @@ export default function LocationStaffPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push('/dashboard/add-member')}
+                    onClick={() => router.push(addMemberRoute)}
                     className="flex items-center gap-2 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) px-5 py-3 rounded-xl text-xs font-semibold tracking-normal shadow-sm "
                   >
                     <Plus size={16} />
@@ -643,23 +667,25 @@ export default function LocationStaffPage() {
                   className="min-w-35 max-w-[170px]"
                 />
 
-                {/* 📍 Compact Location Filter */}
-                <PremiumSelect
-                  icon={MapPin}
-                  value={locationFilter}
-                  onChange={(val) => {
-                    setLocationFilter(val);
-                    setPage(1);
-                  }}
-                  options={[
-                    { label: 'All Locations', value: '' },
-                    ...locations.map(loc => ({
-                      label: `${loc.city} - ${loc.name}`,
-                      value: loc._id
-                    }))
-                  ]}
-                  className="min-w-[150px] max-w-45"
-                />
+                {/* 📍 Compact Location Filter (hidden when only one branch is accessible) */}
+                {(authLocations?.length || 0) > 1 && (
+                  <PremiumSelect
+                    icon={MapPin}
+                    value={locationFilter}
+                    onChange={(val) => {
+                      setLocationFilter(val);
+                      setPage(1);
+                    }}
+                    options={[
+                      { label: 'All Locations', value: '' },
+                      ...locations.map(loc => ({
+                        label: `${loc.city} - ${loc.name}`,
+                        value: loc._id
+                      }))
+                    ]}
+                    className="min-w-[150px] max-w-45"
+                  />
+                )}
               </div>
             )}
           </div>
@@ -692,8 +718,15 @@ export default function LocationStaffPage() {
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-semibold">
-                            {member.name.charAt(0)}
+                          <div className="relative shrink-0">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner transition-transform font-semibold overflow-hidden">
+                              {member.profileImageUrl ? (
+                                <img src={member.profileImageUrl} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                member.name.charAt(0)
+                              )}
+                            </div>
+                            <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-(--color-surface) ${member.isBlocked ? 'bg-danger' : 'bg-success'}`} />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-(--color-text-primary)">{member.name}</p>
@@ -733,7 +766,7 @@ export default function LocationStaffPage() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/staff-reports/${member._id}`); }}
+                            onClick={(e) => { e.stopPropagation(); router.push(`${staffReportsBase}/${member._id}`); }}
                             className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
                             title="View report"
                           >
@@ -749,9 +782,34 @@ export default function LocationStaffPage() {
                               setShowAttendanceModal(true);
                             }}
                             className="p-2.5 text-success hover:bg-success/10 rounded-xl transition-all"
+                            title="Mark attendance"
                           >
                             <UserCheck size={18} />
                           </motion.button>
+                          {canEditPermissions && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); setPermissionUser(member); }}
+                              className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                              title="Edit permissions"
+                            >
+                              <Shield size={18} />
+                            </motion.button>
+                          )}
+                          {isTopAdmin && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => { e.stopPropagation(); handleToggleBlock(member); }}
+                              className={`p-2.5 rounded-xl transition-all ${member.isBlocked
+                                ? 'text-success hover:bg-success/10'
+                                : 'text-(--color-text-muted) hover:text-danger hover:bg-danger/10'}`}
+                              title={member.isBlocked ? 'Unblock user' : 'Block user'}
+                            >
+                              {member.isBlocked ? <UserCheck size={18} /> : <UserX size={18} />}
+                            </motion.button>
+                          )}
                           {canManageStaff && (
                             <>
                               <motion.button
@@ -839,14 +897,11 @@ export default function LocationStaffPage() {
         )}
 
         <Modal
-          isOpen={showEditModal || showAddModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setShowAddModal(false);
-          }}
-          title={showAddModal ? "Add New Staff Member" : "Edit Staff Details"}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          title="Edit Staff Details"
         >
-          <form onSubmit={showAddModal ? handleAdd : handleUpdate} className="space-y-6">
+          <form onSubmit={handleUpdate} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Full Name</label>
@@ -881,52 +936,56 @@ export default function LocationStaffPage() {
               </div>
             </div>
 
-            {showAddModal && (
-              <div className="grid grid-cols-2 gap-6">
+            {/* Role & branch reassignment — historically a Users-page feature; the
+                server only honors these fields for super_admin/admin actors. */}
+            {isTopAdmin && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pt-6 border-t border-(--color-border)">
                 <PremiumSelect
-                  label="Role"
-                  value={formData.role || 'staff'}
-                  onChange={(val) => setFormData({ ...formData, role: val, assignedLocation: '', accessibleLocations: [] })}
+                  label="Staff Role"
+                  value={editRole}
+                  onChange={(val) => {
+                    setEditRole(val);
+                    setEditBranchIds(['branch_admin', 'admin'].includes(val) ? getMemberBranchIds(editingStaff) : []);
+                  }}
                   options={[
-                    { label: 'Staff Member', value: 'staff' },
-                    { label: 'Kitchen Chef', value: 'chef' },
-                    { label: 'Branch Admin', value: 'branch_admin' }
+                    { label: 'Staff', value: 'staff' },
+                    { label: 'Chef', value: 'chef' },
+                    { label: 'Branch Admin', value: 'branch_admin' },
+                    { label: 'Admin', value: 'admin' }
                   ]}
                 />
-                {formData.role === 'branch_admin' ? (
-                  <PremiumSelect
-                    label="Managed Branches"
-                    value={formData.accessibleLocations || []}
-                    onChange={(ids) => setFormData({
-                      ...formData,
-                      accessibleLocations: ids,
-                      assignedLocation: ids[0] || ''
-                    })}
-                    options={locations.map(loc => ({
-                      label: `${loc.city} - ${loc.name}`,
-                      value: loc._id
-                    }))}
-                    multiple
-                    placeholder="Select branches"
-                  />
+                {['branch_admin', 'admin'].includes(editRole) ? (
+                  <div>
+                    <PremiumSelect
+                      label="Managed Branches"
+                      value={editBranchIds}
+                      onChange={setEditBranchIds}
+                      options={locations.map(loc => ({
+                        label: `${loc.city} - ${loc.name}`,
+                        value: loc._id
+                      }))}
+                      multiple
+                      placeholder="Select branches"
+                    />
+                    {editRole === 'branch_admin' && (
+                      <p className="text-[11px] font-medium text-(--color-text-muted) mt-2 ml-1">First selected branch is saved as the primary branch.</p>
+                    )}
+                  </div>
                 ) : (
                   <PremiumSelect
-                    label="Assign Branch"
-                    value={formData.assignedLocation || ''}
-                    onChange={(val) => setFormData({ ...formData, assignedLocation: val })}
-                    options={locations.map(loc => ({
-                      label: `${loc.city} - ${loc.name}`,
-                      value: loc._id
-                    }))}
+                    label="Assigned Branch"
+                    value={editAssignedLocation}
+                    onChange={setEditAssignedLocation}
+                    options={[
+                      { label: 'No branch (Global)', value: '' },
+                      ...locations.map(loc => ({
+                        label: `${loc.city} - ${loc.name}`,
+                        value: loc._id
+                      }))
+                    ]}
+                    placeholder="Select branch"
                   />
                 )}
-              </div>
-            )}
-
-            {showAddModal && (
-              <div>
-                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Password</label>
-                <input required type="password" minLength={10} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="At least 10 characters" />
               </div>
             )}
 
@@ -975,6 +1034,21 @@ export default function LocationStaffPage() {
                 </div>
               </div>
 
+              {/* Aadhaar card image preview (from the enriched GET /users/:id record) */}
+              <div>
+                <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Aadhaar Card Image</label>
+                {editingStaff?.aadharImage ? (
+                  <a href={editingStaff.aadharImage} target="_blank" rel="noopener noreferrer" className="block w-fit">
+                    <img src={editingStaff.aadharImage} alt="Aadhaar card" className="max-h-52 w-auto rounded-xl border border-(--color-border) object-contain bg-(--color-bg-soft)" />
+                    <span className="text-[11px] font-medium text-primary mt-1.5 inline-block">Open full image ↗</span>
+                  </a>
+                ) : (
+                  <div className="p-6 rounded-xl border border-dashed border-(--color-border) text-center text-xs font-medium text-(--color-text-muted)">
+                    No Aadhaar image uploaded
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Salary (₹)</label>
                 <input required type="number" min="0" onKeyDown={blockNegative} className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.monthlySalary} onChange={e => setFormData({ ...formData, monthlySalary: e.target.value })} />
@@ -986,17 +1060,20 @@ export default function LocationStaffPage() {
               disabled={isSubmitting}
               className="w-full py-5 bg-primary text-(--color-on-primary) dark:text-(--color-on-primary) rounded-xl font-semibold text-xs tracking-normal shadow-sm  mt-4 disabled:opacity-50"
             >
-              {showAddModal ? "Add Staff" : "Save Changes"}
+              Save Changes
             </motion.button>
           </form>
         </Modal>
 
-        <ConfirmDialog
+        {/* Replaces a flat "are you sure": shows what the removal touches, what
+            survives, and — for a lead — who can take their place. */}
+        <ImpactDeleteModal
           isOpen={!!showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(null)}
+          entity="user"
+          id={showDeleteConfirm}
+          name={staff.find((s) => s._id === showDeleteConfirm)?.name}
           onConfirm={handleDelete}
-          title="Delete this staff member?"
-          message="This staff member will be permanently deleted. This cannot be undone."
         />
 
         {/* Detailed Staff Details Modal */}
@@ -1011,11 +1088,15 @@ export default function LocationStaffPage() {
               {/* Header Profile */}
               <div className="flex flex-col md:flex-row items-center md:items-start gap-5 pb-8 border-b border-(--color-border) dark:border-(--color-border)">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform">
-                    {viewingStaff.name.charAt(0)}
+                  <div className="h-32 w-32 rounded-xl bg-gradient-to-br from-primary to-primary text-white flex items-center justify-center text-5xl font-semibold shadow-sm  transition-transform overflow-hidden">
+                    {viewingStaff.profileImageUrl ? (
+                      <img src={viewingStaff.profileImageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      viewingStaff.name.charAt(0)
+                    )}
                   </div>
-                  <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-success border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white">
-                    <UserCheck size={14} />
+                  <div className={`absolute -bottom-2 -right-2 h-8 w-8 ${viewingStaff.isBlocked ? 'bg-danger' : 'bg-success'} border-4 border-(--color-border) dark:border-(--color-border) rounded-full flex items-center justify-center text-white`}>
+                    {viewingStaff.isBlocked ? <UserX size={14} /> : <UserCheck size={14} />}
                   </div>
                 </div>
 
@@ -1031,8 +1112,8 @@ export default function LocationStaffPage() {
                     <span className="px-2.5 py-1 bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) text-[11px] font-medium tracking-normal rounded-full">
                       ID: {viewingStaff._id.slice(-6).toUpperCase()}
                     </span>
-                    <span className="px-2.5 py-1 bg-success/10 text-success text-[11px] font-medium tracking-normal rounded-full">
-                      Active
+                    <span className={`px-2.5 py-1 text-[11px] font-medium tracking-normal rounded-full ${viewingStaff.isBlocked ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                      {viewingStaff.isBlocked ? 'Blocked' : 'Active'}
                     </span>
                   </div>
                 </div>
@@ -1153,7 +1234,7 @@ export default function LocationStaffPage() {
                 <Button
                   variant="outline"
                   className="flex-1 py-5 !rounded-xl font-medium text-xs tracking-normal"
-                  onClick={() => router.push(`/dashboard/admin/staff-reports/${viewingStaff._id}`)}
+                  onClick={() => router.push(`${staffReportsBase}/${viewingStaff._id}`)}
                 >
                   View Report
                 </Button>
@@ -1227,6 +1308,15 @@ export default function LocationStaffPage() {
             </div>
           )}
         </Modal>
+
+        {/* Per-row permission editing (shared with the Permissions page).
+            Payload always includes `permissions` — see UserPermissionEditor. */}
+        <UserPermissionEditor
+          isOpen={!!permissionUser}
+          onClose={() => setPermissionUser(null)}
+          targetUser={permissionUser}
+          onSaved={fetchStaff}
+        />
       </div>
     </PageTransition>
   );

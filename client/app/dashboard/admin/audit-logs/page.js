@@ -17,10 +17,13 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import ExportActions from '@/app/components/ui/ExportActions';
 import { Num } from '@/app/components/ui/Money';
 import Modal from '@/app/components/ui/Modal';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 export default function AuditLogsPage() {
   const { user } = useAuth();
   const [logs, setLogs] = useState([]);
+  // Full filtered set (bounded) used for Export, so it is not limited to the page on screen.
+  const [exportLogs, setExportLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
@@ -46,10 +49,20 @@ export default function AuditLogsPage() {
     else setRefetching(true);
     progress.start();
     try {
-      const res = await api.get(`/super-admin/audit-logs?page=${page}&actionType=${actionFilter}&search=${encodeURIComponent(searchUserId)}`);
-      setLogs(res.data.data);
-      setTotalPages(res.data.pagination?.pages || 1);
-      setTotalLogs(res.data.pagination?.total || 0);
+      const query = `actionType=${actionFilter}&search=${encodeURIComponent(searchUserId)}`;
+      // Second request builds the EXPORT dataset: the same filters but the whole
+      // result set (bounded), so "Export" no longer silently emits just the page
+      // currently on screen. allSettled so an export-fetch failure can't blank the table.
+      const [res, exportRes] = await Promise.allSettled([
+        api.get(`/super-admin/audit-logs?page=${page}&${query}`),
+        api.get(`/super-admin/audit-logs?page=1&limit=1000&${query}`),
+      ]);
+      if (res.status === 'fulfilled') {
+        setLogs(res.value.data.data);
+        setTotalPages(res.value.data.pagination?.pages || 1);
+        setTotalLogs(res.value.data.pagination?.total || 0);
+      }
+      setExportLogs(exportRes.status === 'fulfilled' ? (exportRes.value.data.data || []) : []);
     } catch (err) {
       console.error('Could not load activity history. Please try again.');
     } finally {
@@ -169,7 +182,7 @@ export default function AuditLogsPage() {
               ]}
             />
             <ExportActions
-              data={logs}
+              data={exportLogs.length ? exportLogs : logs}
               columns={columns}
               filename={`AuditLogs_${new Date().toISOString().split('T')[0]}`}
             />
@@ -232,7 +245,7 @@ export default function AuditLogsPage() {
                             {log.performedBy?.name?.substring(0, 2).toUpperCase() || 'SY'}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-(--color-text-primary) truncate">{log.performedBy?.name || 'System'}</p>
+                            <p className="text-sm font-medium text-(--color-text-primary) truncate">{displayUserName(log.performedBy, 'System')}</p>
                             <p className="text-[10px] font-medium text-(--color-text-muted) uppercase tracking-wide mt-0.5">{log.performedBy?.role || 'SYSTEM'}</p>
                           </div>
                         </div>
@@ -293,7 +306,7 @@ export default function AuditLogsPage() {
 
             <div className="space-y-2.5">
               {[
-                ['Performed by', selectedLog.performedBy?.name || 'System'],
+                ['Performed by', displayUserName(selectedLog.performedBy, 'System')],
                 ['Email', selectedLog.performedBy?.email || '—'],
                 ['Role', (selectedLog.performedBy?.role || selectedLog.role || 'system').replace(/_/g, ' ')],
               ].map(([label, val]) => (

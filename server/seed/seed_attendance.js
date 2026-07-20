@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const User = require('./models/User');
-const Location = require('./models/Location');
-const Attendance = require('./models/Attendance');
-const AuditLog = require('./models/AuditLog');
+const User = require('../models/User');
+const Location = require('../models/Location');
+const Attendance = require('../models/Attendance');
+const AuditLog = require('../models/AuditLog');
 require('dotenv').config();
 
 async function seed() {

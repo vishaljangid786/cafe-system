@@ -17,7 +17,7 @@ const branchIdsForCafe = async (cafeId) => {
 };
 
 const adminIdsForCafe = async (cafeId) => {
-  const admins = await User.find({ role: 'admin', cafes: cafeId }).select('_id').lean();
+  const admins = await User.find({ role: 'admin', cafes: cafeId, deletedAt: null }).select('_id').lean();
   return admins.map((a) => a._id);
 };
 

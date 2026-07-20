@@ -168,6 +168,17 @@ const ACTION_SCOPES = [
       { action: 'delete', label: 'Delete branches', legacy: { roles: [], perms: ['manageBranches'] } },
     ],
   },
+  {
+    // Customers & CRM. page_customers already exists in pageAccess.js — this adds
+    // the granular WRITE actions on top of that read access.
+    scope: 'customers', pageKey: 'page_customers', label: 'Customers & CRM',
+    actions: [
+      { action: 'modify', label: 'Edit customer details', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['viewAnalytics'] } },
+      { action: 'discount', label: 'Set new-customer discount', legacy: { roles: ['admin', 'branch_admin'], perms: [] } },
+      { action: 'campaign', label: 'Generate birthday / offer coupons', legacy: { roles: ['admin'], perms: ['manageCoupons'] } },
+      { action: 'export', label: 'Export customer report', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['exportReports'] } },
+    ],
+  },
 ];
 
 // Flat list of all valid action keys, e.g. 'orders.add'.

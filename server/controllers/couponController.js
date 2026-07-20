@@ -1,8 +1,10 @@
+const mongoose = require('mongoose');
 const Coupon = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const { clampLimit, escapeRegex } = require('../utils/accessControl');
+const { normalizePhone } = require('../utils/phone');
 
 // @desc    Get all coupons (admin view)
 // @route   GET /api/coupons
@@ -212,6 +214,55 @@ const applyCoupon = asyncHandler(async (req, res) => {
   if (orderAmount < coupon.minOrderAmount) {
     res.status(400);
     throw new Error(`Order amount must be at least ${coupon.minOrderAmount}`);
+  }
+
+  // ── Scope + audience enforcement ───────────────────────────────────────────
+  // Without these a birthday coupon generated for one customer at one cafe could
+  // be typed in by anybody, anywhere. `branchId` identifies where it is being
+  // redeemed; `customerPhone` who is redeeming.
+  const { branchId, customerPhone } = req.body;
+
+  if (coupon.cafe || (coupon.branches && coupon.branches.length)) {
+    if (!mongoose.isValidObjectId(branchId)) {
+      res.status(400);
+      throw new Error('This offer is only valid at selected outlets');
+    }
+    const Location = require('../models/Location');
+    const branch = await Location.findById(branchId).select('cafe').lean();
+    if (!branch) {
+      res.status(400);
+      throw new Error('This offer is not valid here');
+    }
+    if (coupon.cafe && String(branch.cafe) !== String(coupon.cafe)) {
+      res.status(400);
+      throw new Error('This offer is not valid at this cafe');
+    }
+    if (coupon.branches && coupon.branches.length) {
+      const allowed = coupon.branches.map(String);
+      if (!allowed.includes(String(branchId))) {
+        res.status(400);
+        throw new Error('This offer is not valid at this outlet');
+      }
+    }
+  }
+
+  if (coupon.audience && coupon.audience !== 'public') {
+    const assigned = (coupon.assignedCustomers || []).map(String);
+    if (assigned.length === 0) {
+      res.status(400);
+      throw new Error('This offer is not available on this order');
+    }
+    const phone = normalizePhone(customerPhone);
+    if (phone.length < 10) {
+      res.status(400);
+      throw new Error('This offer requires the customer’s mobile number');
+    }
+    const Customer = require('../models/Customer');
+    const customer = await Customer.findOne({ phone }).select('_id').lean();
+    if (!customer || !assigned.includes(String(customer._id))) {
+      res.status(400);
+      throw new Error('This offer belongs to a different customer');
+    }
   }
 
   // Determine applicable subtotal

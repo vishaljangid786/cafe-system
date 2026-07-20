@@ -140,6 +140,17 @@ export const ACTION_SCOPES = [
       { action: 'delete', label: 'Delete', legacy: { roles: [], perms: ['manageBranches'] } },
     ],
   },
+
+  // Customers & CRM — page_customers already grants READ; these are the writes.
+  {
+    scope: 'customers', pageKey: 'page_customers', label: 'Customers & CRM',
+    actions: [
+      { action: 'modify', label: 'Edit customer details', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['viewAnalytics'] } },
+      { action: 'discount', label: 'Set new-customer discount', legacy: { roles: ['admin', 'branch_admin'], perms: [] } },
+      { action: 'campaign', label: 'Generate birthday / offer coupons', legacy: { roles: ['admin'], perms: ['manageCoupons'] } },
+      { action: 'export', label: 'Export customer report', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['exportReports'] } },
+    ],
+  },
 ];
 
 export const ALL_ACTION_KEYS = ACTION_SCOPES.flatMap((s) => s.actions.map((a) => `${s.scope}.${a.action}`));

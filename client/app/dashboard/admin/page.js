@@ -30,13 +30,26 @@ import { motion, AnimatePresence } from 'framer-motion';import ExportActions fr
 import { SlideIn } from '@/app/components/ui/AnimatedContainer';
 import Link from 'next/link';
 import PeopleDrawer from './components/PeopleDrawer';
+import CashFlowCard from '../../components/revenue/CashFlowCard';
 import CashDrawerWidget from './components/CashDrawerWidget';
 import UniversalDateFilter from '../../components/ui/UniversalDateFilter';
 import { formatIndianCompact } from '../../utils/formatNumber';
 import { Money, Num } from '@/app/components/ui/Money';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 // Local YYYY-MM-DD (avoids the UTC shift toISOString() causes for IST midnight).
 const fmtLocalDate = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+const ViewLink = ({ href, label = 'View' }) => (
+  <Link
+    href={href}
+    onClick={(e) => e.stopPropagation()}
+    className="group/vl flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-primary/80 hover:text-primary transition-colors"
+  >
+    {label}
+    <ArrowUpRight size={13} className="transition-transform group-hover/vl:translate-x-0.5 group-hover/vl:-translate-y-0.5" />
+  </Link>
+);
 
 export default function AdminDashboard() {
   const { theme } = useTheme();
@@ -195,19 +208,15 @@ export default function AdminDashboard() {
     return ts.filter((d) => new Date(`${d.date}T00:00:00`) >= cutoff);
   })();
 
+  // Profit margin % over the filtered range — derived from the same summary the
+  // stat tiles use, so it follows the global date/branch filters automatically.
+  const summaryRevenue = analytics?.summary?.totalRevenue || 0;
+  const profitMargin = summaryRevenue > 0
+    ? ((analytics?.summary?.netProfit || 0) / summaryRevenue) * 100
+    : 0;
+
   // Small "View →" affordance so every chart links to its full page. stopPropagation
   // keeps it from triggering any click handler on a wrapping card.
-  const ViewLink = ({ href, label = 'View' }) => (
-    <Link
-      href={href}
-      onClick={(e) => e.stopPropagation()}
-      className="group/vl flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-primary/80 hover:text-primary transition-colors"
-    >
-      {label}
-      <ArrowUpRight size={13} className="transition-transform group-hover/vl:translate-x-0.5 group-hover/vl:-translate-y-0.5" />
-    </Link>
-  );
-
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
@@ -266,6 +275,10 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <div className="mb-6">
+        <CashFlowCard locationId={activeLocationId !== 'all' ? activeLocationId : undefined} />
+      </div>
+
       {refetching ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -288,7 +301,21 @@ export default function AdminDashboard() {
           <StatWidget label="Total Sales" value={<Money value={analytics?.summary?.totalRevenue || 0} animate />} icon={TrendingUp} color="amber" delay={0} />
         </Link>
         <Link href={`${dashPrefix}/revenue`} className="contents">
-          <StatWidget label="Net Profit (Revenue)" value={<Money value={analytics?.summary?.netProfit || 0} animate />} icon={Zap} color="green" delay={0.1} />
+          <StatWidget
+            label="Net Profit (Revenue)"
+            value={
+              <span className="inline-flex items-baseline gap-2">
+                <Money value={analytics?.summary?.netProfit || 0} animate />
+                <span className={`text-sm font-bold ${profitMargin >= 0 ? 'text-success' : 'text-danger'}`}>
+                  <CountUp value={profitMargin} suffix="%" decimals={1} />
+                </span>
+              </span>
+            }
+            sub={<>Revenue: <Money value={analytics?.summary?.totalRevenue || 0} /></>}
+            icon={Zap}
+            color="green"
+            delay={0.1}
+          />
         </Link>
         <Link href={orderAnalyticsHref} className="contents">
           <StatWidget label="Cancel Rate" value={<CountUp value={analytics?.summary?.cancellationRate || 0} suffix="%" decimals={1} />} icon={TrendingDown} color="rose" delay={0.4} />
@@ -591,7 +618,7 @@ export default function AdminDashboard() {
                       <h5 className="text-sm font-medium text-(--color-text-primary) truncate w-32 sm:w-auto">
                         Order #{rev._id.substring(rev._id.length - 6).toUpperCase()}
                       </h5>
-                      <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Marked by {rev.staffId?.name || 'Staff'}</p>
+                      <p className="text-[11px] font-medium text-(--color-text-muted) tracking-normal">Marked by {displayUserName(rev.staffId, 'Staff')}</p>
                     </div>
                   </div>
                   <div className="text-right">

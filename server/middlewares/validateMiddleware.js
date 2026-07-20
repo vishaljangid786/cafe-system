@@ -77,6 +77,7 @@ const timeToMinutes = (t) => {
 };
 
 const bookingSchema = [
+  body('locationId').isMongoId().withMessage('Valid location is required'),
   body('date').isISO8601().withMessage('Valid date is required'),
   body('startTime').isString().bail().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Valid start time required (HH:mm)'),
   body('endTime').isString().bail().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Valid end time required (HH:mm)')
@@ -92,7 +93,11 @@ const bookingSchema = [
       }
       return true;
     }),
-  body('numberOfGuests').isInt({ min: 1 }).withMessage('At least 1 guest required'),
+  body('numberOfGuests').isInt({ min: 1, max: 500 }).withMessage('At least 1 guest required'),
+  body('guestName').optional({ checkFalsy: true }).trim().isLength({ max: 120 }).withMessage('Guest name is too long'),
+  body('guestEmail').optional({ checkFalsy: true }).trim().isEmail().normalizeEmail().withMessage('Valid guest email required'),
+  body('guestPhone').optional({ checkFalsy: true }).trim().matches(/^[0-9+\-\s()]{7,20}$/).withMessage('Valid guest phone required'),
+  body('specialRequests').optional({ checkFalsy: true }).trim().isLength({ max: 500 }).withMessage('Special requests are too long'),
 ];
 
 const couponSchema = [

@@ -52,6 +52,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
+api.interceptors.request.use((config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (!['get', 'head', 'options'].includes(method)) {
+    const csrfToken = Cookies.get('csrfToken');
+    if (csrfToken) {
+      config.headers = config.headers || {};
+      config.headers['x-csrf-token'] = csrfToken;
+    }
+  }
+  return config;
+});
+
 // Response Interceptor: Handle Global Errors
 api.interceptors.response.use(
   (response) => response,
@@ -71,12 +83,33 @@ api.interceptors.response.use(
       }
     }
 
+    // A blocked cafe answers 403 on every route, which is indistinguishable
+    // from a routine permission denial by status alone — hence the explicit
+    // code. Broadcast it so the dashboard can swap itself for the lock screen
+    // instead of every page firing its own "could not load" toast.
+    if (status === 403 && error.response?.data?.code === 'CAFE_SUSPENDED') {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('cafe-suspended', { detail: error.response.data.suspension || {} })
+        );
+      }
+    }
+
+    // A removed account keeps whatever token it was holding until that token
+    // expires, so bounce it out rather than leaving a dead dashboard on screen.
+    if (status === 403 && error.response?.headers?.['x-account-state'] === 'deleted') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        Cookies.remove('selectedLocation');
+        window.location.href = '/login?removed=1';
+      }
+    }
+
     // For GET requests returning 404, treat it as "no data found" rather than a
     // hard failure. Pages that do setData(res.data?.data || []) will just render
     // an empty state instead of firing a "could not load" toast.
     // NOTE: this can mask a genuinely broken/mistyped endpoint as "empty", so in
     // development we log the swallowed 404 to keep real bugs visible.
-    if (status === 404 && error.config?.method === 'get') {
+    if (status === 404 && error.config?.method === 'get' && error.config?.allowEmpty404 === true) {
       if (process.env.NODE_ENV !== 'production') {
         console.warn(`[api] GET ${error.config?.url} returned 404 — treating as empty data. Verify the endpoint is correct.`);
       }

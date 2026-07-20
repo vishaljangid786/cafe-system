@@ -110,7 +110,7 @@ const assertBranchesUnderOneAdmin = async (branchIds) => {
   const User = require('../models/User');
   const ids = normalizeIdList(branchIds);
   if (ids.length <= 1) return;
-  const admins = await User.find({ role: 'admin', accessibleLocations: { $in: ids } })
+  const admins = await User.find({ role: 'admin', accessibleLocations: { $in: ids }, deletedAt: null })
     .select('accessibleLocations')
     .lean();
   const ownedByOneAdmin = admins.some((a) => {

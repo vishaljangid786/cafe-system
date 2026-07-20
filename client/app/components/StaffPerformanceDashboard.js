@@ -116,8 +116,11 @@ export default function StaffPerformanceDashboard({ user, role }) {
   };
 
   if (!user) return null;
-  // First open (and any reload) shows the branded loader instead of a skeleton.
-  if (loading) return <LoadingScreen fullScreen={false} />;
+  // ONLY the first open shows the branded loader. Returning it for every `loading`
+  // state blanked the entire dashboard (header, filters and all) on each page
+  // change or filter tweak — and made the inline skeleton below unreachable.
+  // Once stats exist, refetches fall through and the skeleton covers just the grid.
+  if (loading && !stats) return <LoadingScreen fullScreen={false} />;
 
   return (
     <div className="max-w-400 mx-auto pb-10 space-y-6">

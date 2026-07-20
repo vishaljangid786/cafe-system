@@ -143,7 +143,9 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
   // freshest value even if several clicks fire before a re-render (switchLocationIds
   // takes a full array, not a functional updater — this restores that safety).
   const currentBranchIdsRef = useRef(currentBranchIds);
-  currentBranchIdsRef.current = currentBranchIds;
+  useEffect(() => {
+    currentBranchIdsRef.current = currentBranchIds;
+  }, [currentBranchIds]);
   const allBranchesActive = (!selectedCafe || selectedCafe === 'all')
     ? currentBranchIds.length === 0
     : (allBranchIds.length > 0 && allBranchIds.every((id) => currentBranchIds.includes(id)));
@@ -244,7 +246,9 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                               key={id}
                               onClick={() => {
                                 const cur = currentBranchIdsRef.current;
-                                switchLocationIds(cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]);
+                                const next = cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id];
+                                currentBranchIdsRef.current = next;
+                                switchLocationIds(next);
                               }}
                               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${checked ? 'bg-(--color-primary-soft) text-primary' : 'hover:bg-(--color-surface-soft) text-(--color-text-primary)'}`}
                             >

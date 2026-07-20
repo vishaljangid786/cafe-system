@@ -7,9 +7,12 @@
     "dev": "nodemon server.js",
     "test": "node test/smoke.test.js",
     "test:int": "node --test test/integration.test.js",
-    "seed": "node seed/data.js",
+    "seed": "node seed/moonlightCafe.js",
+    "seed:force": "node seed/moonlightCafe.js --force",
+    "seed:legacy-demo": "node seed/data.js",
     "seed:clear": "node seed/data.js --clear",
-    "seed:attendance": "node seed_attendance.js"
+    "seed:attendance": "node seed/seed_attendance.js",
+    "seed:orders": "node seed/seed_orders.js"
   },
   "keywords": [],
   "author": "",

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { routeForPage } from '../config/routes';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 
 const inr = (n) => formatIndianCompact(n, { currency: true });
@@ -130,8 +131,7 @@ function CompareRow({ label, aVal, bVal, fmt, better }) {
 
 export default function StaffComparison({ user }) {
   const router = useRouter();
-  const basePath = user?.role === 'branch_admin' ? '/dashboard/branch-admin'
-    : user?.role === 'location_admin' ? '/dashboard/location-admin' : '/dashboard/admin';
+  const reportsHref = routeForPage(user?.role, 'page_staffreports');
   const { singleBranchId } = useBranchScope();
 
   const [staffList, setStaffList] = useState([]);
@@ -234,7 +234,7 @@ export default function StaffComparison({ user }) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push(`${basePath}/staff-reports`)}
+            onClick={() => router.push(reportsHref)}
             className="p-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:text-primary transition-all shrink-0"
             title="Back to staff reports"
           >
@@ -327,7 +327,7 @@ export default function StaffComparison({ user }) {
           </div>
 
           <p className="text-[10px] text-(--color-text-muted) text-center">
-            Bar shows each metric's share between the two. Trophy marks the better value where higher/lower clearly wins; salary, coupons and discounts are shown for context only.
+            Bar shows each metric&apos;s share between the two. Trophy marks the better value where higher/lower clearly wins; salary, coupons and discounts are shown for context only.
           </p>
         </div>
       ) : (

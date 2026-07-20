@@ -58,7 +58,7 @@ const sendNotification = async ({ title, message, type, priority, performedByUse
           ],
         });
       }
-      const managers = await User.find({ _id: { $ne: actorId }, $or: orConditions }).select('_id');
+      const managers = await User.find({ _id: { $ne: actorId }, deletedAt: null, $or: orConditions }).select('_id');
       managers.forEach((u) => recipientIds.set(u._id.toString(), u._id));
     }
 

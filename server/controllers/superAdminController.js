@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
+const Transaction = require('../models/Transaction');
+const Expense = require('../models/Expense');
 const MenuItem = require('../models/MenuItem');
 const Location = require('../models/Location');
 const Cafe = require('../models/Cafe');
@@ -55,8 +57,33 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
   const totalTax = revenueAgg?.tax || 0;
   const totalDiscount = revenueAgg?.discount || 0;
   const avgOrderValue = completedOrders ? totalRevenue / completedOrders : 0;
-  // Approximate net profit (revenue - costs, simplified for demo)
-  const netProfit = totalRevenue * 0.4;
+
+  // Real net profit = booked profit on approved revenue transactions − approved
+  // expenses, matching the P&L convention used everywhere else. This previously
+  // reported a hardcoded `totalRevenue * 0.4`, presenting a fabricated number to
+  // super admins as though it were measured.
+  // Transactions/Expenses key off locationId + date (Orders use branch + createdAt).
+  const ledgerScope = branchIds ? { locationId: { $in: branchIds } } : {};
+  const ledgerMatch = { ...ledgerScope };
+  if (hasDate) ledgerMatch.date = dateMatch;
+
+  const [profitAgg, expenseAgg] = await Promise.all([
+    Transaction.aggregate([
+      {
+        $match: {
+          ...ledgerMatch,
+          type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+          status: 'approved',
+        },
+      },
+      { $group: { _id: null, profit: { $sum: '$totalProfit' } } },
+    ]),
+    Expense.aggregate([
+      { $match: { ...ledgerMatch, status: 'approved', type: { $ne: 'INCOME' } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+  ]);
+  const netProfit = (profitAgg[0]?.profit || 0) - (expenseAgg[0]?.total || 0);
 
   // Today's numbers are always "today" regardless of the selected range.
   const today = new Date();
@@ -75,7 +102,7 @@ const getExecutiveSummary = asyncHandler(async (req, res) => {
       Cafe.countDocuments(),
       Customer.countDocuments(),
       MenuItem.countDocuments(),
-      User.countDocuments({ role: { $in: ['staff', 'chef'] } }),
+      User.countDocuments({ role: { $in: ['staff', 'chef'] }, deletedAt: null }),
       Order.countDocuments({ ...baseMatch, 'paymentApproval.status': 'pending' }),
       Order.countDocuments(baseMatch),
     ]);
@@ -240,7 +267,9 @@ const getAuditLogs = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 50;
   const pageNum = parseInt(page);
-  const limitNum = clampLimit(limit, 50);
+  // Allow a larger ceiling than the default 100 so the UI can export the whole
+  // filtered set in one request instead of silently exporting just one page.
+  const limitNum = clampLimit(limit, 50, 1000);
   const skip = (pageNum - 1) * limitNum;
 
   const query = {};

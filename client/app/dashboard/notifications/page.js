@@ -66,18 +66,21 @@ const NotificationsPage = () => {
     }
   };
 
+  // Only mirror the change locally when the server actually accepted it —
+  // otherwise this row would show as read while the backend (and the shared
+  // notification context) still consider it unread.
   const handleMarkAsRead = async (id) => {
-    await markAsRead(id);
+    if (!(await markAsRead(id))) return;
     setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
   };
 
   const handleMarkAsUnread = async (id) => {
-    await markAsUnread(id);
+    if (!(await markAsUnread(id))) return;
     setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
   };
 
   const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
+    if (!(await markAllAsRead())) return;
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 

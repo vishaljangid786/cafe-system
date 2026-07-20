@@ -28,12 +28,17 @@ const submitFeedback = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Branch not found');
   }
+  const cleanCustomerPhone = (customerPhone || '').toString().replace(/\D/g, '').slice(0, 15);
+  if (customerPhone && cleanCustomerPhone.length < 10) {
+    res.status(400);
+    throw new Error('Please provide a valid phone number');
+  }
 
   const fb = await Feedback.create({
     locationId,
     orderId: mongoose.isValidObjectId(orderId) ? orderId : null,
-    customerName: (customerName || '').toString().slice(0, 120),
-    customerPhone: (customerPhone || '').toString().slice(0, 20),
+    customerName: (customerName || '').toString().trim().slice(0, 120),
+    customerPhone: cleanCustomerPhone,
     rating: r,
     foodRating: clampRating(foodRating) || undefined,
     serviceRating: clampRating(serviceRating) || undefined,

@@ -5,6 +5,7 @@
 // wiped real user passwords on each fresh deploy / fresh database — and has
 // been removed. Add only real, idempotent, non-destructive migrations here.
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 // ---------------------------------------------------------------------------
 // Cafe backfill — introduces the Cafe (brand/organization) layer above branches.
@@ -151,12 +152,16 @@ const backfillCafes = async () => {
 //      rest bail. Without this, concurrent boots could each see 0 users and seed
 //      in parallel, producing duplicate data.
 const bootstrapSeedIfEmpty = async () => {
-  // NEVER auto-seed a production database. The demo seed provisions accounts with
-  // publicly-known credentials (super@cafeos.com / password123), so running it on
-  // an empty prod DB would hand an attacker super_admin. In production the first
-  // account is created through the initial-setup registration flow instead
-  // (registerUser makes the very first user a super_admin — see authController).
-  if (process.env.NODE_ENV === 'production') return;
+  // The seed provisions accounts whose credentials live in the repo, so an
+  // accidental run against production would hand out a super_admin. In production
+  // it therefore requires an EXPLICIT opt-in (SEED_MOONLIGHT=true) and can never
+  // fire by itself on a fresh prod deploy; otherwise production creates its first
+  // account through the initial-setup registration flow (registerUser makes the
+  // very first user a super_admin — see authController).
+  if (process.env.NODE_ENV === 'production') {
+    if (String(process.env.SEED_MOONLIGHT).toLowerCase() !== 'true') return;
+    console.warn('[startup] SEED_MOONLIGHT=true in PRODUCTION — seeding known credentials. Change every seeded password immediately after first login.');
+  }
 
   const User = require('../models/User');
   const count = await User.estimatedDocumentCount();
@@ -183,10 +188,10 @@ const bootstrapSeedIfEmpty = async () => {
     }
   }
 
-  console.log('[startup] Empty database detected — running demo seed...');
+  console.log('[startup] Empty database detected — seeding Moon Light Cafe...');
   try {
-    const { seedData } = require('../seed/data');
-    await seedData();
+    const { seedMoonlightCafe } = require('../seed/moonlightCafe');
+    await seedMoonlightCafe();
     if (db) {
       try {
         await db.collection('migrations').updateOne(
@@ -195,9 +200,9 @@ const bootstrapSeedIfEmpty = async () => {
         );
       } catch (e) { /* observability only */ }
     }
-    console.log('[startup] Demo seed complete.');
+    console.log('[startup] Moon Light Cafe seed complete.');
   } catch (err) {
-    console.error('[startup] Demo seed failed (non-fatal):', err.message);
+    console.error('[startup] Moon Light Cafe seed failed (non-fatal):', err.message);
     // Seed failed and the DB is still empty — release the lock so the next boot
     // can retry instead of being permanently blocked by a half-finished marker.
     if (db) {
@@ -226,8 +231,12 @@ const reseedAll = async () => {
     console.warn('[startup] ⚠ RESEED confirmed in PRODUCTION — wiping and reseeding the LIVE database!');
   }
   console.log('[startup] RESEED_ON_START=true — wiping all data and reseeding from scratch...');
-  const { seedData } = require('../seed/data');
-  await seedData();
+  // Wipe first, then rebuild the ONLY dataset this project seeds. seedMoonlightCafe
+  // itself is additive, so the drop lives here where the destructive intent is explicit.
+  const { dropAllData } = require('../seed/moonlightCafe');
+  const { seedMoonlightCafe } = require('../seed/moonlightCafe');
+  await dropAllData();
+  await seedMoonlightCafe();
   console.log('[startup] Reseed complete.');
 };
 
@@ -313,6 +322,91 @@ const backfillAllowedPages = async () => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Customer phone uniqueness moved from global phone-only to per-branch. Without
+// dropping the old unique index, MongoDB would still reject the same customer
+// phone ordering at two different branches even after the schema changed.
+// Customers moved from per-branch rows ({ phone, branch } unique) to a single
+// global identity per phone with per-cafe `memberships[]`. This REPLACES the old
+// migrateCustomerPhoneIndex, which rebuilt the per-branch index on every boot and
+// would now tear down the global identity index. The heavy lifting (merging
+// duplicates, folding roll-ups, swapping indexes) lives in the standalone script
+// so it can also be run manually with --dry-run.
+// Settings gained a cafe tier, so uniqueness moved from { locationId } to
+// { locationId, cafeId }. The old single-field unique index must be dropped or it
+// blocks every cafe-tier document after the first (they all share locationId:null).
+const migrateSettingsCafeIndex = async (connection) => {
+  const db = connection?.db || mongoose.connection.db;
+  if (!db) return;
+  const exists = await db.listCollections({ name: 'settings' }).toArray();
+  if (exists.length === 0) return;
+
+  const collection = db.collection('settings');
+  const indexes = await collection.indexes();
+  const legacy = indexes.find((idx) => idx.name === 'locationId_1' && idx.unique);
+  if (legacy) {
+    await collection.dropIndex('locationId_1');
+    console.log('[migration] Settings: dropped legacy unique locationId_1 index (cafe tier added).');
+  }
+  await collection.createIndex({ locationId: 1, cafeId: 1 }, { name: 'locationId_1_cafeId_1', unique: true });
+};
+
+// The cafe name index is partial, covering only "live" statuses. Adding
+// 'suspended' changed that filter, and MongoDB will not alter a partial index in
+// place — without dropping it first, a suspended cafe would fall outside the
+// index and its name could be taken by a new cafe while it is merely blocked.
+const migrateCafeNameIndex = async (connection) => {
+  const db = connection?.db || mongoose.connection.db;
+  if (!db) return;
+  const exists = await db.listCollections({ name: 'cafes' }).toArray();
+  if (exists.length === 0) return;
+
+  const collection = db.collection('cafes');
+  const indexes = await collection.indexes();
+  const current = indexes.find((idx) => idx.name === 'name_1');
+
+  const wanted = ['active', 'inactive', 'suspended'];
+  const have = current?.partialFilterExpression?.status?.$in || [];
+  const upToDate = have.length === wanted.length && wanted.every((s) => have.includes(s));
+  if (current && upToDate) return;
+
+  if (current) {
+    await collection.dropIndex('name_1');
+    console.log('[migration] Cafe: dropped name_1 to widen its partial filter for suspended cafes.');
+  }
+  await collection.createIndex(
+    { name: 1 },
+    { name: 'name_1', unique: true, partialFilterExpression: { status: { $in: wanted } } }
+  );
+};
+
+const migrateCustomersToGlobalIdentity = async (connection) => {
+  const { migrateCustomersToGlobal, isConverged } = require('../scripts/migrateCustomersToGlobal');
+  if (await isConverged(connection)) return; // already migrated — no-op
+  await migrateCustomersToGlobal({ connection, dryRun: false, verbose: true });
+};
+
+const backfillTablePublicOrderTokens = async () => {
+  const Table = require('../models/Table');
+  const tables = await Table.find({
+    $or: [
+      { publicOrderToken: { $exists: false } },
+      { publicOrderToken: '' },
+      { publicOrderToken: null },
+    ],
+  }).select('_id').lean();
+  if (tables.length === 0) return;
+
+  const ops = tables.map((table) => ({
+    updateOne: {
+      filter: { _id: table._id },
+      update: { $set: { publicOrderToken: crypto.randomBytes(16).toString('hex') } },
+    },
+  }));
+  await Table.bulkWrite(ops);
+  console.log(`[migration] Table QR tokens: backfilled ${ops.length} table token(s).`);
+};
+
 const runStartupMigrations = async (connection) => {
   try {
     if (reseedEnabled()) {
@@ -340,6 +434,26 @@ const runStartupMigrations = async (connection) => {
     await backfillAllowedPages();
   } catch (err) {
     console.error('[migration] allowedPages backfill failed (non-fatal):', err.message);
+  }
+  try {
+    await migrateSettingsCafeIndex(connection);
+  } catch (err) {
+    console.error('[migration] Settings cafe-tier index migration failed (non-fatal):', err.message);
+  }
+  try {
+    await migrateCafeNameIndex(connection);
+  } catch (err) {
+    console.error('[migration] Cafe name index migration failed (non-fatal):', err.message);
+  }
+  try {
+    await migrateCustomersToGlobalIdentity(connection);
+  } catch (err) {
+    console.error('[migration] Customer global-identity migration failed (non-fatal):', err.message);
+  }
+  try {
+    await backfillTablePublicOrderTokens();
+  } catch (err) {
+    console.error('[migration] Table QR token backfill failed (non-fatal):', err.message);
   }
 };
 

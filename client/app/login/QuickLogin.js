@@ -74,12 +74,10 @@ export default function QuickLogin() {
   const [open, setOpen] = useState(true);
   const [pendingEmail, setPendingEmail] = useState(null);
 
-  // This is a public DEMO deployment, so the role-based quick-login panel is shown
-  // by default (in dev and prod) to let anyone try the app without a password. It
-  // exposes seeded demo accounts + a shared password — set the build-time env var
-  // NEXT_PUBLIC_ENABLE_QUICK_LOGIN=false to hide it if this ever becomes a real
-  // production tenant. Hooks are declared above so the rules-of-hooks are not violated.
-  const quickLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_QUICK_LOGIN !== 'false';
+  const quickLoginSetting = process.env.NEXT_PUBLIC_ENABLE_QUICK_LOGIN;
+  const quickLoginEnabled = process.env.NODE_ENV === 'production'
+    ? quickLoginSetting === 'true'
+    : quickLoginSetting !== 'false';
   if (!quickLoginEnabled) return null;
 
   const handleQuickLogin = async (email) => {

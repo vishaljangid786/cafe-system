@@ -1,11 +1,13 @@
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
 const AuditLog = require('../models/AuditLog');
 const { canAccessLocation, normalizeIdList, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
 const { addAdminToCafe } = require('../utils/cafeSync');
+const { isInitialSetupAuthorized } = require('../utils/setupAuth');
 const Cafe = require('../models/Cafe');
 
 // Generate JWT
@@ -27,6 +29,11 @@ const generateToken = (id, sessionVersion, impersonatedBy = null, isViewOnly = f
 };
 
 const isProductionRuntime = () => process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
+const getCookieSameSite = () => {
+  const value = String(process.env.COOKIE_SAMESITE || 'lax').toLowerCase();
+  return ['lax', 'strict', 'none'].includes(value) ? value : 'lax';
+};
 
 const normalizeRoleLocations = (role, assignedLocation, accessibleLocations) => {
   const accessIds = normalizeIdList(accessibleLocations);
@@ -59,7 +66,16 @@ const getAuthCookieOptions = () => ({
   ),
   httpOnly: true,
   secure: isProductionRuntime(),
-  sameSite: isProductionRuntime() ? 'none' : 'lax',
+  sameSite: getCookieSameSite(),
+});
+
+const getCsrfCookieOptions = () => ({
+  expires: new Date(
+    Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+  ),
+  httpOnly: false,
+  secure: isProductionRuntime(),
+  sameSite: getCookieSameSite(),
 });
 
 // Helper to set token in cookie and send response
@@ -70,6 +86,7 @@ const sendTokenResponse = (user, statusCode, res, impersonatedBy = null, isViewO
   res
     .status(statusCode)
     .cookie('token', token, getAuthCookieOptions())
+    .cookie('csrfToken', crypto.randomBytes(32).toString('base64url'), getCsrfCookieOptions())
     .json({
       success: true,
       data: {
@@ -113,6 +130,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
   let finalRole = role;
 
   if (userCount === 0) {
+    if (!req.initialSetupAuthorized && !isInitialSetupAuthorized(req)) {
+      res.status(403);
+      throw new Error('Initial setup is locked. Provide a valid setup secret.');
+    }
     finalRole = 'super_admin';
   } else {
     // Standard auth middleware should have populated req.user
@@ -383,6 +404,10 @@ const loginUser = asyncHandler(async (req, res, next) => {
     // A suspended/deactivated account must never receive a session token, even
     // with the correct password — otherwise the auth cookie is planted and the
     // "account suspended" state is bypassed at the login boundary.
+    if (user.deletedAt) {
+      res.status(403);
+      throw new Error('This account has been removed. Please contact your administrator.');
+    }
     if (user.isBlocked) {
       res.status(403);
       throw new Error('Account suspended. Please contact administrator.');
@@ -390,6 +415,21 @@ const loginUser = asyncHandler(async (req, res, next) => {
     if (user.active === false) {
       res.status(403);
       throw new Error('Account inactive. Permission denied.');
+    }
+    // Refuse the session outright when the whole cafe is frozen, so the lock is
+    // enforced at the login boundary and not only on subsequent requests.
+    const { getSuspensionFor } = require('../utils/tenantStatus');
+    const suspension = await getSuspensionFor(user);
+    if (suspension) {
+      res.status(403);
+      const err = new Error(
+        suspension.reason
+          ? `${suspension.name} is currently blocked: ${suspension.reason}`
+          : `${suspension.name} is currently blocked. Please contact the platform administrator to unblock it.`
+      );
+      err.code = 'CAFE_SUSPENDED';
+      err.suspension = suspension;
+      throw err;
     }
     if (user.failedLoginAttempts || user.lockUntil) {
       await User.updateOne({ _id: user._id }, { $set: { failedLoginAttempts: 0, lockUntil: null } });
@@ -529,7 +569,12 @@ const logoutUser = asyncHandler(async (req, res, next) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProductionRuntime(),
-    sameSite: isProductionRuntime() ? 'none' : 'lax',
+    sameSite: getCookieSameSite(),
+  });
+  res.clearCookie('csrfToken', {
+    httpOnly: false,
+    secure: isProductionRuntime(),
+    sameSite: getCookieSameSite(),
   });
 
   res.status(200).json({

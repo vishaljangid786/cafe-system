@@ -42,6 +42,8 @@ export default function CouponsManagementPage() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  // Unpaginated, unfiltered set used ONLY for the header stat cards.
+  const [allCoupons, setAllCoupons] = useState([]);
 
   // Modals state
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -89,6 +91,20 @@ export default function CouponsManagementPage() {
     }
   };
 
+  // Header stats must describe ALL coupons, not just the rows on the current
+  // page. The list fetch above is paginated (and filtered), so computing "Active
+  // Coupons" / "Redemptions" / "Expiring Soon" from it reported one page's totals
+  // as though they were global. Coupon counts are small, so one unfiltered fetch
+  // is cheap.
+  const fetchCouponStats = async () => {
+    try {
+      const res = await api.get('/coupons?page=1&limit=1000');
+      setAllCoupons(res.data.data || []);
+    } catch (error) {
+      console.error('Failed to load coupon stats');
+    }
+  };
+
   const fetchMenuItems = async () => {
     try {
       setItemsLoading(true);
@@ -109,17 +125,30 @@ export default function CouponsManagementPage() {
     }
   };
 
+  // Refetch when the page OR the search/status filter changes. These filters are
+  // already sent to the API but were missing from the dependency list, so the
+  // search box and status dropdown did nothing. Debounced so typing doesn't fire
+  // a request per keystroke.
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchCoupons();
-    }, 0);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [currentPage]);
+  }, [currentPage, searchTerm, statusFilter]);
+
+  // Changing a filter must return to page 1, otherwise the user can be stranded
+  // on a page number that no longer exists in the filtered result set.
+  const didMountFiltersRef = useRef(false);
+  useEffect(() => {
+    if (!didMountFiltersRef.current) { didMountFiltersRef.current = true; return; }
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchMenuItems();
+      fetchCouponStats();
     }, 0);
 
     return () => clearTimeout(timer);
@@ -155,6 +184,7 @@ export default function CouponsManagementPage() {
       setShowCouponModal(false);
       setEditingCoupon(null);
       fetchCoupons();
+      fetchCouponStats();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Save failed', { id: loadToast });
     }
@@ -167,6 +197,7 @@ export default function CouponsManagementPage() {
       await api.delete(`/coupons/${id}`);
       toast.success('Coupon deleted', { id: loadToast });
       fetchCoupons();
+      fetchCouponStats();
     } catch (error) {
       toast.error('Failed to delete coupon', { id: loadToast });
     }
@@ -198,8 +229,11 @@ export default function CouponsManagementPage() {
     setShowCouponModal(true);
   };
 
-  const totalUsage = coupons.reduce((acc, c) => acc + (c.usedCount || 0), 0);
-  const expiringSoon = coupons.filter(c => {
+  // Header stats come from the full coupon set, not the current page.
+  const statsSource = allCoupons.length ? allCoupons : coupons;
+  const activeCount = statsSource.filter(c => c.isActive).length;
+  const totalUsage = statsSource.reduce((acc, c) => acc + (c.usedCount || 0), 0);
+  const expiringSoon = statsSource.filter(c => {
     const expiry = new Date(c.expiryDate);
     const soon = new Date();
     soon.setDate(soon.getDate() + 7);
@@ -247,7 +281,7 @@ export default function CouponsManagementPage() {
               <span className="text-[11px] font-medium uppercase text-(--color-text-muted) tracking-normal">Active Coupons</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-2xl font-semibold text-(--color-text-primary)">{coupons.filter(c => c.isActive).length}</h4>
+              <h4 className="text-2xl font-semibold text-(--color-text-primary)">{activeCount}</h4>
               <p className="text-xs text-(--color-text-secondary) mt-1 font-medium">Coupons Live</p>
             </div>
           </Card>

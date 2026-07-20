@@ -18,13 +18,22 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Asia/Kolkata is a fixed +05:30 offset (no DST). Compute the UTC instants that
+// bound the current IST calendar day, so the daily window is the Indian business
+// day regardless of the server/runtime timezone (UTC on Vercel).
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const istDayWindow = (at = new Date()) => {
+  const ist = new Date(at.getTime() + IST_OFFSET_MS); // shift into IST wall-clock
+  const istMidnightTs = Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate());
+  const startOfDay = new Date(istMidnightTs - IST_OFFSET_MS); // real UTC instant of IST 00:00
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { startOfDay, endOfDay };
+};
+
 const generateDailyReport = async () => {
   console.log('[SCHEDULER] Initiating daily report generation...');
-  
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+
+  const { startOfDay, endOfDay } = istDayWindow();
 
   try {
     const workbook = new ExcelJS.Workbook();
@@ -44,7 +53,13 @@ const generateDailyReport = async () => {
     ]);
 
     const totalRevenue = await Transaction.aggregate([
-      { $match: { createdAt: { $gte: startOfDay, $lte: endOfDay }, status: 'completed' } },
+      {
+        $match: {
+          date: { $gte: startOfDay, $lte: endOfDay },
+          status: 'approved',
+          type: { $in: ['REVENUE', 'POS_REVENUE', 'MANUAL_REVENUE'] },
+        },
+      },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
@@ -66,7 +81,7 @@ const generateDailyReport = async () => {
     const buffer = await workbook.xlsx.writeBuffer();
 
     // Send Email to Super Admins
-    const superAdmins = await User.find({ role: 'super_admin' }).select('email');
+    const superAdmins = await User.find({ role: 'super_admin', deletedAt: null }).select('email');
     const recipientEmails = superAdmins.map(u => u.email).join(', ');
 
     if (!recipientEmails) {
@@ -128,13 +143,15 @@ const initScheduler = () => {
     console.log('[SCHEDULER] Serverless runtime detected — skipping in-process cron. Use Vercel Cron -> /api/cron/daily-report.');
     return;
   }
+  // 23:59 IST daily. The timezone option pins the schedule to IST regardless of
+  // the host's local timezone.
   cron.schedule('59 23 * * *', () => {
     generateDailyReport();
-  });
-  // 00:30 on the 1st of every month — generate the previous month's payroll.
+  }, { timezone: 'Asia/Kolkata' });
+  // 00:30 IST on the 1st of every month — generate the previous month's payroll.
   cron.schedule('30 0 1 * *', () => {
     generateMonthlyPayroll();
-  });
+  }, { timezone: 'Asia/Kolkata' });
   console.log('[SCHEDULER] Daily report + monthly payroll cron jobs initialized.');
 };
 

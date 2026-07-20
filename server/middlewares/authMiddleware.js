@@ -39,6 +39,15 @@ const attachUserFromToken = async (req, res, token) => {
     throw new Error('Session expired due to security update. Please log in again.');
   }
 
+  // A removed account must not be able to act, even while an unexpired token is
+  // still in circulation. Checked before isBlocked so the message is accurate:
+  // deletion also sets isBlocked, and "suspended" would misdescribe it.
+  if (req.user.deletedAt) {
+    res.status(403);
+    res.setHeader('X-Account-State', 'deleted');
+    throw new Error('This account has been removed. Please contact your administrator.');
+  }
+
   // Security Check: Blocked/Inactive Users
   if (req.user.isBlocked) {
     res.status(403);
@@ -75,12 +84,43 @@ const attachUserFromToken = async (req, res, token) => {
       // Session changes — switching to ANOTHER user (hot-switch) or exiting the
       // impersonation — are navigation, not data mutations, so they're allowed even
       // in view-only mode. Every other write stays blocked.
-      const url = req.originalUrl || req.url || '';
-      const isSessionChange = req.method === 'POST' && /\/auth\/(impersonate\/|exit-impersonation)/.test(url);
+      // Match the PATH only (query string stripped) and anchor to the end of it.
+      // Testing the raw originalUrl let any write bypass view-only mode simply by
+      // appending a crafted query string, e.g. POST /api/orders?x=/auth/impersonate/1.
+      const path = (req.originalUrl || req.url || '').split('?')[0];
+      const isSessionChange = req.method === 'POST'
+        && /\/auth\/(impersonate\/[^/]+|exit-impersonation)\/?$/.test(path);
       if (!isSessionChange) {
         res.status(403);
         throw new Error('Action restricted: View-only impersonation mode is active');
       }
+    }
+  }
+
+  // Tenant lockout. Last, so an individually blocked user still gets the message
+  // about their own account rather than a cafe-wide one.
+  //
+  // A super_admin impersonating someone is deliberately exempt: freezing them
+  // out of a suspended cafe would remove the only way to inspect it while
+  // resolving whatever caused the suspension.
+  const impersonatedBySuper = req.impersonator?.role === 'super_admin';
+  if (!impersonatedBySuper) {
+    const { getSuspensionFor } = require('../utils/tenantStatus');
+    const suspension = await getSuspensionFor(req.user);
+    if (suspension) {
+      res.status(403);
+      res.setHeader('X-Account-State', 'cafe-suspended');
+      // The client keys the full-screen lock off this payload, so the shape
+      // matters as much as the status code.
+      res.locals.suspension = suspension;
+      const err = new Error(
+        suspension.reason
+          ? `${suspension.name} is currently blocked: ${suspension.reason}`
+          : `${suspension.name} is currently blocked. Please contact the platform administrator.`
+      );
+      err.code = 'CAFE_SUSPENDED';
+      err.suspension = suspension;
+      throw err;
     }
   }
 

@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, scopedLocationId } = require('../utils/accessControl');
+const { normalizePhone } = require('../utils/phone');
 
 const Order = require('../models/Order');
 const OrderService = require('../services/orderService');
@@ -165,6 +166,7 @@ const bookTable = asyncHandler(async (req, res) => {
   table.isBooked = true;
   table.numberOfPeople = Number(req.body.numberOfPeople) || table.capacity || 1;
   table.customerName = req.body.customerName || '';
+  table.customerPhone = normalizePhone(req.body.customerPhone);
   table.status = 'booked';
   
   await table.save();
@@ -280,6 +282,7 @@ const updateOrders = asyncHandler(async (req, res) => {
   table.totalAmount = validatedOrders.reduce((acc, item) => acc + (item.quantity * item.price), 0);
 
   if (req.body.customerName !== undefined) table.customerName = req.body.customerName;
+  if (req.body.customerPhone !== undefined) table.customerPhone = normalizePhone(req.body.customerPhone);
   if (req.body.numberOfPeople !== undefined) {
     const guests = Number(req.body.numberOfPeople);
     if (!Number.isInteger(guests) || guests <= 0) {
@@ -440,6 +443,7 @@ const uploadBill = asyncHandler(async (req, res) => {
       branch: table.locationId,
       table: table._id,
       customerName: table.customerName || '',
+      customerPhone: table.customerPhone || '',
       items: stagedItems.map((i) => ({
         menuItem: i.menuItemId,
         itemName: i.itemName,
@@ -474,6 +478,7 @@ const uploadBill = asyncHandler(async (req, res) => {
   table.totalAmount = 0;
   table.numberOfPeople = 0;
   table.customerName = '';
+  table.customerPhone = '';
 
   await table.save();
 
@@ -576,6 +581,7 @@ const mergeTable = asyncHandler(async (req, res) => {
   source.isBooked = false;
   source.numberOfPeople = 0;
   source.customerName = '';
+  source.customerPhone = '';
   source.status = 'available';
   await source.save();
 
@@ -678,6 +684,7 @@ const cancelTable = asyncHandler(async (req, res) => {
   table.totalAmount = 0;
   table.numberOfPeople = 0;
   table.customerName = '';
+  table.customerPhone = '';
   table.activeOrdersCount = 0;
   table.appliedCoupon = null;
 

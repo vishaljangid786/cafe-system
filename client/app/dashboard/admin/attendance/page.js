@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import LeaveApprovals from '../../../components/attendance/LeaveApprovals';
-import { CalendarCheck, Calendar, Filter, MapPin, CheckCircle2, XCircle, PieChart as PieIcon, Activity } from 'lucide-react';
+import { CalendarCheck, Calendar, Clock, Filter, MapPin, CheckCircle2, XCircle, PieChart as PieIcon, Activity } from 'lucide-react';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import {
@@ -15,9 +15,16 @@ import { toneText, toneBg, toneSoft, toneBorder } from '../../../components/ui/t
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { TableSkeleton } from '@/app/components/ui/Skeleton';
+import { useAuth } from '../../../context/AuthContext';
+import { useCan } from '../../../hooks/usePermissions';
+import useBranchScope from '../../../hooks/useBranchScope';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 export default function GlobalAttendancePage() {
   const dateInputRef = useRef(null);
+  const { user, locations: accessibleLocations } = useAuth();
+  const canDo = useCan();
+  const { singleBranchId, scopeKey } = useBranchScope();
   const [attendance, setAttendance] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +41,19 @@ export default function GlobalAttendancePage() {
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
   const itemsPerPage = 20;
-  
+
+  const isAdminRole = user?.role === 'admin' || user?.role === 'super_admin';
+  // Branch/location admins always read the branch-scoped endpoint (the global
+  // /attendance/all + /attendance/monthly-summary routes are admin-only on the
+  // server); admins switch to it when the Navbar scope resolves to one branch.
+  const useLocationEndpoint = !isAdminRole || singleBranchId !== 'all';
+  const effectiveLocationId = singleBranchId !== 'all'
+    ? singleBranchId
+    : (isAdminRole ? filters.locationId : 'All');
+  const attendanceUrl = useLocationEndpoint
+    ? `/attendance/location?date=${filters.date}${singleBranchId !== 'all' ? `&locationId=${singleBranchId}` : ''}&page=${currentPage}&limit=${itemsPerPage}`
+    : `/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`;
+
   const columns = [
     { header: 'Date', key: 'date' },
     { header: 'Employee', key: 'user.name' },
@@ -52,18 +71,27 @@ export default function GlobalAttendancePage() {
       progress.start();
       try {
         const [attRes, summaryRes, locRes] = await Promise.all([
-          api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`),
-          api.get(`/attendance/monthly-summary?month=${filters.date.slice(0, 7)}&locationId=${filters.locationId}`),
+          api.get(attendanceUrl),
+          // Monthly summary is admin/super_admin-only on the server.
+          isAdminRole
+            ? api.get(`/attendance/monthly-summary?month=${filters.date.slice(0, 7)}&locationId=${effectiveLocationId}`)
+            : Promise.resolve(null),
           api.get('/locations')
         ]);
         setAttendance(attRes.data.data);
         setTotalPages(attRes.data.pagination?.pages || 1);
-        setSummary(summaryRes.data.data);
+        setSummary(summaryRes ? summaryRes.data.data : []);
         setLocations(locRes.data.data);
 
-        // Fetch staff if a specific location is selected
-        if (filters.locationId !== 'All') {
-          const staffRes = await api.get(`/users?locationId=${filters.locationId}`);
+        // Fetch staff if a specific location is in scope; branch/location
+        // admins on a multi-branch scope fall back to their server-scoped list.
+        // GET /users defaults to 10 per page — without an explicit high limit only
+        // the first 10 staff of a branch appeared, so the rest could never be marked.
+        if (effectiveLocationId !== 'All') {
+          const staffRes = await api.get(`/users?limit=1000&locationId=${effectiveLocationId}`);
+          setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
+        } else if (!isAdminRole) {
+          const staffRes = await api.get('/users?limit=1000');
           setStaff(staffRes.data.data.filter(u => u.role === 'staff' || u.role === 'chef'));
         } else {
           setStaff([]);
@@ -79,21 +107,21 @@ export default function GlobalAttendancePage() {
       }
     };
     fetchData();
-  }, [filters, currentPage]);
+  }, [filters, currentPage, scopeKey, isAdminRole]);
 
   const handleMarkAttendance = async (userId, status) => {
     const loadToast = toast.loading(`Marking ${status}...`);
     try {
       setMarkingLoading(true);
-      await api.post('/attendance/mark', { 
-        userId, 
-        date: filters.date, 
+      await api.post('/attendance/mark', {
+        userId,
+        date: filters.date,
         status,
-        locationId: filters.locationId === 'All' ? undefined : filters.locationId 
+        locationId: effectiveLocationId === 'All' ? undefined : effectiveLocationId
       });
-      
+
       // Re-fetch attendance logs for the table
-      const attRes = await api.get(`/attendance/all?date=${filters.date}&locationId=${filters.locationId}&page=${currentPage}&limit=${itemsPerPage}`);
+      const attRes = await api.get(attendanceUrl);
       setAttendance(attRes.data.data);
       
       toast.success('Attendance updated', { id: loadToast });
@@ -179,23 +207,26 @@ export default function GlobalAttendancePage() {
           />
         </div>
 
-        {/* Branch Select */}
-        <div className="min-w-45">
-          <PremiumSelect
-            icon={MapPin}
-            value={filters.locationId}
-            onChange={(val) =>
-              setFilters({ ...filters, locationId: val })
-            }
-            options={[
-              { label: 'All Locations', value: 'All' },
-              ...locations.map((l) => ({
-                label: l.name,
-                value: l._id,
-              })),
-            ]}
-          />
-        </div>
+        {/* Branch Select — hidden when the Navbar scope already resolves to a
+            single branch or the user only has one accessible branch */}
+        {!useLocationEndpoint && accessibleLocations.length > 1 && (
+          <div className="min-w-45">
+            <PremiumSelect
+              icon={MapPin}
+              value={filters.locationId}
+              onChange={(val) =>
+                setFilters({ ...filters, locationId: val })
+              }
+              options={[
+                { label: 'All Locations', value: 'All' },
+                ...locations.map((l) => ({
+                  label: l.name,
+                  value: l._id,
+                })),
+              ]}
+            />
+          </div>
+        )}
       </div>
     </div>
   </div>
@@ -214,26 +245,30 @@ export default function GlobalAttendancePage() {
               <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">{attendance.filter(a => a.status === 'absent').length}</p>
             </div>
           </SlideIn>
-          <SlideIn delay={0.3}>
-            <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) transition-colors">
-              <p className="text-[11px] font-medium text-(--color-text-muted)">Total Presents (Month)</p>
-              <p className="text-2xl font-semibold text-success mt-1">
-                {Array.isArray(summary)
-                  ? summary.reduce((acc, s) => acc + (Number(s.totalPresentDays) || 0), 0)
-                  : 0}
-              </p>
-            </div>
-          </SlideIn>
-          <SlideIn delay={0.4}>
-            <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) transition-colors">
-              <p className="text-[11px] font-medium text-(--color-text-muted)">Total Absents (Month)</p>
-              <p className="text-2xl font-semibold text-danger mt-1">
-                {Array.isArray(summary)
-                  ? summary.reduce((acc, s) => acc + (Number(s.totalAbsentDays) || 0), 0)
-                  : 0}
-              </p>
-            </div>
-          </SlideIn>
+          {isAdminRole && (
+            <SlideIn delay={0.3}>
+              <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) transition-colors">
+                <p className="text-[11px] font-medium text-(--color-text-muted)">Total Presents (Month)</p>
+                <p className="text-2xl font-semibold text-success mt-1">
+                  {Array.isArray(summary)
+                    ? summary.reduce((acc, s) => acc + (Number(s.totalPresentDays) || 0), 0)
+                    : 0}
+                </p>
+              </div>
+            </SlideIn>
+          )}
+          {isAdminRole && (
+            <SlideIn delay={0.4}>
+              <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) transition-colors">
+                <p className="text-[11px] font-medium text-(--color-text-muted)">Total Absents (Month)</p>
+                <p className="text-2xl font-semibold text-danger mt-1">
+                  {Array.isArray(summary)
+                    ? summary.reduce((acc, s) => acc + (Number(s.totalAbsentDays) || 0), 0)
+                    : 0}
+                </p>
+              </div>
+            </SlideIn>
+          )}
         </div>
 
         {/* Visual Analytics Section */}
@@ -274,7 +309,8 @@ export default function GlobalAttendancePage() {
             </div>
           </SlideIn>
 
-          {/* Monthly Historical Trends */}
+          {/* Monthly Historical Trends (admin-only: monthly summary is admin-scoped) */}
+          {isAdminRole && (
           <SlideIn delay={0.6}>
             <div className="bg-(--color-surface)/40  p-5 rounded-xl border border-(--color-border) shadow-sm transition-colors">
               <div className="flex items-center justify-between mb-6">
@@ -301,17 +337,18 @@ export default function GlobalAttendancePage() {
               </div>
             </div>
           </SlideIn>
+          )}
         </div>
 
-        {/* Attendance Marking Section (Only when location is selected) */}
-        {filters.locationId !== 'All' && (
+        {/* Attendance Marking Section (single branch in scope, or branch-scoped admin) */}
+        {canDo('attendance.add') && (effectiveLocationId !== 'All' || !isAdminRole) && (
           <SlideIn direction="up">
             <div className="bg-(--color-surface)/60  rounded-xl border border-(--color-border) overflow-hidden shadow-sm">
               <div className="px-5 py-4 border-b border-(--color-border) flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold text-(--color-text-primary) tracking-tight">Mark Attendance</h2>
                   <p className="text-[11px] font-medium text-(--color-text-muted) mt-1">
-                    Manage presence for {locations.find(l => l._id === filters.locationId)?.name}
+                    Manage presence for {locations.find(l => l._id === effectiveLocationId)?.name || 'your branch'}
                   </p>
                 </div>
 
@@ -375,7 +412,9 @@ export default function GlobalAttendancePage() {
                               <div className="flex justify-end gap-2">
                                 {[
                                   { id: 'present', icon: CheckCircle2, label: 'Present', color: 'green' },
-                                  { id: 'half-day', icon: Activity, label: 'Half', color: 'blue' },
+                                  { id: 'half-day', icon: Clock, label: 'Half', color: 'blue' },
+                                  { id: 'week-off', icon: Calendar, label: 'Off', color: 'amber' },
+                                  { id: 'leave', icon: CalendarCheck, label: 'Leave', color: 'amber' },
                                   { id: 'absent', icon: XCircle, label: 'Absent', color: 'red' }
                                 ].map(btn => (
                                   <button
@@ -441,7 +480,7 @@ export default function GlobalAttendancePage() {
                               {record.user?.name?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-(--color-text-primary)">{record.user?.name || 'Unknown'}</p>
+                              <p className="text-sm font-medium text-(--color-text-primary)">{displayUserName(record.user, 'Unknown')}</p>
                               <p className="text-[11px] font-medium text-(--color-text-muted)">
                                 {record.user?.role === 'location_admin' || record.user?.role === 'branch_admin' ? 'Branch Admin' : record.user?.role?.replace('_', ' ')}
                               </p>
@@ -449,12 +488,26 @@ export default function GlobalAttendancePage() {
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          <span className="text-sm font-medium text-(--color-text-secondary)">{record.locationName}</span>
+                          <span className="text-sm font-medium text-(--color-text-secondary)">
+                            {record.locationName || locations.find(l => l._id === (record.locationId?._id || record.locationId))?.name || '—'}
+                          </span>
                         </td>
                         <td className="px-5 py-4">
                           {record.status === 'present' ? (
                             <div className="flex items-center text-success font-medium text-xs uppercase tracking-tight">
                               <CheckCircle2 size={14} className="mr-1" /> Present
+                            </div>
+                          ) : record.status === 'half-day' ? (
+                            <div className="flex items-center text-primary font-medium text-xs uppercase tracking-tight">
+                              <Clock size={14} className="mr-1" /> Half-Day
+                            </div>
+                          ) : record.status === 'week-off' ? (
+                            <div className="flex items-center text-warning font-medium text-xs uppercase tracking-tight">
+                              <Calendar size={14} className="mr-1" /> Week-Off
+                            </div>
+                          ) : record.status === 'leave' ? (
+                            <div className="flex items-center text-warning font-medium text-xs uppercase tracking-tight">
+                              <CalendarCheck size={14} className="mr-1" /> Leave
                             </div>
                           ) : (
                             <div className="flex items-center text-danger font-medium text-xs uppercase tracking-tight">
@@ -463,7 +516,7 @@ export default function GlobalAttendancePage() {
                           )}
                         </td>
                          <td className="px-5 py-4">
-                           <p className="text-xs text-(--color-text-muted)">{record.markedBy?.name || 'Auto'}</p>
+                           <p className="text-xs text-(--color-text-muted)">{displayUserName(record.markedBy, 'Auto')}</p>
                          </td>
                       </tr>
                     ))

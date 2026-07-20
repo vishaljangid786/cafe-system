@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import { todayInput, toDateInput } from '@/app/utils/dateInput';
+import { todayInput } from '@/app/utils/dateInput';
 import { blockNegative } from '@/app/utils/inputValidation';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
-import { can } from '../../../config/actions';
+import { useCan } from '../../../hooks/usePermissions';
+import useBranchScope from '../../../hooks/useBranchScope';
 import {
   TrendingDown, Search, Filter,
   ChevronRight, Calendar, MapPin,
@@ -27,10 +28,11 @@ import { Button } from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
-import DateRangeFilter from '../../../components/ui/DateRangeFilter';
+import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 import { Money } from '../../../components/ui/Money';
 import { formatIndianCompact } from '../../../utils/formatNumber';
 import toast from 'react-hot-toast';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 const EXPENSE_TITLES = [
   "Electricity Bill",
@@ -46,12 +48,23 @@ const EXPENSE_TITLES = [
 ];
 
 export default function ExpensesPage() {
-  const { user, selectedLocation, globalSearch } = useAuth();
+  const { user, locations, globalSearch } = useAuth();
+  const canDo = useCan();
+  const { singleBranchId, scopeKey } = useBranchScope();
+  // Transitional union gates: users may hold the dedicated 'expenses.*' keys or the
+  // legacy 'revenue.*' keys — either one grants the action. Staff/chef keep their
+  // create-only ability by role (their old pages never gated the button).
+  const canCreate = canDo('expenses.add') || canDo('revenue.add') || user?.role === 'staff' || user?.role === 'chef';
+  const canApprove = canDo('expenses.approve') || canDo('revenue.approve');
+  // Only manager-side roles may backdate; staff/chef entries stay locked to today.
+  const canBackdate = ['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(user?.role);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
-  const [timeRange, setTimeRange] = useState('all');
+  // Date range comes from the UniversalDateFilter ('' / '' = all time).
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // NEW STATES FOR SERVER-SIDE PAGINATION & SEARCH
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,8 +76,6 @@ export default function ExpensesPage() {
 
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'mine', 'pending'
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [customDates, setCustomDates] = useState({ start: '', end: '' });
   // Multi-branch filter — selected locationIds; [] = fall back to the global branch.
   const [branchFilter, setBranchFilter] = useState([]);
   const itemsPerPage = 12;
@@ -88,15 +99,6 @@ export default function ExpensesPage() {
     locationId: ''
   });
 
-  const fetchLocations = async () => {
-    try {
-      const res = await api.get('/locations');
-      setLocations(res.data.data);
-    } catch (err) {
-      console.error('Failed to fetch locations');
-    }
-  };
-
   const fetchExpenses = async () => {
     const isInitial = !didInitRef.current;
     if (isInitial) setLoading(true);
@@ -116,38 +118,12 @@ export default function ExpensesPage() {
       // the single globally-selected branch (only on the 'all' tab, as before).
       if (branchFilter.length > 0) {
         query.append('locationIds', branchFilter.join(','));
-      } else if (activeTab === 'all' && selectedLocation) {
-        query.append('locationId', selectedLocation._id || selectedLocation);
+      } else if (activeTab === 'all' && singleBranchId !== 'all') {
+        query.append('locationId', singleBranchId);
       }
 
-      const now = new Date();
-      let start = '';
-      let end = '';
-
-      if (timeRange === 'custom') {
-        start = customDates.start;
-        end = customDates.end;
-      } else if (timeRange === 'today') {
-        start = toDateInput(now);
-        end = start;
-      } else if (timeRange === 'this_week') {
-        const d = new Date();
-        d.setDate(now.getDate() - now.getDay());
-        start = toDateInput(d);
-      } else if (timeRange === 'this_month') {
-        const d = new Date();
-        d.setDate(1);
-        start = toDateInput(d);
-      } else if (timeRange !== 'all') {
-        const d = new Date();
-        if (timeRange === '7d') d.setDate(now.getDate() - 7);
-        else if (timeRange === '1m') d.setMonth(now.getMonth() - 1);
-        else if (timeRange === '3m') d.setMonth(now.getMonth() - 3);
-        start = toDateInput(d);
-      }
-
-      if (start) query.append('startDate', start);
-      if (end) query.append('endDate', end);
+      if (startDate) query.append('startDate', startDate);
+      if (endDate) query.append('endDate', endDate);
 
       // Pagination & Search
       query.append('page', currentPage);
@@ -181,12 +157,9 @@ export default function ExpensesPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchExpenses();
-      if (user?.role === 'super_admin' || user?.role === 'admin') {
-        fetchLocations();
-      }
     }, 0);
     return () => clearTimeout(timer);
-  }, [selectedLocation, timeRange, activeTab, customDates, currentPage, searchQuery, amountRange, branchFilter]);
+  }, [scopeKey, startDate, endDate, activeTab, currentPage, searchQuery, amountRange, branchFilter]);
 
   const resetAddForm = () => {
     setShowAddModal(false);
@@ -204,15 +177,18 @@ export default function ExpensesPage() {
       const finalTitle = formData.title === "Other (Custom Title)" ? formData.customTitle : formData.title;
       if (!finalTitle) throw new Error("Title is required");
 
-      const finalLocationId = formData.locationId || (selectedLocation?._id || selectedLocation);
-      if (!finalLocationId) throw new Error("Location selection is required for cross-branch entry");
+      const finalLocationId = formData.locationId || (singleBranchId !== 'all' ? singleBranchId : '');
+      if (!finalLocationId && locations.length > 1) throw new Error("Location selection is required for cross-branch entry");
 
       const data = {
         ...formData,
         title: finalTitle,
-        locationId: finalLocationId,
         type: 'EXPENSE'
       };
+      // Single-branch users never picked a branch before the merge — omit the id
+      // and let the server infer their branch, exactly as their old pages did.
+      if (finalLocationId) data.locationId = finalLocationId;
+      else delete data.locationId;
 
       await api.post('/transactions', data);
       toast.success('Expense saved', { id: loadToast });
@@ -340,7 +316,7 @@ export default function ExpensesPage() {
         ${row('Date', esc(new Date(exp.date).toLocaleDateString()))}
         ${row('Category', esc(exp.category || ''))}
         ${row('Payment', esc(exp.paymentMethod || 'CASH'))}
-        ${row('Created by', `${esc(exp.createdBy?.name || 'System')}${exp.createdBy?.role ? ` (${esc(exp.createdBy.role.replace('_', ' '))})` : ''}`)}
+        ${row('Created by', `${esc(displayUserName(exp.createdBy, 'System'))}${exp.createdBy?.role ? ` (${esc(exp.createdBy.role.replace('_', ' '))})` : ''}`)}
         ${row('Status', esc(exp.status || ''))}
         ${exp.approvedBy ? row('Approved by', esc(exp.approvedBy.name)) : ''}
       </div>
@@ -396,34 +372,21 @@ export default function ExpensesPage() {
               </div>
 
               <div className="flex flex-wrap items-center mt-6 gap-3">
-                <div className="flex items-center gap-1.5 bg-(--color-surface-soft) p-1.5 rounded-[1.5rem] border border-(--color-border) shadow-inner">
-                  {['7d', '1m', '3m', 'all'].map(t => (
-                    <button
-                      key={t}
-                      onClick={() => { setTimeRange(t); setCustomDates({ start: '', end: '' }); setCurrentPage(1); }}
-                      className={`px-6 py-2.5 text-[11px] font-medium uppercase tracking-normal rounded-xl transition-all duration-500 ${timeRange === t ? 'bg-danger text-(--color-bg-base) scale-105' : 'text-(--color-text-muted) hover:text-(--color-text-primary)'}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <DateRangeFilter
-                  startDate={customDates.start}
-                  endDate={customDates.end}
-                  onChange={({ startDate, endDate }) => {
-                    setCustomDates({ start: startDate, end: endDate });
-                    setTimeRange(startDate || endDate ? 'custom' : 'all');
+                <UniversalDateFilter
+                  defaultFilter="all"
+                  loading={refetching}
+                  onFilterChange={({ startDate, endDate }) => {
+                    setStartDate(startDate);
+                    setEndDate(endDate);
                     setCurrentPage(1);
                   }}
-                  loading={refetching}
-                  iconClassName="text-danger"
                 />
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
 
-              {can(user, 'revenue.add') && (
+              {canCreate && (
                 <Button
                   variant="primary"
                   icon={Plus}
@@ -776,7 +739,7 @@ export default function ExpensesPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-base font-medium text-(--color-text-primary) leading-none">{selectedExpense.createdBy?.name || 'System'}</p>
+                      <p className="text-base font-medium text-(--color-text-primary) leading-none">{displayUserName(selectedExpense.createdBy, 'System')}</p>
                       <p className="text-[11px] font-medium uppercase tracking-normal text-danger mt-1 bg-danger/5 px-2 py-0.5 rounded-lg w-fit">{selectedExpense.createdBy?.role?.replace('_', ' ') || 'Staff'}</p>
                     </div>
                   </div>
@@ -855,7 +818,7 @@ export default function ExpensesPage() {
                         ['Date', new Date(selectedExpense.date).toLocaleDateString()],
                         ['Category', selectedExpense.category],
                         ['Payment', selectedExpense.paymentMethod || 'CASH'],
-                        ['Created by', `${selectedExpense.createdBy?.name || 'System'}${selectedExpense.createdBy?.role ? ` (${selectedExpense.createdBy.role.replace('_', ' ')})` : ''}`],
+                        ['Created by', `${displayUserName(selectedExpense.createdBy, 'System')}${selectedExpense.createdBy?.role ? ` (${selectedExpense.createdBy.role.replace('_', ' ')})` : ''}`],
                         ['Status', selectedExpense.status],
                         ...(selectedExpense.approvedBy ? [['Approved by', selectedExpense.approvedBy.name]] : []),
                       ].map(([label, val]) => (
@@ -886,7 +849,7 @@ export default function ExpensesPage() {
                 )}
               </div>
 
-              {selectedExpense.status === 'pending' && can(user, 'revenue.approve') ? (
+              {selectedExpense.status === 'pending' && canApprove ? (
                 <div className="flex gap-4 pt-4">
                   <Button
                     variant="primary"
@@ -1013,16 +976,19 @@ export default function ExpensesPage() {
               )}
 
               {!splitMode ? (
-                <div className="space-y-3">
-                  <PremiumSelect
-                    label="Select Branch"
-                    icon={MapPin}
-                    value={formData.locationId || (selectedLocation?._id || selectedLocation || '')}
-                    onChange={(val) => setFormData({ ...formData, locationId: val })}
-                    placeholder="Select Branch"
-                    options={locations.map(loc => ({ label: `${loc.name} (${loc.city})`, value: loc._id }))}
-                  />
-                </div>
+                /* Branch picker — hidden for users with a single accessible branch. */
+                locations.length > 1 && (
+                  <div className="space-y-3">
+                    <PremiumSelect
+                      label="Select Branch"
+                      icon={MapPin}
+                      value={formData.locationId || (singleBranchId !== 'all' ? singleBranchId : '')}
+                      onChange={(val) => setFormData({ ...formData, locationId: val })}
+                      placeholder="Select Branch"
+                      options={locations.map(loc => ({ label: `${loc.name} (${loc.city})`, value: loc._id }))}
+                    />
+                  </div>
+                )
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -1069,7 +1035,12 @@ export default function ExpensesPage() {
 
               <div className="space-y-3">
                 <label className="text-[11px] font-medium uppercase tracking-normal text-danger ml-2">Date</label>
-                <input required type="date" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-5 text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-danger/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                {canBackdate ? (
+                  <input required type="date" className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-5 text-sm font-medium text-(--color-text-primary) focus:ring-2 focus:ring-danger/10 transition-all outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                ) : (
+                  /* Staff/chef entries are always dated today — no backdating. */
+                  <input required type="date" readOnly className="w-full rounded-xl bg-(--color-bg-soft) border border-(--color-border) p-5 text-sm font-medium text-(--color-text-muted) cursor-not-allowed outline-none" value={formData.date} />
+                )}
               </div>
 
               <div className="space-y-3">

@@ -10,6 +10,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, clampLimit, scopedLocationId, endOfDay, escapeRegex } = require('../utils/accessControl');
 const { logActivity } = require('../utils/auditLogger');
+const { normalizePhone } = require('../utils/phone');
 const sendNotification = require('../utils/sendNotification');
 const { getSettings } = require('../utils/settings');
 const { notifyCustomer } = require('../services/customerNotify');
@@ -28,7 +29,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Only staff can create orders');
   }
 
-  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, discountAmount, couponId, paymentType, orderType: rawType } = req.body;
+  const { branch: requestedBranch, table: tableId, items, customerPhone, customerName, couponId, paymentType, orderType: rawType } = req.body;
   const orderType = ['dine-in', 'takeaway', 'delivery'].includes(rawType) ? rawType : 'dine-in';
   const branch = ['staff', 'chef'].includes(req.user.role)
     ? req.user.assignedLocation
@@ -54,6 +55,50 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
+  // New-customer intro discount for POS orders, computed SERVER-SIDE from the
+  // phone the cashier entered — the same rule the QR flow applies, so a walk-in
+  // and a self-order get identical treatment. Best-effort: a CRM hiccup must
+  // never stop an order being taken.
+  let serverDiscountAmount = 0;
+  try {
+    const phone = normalizePhone(customerPhone);
+    if (phone.length >= 10) {
+      const Customer = require('../models/Customer');
+      const Location = require('../models/Location');
+      const [known, branchDoc] = await Promise.all([
+        Customer.findOne({ phone }).lean(),
+        Location.findById(branch).select('cafe').lean(),
+      ]);
+      const membership = known && branchDoc?.cafe
+        ? (known.memberships || []).find((m) => String(m.cafe) === String(branchDoc.cafe))
+        : null;
+      // Unknown numbers are new customers too — absence of a membership means
+      // they have never ordered at this cafe.
+      const eligible = !membership || (membership.status === 'new' && !membership.newCustomerDiscountUsed);
+      if (eligible) {
+        const { getSettings } = require('../utils/settings');
+        const crm = (await getSettings(branch)).crm || {};
+        if (crm.newCustomerDiscountEnabled !== false && Number(crm.newCustomerDiscountPercent) > 0) {
+          const subtotal = (items || []).reduce(
+            (acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 0),
+            0
+          );
+          // The service recomputes the authoritative subtotal from the menu; this
+          // is only used when the client sent prices, so guard on a sane value.
+          if (subtotal > 0 && subtotal >= (Number(crm.newCustomerMinOrder) || 0)) {
+            let amount = (subtotal * Number(crm.newCustomerDiscountPercent)) / 100;
+            if (crm.newCustomerMaxDiscount != null) {
+              amount = Math.min(amount, Number(crm.newCustomerMaxDiscount) || 0);
+            }
+            serverDiscountAmount = Number(Math.max(0, amount).toFixed(2));
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[orderController] intro-discount resolution failed:', err.message);
+  }
+
   let order;
   try {
     order = await OrderService.createOrder({
@@ -62,7 +107,11 @@ const createOrder = asyncHandler(async (req, res) => {
       items,
       customerPhone,
       customerName,
-      discountAmount: Number(discountAmount) || 0,
+      serverDiscountAmount,
+      // NOTE: a client-supplied discountAmount is deliberately NOT forwarded. The
+      // service is the sole price authority and derives every discount from the
+      // applied coupon, so passing it through only created the illusion that a
+      // manual discount field worked (it was silently discarded downstream).
       couponId: couponId || null,
       paymentType: paymentType || 'CASH',
       orderType,
@@ -399,7 +448,11 @@ const recordPayment = asyncHandler(async (req, res) => {
   // status ONLY when it doesn't over-claim payment. A client must never be able to
   // mark an order 'paid' (or 'partial') while it is actually underpaid — that would
   // corrupt cash-drawer reconciliation, which sums collected cash from these orders.
-  const total = Number(order.totalAmount) || 0;
+  // Compare against the true amount owed: grandTotal (subtotal − discount +
+  // service + GST) once it's been computed at completion, else the pre-completion
+  // subtotal. Using totalAmount alone would mark an order 'paid' when only the
+  // GST/service-exclusive subtotal was collected, under-counting cash owed.
+  const total = Number(order.grandTotal) > 0 ? Number(order.grandTotal) : (Number(order.totalAmount) || 0);
   const paid = Number(order.amountPaid) || 0;
   const derived = paid <= 0 ? 'unpaid' : (paid < total ? 'partial' : 'paid');
   const rank = { unpaid: 0, partial: 1, paid: 2 };
@@ -512,7 +565,10 @@ const reorderOrder = asyncHandler(async (req, res) => {
 
   // Re-run the full create flow (stock deduction, coupon, reservation link) from
   // the original items — gives staff a one-tap recovery after a chef rejection.
-  const items = order.items.map((i) => ({ menuItem: i.menuItem, quantity: i.quantity, notes: i.notes }));
+  // Carry the modifiers across too — the service re-validates them against the
+  // menu item's groups, so the retried order keeps its paid add-ons instead of
+  // being silently rebuilt at base price.
+  const items = order.items.map((i) => ({ menuItem: i.menuItem, quantity: i.quantity, notes: i.notes, modifiers: i.modifiers }));
   const newOrder = await OrderService.createOrder({
     branch: order.branch,
     tableId: order.table || null,
@@ -652,8 +708,13 @@ const splitOrder = asyncHandler(async (req, res) => {
 
   order.totalAmount = remainingTotal;
   order.discountAmount = remainingDiscount;
-  await order.save();
 
+  // Create the sibling BEFORE persisting the reduced original. The reductions
+  // above are in-memory only until save(), so a failed create leaves the original
+  // untouched in the database. Previously the original was saved first, meaning a
+  // failure here destroyed the moved quantities — reduced on the original and
+  // never created anywhere else. If the original's save then fails, the sibling is
+  // deleted so the two can never diverge.
   const newOrder = await Order.create({
     branch: order.branch,
     table: order.table,
@@ -667,6 +728,13 @@ const splitOrder = asyncHandler(async (req, res) => {
     status: order.status,
     statusHistory: [{ status: order.status, timestamp: new Date(), updatedBy: req.user._id }],
   });
+
+  try {
+    await order.save();
+  } catch (err) {
+    await Order.deleteOne({ _id: newOrder._id }).catch(() => {});
+    throw err;
+  }
 
   // The split adds one more active order to the table.
   if (order.table) {
@@ -930,10 +998,30 @@ const generateOrderBill = asyncHandler(async (req, res) => {
   // two concurrent bills for the same order can't both consume a sequence number
   // (which would burn one and leave a GST-illegal gap). Only the winner reserves a
   // number and appends the BILLED history entry; re-prints reuse the stored value.
-  if (!order.invoiceNumber) {
+  // The claim sentinel is timestamped so a crash between claiming and assigning
+  // can self-heal: a sentinel older than the staleness window is re-claimable.
+  // Re-claiming matches the EXACT stale sentinel value, so concurrent recoveries
+  // still serialize — the first flips it to a new sentinel and the rest become
+  // losers that re-read. Without this, a crashed claim left invoiceNumber stuck on
+  // 'PENDING' forever ('PENDING' is truthy, so the block below was skipped) and
+  // every future receipt printed the literal sentinel as its invoice number.
+  const STALE_CLAIM_MS = 30000;
+  const currentInvoice = order.invoiceNumber;
+  const isPendingSentinel = typeof currentInvoice === 'string' && currentInvoice.startsWith('PENDING');
+  const staleClaim = isPendingSentinel
+    && (Date.now() - (Number(currentInvoice.split(':')[1]) || 0) > STALE_CLAIM_MS);
+
+  if (!currentInvoice || staleClaim) {
     const claim = await Order.findOneAndUpdate(
-      { _id: order._id, $or: [{ invoiceNumber: null }, { invoiceNumber: { $exists: false } }] },
-      { $set: { invoiceNumber: 'PENDING' } },
+      {
+        _id: order._id,
+        $or: [
+          { invoiceNumber: null },
+          { invoiceNumber: { $exists: false } },
+          ...(staleClaim ? [{ invoiceNumber: currentInvoice }] : []),
+        ],
+      },
+      { $set: { invoiceNumber: `PENDING:${Date.now()}` } },
       { new: true }
     );
     if (claim) {
@@ -953,9 +1041,12 @@ const generateOrderBill = asyncHandler(async (req, res) => {
         { $set: { invoiceNumber: order.invoiceNumber }, $push: { statusHistory: { status: 'BILLED', timestamp: new Date(), updatedBy: req.user._id } } }
       );
     } else {
-      // Lost the race — another request is assigning. Reuse the persisted number.
+      // Lost the race — another request is assigning. Reuse the persisted number
+      // once it's a real one (never a PENDING:<ts> claim sentinel).
       const fresh = await Order.findById(order._id).select('invoiceNumber');
-      if (fresh?.invoiceNumber && fresh.invoiceNumber !== 'PENDING') order.invoiceNumber = fresh.invoiceNumber;
+      if (fresh?.invoiceNumber && !String(fresh.invoiceNumber).startsWith('PENDING')) {
+        order.invoiceNumber = fresh.invoiceNumber;
+      }
     }
   }
 

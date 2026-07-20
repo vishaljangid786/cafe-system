@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/app/services/api';
+import CashFlowCard from '@/app/components/revenue/CashFlowCard';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, BarChart, Bar,
@@ -35,22 +36,23 @@ function MetricCard({ label, value, icon: Icon, color, sub, loading }) {
     );
   }
 
-  const colors = {
-    blue: 'bg-primary/10 text-primary border-primary/20',
-    emerald: 'bg-success/10 text-success border-success/20',
-    amber: 'bg-warning/10 text-warning border-warning/20',
-    rose: 'bg-danger/10 text-danger border-danger/20',
-    violet: 'bg-primary/10 text-primary border-primary/20'
+  const tones = {
+    blue: { chip: 'bg-primary/15 text-primary', border: 'border-primary/20', grad: 'from-primary/8' },
+    emerald: { chip: 'bg-success/15 text-success', border: 'border-success/20', grad: 'from-success/8' },
+    amber: { chip: 'bg-warning/15 text-warning', border: 'border-warning/20', grad: 'from-warning/8' },
+    rose: { chip: 'bg-danger/15 text-danger', border: 'border-danger/20', grad: 'from-danger/8' },
+    violet: { chip: 'bg-primary/15 text-primary', border: 'border-primary/20', grad: 'from-primary/8' },
   };
+  const tone = tones[color] || tones.blue;
 
   return (
     <CardHover>
-      <div className="bg-(--color-surface) p-5 rounded-xl border border-(--color-border) shadow-sm h-full flex flex-col group">
-        <div className={`h-12 w-12 rounded-xl flex items-center justify-center border mb-4 ${colors[color]}`}>
-          <Icon size={20} />
-        </div>
-        <p className="text-[11px] font-medium text-(--color-text-muted) mb-1">{label}</p>
-        <p className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">{value}</p>
+      <div className={`rounded-xl border ${tone.border} bg-(--color-surface) bg-linear-to-br ${tone.grad} to-transparent p-5 shadow-sm h-full flex flex-col group`}>
+        <span className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 mb-4 ${tone.chip}`}>
+          <Icon size={20} strokeWidth={2.2} />
+        </span>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-(--color-text-muted) mb-1">{label}</p>
+        <p className="text-2xl font-bold text-(--color-text-primary) tracking-tight">{value}</p>
         {sub && <p className="text-[11px] font-medium text-(--color-text-secondary) mt-2">{sub}</p>}
       </div>
     </CardHover>
@@ -268,6 +270,9 @@ export default function StaffDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Cash flow — scoped to this staff member's own activity */}
+        <CashFlowCard />
 
         {/* Primary Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

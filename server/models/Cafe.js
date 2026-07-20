@@ -56,11 +56,32 @@ const cafeSchema = new mongoose.Schema(
       phone: { type: String, default: '' },
       email: { type: String, default: '' },
     },
+    // 'suspended' is a deliberate fourth state rather than a reuse of
+    // 'inactive'. 'inactive' predates the lockout feature, is settable through
+    // the update validator, and carries no enforcement anywhere — promoting it
+    // to a hard lockout would retroactively freeze any cafe already sitting in
+    // that state. 'suspended' can only be reached through the explicit
+    // suspend endpoint, so its meaning is unambiguous.
     status: {
       type: String,
-      enum: ['active', 'inactive', 'deleted'],
+      enum: ['active', 'inactive', 'suspended', 'deleted'],
       default: 'active',
       index: true,
+    },
+    suspendedAt: {
+      type: Date,
+      default: null,
+    },
+    suspendedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    // Shown verbatim on the lock screen every user of this cafe sees.
+    suspendedReason: {
+      type: String,
+      default: '',
+      trim: true,
     },
     // The super_admin who created the cafe.
     createdBy: {
@@ -78,7 +99,7 @@ const cafeSchema = new mongoose.Schema(
 // build the index, dropping the uniqueness guarantee entirely).
 cafeSchema.index(
   { name: 1 },
-  { unique: true, partialFilterExpression: { status: { $in: ['active', 'inactive'] } } }
+  { unique: true, partialFilterExpression: { status: { $in: ['active', 'inactive', 'suspended'] } } }
 );
 
 const Cafe = mongoose.model('Cafe', cafeSchema);

@@ -8,6 +8,7 @@ import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import getSocketUrl from '../services/socketUrl';
 import { progress } from '../components/ui/TopProgressBar';
+import { getLandingPath } from '../config/navigation';
 
 const AuthContext = createContext();
 
@@ -80,18 +81,8 @@ export const AuthProvider = ({ children }) => {
     setSocket(newSocket);
   };
 
-  // Single source of truth for role-based dashboard routing
-  const getRoleDashboard = (role) => {
-    const map = {
-      super_admin: '/dashboard/admin',
-      admin: '/dashboard/admin',
-      branch_admin: '/dashboard/branch-admin',
-      location_admin: '/dashboard/location-admin',
-      chef: '/dashboard/chef',
-      staff: '/dashboard/staff',
-    };
-    return map[role] || '/dashboard/staff';
-  };
+  // Default landing: Overview when the user can open it, else the first item of
+  // the first sidebar group (config/navigation.js getLandingPath).
 
   const checkAuth = async () => {
     try {
@@ -279,7 +270,7 @@ export const AuthProvider = ({ children }) => {
       await fetchLocations();
       toast.success(`Welcome back, ${userData.name}`);
       setLoading(false);
-      router.push(getRoleDashboard(userData.role));
+      router.push(getLandingPath(userData));
 
       return { success: true };
     } catch (error) {
@@ -291,7 +282,11 @@ export const AuthProvider = ({ children }) => {
 
       return {
         success: false,
-        message
+        message,
+        // Lets the login page present a cafe-wide lockout as its own state
+        // rather than as another failed-credentials error.
+        code: error.response?.data?.code || null,
+        suspension: error.response?.data?.suspension || null,
       };
     }
   };
@@ -353,7 +348,7 @@ export const AuthProvider = ({ children }) => {
       initializeSocket(userData, initialLoc);
       await fetchLocations();
       setLoading(false);
-      router.push(getRoleDashboard(userData.role));
+      router.push(getLandingPath(userData));
 
       return { success: true };
     } catch (error) {
@@ -391,7 +386,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       // Role-routed home — a non-admin delegated impersonator can't open
       // /dashboard/admin/users and would be bounced by the layout guard.
-      router.replace(getRoleDashboard(userData.role));
+      router.replace(getLandingPath(userData));
 
       return { success: true };
     } catch (error) {

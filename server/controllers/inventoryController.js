@@ -51,27 +51,27 @@ const updateInventory = asyncHandler(async (req, res) => {
     throw new Error('Minimum threshold must be a number of 0 or more');
   }
 
-  let item = await BranchInventory.findOne({ branch, ingredient });
+  // Atomic upsert with $inc so this restock MERGES with any concurrent atomic
+  // deduction (order completion / waste log) instead of clobbering it via a
+  // read-modify-write, and two first-time restocks can't race the create.
+  const update = {
+    $inc: { stock: Number(quantity) },
+    $set: { lastRestocked: new Date() },
+  };
+  if (costPerUnit !== undefined) update.$set.costPerUnit = Number(costPerUnit);
+  if (minThreshold !== undefined) update.$set.minThreshold = Number(minThreshold);
+  else update.$setOnInsert = { minThreshold: 10 };
 
-  // Effective unit cost for this purchase (use the provided value, else fall back
-  // to the ingredient's existing recorded cost). Used to book the purchase expense.
-  const effectiveCost = costPerUnit !== undefined ? Number(costPerUnit) : Number(item?.costPerUnit || 0);
+  const item = await BranchInventory.findOneAndUpdate(
+    { branch, ingredient },
+    update,
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
 
-  if (item) {
-    item.stock += Number(quantity);
-    if (costPerUnit !== undefined) item.costPerUnit = Number(costPerUnit);
-    if (minThreshold !== undefined) item.minThreshold = Number(minThreshold);
-    item.lastRestocked = new Date();
-    await item.save();
-  } else {
-    item = await BranchInventory.create({
-      branch,
-      ingredient,
-      stock: quantity,
-      costPerUnit,
-      minThreshold: minThreshold || 10,
-    });
-  }
+  // Effective unit cost for this purchase (the provided value, else the row's
+  // existing recorded cost — both reflected in the returned document). Used to
+  // book the purchase expense.
+  const effectiveCost = Number(item.costPerUnit || 0);
 
   // Book the restock as a real purchase expense in the ledger so COGS shows in
   // P&L (previously inventory purchases were invisible, overstating profit).

@@ -1,350 +1,355 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, Filter, ChevronRight, Loader2 } from 'lucide-react';
-import PremiumSelect from './PremiumSelect';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Calendar, ChevronDown, Loader2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// ── Date helpers ─────────────────────────────────────────────────────────────
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmt = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+const startOfWeek = (base) => {
+  const d = new Date(base);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1)); // Monday
+  return d;
+};
+// Indian financial year starts April 1. Returns the FY's starting calendar year.
+const fyStartYear = (d) => (d.getMonth() < 3 ? d.getFullYear() - 1 : d.getFullYear());
+
+// A "value" is a small tagged object we can serialise to { startDate, endDate }.
+// kinds: today | yesterday | week | month | quarter | fy | rolling12 | custom | all
+const computeRange = (value) => {
+  const now = new Date();
+  const today = fmt(now);
+  switch (value?.kind) {
+    case 'today':
+      return { startDate: today, endDate: today };
+    case 'yesterday': {
+      const y = new Date(); y.setDate(now.getDate() - 1);
+      return { startDate: fmt(y), endDate: fmt(y) };
+    }
+    case 'week': {
+      const start = startOfWeek(now);
+      return { startDate: fmt(start), endDate: today };
+    }
+    case 'month': {
+      const start = new Date(value.y, value.m, 1);
+      const isCurrent = value.y === now.getFullYear() && value.m === now.getMonth();
+      const end = isCurrent ? now : new Date(value.y, value.m + 1, 0);
+      return { startDate: fmt(start), endDate: fmt(end) };
+    }
+    case 'quarter': {
+      const start = new Date(value.y, value.q * 3, 1);
+      const isCurrent = value.y === now.getFullYear() && value.q === Math.floor(now.getMonth() / 3);
+      const end = isCurrent ? now : new Date(value.y, value.q * 3 + 3, 0);
+      return { startDate: fmt(start), endDate: fmt(end) };
+    }
+    case 'fy': {
+      const start = new Date(value.startYear, 3, 1); // Apr 1
+      const isCurrent = value.startYear === fyStartYear(now);
+      const end = isCurrent ? now : new Date(value.startYear + 1, 2, 31); // Mar 31
+      return { startDate: fmt(start), endDate: fmt(end) };
+    }
+    case 'rolling12': {
+      const start = new Date(); start.setMonth(now.getMonth() - 11); start.setDate(1);
+      return { startDate: fmt(start), endDate: today };
+    }
+    case 'custom':
+      return { startDate: value.start || '', endDate: value.end || '' };
+    case 'all':
+    default:
+      return { startDate: '', endDate: '' };
+  }
+};
+
+const labelFor = (value) => {
+  const now = new Date();
+  switch (value?.kind) {
+    case 'today': return 'Today';
+    case 'yesterday': return 'Yesterday';
+    case 'week': return 'Week';
+    case 'month': return `${MONTHS[value.m]} ${value.y}`;
+    case 'quarter': return `Q${value.q + 1} ${value.y}`;
+    case 'fy': return `FY ${String(value.startYear).slice(2)}–${String(value.startYear + 1).slice(2)}`;
+    case 'rolling12': return '12M';
+    case 'custom': return 'Custom';
+    case 'all': return 'All time';
+    default: return '';
+  }
+};
+
+// Map the legacy `defaultFilter` string onto an initial value object so existing
+// callers keep the range they used to request.
+const initialValueFromDefault = (def) => {
+  const now = new Date();
+  switch (def) {
+    case 'today': return { kind: 'today' };
+    case 'yesterday': return { kind: 'yesterday' };
+    case 'this_week': case '7d': return { kind: 'week' };
+    case 'this_month': case '30d': case 'last_month':
+      return { kind: 'month', y: now.getFullYear(), m: now.getMonth() };
+    case '3m': case '6m': case 'this_quarter':
+      return { kind: 'quarter', y: now.getFullYear(), q: Math.floor(now.getMonth() / 3) };
+    case 'financial_year': case 'this_year':
+      return { kind: 'fy', startYear: fyStartYear(now) };
+    case '12m': return { kind: 'rolling12' };
+    case 'all': default: return { kind: 'all' };
+  }
+};
+
+// ── Option generators for the dropdowns ──────────────────────────────────────
+const monthOptions = () => {
+  const now = new Date();
+  const out = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({ value: { kind: 'month', y: d.getFullYear(), m: d.getMonth() }, label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}` });
+  }
+  return out;
+};
+const quarterOptions = () => {
+  const now = new Date();
+  const out = [];
+  let y = now.getFullYear();
+  let q = Math.floor(now.getMonth() / 3);
+  for (let i = 0; i < 6; i++) {
+    const startM = MONTHS[q * 3];
+    const endM = MONTHS[q * 3 + 2];
+    out.push({ value: { kind: 'quarter', y, q }, label: `Q${q + 1} ${y} · ${startM}–${endM}` });
+    q -= 1; if (q < 0) { q = 3; y -= 1; }
+  }
+  return out;
+};
+const fyOptions = () => {
+  const now = new Date();
+  const cur = fyStartYear(now);
+  const out = [];
+  for (let i = 0; i < 5; i++) {
+    const s = cur - i;
+    out.push({ value: { kind: 'fy', startYear: s }, label: `FY ${s}–${String(s + 1).slice(2)}` });
+  }
+  return out;
+};
+
+// ── Small popover dropdown ───────────────────────────────────────────────────
+function Dropdown({ label, active, options, onPick, isSelected }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+          ${active ? 'text-primary' : 'text-(--color-text-secondary) hover:text-(--color-text-primary)'}`}
+      >
+        <span className={active ? 'border-b-2 border-primary pb-0.5' : ''}>{label}</span>
+        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            role="listbox"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.14 }}
+            className="absolute z-50 mt-1 left-0 min-w-52 max-h-72 overflow-y-auto custom-scrollbar bg-(--color-surface) border border-(--color-border) rounded-xl shadow-(--shadow-md) p-1.5"
+          >
+            {options.map((opt) => {
+              const selected = isSelected(opt.value);
+              return (
+                <li key={opt.label}>
+                  <button
+                    type="button"
+                    onClick={() => { onPick(opt.value); setOpen(false); }}
+                    className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors
+                      ${selected ? 'bg-(--color-primary-soft) text-primary font-semibold' : 'text-(--color-text-secondary) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {selected && <Check size={15} className="shrink-0" />}
+                  </button>
+                </li>
+              );
+            })}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Main filter ──────────────────────────────────────────────────────────────
 export default function UniversalDateFilter({
   onFilterChange,
   loading = false,
-  className = "",
-  defaultFilter = 'all'
+  className = '',
+  defaultFilter = 'all',
 }) {
-  const [filterType, setFilterType] = useState(defaultFilter);
-  const [selectedSubValue, setSelectedSubValue] = useState('');
-  const [customDates, setCustomDates] = useState({ start: '', end: '' });
+  const [value, setValue] = useState(() => initialValueFromDefault(defaultFilter));
+  const [showCustom, setShowCustom] = useState(false);
+  const [customDraft, setCustomDraft] = useState({ start: '', end: '' });
+  const customRef = useRef(null);
 
-  // Format date to YYYY-MM-DD in local time
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const months = useMemo(() => monthOptions(), []);
+  const quarters = useMemo(() => quarterOptions(), []);
+  const fys = useMemo(() => fyOptions(), []);
+  const today = fmt(new Date());
 
-  // Generate Past Weeks (Last 4 weeks)
-  const getPastWeeks = () => {
-    const weeks = [];
-    for (let i = 1; i <= 4; i++) {
-      const d = new Date();
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1) - (i * 7);
-      const start = new Date(d.setDate(diff));
-      const end = new Date(d.setDate(diff + 6));
-      
-      const label = `${i} Week${i > 1 ? 's' : ''} Ago (${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
-      weeks.push({ label, value: `week_${i}` });
-    }
-    return weeks;
-  };
+  // Emit on every committed value change. Keep the legacy payload shape
+  // ({ startDate, endDate, filterType }) and add a human `label`.
+  const emit = useCallback((v) => {
+    const { startDate, endDate } = computeRange(v);
+    onFilterChange?.({ startDate, endDate, filterType: v.kind, label: labelFor(v) });
+  }, [onFilterChange]);
 
-  // Generate Past Months (Last 12 months)
-  const getPastMonths = () => {
-    const months = [];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    for (let i = 1; i <= 12; i++) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-      months.push({ label, value: `month_${i}` });
-    }
-    return months;
-  };
+  // Fire once on mount so consumers get their initial range (matches old behaviour).
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (mounted.current) return;
+    mounted.current = true;
+    emit(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Generate Past Years (Last 5 years)
-  const getPastYears = () => {
-    const years = [];
-    const currentYear = new Date().getFullYear();
-    for (let i = 1; i <= 5; i++) {
-      const year = currentYear - i;
-      years.push({ label: `${year}`, value: `year_${i}` });
-    }
-    return years;
-  };
-
-  const filterOptions = [
-    { label: 'Today', value: 'today' },
-    { label: 'Yesterday', value: 'yesterday' },
-    { label: 'Last 7 Days', value: '7d' },
-    { label: 'Last 30 Days', value: '30d' },
-    { label: 'This Week', value: 'this_week' },
-    { label: 'Past Week (pick)', value: 'past_week' },
-    { label: 'This Month', value: 'this_month' },
-    { label: 'Last Month', value: 'last_month' },
-    { label: 'Any Month (pick)', value: 'past_month' },
-    { label: 'Last 3 Months (Quarter)', value: '3m' },
-    { label: 'Last 6 Months (Half-Year)', value: '6m' },
-    { label: 'This Year', value: 'this_year' },
-    { label: 'Any Year (pick)', value: 'past_year' },
-    { label: 'This Financial Year', value: 'financial_year' },
-    { label: 'Last Financial Year', value: 'last_financial_year' },
-    { label: 'All Time', value: 'all' },
-    { label: 'Custom Range', value: 'custom' },
-  ];
-
-  const calculateDates = (type, subValue) => {
-    const now = new Date();
-    let start = '';
-    let end = '';
-
-    switch (type) {
-      case 'today':
-        start = formatDate(now);
-        end = start;
-        break;
-      case 'yesterday':
-        const yesterday = new Date();
-        yesterday.setDate(now.getDate() - 1);
-        start = formatDate(yesterday);
-        end = start;
-        break;
-      case '7d':
-        const last7 = new Date();
-        last7.setDate(now.getDate() - 6);
-        start = formatDate(last7);
-        end = formatDate(now);
-        break;
-      case 'this_week':
-        const dWeek = new Date();
-        const day = dWeek.getDay();
-        const diff = dWeek.getDate() - day + (day === 0 ? -6 : 1);
-        start = formatDate(new Date(dWeek.setDate(diff)));
-        end = formatDate(now);
-        break;
-      case 'past_week':
-        if (subValue) {
-          const weeksAgo = parseInt(subValue.split('_')[1]);
-          const dPastWeek = new Date();
-          const dayPW = dPastWeek.getDay();
-          const diffPW = dPastWeek.getDate() - dayPW + (dayPW === 0 ? -6 : 1) - (weeksAgo * 7);
-          start = formatDate(new Date(dPastWeek.setDate(diffPW)));
-          end = formatDate(new Date(dPastWeek.setDate(diffPW + 6)));
-        }
-        break;
-      case 'this_month':
-        const dMonth = new Date();
-        dMonth.setDate(1);
-        start = formatDate(dMonth);
-        end = formatDate(now);
-        break;
-      case 'past_month':
-        if (subValue) {
-          const monthsAgo = parseInt(subValue.split('_')[1]);
-          const dPastMonth = new Date();
-          dPastMonth.setMonth(dPastMonth.getMonth() - monthsAgo);
-          dPastMonth.setDate(1);
-          start = formatDate(dPastMonth);
-          const lastDay = new Date(dPastMonth.getFullYear(), dPastMonth.getMonth() + 1, 0);
-          end = formatDate(lastDay);
-        }
-        break;
-      case 'this_year':
-        const dYear = new Date();
-        dYear.setMonth(0, 1);
-        start = formatDate(dYear);
-        end = formatDate(now);
-        break;
-      case 'past_year':
-        if (subValue) {
-          const yearsAgo = parseInt(subValue.split('_')[1]);
-          const dPastYear = new Date();
-          dPastYear.setFullYear(dPastYear.getFullYear() - yearsAgo);
-          dPastYear.setMonth(0, 1);
-          start = formatDate(dPastYear);
-          dPastYear.setMonth(11, 31);
-          end = formatDate(dPastYear);
-        }
-        break;
-      case '30d': {
-        const d = new Date();
-        d.setDate(now.getDate() - 29);
-        start = formatDate(d);
-        end = formatDate(now);
-        break;
-      }
-      case 'last_month': {
-        const d = new Date();
-        d.setDate(1);
-        d.setMonth(d.getMonth() - 1);
-        start = formatDate(d);
-        end = formatDate(new Date(d.getFullYear(), d.getMonth() + 1, 0)); // last day of that month
-        break;
-      }
-      case '3m': {
-        const d = new Date();
-        d.setMonth(now.getMonth() - 3);
-        start = formatDate(d);
-        end = formatDate(now);
-        break;
-      }
-      case '6m': {
-        const d = new Date();
-        d.setMonth(now.getMonth() - 6);
-        start = formatDate(d);
-        end = formatDate(now);
-        break;
-      }
-      case 'financial_year':
-        const dFY = new Date();
-        const fyYear = dFY.getFullYear();
-        const fyMonth = dFY.getMonth();
-        let startFYYear = fyYear;
-        if (fyMonth < 3) { // Jan, Feb, Mar
-          startFYYear = fyYear - 1;
-        }
-        start = formatDate(new Date(startFYYear, 3, 1)); // April 1
-        end = formatDate(new Date(startFYYear + 1, 2, 31)); // March 31
-        break;
-      case 'last_financial_year': {
-        const d = new Date();
-        // Start year of the CURRENT financial year, then step back one year.
-        const curFYStart = d.getMonth() < 3 ? d.getFullYear() - 1 : d.getFullYear();
-        const prevFYStart = curFYStart - 1;
-        start = formatDate(new Date(prevFYStart, 3, 1)); // prev April 1
-        end = formatDate(new Date(prevFYStart + 1, 2, 31)); // prev March 31
-        break;
-      }
-      case 'custom':
-        start = customDates.start;
-        end = customDates.end;
-        break;
-      default:
-        start = '';
-        end = '';
-    }
-
-    return { start, end };
+  const pick = (v) => {
+    setShowCustom(false);
+    setValue(v);
+    emit(v);
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Reset sub-values when type changes
-      if (filterType !== 'past_week' && filterType !== 'past_month' && filterType !== 'past_year') {
-        setSelectedSubValue('');
-      }
+    if (!showCustom) return undefined;
+    const onDoc = (e) => { if (customRef.current && !customRef.current.contains(e.target)) setShowCustom(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [showCustom]);
 
-      if (filterType !== 'custom') {
-        const { start, end } = calculateDates(filterType, selectedSubValue);
-        if (filterType === 'all' || start) {
-          onFilterChange({ startDate: start, endDate: end, filterType });
-        }
-      }
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [filterType, selectedSubValue]);
-
-  useEffect(() => {
-    if (filterType === 'custom' && customDates.start && customDates.end) {
-      const timer = setTimeout(() => {
-        onFilterChange({ startDate: customDates.start, endDate: customDates.end, filterType });
-      }, 0);
-
-      return () => clearTimeout(timer);
+  const applyCustom = (start, end) => {
+    setCustomDraft({ start, end });
+    if (start && end) {
+      const v = { kind: 'custom', start, end };
+      setValue(v);
+      emit(v);
     }
-  }, [customDates]);
+  };
+
+  const is = (kind) => value.kind === kind;
+  const eqValue = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  // Render a preset pill (plain helper, not a nested component, so it doesn't
+  // remount on every render).
+  const renderPill = (kind, label, onClick) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+        ${is(kind) ? 'text-primary' : 'text-(--color-text-secondary) hover:text-(--color-text-primary)'}`}
+    >
+      <span className={is(kind) ? 'border-b-2 border-primary pb-0.5' : ''}>{label}</span>
+    </button>
+  );
 
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      <div className="relative w-full h-full">
-        <PremiumSelect
-          icon={Calendar}
-          value={filterType}
-          onChange={(val) => setFilterType(val)}
-          options={filterOptions}
-          className="w-full h-full"
-          placeholder="Select Range"
-        />
+    <div className={`inline-flex flex-wrap items-center gap-0.5 px-2 py-1 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm ${className}`}>
+      {loading && <Loader2 size={15} className="animate-spin text-primary ml-1 mr-0.5" />}
 
-        {loading && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <Loader2 className="animate-spin text-primary" size={18} />
-          </div>
-        )}
+      {renderPill('today', 'Today', () => pick({ kind: 'today' }))}
+      {renderPill('yesterday', 'Yesterday', () => pick({ kind: 'yesterday' }))}
+      {renderPill('week', 'Week', () => pick({ kind: 'week' }))}
+
+      <Dropdown
+        label={is('month') ? labelFor(value) : 'Month'}
+        active={is('month')}
+        options={months}
+        onPick={pick}
+        isSelected={(v) => eqValue(v, value)}
+      />
+      <Dropdown
+        label={is('quarter') ? labelFor(value) : 'Quarter'}
+        active={is('quarter')}
+        options={quarters}
+        onPick={pick}
+        isSelected={(v) => eqValue(v, value)}
+      />
+      <Dropdown
+        label={is('fy') ? labelFor(value) : 'FY'}
+        active={is('fy')}
+        options={fys}
+        onPick={pick}
+        isSelected={(v) => eqValue(v, value)}
+      />
+
+      {renderPill('rolling12', '12M', () => pick({ kind: 'rolling12' }))}
+
+      {/* Custom range */}
+      <div className="relative" ref={customRef}>
+        <button
+          type="button"
+          onClick={() => setShowCustom((s) => !s)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+            ${is('custom') ? 'text-primary' : 'text-(--color-text-secondary) hover:text-(--color-text-primary)'}`}
+        >
+          <Calendar size={14} />
+          <span className={is('custom') ? 'border-b-2 border-primary pb-0.5' : ''}>Custom</span>
+        </button>
+        <AnimatePresence>
+          {showCustom && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.14 }}
+              className="absolute z-50 mt-1 right-0 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-(--shadow-md) p-3 space-y-2 w-64"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-(--color-text-muted) w-10">From</span>
+                <input
+                  type="date"
+                  value={customDraft.start}
+                  max={customDraft.end || today}
+                  onChange={(e) => applyCustom(e.target.value, customDraft.end)}
+                  className="flex-1 bg-(--color-surface-soft) border border-(--color-border) rounded-lg px-2.5 py-1.5 text-xs outline-none text-(--color-text-primary) focus:border-primary/40"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-(--color-text-muted) w-10">To</span>
+                <input
+                  type="date"
+                  value={customDraft.end}
+                  min={customDraft.start || undefined}
+                  max={today}
+                  onChange={(e) => applyCustom(customDraft.start, e.target.value)}
+                  className="flex-1 bg-(--color-surface-soft) border border-(--color-border) rounded-lg px-2.5 py-1.5 text-xs outline-none text-(--color-text-primary) focus:border-primary/40"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => { pick({ kind: 'all' }); setCustomDraft({ start: '', end: '' }); }}
+                className={`w-full text-center text-xs font-medium py-1.5 rounded-lg transition-colors
+                  ${is('all') ? 'bg-(--color-primary-soft) text-primary' : 'text-(--color-text-muted) hover:bg-(--color-surface-soft) hover:text-(--color-text-primary)'}`}
+              >
+                All time (clear)
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <AnimatePresence>
-        {filterType === 'past_week' && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="flex-1"
-          >
-            <PremiumSelect
-              icon={Clock}
-              value={selectedSubValue}
-              onChange={(val) => setSelectedSubValue(val)}
-              options={getPastWeeks()}
-              placeholder="Choose Week"
-            />
-          </motion.div>
-        )}
-
-        {filterType === 'past_month' && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="flex-1"
-          >
-            <PremiumSelect
-              icon={Clock}
-              value={selectedSubValue}
-              onChange={(val) => setSelectedSubValue(val)}
-              options={getPastMonths()}
-              placeholder="Choose Month"
-            />
-          </motion.div>
-        )}
-
-        {filterType === 'past_year' && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="flex-1"
-          >
-            <PremiumSelect
-              icon={Clock}
-              value={selectedSubValue}
-              onChange={(val) => setSelectedSubValue(val)}
-              options={getPastYears()}
-              placeholder="Choose Year"
-            />
-          </motion.div>
-        )}
-
-        {filterType === 'custom' && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="flex gap-2 p-1 bg-(--color-surface) border border-(--color-border) rounded-xl items-center shrink-0"
-          >
-            <div className="flex items-center gap-2 pl-3">
-              <span className="text-xs font-medium text-(--color-text-muted) whitespace-nowrap">From</span>
-              <input
-                type="date"
-                className="bg-transparent text-xs outline-none text-(--color-text-primary) w-24"
-                value={customDates.start}
-                onChange={e => setCustomDates({ ...customDates, start: e.target.value })}
-              />
-            </div>
-            <div className="w-px h-4 bg-(--color-border)" />
-            <div className="flex items-center gap-2 pr-3">
-              <span className="text-xs font-medium text-(--color-text-muted) whitespace-nowrap">To</span>
-              <input
-                type="date"
-                className="bg-transparent text-xs outline-none text-(--color-text-primary) w-24"
-                value={customDates.end}
-                onChange={e => setCustomDates({ ...customDates, end: e.target.value })}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

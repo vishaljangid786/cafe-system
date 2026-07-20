@@ -11,7 +11,7 @@ import { Button } from '../../../components/ui/Button';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { can } from '@/app/config/actions';
@@ -43,11 +43,22 @@ export default function StaffMenuPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Filters go to the SERVER so they apply across the whole menu. Previously
+      // they were applied client-side to the current page only, so searching for
+      // an item that lived on page 2+ silently returned nothing.
       const params = {
         page: currentPage,
         limit: itemsPerPage
       };
       if (selectedLocation) params.locationId = selectedLocation._id || selectedLocation;
+      if (searchTerm.trim()) params.search = searchTerm.trim();
+      if (selectedCategory !== 'All') {
+        const cat = categories.find(c => c.name === selectedCategory);
+        if (cat) params.category = cat._id;
+      }
+      if (availabilityFilter === 'Available') params.isAvailable = 'true';
+      else if (availabilityFilter === 'Unavailable') params.isAvailable = 'false';
+      if (dietaryFilter !== 'All') params.dietaryType = dietaryFilter;
 
       const [itemsRes, catsRes] = await Promise.all([
         api.get('/menu', { params }),
@@ -90,26 +101,27 @@ export default function StaffMenuPage() {
     }
   };
 
+  // Refetch on any filter change (debounced so typing doesn't fire per keystroke).
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchData();
-    }, 0);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [selectedLocation, currentPage]);
+  }, [selectedLocation, currentPage, searchTerm, selectedCategory, availabilityFilter, dietaryFilter]);
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCat = selectedCategory === 'All' || item.category?.name === selectedCategory;
-    const matchesAvailability =
-      availabilityFilter === 'All' ||
-      (availabilityFilter === 'Available' && item.isAvailable) ||
-      (availabilityFilter === 'Unavailable' && !item.isAvailable);
+  // A filter change must return to page 1 — otherwise the user can be stranded on
+  // a page number that no longer exists in the narrowed result set.
+  const didMountFiltersRef = useRef(false);
+  useEffect(() => {
+    if (!didMountFiltersRef.current) { didMountFiltersRef.current = true; return; }
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, availabilityFilter, dietaryFilter]);
 
-    const matchesDietary = dietaryFilter === 'All' || item.dietaryType === dietaryFilter;
-
-    return matchesSearch && matchesCat && matchesAvailability && matchesDietary;
-  });
+  // Every filter is applied server-side now (see fetchData), so the rows returned
+  // are already the filtered set. Re-filtering here would only risk hiding valid
+  // results if a client-side comparison disagreed with the server's.
+  const filteredItems = menuItems;
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 

@@ -4,6 +4,7 @@ const {
   createLocation,
   updateLocation,
   softDeleteLocation,
+  getLocationImpact,
 } = require('../controllers/locationController');
 const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
 const { locationSchema, updateLocationSchema, validate } = require('../middlewares/validateMiddleware');
@@ -14,7 +15,14 @@ const router = express.Router();
 router.get('/public', async (req, res) => {
   try {
     const Location = require('../models/Location');
-    const locations = await Location.find({ status: 'active' })
+    // A blocked cafe disappears from the public booking page entirely; offering
+    // its branches would take reservations nobody is able to honour.
+    const { getSuspendedCafes } = require('../utils/tenantStatus');
+    const suspended = [...(await getSuspendedCafes()).keys()];
+    const locations = await Location.find({
+      status: 'active',
+      ...(suspended.length ? { cafe: { $nin: suspended } } : {}),
+    })
       .select('name city address maxCapacity status')
       .lean();
     res.json({ success: true, data: locations });
@@ -28,6 +36,8 @@ router.route('/')
   // Admins can create branches inside their own cafe; super_admin / anyone with the
   // manageBranches permission can too. Cafe ownership is enforced in the controller.
   .post(verifyToken, checkAction('branches.add'), ...locationSchema, validate, createLocation);
+
+router.get('/:id/impact', verifyToken, checkAction('branches.delete'), getLocationImpact);
 
 router.route('/:id')
   .patch(verifyToken, checkAction('branches.modify'), ...updateLocationSchema, validate, updateLocation)

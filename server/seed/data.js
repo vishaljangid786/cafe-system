@@ -378,6 +378,7 @@ const seedData = async () => {
       isBilled: isCompleted,
       totalAmount: totalAmt,
       grandTotal,
+      taxAmount: gst,
       paymentType: ['CASH', 'UPI', 'CARD'][Math.floor(Math.random() * 3)],
       createdAt: pastDate,
       completedAt: isCompleted ? new Date(pastDate.getTime() + 30 * 60000) : null,
@@ -387,8 +388,12 @@ const seedData = async () => {
       transactionData.push({
         locationId: loc._id,
         orderId,
-        totalAmount: grandTotal,
-        totalProfit: grandTotal - totalCost,
+        // Revenue is booked GST-EXCLUSIVE, matching orderFinalizer at runtime
+        // (revenueAmount = grandTotal − taxAmount). Seeding the GST-inclusive
+        // grandTotal overstated revenue and folded a pass-through tax into profit,
+        // skewing every analytic that mixes seeded and live data.
+        totalAmount: totalAmt,
+        totalProfit: totalAmt - totalCost,
         type: 'REVENUE',
         source: 'ORDER',
         title: `Order Payment – ${cust.name}`,

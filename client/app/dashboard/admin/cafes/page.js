@@ -5,11 +5,12 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { digitsOnly, sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
-  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check, ChevronLeft, ChevronRight,
+  Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check, ChevronLeft, ChevronRight, Lock, Unlock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
+import ImpactDeleteModal from '@/app/components/ui/ImpactDeleteModal';
 import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
@@ -84,7 +85,7 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div><label className={labelCls}>Admin Name *</label><input className={inputCls} value={admin.name} onChange={(e) => setAdmin('name', sanitizeName(e.target.value))} placeholder="Enter admin name" /></div>
         <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} value={admin.email} onChange={(e) => setAdmin('email', sanitizeEmail(e.target.value))} placeholder="Enter admin email" /></div>
-        <div><label className={labelCls}>Password *</label><input type="text" className={inputCls} value={admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="At least 10 characters" /></div>
+        <div><label className={labelCls}>Password *</label><input type="password" autoComplete="new-password" className={inputCls} value={admin.password} onChange={(e) => setAdmin('password', e.target.value)} placeholder="At least 10 characters" /></div>
         <div><label className={labelCls}>Phone *</label><input type="tel" inputMode="numeric" className={inputCls} value={admin.phone} maxLength={10} onChange={(e) => setAdmin('phone', digitsOnly(e.target.value, 10))} placeholder="Enter phone number" /></div>
         <div><label className={labelCls}>Age</label><input type="number" min="18" max="99" onKeyDown={blockNonInteger} className={inputCls} value={admin.age} onChange={(e) => setAdmin('age', e.target.value)} placeholder="30" /></div>
         <div>
@@ -193,6 +194,8 @@ export default function CafesPage() {
   const [editing, setEditing] = useState(null); // cafe being edited (or null = create)
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  // Cafe queued for deletion; drives the impact confirmation dialog.
+  const [deleting, setDeleting] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingImg, setUploadingImg] = useState({ aadhar: false, profile: false });
   const [step, setStep] = useState(0); // create-wizard step index
@@ -423,15 +426,45 @@ export default function CafesPage() {
     }
   };
 
-  const handleDelete = async (cafe) => {
-    if (!confirm(`Delete cafe "${cafe.name}"? Its branches must be removed first.`)) return;
+  // Deletion always goes through the impact dialog now: a cafe can own branches,
+  // menus, stock and staff, and a bare confirm() gave no hint of that.
+  const handleDelete = (cafe) => setDeleting(cafe);
+
+  const confirmDelete = async ({ force, staffMode }) => {
+    const cafe = deleting;
+    if (!cafe) return;
     const loadToast = toast.loading('Deleting cafe...');
     try {
-      await api.delete(`/cafes/${cafe._id}`);
-      toast.success('Cafe deleted', { id: loadToast });
+      const res = await api.delete(`/cafes/${cafe._id}`, { data: { force, staffMode } });
+      toast.success(res.data?.message || 'Cafe deleted', { id: loadToast, duration: 6000 });
+      setDeleting(null);
       fetchCafes();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not delete cafe', { id: loadToast });
+    }
+  };
+
+  const handleToggleBlock = async (cafe) => {
+    const blocking = cafe.status !== 'suspended';
+    let reason = '';
+    if (blocking) {
+      reason = window.prompt(
+        `Block "${cafe.name}"?\n\nEveryone in this cafe will be locked out immediately and its public ordering will stop.\n\nReason (shown to them):`,
+        ''
+      );
+      // A null return is Cancel; an empty string is "block, no reason given".
+      if (reason === null) return;
+    } else if (!confirm(`Unblock "${cafe.name}"? Its staff will be able to log in again.`)) {
+      return;
+    }
+
+    const loadToast = toast.loading(blocking ? 'Blocking cafe...' : 'Unblocking cafe...');
+    try {
+      const res = await api.patch(`/cafes/${cafe._id}/suspension`, { suspended: blocking, reason });
+      toast.success(res.data?.message || 'Updated', { id: loadToast });
+      fetchCafes();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update the cafe', { id: loadToast });
     }
   };
 
@@ -610,7 +643,14 @@ export default function CafesPage() {
                         {cafe.logo ? <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" /> : <Store size={24} />}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-base font-semibold text-(--color-text-primary) truncate">{cafe.name}</p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="text-base font-semibold text-(--color-text-primary) truncate">{cafe.name}</p>
+                          {cafe.status === 'suspended' && (
+                            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-normal bg-danger/10 text-danger border border-danger/20">
+                              <Lock size={10} /> Blocked
+                            </span>
+                          )}
+                        </div>
                         {cafe.gstin ? (
                           <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal mt-0.5 truncate">GSTIN: {cafe.gstin}</p>
                         ) : (
@@ -622,6 +662,19 @@ export default function CafesPage() {
                       <button onClick={() => openEdit(cafe)} className="p-2.5 rounded-xl bg-(--color-surface-soft) text-(--color-text-secondary) border border-(--color-border) hover:text-primary transition-all" title="Edit">
                         <Edit2 size={15} />
                       </button>
+                      {isSuper && (
+                        <button
+                          onClick={() => handleToggleBlock(cafe)}
+                          className={`p-2.5 rounded-xl border transition-all ${
+                            cafe.status === 'suspended'
+                              ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary hover:text-(--color-on-primary)'
+                              : 'bg-(--color-surface-soft) text-(--color-text-secondary) border-(--color-border) hover:text-danger'
+                          }`}
+                          title={cafe.status === 'suspended' ? 'Unblock this cafe' : 'Block this cafe'}
+                        >
+                          {cafe.status === 'suspended' ? <Unlock size={15} /> : <Lock size={15} />}
+                        </button>
+                      )}
                       {can(user, 'cafes.delete') && (
                         <button onClick={() => handleDelete(cafe)} className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all" title="Delete">
                           <Trash2 size={15} />
@@ -773,6 +826,14 @@ export default function CafesPage() {
             </div>
           )}
         </AnimatePresence>
+        <ImpactDeleteModal
+          isOpen={!!deleting}
+          onClose={() => setDeleting(null)}
+          entity="cafe"
+          id={deleting?._id}
+          name={deleting?.name}
+          onConfirm={confirmDelete}
+        />
       </div>
     </PageTransition>
   );

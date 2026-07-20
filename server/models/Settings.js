@@ -13,6 +13,17 @@ const settingsSchema = new mongoose.Schema(
       default: null, // null = global default
     },
 
+    // Cafe-level tier, sitting between global and branch in the merge chain:
+    // DEFAULTS < global (both null) < cafe (cafeId set) < branch (locationId set).
+    // This is what lets a super admin configure any cafe, an admin their own cafe,
+    // and a branch admin just their branch — through one mechanism.
+    cafeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cafe',
+      default: null,
+      index: true,
+    },
+
     tax: {
       gstRate: { type: Number, default: 5, min: 0, max: 100 }, // percent
       gstin: { type: String, default: '' },
@@ -66,14 +77,26 @@ const settingsSchema = new mongoose.Schema(
       acceptCash: { type: Boolean, default: true },
       requireApprovalForQr: { type: Boolean, default: true },
     },
+
+    // Customer CRM: the new-customer intro discount and the QR profile prompt.
+    crm: {
+      newCustomerDiscountEnabled: { type: Boolean, default: true },
+      newCustomerDiscountPercent: { type: Number, default: 20, min: 0, max: 100 },
+      newCustomerMaxDiscount: { type: Number, default: null, min: 0 }, // ₹ cap, null = uncapped
+      newCustomerMinOrder: { type: Number, default: 0, min: 0 },
+      askProfileOnScan: { type: Boolean, default: true },
+      profileRequired: { type: Boolean, default: false }, // false = customer may Skip
+    },
   },
   { timestamps: true }
 );
 
-// One settings doc per branch AND exactly one global doc. A plain unique index on
-// locationId enforces both: at most one document may have locationId = null (the
-// global default), and at most one per branch ObjectId. (A partial index excluding
-// null would have allowed duplicate global docs — see review.)
-settingsSchema.index({ locationId: 1 }, { unique: true });
+// Exactly one document per scope: one global (both null), one per cafe (cafeId set,
+// locationId null) and one per branch (locationId set). A COMPOUND unique index on
+// { locationId, cafeId } enforces all three at once — a plain unique index on
+// locationId alone would have collapsed every cafe doc (which all share
+// locationId: null) into a single row. As before this is a plain (not partial)
+// index so the null/null global row is itself deduplicated.
+settingsSchema.index({ locationId: 1, cafeId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Settings', settingsSchema);

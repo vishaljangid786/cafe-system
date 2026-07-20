@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check models/Customer.js)",
+      "Bash(node --check utils/rateLimitStore.js)",
+      "Bash(node --check utils/scheduler.js)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('vercel.json valid JSON'\\)\")"
+    ]
+  }
+}

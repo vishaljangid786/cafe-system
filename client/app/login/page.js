@@ -12,15 +12,18 @@ import QuickLogin from './QuickLogin';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { getLandingPath } from '../config/navigation';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address').min(1, 'Email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+  // Set when the sign-in was refused because the whole cafe is blocked.
+  const [blockedCafe, setBlockedCafe] = useState(null);
   const { login, user, loading } = useAuth();
   const router = useRouter();
 
@@ -37,17 +40,25 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (user.role === 'super_admin' || user.role === 'admin') router.push('/dashboard/admin');
-      else if (user.role === 'branch_admin' || user.role === 'location_admin') router.push('/dashboard/branch-admin');
-      else if (user.role === 'chef') router.push('/dashboard/chef');
-      else router.push('/dashboard/staff');
+      // Use the shared landing resolver rather than a hardcoded role→path chain:
+      // it honours allowedPages, so a user without Overview access lands on the
+      // first page they can actually open instead of being bounced by the guard.
+      router.push(getLandingPath(user));
     }
   }, [user, loading, router]);
 
   const onSubmit = async (data) => {
     setServerError('');
+    setBlockedCafe(null);
     const res = await login(data.email, data.password);
     if (!res.success) {
+      // A blocked cafe is not a failed sign-in — the credentials were right.
+      // Showing it as a red validation error would send people off changing
+      // passwords that were never the problem.
+      if (res.code === 'CAFE_SUSPENDED') {
+        setBlockedCafe({ message: res.message, ...(res.suspension || {}) });
+        return;
+      }
       setServerError(res.message);
       toast.error(res.message || 'Login failed. Please check your details.');
     }
@@ -116,6 +127,23 @@ export default function LoginPage() {
             <h2 className="text-2xl font-bold text-(--color-text-primary)">Welcome back</h2>
             <p className="text-sm text-(--color-text-muted)">Enter your details to log in to your account.</p>
           </div>
+
+          {blockedCafe && (
+            <div className="mb-6 rounded-xl border border-(--color-border) bg-(--color-surface) p-5">
+              <div className="h-10 w-10 rounded-xl bg-[rgba(var(--color-danger-rgb),0.1)] text-danger flex items-center justify-center mb-3">
+                <Lock size={18} />
+              </div>
+              <p className="text-sm font-semibold text-(--color-text-primary) mb-1.5">
+                {blockedCafe.cafeName ? `${blockedCafe.cafeName} is blocked` : 'This cafe is blocked'}
+              </p>
+              <p className="text-sm text-(--color-text-secondary) leading-relaxed">
+                {blockedCafe.reason || blockedCafe.message}
+              </p>
+              <p className="text-sm text-(--color-text-secondary) leading-relaxed mt-2">
+                Please contact the super admin to have it unblocked.
+              </p>
+            </div>
+          )}
 
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait">

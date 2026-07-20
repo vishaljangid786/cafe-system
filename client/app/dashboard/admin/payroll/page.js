@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import ExportActions from '../../../components/ui/ExportActions';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
 import useBranchScope from '../../../hooks/useBranchScope';
-import { can } from '../../../config/actions';
+import { useCan } from '../../../hooks/usePermissions';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -46,11 +46,25 @@ export default function PayrollRecordsPage() {
   const router = useRouter();
   const { user: currentUser, selectedCafe, cafes } = useAuth();
   const { singleBranchId } = useBranchScope();
+  const canDo = useCan();
 
-  // Single-stage workflow: whoever holds salaries.approve can finalize & pay;
-  // salaries.modify lets them deduct/bonus a still-pending salary.
-  const canApprove = can(currentUser, 'salaries.approve');
-  const canAdjust = can(currentUser, 'salaries.modify');
+  // Single-stage workflow: whoever holds salaries.add can generate the cycle,
+  // salaries.modify lets them deduct/bonus a still-pending salary, and whoever
+  // holds salaries.approve can finalize & pay.
+  const canGenerate = canDo('salaries.add');
+  const canApprove = canDo('salaries.approve');
+  const canAdjust = canDo('salaries.modify');
+
+  // Admins/super-admins read the cross-branch /salary/all dataset; branch and
+  // location admins are not allowed on that endpoint, so they get this same page
+  // fed from /salary/location (the server scopes rows to their own branches).
+  const isAdminScope = ['admin', 'super_admin'].includes(currentUser?.role);
+  // Server-side role/search/page filters only exist on the /salary/all path —
+  // the /salary/location path filters client-side, so keep these params inert
+  // there (and avoid refetching on every keystroke / tab switch).
+  const serverRole = isAdminScope ? activeTab : '';
+  const serverSearch = isAdminScope ? searchQuery : '';
+  const serverPage = isAdminScope ? page : 1;
 
   // The focused branch is driven entirely by the global Navbar filter.
   // 'All' = all branches (a multi-branch / cafe subset also resolves to 'All'
@@ -64,11 +78,13 @@ export default function PayrollRecordsPage() {
       ? (cafes?.find((c) => c._id === selectedCafe)?.name || 'Selected Cafe')
       : null;
 
-  // Only admins/super-admins (or staff explicitly granted payroll/staff access)
-  // may view payroll records. A dead `const { user } = api` previously made this
-  // guard a no-op.
+  // Admin-level roles (or staff explicitly granted payroll/staff access) may
+  // view salary records. Branch/location admins land here too — their old
+  // salary pages are thin wrappers around this one, with data still scoped to
+  // their own branches by the server. A dead `const { user } = api` previously
+  // made this guard a no-op.
   useEffect(() => {
-    if (currentUser && !['super_admin', 'admin'].includes(currentUser.role) && !currentUser.permissions?.manageStaff) {
+    if (currentUser && !['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(currentUser.role) && !currentUser.permissions?.manageStaff) {
       toast.error('Access denied. Admin permission required.');
       router.push('/dashboard');
     }
@@ -79,28 +95,55 @@ export default function PayrollRecordsPage() {
   // IN PLACE — after the first load this sets `refetching` (skeletons), never a full
   // window reload.
   const fetchData = useCallback(async () => {
+    if (!currentUser) return;
     const isInitial = !didInitRef.current;
     if (isInitial) setLoading(true);
     else setRefetching(true);
     progress.start();
     try {
+      // Branch/location admins can't call /salary/all — they read the same rows
+      // from /salary/location (month + optional locationId, exactly what that
+      // API already receives). Payroll history is skipped for location_admin
+      // (the server route excludes that role) and degrades quietly on 403 so a
+      // missing permission never blanks the whole page.
       const [salRes, locRes, payRes] = await Promise.all([
-        api.get(`/salary/all?month=${month}&locationId=${singleBranchId === 'all' ? '' : singleBranchId}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${activeTab}&search=${searchQuery}&page=${page}&limit=10`),
+        isAdminScope
+          ? api.get(`/salary/all?month=${month}&locationId=${singleBranchId === 'all' ? '' : singleBranchId}&cafeId=${selectedCafe && selectedCafe !== 'all' ? selectedCafe : ''}&role=${serverRole}&search=${serverSearch}&page=${serverPage}&limit=10`)
+          : api.get(`/salary/location?${new URLSearchParams(
+              singleBranchId === 'all' ? { month } : { month, locationId: singleBranchId }
+            ).toString()}`),
         api.get('/locations'),
-        api.get(`/salary/payroll/history?month=${month}`)
+        currentUser.role === 'location_admin'
+          ? Promise.resolve(null)
+          : api.get(`/salary/payroll/history?month=${month}`).catch(() => null)
       ]);
 
-      const mergedSalaries = salRes.data.data.map(s => {
-        const payroll = payRes.data.data?.find(p => p.user?._id === s._id);
+      const rows = Array.isArray(salRes.data.data) ? salRes.data.data : [];
+      const mergedSalaries = rows.map(s => {
+        const payroll = payRes?.data?.data?.find(p => p.user?._id === s._id);
         return { ...s, payrollRecord: payroll };
       });
 
       setSalaries(mergedSalaries);
-      setStats({
-        totalPayroll: salRes.data.totalPayrollCost,
-        locationTotals: salRes.data.locationTotals
-      });
-      if (salRes.data.pagination) setPagination(salRes.data.pagination);
+      if (isAdminScope) {
+        setStats({
+          totalPayroll: salRes.data.totalPayrollCost,
+          locationTotals: salRes.data.locationTotals
+        });
+        if (salRes.data.pagination) setPagination(salRes.data.pagination);
+      } else {
+        // /salary/location has no totals — derive the same shapes client-side
+        // so the stat cards and charts keep working for branch-scoped admins.
+        setStats({
+          totalPayroll: rows.reduce((acc, r) => acc + (r.calculatedSalary || 0), 0),
+          locationTotals: rows.reduce((acc, r) => {
+            const locName = r.locationName || 'Unassigned';
+            acc[locName] = (acc[locName] || 0) + (r.calculatedSalary || 0);
+            return acc;
+          }, {})
+        });
+        setPagination({ total: rows.length, pages: 1 });
+      }
       setLocations(locRes.data.data);
     } catch (err) {
       console.error('Failed to fetch records');
@@ -110,7 +153,7 @@ export default function PayrollRecordsPage() {
       setRefetching(false);
       progress.done();
     }
-  }, [month, singleBranchId, activeTab, searchQuery, page, selectedCafe]);
+  }, [month, singleBranchId, serverRole, serverSearch, serverPage, selectedCafe, currentUser, isAdminScope]);
 
   useEffect(() => {
     fetchData();
@@ -121,7 +164,32 @@ export default function PayrollRecordsPage() {
     setPage(1);
   }, [selectedCafe, singleBranchId]);
 
-  const filteredSalaries = salaries; // Now filtered by backend
+  // /salary/all rows arrive already filtered/paginated by the backend; the
+  // /salary/location rows are the whole branch, so apply the tab + search here.
+  const filteredSalaries = isAdminScope
+    ? salaries
+    : salaries.filter(s =>
+        s.role === activeTab &&
+        (s?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+  // Real client-side CSV export (no backend salary-export endpoint exists).
+  const downloadCsv = (rows, filename) => {
+    if (!rows || rows.length === 0) { toast.error('Nothing to export'); return; }
+    const headers = ['Name', 'Email', 'Role', 'Present', 'Half Days', 'Absent', 'Payable Days', 'Monthly Salary', 'Calculated Salary'];
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [headers.join(',')];
+    rows.forEach((r) => lines.push([
+      r.name, r.email, r.role, r.totalPresent, r.totalHalfDay, r.totalAbsent,
+      r.payableDays, r.monthlySalary, Math.round(Number(r.calculatedSalary) || 0),
+    ].map(esc).join(',')));
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const submitAdjustment = async () => {
     const amt = Number(adjustForm.amount);
@@ -147,7 +215,7 @@ export default function PayrollRecordsPage() {
     <PageTransition>
       <div className="space-y-6">
         <PageHeaderSkeleton />
-        <StatGridSkeleton count={3} />
+        <StatGridSkeleton count={4} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
@@ -242,8 +310,12 @@ export default function PayrollRecordsPage() {
                 {[
                   { id: 'staff', label: 'Staff' },
                   { id: 'chef', label: 'Chefs' },
-                  { id: 'branch_admin', label: 'Branch Admins' },
-                  { id: 'admin', label: 'Main Admins' }
+                  // Branch-level admins only ever see their own staff/chefs
+                  // (server hierarchy), so the admin-only tabs are hidden.
+                  ...(isAdminScope ? [
+                    { id: 'branch_admin', label: 'Branch Admins' },
+                    { id: 'admin', label: 'Main Admins' }
+                  ] : [])
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -292,26 +364,28 @@ export default function PayrollRecordsPage() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-4">
-                  <button
-                    onClick={async () => {
-                      const loadToast = toast.loading("Calculating salaries...");
-                      try {
-                        const locObj = locations.find(l => l.name === selectedLocation);
-                        await api.post('/salary/generate', {
-                          month,
-                          locationId: locObj?._id || 'all',
-                          cafeId: selectedCafe && selectedCafe !== 'all' ? selectedCafe : 'all',
-                        });
-                        toast.success("Salary details saved successfully", { id: loadToast });
-                        fetchData();
-                      } catch (e) {
-                        toast.error("Something went wrong. Please try again.", { id: loadToast });
-                      }
-                    }}
-                    className="h-[54px] px-5 py-3 bg-(--color-text-primary) text-(--color-bg-base) font-semibold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-sm "
-                  >
-                    Calculate Monthly Salary
-                  </button>
+                  {canGenerate && (
+                    <button
+                      onClick={async () => {
+                        const loadToast = toast.loading("Calculating salaries...");
+                        try {
+                          const locObj = locations.find(l => l.name === selectedLocation);
+                          await api.post('/salary/generate', {
+                            month,
+                            locationId: locObj?._id || 'all',
+                            cafeId: selectedCafe && selectedCafe !== 'all' ? selectedCafe : 'all',
+                          });
+                          toast.success("Salary details saved successfully", { id: loadToast });
+                          fetchData();
+                        } catch (e) {
+                          toast.error("Something went wrong. Please try again.", { id: loadToast });
+                        }
+                      }}
+                      className="h-[54px] px-5 py-3 bg-(--color-text-primary) text-(--color-bg-base) font-semibold text-xs uppercase tracking-normal rounded-xl transition-all  shadow-sm "
+                    >
+                      Calculate Monthly Salary
+                    </button>
+                  )}
 
                   <ExportActions
                       data={filteredSalaries}
@@ -320,6 +394,9 @@ export default function PayrollRecordsPage() {
                         { header: 'Email', key: 'email' },
                         { header: 'Location', key: 'locationName' },
                         { header: 'Role', key: 'role' },
+                        { header: 'Present', key: 'totalPresent' },
+                        { header: 'Half Days', key: 'totalHalfDay' },
+                        { header: 'Absent', key: 'totalAbsent' },
                         { header: 'Monthly Salary', key: 'monthlySalary' },
                         { header: 'Payable Days', key: 'payableDays' },
                         { header: 'Calculated Payout', key: 'calculatedSalary' }
@@ -333,7 +410,7 @@ export default function PayrollRecordsPage() {
           </div>
         </SlideIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <SlideIn delay={0.1}>
             <div className="bg-primary p-5 rounded-xl shadow-sm  text-(--color-bg-base) h-full">
               <p className="text-xs font-medium uppercase tracking-normal opacity-80">Total Salary Payout</p>
@@ -350,6 +427,22 @@ export default function PayrollRecordsPage() {
               <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">
                 <Money value={filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (curr.calculatedSalary || 0), 0) / filteredSalaries.length) : 0} decimals={0} />
               </p>
+            </div>
+          </SlideIn>
+
+          <SlideIn delay={0.25}>
+            <div className="bg-(--color-surface)/40  p-5 rounded-xl shadow-sm border border-(--color-border) h-full transition-colors">
+              <p className="text-xs font-medium uppercase tracking-normal text-(--color-text-muted)">Average Attendance</p>
+              <p className="text-2xl font-semibold text-(--color-text-primary) mt-1">
+                {filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (Number(curr?.payableDays) || 0), 0) / (filteredSalaries.length * 30) * 100).toFixed(1) : 0}%
+              </p>
+              <div className="mt-4 h-1.5 w-full bg-(--color-surface-soft) rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${filteredSalaries.length > 0 ? (filteredSalaries.reduce((acc, curr) => acc + (Number(curr?.payableDays) || 0), 0) / (filteredSalaries.length * 30) * 100) : 0}%` }}
+                  className="h-full bg-success rounded-full"
+                />
+              </div>
             </div>
           </SlideIn>
 
@@ -483,6 +576,23 @@ export default function PayrollRecordsPage() {
                         </div>
                       )}
                     </div>
+
+                    {['staff', 'chef'].includes(activeTab) && s.totalPresent !== undefined && (
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="rounded-lg bg-success/10 border border-success/20 px-2 py-1.5 text-center">
+                          <p className="text-[10px] font-medium uppercase tracking-normal text-success">Present</p>
+                          <p className="text-sm font-semibold text-success">{s.totalPresent}</p>
+                        </div>
+                        <div className="rounded-lg bg-primary/10 border border-primary/20 px-2 py-1.5 text-center">
+                          <p className="text-[10px] font-medium uppercase tracking-normal text-primary-dark dark:text-primary">Half Days</p>
+                          <p className="text-sm font-semibold text-primary-dark dark:text-primary">{s.totalHalfDay}</p>
+                        </div>
+                        <div className="rounded-lg bg-danger/10 border border-danger/20 px-2 py-1.5 text-center">
+                          <p className="text-[10px] font-medium uppercase tracking-normal text-danger">Absent</p>
+                          <p className="text-sm font-semibold text-danger">{s.totalAbsent}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between gap-2 mt-2">
@@ -645,6 +755,23 @@ export default function PayrollRecordsPage() {
                   </div>
                 </div>
 
+                {viewingSalary.totalPresent !== undefined && (
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success">
+                      <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Present</p>
+                      <p className="text-xl font-semibold">{viewingSalary.totalPresent}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary-dark dark:text-primary">
+                      <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Half Days</p>
+                      <p className="text-xl font-semibold">{viewingSalary.totalHalfDay}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger">
+                      <p className="text-[11px] font-medium uppercase tracking-normal mb-1 opacity-80">Absent</p>
+                      <p className="text-xl font-semibold">{viewingSalary.totalAbsent}</p>
+                    </div>
+                  </div>
+                )}
+
                 {viewingSalary.payrollRecord && (() => {
                   const pr = viewingSalary.payrollRecord;
                   const adjBonus = (pr.adjustments || []).filter(a => a.type === 'bonus').reduce((s, a) => s + (a.amount || 0), 0);
@@ -716,6 +843,13 @@ export default function PayrollRecordsPage() {
                   className="flex-1 py-4 rounded-xl bg-(--color-surface) text-(--color-text-primary) text-xs font-medium uppercase tracking-normal border border-(--color-border) shadow-sm transition-all hover:bg-(--color-surface-soft)"
                 >
                   Print Payslip
+                </button>
+
+                <button
+                  onClick={() => downloadCsv([viewingSalary], `salary-slip-${(viewingSalary.name || 'staff').replace(/\s+/g, '-')}-${month}.csv`)}
+                  className="flex-1 py-4 rounded-xl bg-(--color-surface) text-(--color-text-primary) text-xs font-medium uppercase tracking-normal border border-(--color-border) shadow-sm transition-all hover:bg-(--color-surface-soft)"
+                >
+                  Download Slip
                 </button>
 
                 <button

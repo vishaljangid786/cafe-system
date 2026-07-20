@@ -20,10 +20,20 @@ async function migrateExpenses() {
       });
 
       if (!exists) {
+        const isIncome = exp.type === 'INCOME';
+        // Map the expense's status onto the Transaction status enum
+        // (['pending','approved','rejected']) so migrated rows are visible to the
+        // P&L aggregations, which only count status: 'approved'.
+        const status = ['approved', 'live', 'completed'].includes(exp.status)
+          ? 'approved'
+          : exp.status === 'rejected'
+            ? 'rejected'
+            : 'pending';
         await Transaction.create({
-          type: exp.type === 'income' ? 'manual_revenue' : 'expense',
+          type: isIncome ? 'MANUAL_REVENUE' : 'EXPENSE',
+          status,
           totalAmount: exp.amount,
-          totalProfit: exp.profit || (exp.type === 'income' ? exp.amount : -exp.amount),
+          totalProfit: exp.profit || (isIncome ? exp.amount : -exp.amount),
           title: exp.title,
           description: exp.description,
           category: exp.category || 'Legacy Migration',

@@ -32,10 +32,21 @@ const assertSubsetOfActor = (req, res, permissions) => {
 const canModify = (req, preset) =>
   req.user.role === 'super_admin' || preset.createdBy?.toString() === req.user._id.toString();
 
+const presetScope = (user) => {
+  if (user.role === 'super_admin') return {};
+  const cafeIds = (user.cafes || []).map((id) => id.toString());
+  return {
+    $or: [
+      { createdBy: user._id },
+      ...(cafeIds.length ? [{ cafes: { $in: cafeIds } }] : []),
+    ],
+  };
+};
+
 // @desc    List all permission presets (custom roles)
 // @route   GET /api/permission-presets
 const getPresets = asyncHandler(async (req, res) => {
-  const presets = await PermissionPreset.find().sort({ createdAt: -1 }).lean();
+  const presets = await PermissionPreset.find(presetScope(req.user)).sort({ createdAt: -1 }).lean();
   res.json({ success: true, data: presets });
 });
 
@@ -55,6 +66,7 @@ const createPreset = asyncHandler(async (req, res) => {
     permissions,
     createdBy: req.user._id,
     createdByName: req.user.name,
+    cafes: req.user.role === 'super_admin' ? [] : (req.user.cafes || []),
   });
 
   res.status(201).json({ success: true, data: preset });

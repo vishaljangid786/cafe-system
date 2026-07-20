@@ -46,7 +46,17 @@ const resolveBranch = (req, res) => {
 // Precise per-receipt attribution needs a payment-event ledger (future work).
 const objId = (id) => new (require('mongoose').Types.ObjectId)(id.toString());
 const computeCashFlow = async (locationId, from, to) => {
-  const collected = { $cond: [{ $gt: [{ $ifNull: ['$grandTotal', 0] }, 0] }, '$grandTotal', { $ifNull: ['$amountPaid', 0] }] };
+  // Cash actually collected: a 'partial' order only had amountPaid handed over, so
+  // it must NOT contribute its full grandTotal (that would inflate expected cash
+  // and show a false shortage). A 'paid' order has amountPaid == grandTotal; legacy
+  // orders with an unset paymentStatus fall back to grandTotal (then amountPaid).
+  const collected = {
+    $cond: [
+      { $eq: ['$paymentStatus', 'partial'] },
+      { $ifNull: ['$amountPaid', 0] },
+      { $cond: [{ $gt: [{ $ifNull: ['$grandTotal', 0] }, 0] }, '$grandTotal', { $ifNull: ['$amountPaid', 0] }] },
+    ],
+  };
   const returned = { $cond: [{ $gt: [{ $ifNull: ['$grandTotal', 0] }, 0] }, '$grandTotal', { $ifNull: ['$totalAmount', 0] }] };
   const [sales, refunds] = await Promise.all([
     Order.aggregate([

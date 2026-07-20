@@ -46,7 +46,7 @@ const notificationSchema = new mongoose.Schema(
     // Scoping for broadcast
     roleTarget: {
       type: String,
-      enum: ['super_admin', 'admin', 'branch_admin', 'staff', 'chef', 'all'],
+      enum: ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'],
     },
     locationTarget: {
       type: mongoose.Schema.Types.ObjectId,

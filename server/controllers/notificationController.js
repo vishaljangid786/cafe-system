@@ -174,6 +174,25 @@ const createNotification = asyncHandler(async (req, res) => {
     throw new Error('Title, message, and target type are required');
   }
 
+  // Cap the sizes. Nothing in the stack bounded these, so a single paste could
+  // store an unbounded document and be fanned out to every recipient.
+  const TITLE_MAX = 150;
+  const MESSAGE_MAX = 2000;
+  const cleanTitle = String(title).trim();
+  const cleanMessage = String(message).trim();
+  if (!cleanTitle || !cleanMessage) {
+    res.status(400);
+    throw new Error('Title and message cannot be empty');
+  }
+  if (cleanTitle.length > TITLE_MAX) {
+    res.status(400);
+    throw new Error(`Title must be ${TITLE_MAX} characters or fewer`);
+  }
+  if (cleanMessage.length > MESSAGE_MAX) {
+    res.status(400);
+    throw new Error(`Message must be ${MESSAGE_MAX} characters or fewer`);
+  }
+
   const senderRole = req.user.role;
 
   // Receive-only accounts cannot send messages.
@@ -228,7 +247,7 @@ const createNotification = asyncHandler(async (req, res) => {
       ? {}
       : { $or: [{ assignedLocation: { $in: userLocationIds(req.user) } }, { accessibleLocations: { $in: userLocationIds(req.user) } }] };
     const baseFilter = targetId === 'all' ? {} : { role: targetId };
-    const users = await User.find({ ...baseFilter, ...scope });
+    const users = await User.find({ ...baseFilter, ...scope, deletedAt: null });
     recipients = users.map(u => ({ user: u._id }));
   }
   else if (targetType === 'branch') {
@@ -239,6 +258,7 @@ const createNotification = asyncHandler(async (req, res) => {
       throw new Error('You do not have access to message this branch');
     }
     const branchUsers = await User.find({
+      deletedAt: null,
       $or: [
         { assignedLocation: targetId },
         { accessibleLocations: targetId }
@@ -259,7 +279,7 @@ const createNotification = asyncHandler(async (req, res) => {
     const scope = senderRole === 'super_admin'
       ? {}
       : { $or: [{ assignedLocation: { $in: userLocationIds(req.user) } }, { accessibleLocations: { $in: userLocationIds(req.user) } }] };
-    const users = await User.find(scope);
+    const users = await User.find({ ...scope, deletedAt: null });
     recipients = users.map(u => ({ user: u._id }));
   }
 
@@ -274,8 +294,8 @@ const createNotification = asyncHandler(async (req, res) => {
   // Duplicate Prevention Check (60 seconds)
   const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
   const duplicate = await Notification.findOne({
-    title,
-    message,
+    title: cleanTitle,
+    message: cleanMessage,
     sender: req.user._id,
     createdAt: { $gte: oneMinuteAgo }
   });
@@ -286,8 +306,8 @@ const createNotification = asyncHandler(async (req, res) => {
   }
 
   const notification = await Notification.create({
-    title,
-    message,
+    title: cleanTitle,
+    message: cleanMessage,
     type: type || 'announcement',
     priority: priority || 'medium',
     sender: req.user._id,
@@ -357,7 +377,7 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   let branches = [];
 
   if (canBroadcast && role === 'super_admin') {
-    users = await User.find({ _id: { $ne: user._id } }).select('name role assignedLocation');
+    users = await User.find({ _id: { $ne: user._id }, deletedAt: null }).select('name role assignedLocation');
     roles = ['super_admin', 'admin', 'branch_admin', 'location_admin', 'staff', 'chef', 'all'];
     branches = await Location.find().select('name city');
   }
@@ -366,6 +386,7 @@ const getTargetOptions = asyncHandler(async (req, res) => {
     // cafe/branches — never the entire platform's user & branch directory. Previously
     // any non-super holder of sendGlobalNotifications could enumerate every tenant.
     users = await User.find({
+      deletedAt: null,
       _id: { $ne: user._id },
       $or: [{ assignedLocation: { $in: branchIds } }, { accessibleLocations: { $in: branchIds } }],
     }).select('name role assignedLocation');
@@ -374,8 +395,9 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   }
   else if (role === 'admin') {
     // Super admin (up) + everyone in this admin's branches (down).
-    const supers = await User.find({ role: 'super_admin' }).select('name role');
+    const supers = await User.find({ role: 'super_admin', deletedAt: null }).select('name role');
     const branchUsers = await User.find({
+      deletedAt: null,
       assignedLocation: { $in: branchIds },
       role: { $in: ['branch_admin', 'location_admin', 'staff', 'chef'] },
       _id: { $ne: user._id },
@@ -387,25 +409,27 @@ const getTargetOptions = asyncHandler(async (req, res) => {
   else if (role === 'branch_admin') {
     // Their admin (up) + their staff/chef/location admin (down). Super admin only
     // when the messageSuperAdmin permission is granted.
-    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds } }).select('name role');
+    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds }, deletedAt: null }).select('name role');
     const staff = await User.find({
+      deletedAt: null,
       assignedLocation: { $in: branchIds },
       role: { $in: ['staff', 'chef', 'location_admin'] },
       _id: { $ne: user._id },
     }).select('name role');
-    const supers = canSuper ? await User.find({ role: 'super_admin' }).select('name role') : [];
+    const supers = canSuper ? await User.find({ role: 'super_admin', deletedAt: null }).select('name role') : [];
     users = [...supers, ...admins, ...staff];
   }
   else {
     // staff / chef / location_admin: their branch admin + their admin. Super admin
     // only with the messageSuperAdmin permission.
     const branchAdmins = await User.find({
+      deletedAt: null,
       role: 'branch_admin',
       $or: [{ assignedLocation: { $in: branchIds } }, { accessibleLocations: { $in: branchIds } }],
       _id: { $ne: user._id },
     }).select('name role');
-    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds } }).select('name role');
-    const supers = canSuper ? await User.find({ role: 'super_admin' }).select('name role') : [];
+    const admins = await User.find({ role: 'admin', accessibleLocations: { $in: branchIds }, deletedAt: null }).select('name role');
+    const supers = canSuper ? await User.find({ role: 'super_admin', deletedAt: null }).select('name role') : [];
     users = [...supers, ...admins, ...branchAdmins];
   }
 

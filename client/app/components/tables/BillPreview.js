@@ -81,6 +81,10 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
 
     // Simple print logic
     const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Allow popups to print the receipt');
+      return;
+    }
     printWindow.document.write(`
       <html>
         <head>
@@ -277,6 +281,25 @@ export default function BillPreview({ isOpen, onClose, onComplete, table, system
               <span>Table:</span>
               <span>T{table.tableNumber}</span>
             </div>
+            {/* Customer identity on the printed bill. The phone is masked to the
+                last 4 digits — a receipt can be left on a table or thrown away. */}
+            {table.customerName && (
+              <div className="flex justify-between text-xs font-bold uppercase mt-1">
+                <span>Customer:</span>
+                <span>{table.customerName}</span>
+              </div>
+            )}
+            {table.customerPhone && (
+              <div className="flex justify-between text-xs font-bold uppercase mt-1">
+                <span>Mobile:</span>
+                <span>
+                  {(() => {
+                    const d = String(table.customerPhone).replace(/\D/g, '');
+                    return d.length <= 4 ? d : `••••••${d.slice(-4)}`;
+                  })()}
+                </span>
+              </div>
+            )}
 
             <div className="border-t border-dashed border-black my-4"></div>
 

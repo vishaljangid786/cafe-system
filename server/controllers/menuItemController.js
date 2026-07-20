@@ -4,7 +4,7 @@ const BranchStock = require('../models/BranchStock');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logAction } = require('../utils/auditLogger');
-const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds } = require('../utils/accessControl');
+const { clampLimit, enforceLocationAccess, canAccessLocation, userLocationIds, escapeRegex } = require('../utils/accessControl');
 
 // Coerce a form value to a number, treating blank/invalid input as "not provided".
 // Multipart form fields arrive as strings — an empty optional field is '' (not
@@ -44,11 +44,17 @@ const parseModifierGroups = (raw) => {
 // @route   GET /api/menu
 // @access  Private
 const getMenuItems = asyncHandler(async (req, res) => {
-  const { category, minPrice, maxPrice, isAvailable, locationId, dietaryType } = req.query;
+  const { category, minPrice, maxPrice, isAvailable, locationId, dietaryType, search } = req.query;
 
   const filter = {};
 
   if (category) filter.category = category;
+
+  // Name search. Without this the UI could only filter the rows already on the
+  // current page, so searching for an item beyond page 1 found nothing.
+  if (search && String(search).trim()) {
+    filter.name = new RegExp(escapeRegex(String(search).trim()), 'i');
+  }
 
   if (minPrice !== undefined || maxPrice !== undefined) {
     filter.price = {};
@@ -418,35 +424,43 @@ const updateMenuItem = asyncHandler(async (req, res, next) => {
     updates.image = req.file.path;
   }
 
+  // Validate EVERY per-branch stock value BEFORE any write. Doing this up front
+  // means a single bad value fails fast with a 400 instead of leaving the item
+  // updated and some BranchStock rows deleted/upserted while others aren't.
+  let branchStockPlan = [];
+  if (!isGlobalItem && Array.isArray(branchIds)) {
+    branchStockPlan = branchIds.map((branchId) => {
+      const specificStock = req.body[`branchStock_${branchId}`];
+      const stockToSet = specificStock !== undefined ? Number(specificStock) : (stock ? Number(stock) : 0);
+      if (!Number.isFinite(stockToSet) || stockToSet < 0) {
+        res.status(400);
+        throw new Error('Branch stock must be a number of 0 or more');
+      }
+      return { branchId, stockToSet };
+    });
+  }
+
   const updated = await MenuItem.findByIdAndUpdate(req.params.id, updates, {
     new: true,
     runValidators: true,
   }).populate('category', 'name icon');
 
-  // Synchronize BranchStock records
+  // Synchronize BranchStock records (all values already validated above).
   if (updates.isGlobal !== undefined || updates.availableBranches !== undefined) {
     if (updates.isGlobal) {
-      // If item becomes global, we can either keep or remove branch stocks. 
+      // If item becomes global, we can either keep or remove branch stocks.
       // Usually, global items might use a different inventory logic or we just remove branch-specifics.
       // For now, let's keep it simple: if global, branch-specific stock is ignored.
       await BranchStock.deleteMany({ menuItem: updated._id });
     } else if (updates.availableBranches) {
       // Remove stocks for branches no longer assigned
-      await BranchStock.deleteMany({ 
-        menuItem: updated._id, 
-        branch: { $nin: updates.availableBranches } 
+      await BranchStock.deleteMany({
+        menuItem: updated._id,
+        branch: { $nin: updates.availableBranches }
       });
-      
-      // Add or Update stocks for branches
-      for (const branchId of updates.availableBranches) {
-        const specificStock = req.body[`branchStock_${branchId}`];
-        const stockToSet = specificStock !== undefined ? Number(specificStock) : (stock ? Number(stock) : 0);
 
-        if (!Number.isFinite(stockToSet) || stockToSet < 0) {
-          res.status(400);
-          throw new Error('Branch stock must be a number of 0 or more');
-        }
-
+      // Add or Update stocks for branches (pre-validated plan)
+      for (const { branchId, stockToSet } of branchStockPlan) {
         await BranchStock.findOneAndUpdate(
           { menuItem: updated._id, branch: branchId },
           {

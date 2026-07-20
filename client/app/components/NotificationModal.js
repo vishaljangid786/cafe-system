@@ -140,8 +140,11 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
           <div className="space-y-2">
             <label className="label">Title</label>
+            {/* Caps mirror the server's limits so long text is stopped at entry
+                rather than rejected after sending. */}
             <input
               required
+              maxLength={150}
               className="input"
               placeholder="Enter a subject..."
               value={formData.title}
@@ -154,11 +157,13 @@ const NotificationModal = ({ isOpen, onClose }) => {
             <textarea
               required
               rows={4}
+              maxLength={2000}
               className="input resize-none"
               placeholder="Enter message details..."
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
             />
+            <p className="text-[11px] text-(--color-text-muted) text-right">{formData.message.length}/2000</p>
           </div>
 
           <div className="flex gap-4 pt-2">

@@ -9,10 +9,10 @@ import PremiumSelect from '../ui/PremiumSelect';
 
 // The public self-ordering link. With a tableId it's a dine-in order for that
 // exact table; without one it's a branch-wide takeaway / parcel link.
-export const orderUrl = (branchId, tableId) => {
+export const orderUrl = (branchId, tableId, qrToken) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return tableId
-    ? `${origin}/order?branch=${branchId}&table=${tableId}`
+    ? `${origin}/order?branch=${branchId}&table=${tableId}${qrToken ? `&token=${encodeURIComponent(qrToken)}` : ''}`
     : `${origin}/order?branch=${branchId}`;
 };
 
@@ -178,7 +178,7 @@ function QRPoster({ title, subtitle, url, footnote = 'Scan to view the menu & or
       <div className="flex items-center gap-2 rounded-xl bg-(--color-bg-soft) border border-(--color-border) px-3 py-2">
         <Link2 size={14} className="text-(--color-text-muted) shrink-0" />
         <span className="text-[11px] text-(--color-text-muted) truncate flex-1">{url}</span>
-        <button onClick={copyLink} className="shrink-0 text-primary"><Copy size={14} /></button>
+        <button onClick={copyLink} aria-label="Copy QR order link" title="Copy QR order link" className="shrink-0 text-primary"><Copy size={14} /></button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -196,7 +196,7 @@ function QRPoster({ title, subtitle, url, footnote = 'Scan to view the menu & or
 // ---------------------------------------------------------------------------
 export function TableQRModal({ isOpen, onClose, table, branchName }) {
   if (!table) return null;
-  const url = orderUrl(branchIdOf(table), table._id);
+  const url = orderUrl(branchIdOf(table), table._id, table.publicOrderToken);
   const label = tableLabel(table);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`QR Code · ${label}`} maxWidth="max-w-md">
@@ -256,7 +256,7 @@ export function TableQRBulkModal({ isOpen, onClose, tables = [], branchName }) {
     if (!gridRef.current || tables.length === 0) return;
     const cards = tables.map((t) => {
       const node = gridRef.current.querySelector(`[data-qr="${t._id}"] svg`);
-      return cardHtml({ branchName, label: tableLabel(t), url: orderUrl(branchIdOf(t), t._id), svg: node ? node.outerHTML : '' });
+      return cardHtml({ branchName, label: tableLabel(t), url: orderUrl(branchIdOf(t), t._id, t.publicOrderToken), svg: node ? node.outerHTML : '' });
     }).join('');
     printCards(`<div class="grid">${cards}</div>`, `${branchName || 'Cafe'} — Table QR Codes`);
   };
@@ -301,7 +301,7 @@ export function TableQRBulkModal({ isOpen, onClose, tables = [], branchName }) {
     <Modal isOpen={isOpen} onClose={onClose} title={`Table QR Codes · ${tables.length} table${tables.length === 1 ? '' : 's'}`} maxWidth="max-w-3xl">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-xs text-(--color-text-muted) flex-1 min-w-40">Each table's QR opens the menu for that exact table. Print or download the whole set, or download one at a time.</p>
+          <p className="text-xs text-(--color-text-muted) flex-1 min-w-40">Each table&apos;s QR opens the menu for that exact table. Print or download the whole set, or download one at a time.</p>
           <div className="flex items-center gap-2">
             <button onClick={downloadAll} disabled={tables.length === 0} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-(--color-bg-soft) text-(--color-text-primary) border border-(--color-border) text-[11px] font-bold uppercase tracking-wide active:scale-95 disabled:opacity-50">
               <Download size={15} /> Download all
@@ -317,7 +317,7 @@ export function TableQRBulkModal({ isOpen, onClose, tables = [], branchName }) {
             <div key={t._id} className="relative">
               <div data-qr={t._id} className="rounded-xl border border-(--color-border) bg-white p-3 text-center">
                 <p className="text-[11px] font-bold text-slate-900 mb-2">{tableLabel(t)}</p>
-                <div className="flex justify-center"><QRCode value={orderUrl(branchIdOf(t), t._id)} size={112} /></div>
+                <div className="flex justify-center"><QRCode value={orderUrl(branchIdOf(t), t._id, t.publicOrderToken)} size={112} /></div>
               </div>
               <button
                 onClick={() => downloadOne(t)}

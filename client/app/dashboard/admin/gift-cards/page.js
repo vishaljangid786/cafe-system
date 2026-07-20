@@ -92,7 +92,7 @@ export default function GiftCardsPage() {
                   <p className="text-xs font-medium text-(--color-text-primary)">{found.code} · balance <span className="text-primary font-semibold"><Money value={found.balance} /></span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
                 </div>
               )}
-              <p className="text-[11px] text-(--color-text-muted)">To redeem, open the order in All Orders → Redeem gift card.</p>
+              <p className="text-[11px] text-(--color-text-muted)">Check a card&apos;s balance here before accepting it as payment.</p>
             </div>
           </SlideIn>
         </div>

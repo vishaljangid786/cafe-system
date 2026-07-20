@@ -76,7 +76,7 @@ const seedDatabase = asyncHandler(async (req, res) => {
     throw new Error('Cannot seed yet: at least one Location and one User must exist first.');
   }
 
-  const staff = await User.find({ role: { $in: ['staff', 'chef', 'branch_admin'] } })
+  const staff = await User.find({ role: { $in: ['staff', 'chef', 'branch_admin'] }, deletedAt: null })
     .select('_id name assignedLocation')
     .limit(25)
     .lean();

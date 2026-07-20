@@ -117,18 +117,21 @@ const finalizeOrder = async (order, user) => {
   // GST-inclusive grandTotal + amountPaid separately.
   const revenueAmount = Math.max(0, Number(order.grandTotal || order.totalAmount || 0) - taxAmount);
 
-  // Deduct ingredients FIRST so a deduction failure surfaces before we record
-  // revenue. Previously the false return was swallowed, which could leave a
-  // REVENUE transaction recorded with no corresponding inventory deduction.
-  // The isBilled claim above is already committed, so a thrown error here will
-  // not double-bill on retry — it just prevents recording unbacked revenue.
+  // Deduct ingredients. The isBilled claim above is already committed, so we must
+  // NOT abort on a deduction failure: doing so would leave the order permanently
+  // COMPLETED + billed with no REVENUE transaction (the retry hits the "already
+  // finalized" guard), silently losing real, collected revenue. A completed order
+  // is paid money that must be booked; a failed deduction (a rare transient DB
+  // error — real shortfalls clamp to 0 and still succeed) is an inventory-accuracy
+  // issue that is logged for manual reconciliation, exactly like the shortfall
+  // case. Because the atomic claim serializes finalization, only one finalize ever
+  // runs this deduction, so recording revenue here cannot double-deduct stock.
   const deducted = await deductIngredientsFromRecipe(order, order.branch);
   if (!deducted) {
-    console.error(`[orderFinalizer] Ingredient deduction failed for order ${order._id}; aborting revenue record.`);
-    throw new Error('Failed to deduct ingredients for this order. Revenue was not recorded.');
+    console.error(`[orderFinalizer] Ingredient deduction failed for order ${order._id}; recording revenue anyway — inventory for this order needs manual reconciliation.`);
   }
 
-  // Create Transaction (only after ingredients are successfully deducted)
+  // Create Transaction — the collected revenue is always booked once billed.
   const transaction = await Transaction.create({
     locationId: order.branch,
     type: 'REVENUE',

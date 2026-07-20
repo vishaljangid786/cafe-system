@@ -22,6 +22,7 @@ import PremiumSelect from '../../../components/ui/PremiumSelect';
 import UniversalDateFilter from '../../../components/ui/UniversalDateFilter';
 import PaymentBadge from '../../../components/ui/PaymentBadge';
 import { Money, Num } from '../../../components/ui/Money';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 function StatCard({ label, value, icon: Icon, color }) {
   const colors = {
@@ -523,11 +524,11 @@ export default function StaffOrdersPage() {
                       <div className="space-y-3 relative z-10">
                         <div className="flex justify-between items-center text-[11px] font-medium">
                            <span className="opacity-60 flex items-center gap-2"><User size={12} /> Staff</span>
-                           <span>{selectedOrder.createdBy?.name || 'Automatic'}</span>
+                           <span>{displayUserName(selectedOrder.createdBy, 'Automatic')}</span>
                         </div>
                         <div className="flex justify-between items-center text-[11px] font-medium">
                            <span className="opacity-60 flex items-center gap-2"><Utensils size={12} /> Chef</span>
-                           <span>{selectedOrder.assignedChef?.name || 'Not assigned yet'}</span>
+                           <span>{displayUserName(selectedOrder.assignedChef, 'Not assigned yet')}</span>
                         </div>
                         <div className="flex justify-between items-center text-[11px] font-medium">
                            <span className="opacity-60 flex items-center gap-2"><MapPin size={12} /> Branch</span>

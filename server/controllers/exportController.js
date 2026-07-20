@@ -136,6 +136,7 @@ const exportData = asyncHandler(async (req, res) => {
 
     case 'staff':
       const staffQuery = query.assignedLocation ? { assignedLocation: query.assignedLocation } : {};
+      staffQuery.deletedAt = null;
       const users = await User.find(staffQuery).select('-password').populate('assignedLocation', 'name').lean();
       data = users.map(u => ({
         Name: u.name,
@@ -149,6 +150,7 @@ const exportData = asyncHandler(async (req, res) => {
 
     case 'payroll': {
       const payrollUserQuery = finalBranchId ? { assignedLocation: finalBranchId } : {};
+      payrollUserQuery.deletedAt = null;
       const payrollUsers = await User.find(payrollUserQuery).select('_id').lean();
       const payrollUserIds = payrollUsers.map(u => u._id);
       const payrollFilter = { user: { $in: payrollUserIds } };

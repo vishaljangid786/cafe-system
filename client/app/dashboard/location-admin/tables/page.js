@@ -181,7 +181,10 @@ export default function TablesPage() {
     try {
       await api.put(`/tables/${selectedTable._id}/book`, {
         numberOfPeople: Number(data.numberOfPeople),
-        customerName: data.customerName
+        customerName: data.customerName,
+        // Collected as a required field in AssignTableModal — forwarding it is what
+        // links the table session (and its orders) to a CRM identity.
+        customerPhone: data.customerPhone || ''
       });
       fetchTables();
       toast.success('Table booked', { id: loadToast });

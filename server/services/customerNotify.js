@@ -66,7 +66,7 @@ async function notifyCustomer(phone, message, meta = {}) {
   try {
     switch (PROVIDER) {
       case 'log':
-        console.log(`[customerNotify:${meta.type || 'sms'}] -> ${digits}: ${message}`);
+        console.log(`[customerNotify:${meta.type || 'sms'}] -> ${digits.replace(/\d(?=\d{4})/g, '*')}`);
         return true;
       case 'msg91':
         await sendViaMsg91(digits, message);

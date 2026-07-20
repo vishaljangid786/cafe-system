@@ -71,13 +71,19 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [socket]);
 
+  // These return true/false so callers can avoid applying a local "read" state
+  // for a write the server actually rejected (which left the page and this
+  // context showing different things).
   const markAsRead = async (id) => {
     try {
       await api.patch(`/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
+      return true;
     } catch (err) {
       logger.error('Failed to mark as read:', err.response?.data || err.message);
+      toast.error('Could not mark as read');
+      return false;
     }
   };
 
@@ -86,8 +92,11 @@ export const NotificationProvider = ({ children }) => {
       await api.patch(`/notifications/${id}/unread`);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
       setUnreadCount(prev => prev + 1);
+      return true;
     } catch (err) {
       logger.error('Failed to mark as unread:', err.response?.data || err.message);
+      toast.error('Could not mark as unread');
+      return false;
     }
   };
 
@@ -97,8 +106,11 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
       toast.success('All notifications cleared');
+      return true;
     } catch (err) {
       logger.error('Failed to clear notifications:', err.response?.data || err.message);
+      toast.error('Could not clear notifications');
+      return false;
     }
   };
 

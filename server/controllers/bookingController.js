@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const crypto = require('crypto');
 const Location = require('../models/Location');
 const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
@@ -21,14 +22,76 @@ const isValidTimeRange = (startTime, endTime) => {
   return toMinutes(endTime) > toMinutes(startTime);
 };
 
-const isTodayOrFuture = (date) => {
-  const bookingDay = new Date(date);
-  if (Number.isNaN(bookingDay.getTime())) return false;
-  bookingDay.setHours(0, 0, 0, 0);
+// Asia/Kolkata is a fixed +05:30 offset. Comparing calendar days in IST (the
+// product's business timezone) instead of server-local time stops a booking for
+// "today" being rejected as past when the runtime clock is on UTC.
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const istCalendarDay = (value) => {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return NaN;
+  const shifted = new Date(d.getTime() + IST_OFFSET_MS);
+  return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+};
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return bookingDay >= today;
+const isTodayOrFuture = (date) => {
+  const bookingDay = istCalendarDay(date);
+  if (Number.isNaN(bookingDay)) return false;
+  return bookingDay >= istCalendarDay(new Date());
+};
+
+// Booking/reservation dates are stored from date-only strings ("YYYY-MM-DD"),
+// which parse to UTC midnight. Matching on an exact Date is fragile — any stray
+// time component or offset makes the query return NOTHING, silently skipping the
+// capacity check and allowing an overbooking. Match the whole UTC day instead.
+const dayRange = (date) => {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return null;
+  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  return { $gte: start, $lt: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const bookingLockKey = (locationId, date) => {
+  const day = new Date(date).toISOString().slice(0, 10);
+  return `booking:${locationId}:${day}`;
+};
+
+const acquireBookingLock = async (locationId, date) => {
+  const locks = Booking.db.collection('booking_locks');
+  const _id = bookingLockKey(locationId, date);
+  const token = crypto.randomBytes(12).toString('hex');
+
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const now = new Date();
+    const lockedUntil = new Date(now.getTime() + 15000);
+    try {
+      const result = await locks.findOneAndUpdate(
+        {
+          _id,
+          $or: [{ lockedUntil: { $lte: now } }, { lockedUntil: { $exists: false } }],
+        },
+        {
+          $set: { token, lockedUntil, updatedAt: now },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
+      const doc = result && (result.value !== undefined ? result.value : result);
+      if (doc?.token === token) {
+        return {
+          release: () => locks.deleteOne({ _id, token }),
+        };
+      }
+    } catch (err) {
+      if (!err || ![11000, 11001].includes(err.code)) throw err;
+    }
+    await sleep(100);
+  }
+
+  const err = new Error('Booking slot is busy. Please try again.');
+  err.statusCode = 423;
+  throw err;
 };
 
 const getBookableLocation = async (res, locationId) => {
@@ -43,6 +106,15 @@ const getBookableLocation = async (res, locationId) => {
     throw new Error('This location is not accepting bookings right now');
   }
 
+  // A blocked cafe stops taking reservations across every one of its branches.
+  const { getSuspendedCafes } = require('../utils/tenantStatus');
+  if (location.cafe && (await getSuspendedCafes()).has(String(location.cafe))) {
+    res.status(403);
+    const err = new Error('This location is not accepting bookings right now');
+    err.code = 'CAFE_SUSPENDED';
+    throw err;
+  }
+
   return location;
 };
 
@@ -50,7 +122,7 @@ const getBookableLocation = async (res, locationId) => {
 const getBookedGuests = async (locationId, date, startTime, endTime, excludeBookingId = null) => {
   const query = {
     locationId,
-    date: new Date(date),
+    date: dayRange(date),
     status: { $in: ['pending', 'confirmed'] },
     $and: [
       { startTime: { $lt: endTime } },
@@ -69,7 +141,7 @@ const getBookedGuests = async (locationId, date, startTime, endTime, excludeBook
   // bookings + reservations can't over-allocate the same physical room/tables.
   const reservations = await Reservation.find({
     locationId,
-    date: new Date(date),
+    date: dayRange(date),
     status: { $nin: ['cancelled', 'no-show'] },
     $or: [
       { isFullDay: true },
@@ -149,34 +221,38 @@ const createBooking = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'At least 1 guest is required' });
   }
 
-  const location = await getBookableLocation(res, locationId);
-  const maxCapacity = location.maxCapacity || 20;
-  const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
-
-  if (bookedGuests + guestCount > maxCapacity) {
-    return res.status(400).json({
-      success: false,
-      message: `Cannot book. Only ${Math.max(0, maxCapacity - bookedGuests)} slots available.`
-    });
-  }
-
   const isAuthenticated = !!req.user;
   if (!isAuthenticated && !guestName) {
     return res.status(400).json({ success: false, message: 'Guest name is required for unauthenticated bookings' });
   }
 
-  const booking = await Booking.create({
-    userId: isAuthenticated ? req.user._id : null,
-    guestName: isAuthenticated ? null : guestName,
-    guestEmail: isAuthenticated ? null : (guestEmail || null),
-    guestPhone: isAuthenticated ? null : (guestPhone || null),
-    locationId,
-    date: new Date(date),
-    startTime,
-    endTime,
-    numberOfGuests: guestCount,
-    specialRequests
-  });
+  const location = await getBookableLocation(res, locationId);
+  const lock = await acquireBookingLock(locationId, date);
+  let booking;
+  try {
+    const maxCapacity = location.maxCapacity || 20;
+    const bookedGuests = await getBookedGuests(locationId, date, startTime, endTime);
+
+    if (bookedGuests + guestCount > maxCapacity) {
+      res.status(400);
+      throw new Error(`Cannot book. Only ${Math.max(0, maxCapacity - bookedGuests)} slots available.`);
+    }
+
+    booking = await Booking.create({
+      userId: isAuthenticated ? req.user._id : null,
+      guestName: isAuthenticated ? null : guestName,
+      guestEmail: isAuthenticated ? null : (guestEmail || null),
+      guestPhone: isAuthenticated ? null : (guestPhone || null),
+      locationId,
+      date: new Date(date),
+      startTime,
+      endTime,
+      numberOfGuests: guestCount,
+      specialRequests
+    });
+  } finally {
+    await lock.release();
+  }
 
   await booking.populate('locationId', 'name');
   if (isAuthenticated) await booking.populate('userId', 'name email');

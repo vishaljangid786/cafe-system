@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Order = require('./models/Order');
-const User = require('./models/User');
-const Location = require('./models/Location');
-const MenuItem = require('./models/MenuItem');
-const Table = require('./models/Table');
+const Order = require('../models/Order');
+const User = require('../models/User');
+const Location = require('../models/Location');
+const MenuItem = require('../models/MenuItem');
+const Table = require('../models/Table');
 
 dotenv.config();
 

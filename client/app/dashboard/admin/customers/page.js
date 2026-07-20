@@ -8,6 +8,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
 import { Money, Num } from '@/app/components/ui/Money';
+import CrmWorkspace from './components/CrmWorkspace';
 
 export default function CustomersDashboard() {
   // Scope CRM data to the global top-navbar cafe/branch selector (previously the
@@ -118,6 +119,11 @@ export default function CustomersDashboard() {
             </button>
           </div>
         </SlideIn>
+
+        {/* CRM report: scoped filters, KPIs, customer table and the 360 drawer.
+            The reward panels below stay as they were — they answer a different
+            question (who to reward / win back) than the report does. */}
+        <CrmWorkspace />
 
         {/* Analytics KPIs */}
         {refetching ? (

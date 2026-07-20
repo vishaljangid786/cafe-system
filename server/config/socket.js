@@ -73,7 +73,7 @@ module.exports = {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         const user = await User.findById(decoded.id).select('-password');
-        if (!user || user.isBlocked || user.active === false) {
+        if (!user || user.isBlocked || user.active === false || user.deletedAt) {
           return next(new Error('Socket authentication failed'));
         }
 
@@ -82,6 +82,14 @@ module.exports = {
         const userVersion = user.sessionVersion || 1;
         if (tokenVersion !== userVersion) {
           return next(new Error('Session revoked. Please log in again.'));
+        }
+
+        // Mirror the HTTP tenant lockout. Without this a frozen cafe's users
+        // would keep receiving live order and kitchen events over an already
+        // open socket, which is authorised only once, at handshake.
+        const { getSuspensionFor } = require('../utils/tenantStatus');
+        if (await getSuspensionFor(user)) {
+          return next(new Error('This cafe is currently blocked.'));
         }
 
         socket.user = user;

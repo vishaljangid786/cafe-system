@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { can } from '@/app/config/actions';
 import api from '../../../services/api';
+import ImpactDeleteModal from '@/app/components/ui/ImpactDeleteModal';
 import { digitsOnly } from '@/app/utils/inputValidation';
 import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,6 +31,8 @@ export default function BranchesPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  // Branch queued for deletion; drives the impact confirmation dialog.
+  const [deletingBranch, setDeletingBranch] = useState(null);
   const [cafes, setCafes] = useState([]);
   const [formData, setFormData] = useState({
     name: '', city: '', state: '', country: 'India',
@@ -74,6 +77,21 @@ export default function BranchesPage() {
     } finally {
       setLoading(false);
       progress.done();
+    }
+  };
+
+  // Branch deletion is permanent: it takes the tables, branch-only menu, stock,
+  // suppliers and forward bookings with it. Orders, revenue and payroll stay.
+  const confirmDeleteBranch = async ({ force, staffMode }) => {
+    if (!deletingBranch) return;
+    const loadToast = toast.loading('Deleting branch...');
+    try {
+      const res = await api.delete(`/locations/${deletingBranch._id}`, { data: { force, staffMode } });
+      toast.success(res.data?.message || 'Branch deleted', { id: loadToast, duration: 6000 });
+      setDeletingBranch(null);
+      fetchLocations();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not delete branch', { id: loadToast });
     }
   };
 
@@ -379,6 +397,17 @@ export default function BranchesPage() {
                             }`}
                         >
                           <ShieldAlert size={16} />
+                        </motion.button>
+                        )}
+                        {can(user, 'branches.delete') && (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => { e.stopPropagation(); setDeletingBranch(loc); }}
+                          className="p-2.5 rounded-xl bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all"
+                          title="Delete branch"
+                        >
+                          <Trash2 size={16} />
                         </motion.button>
                         )}
                       </div>
@@ -823,6 +852,15 @@ export default function BranchesPage() {
             </div>
           )}
         </AnimatePresence>
+
+        <ImpactDeleteModal
+          isOpen={!!deletingBranch}
+          onClose={() => setDeletingBranch(null)}
+          entity="branch"
+          id={deletingBranch?._id}
+          name={deletingBranch ? `${deletingBranch.city} - ${deletingBranch.name}` : ''}
+          onConfirm={confirmDeleteBranch}
+        />
       </div>
     </PageTransition>
   );

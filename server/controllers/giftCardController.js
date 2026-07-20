@@ -96,7 +96,17 @@ const lookupGiftCard = asyncHandler(async (req, res) => {
     throw new Error('Gift card not found');
   }
   const expired = card.expiresAt && card.expiresAt < new Date();
-  res.json({ success: true, data: { code: card.code, balance: card.balance, active: card.isActive && !expired, expired, issuedToName: card.issuedToName } });
+  const canViewIssuedTo = req.user.role === 'super_admin' || req.user.permissions?.viewRevenue || req.user.permissions?.exportReports;
+  res.json({
+    success: true,
+    data: {
+      code: card.code,
+      balance: card.balance,
+      active: card.isActive && !expired,
+      expired,
+      issuedToName: canViewIssuedTo ? card.issuedToName : undefined,
+    }
+  });
 });
 
 // @desc    Redeem gift-card balance to settle an order (gift card = the tender)

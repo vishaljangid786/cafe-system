@@ -1,11 +1,11 @@
 require('dotenv').config();
 
-// Fail fast if critical configuration is missing, rather than starting in a
-// broken/insecure state.
-const REQUIRED_ENV = ['JWT_SECRET', 'MONGO_URI'];
-const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
-if (missingEnv.length) {
-  console.error(`[startup] Missing required environment variables: ${missingEnv.join(', ')}. Refusing to start.`);
+const { assertRequiredEnv } = require('./config/requiredEnv');
+
+try {
+  assertRequiredEnv();
+} catch (err) {
+  console.error(err.message);
   process.exit(1);
 }
 

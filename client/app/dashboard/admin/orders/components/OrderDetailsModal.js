@@ -17,7 +17,7 @@ const PAYMENT_CHIP = {
   unpaid: 'text-danger bg-danger/10 border-danger/20',
 };
 
-export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, handleRedeemGiftCard, tables = [], userRole, canDelete, canRefund: canRefundProp }) {
+export default function OrderDetailsModal({ selectedOrder, onClose, handleCancel, handleForceComplete, handleDeleteOrder, handleRefund, handleReorder, handleMoveTable, handleSplit, tables = [], userRole, canDelete, canRefund: canRefundProp }) {
   const [showSplit, setShowSplit] = useState(false);
   const [splitQty, setSplitQty] = useState({}); // itemId -> qty to split off
   useEffect(() => { setShowSplit(false); setSplitQty({}); }, [selectedOrder?._id]);

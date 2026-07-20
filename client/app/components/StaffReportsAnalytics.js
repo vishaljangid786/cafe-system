@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import PremiumSelect from './ui/PremiumSelect';
 import useBranchScope from '../hooks/useBranchScope';
+import { routeForPage } from '../config/routes';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 
@@ -21,9 +22,9 @@ const COLORS = ['#f59e0b', '#ea580c', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'
 export default function StaffReportsAnalytics({ user }) {
   const router = useRouter();
   // Each row links to that staff member's full detail page (orders, coupons,
-  // reservations, …). Route base follows the viewer's role.
-  const basePath = user?.role === 'branch_admin' ? '/dashboard/branch-admin'
-    : user?.role === 'location_admin' ? '/dashboard/location-admin' : '/dashboard/admin';
+  // reservations, …). Hrefs come from the shared route registry.
+  const reportsBase = routeForPage(user?.role, 'page_staffreports');
+  const comparisonHref = routeForPage(user?.role, 'page_staffcomparison');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -105,17 +106,25 @@ export default function StaffReportsAnalytics({ user }) {
       s.avgOrderValue
     ]);
     
-    let csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
-      + rows.map(e => e.join(",")).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Staff_Performance_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    // Quote any value containing a comma, quote or newline (RFC 4180) — a staff or
+    // branch name like "Mumbai, Andheri" previously shifted every later column.
+    const escapeCsv = (value) => {
+      const s = value === null || value === undefined ? '' : String(value);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\r\n');
+
+    // Blob + BOM instead of an encodeURI'd data URI: no URL length limit, and Excel
+    // reads the UTF-8 ₹ symbol correctly.
+    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Staff_Performance_Report_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const exportPDF = () => {
@@ -153,7 +162,7 @@ export default function StaffReportsAnalytics({ user }) {
 
         <div className="flex gap-4">
           <button
-            onClick={() => router.push(`${basePath}/staff-comparison`)}
+            onClick={() => router.push(comparisonHref)}
             className="px-5 py-3 bg-(--color-surface-soft) hover:bg-(--color-surface) text-(--color-text-secondary) rounded-xl text-[11px] font-medium uppercase tracking-normal transition-all flex items-center gap-2 shadow-sm border border-(--color-border)"
           >
             <Users size={16} /> Compare Staff
@@ -345,7 +354,7 @@ export default function StaffReportsAnalytics({ user }) {
                 </thead>
                 <tbody>
                   {data.map((staff) => (
-                    <tr key={staff._id} onClick={() => router.push(`${basePath}/staff-reports/${staff._id}`)} title="View full report" className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group cursor-pointer">
+                    <tr key={staff._id} onClick={() => router.push(`${reportsBase}/${staff._id}`)} title="View full report" className="border-b border-(--color-border)/50 hover:bg-(--color-surface-soft)/30 transition-all group cursor-pointer">
                       <td className="py-4 text-xs font-semibold text-primary">#{staff.ranking}</td>
                       <td className="py-4 text-xs font-medium text-(--color-text-primary) dark:text-(--color-text-primary) group-hover:text-primary transition-colors">{staff.name} <span className="opacity-0 group-hover:opacity-60 text-[10px]">›</span></td>
                       <td className="py-4 text-[11px] font-medium text-(--color-text-muted) uppercase tracking-wider">{staff.role}</td>

@@ -63,6 +63,28 @@ export default function AdminTablesPage() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [dietaryFilter, setDietaryFilter] = useState('All');
   const [systemOrders, setSystemOrders] = useState([]);
+  // Tender is picked when the order is TAKEN (not only at billing) so the kitchen
+  // ticket and the cash drawer agree from the start.
+  const [orderPaymentType, setOrderPaymentType] = useState('CASH');
+  // Purely informational chip; the discount itself is applied server-side.
+  const [customerHint, setCustomerHint] = useState('');
+  useEffect(() => { // cafeos-crm-hint
+    const digits = String(selectedTable?.customerPhone || '').replace(/\D/g, '');
+    if (digits.length < 10) { setCustomerHint(''); return undefined; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      api.get(`/customers?search=${digits}&limit=1`)
+        .then((r) => {
+          if (cancelled) return;
+          const c = (r.data?.data || [])[0];
+          setCustomerHint(c
+            ? `Returning · ${c.visits || 0} visits · ₹${Math.round(c.totalSpend || 0)} lifetime`
+            : 'New customer — intro offer applies');
+        })
+        .catch(() => { if (!cancelled) setCustomerHint(''); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [selectedTable?.customerPhone]);
   const syncTimeoutRef = useRef(null);
   const selectedTableRef = useRef(null);
 
@@ -190,21 +212,28 @@ export default function AdminTablesPage() {
         socket.emit('join_room', `branch_${selectedLocation}`);
       }
       
-      socket.on('order:new', () => fetchTables(true));
-      socket.on('order:update', () => {
+      // Named handlers so cleanup can remove exactly THIS component's listeners.
+      // socket.off(event) with no handler wipes every listener for that event on
+      // the shared socket, silently killing other mounted components' realtime.
+      const onOrderNew = () => fetchTables(true);
+      const onOrderUpdate = () => {
         fetchTables(true);
         if (selectedTableRef.current) fetchSystemOrders(selectedTableRef.current._id);
-      });
-      socket.on('order:ready', (data) => {
+      };
+      const onOrderReady = (data) => {
         toast.success(data.message || 'Order is ready!', { icon: '🍱' });
         fetchTables(true);
-      });
+      };
+
+      socket.on('order:new', onOrderNew);
+      socket.on('order:update', onOrderUpdate);
+      socket.on('order:ready', onOrderReady);
 
       return () => {
         clearTimeout(timer);
-        socket.off('order:new');
-        socket.off('order:update');
-        socket.off('order:ready');
+        socket.off('order:new', onOrderNew);
+        socket.off('order:update', onOrderUpdate);
+        socket.off('order:ready', onOrderReady);
       };
     }
 
@@ -270,7 +299,8 @@ export default function AdminTablesPage() {
     try {
       const res = await api.put(`/tables/${table._id}/book`, {
         numberOfPeople: table.capacity || 1,
-        customerName: ''
+        customerName: '',
+        customerPhone: ''
       });
       fetchTables();
       handleOpenOrder(res.data.data);
@@ -416,6 +446,11 @@ export default function AdminTablesPage() {
   const handleSendToKitchen = async () => {
     if (pendingOrders.length === 0) return toast.error('No items added to order');
     if (!selectedTable.customerName) return toast.error('Customer name required');
+    // Phone is the CRM identity key: without it the order can't be linked to
+    // rewards or the new-customer offer.
+    if (String(selectedTable.customerPhone || '').replace(/\D/g, '').length < 10) {
+      return toast.error('Customer mobile number required (10 digits)');
+    }
 
     const loadToast = toast.loading('Sending to kitchen...');
     try {
@@ -431,7 +466,12 @@ export default function AdminTablesPage() {
         })),
         totalAmount: pendingOrders.reduce((acc, curr) => acc + (Number(curr.price) * Number(curr.quantity)), 0),
         discountAmount: Number(discountAmount || 0),
-        couponId: appliedCoupon?.couponId || null
+        couponId: appliedCoupon?.couponId || null,
+        customerName: selectedTable.customerName || '',
+        customerPhone: String(selectedTable.customerPhone || '').replace(/\D/g, ''),
+        // Tender is chosen when the order is taken (not only at billing) so the
+        // kitchen ticket and the drawer agree from the start.
+        paymentType: orderPaymentType
       };
 
       await api.post('/orders', payload);
@@ -801,6 +841,43 @@ export default function AdminTablesPage() {
                         value={selectedTable.customerName || ''}
                         onChange={(e) => handleSyncOrders(pendingOrders, { customerName: e.target.value })}
                       />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                        Mobile <span className="text-danger font-medium">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="10-digit mobile"
+                        className="w-full bg-(--color-bg-soft) border border-(--color-border) rounded-xl px-4 py-2.5 mt-1 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-(--color-text-muted)/30 text-(--color-text-primary)"
+                        value={selectedTable.customerPhone || ''}
+                        onChange={(e) => handleSyncOrders(pendingOrders, { customerPhone: e.target.value.replace(/\D/g, '').slice(0, 15) })}
+                      />
+                      {customerHint && (
+                        <p className="mt-1 text-[10px] font-bold text-primary">{customerHint}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted)">
+                        Pay with
+                      </label>
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        {['CASH', 'UPI'].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setOrderPaymentType(m)}
+                            className={`py-2.5 rounded-xl text-[11px] font-bold transition-colors ${
+                              orderPaymentType === m
+                                ? 'bg-primary text-(--color-on-primary)'
+                                : 'bg-(--color-bg-soft) text-(--color-text-muted) border border-(--color-border)'
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <PremiumSelect

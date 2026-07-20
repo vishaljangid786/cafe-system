@@ -187,7 +187,7 @@ const getMonthlySummary = asyncHandler(async (req, res) => {
     throw new Error('Month parameter (YYYY-MM) is required');
   }
 
-  let userMatch = { role: 'staff' };
+  let userMatch = { role: 'staff', deletedAt: null };
   let attendanceMatch = { date: { $regex: `^${escapeRegex(month)}` } };
 
   if (locationId && locationId !== 'All') {

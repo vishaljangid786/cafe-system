@@ -81,7 +81,7 @@ const getUsers = asyncHandler(async (req, res) => {
     // Admins see branch admins and staff under their accessible locations
     const allowedLocs = userLocationIds(actor);
     query.$and = [
-      { role: { $in: ['branch_admin', 'staff', 'chef'] } },
+      { role: { $in: ['branch_admin', 'location_admin', 'staff', 'chef'] } },
       {
         $or: [
           { assignedLocation: { $in: allowedLocs } },
@@ -90,7 +90,7 @@ const getUsers = asyncHandler(async (req, res) => {
       }
     ];
   } else if (actor.role === 'super_admin') {
-    query.role = { $in: ['admin', 'branch_admin', 'staff', 'chef'] };
+    query.role = { $in: ['admin', 'branch_admin', 'location_admin', 'staff', 'chef'] };
   } else {
     // Any other role (e.g. a staff/chef/location_admin granted manageStaff):
     // restrict strictly to their own branch's staff & chefs — never global data.
@@ -111,8 +111,8 @@ const getUsers = asyncHandler(async (req, res) => {
   // Optional Filters
   if (req.query.role && req.user.role !== 'branch_admin') {
     const viewableRoles = req.user.role === 'super_admin'
-      ? ['admin', 'branch_admin', 'staff', 'chef']
-      : ['branch_admin', 'staff', 'chef'];
+      ? ['admin', 'branch_admin', 'location_admin', 'staff', 'chef']
+      : ['branch_admin', 'location_admin', 'staff', 'chef'];
 
     if (viewableRoles.includes(req.query.role)) {
       query.role = req.query.role;
@@ -136,8 +136,18 @@ const getUsers = asyncHandler(async (req, res) => {
     }
   }
 
+  // Removed people are hidden by default. A super_admin can ask for them
+  // explicitly to review or restore; nobody else can see them at all, so a
+  // delegated manageStaff permission cannot be used to browse ex-employees.
+  const wantsDeleted = req.query.includeDeleted === 'true' && req.user.role === 'super_admin';
+  if (req.query.status === 'deleted' && req.user.role === 'super_admin') {
+    query.deletedAt = { $ne: null };
+  } else if (!wantsDeleted) {
+    query.deletedAt = null;
+  }
+
   // Status Filter (Blocked/Active)
-  if (req.query.status) {
+  if (req.query.status && req.query.status !== 'deleted') {
     if (req.query.status === 'blocked') {
       query.isBlocked = true;
     } else if (req.query.status === 'active') {
@@ -466,10 +476,11 @@ const updateUser = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private (Super Admin, Admin, Location Admin)
-const deleteUser = asyncHandler(async (req, res) => {
+/**
+ * Shared guard for every destructive action against a user. Returns the target
+ * document, or throws through Express' error handler with the right status.
+ */
+const loadDeletableUser = async (req, res, { verb }) => {
   const user = await User.findById(req.params.id);
 
   if (!user) {
@@ -477,45 +488,182 @@ const deleteUser = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Restrictions
   if (req.user.role === 'branch_admin') {
     if (!['staff', 'chef'].includes(user.role)) {
       res.status(403);
       throw new Error('Branch Admins can only delete Staff or Chef personnel');
     }
   }
-  ensureCanManageUserRank(req, res, user, 'You cannot delete a user at or above your own role');
-  ensureCanManageUserLocation(req, res, user, 'You do not have permission to delete users from other locations');
+  ensureCanManageUserRank(req, res, user, `You cannot ${verb} a user at or above your own role`);
+  ensureCanManageUserLocation(req, res, user, `You do not have permission to ${verb} users from other locations`);
 
   if (user.role === 'super_admin') {
     res.status(403);
     throw new Error('Super Admin cannot be deleted');
   }
 
-  // Active Order Guard for Deletion
+  if (String(user._id) === String(req.user._id)) {
+    res.status(400);
+    throw new Error('You cannot delete your own account');
+  }
+
+  return user;
+};
+
+// @desc    What would be affected by removing this user
+// @route   GET /api/users/:id/impact
+// @access  Private (Super Admin, Admin, Location Admin)
+const getUserDeleteImpact = asyncHandler(async (req, res) => {
+  const user = await loadDeletableUser(req, res, { verb: 'delete' });
+  const { previewUserImpact } = require('../services/cascadeDelete');
+
+  const impact = await previewUserImpact(user);
+
+  // Surfaced separately from the dependency counts because it is a hard block,
+  // not something the operator can confirm away: an order mid-preparation has
+  // to reach the pass before the person who owns it can leave.
   const Order = require('../models/Order');
-  const activeOrders = await Order.findOne({
+  const activeOrders = await Order.countDocuments({
     $or: [{ assignedChef: user._id }, { createdBy: user._id }],
-    status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] }
+    status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] },
   });
 
-  if (activeOrders) {
+  res.json({ success: true, data: { ...impact, activeOrders } });
+});
+
+// @desc    Remove a user
+// @route   DELETE /api/users/:id
+// @access  Private (Super Admin, Admin, Location Admin)
+//
+// Modes (body or query):
+//   'solo'      default — remove this person only. Their staff keep working and
+//               simply lose a lead until one is assigned.
+//   'reassign'  remove them and hand their seat to `replacementId`, who is
+//               promoted into the vacated role and inherits the branch, the
+//               cafe memberships and every subordinate.
+//   'cascade'   remove them together with everyone reporting to them.
+//
+// In all three the person is soft-deleted, never dropped: their orders, bills,
+// expenses and payroll rows must keep resolving a name. Financial and audit
+// records are untouched by every mode.
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await loadDeletableUser(req, res, { verb: 'delete' });
+
+  const mode = String(req.body?.mode || req.query?.mode || 'solo');
+  if (!['solo', 'reassign', 'cascade'].includes(mode)) {
     res.status(400);
-    throw new Error(`Cannot delete user "${user.name}" with active pending orders.`);
+    throw new Error('Invalid delete mode');
   }
+  // Only a super_admin may take out a lead together with their whole team.
+  if (mode === 'cascade' && req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error('Only a Super Admin can delete a user along with their team');
+  }
+
+  const force = req.body?.force === true || req.query?.force === 'true';
+
+  const Order = require('../models/Order');
+  const activeOrders = await Order.countDocuments({
+    $or: [{ assignedChef: user._id }, { createdBy: user._id }],
+    status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] },
+  });
+
+  // A super_admin can override the open-order guard deliberately; nobody else
+  // can, and even they have to ask for it explicitly.
+  if (activeOrders > 0 && !(force && req.user.role === 'super_admin')) {
+    res.status(400);
+    throw new Error(
+      `Cannot delete "${user.name}" — ${activeOrders} order(s) are still in progress. Close them first.`
+    );
+  }
+
+  const { softDeleteUsers, findSubordinates } = require('../services/cascadeDelete');
 
   const userId = user._id;
   const userName = user.name;
   const locationId = user.assignedLocation;
 
-  await user.deleteOne();
+  let replacement = null;
+  let cascadedCount = 0;
+
+  if (mode === 'reassign') {
+    const replacementId = req.body?.replacementId;
+    if (!replacementId) {
+      res.status(400);
+      throw new Error('Select who takes over before removing this user');
+    }
+    replacement = await User.findOne({ _id: replacementId, deletedAt: null });
+    if (!replacement) {
+      res.status(404);
+      throw new Error('Replacement user not found');
+    }
+    if (String(replacement._id) === String(userId)) {
+      res.status(400);
+      throw new Error('A user cannot replace themselves');
+    }
+    if (replacement.role === 'super_admin') {
+      res.status(400);
+      throw new Error('A Super Admin cannot take over a branch role');
+    }
+
+    // Promote into the vacated seat and inherit its whole scope. Cafe and branch
+    // lists are unioned rather than overwritten so a replacement already running
+    // another branch does not lose it.
+    replacement.role = user.role;
+    if (user.assignedLocation) replacement.assignedLocation = user.assignedLocation;
+
+    const mergeIds = (existing, incoming) => {
+      const seen = new Set((existing || []).map(String));
+      (incoming || []).forEach((id) => seen.add(String(id)));
+      return [...seen];
+    };
+    replacement.accessibleLocations = mergeIds(replacement.accessibleLocations, user.accessibleLocations);
+    replacement.cafes = mergeIds(replacement.cafes, user.cafes);
+    replacement.allowedPages = mergeIds(replacement.allowedPages, user.allowedPages);
+    // The seat's authority travels with it, so the branch is not left with a
+    // lead who cannot approve anything.
+    if (user.permissions) {
+      const src = user.permissions.toObject ? user.permissions.toObject() : user.permissions;
+      Object.entries(src).forEach(([k, v]) => {
+        if (v === true) replacement.permissions[k] = true;
+      });
+    }
+    // Role changed, so any cached token claiming the old role must die.
+    replacement.sessionVersion = (replacement.sessionVersion || 1) + 1;
+    await replacement.save({ validateModifiedOnly: true });
+  }
+
+  if (mode === 'cascade') {
+    const subordinates = await findSubordinates(user);
+    if (subordinates.length) {
+      cascadedCount = await softDeleteUsers(
+        subordinates.map((s) => s._id),
+        { actorId: req.user._id, reason: `Team of ${userName} removed` }
+      );
+    }
+  }
+
+  await softDeleteUsers([userId], {
+    actorId: req.user._id,
+    reason: String(req.body?.reason || '').slice(0, 200),
+  });
 
   const { logSecurityAction } = require('../utils/auditLogger');
-  await logSecurityAction(req, 'USER_DELETED', { userName }, userId, 'User');
+  await logSecurityAction(
+    req,
+    'USER_DELETED',
+    { userName, mode, cascadedCount, replacement: replacement?.name || null, forced: activeOrders > 0 },
+    userId,
+    'User'
+  );
+
+  let message = `${userName} was removed`;
+  if (mode === 'reassign') message += `, and ${replacement.name} took over as ${user.role.replace(/_/g, ' ')}`;
+  if (mode === 'cascade') message += ` along with ${cascadedCount} team member(s)`;
 
   await sendNotification({
-    title: 'User Deleted',
-    message: `User ${userName} was removed by ${req.user.name}.`,
+    title: 'User Removed',
+    message: `${message} by ${req.user.name}.`,
     type: 'user_action',
     performedByUser: req.user,
     locationId,
@@ -523,8 +671,122 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'User removed successfully',
+    message,
+    data: { mode, cascadedCount, replacementId: replacement?._id || null },
   });
+});
+
+// @desc    Irreversibly erase a removed user's personal data
+// @route   DELETE /api/users/:id/purge
+// @access  Private (Super Admin only)
+//
+// Where nothing references the person, the document is dropped outright. Where
+// something does — an order they took, a payroll row — the document survives
+// stripped of every personal field, because deleting it would break the
+// financial record that must be preserved. Either way the person is
+// unrecoverable afterwards.
+const purgeUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  if (user.role === 'super_admin') {
+    res.status(403);
+    throw new Error('Super Admin cannot be purged');
+  }
+  if (!user.deletedAt) {
+    res.status(400);
+    throw new Error('Remove the user first, then purge');
+  }
+
+  const { countDependents } = require('../services/cascadeDelete');
+  const { USER_DEPENDENTS } = require('../services/dependencyGraph');
+  const rows = await countDependents(USER_DEPENDENTS, [user._id]);
+  const referenced = rows.reduce((sum, r) => sum + r.count, 0);
+
+  const userId = user._id;
+  const userName = user.name;
+
+  if (referenced === 0) {
+    await user.deleteOne();
+  } else {
+    // Anonymise in place. The `_id` stays valid so every historical `populate`
+    // still resolves and renders "Removed user" instead of a blank cell.
+    user.name = 'Removed user';
+    user.email = `purged.${user._id}@removed.invalid`;
+    user.deletedEmail = null;
+    user.phone = '';
+    user.alternatePhone = '';
+    user.city = '';
+    user.state = '';
+    user.pincode = '';
+    user.aadharNumber = '';
+    user.aadharImage = '';
+    user.profileImageUrl = '';
+    user.monthlySalary = 0;
+    user.password = require('crypto').randomBytes(32).toString('hex');
+    user.purgedAt = new Date();
+    user.sessionVersion = (user.sessionVersion || 1) + 1;
+    await user.save({ validateModifiedOnly: true });
+  }
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(
+    req,
+    'USER_PURGED',
+    { userName, referenced, hardDeleted: referenced === 0 },
+    userId,
+    'User'
+  );
+
+  res.json({
+    success: true,
+    message:
+      referenced === 0
+        ? `${userName} was permanently deleted`
+        : `${userName}'s personal data was erased. ${referenced} financial or audit record(s) were preserved and now show "Removed user".`,
+    data: { hardDeleted: referenced === 0, preservedRecords: referenced },
+  });
+});
+
+// @desc    Bring back a removed user
+// @route   POST /api/users/:id/restore
+// @access  Private (Super Admin only)
+const restoreUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  if (!user.deletedAt) {
+    res.status(400);
+    throw new Error('This user is not removed');
+  }
+  if (user.purgedAt) {
+    res.status(400);
+    throw new Error('This user was permanently erased and cannot be restored');
+  }
+
+  const reclaimed = await user.reclaimEmail();
+  if (!reclaimed) {
+    res.status(409);
+    throw new Error(
+      `Cannot restore: ${user.deletedEmail} now belongs to another account. Change that address first.`
+    );
+  }
+
+  user.deletedAt = null;
+  user.deletedBy = null;
+  user.deletedReason = '';
+  user.isBlocked = false;
+  user.active = true;
+  await user.save({ validateModifiedOnly: true });
+
+  const { logSecurityAction } = require('../utils/auditLogger');
+  await logSecurityAction(req, 'USER_RESTORED', { userName: user.name }, user._id, 'User');
+
+  res.json({ success: true, message: `${user.name} was restored`, data: { id: user._id } });
 });
 
 // @desc    Toggle blocklist status
@@ -541,6 +803,13 @@ const toggleBlocklist = asyncHandler(async (req, res) => {
   if (user.role === 'super_admin') {
     res.status(403);
     throw new Error('Cannot block Super Admin');
+  }
+
+  // A removed account is already blocked. Toggling it here would silently
+  // un-block a deleted person and hand them a working login again.
+  if (user.deletedAt) {
+    res.status(400);
+    throw new Error('This user has been removed. Restore them first.');
   }
 
   ensureCanManageUserRank(req, res, user, 'You cannot block a user at or above your own role');
@@ -862,6 +1131,9 @@ module.exports = {
   getUser,
   updateUser,
   deleteUser,
+  getUserDeleteImpact,
+  purgeUser,
+  restoreUser,
   promoteUser,
   demoteUser,
   toggleBlocklist,

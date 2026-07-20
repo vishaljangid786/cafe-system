@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
+import { displayUserName } from '@/app/utils/userDisplay';
 
 export default function CashDrawerPage() {
   const { user, socket } = useAuth();
@@ -173,7 +174,7 @@ export default function CashDrawerPage() {
                   </h1>
                   <p className="mt-1.5 text-sm font-medium text-(--color-text-secondary)">
                     {session
-                      ? <>Opened by {session.openedBy?.name || '—'} · {new Date(session.openedAt).toLocaleString('en-IN')}</>
+                      ? <>Opened by {displayUserName(session.openedBy, '—')} · {new Date(session.openedAt).toLocaleString('en-IN')}</>
                       : 'Open a shift to start tracking cash for this branch.'}
                   </p>
                 </div>

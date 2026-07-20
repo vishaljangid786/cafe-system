@@ -228,6 +228,7 @@ const createTransaction = asyncHandler(async (req, res) => {
   // Notify Admins about new pending expense
   if (status === 'pending') {
     const admins = await User.find({
+      deletedAt: null,
       $or: [
         { role: 'super_admin' },
         { role: 'admin', accessibleLocations: targetLocation },
@@ -434,6 +435,7 @@ const createBulkRevenue = asyncHandler(async (req, res) => {
   if (status === 'pending') {
     const branchIds = [...seen];
     const admins = await User.find({
+      deletedAt: null,
       $or: [
         { role: 'super_admin' },
         { role: 'admin', accessibleLocations: { $in: branchIds } },
@@ -505,6 +507,7 @@ const approveTransaction = asyncHandler(async (req, res) => {
   // NOTIFICATION LOGIC
   const approvalLocationId = transactionLocationId;
   const admins = await User.find({
+    deletedAt: null,
     _id: { $ne: req.user._id },
     $or: [
       { role: 'super_admin' },
@@ -569,6 +572,7 @@ const rejectTransaction = asyncHandler(async (req, res) => {
   // NOTIFICATION LOGIC
   const rejectionLocationId = transaction.locationId?._id || transaction.locationId;
   const admins = await User.find({
+    deletedAt: null,
     _id: { $ne: req.user._id },
     $or: [
       { role: 'super_admin' },

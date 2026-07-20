@@ -16,6 +16,7 @@ import LoadingScreen from '../components/ui/LoadingScreen';
 import { useForm, Controller } from 'react-hook-form';
 import PremiumSelect from '../components/ui/PremiumSelect';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { routeForPage } from '../config/routes';
 import * as z from 'zod';
 
 const signupSchema = z.object({
@@ -270,7 +271,7 @@ function SignupContent() {
         router.push('/login');
       } else {
         toast.success('Member created successfully.', { id: loadToast });
-        router.push(currentUser?.role === 'branch_admin' ? '/dashboard/branch-admin/staff' : '/dashboard/admin/staff');
+        router.push(routeForPage(currentUser?.role, 'page_staff'));
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not create account. Please check your details.', { id: loadToast });
