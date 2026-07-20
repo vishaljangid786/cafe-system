@@ -25,6 +25,41 @@
 
 const mongoose = require('mongoose');
 
+// Register every model this registry touches, up front.
+//
+// Resolving them lazily through `mongoose.model(name)` throws MissingSchemaError
+// if nothing else happened to require the file first — and it would throw
+// *midway* through a cascade, leaving a cafe half-deleted. Requiring here makes
+// the dependency explicit and the engine self-sufficient.
+require('../models/User');
+require('../models/Cafe');
+require('../models/Location');
+require('../models/Table');
+require('../models/MenuItem');
+require('../models/BranchStock');
+require('../models/BranchInventory');
+require('../models/Supplier');
+require('../models/Waitlist');
+require('../models/Reservation');
+require('../models/Booking');
+require('../models/Settings');
+require('../models/Order');
+require('../models/Transaction');
+require('../models/Expense');
+require('../models/Payroll');
+require('../models/CashSession');
+require('../models/GiftCard');
+require('../models/PurchaseOrder');
+require('../models/WasteRecord');
+require('../models/Attendance');
+require('../models/LeaveRequest');
+require('../models/Feedback');
+require('../models/AuditLog');
+require('../models/Coupon');
+require('../models/Customer');
+require('../models/Notification');
+require('../models/PermissionPreset');
+
 const M = (name) => mongoose.model(name);
 
 // ---------------------------------------------------------------------------

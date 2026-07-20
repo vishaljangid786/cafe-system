@@ -223,15 +223,32 @@ const disposeLocationUsers = async (locationIds, { actorId, staffMode }) => {
     return victims.length;
   }
 
-  const res = await User.updateMany(
+  await User.updateMany(
     { accessibleLocations: { $in: ids } },
     { $pull: { accessibleLocations: { $in: ids } } }
   );
-  await User.updateMany(
-    { assignedLocation: { $in: ids } },
-    { $set: { assignedLocation: null } }
+
+  // `assignedLocation` is REQUIRED for branch-level roles, so blanking it would
+  // leave documents that fail validation on the next ordinary save. Move each
+  // person to another branch they can still reach; when there is none, leave the
+  // pointer on the defunct branch — its document is deliberately retained (only
+  // flagged isPermanentlyDeleted), so the reference stays resolvable and the
+  // person shows up as attached to a closed branch, ready to be reassigned.
+  const dead = new Set(ids.map(String));
+  const stranded = await User.find({ assignedLocation: { $in: ids } }).select(
+    'assignedLocation accessibleLocations role'
   );
-  return res.modifiedCount || 0;
+
+  let moved = 0;
+  for (const user of stranded) {
+    const survivor = (user.accessibleLocations || []).find((l) => !dead.has(String(l)));
+    if (survivor) {
+      user.assignedLocation = survivor;
+      await user.save({ validateModifiedOnly: true });
+      moved++;
+    }
+  }
+  return stranded.length;
 };
 
 // ---------------------------------------------------------------------------

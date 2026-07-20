@@ -12,7 +12,8 @@
     "seed:legacy-demo": "node seed/data.js",
     "seed:clear": "node seed/data.js --clear",
     "seed:attendance": "node seed/seed_attendance.js",
-    "seed:orders": "node seed/seed_orders.js"
+    "seed:orders": "node seed/seed_orders.js",
+    "test:destructive": "node --test test/destructive.test.js"
   },
   "keywords": [],
   "author": "",
