@@ -180,7 +180,9 @@ const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins
           taxAmount: tax,
           grandTotal: grand,
           paymentType,
-          paymentStatus: done ? 'paid' : 'pending',
+          // Order.paymentStatus enum is ['unpaid','partial','paid'] — 'pending'
+          // belongs to paymentApproval.status, a different field entirely.
+          paymentStatus: done ? 'paid' : 'unpaid',
           amountPaid: done ? grand : 0,
           completedAt: done ? new Date(when.getTime() + rand(15, 45) * 60000) : null,
           createdAt: when,
