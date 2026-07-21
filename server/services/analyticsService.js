@@ -247,15 +247,30 @@ class AnalyticsService {
       Transaction.aggregate([
         { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         {
-          $group: {
-            _id: null,
-            upiCount: { $sum: { $cond: [{ $or: [{ $eq: ["$paymentType", "UPI"] }, { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "UPI", options: "i" } }] }, 1, 0] } },
-            cashCount: { $sum: { $cond: [{ $or: [{ $eq: ["$paymentType", "CASH"] }, { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "CASH", options: "i" } }] }, 1, 0] } },
-            total: { $sum: 1 }
+          $facet: {
+            // Legacy shape the overview's UPI/Cash tiles still read.
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  upiCount: { $sum: { $cond: [{ $or: [{ $eq: ["$paymentType", "UPI"] }, { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "UPI", options: "i" } }] }, 1, 0] } },
+                  cashCount: { $sum: { $cond: [{ $or: [{ $eq: ["$paymentType", "CASH"] }, { $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: "CASH", options: "i" } }] }, 1, 0] } },
+                  total: { $sum: 1 }
+                }
+              },
+              { $addFields: { otherCount: { $max: [0, { $subtract: ["$total", { $add: ["$upiCount", "$cashCount"] }] }] } } },
+              { $project: { upiCount: { $ifNull: ["$upiCount", 0] }, cashCount: { $ifNull: ["$cashCount", 0] }, otherCount: { $ifNull: ["$otherCount", 0] } } }
+            ],
+            // The REAL split, one row per method actually used. The tiles above
+            // derive "other" by subtraction, which turns every non-UPI/CASH
+            // payment into an unlabelled bucket nobody can explain. This names
+            // each method instead, so the chart can show what was really taken.
+            breakdown: [
+              { $group: { _id: { $ifNull: ['$paymentType', 'UNSPECIFIED'] }, count: { $sum: 1 }, amount: { $sum: '$totalAmount' } } },
+              { $sort: { count: -1 } }
+            ]
           }
-        },
-        { $addFields: { otherCount: { $max: [0, { $subtract: ["$total", { $add: ["$upiCount", "$cashCount"] }] }] } } },
-        { $project: { upiCount: { $ifNull: ["$upiCount", 0] }, cashCount: { $ifNull: ["$cashCount", 0] }, otherCount: { $ifNull: ["$otherCount", 0] } } }
+        }
       ]),
       Order.aggregate([
         { $match: { ...(match.locationId ? { branch: match.locationId } : {}), ...orderDateMatch } },
@@ -339,7 +354,11 @@ class AnalyticsService {
         { $sort: { revenue: -1 } }
       ]),
       Transaction.aggregate([
-        { $match: transactionMatch },
+        // "Sales by Category" must see SALES only. Matching the bare
+        // transactionMatch pulled EXPENSE rows in too, so the byTransaction facet
+        // below grouped 'Rent', 'Salary', 'Electricity' as if they were product
+        // categories — they showed up in the sales pie and inflated its totals.
+        { $match: { ...transactionMatch, type: { $ne: 'EXPENSE' }, status: 'approved' } },
         { $facet: {
           byItems: [
             { $unwind: '$orders' },
@@ -385,7 +404,12 @@ class AnalyticsService {
       recentRevenues,
       staffStats: personnelStats,
       attendanceStats: attendanceAgg,
-      paymentStats: { methods: upiStats[0] || { upiCount: 0, cashCount: 0 }, sources: paymentAgg },
+      paymentStats: {
+        methods: upiStats[0]?.totals?.[0] || { upiCount: 0, cashCount: 0, otherCount: 0 },
+        // [{ name, count, amount }] — every payment method that was actually used.
+        breakdown: (upiStats[0]?.breakdown || []).map((m) => ({ name: m._id, count: m.count, amount: m.amount })),
+        sources: paymentAgg,
+      },
       orderStats: orderStatusAgg,
       forecast: { expectedTodayRevenue, nextMonthSalesTrend },
       summary: {

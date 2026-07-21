@@ -23,7 +23,10 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 const CATEGORIES = ['Beverages', 'Snacks', 'Main Course', 'Desserts', 'Specials'];
 // Weighted so UPI/CASH dominate, mirroring a typical cafe.
-const PAYMENT_TYPES = ['UPI', 'UPI', 'UPI', 'CASH', 'CASH', 'CARD', 'OTHER'];
+// Only the methods the ordering flow actually offers. Seeding CARD/OTHER created
+// payments no real screen can produce, which then showed up as an unexplained
+// slice on the Payment Methods chart.
+const PAYMENT_TYPES = ['UPI', 'UPI', 'UPI', 'CASH', 'CASH'];
 
 // @desc    Current seed status (counts + whether seeding is enabled)
 // @route   GET /api/seed
@@ -158,7 +161,7 @@ const seedDatabase = asyncHandler(async (req, res) => {
         status: 'COMPLETED',
         completedAt: when,
         totalAmount: amount,
-        paymentType: pick(['CASH', 'UPI', 'CARD']),
+        paymentType: pick(['CASH', 'UPI']),
         paymentStatus: 'paid',
         amountPaid: amount,
         grandTotal: amount,
@@ -357,6 +360,7 @@ const seedPage = asyncHandler(async (req, res) => {
     Transaction.countDocuments(),
   ]);
   const needsKey = Boolean(process.env.SEED_KEY);
+  const blockedInProd = process.env.NODE_ENV === 'production' && !needsKey;
   res.send(seedShell(`
     <h1>Seed ${CAFE_NAME}</h1>
     <p>Rebuilds the full Moon Light Cafe demo: 1 super admin, 1 cafe + admin, 3 branches with branch admins, staff &amp; chefs, menu, tables, stock — plus ${HISTORY_DAYS} days of sample history for every module: orders, revenue, expenses, attendance, payroll, cash-drawer shifts, customers, reservations, waitlist, feedback, gift cards, coupons, notifications, inventory and purchase orders.</p>
@@ -366,12 +370,15 @@ const seedPage = asyncHandler(async (req, res) => {
       <span>Transactions <b>${transactions}</b></span>
     </div>
     <div class="warn"><b>Warning:</b> this DELETES all existing data in every collection before seeding. It cannot be undone.</div>
-    <form method="GET" action="/seed/run">
-      <input type="hidden" name="run" value="1" />
-      ${needsKey ? '<input type="password" name="key" placeholder="Seed key (SEED_KEY)" required />' : ''}
-      <button type="submit">Seed Now — Reset Everything</button>
-    </form>
-    <div class="muted">${needsKey ? 'Protected by SEED_KEY.' : 'Tip: set a SEED_KEY env var to protect this page.'}</div>
+    ${blockedInProd
+      ? `<div class="warn"><b>Disabled.</b> No <code>SEED_KEY</code> is set on this production server, so seeding is refused —
+          otherwise anyone who found this URL could wipe the live database. Set <code>SEED_KEY</code> and redeploy to enable it.</div>`
+      : `<form method="GET" action="/seed/run">
+          <input type="hidden" name="run" value="1" />
+          ${needsKey ? '<input type="password" name="key" placeholder="Seed key (SEED_KEY)" required />' : ''}
+          <button type="submit">Seed Now — Reset Everything</button>
+        </form>`}
+    <div class="muted">${needsKey ? 'Protected by SEED_KEY.' : 'Set a SEED_KEY env var to protect this page.'}</div>
   `));
 });
 
@@ -379,6 +386,19 @@ const seedPage = asyncHandler(async (req, res) => {
 // SEED_KEY when one is configured.
 const runFullSeed = asyncHandler(async (req, res) => {
   if (req.query.run !== '1') return res.redirect('/seed');
+
+  // FAIL CLOSED in production. This endpoint drops every collection, so an
+  // unprotected deployment means anyone who guesses the URL can destroy the
+  // live database. Treating SEED_KEY as optional was only ever safe locally.
+  if (process.env.NODE_ENV === 'production' && !process.env.SEED_KEY) {
+    return res.status(403).send(seedShell(`
+      <h1>Seeding is disabled</h1>
+      <div class="warn">This wipes and rebuilds the entire database, so it refuses to run in production without a key.
+      Set a <code>SEED_KEY</code> environment variable on the server and redeploy, then enter it here.</div>
+      <p><a href="/seed">&larr; Back</a></p>
+    `));
+  }
+
   if (process.env.SEED_KEY && req.query.key !== process.env.SEED_KEY) {
     return res.status(403).send(seedShell(`
       <h1>Wrong key</h1>

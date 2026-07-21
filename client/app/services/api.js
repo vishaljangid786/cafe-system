@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { rememberIntendedPath } from '../utils/returnTo';
 
 // Resolve the API base URL at runtime (in the browser).
 //
@@ -79,6 +80,10 @@ api.interceptors.response.use(
         publicPaths.some((p) => window.location.pathname === p || window.location.pathname.startsWith(`${p}/`));
       const isProfileProbe = error.config?.url?.includes('/auth/profile');
       if (typeof window !== 'undefined' && !onPublicPath && !isProfileProbe) {
+        // A token that lapsed mid-work is the case this matters most for: without
+        // it you sign back in and land on the dashboard home, having lost the page
+        // you were actually on.
+        rememberIntendedPath(window.location.pathname);
         window.location.href = '/login';
       }
     }

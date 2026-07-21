@@ -210,7 +210,8 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
               <>
                 <button
                   onClick={() => setShowBranchPanel(v => !v)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-sm font-medium text-(--color-text-primary) min-w-50"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-(--color-border) bg-(--color-surface) hover:border-(--color-border-strong) transition-colors text-sm font-medium text-(--color-text-primary) min-w-64 max-w-80"
+                  title={multiBranchLabel}
                 >
                   <MapPin size={15} className="text-primary shrink-0" />
                   <span className="flex-1 text-left truncate text-sm font-medium">{multiBranchLabel}</span>
@@ -224,7 +225,7 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -6, scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-64 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-[var(--shadow-md)] z-300 overflow-hidden"
+                      className="absolute right-0 top-full mt-2 w-88 max-w-[calc(100vw-2rem)] bg-(--color-surface) border border-(--color-border) rounded-xl shadow-(--shadow-md) z-300 overflow-hidden"
                     >
                       <div className="p-2 border-b border-(--color-border)">
                         <button
@@ -255,7 +256,13 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
                               <span className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary' : 'border-(--color-border-strong)'}`}>
                                 {checked && <Check size={10} className="text-(--color-on-primary)" strokeWidth={3} />}
                               </span>
-                              <span className="truncate">{branch.city && branch.name ? `${branch.city} — ${branch.name}` : branch.name || branch.city}</span>
+                              {/* Branch names are long ("Moon Light — Koregaon Park") and a
+                                  city prefix makes them longer still. Wrapping to a second
+                                  line beats truncating: a list of "Moon Light — …" rows is
+                                  unusable because the distinguishing part is what got cut. */}
+                              <span className="flex-1 text-left leading-snug whitespace-normal wrap-break-word">
+                                {branch.city && branch.name ? `${branch.city} — ${branch.name}` : branch.name || branch.city}
+                              </span>
                             </button>
                           );
                         })}

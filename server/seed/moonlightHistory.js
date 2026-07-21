@@ -154,7 +154,10 @@ const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins
         }
         const tax = Math.round(totalAmt * 0.05);
         const grand = totalAmt + tax;
-        const paymentType = pick(['CASH', 'CASH', 'UPI', 'UPI', 'UPI', 'CARD']);
+        // CASH and UPI are the only methods the ordering flow actually offers
+        // (see the POS/table billing screens), so seeding CARD produced payments
+        // the app can never create — they surfaced as a mystery "OTHER" slice.
+        const paymentType = pick(['CASH', 'CASH', 'UPI', 'UPI', 'UPI']);
 
         // Today keeps a few live orders; history is completed with a small
         // cancelled share so cancel-rate widgets have something to show.

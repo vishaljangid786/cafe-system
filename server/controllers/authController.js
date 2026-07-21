@@ -378,7 +378,11 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   const cleanEmail = email.trim().toLowerCase();
 
-  const user = await User.findOne({ email: cleanEmail }).populate('assignedLocation accessibleLocations');
+  // +password: the field is select:false on the schema, and this is one of the
+  // only two places that legitimately needs the hash (see matchPassword below).
+  const user = await User.findOne({ email: cleanEmail })
+    .select('+password')
+    .populate('assignedLocation accessibleLocations');
 
   if (!user) {
     res.status(401);

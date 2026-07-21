@@ -209,9 +209,7 @@ export default function StaffPerformanceDashboard({ user, role }) {
               options={[
                 { label: 'All Types', value: '' },
                 { label: 'Cash', value: 'CASH' },
-                { label: 'Card', value: 'CARD' },
                 { label: 'UPI', value: 'UPI' },
-                { label: 'Online', value: 'ONLINE' }
               ]}
               className="w-full"
             />

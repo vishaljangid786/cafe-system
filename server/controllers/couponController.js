@@ -3,15 +3,52 @@ const Coupon = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { logActivity } = require('../utils/auditLogger');
-const { clampLimit, escapeRegex } = require('../utils/accessControl');
+const { clampLimit, escapeRegex, resolveUserCafeIds, canAccessCafe } = require('../utils/accessControl');
 const { normalizePhone } = require('../utils/phone');
+
+// Coupons carry `cafe` and `branches[]` scoping (added when the product went
+// multi-tenant), but the management handlers were written when a coupon was
+// org-wide and never caught up — so an admin of one cafe could list, read, edit
+// and delete another cafe's promotions just by holding the admin role.
+//
+// A coupon with `cafe: null` is genuinely org-wide legacy: everyone may SEE it,
+// but only a super_admin may change it, because editing it hits every cafe.
+
+// Mongo filter limiting a listing to what this user's tenant may see.
+const cafeVisibilityFilter = async (user) => {
+  if (user.role === 'super_admin') return {};
+  const cafeIds = await resolveUserCafeIds(user);
+  return {
+    $or: [
+      { cafe: null },                                       // org-wide legacy
+      ...(cafeIds.length ? [{ cafe: { $in: cafeIds } }] : []),
+    ],
+  };
+};
+
+// Guard a single coupon before reading or writing it.
+const assertCouponScope = (req, res, coupon, { write = false } = {}) => {
+  if (req.user.role === 'super_admin') return;
+  if (!coupon.cafe) {
+    // Org-wide: readable by all, editable only by a super_admin.
+    if (write) {
+      res.status(403);
+      throw new Error('This offer applies to every cafe, so only a Super Admin can change it.');
+    }
+    return;
+  }
+  if (!canAccessCafe(req.user, coupon.cafe)) {
+    res.status(403);
+    throw new Error('This offer belongs to another cafe. You can only manage offers for your own cafe.');
+  }
+};
 
 // @desc    Get all coupons (admin view)
 // @route   GET /api/coupons
 // @access  Private (Admin)
 const getCoupons = asyncHandler(async (req, res) => {
   const { active, search } = req.query;
-  const filter = {};
+  const filter = { ...(await cafeVisibilityFilter(req.user)) };
   if (active === 'true') filter.isActive = true;
   else if (active === 'false') filter.isActive = false;
   if (search) filter.code = new RegExp(escapeRegex(search), 'i');
@@ -68,6 +105,34 @@ const createCoupon = asyncHandler(async (req, res) => {
     throw new Error('Coupon code already exists');
   }
 
+  // Stamp the tenant. Without this every coupon was created with `cafe: null`,
+  // which the redemption check treats as "valid at every cafe" — so one cafe's
+  // admin was minting discounts that another cafe had to honour.
+  // A super_admin may deliberately create an org-wide offer by passing no cafe.
+  let cafe = null;
+  if (req.user.role === 'super_admin') {
+    cafe = req.body.cafe || null;
+  } else {
+    const mine = await resolveUserCafeIds(req.user);
+    if (mine.length === 0) {
+      res.status(400);
+      throw new Error('Your account is not linked to a cafe, so it cannot create offers.');
+    }
+    // An admin over several cafes must say which one this offer belongs to.
+    if (req.body.cafe) {
+      if (!mine.includes(String(req.body.cafe))) {
+        res.status(403);
+        throw new Error('You can only create offers for your own cafe.');
+      }
+      cafe = req.body.cafe;
+    } else if (mine.length === 1) {
+      cafe = mine[0];
+    } else {
+      res.status(400);
+      throw new Error('Select which cafe this offer belongs to.');
+    }
+  }
+
   const coupon = await Coupon.create({
     code,
     discountType,
@@ -77,6 +142,7 @@ const createCoupon = asyncHandler(async (req, res) => {
     expiryDate,
     usageLimit,
     appliesTo: appliesTo || {},
+    cafe,
     isActive: req.body.isActive === 'on' || req.body.isActive === 'true' || req.body.isActive === true || req.body.isActive === undefined,
     createdBy: req.user._id,
   });
@@ -117,8 +183,17 @@ const updateCoupon = asyncHandler(async (req, res) => {
     updates.isActive = updates.isActive === 'on' || updates.isActive === 'true' || updates.isActive === true;
   }
 
+  // Load and scope-check BEFORE applying anything — the update below is a blind
+  // findByIdAndUpdate, so without this any admin could edit any cafe's offer.
+  const target = await Coupon.findById(req.params.id).select('cafe discountType discountValue');
+  if (!target) {
+    res.status(404);
+    throw new Error('Coupon not found. It may have already been deleted.');
+  }
+  assertCouponScope(req, res, target, { write: true });
+
   if (updates.discountValue !== undefined || updates.discountType !== undefined) {
-    const existing = await Coupon.findById(req.params.id).select('discountType discountValue');
+    const existing = target;
     const effType = updates.discountType ?? existing?.discountType;
     const effVal = Number(updates.discountValue ?? existing?.discountValue);
     if (!Number.isFinite(effVal) || effVal <= 0) {
@@ -162,8 +237,9 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(req.params.id);
   if (!coupon) {
     res.status(404);
-    throw new Error('Coupon not found');
+    throw new Error('Coupon not found. It may have already been deleted.');
   }
+  assertCouponScope(req, res, coupon, { write: true });
   coupon.isActive = false;
   await coupon.save();
 
@@ -328,8 +404,9 @@ const getCoupon = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(req.params.id).populate('createdBy', 'name deletedAt');
   if (!coupon) {
     res.status(404);
-    throw new Error('Coupon not found');
+    throw new Error('Coupon not found. It may have already been deleted.');
   }
+  assertCouponScope(req, res, coupon);
   res.json({ success: true, data: coupon });
 });
 

@@ -50,6 +50,36 @@ const canAccessLocation = (user, locationId) => {
   return userLocationIds(user).includes(target);
 };
 
+// ── Cafe (tenant) scope ─────────────────────────────────────────────────────
+// The branch helpers above answer "which outlets", these answer "which tenant".
+// Anything the Cafe model scopes — coupons, cafe-wide menu, settings — has to be
+// checked at this level, or an admin of one cafe reaches another cafe's records
+// simply by knowing an id.
+
+const userCafeIds = (user) => (user?.cafes || []).map((c) => normalizeId(c)).filter(Boolean);
+
+// Branch-level roles usually carry no `cafes[]`; their tenant is whichever cafe
+// owns their branch, so resolve it rather than treating them as belonging to none.
+const resolveUserCafeIds = async (user) => {
+  const ids = new Set(userCafeIds(user));
+  if (ids.size === 0) {
+    const locIds = userLocationIds(user);
+    if (locIds.length) {
+      const Location = require('../models/Location');
+      const locs = await Location.find({ _id: { $in: locIds } }).select('cafe').lean();
+      locs.forEach((l) => { if (l.cafe) ids.add(l.cafe.toString()); });
+    }
+  }
+  return [...ids];
+};
+
+const canAccessCafe = (user, cafeId) => {
+  if (!user) return false;
+  if (user.role === 'super_admin') return true;
+  if (!cafeId) return false;
+  return userCafeIds(user).includes(normalizeId(cafeId));
+};
+
 const enforceLocationAccess = (req, res, locationId, message = 'Permission denied to this location') => {
   if (!canAccessLocation(req.user, locationId)) {
     res.status(403);
@@ -139,6 +169,9 @@ module.exports = {
   userLocationIds,
   canAccessLocation,
   enforceLocationAccess,
+  userCafeIds,
+  resolveUserCafeIds,
+  canAccessCafe,
   scopedLocationId,
   scopedLocationIds,
   assertBranchesUnderOneAdmin,

@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema(
       // Matches the signup validator's 10-char minimum so non-signup paths
       // (admin-created users, resets, seed) can't store weaker passwords.
       minlength: [10, 'Password must be at least 10 characters'],
+      // Never returned unless a query explicitly asks with .select('+password').
+      // Dozens of handlers load users with no projection and hand the document
+      // to res.json(); without this, every one of them ships the bcrypt hash to
+      // the client, where it can be cracked offline at leisure. Opting IN at the
+      // two places that actually compare a password is far safer than trying to
+      // remember `-password` at every call site forever.
+      select: false,
     },
     phone: {
       type: String,

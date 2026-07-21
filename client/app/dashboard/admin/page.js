@@ -36,9 +36,20 @@ import UniversalDateFilter from '../../components/ui/UniversalDateFilter';
 import { formatIndianCompact } from '../../utils/formatNumber';
 import { Money, Num } from '@/app/components/ui/Money';
 import { displayUserName } from '@/app/utils/userDisplay';
+import ChartToolbar, { groupSeries, GROUP_OPTIONS } from '../../components/ui/ChartToolbar';
 
 // Local YYYY-MM-DD (avoids the UTC shift toISOString() causes for IST midnight).
 const fmtLocalDate = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+// Tile colours for the payment-method summary. Written out in full because
+// Tailwind scans source text — a template-built class name never gets emitted.
+const PAY_TILE = [
+  { bg: 'bg-primary/5', text: 'text-primary' },
+  { bg: 'bg-secondary/5', text: 'text-secondary' },
+  { bg: 'bg-success/5', text: 'text-success' },
+  { bg: 'bg-(--color-amber)/5', text: 'text-(--color-amber)' },
+  { bg: 'bg-danger/5', text: 'text-danger' },
+];
 
 const ViewLink = ({ href, label = 'View' }) => (
   <Link
@@ -89,6 +100,15 @@ export default function AdminDashboard() {
   // trailing-window date filter + which series lines are visible (click to toggle).
   const [salesRange, setSalesRange] = useState('all'); // 'today' | '7d' | '30d' | 'all'
   const [salesSeries, setSalesSeries] = useState({ revenue: true, profit: true, expenses: true });
+
+  // Per-chart controls. Each chart narrows only itself; the page-level date
+  // filter still decides the overall period every chart draws from.
+  const [salesGrain, setSalesGrain] = useState('day');      // Sales Report bucketing
+  const [ordersGrain, setOrdersGrain] = useState('day');    // Daily Orders bucketing
+  const [catSelected, setCatSelected] = useState([]);       // [] = every category
+  const [paySelected, setPaySelected] = useState([]);       // [] = every method
+  const [staffLimit, setStaffLimit] = useState('5');        // leaderboard size
+  const [staffSort, setStaffSort] = useState('revenue');    // revenue | orders
 
   // Branch scope comes solely from the Navbar global filter (AuthContext).
   // Single branch -> its id; all / multi-branch subset -> 'all' (the subset is sent via locationIds).
@@ -200,13 +220,45 @@ export default function AdminDashboard() {
   // global time filter at the top of the page.
   const salesData = (() => {
     const ts = analytics?.timeSeries || [];
-    if (salesRange === 'all' || ts.length === 0) return ts;
-    const days = salesRange === 'today' ? 1 : salesRange === '7d' ? 7 : 30;
-    const cutoff = new Date();
-    cutoff.setHours(0, 0, 0, 0);
-    cutoff.setDate(cutoff.getDate() - (days - 1));
-    return ts.filter((d) => new Date(`${d.date}T00:00:00`) >= cutoff);
+    let rows = ts;
+    if (salesRange !== 'all' && ts.length > 0) {
+      const days = salesRange === 'today' ? 1 : salesRange === '7d' ? 7 : 30;
+      const cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+      cutoff.setDate(cutoff.getDate() - (days - 1));
+      rows = ts.filter((d) => new Date(`${d.date}T00:00:00`) >= cutoff);
+    }
+    return groupSeries(rows, salesGrain, ['revenue', 'profit', 'expenses']);
   })();
+
+  // ── Per-chart derived data ────────────────────────────────────────────────
+  // Each block narrows ONE chart from the already-loaded payload, so switching a
+  // control is instant and never refetches.
+
+  const allCategories = analytics?.categorySales || [];
+  const categoryData = catSelected.length
+    ? allCategories.filter((c) => catSelected.includes(c.name))
+    : allCategories;
+
+  // Prefer the real per-method breakdown; fall back to the legacy UPI/Cash/Other
+  // tiles for a server that has not been redeployed yet.
+  const allPayments = (analytics?.paymentStats?.breakdown?.length
+    ? analytics.paymentStats.breakdown
+    : [
+      { name: 'UPI', count: analytics?.paymentStats?.methods?.upiCount || 0 },
+      { name: 'CASH', count: analytics?.paymentStats?.methods?.cashCount || 0 },
+    ]).filter((m) => m.count > 0);
+  const paymentData = paySelected.length
+    ? allPayments.filter((m) => paySelected.includes(m.name))
+    : allPayments;
+
+  const staffRows = [...(analytics?.staffPerformance || [])]
+    .sort((a, b) => (staffSort === 'orders'
+      ? (b.totalOrders || 0) - (a.totalOrders || 0)
+      : (b.revenue || 0) - (a.revenue || 0)))
+    .slice(0, staffLimit === 'all' ? undefined : Number(staffLimit));
+
+  const ordersData = groupSeries(analytics?.timeSeries || [], ordersGrain, ['orders']);
 
   // Profit margin % over the filtered range — derived from the same summary the
   // stat tiles use, so it follows the global date/branch filters automatically.
@@ -358,6 +410,10 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
+              {/* Roll the same window up by day / week / month / year */}
+              <ChartToolbar
+                segments={[{ key: 'grain', options: GROUP_OPTIONS, value: salesGrain, onChange: setSalesGrain }]}
+              />
               <ViewLink href={`${dashPrefix}/revenue`} />
             </div>
           </div>
@@ -422,19 +478,19 @@ export default function AdminDashboard() {
         <Card className="!p-5 glass-card border-(--color-border) export-chart premium-shadow" hover={false}>
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
-              <CardTitle className="text-xl">Daily Orders</CardTitle>
-              <CardDescription>Total orders per day.</CardDescription>
+              <CardTitle className="text-xl">Orders</CardTitle>
+              <CardDescription>Total orders per {ordersGrain}.</CardDescription>
             </div>
             <div className="flex items-center gap-3">
+              <ChartToolbar
+                segments={[{ key: 'grain', options: GROUP_OPTIONS, value: ordersGrain, onChange: setOrdersGrain }]}
+              />
               <ViewLink href={orderAnalyticsHref} />
-              <div className="p-3 bg-primary/10 rounded-xl text-primary">
-                <Layers size={20} />
-              </div>
             </div>
           </div>
           <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics?.timeSeries}>
+              <BarChart data={ordersData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: chartColors.text }} />
@@ -711,96 +767,149 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Category Sales Distribution */}
         <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-2 mb-6">
             <CardTitle className="text-lg">Sales by Category</CardTitle>
-            <ViewLink href={orderAnalyticsHref} />
+            <div className="flex items-center gap-2">
+              <ChartToolbar
+                filters={[{
+                  key: 'cat',
+                  label: 'Categories',
+                  options: allCategories.map((c) => ({ value: c.name, label: c.name })),
+                  selected: catSelected,
+                  onChange: setCatSelected,
+                }]}
+              />
+              <ViewLink href={orderAnalyticsHref} />
+            </div>
           </div>
           <div className="h-[250px] w-full">
+            {categoryData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm font-medium text-(--color-text-muted)">No sales in this range.</div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={analytics?.categorySales}
+                  data={categoryData}
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {analytics?.categorySales?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'][index % 5]} />
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${entry.name}`} fill={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'][index % 5]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => formatIndianCompact(v, { currency: true })} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
               </PieChart>
             </ResponsiveContainer>
+            )}
           </div>
         </Card>
 
         {/* Payment Methods */}
         <Card className="!p-5 glass-card border-(--color-border) premium-shadow" hover={false}>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-2 mb-6">
             <CardTitle className="text-lg">Payment Methods</CardTitle>
-            <ViewLink href={['admin', 'super_admin'].includes(user?.role) ? `${dashPrefix}/payment-intelligence` : `${dashPrefix}/revenue`} />
+            <div className="flex items-center gap-2">
+              <ChartToolbar
+                filters={[{
+                  key: 'pay',
+                  label: 'Methods',
+                  options: allPayments.map((m) => ({ value: m.name, label: m.name, count: m.count })),
+                  selected: paySelected,
+                  onChange: setPaySelected,
+                }]}
+              />
+              <ViewLink href={['admin', 'super_admin'].includes(user?.role) ? `${dashPrefix}/payment-intelligence` : `${dashPrefix}/revenue`} />
+            </div>
           </div>
           <div className="h-[250px] w-full">
+            {paymentData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm font-medium text-(--color-text-muted)">No payments in this range.</div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
+                {/* One slice per method actually used — no residual "Other" bucket. */}
                 <Pie
-                  data={[
-                    { name: 'UPI', value: analytics?.paymentStats?.methods?.upiCount || 0 },
-                    { name: 'CASH', value: analytics?.paymentStats?.methods?.cashCount || 0 },
-                    { name: 'OTHER', value: analytics?.paymentStats?.methods?.otherCount || 0 }
-                  ]}
+                  data={paymentData.map((m) => ({ name: m.name, value: m.count }))}
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  <Cell fill="var(--color-primary)" />
-                  <Cell fill="var(--color-secondary)" />
-                  <Cell fill="var(--color-amber)" />
+                  {paymentData.map((m, i) => (
+                    <Cell
+                      key={m.name}
+                      fill={['var(--color-primary)', 'var(--color-secondary)', 'var(--color-success)', 'var(--color-amber)', 'var(--color-danger)'][i % 5]}
+                    />
+                  ))}
                 </Pie>
                 <Tooltip />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
               </PieChart>
             </ResponsiveContainer>
+            )}
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="p-2 bg-primary/5 rounded-xl text-center">
-              <p className="text-[11px] font-medium uppercase text-primary">UPI</p>
-              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.upiCount}</p>
+          {/* Tiles mirror the slices exactly, so the legend and the numbers can
+              never tell different stories. */}
+          {paymentData.length > 0 && (
+            <div className={`mt-4 grid gap-2 ${paymentData.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {paymentData.map((m, i) => (
+                // Full class strings, never interpolated — Tailwind only emits
+                // classes it can see literally in the source.
+                <div key={m.name} className={`p-2 rounded-xl text-center ${PAY_TILE[i % PAY_TILE.length].bg}`}>
+                  <p className={`text-[11px] font-medium uppercase ${PAY_TILE[i % PAY_TILE.length].text}`}>{m.name}</p>
+                  <p className="text-xs font-semibold">{m.count}</p>
+                </div>
+              ))}
             </div>
-            <div className="p-2 bg-secondary/5 rounded-xl text-center">
-              <p className="text-[11px] font-medium uppercase text-secondary">Cash</p>
-              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.cashCount}</p>
-            </div>
-            <div className="p-2 bg-(--color-amber)/5 rounded-xl text-center">
-              <p className="text-[11px] font-medium uppercase text-(--color-amber)">Other</p>
-              <p className="text-xs font-semibold">{analytics?.paymentStats?.methods?.otherCount || 0}</p>
-            </div>
-          </div>
+          )}
         </Card>
 
         {/* Staff Performance Leaderboard */}
         <Card className="!p-5 glass-card border-(--color-border) premium-shadow lg:col-span-1" hover={false}>
-          <button
-            type="button"
-            onClick={() => setDrawerRole('staff')}
-            className="w-full flex items-center justify-between mb-6 group cursor-pointer text-left"
-          >
-            <CardTitle className="text-lg group-hover:text-primary transition-colors">Staff Leaderboard</CardTitle>
-            <Target size={18} className="text-(--color-amber) transition-transform" />
-          </button>
-          <div className="space-y-3">
-            {analytics?.staffPerformance?.slice(0, 5).map((staff, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
-                <div className="flex items-center gap-3">
-                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setDrawerRole('staff')}
+              className="group cursor-pointer text-left"
+            >
+              <CardTitle className="text-lg group-hover:text-primary transition-colors">Staff Leaderboard</CardTitle>
+            </button>
+            <div className="flex items-center gap-2">
+              <ChartToolbar
+                segments={[
+                  {
+                    key: 'sort',
+                    options: [{ value: 'revenue', label: '₹' }, { value: 'orders', label: 'Orders' }],
+                    value: staffSort,
+                    onChange: setStaffSort,
+                  },
+                  {
+                    key: 'limit',
+                    options: [{ value: '5', label: '5' }, { value: '10', label: '10' }, { value: 'all', label: 'All' }],
+                    value: staffLimit,
+                    onChange: setStaffLimit,
+                  },
+                ]}
+              />
+              <Target size={18} className="text-(--color-amber) shrink-0" />
+            </div>
+          </div>
+          <div className={`space-y-3 ${staffLimit === 'all' ? 'max-h-80 overflow-y-auto custom-scrollbar pr-1' : ''}`}>
+            {staffRows.length === 0 && (
+              <p className="text-sm font-medium text-(--color-text-muted) py-8 text-center">No staff sales in this range.</p>
+            )}
+            {staffRows.map((staff, i) => (
+              <div key={staff.name || i} className="flex items-center justify-between p-3 bg-(--color-surface-soft)/50 rounded-xl border border-(--color-border)">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary shrink-0">
                     {i + 1}
                   </div>
-                  <span className="text-xs font-medium truncate w-24">{staff.name}</span>
+                  <span className="text-xs font-medium truncate">{staff.name}</span>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0 pl-2">
                   <p className="text-[11px] font-semibold text-success"><Money value={staff.revenue} /></p>
                   <p className="text-[11px] font-medium text-(--color-text-muted)">{staff.totalOrders} Orders</p>
                 </div>

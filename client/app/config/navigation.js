@@ -105,13 +105,24 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
   const isManager = ['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(role);
   const pushGroup = (title, items) => { if (items.length > 0) groupsList.push({ title, items }); };
 
+  // A hub is one sidebar entry standing in for several tabbed sections. It is
+  // listed when the viewer holds ANY of those sections — TabHub then shows only
+  // the tabs their grants cover, so the entry never opens an empty page.
+  // `covers` lists every key the hub absorbs, so the "Granted Access" fallback
+  // below does not re-add a second entry for a section that is already a tab.
+  const hubItem = (name, href, icon, keys) =>
+    (keys.some((k) => canView(k))
+      ? { name, href, icon, pageKey: keys.find((k) => canView(k)), covers: keys }
+      : null);
+
   if (isManager) {
     const peopleItems = [];
     if (role !== 'location_admin' && canView('page_addmember')) peopleItems.push({ name: 'Add Member', pageKey: 'page_addmember', href: r('page_addmember'), icon: UserPlus });
-    if (canView('page_users')) peopleItems.push({ name: 'Users', pageKey: 'page_users', href: r('page_users'), icon: Users });
-    if (canView('page_staff')) peopleItems.push({ name: 'Staff', pageKey: 'page_staff', href: r('page_staff'), icon: Users });
-    if (canView('page_attendance')) peopleItems.push({ name: 'Attendance', pageKey: 'page_attendance', href: r('page_attendance'), icon: CalendarCheck });
-    if (canView('page_salaries')) peopleItems.push({ name: 'Salaries', pageKey: 'page_salaries', href: r('page_salaries'), icon: Wallet });
+    // Team, Attendance, Salaries, Permissions and Login As are all tabs of this
+    // one page now, so the five old entries collapse into one.
+    const people = hubItem('People', '/dashboard/admin/users', Users,
+      ['page_staff', 'page_users', 'page_attendance', 'page_salaries', 'page_permissions', 'page_impersonate']);
+    if (people) peopleItems.push(people);
     pushGroup('People', peopleItems);
 
     const opsItems = [];
@@ -124,8 +135,9 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
     pushGroup('Operations', opsItems);
 
     const invItems = [];
-    if (canView('page_inventory') && role !== 'location_admin') invItems.push({ name: 'Inventory', pageKey: 'page_inventory', href: r('page_inventory'), icon: Package });
-    if (canView('page_procurement')) invItems.push({ name: 'Procurement', pageKey: 'page_procurement', href: r('page_procurement'), icon: Truck });
+    const stockKeys = role === 'location_admin' ? ['page_procurement'] : ['page_inventory', 'page_procurement'];
+    const stock = hubItem('Inventory', '/dashboard/admin/stock', Package, stockKeys);
+    if (stock) invItems.push(stock);
     pushGroup('Inventory', invItems);
 
     const mktItems = [];
@@ -136,28 +148,32 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
     pushGroup('Marketing', mktItems);
 
     const finItems = [];
-    if (canView('page_revenue')) finItems.push({ name: 'Revenue', pageKey: 'page_revenue', href: r('page_revenue'), icon: TrendingUp });
-    if (canView('page_expenses')) finItems.push({ name: 'Expenses', pageKey: 'page_expenses', href: r('page_expenses'), icon: Receipt });
-    if (canView('page_paymentinsights')) finItems.push({ name: 'Payment Insights', pageKey: 'page_paymentinsights', href: r('page_paymentinsights'), icon: CreditCard });
+    const finance = hubItem('Finance', '/dashboard/admin/finance', Wallet,
+      ['page_revenue', 'page_expenses', 'page_paymentinsights']);
+    if (finance) finItems.push(finance);
     pushGroup('Finance', finItems);
 
     const repItems = [];
-    if (canView('page_orderreports')) repItems.push({ name: 'Order Reports', pageKey: 'page_orderreports', href: r('page_orderreports'), icon: TrendingUp });
-    if (canView('page_staffreports')) repItems.push({ name: 'Staff Reports', pageKey: 'page_staffreports', href: r('page_staffreports'), icon: TrendingUp });
-    if (canView('page_staffcomparison')) repItems.push({ name: 'Staff Comparison', pageKey: 'page_staffcomparison', href: r('page_staffcomparison'), icon: Users });
-    if (canView('page_branchcompare') && hasMultipleComparableBranches) repItems.push({ name: 'Branch Compare', pageKey: 'page_branchcompare', href: r('page_branchcompare'), icon: Target });
+    const reports = hubItem('Reports', '/dashboard/admin/reports', TrendingUp,
+      ['page_orderreports', 'page_staffreports']);
+    if (reports) repItems.push(reports);
+    // Branch Compare is pointless with one branch, so the hub only appears when
+    // there is something to compare — or when Staff Comparison alone is granted.
+    const compareKeys = ['page_staffcomparison', ...(hasMultipleComparableBranches ? ['page_branchcompare'] : [])];
+    const compare = hubItem('Comparisons', '/dashboard/admin/compare', Target, compareKeys);
+    if (compare) repItems.push(compare);
     if (canView('page_forecast')) repItems.push({ name: 'Sales Forecast', pageKey: 'page_forecast', href: r('page_forecast'), icon: TrendingUp });
     if (canView('page_alerts')) repItems.push({ name: 'Alerts Overview', pageKey: 'page_alerts', href: r('page_alerts'), icon: AlertCircle });
     if (canView('page_exports')) repItems.push({ name: 'Export Center', pageKey: 'page_exports', href: r('page_exports'), icon: Download });
     pushGroup('Reports', repItems);
 
+    // Permissions and Login As moved into the People hub, so Setup keeps only
+    // what is genuinely org configuration.
     const setupItems = [];
     if (canView('page_cafes')) setupItems.push({ name: 'Cafes', pageKey: 'page_cafes', href: r('page_cafes'), icon: Store });
     if (canView('page_branches')) setupItems.push({ name: 'Branches', pageKey: 'page_branches', href: r('page_branches'), icon: MapPin });
-    if (role !== 'location_admin' && canView('page_permissions')) setupItems.push({ name: 'Permissions', pageKey: 'page_permissions', href: r('page_permissions'), icon: ShieldCheck });
     if (canView('page_settings')) setupItems.push({ name: 'Settings', pageKey: 'page_settings', href: r('page_settings'), icon: Settings });
     if (canView('page_auditlogs')) setupItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: r('page_auditlogs'), icon: Activity });
-    if (canView('page_impersonate')) setupItems.push({ name: 'Login As Staff', pageKey: 'page_impersonate', href: r('page_impersonate'), icon: ShieldAlert });
     pushGroup('Setup', setupItems);
   } else {
     const opsItems = [];
@@ -181,7 +197,12 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
   }
 
   const visibleHrefs = new Set(groupsList.flatMap((g) => g.items.map((i) => i.href)));
-  const visiblePageKeys = new Set(groupsList.flatMap((g) => g.items.map((i) => i.pageKey).filter(Boolean)));
+  // A hub entry stands in for all of its tabs, so every key it covers counts as
+  // already visible — otherwise Attendance and Salaries would reappear here as
+  // separate links right after being folded into the People hub.
+  const visiblePageKeys = new Set(
+    groupsList.flatMap((g) => g.items.flatMap((i) => i.covers || (i.pageKey ? [i.pageKey] : [])))
+  );
   const grantableForRole = ['staff', 'chef'].includes(role)
     ? GRANTABLE_PAGES
     : GRANTABLE_PAGES.filter((p) => ROLE_LOCKED_PAGE_KEYS.has(p.pageKey));

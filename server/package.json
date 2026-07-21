@@ -13,7 +13,9 @@
     "seed:clear": "node seed/data.js --clear",
     "seed:attendance": "node seed/seed_attendance.js",
     "seed:orders": "node seed/seed_orders.js",
-    "test:destructive": "node --test test/destructive.test.js"
+    "test:destructive": "node --test test/destructive.test.js",
+    "test:authz": "node --test test/authz.test.js",
+    "test:all": "node test/smoke.test.js && node --test test/authz.test.js && node --test test/destructive.test.js && node --test test/integration.test.js"
   },
   "keywords": [],
   "author": "",

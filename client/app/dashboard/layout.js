@@ -14,6 +14,7 @@ import api from '../services/api';
 import PremiumSelect from '../components/ui/PremiumSelect';
 import { gatedEntries } from '../config/routes';
 import { getLandingPath } from '../config/navigation';
+import { rememberIntendedPath } from '../utils/returnTo';
 
 const BRANCH_ADMIN_SHARED_PAGES = [
   '/dashboard/admin/procurement',
@@ -116,6 +117,9 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     if (!loading && !user) {
+      // Keep the page they were aiming for so signing in returns them to it
+      // rather than to a generic landing page.
+      rememberIntendedPath(pathname);
       router.replace('/login');
       return;
     }
@@ -129,7 +133,10 @@ export default function DashboardLayout({ children }) {
       const gated = matchGatedPage(pathname);
 
       if (gated) {
-        const canOpen = user.role === 'super_admin' || (user.allowedPages || []).includes(gated.key);
+        // A hub carries several section grants — holding any one of them opens
+        // it, and TabHub then renders only the sections that grant covers.
+        const granted = user.allowedPages || [];
+        const canOpen = user.role === 'super_admin' || (gated.keys || [gated.key]).some((k) => granted.includes(k));
         if (!canOpen && pathname !== fallback) router.replace(fallback);
         return;
       }

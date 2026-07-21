@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import getSocketUrl from '../services/socketUrl';
 import { progress } from '../components/ui/TopProgressBar';
 import { getLandingPath } from '../config/navigation';
+import { takeIntendedPath, clearIntendedPath } from '../utils/returnTo';
 
 const AuthContext = createContext();
 
@@ -270,7 +271,10 @@ export const AuthProvider = ({ children }) => {
       await fetchLocations();
       toast.success(`Welcome back, ${userData.name}`);
       setLoading(false);
-      router.push(getLandingPath(userData));
+      // Return them to whatever they were trying to reach before being bounced
+      // here; the dashboard guard still applies, so an intent they lack
+      // permission for simply forwards on to their own landing page.
+      router.push(takeIntendedPath() || getLandingPath(userData));
 
       return { success: true };
     } catch (error) {
@@ -313,6 +317,9 @@ export const AuthProvider = ({ children }) => {
       setSocket(null);
     }
     setLoading(false);
+    // A deliberate sign-out ends the intent too — the next person to log in on
+    // this tab should land on their own home, not wherever the last one was.
+    clearIntendedPath();
     router.push('/login');
   };
 

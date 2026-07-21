@@ -974,7 +974,8 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error('New password must be at least 10 characters');
   }
 
-  const user = await User.findById(req.user._id);
+  // +password: needed to verify the current one (schema keeps it select:false).
+  const user = await User.findById(req.user._id).select('+password');
 
   if (!user || !(await user.matchPassword(currentPassword))) {
     res.status(401);

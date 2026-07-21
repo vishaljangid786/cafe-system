@@ -10,6 +10,12 @@
 // own route (legacy duplicates kept alive as re-export stubs) at that route.
 // `paths` MUST keep listing every historical variant until its stub is deleted,
 // so the access guard keeps gating old bookmarks/deep links.
+//
+// HUB routes host several sections as tabs (see components/ui/TabHub). They are
+// declared with `anyOf` instead of gating on one key: a viewer may open the hub
+// when they hold ANY of its sections, and TabHub then shows only the tabs they
+// actually hold. Gating on a single key would lock someone out of a page they
+// have partial access to.
 
 export const ROUTE_TABLE = {
   page_overview: {
@@ -26,9 +32,13 @@ export const ROUTE_TABLE = {
     canonical: '/dashboard/admin/branch-presence',
     paths: ['/dashboard/admin/branch-presence'],
   },
+  // '/dashboard/admin/users' IS the People hub, so `hub_people` owns that path
+  // and gates it on ANY of its sections. Leaving it here too made both entries
+  // match, and the single-key one won — locking out anyone whose only grant was
+  // Staff / Attendance / Salaries / Permissions / Login As.
   page_users: {
     canonical: '/dashboard/admin/users',
-    paths: ['/dashboard/admin/users'],
+    paths: [],
   },
   page_staff: {
     canonical: '/dashboard/admin/staff',
@@ -36,6 +46,9 @@ export const ROUTE_TABLE = {
       branch_admin: '/dashboard/branch-admin/staff',
       location_admin: '/dashboard/location-admin/staff',
     },
+    // The Team tab opens on either grant (Users and Staff were merged), so the
+    // route guard has to accept either too.
+    anyOf: ['page_staff', 'page_users'],
     paths: ['/dashboard/admin/staff', '/dashboard/branch-admin/staff', '/dashboard/location-admin/staff'],
   },
   page_attendance: {
@@ -194,10 +207,11 @@ export const ROUTE_TABLE = {
     canonical: '/dashboard/add-member',
     paths: ['/dashboard/add-member'],
   },
+  // Permissions is now a TAB of the People hub — its standalone pages were
+  // deleted, so every link that asks for this key opens the hub instead.
   page_permissions: {
-    canonical: '/dashboard/admin/permissions',
-    byRole: { branch_admin: '/dashboard/branch-admin/permissions' },
-    paths: ['/dashboard/admin/permissions', '/dashboard/branch-admin/permissions'],
+    canonical: '/dashboard/admin/users',
+    paths: [],
   },
   page_settings: {
     canonical: '/dashboard/admin/settings',
@@ -215,13 +229,43 @@ export const ROUTE_TABLE = {
     canonical: '/dashboard/admin/audit-logs',
     paths: ['/dashboard/admin/audit-logs'],
   },
+  // Login As is now a TAB of the People hub; the standalone page was deleted.
   page_impersonate: {
-    canonical: '/dashboard/admin/impersonate',
-    paths: ['/dashboard/admin/impersonate'],
+    canonical: '/dashboard/admin/users',
+    paths: [],
   },
   page_admincenter: {
     canonical: '/dashboard/super-admin',
     paths: ['/dashboard/super-admin'],
+  },
+
+  // ── Hubs ────────────────────────────────────────────────────────────────
+  // One route, several tabbed sections. `anyOf` lists the section grants; the
+  // guard opens the hub when the viewer holds at least one of them.
+  hub_people: {
+    canonical: '/dashboard/admin/users',
+    anyOf: ['page_staff', 'page_users', 'page_attendance', 'page_salaries', 'page_permissions', 'page_impersonate'],
+    paths: ['/dashboard/admin/users'],
+  },
+  hub_finance: {
+    canonical: '/dashboard/admin/finance',
+    anyOf: ['page_revenue', 'page_expenses', 'page_paymentinsights'],
+    paths: ['/dashboard/admin/finance'],
+  },
+  hub_stock: {
+    canonical: '/dashboard/admin/stock',
+    anyOf: ['page_inventory', 'page_procurement'],
+    paths: ['/dashboard/admin/stock'],
+  },
+  hub_reports: {
+    canonical: '/dashboard/admin/reports',
+    anyOf: ['page_orderreports', 'page_staffreports'],
+    paths: ['/dashboard/admin/reports'],
+  },
+  hub_compare: {
+    canonical: '/dashboard/admin/compare',
+    anyOf: ['page_staffcomparison', 'page_branchcompare'],
+    paths: ['/dashboard/admin/compare'],
   },
 };
 
@@ -232,6 +276,12 @@ export const routeForPage = (role, pageKey) => {
   return (entry.byRole && entry.byRole[role]) || entry.canonical;
 };
 
-// [{ key, paths }] for the layout access guard.
+// [{ key, keys, paths }] for the layout access guard.
+// `keys` is what the guard checks: a plain page contributes its own key, a hub
+// contributes every section grant that opens it.
 export const gatedEntries = () =>
-  Object.entries(ROUTE_TABLE).map(([key, entry]) => ({ key, paths: entry.paths }));
+  Object.entries(ROUTE_TABLE).map(([key, entry]) => ({
+    key,
+    keys: entry.anyOf || [key],
+    paths: entry.paths,
+  }));

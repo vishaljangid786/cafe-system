@@ -221,12 +221,13 @@ export default function AddRevenueModal({
               label="Received Via"
               value={form.paymentMethod}
               onChange={(val) => setForm({ ...form, paymentMethod: val })}
+              // Cash and UPI are the only methods the cafe actually takes, so the
+              // ledger should not be able to grow payment types the ordering
+              // screens can never produce. (The model still accepts the older
+              // values, so historical CARD/ONLINE rows keep rendering.)
               options={[
                 { label: 'Cash', value: 'CASH' },
                 { label: 'UPI', value: 'UPI' },
-                { label: 'Card', value: 'CARD' },
-                { label: 'Online / Bank', value: 'ONLINE' },
-                { label: 'Other', value: 'OTHER' },
               ]}
             />
           </div>
