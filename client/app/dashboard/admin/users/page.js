@@ -1,9 +1,8 @@
 'use client';
-import StaffTeamPage from '../staff/page';
+import PeopleHub from '@/app/components/people/PeopleHub';
 
-// Users and Staff were two near-duplicate people pages; both nav items now open
-// the unified People page (list + tree, filters, block/unblock, role/branch
-// reassignment, per-row permission editing).
+// Users, Staff, Attendance and Login-As are one unified People hub now; this
+// route (and each of the others) just picks the tab it historically showed.
 export default function AdminUsersPage() {
-  return <StaffTeamPage />;
+  return <PeopleHub defaultTab="team" />;
 }
