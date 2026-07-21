@@ -275,10 +275,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mb-6">
-        <CashFlowCard locationId={activeLocationId !== 'all' ? activeLocationId : undefined} />
-      </div>
-
       {refetching ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -332,6 +328,10 @@ export default function AdminDashboard() {
           </Link>
         </div>
       )}
+
+      <div className="mb-6">
+        <CashFlowCard locationId={activeLocationId !== 'all' ? activeLocationId : undefined} />
+      </div>
 
       {/* Cash Drawer — live register summary + last 10 shifts. Read-only here; full
           open/close/pay-in-out lives on the Cash Drawer page. Shown to every admin
