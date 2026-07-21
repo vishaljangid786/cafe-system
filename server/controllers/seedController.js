@@ -293,13 +293,20 @@ const renderHome = () => `<!DOCTYPE html>
 </html>`;
 
 // ── Full demo seed (GET /seed) ───────────────────────────────────────────────
-// Browser-visitable reset for the hosted demo: runs seed/data.js, which DROPS
-// every collection and rebuilds the entire demo dataset. Because that is
-// destructive, a bare GET /seed never seeds — it renders a confirm page whose
-// form submits run=1 (so crawlers can't trigger it), and when a SEED_KEY env
-// var is configured the run also requires the matching key. No JS on the page:
-// helmet's default CSP blocks inline scripts, a plain form needs none.
-const { seedData } = require('../seed/data');
+// Browser-visitable reset for the hosted deployment: wipes every collection and
+// rebuilds the Moon Light Cafe dataset (seed/moonlightCafe.js — the ONLY
+// dataset this project seeds; startupMigrations uses the same one). Because
+// that is destructive, a bare GET /seed never seeds — it renders a confirm page
+// whose form submits run=1 (so crawlers can't trigger it), and when a SEED_KEY
+// env var is configured the run also requires the matching key. No JS on the
+// page: helmet's default CSP blocks inline scripts, a plain form needs none.
+const {
+  seedMoonlightCafe,
+  dropAllData,
+  PASSWORD: SEED_PASSWORD,
+  SUPER_ADMIN_EMAIL,
+  CAFE_NAME,
+} = require('../seed/moonlightCafe');
 
 const seedShell = (inner) => `<!DOCTYPE html>
 <html lang="en">
@@ -350,8 +357,8 @@ const seedPage = asyncHandler(async (req, res) => {
   ]);
   const needsKey = Boolean(process.env.SEED_KEY);
   res.send(seedShell(`
-    <h1>Seed Demo Data</h1>
-    <p>Rebuilds the full demo dataset from <code>seed/data.js</code> — cafes, branches, users, menu, orders, attendance and payroll. All demo accounts use <code>password123</code>.</p>
+    <h1>Seed ${CAFE_NAME}</h1>
+    <p>Rebuilds the Moon Light Cafe dataset: 1 super admin, 1 cafe with its admin, 3 branches — each with a branch admin, staff &amp; chefs — plus the branch setup (menu, tables, stock). <b>No orders, revenue or attendance</b> are seeded.</p>
     <div class="counts">
       <span>Users <b>${users}</b></span>
       <span>Branches <b>${locations}</b></span>
@@ -378,10 +385,13 @@ const runFullSeed = asyncHandler(async (req, res) => {
       <p><a href="/seed">&larr; Try again</a></p>
     `));
   }
-  await seedData();
+  await dropAllData();
+  const result = await seedMoonlightCafe();
   res.send(seedShell(`
     <h1>Seeding complete ✓</h1>
-    <div class="ok">The demo dataset has been rebuilt. Log in on the client with any demo account — every account's password is <code>password123</code> (e.g. <code>super@cafeos.com</code>).</div>
+    <div class="ok">${CAFE_NAME} rebuilt: ${result.locations.length} branches, ${result.branchAdmins.length} branch admins, ${result.staff.length} staff, ${result.chefs.length} chefs.<br /><br />
+    Login: <code>${SUPER_ADMIN_EMAIL.toLowerCase()}</code> / <code>${SEED_PASSWORD}</code><br />
+    (every seeded account uses the same password)</div>
     <p><a href="/seed">&larr; Back to seed page</a></p>
   `));
 });
