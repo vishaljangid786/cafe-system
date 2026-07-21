@@ -126,11 +126,13 @@ export default function SuperAdminDashboard() {
                   />
                 </div>
               )}
-              <div className="w-full sm:w-auto h-11">
+              {/* No fixed height — when the presets wrap on small screens the
+                  pill container must grow instead of clipping over content. */}
+              <div className="w-full sm:w-auto">
                 <UniversalDateFilter
                   onFilterChange={({ startDate, endDate }) => setFilters((f) => ({ ...f, startDate, endDate }))}
                   loading={refetching}
-                  className="w-full h-full"
+                  className="w-full min-h-11"
                 />
               </div>
             </div>

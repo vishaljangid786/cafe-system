@@ -45,7 +45,7 @@ export default function DashboardFilters({
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center">
         {/* Status Selector */}
-        <div className="lg:col-span-3 ">
+        <div className="lg:col-span-4">
           <PremiumSelect
             value={statusFilter}
             onChange={setStatusFilter}
@@ -63,7 +63,7 @@ export default function DashboardFilters({
         </div>
 
         {/* Order Type Selector — Dine-in / Takeaway / Delivery */}
-        <div className="lg:col-span-3 ">
+        <div className="lg:col-span-4">
           <PremiumSelect
             value={typeFilter}
             onChange={setTypeFilter}
@@ -77,17 +77,8 @@ export default function DashboardFilters({
           />
         </div>
 
-        {/* Temporal Controller */}
-        <div className="lg:col-span-3 h-11">
-          <UniversalDateFilter
-            onFilterChange={({ startDate, endDate }) => setDateRange({ start: startDate, end: endDate })}
-            loading={loading}
-            className="w-full h-full"
-          />
-        </div>
-
         {/* View Toggle */}
-        <div className="lg:col-span-2 h-11 bg-(--color-surface-soft) rounded-xl p-1 border border-(--color-border) flex items-center justify-center gap-1">
+        <div className="lg:col-span-3 h-11 bg-(--color-surface-soft) rounded-xl p-1 border border-(--color-border) flex items-center justify-center gap-1">
           <button
             onClick={() => setViewMode('grid')}
             className={`flex-1 h-full rounded-lg flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-primary text-(--color-on-primary) shadow-sm shadow-primary/20' : 'text-(--color-text-muted) hover:text-primary'}`}
@@ -111,6 +102,16 @@ export default function DashboardFilters({
           >
             <FilterX size={18} className="group-hover:rotate-12 transition-transform" />
           </button>
+        </div>
+
+        {/* Temporal Controller — full row: 8 presets never fit in a 3-col slot,
+            and a fixed h-11 clipped the wrapped pills over the cards below. */}
+        <div className="lg:col-span-12">
+          <UniversalDateFilter
+            onFilterChange={({ startDate, endDate }) => setDateRange({ start: startDate, end: endDate })}
+            loading={loading}
+            className="w-full min-h-11"
+          />
         </div>
       </div>
     </div>

@@ -200,6 +200,9 @@ export default function UniversalDateFilter({
   loading = false,
   className = '',
   defaultFilter = 'all',
+  // 'solid' renders its own pill container; 'ghost' drops the box (for callers
+  // that already place the filter inside a styled bar).
+  variant = 'solid',
 }) {
   const [value, setValue] = useState(() => initialValueFromDefault(defaultFilter));
   const [showCustom, setShowCustom] = useState(false);
@@ -266,7 +269,11 @@ export default function UniversalDateFilter({
   );
 
   return (
-    <div className={`inline-flex flex-wrap items-center gap-0.5 px-2 py-1 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm ${className}`}>
+    <div
+      className={`inline-flex flex-wrap items-center gap-0.5 ${
+        variant === 'ghost' ? '' : 'px-2 py-1 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm'
+      } ${className}`}
+    >
       {loading && <Loader2 size={15} className="animate-spin text-primary ml-1 mr-0.5" />}
 
       {renderPill('today', 'Today', () => pick({ kind: 'today' }))}
