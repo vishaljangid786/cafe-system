@@ -7,6 +7,7 @@ const {
   getMyAttendance,
   checkIn,
   checkOut,
+  deleteAttendance,
 } = require('../controllers/attendanceController');
 const { verifyToken, checkRoles, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
 
@@ -32,5 +33,10 @@ router.route('/all')
 
 router.route('/monthly-summary')
   .get(checkRoles('admin', 'super_admin'), checkPermissions('manageStaff'), getMonthlySummary);
+
+// Declared last so it can never shadow the named routes above. checkAction is the
+// first gate; the controller re-checks it together with the record's branch scope.
+router.route('/:id')
+  .delete(checkAction('attendance.delete'), deleteAttendance);
 
 module.exports = router;

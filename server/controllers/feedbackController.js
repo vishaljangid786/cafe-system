@@ -3,6 +3,7 @@ const Feedback = require('../models/Feedback');
 const Location = require('../models/Location');
 const mongoose = require('mongoose');
 const { scopedLocationId, clampLimit } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 const clampRating = (v) => {
   const n = Math.round(Number(v));
@@ -96,4 +97,77 @@ const getFeedback = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { submitFeedback, getFeedback };
+// @desc    Delete one feedback entry (spam, duplicate, test row, wrong branch)
+// @route   DELETE /api/feedback/:id
+// @access  Private (feedback.delete)
+const deleteFeedback = asyncHandler(async (req, res) => {
+  // A malformed id would otherwise surface as a CastError 500; the operator needs
+  // to know their list is stale, not that the server broke.
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400);
+    throw new Error('That feedback id is not valid. Refresh the feedback list and try again.');
+  }
+
+  const feedback = await Feedback.findById(req.params.id);
+  requireRecord(res, feedback, 'Feedback');
+
+  // locationId is required on the model, so branch scoping always applies here —
+  // a branch admin can only remove feedback about a branch they actually manage.
+  assertCanDelete(req, res, {
+    resource: 'feedback entry',
+    actionKey: 'feedback.delete',
+    locationId: feedback.locationId,
+  });
+
+  // Business rule: feedback is the branch's public score. A 1–2★ entry is a
+  // complaint, and letting the very people it reflects on erase it turns the
+  // rating into fiction (delete the bad reviews → average climbs). So a negative
+  // entry may only be removed by a cafe-level administrator, who is not the
+  // person being rated. Everyone else gets told the safe alternative: escalate it.
+  const isComplaint = feedback.rating <= 2;
+  if (isComplaint && !['super_admin', 'admin'].includes(req.user.role)) {
+    res.status(400);
+    throw new Error(
+      `This is a ${feedback.rating}-star complaint and it counts towards this branch's rating. Only a cafe administrator can remove it — escalate it to them if it is spam or a duplicate.`
+    );
+  }
+
+  // Cascade decision: nothing to clean up. The linked Order is independent (it
+  // survives fine without its feedback) and every rating figure the app shows is
+  // aggregated live from this collection on read — there is no denormalised
+  // average to repair. Removing the row IS the whole side effect, which is
+  // exactly why the numbers below are captured into the audit record.
+  await feedback.deleteOne();
+
+  const guest = (feedback.customerName || '').trim() || 'an anonymous guest';
+
+  await announceDeletion(req, {
+    resource: 'Feedback',
+    name: `${feedback.rating}-star review from ${guest}`,
+    locationId: feedback.locationId,
+    action: 'FEEDBACK_DELETE',
+    type: 'activity',
+    // High: this silently moves a branch's average rating, so the people who
+    // report on that number must see it happen.
+    priority: 'high',
+    detail: `Branch rating figures will change. Removed rating: ${feedback.rating}/5.`,
+    // The deletion is only reviewable if what disappeared is still readable:
+    // keep the full scores and the guest's own words in the audit row.
+    metadata: {
+      feedbackId: feedback._id.toString(),
+      rating: feedback.rating,
+      foodRating: feedback.foodRating ?? null,
+      serviceRating: feedback.serviceRating ?? null,
+      comment: feedback.comment || '',
+      customerName: feedback.customerName || '',
+      customerPhone: feedback.customerPhone || '',
+      source: feedback.source,
+      orderId: feedback.orderId ? feedback.orderId.toString() : null,
+      submittedAt: feedback.createdAt,
+    },
+  });
+
+  res.json({ success: true, message: 'Feedback removed' });
+});
+
+module.exports = { submitFeedback, getFeedback, deleteFeedback };

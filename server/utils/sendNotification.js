@@ -16,6 +16,10 @@ const MANAGER_ROLES = ['admin', 'branch_admin', 'location_admin'];
  *   • admins / branch_admins / location_admins WITH ACCESS to the affected branch
  *   • optionally a specific affected user (`notifyUserId`) — e.g. the user who was
  *     blocked, deactivated, or had their role / profile / permissions changed.
+ *   • optionally MANY affected users (`notifyUserIds`) — e.g. every member of a
+ *     cafe or branch that was just deleted. Workers (staff / chef) are not in
+ *     MANAGER_ROLES, so without this they would never learn that the thing they
+ *     belong to is gone. Passed ids bypass the manager filter by design.
  *
  * Branch-scoped: managers of OTHER branches never receive it, so one cafe's
  * activity never leaks to another (tenant isolation). When no branch is known
@@ -32,8 +36,19 @@ const MANAGER_ROLES = ['admin', 'branch_admin', 'location_admin'];
  * @param {Object}  params.performedByUser       The actor (User doc); never notified about their own action
  * @param {String}  [params.locationId]          Affected branch; defaults to the actor's assignedLocation
  * @param {String}  [params.notifyUserId]        A specific user to also notify (the change's target)
+ * @param {Array}   [params.notifyUserIds]       Many affected users to also notify
  */
-const sendNotification = async ({ title, message, type, priority, performedByUser, locationId, notifyUserId, targetOnly = false }) => {
+const sendNotification = async ({
+  title,
+  message,
+  type,
+  priority,
+  performedByUser,
+  locationId,
+  notifyUserId,
+  notifyUserIds,
+  targetOnly = false,
+}) => {
   try {
     if (!performedByUser || !performedByUser._id) return;
 
@@ -62,13 +77,19 @@ const sendNotification = async ({ title, message, type, priority, performedByUse
       managers.forEach((u) => recipientIds.set(u._id.toString(), u._id));
     }
 
-    // The specifically-affected user (if any) — still exists and isn't the actor.
-    if (notifyUserId) {
-      const targetId = normalizeId(notifyUserId);
-      if (targetId && targetId !== actorId) {
-        const target = await User.findById(targetId).select('_id');
-        if (target) recipientIds.set(target._id.toString(), target._id);
-      }
+    // The specifically-affected people (if any) — still exist and aren't the actor.
+    // Soft-deleted users are deliberately NOT filtered out here: "you were removed"
+    // is exactly the message a just-deleted member needs to find waiting for them.
+    const affected = [
+      ...(notifyUserId ? [notifyUserId] : []),
+      ...(Array.isArray(notifyUserIds) ? notifyUserIds : []),
+    ]
+      .map(normalizeId)
+      .filter((id) => id && id !== actorId);
+
+    if (affected.length > 0) {
+      const targets = await User.find({ _id: { $in: [...new Set(affected)] } }).select('_id');
+      targets.forEach((t) => recipientIds.set(t._id.toString(), t._id));
     }
 
     if (recipientIds.size === 0) return;

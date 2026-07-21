@@ -82,11 +82,13 @@ export default function BranchesPage() {
 
   // Branch deletion is permanent: it takes the tables, branch-only menu, stock,
   // suppliers and forward bookings with it. Orders, revenue and payroll stay.
-  const confirmDeleteBranch = async ({ force, staffMode }) => {
+  const confirmDeleteBranch = async ({ force, staffMode, staffTargetLocationId, purgeKeys }) => {
     if (!deletingBranch) return;
     const loadToast = toast.loading('Deleting branch...');
     try {
-      const res = await api.delete(`/locations/${deletingBranch._id}`, { data: { force, staffMode } });
+      const res = await api.delete(`/locations/${deletingBranch._id}`, {
+        data: { force, staffMode, staffTargetLocationId, purgeKeys },
+      });
       toast.success(res.data?.message || 'Branch deleted', { id: loadToast, duration: 6000 });
       setDeletingBranch(null);
       fetchLocations();
@@ -155,7 +157,9 @@ export default function BranchesPage() {
       toast.success(`Staff ${action}d successfully`, { id: loadToast });
       if (selectedLocation) fetchStaff(selectedLocation._id);
     } catch (error) {
-      toast.error("Something went wrong. Please try again.", { id: loadToast });
+      // Removing a staff member can be refused for a specific reason (open orders,
+      // outside your branch) — surface it rather than a generic retry prompt.
+      toast.error(error.response?.data?.message || 'Something went wrong. Please try again.', { id: loadToast, duration: 7000 });
     }
   };
 

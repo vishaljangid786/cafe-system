@@ -19,6 +19,7 @@ import { Button } from '@/app/components/ui/Button';
 import ExportActions from '@/app/components/ui/ExportActions';
 import { Money } from '@/app/components/ui/Money';
 import useBranchScope from '../../../hooks/useBranchScope';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function InventoryDashboard() {
   const { singleBranchId } = useBranchScope();
@@ -380,22 +381,36 @@ export default function InventoryDashboard() {
                               </div>
                             </td>
                             <td className="px-5 py-4">
-                              <button
-                                onClick={() => {
-                                  setSelectedItem(item);
-                                  setFormData({
-                                    branch: item.branch?._id || item.branch,
-                                    ingredient: item.ingredient?._id,
-                                    quantity: '',
-                                    costPerUnit: item.costPerUnit,
-                                    minThreshold: item.minThreshold
-                                  });
-                                  setIsUpdateModalOpen(true);
-                                }}
-                                className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-bg-base) transition-all"
-                              >
-                                <RefreshCcw size={16} />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setFormData({
+                                      branch: item.branch?._id || item.branch,
+                                      ingredient: item.ingredient?._id,
+                                      quantity: '',
+                                      costPerUnit: item.costPerUnit,
+                                      minThreshold: item.minThreshold
+                                    });
+                                    setIsUpdateModalOpen(true);
+                                  }}
+                                  className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-bg-base) transition-all"
+                                  title="Update stock"
+                                >
+                                  <RefreshCcw size={16} />
+                                </button>
+                                {/* Deletes the INGREDIENT itself (and its stock rows at
+                                    every branch), not just this branch's line. */}
+                                <RowDeleteButton
+                                  actionKey="inventory.delete"
+                                  endpoint={`/inventory/ingredients/${item.ingredient?._id}`}
+                                  label={item.ingredient?.name || 'this ingredient'}
+                                  description="This removes the ingredient everywhere, along with its stock rows at every branch. If a recipe still uses it, the server will refuse and tell you how many."
+                                  onDeleted={fetchData}
+                                  size={16}
+                                  className="p-2!"
+                                />
+                              </div>
                             </td>
                           </tr>
                         ))}

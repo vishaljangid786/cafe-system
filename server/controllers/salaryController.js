@@ -8,6 +8,7 @@ const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { scopedLocationId, scopedLocationIds, isAllLocation, enforceLocationAccess, clampLimit, escapeRegex } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 const { getSettings, num } = require('../utils/settings');
 const mongoose = require('mongoose');
 
@@ -691,6 +692,95 @@ const approvePayroll = asyncHandler(async (req, res) => {
   res.json({ success: true, data: payroll });
 });
 
+// A PAID payroll is the proof that money left the cafe and reached the employee;
+// FINAL_APPROVED is the legacy "signed-off, awaiting disbursal" figure. Both are
+// settled statements rather than drafts, so neither may be removed casually.
+const SETTLED_PAYROLL_STATUSES = ['PAID', 'FINAL_APPROVED'];
+
+// @desc    Delete a payroll record
+// @route   DELETE /api/salary/:id  (alias: DELETE /api/salary/payroll/:id)
+// @access  Private (salaries.delete)
+const deletePayroll = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    res.status(400);
+    throw new Error('That payroll id is not valid. Refresh the payroll list and try again.');
+  }
+
+  const payroll = await Payroll.findById(req.params.id).populate('user', 'name role assignedLocation');
+  requireRecord(res, payroll, 'Payroll record');
+
+  const staffId = payroll.user?._id || payroll.user;
+  const staffName = payroll.user?.name || 'this employee';
+
+  // Same branch attribution the approve path uses: the branch captured at generation
+  // wins, falling back to the employee's current branch for legacy rows that predate
+  // Payroll.locationId. If neither resolves (employee deleted / never assigned) the
+  // record is effectively global and only admin/super_admin may remove it.
+  const payrollBranch = payroll.locationId || payroll.user?.assignedLocation;
+
+  // NOTE: no `ownerId`. The employee the payroll belongs to is precisely the person
+  // with a motive to erase an unfavourable figure, so deleting always requires
+  // salaries.delete plus reach over the payroll's branch.
+  assertCanDelete(req, res, {
+    resource: 'payroll record',
+    actionKey: 'salaries.delete',
+    locationId: payrollBranch,
+    globalRoles: ['super_admin', 'admin'],
+  });
+
+  // Money/proof guard. A PAID row cannot be rejected either (approvePayroll refuses
+  // once status is PAID), so the honest alternative is a correcting adjustment on the
+  // next month — not a silent erase. Only a super_admin may force it, and only they
+  // can be trusted to also reconcile the ledger.
+  if (SETTLED_PAYROLL_STATUSES.includes(payroll.status) && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      payroll.status === 'PAID'
+        ? `This payroll is already paid — it is the record that ${staffName} received ₹${payroll.netSalary} for ${payroll.month}, and that amount is posted to the branch ledger. A paid salary cannot be deleted; apply a correcting adjustment to the next month's payroll, or ask a super admin if it was posted in error.`
+        : `This payroll for ${staffName} (${payroll.month}) is already approved and waiting to be paid. Reject it first (which reopens the month), then recalculate — only a super admin can delete an approved payroll outright.`
+    );
+  }
+
+  // Cascade: a PAID payroll owns the salary Expense it posted to the ledger
+  // (ledgerExpenseId) and that Expense owns a Transaction. We DELETE both rather
+  // than leave them. Leaving them would be worse than an orphan: Payroll has a
+  // unique (user, month) index, so removing the payroll lets the month be
+  // regenerated and approved again — which creates a SECOND salary Expense and
+  // double-charges the branch's P&L for one month of pay.
+  let ledgerNote = '';
+  if (payroll.ledgerExpenseId) {
+    await Expense.deleteOne({ _id: payroll.ledgerExpenseId });
+    await TransactionService.deleteExpenseTransaction(payroll.ledgerExpenseId);
+    ledgerNote = `The matching salary expense of ₹${payroll.netSalary} was removed from the ${payroll.month} ledger as well.`;
+  }
+
+  await payroll.deleteOne();
+
+  await announceDeletion(req, {
+    resource: 'Payroll record',
+    name: `${staffName} — ${payroll.month} (₹${payroll.netSalary})`,
+    locationId: payrollBranch,
+    action: 'PAYROLL_DELETE',
+    type: 'user_action',
+    // The employee is not a manager, so the manager fan-out would never reach them —
+    // and this is their own pay record, so they must be told directly.
+    notifyUserIds: staffId ? [staffId] : [],
+    detail: ledgerNote,
+    metadata: {
+      userId: staffId ? String(staffId) : null,
+      month: payroll.month,
+      status: payroll.status,
+      netSalary: payroll.netSalary,
+      ledgerExpenseId: payroll.ledgerExpenseId ? String(payroll.ledgerExpenseId) : null,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Payroll record removed',
+  });
+});
+
 const getPayrollHistory = asyncHandler(async (req, res) => {
   const { month, locationId } = req.query;
   const filter = {};
@@ -720,5 +810,6 @@ module.exports = {
   runMonthlyPayrollGeneration,
   adjustPayroll,
   approvePayroll,
+  deletePayroll,
   getPayrollHistory
 };

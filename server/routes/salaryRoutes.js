@@ -7,6 +7,7 @@ const {
   generatePayroll,
   adjustPayroll,
   approvePayroll,
+  deletePayroll,
   getPayrollHistory
 } = require('../controllers/salaryController');
 const { verifyToken, checkRoles, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
@@ -39,5 +40,15 @@ router.route('/payroll/:id/adjust')
 
 router.route('/payroll/:id/approve')
   .patch(checkAction('salaries.approve'), approvePayroll);
+
+// Delete a payroll record. Registered under /payroll/:id for symmetry with the
+// other payroll mutations, and at the bare /:id the client uses. Both carry
+// checkAction; deletePayroll re-checks the permission AND the record's branch.
+// Declared last so the literal paths above ('/all', '/generate', …) always win.
+router.route('/payroll/:id')
+  .delete(checkAction('salaries.delete'), deletePayroll);
+
+router.route('/:id')
+  .delete(checkAction('salaries.delete'), deletePayroll);
 
 module.exports = router;

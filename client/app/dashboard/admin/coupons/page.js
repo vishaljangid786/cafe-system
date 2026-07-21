@@ -199,7 +199,9 @@ export default function CouponsManagementPage() {
       fetchCoupons();
       fetchCouponStats();
     } catch (error) {
-      toast.error('Failed to delete coupon', { id: loadToast });
+      // The server explains why — e.g. an already-redeemed coupon must be
+      // deactivated instead. A generic string would hide the way forward.
+      toast.error(error.response?.data?.message || 'Could not delete the coupon. Please try again.', { id: loadToast, duration: 7000 });
     }
   };
 

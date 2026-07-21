@@ -7,6 +7,7 @@ const Expense = require('../models/Expense');
 const Transaction = require('../models/Transaction');
 const TransactionService = require('../services/transactionService');
 const { canAccessLocation, scopedLocationId, userLocationIds, clampLimit } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 const resolveBranch = (req, res, fromBody) => {
   const branchScoped = ['branch_admin', 'location_admin'].includes(req.user.role);
@@ -94,6 +95,78 @@ const updateSupplier = asyncHandler(async (req, res) => {
   for (const f of fields) if (req.body[f] !== undefined) supplier[f] = req.body[f];
   await supplier.save();
   res.json({ success: true, data: supplier });
+});
+
+// @desc    Delete a supplier
+// @route   DELETE /api/suppliers/:id
+const deleteSupplier = asyncHandler(async (req, res) => {
+  // Populate the branch so the messages can name it — normalizeId() inside the
+  // guards unwraps a populated ref, so scoping still works on the populated doc.
+  const supplier = await Supplier.findById(req.params.id).populate('locationId', 'name');
+  requireRecord(res, supplier, 'Supplier');
+
+  const locationId = supplier.locationId?._id || supplier.locationId || null;
+  const branchName = supplier.locationId?.name || null;
+
+  assertCanDelete(req, res, {
+    resource: 'supplier',
+    actionKey: 'procurement.delete',
+    // null locationId = a shared, org-wide vendor every branch orders from.
+    locationId,
+    // updateSupplier already limits merely EDITING a shared supplier to a super
+    // admin; deleting one is strictly more destructive, so it must not be looser
+    // than editing (the default global roles would also let a plain admin through).
+    globalRoles: ['super_admin'],
+  });
+
+  // GUARD — refuse while any purchase order still points at this vendor, and refuse
+  // it for EVERY role including super_admin: this is referential integrity, not a
+  // money rule a superior can knowingly override. PurchaseOrder.supplier is a hard
+  // ref with no name snapshot on the order, so removing the vendor silently turns
+  // every PO it ever fulfilled — including received ones carrying real COGS — into a
+  // row with a blank supplier on the procurement screen and in the ledger drill-down.
+  // The caller must clear those orders first (or retire the vendor with isActive).
+  const byStatus = await PurchaseOrder.aggregate([
+    { $match: { supplier: supplier._id } },
+    { $group: { _id: '$status', n: { $sum: 1 } } },
+  ]);
+  const counts = byStatus.reduce((acc, r) => ({ ...acc, [r._id]: r.n }), {});
+  const linkedOrders = byStatus.reduce((a, r) => a + r.n, 0);
+  if (linkedOrders > 0) {
+    res.status(400);
+    throw new Error(
+      `"${supplier.name}" is still used by ${linkedOrders} purchase order(s) — ${counts.ordered || 0} open, ${counts.received || 0} received, ${counts.cancelled || 0} cancelled. Delete those orders first (cancelling one does NOT release the link), or leave them alone and simply mark this supplier inactive, which hides it from new orders while keeping the purchase history readable.`
+    );
+  }
+
+  await supplier.deleteOne();
+
+  // CASCADE: nothing to clean up. The zero-orders check above is what makes that
+  // true — a supplier with no purchase orders is referenced by nothing else in the
+  // schema (ingredients and inventory never link to it).
+
+  await announceDeletion(req, {
+    resource: 'Supplier',
+    name: supplier.name,
+    locationId,
+    action: 'SUPPLIER_DELETE',
+    // The person who added the vendor is often branch staff, not a manager, so the
+    // manager fan-out would never reach them.
+    notifyUserIds: [supplier.createdBy?.toString()].filter(Boolean),
+    detail: branchName
+      ? `It was a ${branchName} supplier and had no purchase orders on record.`
+      : 'It was a shared (all-branch) supplier and had no purchase orders on record.',
+    metadata: {
+      supplierId: String(supplier._id),
+      phone: supplier.phone,
+      email: supplier.email,
+      gstin: supplier.gstin,
+      wasActive: supplier.isActive,
+      shared: !locationId,
+    },
+  });
+
+  res.json({ success: true, message: 'Supplier removed' });
 });
 
 /* -------------------------- Purchase Orders -------------------------- */
@@ -280,7 +353,94 @@ const cancelPurchaseOrder = asyncHandler(async (req, res) => {
   res.json({ success: true, data: po });
 });
 
+// @desc    Delete a purchase order
+// @route   DELETE /api/purchase-orders/:id
+const deletePurchaseOrder = asyncHandler(async (req, res) => {
+  // Populate so the error/notification text can name the vendor and branch —
+  // normalizeId() inside the guards unwraps the populated branch, so scoping works.
+  const po = await PurchaseOrder.findById(req.params.id)
+    .populate('supplier', 'name')
+    .populate('locationId', 'name');
+  requireRecord(res, po, 'Purchase order');
+
+  const locationId = po.locationId?._id || po.locationId;
+  const branchName = po.locationId?.name || 'this branch';
+  const supplierName = po.supplier?.name || 'supplier';
+  const poRef = String(po._id).slice(-6).toUpperCase();
+
+  assertCanDelete(req, res, {
+    resource: 'purchase order',
+    actionKey: 'procurement.delete',
+    locationId,
+  });
+
+  // GUARD — a RECEIVED order already moved stock AND money: receivePurchaseOrder
+  // added every line to BranchInventory and posted an approved purchase Expense
+  // (COGS) to the ledger. Deleting it erases a real cost (overstating profit) and
+  // leaves stock on the shelf that no document explains, with no reversal trail —
+  // so it stays super_admin-only regardless of the procurement.delete flag. An
+  // 'ordered' order has moved nothing yet and its safe alternative is Cancel, which
+  // keeps the paper trail; a 'cancelled' order deletes freely.
+  if (po.status === 'received' && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      `Purchase order #${poRef} from ${supplierName} was already received at ${branchName}: its ${po.items.length} item(s) are in stock and ₹${po.totalAmount} is posted to the ledger as a purchase expense. Cancel an order instead of deleting it while it is still open — a received one can only be removed by a super admin, so ask one, or reject the linked purchase expense to reverse the cost.`
+    );
+  }
+
+  const expenseId = po.expenseId;
+  const status = po.status;
+  const itemCount = po.items.length;
+  const totalAmount = po.totalAmount;
+  const createdById = po.createdBy?.toString();
+  const receivedById = po.receivedBy?.toString();
+
+  await po.deleteOne();
+
+  // CASCADE 1 — CLEANED UP: the purchase Expense and its ledger Transaction exist
+  // only because this PO was received, and the link is one-way (PO -> expenseId;
+  // the Expense has no back-reference). Leaving them would strand a COGS line for a
+  // purchase that no longer exists, and no screen could ever trace it back to
+  // remove it. So they go with the order. Only a super admin ever reaches this
+  // branch of the code, per the guard above.
+  if (expenseId) {
+    await Expense.deleteOne({ _id: expenseId });
+    await TransactionService.deleteExpenseTransaction(expenseId);
+  }
+
+  // CASCADE 2 — DELIBERATELY NOT REVERSED: stock added on receive stays. The goods
+  // physically arrived and have usually been consumed by sales/recipes since, so
+  // decrementing now would drive BranchInventory negative and misstate what is
+  // actually on the shelf — worse than the orphan it would fix. The correct
+  // correction for a wrong quantity is a stock adjustment, so the notification
+  // below states plainly that the stock remains.
+
+  await announceDeletion(req, {
+    resource: 'Purchase Order',
+    name: `#${poRef} — ${supplierName}`,
+    locationId,
+    action: 'PURCHASE_ORDER_DELETE',
+    // The buyer who raised the order and the person who received it are usually not
+    // managers, so the manager fan-out would never reach them.
+    notifyUserIds: [createdById, receivedById].filter(Boolean),
+    type: 'expense',
+    detail: status === 'received'
+      ? `It was already received at ${branchName} (${itemCount} item(s), ₹${totalAmount}); the linked purchase expense and its ledger entry were removed with it, but the stock it added was NOT reversed — correct it with an inventory adjustment if the goods never arrived.`
+      : `It was ${status} at ${branchName} (${itemCount} item(s), ₹${totalAmount}) and had not moved any stock or money.`,
+    metadata: {
+      purchaseOrderId: poRef,
+      supplier: supplierName,
+      status,
+      itemCount,
+      totalAmount,
+      expenseRemoved: Boolean(expenseId),
+    },
+  });
+
+  res.json({ success: true, message: 'Purchase order removed' });
+});
+
 module.exports = {
-  createSupplier, getSuppliers, updateSupplier,
-  createPurchaseOrder, getPurchaseOrders, receivePurchaseOrder, cancelPurchaseOrder,
+  createSupplier, getSuppliers, updateSupplier, deleteSupplier,
+  createPurchaseOrder, getPurchaseOrders, receivePurchaseOrder, cancelPurchaseOrder, deletePurchaseOrder,
 };

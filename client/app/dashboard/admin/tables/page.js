@@ -290,7 +290,10 @@ export default function AdminTablesPage() {
       setShowDeleteConfirm(null);
       toast.success('Table deleted', { id: loadToast });
     } catch (error) {
-      toast.error('Could not delete the table. Please try again.', { id: loadToast });
+      // e.g. "Table 5 still has an active order" — the server names the blocker,
+      // so show it instead of a generic retry message.
+      toast.error(error.response?.data?.message || 'Could not delete the table. Please try again.', { id: loadToast, duration: 7000 });
+      setShowDeleteConfirm(null);
     }
   };
 

@@ -15,6 +15,7 @@ import {
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
 import { displayUserName } from '@/app/utils/userDisplay';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function CashDrawerPage() {
   const { user, socket } = useAuth();
@@ -385,9 +386,20 @@ export default function CashDrawerPage() {
                       <p className="text-xs font-medium text-(--color-text-primary)">{new Date(s.openedAt).toLocaleDateString('en-IN')} · {s.locationId?.name || ''}</p>
                       <p className="text-[11px] text-(--color-text-muted)">Sales <Money value={s.cashSales} />{s.cashExpenses ? <> · Expenses <Money value={s.cashExpenses} /></> : ''} · Expected <Money value={s.expectedCash} /> · Counted <Money value={s.countedCash} /></p>
                     </div>
-                    <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${s.variance === 0 ? 'bg-success/10 text-success' : s.variance > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
-                      <Money value={s.variance} /> {s.variance < 0 ? 'short' : s.variance > 0 ? 'over' : 'balanced'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${s.variance === 0 ? 'bg-success/10 text-success' : s.variance > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
+                        <Money value={s.variance} /> {s.variance < 0 ? 'short' : s.variance > 0 ? 'over' : 'balanced'}
+                      </span>
+                      <RowDeleteButton
+                        actionKey="cashdrawer.delete"
+                        endpoint={`/cash-drawer/${s._id}`}
+                        label={`the ${new Date(s.openedAt).toLocaleDateString('en-IN')} shift`}
+                        description="A closed shift is that day's Z-report — the record of what was counted against what was expected. Removing it leaves the day unreconciled."
+                        onDeleted={refresh}
+                        size={14}
+                        className="p-2!"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

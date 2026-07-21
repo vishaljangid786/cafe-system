@@ -395,7 +395,14 @@ const getCafeImpact = asyncHandler(async (req, res) => {
   const { previewCafeImpact } = require('../services/cascadeDelete');
   const impact = await previewCafeImpact(cafe._id);
 
-  res.json({ success: true, data: { ...impact, subject: { type: 'cafe', id: String(cafe._id), name: cafe.name } } });
+  res.json({
+    success: true,
+    data: {
+      ...impact,
+      subject: { type: 'cafe', id: String(cafe._id), name: cafe.name },
+      canPurge: req.user.role === 'super_admin',
+    },
+  });
 });
 
 // @desc    Delete a cafe
@@ -413,14 +420,35 @@ const deleteCafe = asyncHandler(async (req, res) => {
   }
 
   const force = req.body?.force === true || req.query?.force === 'true';
-  // `staffMode: 'delete'` removes the cafe's people too; the default keeps them
-  // and merely detaches the dead cafe from their access lists.
-  const staffMode = req.body?.staffMode === 'delete' ? 'delete' : 'detach';
+  // 'delete' removes the cafe's people too; 'reassign' shifts everyone to a
+  // branch of another cafe; the default keeps them and merely detaches the
+  // dead cafe from their access lists.
+  const staffMode = ['delete', 'reassign'].includes(req.body?.staffMode) ? req.body.staffMode : 'detach';
 
   if (force && req.user.role !== 'super_admin') {
     res.status(403);
     throw new Error('Only a Super Admin can force-delete a cafe with its branches');
   }
+
+  let staffTargetLocationId = null;
+  if (staffMode === 'reassign') {
+    staffTargetLocationId = req.body?.staffTargetLocationId;
+    const target = staffTargetLocationId ? await Location.findById(staffTargetLocationId) : null;
+    // The target must be live and must belong to a DIFFERENT cafe — every
+    // branch of this one is being deleted.
+    if (
+      !target ||
+      target.isPermanentlyDeleted ||
+      target.status === 'deleted' ||
+      String(target.cafe) === String(cafe._id)
+    ) {
+      res.status(400);
+      throw new Error("Pick a live branch of another cafe to move this cafe's people to");
+    }
+  }
+
+  // Explicitly chosen financial groups to hard-delete with the cafe's branches.
+  const purgeKeys = Array.isArray(req.body?.purgeKeys) ? req.body.purgeKeys.map(String) : [];
 
   const branchCount = await Location.countDocuments({
     cafe: cafe._id,
@@ -437,7 +465,12 @@ const deleteCafe = asyncHandler(async (req, res) => {
 
   if (force) {
     const { executeCafePurge } = require('../services/cascadeDelete');
-    summary = await executeCafePurge(cafe._id, { actorId: req.user._id, staffMode });
+    summary = await executeCafePurge(cafe._id, {
+      actorId: req.user._id,
+      staffMode,
+      staffTargetLocationId,
+      purgeKeys,
+    });
   } else {
     cafe.status = 'deleted';
     await cafe.save();
@@ -458,7 +491,7 @@ const deleteCafe = asyncHandler(async (req, res) => {
     'CAFE_DELETE',
     `Deleted cafe: ${cafe.name}${force ? ` (forced, ${summary.branchCount} branch(es))` : ''}`,
     req,
-    { cafeId: cafe._id, force, staffMode, removed: summary.performed }
+    { cafeId: cafe._id, force, staffMode, staffTargetLocationId, purgeKeys, removed: summary.performed }
   );
 
   await sendNotification({
@@ -469,10 +502,16 @@ const deleteCafe = asyncHandler(async (req, res) => {
     performedByUser: req.user,
   });
 
+  const purgedTotal = (summary.performed || [])
+    .filter((r) => r.disposition === 'purged')
+    .reduce((s, r) => s + r.count, 0);
+
   res.json({
     success: true,
     message: force
-      ? `${cafe.name} and ${summary.branchCount} branch(es) were deleted. Financial and audit records were preserved.`
+      ? purgedTotal > 0
+        ? `${cafe.name} and ${summary.branchCount} branch(es) were deleted along with ${purgedTotal} financial record(s) you selected. Audit records were preserved.`
+        : `${cafe.name} and ${summary.branchCount} branch(es) were deleted. Financial and audit records were preserved.`
       : 'Cafe deleted',
     data: summary,
   });

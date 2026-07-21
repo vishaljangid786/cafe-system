@@ -449,3 +449,91 @@ test('deleting staff on branch purge removes them', async () => {
 
   assert.ok((await User.findById(staff._id)).deletedAt, 'person removed with the branch');
 });
+
+// ---------------------------------------------------------------------------
+// Explicit purge of preserve rows + reassign-to-branch
+// ---------------------------------------------------------------------------
+
+const AuditLog = require('../models/AuditLog');
+const { executePreservePurge } = require('../services/cascadeDelete');
+const { USER_DEPENDENTS } = require('../services/dependencyGraph');
+
+const mkRevenueTx = (locationId, staffId) =>
+  Transaction.create({
+    locationId,
+    type: 'REVENUE',
+    source: 'ORDER',
+    title: 'Order Payment',
+    category: 'Food Sales',
+    totalAmount: 100,
+    totalProfit: 40,
+    status: 'approved',
+    date: new Date(),
+    createdBy: staffId,
+    staffId,
+  });
+
+test('purgeKeys deletes exactly the chosen user groups, and audit logs never', async () => {
+  const { locs } = await buildCafe();
+  const staff = await mkUser({ role: 'staff', assignedLocation: locs[0]._id });
+  const tx = await mkRevenueTx(locs[0]._id, staff._id);
+  const audit = await AuditLog.create({ action: 'TEST_ACTION', performedBy: staff._id, locationId: locs[0]._id });
+  const payroll = await Payroll.create({
+    user: staff._id, month: '2026-06', dailyRate: 800, payableDays: 30, baseSalary: 24000, netSalary: 24000,
+  });
+
+  // Ask for transactions AND audit logs: transactions must die, audit must not.
+  await executePreservePurge(USER_DEPENDENTS, [staff._id], ['transactions', 'auditLogs']);
+
+  assert.equal(await Transaction.findById(tx._id), null, 'chosen group is hard-deleted');
+  assert.ok(await AuditLog.findById(audit._id), 'audit logs survive even when asked for');
+  assert.ok(await Payroll.findById(payroll._id), 'unchosen groups are untouched');
+});
+
+test("branch purge with purgeKeys removes that branch's chosen money history only", async () => {
+  const { locs } = await buildCafe();
+  const staff = await mkUser({ role: 'staff', assignedLocation: locs[0]._id });
+  const order = await Order.create({
+    branch: locs[0]._id, orderType: 'takeaway', items: [], totalAmount: 250, createdBy: staff._id,
+  });
+  const tx = await mkRevenueTx(locs[0]._id, staff._id);
+  const expense = await Expense.create({
+    title: 'Rent', description: 'Monthly rent', proofImage: 'https://example.test/rent.jpg',
+    amount: 9000, category: 'Rent', date: new Date(),
+    locationId: locs[0]._id, createdBy: staff._id,
+  });
+
+  await executeLocationPurge([locs[0]._id], {
+    actorId: superAdmin._id,
+    staffMode: 'detach',
+    purgeKeys: ['orders', 'transactions'],
+  });
+
+  assert.equal(await Order.findById(order._id), null, 'orders were chosen — gone');
+  assert.equal(await Transaction.findById(tx._id), null, 'transactions were chosen — gone');
+  assert.ok(await Expense.findById(expense._id), 'expenses were NOT chosen — survive');
+});
+
+test('reassign staffMode shifts everyone to the chosen branch', async () => {
+  const { locs } = await buildCafe({ branches: 2 });
+  const staff = await mkUser({
+    role: 'staff', assignedLocation: locs[0]._id, accessibleLocations: [locs[0]._id],
+  });
+
+  await executeLocationPurge([locs[0]._id], {
+    actorId: superAdmin._id,
+    staffMode: 'reassign',
+    staffTargetLocationId: locs[1]._id,
+  });
+
+  const fresh = await User.findById(staff._id);
+  assert.equal(fresh.deletedAt, null, 'person survives the branch');
+  assert.equal(String(fresh.assignedLocation), String(locs[1]._id), 'primary branch is the chosen target');
+  const access = fresh.accessibleLocations.map(String);
+  assert.ok(access.includes(String(locs[1]._id)), 'target joined the access list');
+  assert.ok(!access.includes(String(locs[0]._id)), 'dead branch left the access list');
+
+  // The document must stay ordinarily saveable.
+  fresh.phone = '9777777777';
+  await fresh.save();
+});

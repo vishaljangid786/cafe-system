@@ -430,12 +430,14 @@ export default function CafesPage() {
   // menus, stock and staff, and a bare confirm() gave no hint of that.
   const handleDelete = (cafe) => setDeleting(cafe);
 
-  const confirmDelete = async ({ force, staffMode }) => {
+  const confirmDelete = async ({ force, staffMode, staffTargetLocationId, purgeKeys }) => {
     const cafe = deleting;
     if (!cafe) return;
     const loadToast = toast.loading('Deleting cafe...');
     try {
-      const res = await api.delete(`/cafes/${cafe._id}`, { data: { force, staffMode } });
+      const res = await api.delete(`/cafes/${cafe._id}`, {
+        data: { force, staffMode, staffTargetLocationId, purgeKeys },
+      });
       toast.success(res.data?.message || 'Cafe deleted', { id: loadToast, duration: 6000 });
       setDeleting(null);
       fetchCafes();

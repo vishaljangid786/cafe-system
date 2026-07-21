@@ -6,6 +6,7 @@ const Location = require('../models/Location');
 require('../models/Cafe');
 const asyncHandler = require('../utils/asyncHandler');
 const { scopedLocationId, isAllLocation } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 // Build a Customer query filter scoped to the caller's accessible branches AND the
 // optional top-navbar cafe/branch selector. super_admin sees all, others only their
@@ -162,7 +163,7 @@ const getCustomerAnalytics = asyncHandler(async (req, res) => {
 // ── CRM report / 360 ─────────────────────────────────────────────────────────
 
 const Order = require('../models/Order');
-const { endOfDay, clampLimit, escapeRegex, userLocationIds, canAccessLocation } = require('../utils/accessControl');
+const { endOfDay, clampLimit, escapeRegex, userLocationIds, canAccessLocation, normalizeId } = require('../utils/accessControl');
 const { getSettingsWithSources } = require('../utils/settings');
 const { logActivity } = require('../utils/auditLogger');
 const { normalizePhone } = require('../utils/phone');
@@ -835,6 +836,212 @@ const updateCampaign = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { updated: result.modifiedCount } });
 });
 
+// ── Deletion ─────────────────────────────────────────────────────────────────
+
+// @desc    Remove a customer. Membership-only for cafe staff, full erase for super admin.
+// @route   DELETE /api/customers/:id
+// @access  Private (customers.delete)
+//
+// A Customer is a GLOBAL identity — one phone number is one human, shared by every
+// cafe they have ever bought from (see models/Customer.js). So "delete" cannot mean
+// the same thing for everybody: a branch admin pressing delete must not erase a
+// person who is also a regular at three other cafes. Hence two distinct outcomes,
+// and the response always states which one happened.
+const deleteCustomer = asyncHandler(async (req, res) => {
+  // A malformed id would surface as a CastError 500; the operator needs to know
+  // their list is stale, not that the server broke.
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400);
+    throw new Error('That customer id is not valid. Refresh the customer list and try again.');
+  }
+
+  const customer = await Customer.findById(req.params.id);
+  requireRecord(res, customer, 'Customer');
+
+  const isSuper = req.user.role === 'super_admin';
+  const myBranches = new Set(userLocationIds(req.user).map(String));
+  // Only a cafe-level `admin` owns a whole cafe. A branch_admin may also carry a
+  // `cafes` array (it scopes their dropdowns), and reading it as ownership here
+  // would silently let them close a membership covering branches they do not run.
+  const myCafes = new Set(req.user.role === 'admin' ? (req.user.cafes || []).map(String) : []);
+  const label = (customer.name || '').trim() || 'This customer';
+
+  // Work out how much of this profile the caller may actually touch:
+  //   - a cafe `admin` owns whole cafes (req.user.cafes) → the entire membership
+  //   - a branch/location admin owns only their assigned branches, so they may
+  //     detach THOSE branches. The membership itself only disappears once none of
+  //     the branches the customer visited lie outside their remit — otherwise one
+  //     branch admin would wipe the customer's history at four sibling branches.
+  const plan = [];
+  for (const m of customer.memberships || []) {
+    const cafeId = normalizeId(m.cafe);
+    const branchIds = (m.branches || []).map((b) => normalizeId(b)).filter(Boolean);
+    const firstBranch = normalizeId(m.firstBranch);
+    const ownsCafe = myCafes.has(cafeId);
+    const mine = branchIds.filter((b) => myBranches.has(b));
+    if (!isSuper && !ownsCafe && mine.length === 0 && !(firstBranch && myBranches.has(firstBranch))) continue;
+    const whole = isSuper || ownsCafe || mine.length === branchIds.length;
+    plan.push({ membership: m, cafeId, whole, detach: whole ? branchIds : mine });
+  }
+
+  // Scope refusal: a customer entirely outside the caller's cafes/branches.
+  // super_admin is exempt — a profile with no memberships at all (an import, or a
+  // QR scan that never converted) is still theirs to clean up.
+  if (!isSuper && plan.length === 0) {
+    res.status(403);
+    throw new Error(
+      `${label} has no membership at any cafe or branch you manage, so you cannot remove them. Ask the administrator of the branch they actually visit.`
+    );
+  }
+
+  // Pin the record to a branch the caller can reach so Gate 2 judges the RECORD,
+  // not the request. When nothing pins (a cafe-wide admin whose branch list is
+  // empty) it falls through to the globalRoles check, which is the correct tier
+  // for a cafe-wide identity.
+  const reachableBranch = isSuper
+    ? normalizeId(customer.branch)
+    : plan.flatMap((p) => p.detach.concat(normalizeId(p.membership.firstBranch) || []))
+      .find((b) => myBranches.has(b));
+
+  assertCanDelete(req, res, {
+    resource: 'customer',
+    actionKey: 'customers.delete',
+    locationId: reachableBranch || undefined,
+    globalRoles: ['super_admin', 'admin'],
+  });
+
+  // Money guard: loyalty points are a balance the guest already earned and can
+  // still spend. Closing the membership destroys it with no reversal trail, so a
+  // cafe-level actor is pointed at the safe alternative; a super admin may force it.
+  const pointsAtStake = plan.reduce((sum, p) => sum + (p.whole ? (p.membership.loyaltyPoints || 0) : 0), 0);
+  if (!isSuper && pointsAtStake > 0) {
+    res.status(400);
+    throw new Error(
+      `${label} still holds ${pointsAtStake} unredeemed loyalty point(s) with you. Redeem or zero the points first, then remove them — otherwise the guest silently loses a balance they earned.`
+    );
+  }
+
+  // Counted BEFORE anything changes. Orders are never deleted here (see below), so
+  // this is the number that keeps their name on the books.
+  const ordersRetained = await Order.countDocuments({
+    $or: [{ customerId: customer._id }, { customerPhone: customer.phone }],
+  });
+
+  const membershipsClosed = plan.filter((p) => p.whole).length;
+  let branchesDetached = 0;
+  let message;
+  let detail;
+
+  if (isSuper) {
+    await customer.deleteOne();
+
+    // Cascade 1 — orders are KEPT on purpose: each carries its own customerName /
+    // customerPhone snapshot, so revenue and sales history stay complete and
+    // auditable after the profile goes. Only the now-dangling `customerId` pointer
+    // is cleared. The phone stays the join key (getCustomerOrders already falls
+    // back to it), so if the same person ever registers again their history
+    // re-attaches by itself.
+    await Order.updateMany({ customerId: customer._id }, { $set: { customerId: null } });
+
+    // Cascade 2 — birthday/targeted coupons minted FOR this person. Leaving the id
+    // behind keeps dead "assigned" rows counting as active in the campaign report.
+    // A non-public coupon whose assignedCustomers empties out is already refused at
+    // redemption (couponController), so deactivate exactly those instead of
+    // leaving inert rows advertised as live.
+    const Coupon = require('../models/Coupon');
+    const touched = await Coupon.find({ assignedCustomers: customer._id }).select('_id').lean();
+    if (touched.length) {
+      const ids = touched.map((c) => c._id);
+      await Coupon.updateMany({ _id: { $in: ids } }, { $pull: { assignedCustomers: customer._id } });
+      await Coupon.updateMany(
+        { _id: { $in: ids }, audience: { $ne: 'public' }, assignedCustomers: { $size: 0 } },
+        { $set: { isActive: false } }
+      );
+    }
+
+    branchesDetached = plan.reduce((n, p) => n + p.detach.length, 0);
+    message = `${label} was permanently deleted, including their global profile and all ${plan.length} cafe membership(s). ${ordersRetained} past order(s) were kept — they carry their own name and phone snapshot — and are no longer linked to a customer record.`;
+    detail = `Global profile erased. ${ordersRetained} order(s) kept under the stored name/phone.`;
+  } else {
+    const wholeCafes = new Set(plan.filter((p) => p.whole).map((p) => p.cafeId));
+    const partial = new Map(plan.filter((p) => !p.whole).map((p) => [p.cafeId, new Set(p.detach)]));
+
+    const kept = [];
+    for (const m of customer.memberships) {
+      const cafeId = normalizeId(m.cafe);
+      if (wholeCafes.has(cafeId)) {
+        branchesDetached += (m.branches || []).length;
+        continue; // membership closed entirely
+      }
+      const drop = partial.get(cafeId);
+      if (drop && drop.size) {
+        m.branches = (m.branches || []).filter((b) => !drop.has(normalizeId(b)));
+        // The acquisition branch is one of the ones we just detached. Clearing it is
+        // the honest move — repointing it at a branch that did NOT acquire them
+        // would fabricate provenance. The per-cafe totals are left alone: they are
+        // cafe-wide figures and the sibling branches still legitimately own them.
+        if (m.firstBranch && drop.has(normalizeId(m.firstBranch))) m.firstBranch = null;
+        branchesDetached += drop.size;
+      }
+      kept.push(m);
+    }
+    customer.memberships = kept;
+
+    // The top-level numbers are roll-ups ACROSS memberships and /top, /inactive,
+    // /analytics and the CRM report all sort on them. Left untouched, a customer we
+    // just detached would keep ranking as one of the biggest spenders in a cafe
+    // they no longer belong to — so rebuild them from what actually remains.
+    customer.visits = kept.reduce((n, m) => n + (m.orderCount || 0), 0);
+    customer.totalSpend = kept.reduce((n, m) => n + (m.totalSpend || 0), 0);
+    customer.loyaltyPoints = kept.reduce((n, m) => n + (m.loyaltyPoints || 0), 0);
+    const seen = kept.map((m) => m.lastVisit).filter(Boolean).map((d) => new Date(d).getTime());
+    if (seen.length) customer.lastVisit = new Date(Math.max(...seen));
+
+    // `branch` (the original acquisition branch) is required by the schema and is
+    // never used for scoping — buildBranchFilter matches on memberships.branches —
+    // so it is left as historical provenance rather than forced to a wrong value.
+    await customer.save();
+
+    message = `${label} was removed from your customer list — ${membershipsClosed} cafe membership(s) closed and ${branchesDetached} branch link(s) detached. Their global profile was NOT deleted: one phone number is one person across every cafe, so only a super admin can erase it. ${ordersRetained} past order(s) remain attributed to them by name and phone.`;
+    detail = `Membership only — the global profile was kept. ${ordersRetained} order(s) remain attributed.`;
+  }
+
+  await announceDeletion(req, {
+    resource: 'Customer',
+    name: `${label} (${customer.phone})`,
+    locationId: reachableBranch || undefined,
+    action: 'CUSTOMER_DELETE',
+    type: 'activity',
+    // High: this changes CRM totals and, for a super admin, is irreversible.
+    priority: 'high',
+    detail,
+    // A deletion is only reviewable if what disappeared is still readable.
+    metadata: {
+      customerId: customer._id.toString(),
+      phone: customer.phone,
+      email: customer.email || null,
+      hardDeleted: isSuper,
+      membershipsClosed,
+      branchesDetached,
+      ordersRetained,
+      totalSpendAtDeletion: customer.totalSpend,
+      loyaltyPointsAtDeletion: pointsAtStake,
+    },
+  });
+
+  res.json({
+    success: true,
+    message,
+    data: {
+      hardDeleted: isSuper,
+      membershipsClosed,
+      branchesDetached,
+      membershipsRemaining: isSuper ? 0 : customer.memberships.length,
+      ordersRetained,
+    },
+  });
+});
+
 module.exports = {
   getCustomers,
   getTopCustomers,
@@ -851,4 +1058,5 @@ module.exports = {
   getCustomerBirthdays,
   getDiscountConfig,
   updateDiscountConfig,
+  deleteCustomer,
 };

@@ -300,7 +300,9 @@ export default function MenuManagementPage() {
       toast.success('Category turned off', { id: loadToast });
       fetchData();
     } catch (error) {
-      toast.error('Could not turn off category. Please try again.', { id: loadToast });
+      // The server names the blocker — e.g. how many menu items still use this
+      // category — so the operator knows what to clear first.
+      toast.error(error.response?.data?.message || 'Could not turn off category. Please try again.', { id: loadToast, duration: 7000 });
     }
   };
 
@@ -431,7 +433,9 @@ export default function MenuManagementPage() {
       toast.success('Item deleted', { id: loadToast });
       fetchData();
     } catch (error) {
-      toast.error('Could not delete item. Please try again.', { id: loadToast });
+      // A cafe-wide item can only be removed by a cafe administrator — the
+      // server says so, and hiding it would look like a broken button.
+      toast.error(error.response?.data?.message || 'Could not delete item. Please try again.', { id: loadToast, duration: 7000 });
     }
   };
 

@@ -5,6 +5,7 @@ const Transaction = require('../models/Transaction');
 const sendNotification = require('../utils/sendNotification');
 const { getIO } = require('../config/socket');
 const { canAccessLocation, endOfDay, clampLimit, userLocationIds } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 // Tell every client viewing this branch's drawer to refetch. Emitted whenever
 // something changes the live balance: a cash order completing, a cash expense,
@@ -368,4 +369,88 @@ const getDrawerHistory = asyncHandler(async (req, res) => {
   res.json({ success: true, data: sessions });
 });
 
-module.exports = { openDrawer, getCurrentDrawer, addMovement, closeDrawer, getDrawerHistory };
+// @desc    Delete a drawer shift (Z-report)
+// @route   DELETE /api/cash-drawer/:id
+const deleteSession = asyncHandler(async (req, res) => {
+  // Populate the branch so the error/notification text can name it — normalizeId()
+  // inside the guards unwraps the populated doc, so scoping still works.
+  const session = await CashSession.findById(req.params.id)
+    .populate('locationId', 'name')
+    .populate('openedBy', 'name deletedAt');
+  requireRecord(res, session, 'Cash drawer shift');
+
+  const locationId = session.locationId?._id || session.locationId;
+  const branchName = session.locationId?.name || 'this branch';
+
+  assertCanDelete(req, res, {
+    resource: 'cash drawer shift',
+    actionKey: 'cashdrawer.delete',
+    locationId,
+  });
+
+  // GUARD 1 — an OPEN drawer is never deletable, not even by a super admin. The
+  // unique partial index { locationId } on status:'open' is what keeps a branch to
+  // one live register; removing the row mid-shift strands every cash order, refund
+  // and pay-in already recorded against it (they are matched by the openedAt window,
+  // which would vanish) and the cashier would be counting money with no shift to
+  // reconcile it against. Closing first produces the Z-report, then it can go.
+  if (session.status === 'open') {
+    res.status(400);
+    throw new Error(
+      `This cash drawer is still open at ${branchName}. Close it with a physical count first — that produces the shift's Z-report — and only then can the shift be deleted.`
+    );
+  }
+
+  // GUARD 2 — a CLOSED shift IS the Z-report: the counted cash, the expected cash
+  // and the variance are the branch's proof of what was in the register that day.
+  // Deleting one erases an audited reconciliation with no reversal, so it stays
+  // super_admin-only regardless of the cashdrawer.delete flag. Everyone else has a
+  // non-destructive alternative: correct the record in the shift notes.
+  if (req.user.role !== 'super_admin') {
+    const shiftDay = session.closedAt ? new Date(session.closedAt).toISOString().slice(0, 10) : 'unknown date';
+    res.status(400);
+    throw new Error(
+      `This closed shift is ${branchName}'s Z-report for ${shiftDay} (counted ₹${session.countedCash ?? 0}, variance ₹${session.variance ?? 0}) and is the audit record of that day's cash. Only a super admin can delete a closed shift — ask one, or record the correction in the shift notes instead.`
+    );
+  }
+
+  const variance = session.variance ?? 0;
+  const openedById = (session.openedBy?._id || session.openedBy)?.toString();
+  const closedById = (session.closedBy?._id || session.closedBy)?.toString();
+
+  await session.deleteOne();
+
+  // CASCADE DECISION: nothing is orphaned, so nothing is cleaned up. A shift OWNS
+  // only its embedded movements (they go with the document). The cash orders,
+  // refunds and expenses it reported were never linked to it — they live in Order /
+  // Transaction and are matched to a shift purely by the openedAt..closedAt window,
+  // so they stay intact and simply become unreported. Other shifts are unaffected:
+  // each computes its own window from its own openedAt. The only real loss is the
+  // reconciliation itself, which is why GUARD 2 keeps this to super admins.
+
+  emitCashUpdate(locationId);
+
+  await announceDeletion(req, {
+    resource: 'Cash Drawer Shift',
+    name: session.closedAt ? new Date(session.closedAt).toISOString().slice(0, 10) : String(session._id).slice(-6).toUpperCase(),
+    locationId,
+    action: 'CASHDRAWER_DELETE',
+    // The cashier who ran the shift is usually not a manager, so the branch-manager
+    // fan-out would never reach them — tell the people whose shift was removed.
+    notifyUserIds: [openedById, closedById].filter(Boolean),
+    detail: `The Z-report for ${branchName} (counted ₹${session.countedCash ?? 0}, expected ₹${session.expectedCash ?? 0}, variance ₹${variance}) is no longer on record; its cash orders and expenses remain in the ledger but are now unreconciled.`,
+    metadata: {
+      sessionId: String(session._id),
+      openedAt: session.openedAt,
+      closedAt: session.closedAt,
+      openingFloat: session.openingFloat,
+      countedCash: session.countedCash,
+      expectedCash: session.expectedCash,
+      variance,
+    },
+  });
+
+  res.json({ success: true, message: 'Cash drawer shift removed' });
+});
+
+module.exports = { openDrawer, getCurrentDrawer, addMovement, closeDrawer, getDrawerHistory, deleteSession };

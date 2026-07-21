@@ -1,9 +1,12 @@
+const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const GiftCard = require('../models/GiftCard');
 const Order = require('../models/Order');
 const { getSettings } = require('../utils/settings');
 const { canAccessLocation, userLocationIds, clampLimit } = require('../utils/accessControl');
 const sendNotification = require('../utils/sendNotification');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
+const { logAction } = require('../utils/auditLogger');
 
 // The amount the customer actually owes for an order. Once finalized this is the
 // stored grandTotal; before completion we derive it the same way the bill does
@@ -268,4 +271,109 @@ const getGiftCards = asyncHandler(async (req, res) => {
   res.json({ success: true, data: cards });
 });
 
-module.exports = { issueGiftCard, lookupGiftCard, redeemGiftCard, topupGiftCard, getGiftCards };
+// @desc    Delete a gift card (mis-issued card, duplicate, test row)
+// @route   DELETE /api/gift-cards/:id
+// @access  Private (giftcards.delete)
+const deleteGiftCard = asyncHandler(async (req, res) => {
+  // A malformed id would surface as a CastError 500; the operator needs to know
+  // their row reference is stale, not that the server broke.
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    res.status(400);
+    throw new Error('That gift card id is not valid. Refresh the gift card list and try again.');
+  }
+
+  const card = await GiftCard.findById(req.params.id);
+  requireRecord(res, card, 'Gift card');
+
+  // locationId is deliberately passed through even when null: an org-wide card has
+  // no branch to scope against, so assertCanDelete falls back to the global-role
+  // check (super_admin / admin) instead of letting any branch admin erase it.
+  // No `ownerId` — the issuer does not own the card, the customer's money does.
+  assertCanDelete(req, res, {
+    resource: 'gift card',
+    actionKey: 'giftcards.delete',
+    locationId: card.locationId,
+  });
+
+  const isSuperAdmin = req.user.role === 'super_admin';
+  const balance = Number(card.balance || 0);
+  const redeemed = card.transactions.some((t) => t.type === 'redeem');
+
+  // Guard 1 — a remaining balance is a live liability: real money the cafe already
+  // took and still owes the bearer. Erasing the row makes the debt disappear from
+  // the books while the customer still holds the card. Deactivating first is the
+  // deliberate act that writes the liability off with a trail.
+  if (balance > 0 && !isSuperAdmin) {
+    res.status(400);
+    throw new Error(
+      `This gift card still holds a balance of ₹${balance} that is owed to the customer. Deactivate the card and zero its balance deliberately before deleting it, or ask a super admin to remove it.`
+    );
+  }
+
+  // Guard 2 — a card that has ever been redeemed is payment evidence: the orders it
+  // settled record only `paymentType: 'GIFT_CARD'`, so this document's transaction
+  // log is the ONLY link between those orders and the tender that paid them.
+  // Cascade decision: we do NOT touch the settled orders (they are paid and correct);
+  // instead we keep the card and deactivate it, which removes it from circulation
+  // without destroying the trail. Only a super_admin may hard-delete the history.
+  if (redeemed && !isSuperAdmin) {
+    if (!card.isActive) {
+      res.status(400);
+      throw new Error(
+        'This gift card has already been redeemed against an order and is already deactivated. Its history is the only record linking that order to the gift-card tender, so only a super admin can erase it.'
+      );
+    }
+    card.isActive = false;
+    await card.save();
+
+    await sendNotification({
+      title: 'Gift Card Deactivated',
+      message: `Gift card "${card.code}" was deactivated by ${req.user.name} instead of being deleted, because it has redemption history.`,
+      type: 'activity',
+      priority: 'high',
+      performedByUser: req.user,
+      locationId: card.locationId,
+      notifyUserIds: card.issuedBy ? [card.issuedBy] : undefined,
+    });
+    await logAction(req, 'GIFTCARD_DEACTIVATE', {
+      resource: 'GiftCard',
+      code: card.code,
+      locationId: card.locationId ? card.locationId.toString() : null,
+      reason: 'redeemed card cannot be hard-deleted by a non-super-admin',
+    });
+
+    return res.json({
+      success: true,
+      deactivated: true,
+      data: card,
+      message: `Gift card ${card.code} has been redeemed before, so it was deactivated instead of deleted — its redemption history is kept as proof of payment.`,
+    });
+  }
+
+  await card.deleteOne();
+
+  // Cascade: transactions are embedded in this document, so nothing is orphaned by
+  // the delete. Orders never reference a GiftCard _id, so no order is left dangling
+  // either — the only loss is the tender trail, which is why guard 2 exists.
+  const detail = balance > 0
+    ? `The card still held ₹${balance}; that outstanding liability has been written off.`
+    : '';
+
+  await announceDeletion(req, {
+    resource: 'Gift card',
+    name: card.code,
+    locationId: card.locationId,
+    action: 'GIFTCARD_DELETE',
+    type: 'activity',
+    // The person who issued the card is usually a cashier, not a manager, so the
+    // standard manager fan-out never reaches them — but they are the one who will
+    // be asked about it when the customer turns up with the card.
+    notifyUserIds: card.issuedBy ? [card.issuedBy] : undefined,
+    metadata: { code: card.code, balance, initialBalance: card.initialBalance, hadRedemptions: redeemed },
+    detail,
+  });
+
+  res.json({ success: true, message: `Gift card ${card.code} removed` });
+});
+
+module.exports = { issueGiftCard, lookupGiftCard, redeemGiftCard, topupGiftCard, getGiftCards, deleteGiftCard };

@@ -10,18 +10,18 @@
 //
 //   'cascade'  The row only exists because the parent exists (a table belongs to
 //              a branch, a branch belongs to a cafe). It is removed.
-//   'preserve' The row is a financial or audit record. It is NEVER removed by a
-//              cascade, at any depth, under any flag — including a forced
-//              delete. Revenue history must keep reconciling after a person
-//              leaves. These rows survive and re-attribute on screen to
+//   'preserve' The row is a financial or audit record. A cascade NEVER removes
+//              it by default — revenue history must keep reconciling after a
+//              person leaves. These rows survive and re-attribute on screen to
 //              "<name> (removed)".
 //   'detach'   The row outlives the parent but must stop pointing at it, e.g. a
 //              cafe-wide menu item listing a branch that no longer exists.
 //
-// `preserve` is deliberately not overridable. It is the guarantee behind
-// "other data entries can't be deleted from these actions": the only way to
-// remove a financial record is to delete that specific record on its own page,
-// one at a time, as a considered act.
+// Preserve rows CAN be deleted, but only when a super_admin explicitly ticks
+// that group in the confirmation dialog (`purgeKeys`) — never implicitly, never
+// by `force` alone. The one exception is entries marked `purgeable: false`
+// (audit/security logs): those survive every path, because the record of who
+// deleted what must outlive the deletion itself.
 
 const mongoose = require('mongoose');
 
@@ -208,6 +208,7 @@ const LOCATION_DEPENDENTS = [
     key: 'auditLogs',
     label: 'Audit log entries',
     disposition: 'preserve',
+    purgeable: false,
     filter: (ids) => ({ locationId: { $in: ids } }),
   },
 
@@ -360,6 +361,7 @@ const USER_DEPENDENTS = [
     key: 'auditLogs',
     label: 'Audit log entries',
     disposition: 'preserve',
+    purgeable: false,
     filter: (ids) => ({ performedBy: { $in: ids } }),
   },
 ];

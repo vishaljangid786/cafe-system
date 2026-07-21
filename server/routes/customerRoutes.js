@@ -16,6 +16,7 @@ const {
   generateBirthdayCampaign,
   listCampaigns,
   updateCampaign,
+  deleteCustomer,
 } = require('../controllers/customerController');
 const { verifyToken, checkRoles, checkAction } = require('../middlewares/authMiddleware');
 
@@ -45,6 +46,9 @@ router.route('/').get(getCustomers);
 router.route('/:id/orders').get(getCustomerOrders);
 router.route('/:id')
   .get(getCustomerById)
-  .patch(checkAction('customers.modify'), updateCustomer);
+  .patch(checkAction('customers.modify'), updateCustomer)
+  // Belt and braces: checkAction gates the ROUTE, assertCanDelete inside the
+  // controller re-checks it against the record the id actually resolves to.
+  .delete(checkAction('customers.delete'), deleteCustomer);
 
 module.exports = router;

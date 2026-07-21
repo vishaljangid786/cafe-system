@@ -346,12 +346,38 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     throw new Error('Only a Super Admin can permanently delete a branch');
   }
 
-  const staffMode = req.body?.staffMode === 'delete' ? 'delete' : 'detach';
+  // 'detach' keeps the people (auto-moving them to a branch they already had),
+  // 'reassign' shifts everyone to a chosen branch, 'delete' removes them too.
+  const staffMode = ['delete', 'reassign'].includes(req.body?.staffMode) ? req.body.staffMode : 'detach';
+  let staffTargetLocationId = null;
+  if (staffMode === 'reassign') {
+    staffTargetLocationId = req.body?.staffTargetLocationId;
+    const target = staffTargetLocationId ? await Location.findById(staffTargetLocationId) : null;
+    if (
+      !target ||
+      target.isPermanentlyDeleted ||
+      target.status === 'deleted' ||
+      String(target._id) === String(location._id)
+    ) {
+      res.status(400);
+      throw new Error('Pick a live branch to move the people to');
+    }
+  }
+
+  // Explicitly chosen financial groups to hard-delete with the branch. Empty =
+  // everything preserved (default). Audit logs can never be chosen.
+  const purgeKeys = Array.isArray(req.body?.purgeKeys) ? req.body.purgeKeys.map(String) : [];
+
   let summary = { performed: [], staffAffected: 0 };
 
   if (force) {
     const { executeLocationPurge } = require('../services/cascadeDelete');
-    summary = await executeLocationPurge([location._id], { actorId: req.user._id, staffMode });
+    summary = await executeLocationPurge([location._id], {
+      actorId: req.user._id,
+      staffMode,
+      staffTargetLocationId,
+      purgeKeys,
+    });
     // The branch→cafe map backing the lockout check is now stale.
     require('../utils/tenantStatus').invalidateTenantCache();
   } else {
@@ -364,7 +390,7 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     'LOCATION_DELETE',
     `${force ? 'Permanently deleted' : 'Soft-deleted'} branch: ${location.city} - ${location.name}`,
     req,
-    { locationId: location._id, force, staffMode, removed: summary.performed }
+    { locationId: location._id, force, staffMode, staffTargetLocationId, purgeKeys, removed: summary.performed }
   );
 
   await sendNotification({
@@ -376,10 +402,16 @@ const softDeleteLocation = asyncHandler(async (req, res) => {
     locationId: location._id,
   });
 
+  const purgedTotal = (summary.performed || [])
+    .filter((r) => r.disposition === 'purged')
+    .reduce((s, r) => s + r.count, 0);
+
   res.json({
     success: true,
     message: force
-      ? `Branch permanently deleted. Financial and audit records were preserved.`
+      ? purgedTotal > 0
+        ? `Branch permanently deleted along with ${purgedTotal} financial record(s) you selected. Audit records were preserved.`
+        : 'Branch permanently deleted. Financial and audit records were preserved.'
       : 'Location marked as deleted',
     data: summary,
   });
@@ -416,6 +448,7 @@ const getLocationImpact = asyncHandler(async (req, res) => {
     data: {
       ...impact,
       subject: { type: 'branch', id: String(location._id), name: `${location.city} - ${location.name}` },
+      canPurge: req.user.role === 'super_admin',
     },
   });
 });

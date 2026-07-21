@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const Waitlist = require('../models/Waitlist');
 const { canAccessLocation, scopedLocationId, clampLimit } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 const resolveBranch = (req, res, fromBody) => {
   const branchScoped = ['staff', 'chef', 'branch_admin', 'location_admin'].includes(req.user.role);
@@ -115,4 +117,69 @@ const updateWaitlistEntry = asyncHandler(async (req, res) => {
   res.json({ success: true, data: updated });
 });
 
-module.exports = { addToWaitlist, getWaitlist, updateWaitlistEntry };
+// @desc    Remove a waitlist entry outright (mis-typed party, duplicate, test row)
+// @route   DELETE /api/waitlist/:id
+// @access  Private (waitlist.delete)
+const deleteWaitlistEntry = asyncHandler(async (req, res) => {
+  // A malformed id would otherwise surface as a CastError 500; the floor staff
+  // needs to know the row reference is stale, not that the server broke.
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    res.status(400);
+    throw new Error('That waitlist id is not valid. Refresh the waitlist and try again.');
+  }
+
+  const entry = await Waitlist.findById(req.params.id).populate('tableId', 'tableNumber');
+  requireRecord(res, entry, 'Waitlist entry');
+
+  // No `ownerId`: the staff member who added the party is not its owner in any
+  // meaningful sense — the entry belongs to the floor. Deleting always needs
+  // waitlist.delete AND reach over the entry's branch.
+  assertCanDelete(req, res, {
+    resource: 'waitlist entry',
+    actionKey: 'waitlist.delete',
+    locationId: entry.locationId,
+  });
+
+  const tableNumber = entry.tableId?.tableNumber;
+
+  // Cascade decision: we deliberately do NOT free the linked Table. A seated
+  // entry means the party is physically at that table; resetting the table to
+  // available here would invite a double-seating. The table's own lifecycle is
+  // owned by the table/order flow, so we only flag it in the notification below
+  // so a manager can clear it by hand if the party really did leave.
+  const detail = entry.status === 'seated'
+    ? `This party was already seated${tableNumber ? ` at table ${tableNumber}` : ''} — the table was left as-is, free it from the floor map if they have left.`
+    : '';
+
+  await entry.deleteOne();
+
+  await announceDeletion(req, {
+    resource: 'Waitlist entry',
+    // Name the party explicitly: the floor manager's only question is "which
+    // walk-in just disappeared from the queue?".
+    name: `${entry.customerName} (party of ${entry.partySize})`,
+    locationId: entry.locationId,
+    action: 'WAITLIST_DELETE',
+    type: 'table_action',
+    priority: 'medium',
+    // The staff member who queued the party is usually not a manager, so the
+    // standard fan-out never reaches them — but they are the one still calling
+    // that name out at the door.
+    notifyUserIds: entry.addedBy ? [entry.addedBy] : [],
+    detail,
+    metadata: {
+      customerName: entry.customerName,
+      customerPhone: entry.customerPhone || null,
+      partySize: entry.partySize,
+      status: entry.status,
+      tableNumber: tableNumber || null,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Waitlist entry removed',
+  });
+});
+
+module.exports = { addToWaitlist, getWaitlist, updateWaitlistEntry, deleteWaitlistEntry };

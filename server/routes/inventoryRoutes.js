@@ -4,10 +4,12 @@ const {
   getBranchInventory,
   updateInventory,
   logWaste,
+  deleteWaste,
   getInventoryAlerts,
   getPurchaseSuggestions,
   createIngredient,
   getIngredients,
+  deleteIngredient,
   getAllInventory
 } = require('../controllers/inventoryController');
 const { verifyToken, checkRoles, checkRoleOrPermission, checkAction } = require('../middlewares/authMiddleware');
@@ -20,11 +22,18 @@ router.use(verifyToken);
 router.get('/', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getAllInventory);
 router.post('/ingredients', checkAction('inventory.add'), createIngredient);
 router.get('/ingredients', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getIngredients);
+// The ingredient catalog is cafe-wide: checkAction gates the permission, and the
+// controller's assertCanDelete additionally applies the global-role check because
+// the record has no branch to scope against.
+router.delete('/ingredients/:id', checkAction('inventory.delete'), deleteIngredient);
 
 // Shared/Branch routes — reads match the list route (any manageOrders holder).
 router.get('/branch/:branchId', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getBranchInventory);
 router.post('/update', checkAction('inventory.modify'), updateInventory);
 router.post('/waste', checkAction('inventory.modify'), logWaste);
+// Branch scope for a waste record can only be decided once the id is resolved, so
+// the controller re-checks with assertCanDelete on top of this middleware.
+router.delete('/waste/:id', checkAction('inventory.delete'), deleteWaste);
 router.get('/alerts', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getInventoryAlerts);
 router.get('/suggestions', checkRoleOrPermission(['admin', 'super_admin', 'branch_admin'], 'manageOrders'), getPurchaseSuggestions);
 

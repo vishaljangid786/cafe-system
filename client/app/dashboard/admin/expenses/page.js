@@ -9,6 +9,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '../../../context/AuthContext';
 import { useCan } from '../../../hooks/usePermissions';
+import RowDeleteButton from '../../../components/ui/RowDeleteButton';
 import useBranchScope from '../../../hooks/useBranchScope';
 import {
   TrendingDown, Search, Filter,
@@ -585,9 +586,19 @@ export default function ExpensesPage() {
                               </div>
                             </div>
                           </div>
-                          <div className="text-right relative z-10 shrink-0">
-                            <p className="text-xl font-semibold text-danger tracking-tight leading-none transition-transform"><Money value={t.totalAmount} prefix="-" /></p>
-                            <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-2">Verified</p>
+                          <div className="flex items-center gap-3 relative z-10 shrink-0">
+                            <div className="text-right">
+                              <p className="text-xl font-semibold text-danger tracking-tight leading-none transition-transform"><Money value={t.totalAmount} prefix="-" /></p>
+                              <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-2">Verified</p>
+                            </div>
+                            <RowDeleteButton
+                              actionKey={['expenses.delete', 'revenue.delete']}
+                              endpoint={`/expenses/${t._id}`}
+                              label={t.title || 'this expense'}
+                              description="An expense already posted to the ledger cannot be deleted — reject it instead, which reverses the ledger entry properly."
+                              onDeleted={fetchExpenses}
+                              size={16}
+                            />
                           </div>
                         </div>
                       </CardHover>

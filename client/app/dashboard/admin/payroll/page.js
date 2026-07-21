@@ -21,6 +21,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { CardSkeleton, StatGridSkeleton, PageHeaderSkeleton } from '@/app/components/ui/Skeleton';
 import { Money } from '@/app/components/ui/Money';
 import { formatIndianCompact } from '@/app/utils/formatNumber';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function PayrollRecordsPage() {
   const monthInputRef = useRef(null);
@@ -653,6 +654,18 @@ export default function PayrollRecordsPage() {
                         >
                           View
                         </button>
+                        {/* Only a generated payroll row can be removed — the button
+                            renders against that record, not the employee. */}
+                        {s.payrollRecord && (
+                          <RowDeleteButton
+                            actionKey="salaries.delete"
+                            endpoint={`/salary/payroll/${s.payrollRecord._id}`}
+                            label={`${s.name}'s payroll record`}
+                            description="This removes the generated payroll row for this month. A record already marked PAID is proof the person was paid and can only be removed by a Super Admin. The employee is notified."
+                            onDeleted={fetchData}
+                            size={16}
+                          />
+                        )}
                       </div>
                     ) : (
                       <button

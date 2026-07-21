@@ -9,9 +9,21 @@ const TransactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 const sendNotification = require('../utils/sendNotification');
 // Re-export from service layer — single source of truth, no duplicate logic
 const { deductIngredientsFromRecipe } = require('../services/inventoryService');
+
+// A malformed id would otherwise reach Mongoose and come back through the error
+// middleware as a bare "Resource not found" — which tells the operator nothing.
+// Checking it here keeps every failure in this file specific and actionable.
+const requireValidId = (res, id, resource) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error(`"${id}" is not a valid ${resource} id. Refresh the page and try again from the list.`);
+  }
+  return id;
+};
 
 // @desc    Get inventory for a specific branch
 // @route   GET /api/inventory/branch/:branchId
@@ -148,6 +160,91 @@ const logWaste = asyncHandler(async (req, res) => {
   res.json({ success: true, data: waste });
 });
 
+// @desc    Delete a logged waste record (and put the wasted quantity back)
+// @route   DELETE /api/inventory/waste/:id
+const deleteWaste = asyncHandler(async (req, res) => {
+  requireValidId(res, req.params.id, 'waste record');
+
+  // Populate so every message can name the ingredient and the branch —
+  // normalizeId() inside the guards unwraps a populated ref, so branch scoping
+  // still works on the populated document.
+  const waste = await WasteRecord.findById(req.params.id)
+    .populate('ingredient', 'name unit')
+    .populate('branch', 'name');
+  requireRecord(res, waste, 'Waste record');
+
+  const locationId = waste.branch?._id || waste.branch;
+  const branchName = waste.branch?.name || 'this branch';
+  const ingredientId = waste.ingredient?._id || waste.ingredient;
+  const ingredientName = waste.ingredient?.name || 'ingredient';
+  const unit = waste.ingredient?.unit || 'units';
+  const quantity = Number(waste.quantity) || 0;
+  const loggedAt = new Date(waste.date || waste.createdAt);
+
+  assertCanDelete(req, res, {
+    resource: 'waste record',
+    actionKey: 'inventory.delete',
+    // Waste always belongs to exactly one branch, so this is a pure branch-scope
+    // check: a branch admin may clean up their own branch's mis-logged waste only.
+    locationId,
+  });
+
+  // GUARD — a waste entry is a loss record. analyticsController reads it for
+  // wastage reporting and for the per-staff activity report, so once the day it
+  // belongs to has been reported on, erasing it quietly improves someone's
+  // numbers with no reversal trail. Inside 24 hours it is still a typo being
+  // fixed; after that a super admin must decide.
+  const ageHours = (Date.now() - loggedAt.getTime()) / 36e5;
+  if (ageHours > 24 && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      `This waste entry (${quantity} ${unit} of ${ingredientName} at ${branchName}, logged ${loggedAt.toDateString()}) is older than 24 hours and has already been counted in the wastage and staff activity reports for that period. Correct the shelf count with a restock in Update Inventory instead of erasing the loss — only a super admin can delete a settled waste record.`
+    );
+  }
+
+  await waste.deleteOne();
+
+  // CASCADE — REVERSED ON PURPOSE: logWaste is what deducted this quantity from
+  // BranchInventory, and this record is the ONLY document explaining that
+  // deduction. Removing it without adding the stock back would leave the shelf
+  // count permanently short with nothing to account for the gap, so the deduction
+  // is undone here. No upsert: if the branch no longer carries the ingredient at
+  // all, re-creating a stock row for it would invent inventory nobody stocks.
+  const restored = quantity > 0 && ingredientId
+    ? await BranchInventory.findOneAndUpdate(
+        { branch: locationId, ingredient: ingredientId },
+        { $inc: { stock: quantity } },
+        { new: true }
+      )
+    : null;
+
+  const stockNote = restored
+    ? `${quantity} ${unit} of ${ingredientName} went back into ${branchName} stock (now ${restored.stock}).`
+    : `${branchName} no longer carries ${ingredientName}, so no stock was added back.`;
+
+  await announceDeletion(req, {
+    resource: 'Waste Record',
+    name: `${quantity} ${unit} of ${ingredientName}`,
+    locationId,
+    action: 'WASTE_RECORD_DELETE',
+    // The person who logged the waste is usually floor staff, not a manager, so
+    // the manager fan-out would never reach them — and it was their entry.
+    notifyUserIds: [waste.recordedBy?.toString()].filter(Boolean),
+    detail: `It was logged on ${loggedAt.toDateString()} as "${waste.reason}". ${stockNote}`,
+    metadata: {
+      wasteRecordId: String(waste._id),
+      ingredient: ingredientName,
+      quantity,
+      unit,
+      reason: waste.reason,
+      stockRestored: Boolean(restored),
+      loggedAt: loggedAt.toISOString(),
+    },
+  });
+
+  res.json({ success: true, message: `Waste record removed. ${stockNote}` });
+});
+
 // @desc    Get low stock alerts across all branches (Admin) or single branch
 // @route   GET /api/inventory/alerts
 const getInventoryAlerts = asyncHandler(async (req, res) => {
@@ -223,6 +320,122 @@ const getIngredients = asyncHandler(async (req, res) => {
   res.json({ success: true, data: ingredients });
 });
 
+// @desc    Delete a global ingredient definition and its per-branch stock rows
+// @route   DELETE /api/inventory/ingredients/:id
+const deleteIngredient = asyncHandler(async (req, res) => {
+  requireValidId(res, req.params.id, 'ingredient');
+
+  const ingredient = await Ingredient.findById(req.params.id);
+  requireRecord(res, ingredient, 'Ingredient');
+
+  // Ingredient is the CAFE-WIDE catalog — the schema has no branch at all. Passing
+  // no locationId makes assertCanDelete fall through to the global-role check, so a
+  // branch admin holding inventory.delete can still clean up their own branch's
+  // waste but cannot delete a definition every other branch stocks.
+  assertCanDelete(req, res, {
+    resource: 'ingredient',
+    actionKey: 'inventory.delete',
+  });
+
+  // GUARD 1 — recipes. Refused for EVERY role including super_admin: this is
+  // referential integrity, not a money rule a superior may knowingly override.
+  // Recipe lines carry BOTH an optional `ingredient` ref and a required `name`
+  // snapshot, so a recipe authored before the catalog existed links by name only —
+  // counting the ref alone would let us delete something half the menu depends on
+  // and deductIngredientsFromRecipe would silently stop deducting stock for it.
+  const nameRegex = new RegExp(`^${ingredient.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+  const recipeFilter = {
+    $or: [
+      { 'ingredients.ingredient': ingredient._id },
+      // `ingredient: null` also matches lines where the field is absent.
+      { ingredients: { $elemMatch: { ingredient: null, name: nameRegex } } },
+    ],
+  };
+  const [recipeCount, sampleRecipes] = await Promise.all([
+    Recipe.countDocuments(recipeFilter),
+    Recipe.find(recipeFilter).populate('menuItemId', 'name').select('menuItemId').limit(3).lean(),
+  ]);
+  if (recipeCount > 0) {
+    const names = sampleRecipes.map((r) => r.menuItemId?.name).filter(Boolean);
+    res.status(400);
+    throw new Error(
+      `"${ingredient.name}" is still used by ${recipeCount} recipe(s)${names.length ? ` — including ${names.join(', ')}` : ''}. Remove it from those recipes first, or leave them alone and simply mark the ingredient inactive, which hides it from new stock entry while keeping the recipes costing correctly.`
+    );
+  }
+
+  // GUARD 2 — stock still on the shelf. Every unit of it was paid for and booked
+  // as a purchase expense by updateInventory, so deleting the rows writes off real
+  // value with nothing to reconcile against. The safe alternative is to consume or
+  // waste it down to zero (which leaves a trail) or to deactivate the ingredient.
+  // A super admin may still force it — sometimes the row itself is the mistake.
+  const stockRows = await BranchInventory.find({ ingredient: ingredient._id })
+    .populate('branch', 'name')
+    .lean();
+  const withStock = stockRows.filter((r) => Number(r.stock) > 0);
+  if (withStock.length > 0 && req.user.role !== 'super_admin') {
+    const breakdown = withStock
+      .map((r) => `${r.branch?.name || 'unknown branch'} ${r.stock} ${ingredient.unit}`)
+      .join(', ');
+    res.status(400);
+    throw new Error(
+      `"${ingredient.name}" still has stock on hand at ${withStock.length} branch(es): ${breakdown}. Log it as waste or use it up so the count reaches zero before deleting, or mark the ingredient inactive to retire it while keeping the stock figures honest. Only a super admin can delete an ingredient that still has stock.`
+    );
+  }
+
+  // GUARD 3 — waste history. WasteRecord.ingredient is a required ref that the
+  // staff activity report populates by name, so removing the ingredient turns
+  // every past loss into an unnamed row. Deactivating keeps that history readable.
+  const wasteCount = await WasteRecord.countDocuments({ ingredient: ingredient._id });
+  if (wasteCount > 0 && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      `"${ingredient.name}" appears in ${wasteCount} waste record(s), and those loss entries would lose their ingredient name if it were deleted. Mark the ingredient inactive instead — it disappears from restock and recipe pickers while the wastage reports keep reading correctly. Only a super admin can delete an ingredient with waste history.`
+    );
+  }
+
+  const ingredientName = ingredient.name;
+  await ingredient.deleteOne();
+
+  // CASCADE 1 — CLEANED UP: a BranchInventory row is a per-branch stock count for
+  // this exact ingredient and means nothing without it (getAllInventory already
+  // has to filter out rows whose populated ingredient came back null). They go too.
+  const { deletedCount = 0 } = await BranchInventory.deleteMany({ ingredient: ingredient._id });
+
+  // CASCADE 2 — DELIBERATELY PRESERVED: WasteRecord rows survive, matching the
+  // 'preserve' disposition the cascade registry (services/dependencyGraph.js) uses
+  // for financial and audit history — a recorded loss must keep reconciling after
+  // the catalog entry is gone. Only a super admin ever reaches this line with any
+  // (guard 3), and the notification below states how many were left behind.
+  //
+  // CASCADE 3 — DELIBERATELY UNTOUCHED: the purchase Expense rows updateInventory
+  // books on restock name the ingredient in free text only, with no ref, so they
+  // are already immune — and they are ledger records that must never be erased by
+  // a catalog cleanup.
+
+  await announceDeletion(req, {
+    resource: 'Ingredient',
+    name: ingredientName,
+    // No locationId: an ingredient is cafe-wide, so this fans out to the org
+    // administrators rather than to one branch's managers.
+    action: 'INGREDIENT_DELETE',
+    detail: `${deletedCount} branch stock row(s) were removed with it.${wasteCount > 0 ? ` ${wasteCount} waste record(s) were kept and now reference a deleted ingredient.` : ''}`,
+    metadata: {
+      ingredientId: String(ingredient._id),
+      unit: ingredient.unit,
+      category: ingredient.category,
+      wasActive: ingredient.isActive,
+      branchStockRowsRemoved: deletedCount,
+      wasteRecordsPreserved: wasteCount,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: `Ingredient removed along with ${deletedCount} branch stock row(s)`,
+    data: { branchStockRowsRemoved: deletedCount, wasteRecordsPreserved: wasteCount },
+  });
+});
+
 // @desc    Get all inventory items (across all branches)
 // @route   GET /api/inventory
 const getAllInventory = asyncHandler(async (req, res) => {
@@ -252,10 +465,12 @@ module.exports = {
   getBranchInventory,
   updateInventory,
   logWaste,
+  deleteWaste,
   getInventoryAlerts,
   getPurchaseSuggestions,
   createIngredient,
   getIngredients,
+  deleteIngredient,
   getAllInventory,
   // Re-exported from inventoryService — single source of truth
   deductIngredientsFromRecipe

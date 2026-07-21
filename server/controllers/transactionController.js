@@ -5,6 +5,7 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, canAccessLocation, escapeRegex, clampLimit, scopedLocationId, scopedLocationIds, userLocationIds, assertBranchesUnderOneAdmin } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD', 'ONLINE', 'GIFT_CARD', 'OTHER'];
 
@@ -603,6 +604,130 @@ const rejectTransaction = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Delete a ledger entry (a manual revenue row, or a manual expense row
+//          created through this same endpoint)
+// @route   DELETE /api/transactions/:id
+// @access  Private (revenue.delete)
+//
+// Deleting a ledger row is NOT the normal way to undo money — approve/reject is,
+// because a rejection leaves the row in place with a reversed status and therefore
+// a trail. This endpoint exists for the genuinely wrong row (a typo'd manual entry,
+// a duplicate) and deliberately refuses anything whose removal would rewrite real
+// history or desync another record.
+const deleteTransaction = asyncHandler(async (req, res) => {
+  const transaction = requireRecord(
+    res,
+    await Transaction.findById(req.params.id)
+      .populate('locationId', 'name')
+      .populate('createdBy', 'name role deletedAt'),
+    'Transaction'
+  );
+
+  const transactionLocationId = transaction.locationId?._id || transaction.locationId;
+  const branchName = transaction.locationId?.name || 'this branch';
+
+  // The resource word is 'transaction' rather than 'revenue entry' because
+  // deleteGuard pluralises it into its messages ("delete transactions") and this
+  // row can sit on either side of the ledger.
+  assertCanDelete(req, res, {
+    resource: 'transaction',
+    actionKey: 'revenue.delete',
+    locationId: transactionLocationId,
+  });
+
+  const isSuperAdmin = req.user.role === 'super_admin';
+
+  // GUARD 1 — this row is the ledger MIRROR of an Expense document
+  // (TransactionService.syncExpenseToTransaction keeps the two in step via
+  // expenseId). Deleting the mirror alone leaves the Expense with no ledger row,
+  // and the next edit/approve of that expense would silently re-create it — so the
+  // books would disagree with the expense list either way. No super_admin override
+  // here: deleting the Expense itself already cascades correctly
+  // (deleteExpenseTransaction), so there is a right way to do this for EVERY role.
+  // This also covers the reservation-advance and purchase-order expenses, which
+  // reach the ledger through the same expenseId link.
+  if (transaction.expenseId) {
+    res.status(400);
+    throw new Error(
+      'This entry is the ledger copy of an expense record, so removing it here would leave the expense and the books out of sync. Delete or reject it on the Expenses page instead — that removes both together.'
+    );
+  }
+
+  // GUARD 2 — real money from a real sale. Order revenue is written once by
+  // orderFinalizer and can never be re-created (the finalizer's atomic "already
+  // billed" claim blocks a second run), so deleting it erases the sale permanently.
+  const orderRef = transaction.orderId
+    ? `#${String(transaction.orderId).slice(-6).toUpperCase()}`
+    : '';
+  if (transaction.orderId && !isSuperAdmin) {
+    res.status(400);
+    throw new Error(
+      `This revenue came from order ${orderRef}, so deleting it would erase a real sale from the books. Refund the order instead — a refund reverses the revenue and keeps the order on record. Only a super admin can force-delete order revenue.`
+    );
+  }
+
+  // GUARD 3 — an approved entry is already posted to the ledger and counted in
+  // analytics, so removing it changes reported figures with no reversal trail.
+  // Rejection is the safe reversal, but only a PENDING entry can be rejected
+  // (see rejectTransaction) — so for an already-approved row the honest, actionable
+  // answer is to ask a super admin.
+  if (transaction.status === 'approved' && !isSuperAdmin) {
+    res.status(400);
+    throw new Error(
+      `This ${transaction.type === 'EXPENSE' ? 'expense' : 'revenue'} entry of ₹${transaction.totalAmount} is already approved and posted to ${branchName}'s ledger. Reject entries you disagree with while they are still pending; an approved one can only be removed by a super admin.`
+    );
+  }
+
+  const wasOrderRevenue = Boolean(transaction.orderId);
+  const isExpenseRow = transaction.type === 'EXPENSE';
+  const creatorId = (transaction.createdBy?._id || transaction.createdBy)?.toString();
+
+  await transaction.deleteOne();
+
+  // CASCADE DECISION: when a super admin force-deletes order revenue we do NOT
+  // touch the Order. The order stays COMPLETED/billed as the record of what was
+  // actually served and paid for — flipping it back would corrupt inventory,
+  // gift-card and coupon reconciliation that already ran. The consequence (the sale
+  // is permanently off the books and will not be re-booked) is stated in the
+  // response and written to the audit log below rather than silently swallowed.
+
+  // A cash expense leaving the ledger changes the register's expected balance —
+  // refresh any open drawer view, exactly as approve/reject do.
+  if (isExpenseRow && transaction.paymentType === 'CASH') emitCashUpdate(transactionLocationId);
+
+  const entryLabel = isExpenseRow ? 'Expense Entry' : 'Revenue Entry';
+  await announceDeletion(req, {
+    resource: entryLabel,
+    name: transaction.title || `₹${transaction.totalAmount}`,
+    locationId: transactionLocationId,
+    action: 'REVENUE_DELETE',
+    type: 'expense', // shared financial bucket (no dedicated 'revenue' type)
+    // The submitter is usually not a manager, so the branch-manager fan-out would
+    // never reach them — tell the person whose entry was removed.
+    notifyUserIds: creatorId ? [creatorId] : [],
+    detail: wasOrderRevenue
+      ? `This was the revenue for order ${orderRef} (₹${transaction.totalAmount}); that sale is no longer counted in the books and will not be re-recorded.`
+      : `Amount: ₹${transaction.totalAmount} (${transaction.status}).`,
+    metadata: {
+      transactionId: String(transaction._id),
+      type: transaction.type,
+      status: transaction.status,
+      totalAmount: transaction.totalAmount,
+      paymentType: transaction.paymentType,
+      orderId: transaction.orderId ? String(transaction.orderId) : null,
+      orderRevenueErased: wasOrderRevenue,
+      branch: branchName,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: wasOrderRevenue
+      ? `Revenue entry removed. The ₹${transaction.totalAmount} from order ${orderRef} is no longer counted as revenue for ${branchName}; the order itself was kept for audit and this sale will not be re-recorded.`
+      : `${isExpenseRow ? 'Expense' : 'Revenue'} entry removed`,
+  });
+});
+
 // @desc    Get transaction analytics
 // @route   GET /api/transactions/stats
 // @access  Private
@@ -668,5 +793,6 @@ module.exports = {
   createBulkRevenue,
   getTransactionStats,
   approveTransaction,
-  rejectTransaction
+  rejectTransaction,
+  deleteTransaction
 };

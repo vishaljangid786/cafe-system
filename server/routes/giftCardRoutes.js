@@ -6,6 +6,7 @@ const {
   redeemGiftCard,
   topupGiftCard,
   getGiftCards,
+  deleteGiftCard,
 } = require('../controllers/giftCardController');
 const { verifyToken, checkRoles, checkPermissions, checkAction } = require('../middlewares/authMiddleware');
 
@@ -21,5 +22,9 @@ router.route('/')
   .get(checkRoles('super_admin', 'admin', 'branch_admin', 'location_admin'), getGiftCards)
   .post(checkAction('giftcards.add'), issueGiftCard);
 router.post('/:id/topup', checkAction('giftcards.modify'), topupGiftCard);
+
+// Deleting a card destroys a liability record, so it is its own grantable action —
+// the controller re-checks it (and the card's branch) via assertCanDelete.
+router.delete('/:id', checkAction('giftcards.delete'), deleteGiftCard);
 
 module.exports = router;

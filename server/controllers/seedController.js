@@ -307,6 +307,7 @@ const {
   SUPER_ADMIN_EMAIL,
   CAFE_NAME,
 } = require('../seed/moonlightCafe');
+const { seedMoonlightHistory, DAYS: HISTORY_DAYS } = require('../seed/moonlightHistory');
 
 const seedShell = (inner) => `<!DOCTYPE html>
 <html lang="en">
@@ -358,7 +359,7 @@ const seedPage = asyncHandler(async (req, res) => {
   const needsKey = Boolean(process.env.SEED_KEY);
   res.send(seedShell(`
     <h1>Seed ${CAFE_NAME}</h1>
-    <p>Rebuilds the Moon Light Cafe dataset: 1 super admin, 1 cafe with its admin, 3 branches — each with a branch admin, staff &amp; chefs — plus the branch setup (menu, tables, stock). <b>No orders, revenue or attendance</b> are seeded.</p>
+    <p>Rebuilds the full Moon Light Cafe demo: 1 super admin, 1 cafe + admin, 3 branches with branch admins, staff &amp; chefs, menu, tables, stock — plus ${HISTORY_DAYS} days of sample history for every module: orders, revenue, expenses, attendance, payroll, cash-drawer shifts, customers, reservations, waitlist, feedback, gift cards, coupons, notifications, inventory and purchase orders.</p>
     <div class="counts">
       <span>Users <b>${users}</b></span>
       <span>Branches <b>${locations}</b></span>
@@ -387,9 +388,11 @@ const runFullSeed = asyncHandler(async (req, res) => {
   }
   await dropAllData();
   const result = await seedMoonlightCafe();
+  const history = await seedMoonlightHistory(result);
   res.send(seedShell(`
     <h1>Seeding complete ✓</h1>
     <div class="ok">${CAFE_NAME} rebuilt: ${result.locations.length} branches, ${result.branchAdmins.length} branch admins, ${result.staff.length} staff, ${result.chefs.length} chefs.<br /><br />
+    Sample history (${HISTORY_DAYS} days): ${history.orders} orders, ${history.revenueTransactions} revenue entries, ${history.expenses} expenses, ${history.attendance} attendance records, ${history.payroll} payroll rows, ${history.cashSessions} cash-drawer shifts, ${history.customers} customers, ${history.reservations} reservations, ${history.feedback} feedback, ${history.giftCards} gift cards, ${history.notifications} notifications.<br /><br />
     Login: <code>${SUPER_ADMIN_EMAIL.toLowerCase()}</code> / <code>${SEED_PASSWORD}</code><br />
     (every seeded account uses the same password)</div>
     <p><a href="/seed">&larr; Back to seed page</a></p>

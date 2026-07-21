@@ -12,13 +12,16 @@ import api from '@/app/services/api';
 // distinction matters more than the total —
 //
 //   removed    disappears for good
-//   preserved  financial and audit records that survive by design, and will
-//              show the person as "(removed)" from here on
+//   preserved  financial and audit records that survive by default, and will
+//              show the person as "(removed)" from here on. A super admin can
+//              tick individual groups here to delete them too — audit logs
+//              excepted, those can never be chosen.
 //   detached   survives, but stops pointing at what is being deleted
 //
 // For a role-holder it also offers the choice the operator actually has: take
 // the person out on their own, hand their seat to somebody else, or remove
-// their whole team with them.
+// their whole team with them. For a branch or cafe the people get the same
+// treatment: keep them, shift everyone to a branch you pick, or remove them.
 
 const MODE_COPY = {
   solo: {
@@ -83,7 +86,12 @@ export default function ImpactDeleteModal({
   const [error, setError] = useState('');
   const [mode, setMode] = useState('solo');
   const [replacementId, setReplacementId] = useState('');
-  const [alsoRemoveStaff, setAlsoRemoveStaff] = useState(false);
+  // What happens to the people of a branch/cafe: keep them, shift everyone to
+  // a chosen branch, or remove them along with it.
+  const [staffChoice, setStaffChoice] = useState('detach');
+  const [staffTargetId, setStaffTargetId] = useState('');
+  // Preserve-group keys the super admin explicitly chose to hard-delete.
+  const [purgeSel, setPurgeSel] = useState({});
   const [typed, setTyped] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,7 +111,9 @@ export default function ImpactDeleteModal({
     setImpact(null);
     setMode('solo');
     setReplacementId('');
-    setAlsoRemoveStaff(false);
+    setStaffChoice('detach');
+    setStaffTargetId('');
+    setPurgeSel({});
     setTyped('');
 
     api
@@ -133,17 +143,26 @@ export default function ImpactDeleteModal({
   const totalPreserved = preserveRows.reduce((s, r) => s + r.count, 0);
   const hasDependencies = totalRemoved + totalPreserved + detachRows.length > 0;
 
-  // Deleting a whole cafe or branch is typed-confirmation territory; removing a
-  // single person with nothing attached to them is not.
-  const needsTypedConfirm = entity !== 'user' || totalRemoved > 0;
-  const confirmWord = entity === 'user' ? 'REMOVE' : 'DELETE';
+  const canPurge = !!impact?.canPurge;
+  const purgeKeys = Object.keys(purgeSel).filter((k) => purgeSel[k]);
+  const purgedCount = preserveRows
+    .filter((r) => purgeKeys.includes(r.key))
+    .reduce((s, r) => s + r.count, 0);
+  const reassignTargets = impact?.reassignTargets || [];
+
+  // Deleting a whole cafe or branch is typed-confirmation territory; so is any
+  // delete that takes financial records with it. Removing a single person with
+  // nothing attached to them is not.
+  const needsTypedConfirm = entity !== 'user' || totalRemoved > 0 || purgeKeys.length > 0;
+  const confirmWord = entity === 'user' && purgeKeys.length === 0 ? 'REMOVE' : 'DELETE';
   const typedOk = !needsTypedConfirm || typed.trim().toUpperCase() === confirmWord;
 
   const blockedByActiveOrders = entity === 'user' && (impact?.activeOrders || 0) > 0;
   const needsReplacement = entity === 'user' && mode === 'reassign' && !replacementId;
+  const needsStaffTarget = entity !== 'user' && staffChoice === 'reassign' && !staffTargetId;
 
   const canConfirm =
-    !loading && !submitting && !error && typedOk && !needsReplacement && !blockedByActiveOrders;
+    !loading && !submitting && !error && typedOk && !needsReplacement && !needsStaffTarget && !blockedByActiveOrders;
 
   const handleConfirm = async () => {
     if (!canConfirm) return;
@@ -151,8 +170,13 @@ export default function ImpactDeleteModal({
     try {
       await onConfirm(
         entity === 'user'
-          ? { mode, replacementId: mode === 'reassign' ? replacementId : undefined }
-          : { force: true, staffMode: alsoRemoveStaff ? 'delete' : 'detach' }
+          ? { mode, replacementId: mode === 'reassign' ? replacementId : undefined, purgeKeys }
+          : {
+              force: true,
+              staffMode: staffChoice,
+              staffTargetLocationId: staffChoice === 'reassign' ? staffTargetId : undefined,
+              purgeKeys,
+            }
       );
     } finally {
       setSubmitting(false);
@@ -268,25 +292,69 @@ export default function ImpactDeleteModal({
                       </div>
                     )}
 
-                    {/* Branch / cafe: what to do with the people */}
+                    {/* Branch / cafe: what to do with the people. A branch role
+                        must always end up with a branch — keep (auto-move),
+                        shift everyone to a chosen branch, or remove them too. */}
                     {entity !== 'user' && (
-                      <label className="flex items-start gap-3 rounded-xl border border-(--color-border) p-3 mb-5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={alsoRemoveStaff}
-                          onChange={(e) => setAlsoRemoveStaff(e.target.checked)}
-                          className="mt-0.5"
-                        />
-                        <span>
-                          <span className="block text-xs font-semibold text-(--color-text-primary)">
-                            Also remove the {impact.staffCount ?? 0} people attached to it
-                          </span>
-                          <span className="block text-[11px] text-(--color-text-muted) mt-0.5 leading-relaxed">
-                            Leave this off and they keep their accounts; only the link to this{' '}
-                            {entity} is cleared.
-                          </span>
-                        </span>
-                      </label>
+                      <div className="space-y-2 mb-5">
+                        <p className="text-[11px] font-semibold uppercase tracking-normal text-(--color-text-primary)">
+                          {impact.staffCount ?? 0} people are attached to this {entity}
+                        </p>
+                        {[
+                          {
+                            value: 'detach',
+                            title: 'Keep their accounts',
+                            body: 'The link to this ' + entity + ' is cleared; each person auto-moves to another branch they already had access to.',
+                            show: true,
+                          },
+                          {
+                            value: 'reassign',
+                            title: 'Shift everyone to another branch',
+                            body: 'All of them move to the branch you pick below and keep working from there.',
+                            show: reassignTargets.length > 0,
+                          },
+                          {
+                            value: 'delete',
+                            title: 'Remove the people too',
+                            body: 'Their accounts are removed along with the ' + entity + '. Their records stay unless you also tick them below.',
+                            show: true,
+                          },
+                        ]
+                          .filter((o) => o.show)
+                          .map((o) => {
+                            const active = staffChoice === o.value;
+                            return (
+                              <button
+                                key={o.value}
+                                type="button"
+                                onClick={() => setStaffChoice(o.value)}
+                                className={`w-full text-left rounded-xl border p-3 transition-all ${
+                                  active
+                                    ? 'border-(--color-primary) bg-(--color-primary-soft)'
+                                    : 'border-(--color-border) hover:border-(--color-text-muted)'
+                                }`}
+                              >
+                                <span className="block text-xs font-semibold text-(--color-text-primary)">{o.title}</span>
+                                <span className="block text-[11px] text-(--color-text-muted) mt-0.5 leading-relaxed">{o.body}</span>
+                              </button>
+                            );
+                          })}
+
+                        {staffChoice === 'reassign' && (
+                          <select
+                            value={staffTargetId}
+                            onChange={(e) => setStaffTargetId(e.target.value)}
+                            className="w-full mt-1 px-4 py-3 rounded-xl text-sm bg-(--color-surface-2) border border-(--color-border) text-(--color-text-primary)"
+                          >
+                            <option value="">Move everyone to which branch?</option>
+                            {reassignTargets.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.city ? `${t.city} — ` : ''}{t.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     )}
 
                     <div className="space-y-3">
@@ -301,10 +369,54 @@ export default function ImpactDeleteModal({
 
                       {preserveRows.length > 0 && (
                         <Section
-                          title={`Kept (${totalPreserved.toLocaleString()})`}
-                          hint="Financial and audit records are never deleted, so your reports keep adding up. They will show this as removed from now on."
+                          title={
+                            purgeKeys.length > 0
+                              ? `Kept (${(totalPreserved - purgedCount).toLocaleString()}) — deleting ${purgedCount.toLocaleString()}`
+                              : `Kept (${totalPreserved.toLocaleString()})`
+                          }
+                          hint={
+                            canPurge
+                              ? 'Financial records are kept by default and will show this as removed. Tick a group to delete those records permanently instead. Audit logs can never be deleted.'
+                              : 'Financial and audit records are never deleted, so your reports keep adding up. They will show this as removed from now on.'
+                          }
                         >
-                          <GroupList rows={preserveRows} tone="safe" />
+                          {canPurge ? (
+                            <ul className="space-y-1.5">
+                              {preserveRows.map((r) => {
+                                const purgeable = r.purgeable !== false;
+                                const checked = !!purgeSel[r.key];
+                                return (
+                                  <li key={r.key} className="flex items-center justify-between gap-4 text-xs">
+                                    <label
+                                      className={`flex items-center gap-2 ${purgeable ? 'cursor-pointer' : 'opacity-60'}`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        disabled={!purgeable}
+                                        checked={checked}
+                                        onChange={(e) =>
+                                          setPurgeSel((prev) => ({ ...prev, [r.key]: e.target.checked }))
+                                        }
+                                      />
+                                      <span className={checked ? 'text-danger line-through' : 'text-(--color-text-secondary)'}>
+                                        {r.label}
+                                        {!purgeable && ' (always kept)'}
+                                      </span>
+                                    </label>
+                                    <span
+                                      className={`font-semibold tabular-nums ${
+                                        checked ? 'text-danger' : 'text-(--color-text-secondary)'
+                                      }`}
+                                    >
+                                      {r.count.toLocaleString()}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <GroupList rows={preserveRows} tone="safe" />
+                          )}
                         </Section>
                       )}
 
@@ -317,6 +429,13 @@ export default function ImpactDeleteModal({
                         </Section>
                       )}
                     </div>
+
+                    {purgedCount > 0 && (
+                      <div className="rounded-xl bg-[rgba(var(--color-danger-rgb),0.1)] border border-[rgba(var(--color-danger-rgb),0.2)] p-3 mt-4 text-xs text-danger leading-relaxed">
+                        {purgedCount.toLocaleString()} financial record(s) will be permanently deleted with this.
+                        Your revenue and expense reports will no longer include them. This cannot be undone.
+                      </div>
+                    )}
 
                     {needsTypedConfirm && (
                       <div className="mt-5">

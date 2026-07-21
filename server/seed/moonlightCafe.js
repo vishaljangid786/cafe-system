@@ -213,6 +213,7 @@ const seedMoonlightCafe = async () => {
       role: 'branch_admin',
       aadharNumber: nextAadhar(),
       permissions: BRANCH_ADMIN_PERMS,
+      monthlySalary: 38000 + b * 2000,
     }));
 
     for (let s = 0; s < STAFF_NAMES[b].length; s += 1) {
@@ -227,7 +228,9 @@ const seedMoonlightCafe = async () => {
         role: 'staff',
         aadharNumber: nextAadhar(),
         permissions: STAFF_PERMS,
-        salary: 22000 + s * 1500,
+        // The User model's field is monthlySalary — `salary` would be silently
+        // dropped by strict mode, leaving payroll/salary pages empty.
+        monthlySalary: 22000 + s * 1500,
       }));
     }
 
@@ -243,7 +246,7 @@ const seedMoonlightCafe = async () => {
         role: 'chef',
         aadharNumber: nextAadhar(),
         permissions: STAFF_PERMS,
-        salary: 28000 + c * 2000,
+        monthlySalary: 28000 + c * 2000,
       }));
     }
   }

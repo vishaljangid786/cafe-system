@@ -11,6 +11,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Money } from '@/app/components/ui/Money';
 import { Truck, Package, Plus, Trash2, Check, X, Building2 } from 'lucide-react';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function ProcurementPage() {
   const { user } = useAuth();
@@ -217,6 +218,17 @@ export default function ProcurementPage() {
                             )}
                           </>
                         )}
+                        {/* Cancel reverses a pending PO; delete erases the record. A
+                            received PO already moved stock, so the server restricts it. */}
+                        <RowDeleteButton
+                          actionKey="procurement.delete"
+                          endpoint={`/purchase-orders/${po._id}`}
+                          label={`this ${po.supplier?.name || 'supplier'} order`}
+                          description="A received order has already moved stock and money — cancel it instead of deleting. The server will say so if that applies here."
+                          onDeleted={load}
+                          size={14}
+                          className="p-2!"
+                        />
                       </div>
                     </div>
                   ))}
@@ -253,6 +265,15 @@ export default function ProcurementPage() {
                         <p className="text-xs font-medium text-(--color-text-primary)">{s.name}</p>
                         <p className="text-[10px] text-(--color-text-muted)">{[s.phone, s.gstin, s.paymentTerms].filter(Boolean).join(' · ') || '—'}</p>
                       </div>
+                      <RowDeleteButton
+                        actionKey="procurement.delete"
+                        endpoint={`/suppliers/${s._id}`}
+                        label={s.name}
+                        description="A supplier that still has purchase orders against it cannot be removed — the server will tell you how many to clear first."
+                        onDeleted={load}
+                        size={14}
+                        className="p-2!"
+                      />
                     </div>
                   ))}
                 </div>

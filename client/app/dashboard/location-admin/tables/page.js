@@ -336,7 +336,7 @@ export default function TablesPage() {
       fetchTables();
       toast.success('Table removed', { id: loadToast });
     } catch (error) {
-      toast.error('Could not delete the table. Please try again.', { id: loadToast });
+      toast.error(error.response?.data?.message || 'Could not delete the table. Please try again.', { id: loadToast, duration: 7000 });
     }
   };
 

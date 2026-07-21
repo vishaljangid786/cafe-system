@@ -9,6 +9,7 @@ const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 const { getIO } = require('../config/socket');
 const { enforceLocationAccess, clampLimit, scopedLocationId, endOfDay, escapeRegex } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 const { logActivity } = require('../utils/auditLogger');
 const { normalizePhone } = require('../utils/phone');
 const sendNotification = require('../utils/sendNotification');
@@ -322,29 +323,80 @@ const cancelOrder = asyncHandler(async (req, res) => {
 });
 
 // @desc    Delete order
+// @route   DELETE /api/orders/:id
 const deleteOrder = asyncHandler(async (req, res) => {
   const orderId = req.params.id;
-  const order = await Order.findById(orderId);
-  if (!order) {
-    res.status(404);
-    throw new Error('Order not found');
-  }
-  ensureOrderAccess(req, res, order);
-  
-  if (!['admin', 'super_admin'].includes(req.user.role)) {
-    res.status(403);
-    throw new Error('No permission to delete orders');
+  const order = requireRecord(res, await Order.findById(orderId), 'Order');
+
+  // The route already applied checkAction('orders.delete'), but middleware cannot
+  // know WHICH order the id resolves to. Re-checking here — after the document is
+  // loaded — is what stops an admin of branch A deleting branch B's order, and it
+  // survives the controller being reached by any future route or internal call.
+  assertCanDelete(req, res, {
+    resource: 'order',
+    actionKey: 'orders.delete',
+    locationId: order.branch,
+  });
+
+  // A COMPLETED order is a settled sale: the money was collected and booked as
+  // revenue. OrderService.deleteOrder refuses it outright (existing rule, kept as
+  // is) — surfacing it here turns that service-level throw into a specific 400
+  // that names the reversible alternative instead of a generic failure.
+  if (order.status === 'COMPLETED') {
+    res.status(400);
+    throw new Error(
+      `Order #${shortOrderId(order._id)} is completed and its revenue is already in the books. Refund it instead of deleting it — a refund reverses the revenue and keeps the sale on record.`
+    );
   }
 
+  // Cascade decision: a revenue Transaction points back at this order via `orderId`,
+  // so deleting the order would leave money in the books referencing a sale nobody
+  // can open. Chosen handling — REFUSE for everyone except a super_admin (refunding
+  // is the reversible path and keeps the audit trail), and when a super_admin does
+  // force it, DELETE the paired transactions with the order rather than orphan them,
+  // recording the erased amount in the audit entry so the money is still traceable.
+  // Already-rejected rows are ignored: they are out of the books (that is what a
+  // refund does) and carry no live revenue.
+  const Transaction = require('../models/Transaction');
+  const revenueTxns = await Transaction.find({
+    orderId: order._id,
+    type: 'REVENUE',
+    status: { $ne: 'rejected' },
+  }).select('_id totalAmount').lean();
+
+  if (revenueTxns.length && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      `Order #${shortOrderId(order._id)} has been billed and its revenue is recorded. Refund it first (that reverses the revenue), then it can be deleted.`
+    );
+  }
+
+  // Active (not cancelled/rejected/completed) orders are safe to delete: the service
+  // restores the reserved stock, returns the coupon use and decrements the table's
+  // active-order counter, so nothing is left dangling behind them.
   await OrderService.deleteOrder(orderId, req.user.role);
 
-  await sendNotification({
-    title: 'Order Deleted',
-    message: `Order #${shortOrderId(orderId)} was deleted by ${req.user.name}.`,
+  const erasedRevenue = revenueTxns.reduce((sum, t) => sum + (Number(t.totalAmount) || 0), 0);
+  if (revenueTxns.length) {
+    await Transaction.deleteMany({ _id: { $in: revenueTxns.map((t) => t._id) } });
+  }
+
+  await announceDeletion(req, {
+    resource: 'Order',
+    name: `#${shortOrderId(order._id)}`,
+    locationId: order.branch,
+    action: 'ORDER_DELETE',
     type: 'order_action',
     priority: 'high',
-    performedByUser: req.user,
-    locationId: order.branch,
+    detail: revenueTxns.length
+      ? `Its booked revenue (${erasedRevenue}) was removed with it.`
+      : '',
+    metadata: {
+      orderId: String(order._id),
+      status: order.status,
+      totalAmount: order.totalAmount,
+      revenueRemoved: erasedRevenue,
+    },
   });
 
   res.json({ success: true, message: 'Order deleted from system' });

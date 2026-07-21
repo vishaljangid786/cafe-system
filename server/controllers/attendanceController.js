@@ -1,10 +1,12 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const Location = require('../models/Location');
+const Payroll = require('../models/Payroll');
 const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 const sendNotification = require('../utils/sendNotification');
 const { enforceLocationAccess, canAccessLocation, clampLimit, escapeRegex, scopedLocationId, userLocationIds } = require('../utils/accessControl');
+const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 const { getSettings, num } = require('../utils/settings');
 
 // Helper to validate date format (YYYY-MM-DD)
@@ -392,6 +394,106 @@ const checkOut = asyncHandler(async (req, res) => {
   res.json({ success: true, data: attendance });
 });
 
+// Payroll rows in these states are settled money-or-proof: FINAL_APPROVED is the
+// signed-off figure and PAID means the salary is already on the ledger as an
+// Expense. The attendance behind them is the evidence for that amount.
+const SETTLED_PAYROLL_STATUSES = ['FINAL_APPROVED', 'PAID'];
+// A payroll still in one of these states is a draft that generatePayroll may
+// overwrite in place (it upserts), so a deleted mark is picked up simply by
+// recalculating the month — nothing to clean up.
+const REGENERABLE_PAYROLL_STATUSES = ['PENDING_APPROVAL', 'PENDING_BRANCH_APPROVAL', 'REJECTED'];
+
+// @desc    Delete a single attendance mark
+// @route   DELETE /api/attendance/:id
+// @access  Private (attendance.delete)
+const deleteAttendance = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    res.status(400);
+    throw new Error('That attendance id is not valid. Refresh the attendance list and try again.');
+  }
+
+  const attendance = await Attendance.findById(req.params.id).populate('user', 'name');
+  requireRecord(res, attendance, 'Attendance record');
+
+  // NOTE: no `ownerId` is passed on purpose. Everywhere else a self-service row may
+  // be removed by its owner, but here the owner is exactly the person with a motive
+  // to erase their own absent/late mark. Deleting a mark always requires
+  // attendance.delete AND reach over the record's branch.
+  assertCanDelete(req, res, {
+    resource: 'attendance record',
+    actionKey: 'attendance.delete',
+    locationId: attendance.locationId,
+  });
+
+  const staffId = attendance.user?._id || attendance.user;
+  const staffName = attendance.user?.name || 'this staff member';
+  const today = istDateStr();
+
+  // Mirrors the "Attendance Lockdown" already enforced in markAttendance: branch
+  // operators may only touch the CURRENT day. Removing an older mark is a
+  // retroactive payroll correction and has to go through an administrator.
+  if (['branch_admin', 'location_admin'].includes(req.user.role) && attendance.date !== today) {
+    res.status(403);
+    throw new Error(
+      `Attendance Lockdown: branch operators can only delete marks for the current day (${today}). Ask an administrator to remove the ${attendance.date} record for ${staffName}.`
+    );
+  }
+
+  // Attendance is the input to payroll, and Payroll.month is YYYY-MM while
+  // Attendance.date is YYYY-MM-DD — so the month is the date's prefix.
+  const month = String(attendance.date).slice(0, 7);
+  const payroll = await Payroll.findOne({ user: staffId, month });
+
+  // Proof guard: a settled payroll is a statement of what this person was paid for
+  // the month. Deleting a day out from under it makes the paid figure impossible to
+  // reconstruct, so the month must be reopened (reject → regenerate) first. A
+  // super_admin may still force it — they are the ones who fix genuine mistakes.
+  if (payroll && SETTLED_PAYROLL_STATUSES.includes(payroll.status) && req.user.role !== 'super_admin') {
+    res.status(400);
+    throw new Error(
+      `Payroll for ${month} is already ${payroll.status === 'PAID' ? 'paid' : 'approved'} for ${staffName}. Reopen that payroll first (reject it, then recalculate the month) before deleting this attendance mark.`
+    );
+  }
+
+  // Cascade decision: we do NOT touch the Payroll row. A draft payroll is upserted
+  // on the next "Calculate Monthly Salary" run, so it self-heals; deleting it here
+  // would throw away any manual adjustments an admin had already applied. Rows that
+  // are mid-approval (or forced through by a super_admin) cannot be regenerated in
+  // place, so instead of silently leaving a stale figure we say so in the
+  // notification below and let the approver reject + recalculate.
+  const payrollNote = payroll
+    ? (REGENERABLE_PAYROLL_STATUSES.includes(payroll.status)
+      ? `Recalculate the ${month} payroll for ${staffName} so the draft picks this up.`
+      : `The ${month} payroll for ${staffName} is ${payroll.status.replace(/_/g, ' ').toLowerCase()} and will NOT update by itself — reject it and recalculate the month.`)
+    : '';
+
+  await attendance.deleteOne();
+
+  await announceDeletion(req, {
+    resource: 'Attendance record',
+    name: `${staffName} — ${attendance.date} (${attendance.status})`,
+    locationId: attendance.locationId,
+    action: 'ATTENDANCE_DELETE',
+    type: 'user_action',
+    // The staff member is not a manager, so the normal fan-out would never reach
+    // them — and this changes their pay, so they must be told directly.
+    notifyUserIds: staffId ? [staffId] : [],
+    detail: payrollNote,
+    metadata: {
+      userId: staffId ? String(staffId) : null,
+      date: attendance.date,
+      status: attendance.status,
+      payrollMonth: month,
+      payrollStatus: payroll?.status || null,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Attendance record removed',
+  });
+});
+
 module.exports = {
   markAttendance,
   getLocationAttendance,
@@ -400,4 +502,5 @@ module.exports = {
   getMyAttendance,
   checkIn,
   checkOut,
+  deleteAttendance,
 };

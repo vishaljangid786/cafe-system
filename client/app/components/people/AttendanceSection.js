@@ -19,6 +19,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useCan } from '@/app/hooks/usePermissions';
 import useBranchScope from '@/app/hooks/useBranchScope';
 import { displayUserName } from '@/app/utils/userDisplay';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function AttendanceSection() {
   const dateInputRef = useRef(null);
@@ -129,6 +130,17 @@ export default function AttendanceSection() {
       toast.error(error.response?.data?.message || 'Could not mark attendance. Please try again.', { id: loadToast });
     } finally {
       setMarkingLoading(false);
+    }
+  };
+
+  // Reload just the logs table — used after a row is deleted, so the marking grid
+  // above it also reflects the record going away.
+  const refreshLogs = async () => {
+    try {
+      const attRes = await api.get(attendanceUrl);
+      setAttendance(attRes.data.data);
+    } catch (error) {
+      console.error('Could not refresh attendance logs');
     }
   };
 
@@ -458,18 +470,19 @@ export default function AttendanceSection() {
                     <th className="px-5 py-4">Location</th>
                     <th className="px-5 py-4">Status</th>
                     <th className="px-5 py-4">Marked By</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-(--color-border)">
                   {refetching ? (
                     <tr>
-                      <td colSpan="4" className="p-0">
-                        <TableSkeleton rows={6} cols={4} />
+                      <td colSpan="5" className="p-0">
+                        <TableSkeleton rows={6} cols={5} />
                       </td>
                     </tr>
                   ) : attendance.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-5 py-12 text-center text-(--color-text-muted) font-medium">No attendance records found for this date.</td>
+                      <td colSpan="5" className="px-5 py-12 text-center text-(--color-text-muted) font-medium">No attendance records found for this date.</td>
                     </tr>
                   ) : (
                     attendance.map((record) => (
@@ -517,6 +530,18 @@ export default function AttendanceSection() {
                         </td>
                          <td className="px-5 py-4">
                            <p className="text-xs text-(--color-text-muted)">{displayUserName(record.markedBy, 'Auto')}</p>
+                         </td>
+                         <td className="px-5 py-4">
+                           <div className="flex justify-end">
+                             <RowDeleteButton
+                               actionKey="attendance.delete"
+                               endpoint={`/attendance/${record._id}`}
+                               label={`${displayUserName(record.user, 'this')}'s ${record.status} mark`}
+                               description="Attendance feeds payroll, so removing a mark changes what this person is owed. They are notified. If the month's payroll is already approved or paid, the server will refuse."
+                               onDeleted={refreshLogs}
+                               size={16}
+                             />
+                           </div>
                          </td>
                       </tr>
                     ))

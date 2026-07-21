@@ -10,6 +10,7 @@ import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContaine
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Users, Clock, Plus, Check, X, UserX } from 'lucide-react';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function WaitlistPage() {
   const { user } = useAuth();
@@ -136,13 +137,25 @@ export default function WaitlistPage() {
                         </p>
                       </div>
                     </div>
-                    {can(user, 'waitlist.modify') && (
                     <div className="flex items-center gap-2">
-                      <button disabled={busy} onClick={() => act(e._id, 'seated')} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[11px] font-medium rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Seat</button>
-                      <button disabled={busy} onClick={() => act(e._id, 'no-show')} className="flex items-center gap-1 px-3 py-2 bg-amber-500/10 text-amber-500 text-[11px] font-medium rounded-lg border border-amber-500/20 hover:bg-amber-500 hover:text-white disabled:opacity-50"><UserX size={12} /> No-show</button>
-                      <button disabled={busy} onClick={() => act(e._id, 'cancelled')} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[11px] font-medium rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50"><X size={12} /></button>
+                      {can(user, 'waitlist.modify') && (
+                        <>
+                          <button disabled={busy} onClick={() => act(e._id, 'seated')} className="flex items-center gap-1 px-3 py-2 bg-success/10 text-success text-[11px] font-medium rounded-lg border border-success/20 hover:bg-success hover:text-white disabled:opacity-50"><Check size={12} /> Seat</button>
+                          <button disabled={busy} onClick={() => act(e._id, 'no-show')} className="flex items-center gap-1 px-3 py-2 bg-amber-500/10 text-amber-500 text-[11px] font-medium rounded-lg border border-amber-500/20 hover:bg-amber-500 hover:text-white disabled:opacity-50"><UserX size={12} /> No-show</button>
+                          <button disabled={busy} onClick={() => act(e._id, 'cancelled')} className="flex items-center gap-1 px-3 py-2 bg-danger/10 text-danger text-[11px] font-medium rounded-lg border border-danger/20 hover:bg-danger hover:text-white disabled:opacity-50" title="Cancel"><X size={12} /></button>
+                        </>
+                      )}
+                      {/* Cancel keeps the entry for the day's report; delete erases it. */}
+                      <RowDeleteButton
+                        actionKey="waitlist.delete"
+                        endpoint={`/waitlist/${e._id}`}
+                        label={`${e.customerName}'s waitlist entry`}
+                        description="This erases the entry entirely. To keep it in today's record, use Cancel or No-show instead."
+                        onDeleted={load}
+                        size={14}
+                        className="p-2!"
+                      />
                     </div>
-                    )}
                   </div>
                 );
               })}

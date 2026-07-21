@@ -6,8 +6,11 @@
 // two calls — never because the two disagree about what a cascade means.
 //
 // Invariant enforced here and nowhere else: entries marked 'preserve' are
-// counted and reported, but their `exec` is never invoked. There is no flag,
-// including `force`, that turns a preserve into a delete.
+// counted and reported, and their rows are never touched by a cascade or by
+// `force`. The ONLY path that deletes them is `executePreservePurge`, which
+// requires the operator (a super_admin — controllers enforce that) to name
+// each group explicitly via `purgeKeys`. Entries with `purgeable: false`
+// (audit logs) are excluded even from that.
 
 const mongoose = require('mongoose');
 const {
@@ -36,6 +39,9 @@ const countDependents = async (entries, ids) => {
         key: entry.key,
         label: entry.label,
         disposition: entry.disposition,
+        // Lets the dialog offer a per-group "delete this too" checkbox for
+        // preserve rows — audit logs (purgeable:false) never get one.
+        purgeable: entry.disposition === 'preserve' ? entry.purgeable !== false : undefined,
         count,
       };
     })
@@ -43,6 +49,32 @@ const countDependents = async (entries, ids) => {
 
   // Empty relationships are noise in a confirmation dialog.
   return rows.filter((r) => r.count > 0);
+};
+
+/**
+ * Hard-delete the preserve groups the operator explicitly named. Deletion uses
+ * the exact same `filter` the preview counted with, so the dialog's numbers are
+ * the numbers that die. Keys that aren't preserve entries, or that are marked
+ * purgeable:false, are silently dropped — there is no way to reach audit logs
+ * through here.
+ */
+const executePreservePurge = async (entries, ids, purgeKeys = []) => {
+  const roots = asArray(ids);
+  const keys = new Set(asArray(purgeKeys).map(String));
+  const performed = [];
+  if (!roots.length || !keys.size) return performed;
+
+  for (const entry of entries) {
+    if (entry.disposition !== 'preserve') continue;
+    if (entry.purgeable === false) continue;
+    if (!keys.has(entry.key)) continue;
+
+    const res = await M(MODEL_FOR_KEY[entry.key]).deleteMany(entry.filter(roots));
+    if (res.deletedCount > 0) {
+      performed.push({ key: entry.key, label: entry.label, disposition: 'purged', count: res.deletedCount });
+    }
+  }
+  return performed;
 };
 
 /**
@@ -171,9 +203,15 @@ const locationUserFilter = (ids) => ({
 
 const previewLocationImpact = async (locationIds) => {
   const ids = asArray(locationIds);
-  const [rows, staffCount] = await Promise.all([
+  const [rows, staffCount, targets] = await Promise.all([
     countDependents(LOCATION_DEPENDENTS, ids),
     M('User').countDocuments(locationUserFilter(ids)),
+    // Live branches the people could be shifted to instead of being deleted.
+    M('Location')
+      .find({ _id: { $nin: ids }, isPermanentlyDeleted: { $ne: true }, status: { $ne: 'deleted' } })
+      .select('name city')
+      .limit(200)
+      .lean(),
   ]);
 
   return {
@@ -181,20 +219,26 @@ const previewLocationImpact = async (locationIds) => {
     detach: rows.filter((r) => r.disposition === 'detach'),
     preserve: rows.filter((r) => r.disposition === 'preserve'),
     staffCount,
+    reassignTargets: targets.map((t) => ({ id: String(t._id), name: t.name, city: t.city })),
   };
 };
 
 /**
  * Permanently remove branches and everything that only exists because of them.
- * Financial history stays put and keeps pointing at the (now absent) branch id;
- * report screens resolve that to "Removed branch" rather than breaking.
+ * Financial history stays put by default and keeps pointing at the (now absent)
+ * branch id; report screens resolve that to "Removed branch" rather than
+ * breaking. Groups explicitly named in `purgeKeys` are hard-deleted instead.
  */
-const executeLocationPurge = async (locationIds, { actorId, staffMode = 'detach' } = {}) => {
+const executeLocationPurge = async (
+  locationIds,
+  { actorId, staffMode = 'detach', staffTargetLocationId = null, purgeKeys = [] } = {}
+) => {
   const ids = asArray(locationIds);
   if (!ids.length) return { performed: [], staffAffected: 0 };
 
   const performed = await executeDependents(LOCATION_DEPENDENTS, ids);
-  const staffAffected = await disposeLocationUsers(ids, { actorId, staffMode });
+  performed.push(...(await executePreservePurge(LOCATION_DEPENDENTS, ids, purgeKeys)));
+  const staffAffected = await disposeLocationUsers(ids, { actorId, staffMode, staffTargetLocationId });
 
   // Stage 2 of the branch lifecycle, which the original two-stage design
   // declared but never implemented. The row itself is kept so historical
@@ -209,10 +253,16 @@ const executeLocationPurge = async (locationIds, { actorId, staffMode = 'detach'
 
 /**
  * What happens to the people attached to a branch that is going away.
- *   'detach' — they survive; the dead branch is pulled from their access lists.
- *   'delete' — they are soft-deleted alongside it.
+ *   'detach'   — they survive; the dead branch is pulled from their access
+ *                lists and each person auto-moves to another branch they can
+ *                already reach (when they have one).
+ *   'reassign' — they survive and EVERYONE is shifted to the specific branch
+ *                the operator chose (`staffTargetLocationId`). Branch-level
+ *                roles must always have a branch, so this is the explicit
+ *                "move my team there" path.
+ *   'delete'   — they are soft-deleted alongside it.
  */
-const disposeLocationUsers = async (locationIds, { actorId, staffMode }) => {
+const disposeLocationUsers = async (locationIds, { actorId, staffMode, staffTargetLocationId = null }) => {
   const ids = asArray(locationIds);
   const User = M('User');
 
@@ -221,6 +271,23 @@ const disposeLocationUsers = async (locationIds, { actorId, staffMode }) => {
     if (!victims.length) return 0;
     await softDeleteUsers(victims.map((v) => v._id), { actorId, reason: 'Branch removed' });
     return victims.length;
+  }
+
+  if (staffMode === 'reassign' && staffTargetLocationId) {
+    const affected = await User.find(locationUserFilter(ids)).select('_id').lean();
+    if (!affected.length) return 0;
+    const affectedIds = affected.map((u) => u._id);
+    // Point everyone at the chosen branch: primary assignment moves, dead ids
+    // leave the access lists, and the target joins them so scope checks pass.
+    await User.updateMany(
+      { _id: { $in: affectedIds } },
+      { $pull: { accessibleLocations: { $in: ids } } }
+    );
+    await User.updateMany(
+      { _id: { $in: affectedIds } },
+      { $set: { assignedLocation: staffTargetLocationId }, $addToSet: { accessibleLocations: staffTargetLocationId } }
+    );
+    return affectedIds.length;
   }
 
   await User.updateMany(
@@ -270,7 +337,7 @@ const previewCafeImpact = async (cafeId) => {
     countDependents(CAFE_DEPENDENTS, [cafeId]),
     branchIds.length
       ? previewLocationImpact(branchIds)
-      : Promise.resolve({ cascade: [], detach: [], preserve: [], staffCount: 0 }),
+      : Promise.resolve({ cascade: [], detach: [], preserve: [], staffCount: 0, reassignTargets: [] }),
     M('User').countDocuments({ cafes: cafeId, deletedAt: null, role: { $ne: 'super_admin' } }),
   ]);
 
@@ -294,18 +361,25 @@ const previewCafeImpact = async (cafeId) => {
     cascade: merge(cafeRows.filter((r) => r.disposition === 'cascade'), branchImpact.cascade),
     detach: merge(cafeRows.filter((r) => r.disposition === 'detach'), branchImpact.detach),
     preserve: merge(cafeRows.filter((r) => r.disposition === 'preserve'), branchImpact.preserve),
+    // The cafe's own branches die with it, so people can only be shifted to a
+    // branch of ANOTHER cafe (previewLocationImpact already excluded these ids).
+    reassignTargets: branchImpact.reassignTargets || [],
   };
 };
 
 /**
  * Force-delete a cafe: its branches, their configuration, and optionally its
- * people. Money and audit rows survive by construction.
+ * people. Money rows survive by default; groups named in `purgeKeys` are
+ * hard-deleted. Audit rows survive every path.
  */
-const executeCafePurge = async (cafeId, { actorId, staffMode = 'detach' } = {}) => {
+const executeCafePurge = async (
+  cafeId,
+  { actorId, staffMode = 'detach', staffTargetLocationId = null, purgeKeys = [] } = {}
+) => {
   const branchIds = await liveBranchIds([cafeId]);
 
   const branchResult = branchIds.length
-    ? await executeLocationPurge(branchIds, { actorId, staffMode })
+    ? await executeLocationPurge(branchIds, { actorId, staffMode, staffTargetLocationId, purgeKeys })
     : { performed: [], staffAffected: 0 };
 
   const performed = await executeDependents(CAFE_DEPENDENTS, [cafeId]);
@@ -317,6 +391,18 @@ const executeCafePurge = async (cafeId, { actorId, staffMode = 'detach' } = {}) 
       .lean();
     if (admins.length) {
       await softDeleteUsers(admins.map((a) => a._id), { actorId, reason: 'Cafe removed' });
+    }
+  }
+  // When the people are shifted to a branch of another cafe, its admins must
+  // land inside that cafe too — an admin without a cafe violates the scope
+  // model, and their branch access alone wouldn't grant cafe membership.
+  if (staffMode === 'reassign' && staffTargetLocationId) {
+    const targetBranch = await M('Location').findById(staffTargetLocationId).select('cafe').lean();
+    if (targetBranch?.cafe) {
+      await User.updateMany(
+        { cafes: cafeId, deletedAt: null },
+        { $addToSet: { cafes: targetBranch.cafe } }
+      );
     }
   }
   // Always drop the membership, even when the person is kept: a live pointer to
@@ -376,6 +462,7 @@ const softDeleteUsers = async (userIds, { actorId = null, reason = '' } = {}) =>
 module.exports = {
   countDependents,
   executeDependents,
+  executePreservePurge,
   previewUserImpact,
   previewLocationImpact,
   previewCafeImpact,

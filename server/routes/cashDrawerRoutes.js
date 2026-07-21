@@ -6,6 +6,7 @@ const {
   addMovement,
   closeDrawer,
   getDrawerHistory,
+  deleteSession,
 } = require('../controllers/cashDrawerController');
 const { verifyToken, checkPermissions, checkAnyPermission, checkAction } = require('../middlewares/authMiddleware');
 
@@ -22,5 +23,10 @@ router.post('/:id/close', checkAction('cashdrawer.modify'), closeDrawer);
 
 // Z-report history is financial reporting.
 router.get('/', checkPermissions('viewRevenue'), getDrawerHistory);
+
+// Removing a shift erases a cash reconciliation, so it is gated separately from the
+// cashier writes above. The controller re-checks the action AND branch scope, and
+// refuses an open drawer outright / limits closed shifts to super admins.
+router.delete('/:id', checkAction('cashdrawer.delete'), deleteSession);
 
 module.exports = router;

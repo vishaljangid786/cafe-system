@@ -8,6 +8,7 @@ import { PageTransition, SlideIn } from '../../../components/ui/AnimatedContaine
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { Money } from '@/app/components/ui/Money';
 import { Gift, Plus, Search, IndianRupee } from 'lucide-react';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function GiftCardsPage() {
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,18 @@ export default function GiftCardsPage() {
                     <p className="text-xs font-medium text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[11px]">· {c.issuedToName || 'guest'}</span></p>
                     <p className="text-[11px] text-(--color-text-muted)">Issued <Money value={c.initialBalance} /> · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}><Money value={c.balance} /></span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}><Money value={c.balance} /></span>
+                    <RowDeleteButton
+                      actionKey="giftcards.delete"
+                      endpoint={`/gift-cards/${c._id}`}
+                      label={`gift card ${c.code}`}
+                      description="A card still carrying a balance is money owed to the customer, so it cannot simply be erased — the server will say so if this one still has value left."
+                      onDeleted={load}
+                      size={14}
+                      className="p-2!"
+                    />
+                  </div>
                 </div>
               ))}
             </div>

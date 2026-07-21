@@ -528,7 +528,10 @@ const getUserDeleteImpact = asyncHandler(async (req, res) => {
     status: { $nin: ['SERVED', 'COMPLETED', 'CANCELLED', 'REJECTED'] },
   });
 
-  res.json({ success: true, data: { ...impact, activeOrders } });
+  // Only a super_admin gets the "delete their data too" checkboxes.
+  const canPurge = req.user.role === 'super_admin';
+
+  res.json({ success: true, data: { ...impact, activeOrders, canPurge } });
 });
 
 // @desc    Remove a user
@@ -558,6 +561,16 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (mode === 'cascade' && req.user.role !== 'super_admin') {
     res.status(403);
     throw new Error('Only a Super Admin can delete a user along with their team');
+  }
+
+  // Optional hard-delete of the person's records (orders they took, revenue
+  // entries, expenses, attendance, payroll…). Each group must be named
+  // explicitly; leaving this empty keeps every record, re-attributed to
+  // "<name> (removed)". Super admin only — nobody else can destroy history.
+  const purgeKeys = Array.isArray(req.body?.purgeKeys) ? req.body.purgeKeys.map(String) : [];
+  if (purgeKeys.length && req.user.role !== 'super_admin') {
+    res.status(403);
+    throw new Error("Only a Super Admin can delete a user's records along with them");
   }
 
   const force = req.body?.force === true || req.query?.force === 'true';
@@ -633,13 +646,15 @@ const deleteUser = asyncHandler(async (req, res) => {
     await replacement.save({ validateModifiedOnly: true });
   }
 
+  let cascadedIds = [];
   if (mode === 'cascade') {
     const subordinates = await findSubordinates(user);
     if (subordinates.length) {
-      cascadedCount = await softDeleteUsers(
-        subordinates.map((s) => s._id),
-        { actorId: req.user._id, reason: `Team of ${userName} removed` }
-      );
+      cascadedIds = subordinates.map((s) => s._id);
+      cascadedCount = await softDeleteUsers(cascadedIds, {
+        actorId: req.user._id,
+        reason: `Team of ${userName} removed`,
+      });
     }
   }
 
@@ -648,11 +663,23 @@ const deleteUser = asyncHandler(async (req, res) => {
     reason: String(req.body?.reason || '').slice(0, 200),
   });
 
+  // Hard-delete the explicitly chosen record groups — for the person and, on a
+  // cascade, for their removed team as well (their records go by the same
+  // choice; keeping a deleted team's orders while purging the lead's would
+  // leave a half-erased trail nobody asked for).
+  let purged = [];
+  if (purgeKeys.length) {
+    const { executePreservePurge } = require('../services/cascadeDelete');
+    const { USER_DEPENDENTS } = require('../services/dependencyGraph');
+    purged = await executePreservePurge(USER_DEPENDENTS, [userId, ...cascadedIds], purgeKeys);
+  }
+  const purgedTotal = purged.reduce((s, r) => s + r.count, 0);
+
   const { logSecurityAction } = require('../utils/auditLogger');
   await logSecurityAction(
     req,
     'USER_DELETED',
-    { userName, mode, cascadedCount, replacement: replacement?.name || null, forced: activeOrders > 0 },
+    { userName, mode, cascadedCount, replacement: replacement?.name || null, forced: activeOrders > 0, purged },
     userId,
     'User'
   );
@@ -660,6 +687,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   let message = `${userName} was removed`;
   if (mode === 'reassign') message += `, and ${replacement.name} took over as ${user.role.replace(/_/g, ' ')}`;
   if (mode === 'cascade') message += ` along with ${cascadedCount} team member(s)`;
+  if (purgedTotal > 0) message += `. ${purgedTotal} of their record(s) were permanently deleted`;
 
   await sendNotification({
     title: 'User Removed',
@@ -672,7 +700,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message,
-    data: { mode, cascadedCount, replacementId: replacement?._id || null },
+    data: { mode, cascadedCount, replacementId: replacement?._id || null, purged },
   });
 });
 

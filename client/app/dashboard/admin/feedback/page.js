@@ -10,6 +10,7 @@ import Modal from '../../../components/ui/Modal';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Star, MessageSquare, Link2, Copy, QrCode, Download } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 
 export default function FeedbackPage() {
   const { user } = useAuth();
@@ -178,7 +179,18 @@ export default function FeedbackPage() {
                       {[1, 2, 3, 4, 5].map((n) => <Star key={n} size={13} className={f.rating >= n ? 'text-amber-400 fill-amber-400' : 'text-(--color-border)'} />)}
                       <span className="text-[11px] font-medium text-(--color-text-primary) ml-2">{f.customerName || 'Guest'}</span>
                     </div>
-                    <span className="text-[9px] text-(--color-text-muted)">{new Date(f.createdAt).toLocaleDateString('en-IN')}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-(--color-text-muted)">{new Date(f.createdAt).toLocaleDateString('en-IN')}</span>
+                      <RowDeleteButton
+                        actionKey="feedback.delete"
+                        endpoint={`/feedback/${f._id}`}
+                        label={`${f.customerName || 'this guest'}'s feedback`}
+                        description="Removing feedback changes this branch's rating average. The deletion itself is recorded in the audit log."
+                        onDeleted={load}
+                        size={13}
+                        className="p-1.5!"
+                      />
+                    </div>
                   </div>
                   {f.comment && <p className="text-xs text-(--color-text-secondary) mt-1.5">{f.comment}</p>}
                 </div>

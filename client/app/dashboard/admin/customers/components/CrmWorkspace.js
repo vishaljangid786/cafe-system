@@ -10,6 +10,7 @@ import { Money, Num } from '@/app/components/ui/Money';
 import { StatGridSkeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
 import ExportActions from '@/app/components/ui/ExportActions';
 import Customer360Drawer from './Customer360Drawer';
+import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 import DiscountSettingsModal from './DiscountSettingsModal';
 import BirthdayCampaignModal from './BirthdayCampaignModal';
 
@@ -245,8 +246,8 @@ export default function CrmWorkspace() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                  {['Customer', 'Status', 'Cafes', 'Orders', 'Spend', 'Last visit'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-(--color-text-muted) whitespace-nowrap">{h}</th>
+                  {['Customer', 'Status', 'Cafes', 'Orders', 'Spend', 'Last visit', ''].map((h, i) => (
+                    <th key={h || `actions-${i}`} className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-(--color-text-muted) whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -283,6 +284,17 @@ export default function CrmWorkspace() {
                       <td className="px-4 py-3 text-xs font-bold text-(--color-text-primary)"><Money value={c.totalSpend || 0} /></td>
                       <td className="px-4 py-3 text-[11px] text-(--color-text-muted) whitespace-nowrap">
                         {c.lastVisit ? new Date(c.lastVisit).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <RowDeleteButton
+                          actionKey="customers.delete"
+                          endpoint={`/customers/${c._id}`}
+                          label={c.name || 'this customer'}
+                          description="A customer profile is shared across cafes. Unless you are a Super Admin this removes only your cafe's membership — their orders are kept either way."
+                          onDeleted={load}
+                          size={15}
+                          className="p-2!"
+                        />
                       </td>
                     </tr>
                   );

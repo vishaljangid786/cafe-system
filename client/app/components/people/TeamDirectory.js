@@ -242,11 +242,11 @@ export default function TeamDirectory() {
     }
   };
 
-  const handleDelete = async ({ mode, replacementId }) => {
+  const handleDelete = async ({ mode, replacementId, purgeKeys }) => {
     if (!showDeleteConfirm) return;
     const loadToast = toast.loading('Removing staff record...');
     try {
-      const res = await api.delete(`/users/${showDeleteConfirm}`, { data: { mode, replacementId } });
+      const res = await api.delete(`/users/${showDeleteConfirm}`, { data: { mode, replacementId, purgeKeys } });
       // A cascade removes the team as well, so refetch instead of splicing one
       // row out of local state and leaving the rest of the list stale.
       if (mode === 'cascade' || mode === 'reassign') fetchStaff();

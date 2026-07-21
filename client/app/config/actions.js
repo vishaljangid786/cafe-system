@@ -47,6 +47,7 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Add', legacy: { roles: ['admin'], perms: [] } },
       { action: 'modify', label: 'Modify', legacy: { roles: ['admin', 'branch_admin'], perms: [] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin'], perms: [] } },
     ],
   },
   {
@@ -54,6 +55,7 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Add', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
       { action: 'modify', label: 'Modify', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
     ],
   },
   {
@@ -61,6 +63,7 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Open', legacy: { roles: [], perms: ['manageOrders'] } },
       { action: 'modify', label: 'Movements / Close', legacy: { roles: [], perms: ['manageOrders'] } },
+      { action: 'delete', label: 'Delete shift', legacy: { roles: ['admin'], perms: [] } },
     ],
   },
   {
@@ -68,6 +71,7 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Add', legacy: { roles: [], perms: ['manageOrders'] } },
       { action: 'modify', label: 'Modify', legacy: { roles: [], perms: ['manageOrders'] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: [], perms: ['manageOrders'] } },
     ],
   },
   {
@@ -83,6 +87,13 @@ export const ACTION_SCOPES = [
     actions: [
       { action: 'add', label: 'Issue', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
       { action: 'modify', label: 'Top-up', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
+      { action: 'delete', label: 'Void', legacy: { roles: ['admin'], perms: [] } },
+    ],
+  },
+  {
+    scope: 'feedback', pageKey: 'page_feedback', label: 'Feedback',
+    actions: [
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: [] } },
     ],
   },
 
@@ -95,6 +106,7 @@ export const ACTION_SCOPES = [
       { action: 'add', label: 'Add', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
       { action: 'modify', label: 'Modify / Refund', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
       { action: 'approve', label: 'Approve', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin', 'branch_admin'], perms: ['editRevenue'] } },
     ],
   },
   {
@@ -113,6 +125,7 @@ export const ACTION_SCOPES = [
     scope: 'attendance', pageKey: 'page_attendance', label: 'Attendance',
     actions: [
       { action: 'add', label: 'Mark', legacy: { roles: [], perms: ['manageStaff'] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: [], perms: ['manageStaff'] } },
     ],
   },
   {
@@ -121,6 +134,7 @@ export const ACTION_SCOPES = [
       { action: 'add', label: 'Generate', legacy: { roles: [], perms: ['manageStaff'] } },
       { action: 'modify', label: 'Adjust (deduct / bonus)', legacy: { roles: ['admin'], perms: [] } },
       { action: 'approve', label: 'Approve / Pay', legacy: { roles: [], perms: ['manageStaff'] } },
+      { action: 'delete', label: 'Delete', legacy: { roles: ['admin'], perms: [] } },
     ],
   },
 
@@ -149,6 +163,7 @@ export const ACTION_SCOPES = [
       { action: 'discount', label: 'Set new-customer discount', legacy: { roles: ['admin', 'branch_admin'], perms: [] } },
       { action: 'campaign', label: 'Generate birthday / offer coupons', legacy: { roles: ['admin'], perms: ['manageCoupons'] } },
       { action: 'export', label: 'Export customer report', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['exportReports'] } },
+      { action: 'delete', label: 'Delete customer profiles', legacy: { roles: ['admin'], perms: [] } },
     ],
   },
 ];
