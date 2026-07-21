@@ -74,6 +74,9 @@ const FEEDBACK_COMMENTS = [
 
 const EXPENSE_CATS = ['Inventory', 'Electricity', 'Water', 'Maintenance', 'Marketing', 'Rent'];
 
+// Expense.proofImage is a required field (every real expense has a receipt).
+const RECEIPT_PLACEHOLDER = 'https://placehold.co/600x800/1f2937/e5e7eb.png?text=Receipt';
+
 const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins, staff, chefs }) => {
   console.log('[seed] Moon Light history — starting.');
   const now = new Date();
@@ -262,6 +265,9 @@ const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins
       status: 'approved',
       type: 'EXPENSE',
       date: t.date,
+      // Required by the model — a real expense always carries its receipt, and
+      // the Expenses page renders this, so a placeholder keeps the demo honest.
+      proofImage: RECEIPT_PLACEHOLDER,
       createdBy: t.createdBy,
       createdAt: t.date,
       updatedAt: t.date,
