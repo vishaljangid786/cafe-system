@@ -205,6 +205,12 @@ app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/seed', seedRoutes);
 
+// Browser-visitable full demo seed: GET /seed shows a confirm page, its form
+// hits /seed/run which wipes and rebuilds the demo dataset (seed/data.js).
+// Guarded by the run=1 form flag + optional SEED_KEY env var.
+const { seedPage, runFullSeed } = require('./controllers/seedController');
+app.get('/seed', seedPage);
+app.get('/seed/run', runFullSeed);
 
 app.get('/', (req, res) => {
   res.json({ success: true, service: 'CafeOS API', health: '/healthz', readiness: '/readyz' });

@@ -292,4 +292,98 @@ const renderHome = () => `<!DOCTYPE html>
 </body>
 </html>`;
 
-module.exports = { seedDatabase, seedStatus, renderHome };
+// ── Full demo seed (GET /seed) ───────────────────────────────────────────────
+// Browser-visitable reset for the hosted demo: runs seed/data.js, which DROPS
+// every collection and rebuilds the entire demo dataset. Because that is
+// destructive, a bare GET /seed never seeds — it renders a confirm page whose
+// form submits run=1 (so crawlers can't trigger it), and when a SEED_KEY env
+// var is configured the run also requires the matching key. No JS on the page:
+// helmet's default CSP blocks inline scripts, a plain form needs none.
+const { seedData } = require('../seed/data');
+
+const seedShell = (inner) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Seed — Cafe Management API</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:#0a0a0b; color:#e7e7ea; padding:24px; }
+  .card { width:100%; max-width:520px; background:#121214; border:1px solid #26262b; border-radius:20px;
+    padding:40px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  h1 { font-size:24px; margin:0 0 8px; letter-spacing:-.02em; }
+  p { color:#9a9aa3; font-size:14px; line-height:1.6; margin:0 0 16px; }
+  .warn { border:1px solid rgba(239,68,68,.35); background:rgba(239,68,68,.08); color:#fca5a5;
+    border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.55; margin:0 0 20px; }
+  .ok { border:1px solid rgba(34,197,94,.4); background:rgba(34,197,94,.08); color:#86efac;
+    border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.55; margin:0 0 20px; }
+  .counts { display:flex; gap:10px; margin:0 0 20px; flex-wrap:wrap; }
+  .counts span { background:#0e0e10; border:1px solid #26262b; border-radius:10px; padding:8px 12px;
+    font-size:12px; color:#9a9aa3; }
+  .counts b { color:#e7e7ea; }
+  input[type=password] { width:100%; background:#0e0e10; border:1px solid #26262b; border-radius:12px;
+    padding:13px 14px; color:#e7e7ea; font-size:14px; outline:none; margin:0 0 14px; }
+  input[type=password]:focus { border-color:#3b82f6; }
+  button { width:100%; border:0; border-radius:14px; padding:16px; font-size:13px; font-weight:800;
+    letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:.15s;
+    background:#3b82f6; color:#fff; }
+  button:hover { filter:brightness(1.08); }
+  a { color:#3b82f6; text-decoration:none; }
+  .muted { color:#6b6b73; font-size:11px; margin-top:18px; text-align:center; letter-spacing:.04em; }
+  code { background:#0e0e10; border:1px solid #26262b; border-radius:6px; padding:1px 6px; font-size:12px; }
+</style>
+</head>
+<body><div class="card">${inner}</div></body>
+</html>`;
+
+// GET /seed — confirm page with current DB counts and the run form.
+const seedPage = asyncHandler(async (req, res) => {
+  const [users, locations, transactions] = await Promise.all([
+    User.countDocuments(),
+    Location.countDocuments(),
+    Transaction.countDocuments(),
+  ]);
+  const needsKey = Boolean(process.env.SEED_KEY);
+  res.send(seedShell(`
+    <h1>Seed Demo Data</h1>
+    <p>Rebuilds the full demo dataset from <code>seed/data.js</code> — cafes, branches, users, menu, orders, attendance and payroll. All demo accounts use <code>password123</code>.</p>
+    <div class="counts">
+      <span>Users <b>${users}</b></span>
+      <span>Branches <b>${locations}</b></span>
+      <span>Transactions <b>${transactions}</b></span>
+    </div>
+    <div class="warn"><b>Warning:</b> this DELETES all existing data in every collection before seeding. It cannot be undone.</div>
+    <form method="GET" action="/seed/run">
+      <input type="hidden" name="run" value="1" />
+      ${needsKey ? '<input type="password" name="key" placeholder="Seed key (SEED_KEY)" required />' : ''}
+      <button type="submit">Seed Now — Reset Everything</button>
+    </form>
+    <div class="muted">${needsKey ? 'Protected by SEED_KEY.' : 'Tip: set a SEED_KEY env var to protect this page.'}</div>
+  `));
+});
+
+// GET /seed/run — executes the full seed. Needs run=1 (from the form) and the
+// SEED_KEY when one is configured.
+const runFullSeed = asyncHandler(async (req, res) => {
+  if (req.query.run !== '1') return res.redirect('/seed');
+  if (process.env.SEED_KEY && req.query.key !== process.env.SEED_KEY) {
+    return res.status(403).send(seedShell(`
+      <h1>Wrong key</h1>
+      <div class="warn">The seed key you entered doesn't match <code>SEED_KEY</code>.</div>
+      <p><a href="/seed">&larr; Try again</a></p>
+    `));
+  }
+  await seedData();
+  res.send(seedShell(`
+    <h1>Seeding complete ✓</h1>
+    <div class="ok">The demo dataset has been rebuilt. Log in on the client with any demo account — every account's password is <code>password123</code> (e.g. <code>super@cafeos.com</code>).</div>
+    <p><a href="/seed">&larr; Back to seed page</a></p>
+  `));
+});
+
+module.exports = { seedDatabase, seedStatus, renderHome, seedPage, runFullSeed };
