@@ -575,7 +575,7 @@ export default function TeamDirectory() {
 
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-semibold text-(--color-text-primary) tracking-tight">
-                    Staff <span className="text-primary">Team</span>
+                    All <span className="text-primary">Users</span>
                   </h1>
 
                   <p className="text-sm text-(--color-text-muted) mt-1 flex items-center gap-2">
@@ -760,7 +760,7 @@ export default function TeamDirectory() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                    <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Staff Member</th>
+                  <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Member Name</th>
                     <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Contact Info</th>
                     <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Role</th>
                     <th className="px-5 py-4 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">Branch</th>
