@@ -6,7 +6,8 @@ import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app
 import { todayInput } from '@/app/utils/dateInput';
 import { stateOptions } from '@/app/utils/indianStates';
 import { runValidation, required, email, phone, age, pincode, aadhaar, nonNegativeAmount, hasErrors, firstError } from '@/app/utils/validators';
-import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, UserX, Mail, Phone, MapPin, Edit3, Trash2, Shield, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
+import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, UserX, Mail, Phone, MapPin, Edit3, Trash2, Shield, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus, Eye } from 'lucide-react';
+import RowActionsMenu from './RowActionsMenu';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
 import Modal from '@/app/components/ui/Modal';
@@ -31,7 +32,7 @@ import UserPermissionEditor from '@/app/components/ui/UserPermissionEditor';
 // wrappers around this component — the server scopes GET /users per requester.
 export default function TeamDirectory() {
   const router = useRouter();
-  const { user: currentUser, locations: authLocations } = useAuth();
+  const { user: currentUser, locations: authLocations, impersonate } = useAuth();
   const canManageStaff = currentUser?.role === 'super_admin' || currentUser?.permissions?.manageStaff === true;
   // Block/Unblock + role/branch reassignment keep their historical admin/users reach.
   const isTopAdmin = ['super_admin', 'admin'].includes(currentUser?.role);
@@ -39,6 +40,11 @@ export default function TeamDirectory() {
   // (location_admin is barred from PUT /users/:id/permissions server-side).
   const canEditPermissions = ['super_admin', 'admin', 'branch_admin'].includes(currentUser?.role)
     && canViewPage(currentUser, 'page_permissions');
+  // "Login As" moved here from its own tab. The base right to impersonate at all;
+  // canImpersonateMember() then applies the same per-target hierarchy the old
+  // Login As page enforced (the server re-checks on every attempt).
+  const canImpersonateBase = ['super_admin', 'admin', 'branch_admin', 'location_admin'].includes(currentUser?.role)
+    || currentUser?.permissions?.impersonateUsers === true;
   const staffReportsBase = routeForPage(currentUser?.role, 'page_staffreports');
   const addMemberRoute = routeForPage(currentUser?.role, 'page_addmember');
 
@@ -66,6 +72,9 @@ export default function TeamDirectory() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [permissionUser, setPermissionUser] = useState(null); // row whose access is being edited
+  const [impersonateTarget, setImpersonateTarget] = useState(null); // row being logged-in-as (confirm popup)
+  const [notifyImpersonate, setNotifyImpersonate] = useState(true); // notify the user vs ghost mode
+  const [impersonating, setImpersonating] = useState(false);
   const [editRole, setEditRole] = useState('staff');
   const [editBranchIds, setEditBranchIds] = useState([]);
   const [editAssignedLocation, setEditAssignedLocation] = useState('');
@@ -284,6 +293,39 @@ export default function TeamDirectory() {
       member.accessibleLocations.forEach((loc) => ids.push(loc._id || loc));
     }
     return [...new Set(ids.filter(Boolean).map((id) => id.toString()))];
+  };
+
+  // Mirrors the old Login As page's hierarchy: who THIS actor may sign in as.
+  const canImpersonateMember = (member) => {
+    if (!canImpersonateBase || !member) return false;
+    if (member._id === currentUser?._id || member.isBlocked) return false; // never self, never blocked
+    const role = currentUser?.role;
+    if (role === 'super_admin') return true;
+    if (role === 'admin') return member.role !== 'super_admin';
+    if (role === 'branch_admin' || role === 'location_admin') {
+      if (!['staff', 'chef'].includes(member.role)) return false;
+      const mine = getMemberBranchIds(currentUser);
+      return mine.includes((member.assignedLocation?._id || member.assignedLocation)?.toString());
+    }
+    // A non-admin granted impersonateUsers may sign in as anyone but a super admin.
+    return member.role !== 'super_admin';
+  };
+
+  const doImpersonate = async () => {
+    const member = impersonateTarget;
+    if (!member) return;
+    setImpersonating(true);
+    toast.loading(`Logging in as ${member.name}...`, { id: 'impersonate' });
+    try {
+      const res = await impersonate(member._id, false, notifyImpersonate);
+      if (res?.success) toast.success(`Logged in as ${member.name}`, { id: 'impersonate' });
+      else toast.error(res?.message || 'Could not log in as this user', { id: 'impersonate' });
+    } catch (err) {
+      toast.error('Could not log in as this user', { id: 'impersonate' });
+    } finally {
+      setImpersonating(false);
+      setImpersonateTarget(null);
+    }
   };
 
   const toggleBranch = (nodeId) => {
@@ -781,76 +823,21 @@ export default function TeamDirectory() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <div className="flex justify-end gap-2 transition-opacity">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => { e.stopPropagation(); router.push(`${staffReportsBase}/${member._id}`); }}
-                            className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                            title="View report"
-                          >
-                            <Award size={18} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAttendanceStaff(member);
-                              setAttendanceDate(new Date().toISOString().split('T')[0]);
-                              setShowAttendanceModal(true);
-                            }}
-                            className="p-2.5 text-success hover:bg-success/10 rounded-xl transition-all"
-                            title="Mark attendance"
-                          >
-                            <UserCheck size={18} />
-                          </motion.button>
-                          {canEditPermissions && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => { e.stopPropagation(); setPermissionUser(member); }}
-                              className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                              title="Edit permissions"
-                            >
-                              <Shield size={18} />
-                            </motion.button>
-                          )}
-                          {isTopAdmin && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => { e.stopPropagation(); handleToggleBlock(member); }}
-                              className={`p-2.5 rounded-xl transition-all ${member.isBlocked
-                                ? 'text-success hover:bg-success/10'
-                                : 'text-(--color-text-muted) hover:text-danger hover:bg-danger/10'}`}
-                              title={member.isBlocked ? 'Unblock user' : 'Block user'}
-                            >
-                              {member.isBlocked ? <UserCheck size={18} /> : <UserX size={18} />}
-                            </motion.button>
-                          )}
-                          {canManageStaff && (
-                            <>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                                className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                                title="Edit details"
-                              >
-                                <Edit3 size={18} />
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
-                                className="p-2.5 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-xl transition-all"
-                                title="Remove staff member"
-                              >
-                                <Trash2 size={18} />
-                              </motion.button>
-                            </>
-                          )}
+                        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                          {/* All row actions collapse into one floating ⋮ menu. Each
+                              item is shown only to a viewer permitted to use it. */}
+                          <RowActionsMenu
+                            items={[
+                              { key: 'view', icon: Info, label: 'View details', onClick: () => handleViewStaff(member) },
+                              { key: 'report', icon: Award, label: 'View report', onClick: () => router.push(`${staffReportsBase}/${member._id}`) },
+                              { key: 'loginas', icon: Eye, label: 'Login as user', show: canImpersonateMember(member), onClick: () => { setNotifyImpersonate(true); setImpersonateTarget(member); } },
+                              { key: 'attendance', icon: UserCheck, label: 'Mark attendance', onClick: () => { setAttendanceStaff(member); setAttendanceDate(new Date().toISOString().split('T')[0]); setShowAttendanceModal(true); } },
+                              { key: 'permissions', icon: Shield, label: 'Edit permissions', show: canEditPermissions, onClick: () => setPermissionUser(member) },
+                              { key: 'block', icon: member.isBlocked ? UserCheck : UserX, label: member.isBlocked ? 'Unblock user' : 'Block user', show: isTopAdmin, danger: !member.isBlocked, onClick: () => handleToggleBlock(member) },
+                              { key: 'edit', icon: Edit3, label: 'Edit details', show: canManageStaff, onClick: () => handleEdit(member) },
+                              { key: 'delete', icon: Trash2, label: 'Remove staff member', show: canManageStaff, danger: true, onClick: () => setShowDeleteConfirm(member._id) },
+                            ]}
+                          />
                         </div>
                       </td>
                     </motion.tr>
@@ -1337,6 +1324,64 @@ export default function TeamDirectory() {
           targetUser={permissionUser}
           onSaved={fetchStaff}
         />
+
+        {/* Login As confirm — replaces the old Login As tab. Choose whether the
+            user is notified (transparency) or signed into silently (ghost mode). */}
+        <Modal
+          isOpen={!!impersonateTarget}
+          onClose={() => { if (!impersonating) setImpersonateTarget(null); }}
+          title="Log in as user"
+          maxWidth="max-w-md"
+        >
+          {impersonateTarget && (
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
+                <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-semibold shrink-0">
+                  {impersonateTarget.name?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-(--color-text-primary) truncate">{impersonateTarget.name}</p>
+                  <p className="text-xs text-(--color-text-muted) truncate">{impersonateTarget.email}</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setNotifyImpersonate((v) => !v)}
+                className={`rounded-xl p-4 border flex items-center justify-between gap-4 cursor-pointer transition-colors ${notifyImpersonate ? 'border-primary/40 bg-primary/5' : 'border-(--color-border) bg-(--color-surface-soft)'}`}
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${notifyImpersonate ? 'bg-primary/10 text-primary' : 'bg-(--color-surface) text-(--color-text-muted)'}`}>
+                    {notifyImpersonate ? <Shield size={18} /> : <ShieldAlert size={18} />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-(--color-text-primary)">{notifyImpersonate ? 'Notify the user' : 'Ghost mode'}</p>
+                    <p className="text-[11px] text-(--color-text-muted) mt-0.5 leading-relaxed">
+                      {notifyImpersonate
+                        ? 'They get a notification that you (your name & role) signed into their account.'
+                        : 'You log in silently — the user is NOT notified that you accessed their account.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button" role="switch" aria-checked={notifyImpersonate}
+                  onClick={(e) => { e.stopPropagation(); setNotifyImpersonate((v) => !v); }}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${notifyImpersonate ? 'bg-primary' : 'bg-(--color-border-strong)'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${notifyImpersonate ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+
+              <p className="text-[11px] font-medium text-danger">Caution: every action you take while signed in as this user is logged.</p>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 !rounded-xl" onClick={() => setImpersonateTarget(null)} disabled={impersonating}>Cancel</Button>
+                <Button variant="primary" icon={Eye} className="flex-1 !rounded-xl" onClick={doImpersonate} loading={impersonating} disabled={impersonating}>
+                  {impersonating ? 'Signing in…' : 'Login As'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </PageTransition>
   );

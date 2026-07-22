@@ -1,23 +1,20 @@
 'use client';
-import { Users, CalendarCheck, ArrowRightLeft, Wallet, ShieldCheck } from 'lucide-react';
+import { Users, CalendarCheck, Wallet } from 'lucide-react';
 import { canViewPage } from '@/app/config/pages';
 import TabHub from '@/app/components/ui/TabHub';
 import TeamDirectory from './TeamDirectory';
 import AttendanceSection from './AttendanceSection';
-import LoginAsSection from './LoginAsSection';
 import PayrollPage from '@/app/dashboard/admin/payroll/page';
-import PermissionManager from '@/app/components/ui/PermissionManager';
 
-// Everything about PEOPLE in one page: who they are, whether they showed up,
-// what they are paid, what they may do, and signing in as them.
+// Everything about PEOPLE in one page: who they are, whether they showed up, and
+// what they are paid.
 //
-// These were five separate routes (Users, Staff, Attendance, Salaries,
-// Permissions, Login As) that all answered questions about the same person, so
-// managing one employee meant walking the sidebar. Each is a tab now; every old
-// route still resolves here with its tab preselected, so bookmarks keep working.
+// Permissions editing and "Login As" are no longer their own tabs — both are now
+// per-row actions in the Team directory's ⋮ menu (permission-editing modal and an
+// eye/Login-As action), each shown only to a viewer who may use it. That keeps
+// every person's controls in one place instead of a separate tab.
 //
-// Gating is per tab — see TabHub. A branch admin without the Permissions grant
-// simply has no Permissions tab.
+// Gating is per tab — see TabHub.
 const TABS = [
   {
     key: 'team',
@@ -40,30 +37,6 @@ const TABS = [
     icon: Wallet,
     pageKey: 'page_salaries',
     render: () => <PayrollPage />,
-  },
-  {
-    key: 'permissions',
-    label: 'Permissions',
-    icon: ShieldCheck,
-    // location_admin is barred from PUT /users/:id/permissions server-side, so
-    // showing them the editor would only produce 403s.
-    visible: (user) =>
-      canViewPage(user, 'page_permissions')
-      && ['super_admin', 'admin', 'branch_admin'].includes(user?.role),
-    render: () => <PermissionManager />,
-  },
-  {
-    key: 'login-as',
-    label: 'Login As',
-    icon: ArrowRightLeft,
-    // The page grant plus the actor check the standalone page enforced
-    // internally. Anyone currently impersonating always sees it, so they always
-    // have a way back to their own account.
-    visible: (user) =>
-      (canViewPage(user, 'page_impersonate')
-        && (['super_admin', 'admin', 'branch_admin'].includes(user?.role) || user?.permissions?.impersonateUsers === true))
-      || !!user?.isImpersonating || !!user?.impersonatedBy,
-    render: () => <LoginAsSection />,
   },
 ];
 
