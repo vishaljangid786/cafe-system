@@ -47,7 +47,7 @@ export default function CashFlowCard({ locationId }) {
   const moneyOut = data?.moneyOut || 0;
   const stock = data?.stockPurchases || 0;
   const otherExp = data?.otherExpenses || 0;
-  const udhaar = data?.udhaar || 0;
+  const outstanding = data?.outstanding || 0;
   const net = data?.netCashFlow ?? (moneyIn - moneyOut);
   const byCategory = data?.byCategory || [];
 
@@ -149,7 +149,7 @@ export default function CashFlowCard({ locationId }) {
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wider text-(--color-text-muted)">Net Cash Flow</p>
           <p className="text-xs text-(--color-text-muted) mt-0.5">
-            money in − out · <Money value={udhaar} /> still on udhaar
+            money in − out · <Money value={outstanding} /> still outstanding
           </p>
         </div>
         <div className={`flex items-center gap-1.5 text-2xl font-bold ${net >= 0 ? 'text-success' : 'text-danger'}`}>

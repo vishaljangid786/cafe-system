@@ -1464,7 +1464,7 @@ const getForecastingAnalytics = asyncHandler(async (req, res) => {
 // @access  Private (all roles; staff/chef are scoped to their own activity)
 // Money in  = approved revenue transactions (sales collected).
 // Money out = approved expenses (split into stock purchases vs other).
-// Udhaar    = outstanding balance on completed unpaid/partial orders.
+// Outstanding = unpaid balance on completed unpaid/partial orders.
 const getCashFlow = asyncHandler(async (req, res) => {
   const { month, locationId, category } = req.query;
   const role = req.user.role;
@@ -1543,8 +1543,8 @@ const getCashFlow = asyncHandler(async (req, res) => {
     ? byCategory.filter((c) => c.category === category).reduce((s, c) => s + c.total, 0)
     : stockPurchases + otherExpenses;
 
-  // Udhaar — outstanding on completed orders left unpaid or partly paid this month.
-  const udhaarAgg = await Order.aggregate([
+  // Outstanding — on completed orders left unpaid or partly paid this month.
+  const outstandingAgg = await Order.aggregate([
     {
       $match: {
         ...orderLocMatch,
@@ -1565,7 +1565,7 @@ const getCashFlow = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  const udhaar = udhaarAgg[0]?.outstanding || 0;
+  const outstanding = outstandingAgg[0]?.outstanding || 0;
 
   res.json({
     success: true,
@@ -1576,7 +1576,7 @@ const getCashFlow = asyncHandler(async (req, res) => {
       stockPurchases,
       otherExpenses,
       byCategory,
-      udhaar,
+      outstanding,
       netCashFlow: moneyIn - moneyOut,
     },
   });

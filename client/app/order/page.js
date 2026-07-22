@@ -952,7 +952,7 @@ function OrderApp() {
                   }`}
                 />
                 <p className="mt-1 text-[10px] text-(--color-text-muted)">
-                  Birthday par special offers ke liye. Ek baar set hone ke baad change nahi hoga.
+                  Used for special birthday offers. Once set, it can&apos;t be changed.
                 </p>
               </div>
 
