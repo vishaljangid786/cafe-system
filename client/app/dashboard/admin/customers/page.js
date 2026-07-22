@@ -22,6 +22,9 @@ export default function CustomersDashboard() {
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const [loyaltyCfg, setLoyaltyCfg] = useState(null);
+  // Two views on one page: 'crm' (the report + campaigns) and 'rewards' (loyalty
+  // points, top earners, win-back list).
+  const [tab, setTab] = useState('crm');
 
   const fetchCRMData = async () => {
     const isInitial = !didInitRef.current;
@@ -95,12 +98,10 @@ export default function CustomersDashboard() {
     return { label: 'Bronze', color: 'text-success', bg: 'bg-success/10' };
   };
 
-  if (loading) return <LoadingScreen fullScreen={false} />;
-
   return (
     <PageTransition>
       <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
-        
+
         {/* Header Segment */}
         <SlideIn>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -111,20 +112,47 @@ export default function CustomersDashboard() {
               </h1>
               <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Manage customer relationships and reward points.</p>
             </div>
-            <button
-              onClick={fetchCRMData}
-              className="px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal rounded-xl  transition-transform shadow-sm "
-            >
-              Refresh Information
-            </button>
+            {tab === 'rewards' && (
+              <button
+                onClick={fetchCRMData}
+                className="px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal rounded-xl  transition-transform shadow-sm "
+              >
+                Refresh Information
+              </button>
+            )}
           </div>
         </SlideIn>
 
-        {/* CRM report: scoped filters, KPIs, customer table and the 360 drawer.
-            The reward panels below stay as they were — they answer a different
-            question (who to reward / win back) than the report does. */}
-        <CrmWorkspace />
+        {/* Two tabs: the CRM report + campaigns, and the loyalty/rewards view.
+            Both share the page_customers grant, so this is a plain in-page switch. */}
+        <div className="inline-flex flex-wrap items-center gap-1 bg-(--color-surface) border border-(--color-border) rounded-xl p-1.5 shadow-sm">
+          {[
+            { key: 'crm', label: 'CRM', icon: Users },
+            { key: 'rewards', label: 'Rewards', icon: Award },
+          ].map((t) => {
+            const on = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                aria-current={on ? 'page' : undefined}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-normal transition-all ${
+                  on ? 'bg-primary text-(--color-on-primary) shadow-sm' : 'text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft)'
+                }`}
+              >
+                <t.icon size={15} /> {t.label}
+              </button>
+            );
+          })}
+        </div>
 
+        {/* CRM report: scoped filters, KPIs, customer table and the 360 drawer.
+            Self-contained — it loads its own data. */}
+        {tab === 'crm' && <CrmWorkspace />}
+
+        {tab === 'rewards' && loading && <LoadingScreen fullScreen={false} />}
+
+        {tab === 'rewards' && !loading && (<>
         {/* Analytics KPIs */}
         {refetching ? (
           <StatGridSkeleton count={4} />
@@ -277,6 +305,7 @@ export default function CustomersDashboard() {
             )}
           </div>
         </div>
+        </>)}
       </div>
 
       {/* Customer Deep Dive Modal */}

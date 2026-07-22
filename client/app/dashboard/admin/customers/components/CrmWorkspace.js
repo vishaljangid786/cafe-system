@@ -150,7 +150,7 @@ export default function CrmWorkspace() {
   return (
     <div className="space-y-5">
       {/* Filter bar */}
-      <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-(--color-bg-base)/85 backdrop-blur">
+      <div className="-mx-1 px-1 py-2">
         <div className="flex flex-wrap items-center gap-2">
           <UniversalDateFilter
             defaultFilter="all"
