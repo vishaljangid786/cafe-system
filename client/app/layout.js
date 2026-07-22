@@ -7,6 +7,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import TopProgressBar, { RouteProgress } from "./components/ui/TopProgressBar";
 import DateInputEnhancer from "./components/ui/DateInputEnhancer";
+import TooltipLayer from "./components/ui/TooltipLayer";
 
 export const metadata = {
   title: "Cafe Management System | Premium Dashboard",
@@ -70,6 +71,9 @@ export default function RootLayout({ children }) {
               <div className="relative z-10 min-h-screen app-shell">
                 {children}
               </div>
+              {/* Global styled hover tooltips for every icon/action button
+                  (reads their title / data-tooltip / aria-label). */}
+              <TooltipLayer />
             </NotificationProvider>
           </AuthProvider>
           </ValueVisibilityProvider>

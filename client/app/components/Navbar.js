@@ -157,6 +157,8 @@ const Navbar = ({ onToggleSidebar, sidebarExpanded, isMobile }) => {
       <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={onToggleSidebar}
+          title={isMobile ? 'Open menu' : 'Toggle sidebar'}
+          aria-label={isMobile ? 'Open menu' : 'Toggle sidebar'}
           className="p-2 text-(--color-text-muted) hover:text-(--color-text-primary) hover:bg-(--color-surface-soft) transition-colors rounded-lg"
         >
           {isMobile ? (

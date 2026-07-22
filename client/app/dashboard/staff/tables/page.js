@@ -433,6 +433,7 @@ export default function StaffTablesPage() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
+              title="Refresh"
               className="p-2.5 rounded-xl bg-(--color-surface-soft) dark:bg-(--color-surface) text-(--color-text-muted) hover:text-primary hover:bg-primary/10 transition-all disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />

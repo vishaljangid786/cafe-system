@@ -1514,7 +1514,7 @@ export default function MenuManagementPage() {
                         <label className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted)">
                           <input type="checkbox" checked={g.required} onChange={(e) => setModifierGroups((p) => p.map((x, i) => (i === gi ? { ...x, required: e.target.checked } : x)))} /> Required
                         </label>
-                        <button type="button" onClick={() => setModifierGroups((p) => p.filter((_, i) => i !== gi))} className="p-2 text-danger hover:bg-danger/10 rounded-lg">
+                        <button type="button" onClick={() => setModifierGroups((p) => p.filter((_, i) => i !== gi))} title="Remove group" className="p-2 text-danger hover:bg-danger/10 rounded-lg">
                           <Trash2 size={14} />
                         </button>
                       </div>

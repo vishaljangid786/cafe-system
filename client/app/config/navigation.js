@@ -168,10 +168,10 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
     pushGroup('Reports', repItems);
 
     // Permissions and Login As moved into the People hub, so Setup keeps only
-    // what is genuinely org configuration.
+    // what is genuinely org configuration. Cafes + Branches are one hub now.
     const setupItems = [];
-    if (canView('page_cafes')) setupItems.push({ name: 'Cafes', pageKey: 'page_cafes', href: r('page_cafes'), icon: Store });
-    if (canView('page_branches')) setupItems.push({ name: 'Branches', pageKey: 'page_branches', href: r('page_branches'), icon: MapPin });
+    const places = hubItem('Cafes & Branches', '/dashboard/admin/places', Store, ['page_cafes', 'page_branches']);
+    if (places) setupItems.push(places);
     if (canView('page_settings')) setupItems.push({ name: 'Settings', pageKey: 'page_settings', href: r('page_settings'), icon: Settings });
     if (canView('page_auditlogs')) setupItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: r('page_auditlogs'), icon: Activity });
     pushGroup('Setup', setupItems);

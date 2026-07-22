@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import { uploadImageFile } from '@/app/utils/imageUpload';
+import { stateOptions } from '@/app/utils/indianStates';
 import { digitsOnly, sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
   Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check, ChevronLeft, ChevronRight, Lock, Unlock,
@@ -100,7 +101,10 @@ function NewAdminFields({ admin, setAdmin, permissions, togglePerm, onImage, upl
         <div><label className={labelCls}>Address Line 1 *</label><input className={inputCls} value={admin.address1} onChange={(e) => setAdmin('address1', e.target.value)} placeholder="Building / Street" /></div>
         <div><label className={labelCls}>Address Line 2</label><input className={inputCls} value={admin.address2} onChange={(e) => setAdmin('address2', e.target.value)} placeholder="Locality / Landmark" /></div>
         <div><label className={labelCls}>City *</label><input className={inputCls} value={admin.city} onChange={(e) => setAdmin('city', e.target.value)} placeholder="Mumbai" /></div>
-        <div><label className={labelCls}>State</label><input className={inputCls} value={admin.state} onChange={(e) => setAdmin('state', e.target.value)} placeholder="Maharashtra" /></div>
+        <div>
+          <PremiumSelect label="State" value={admin.state} onChange={(v) => setAdmin('state', v)}
+            options={stateOptions(admin.state)} placeholder="Select state" />
+        </div>
         <div><label className={labelCls}>Country</label><input className={inputCls} value={admin.country} onChange={(e) => setAdmin('country', e.target.value)} placeholder="India" /></div>
         <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" className={inputCls} value={admin.pincode} maxLength={6} onChange={(e) => setAdmin('pincode', digitsOnly(e.target.value, 6))} placeholder="400001" /></div>
         <div>
@@ -578,7 +582,10 @@ export default function CafesPage() {
           <input className={inputCls} value={form.address.line1} onChange={(e) => setAddress('line1', e.target.value)} />
         </div>
         <div><label className={labelCls}>City</label><input className={inputCls} value={form.address.city} onChange={(e) => setAddress('city', e.target.value)} /></div>
-        <div><label className={labelCls}>State</label><input className={inputCls} value={form.address.state} onChange={(e) => setAddress('state', e.target.value)} /></div>
+        <div>
+          <PremiumSelect label="State" value={form.address.state} onChange={(v) => setAddress('state', v)}
+            options={stateOptions(form.address.state)} placeholder="Select state" />
+        </div>
         <div><label className={labelCls}>Pincode</label><input type="text" inputMode="numeric" maxLength={6} className={inputCls} value={form.address.pincode} onChange={(e) => setAddress('pincode', digitsOnly(e.target.value, 6))} /></div>
         <div><label className={labelCls}><Phone size={11} className="inline mr-1" /> Phone</label><input type="tel" inputMode="numeric" maxLength={10} className={inputCls} value={form.contact.phone} onChange={(e) => setContact('phone', digitsOnly(e.target.value, 10))} /></div>
         <div className="md:col-span-2"><label className={labelCls}><Mail size={11} className="inline mr-1" /> Email</label><input type="email" className={inputCls} value={form.contact.email} onChange={(e) => setContact('email', sanitizeEmail(e.target.value))} /></div>

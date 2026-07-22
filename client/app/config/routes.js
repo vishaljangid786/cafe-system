@@ -267,6 +267,11 @@ export const ROUTE_TABLE = {
     anyOf: ['page_staffcomparison', 'page_branchcompare'],
     paths: ['/dashboard/admin/compare'],
   },
+  hub_places: {
+    canonical: '/dashboard/admin/places',
+    anyOf: ['page_cafes', 'page_branches'],
+    paths: ['/dashboard/admin/places'],
+  },
 };
 
 // The href a given role should use to open a page.

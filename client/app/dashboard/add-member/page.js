@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { compressImage, validateImageFile, uploadErrorMessage } from '@/app/utils/imageUpload';
+import { stateOptions } from '@/app/utils/indianStates';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   UserPlus, User, MapPin, Shield, CreditCard,
@@ -395,7 +396,9 @@ export default function AddMemberPage() {
             <Field label="Address Line 1"><input className={inputCls} value={form.address1} onChange={(e) => set('address1', e.target.value)} placeholder="Building / Street" /></Field>
             <Field label="Address Line 2"><input className={inputCls} value={form.address2} onChange={(e) => set('address2', e.target.value)} placeholder="Locality / Landmark" /></Field>
             <Field label="City"><input className={inputCls} value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="Mumbai" /></Field>
-            <Field label="State"><input className={inputCls} value={form.state} onChange={(e) => set('state', e.target.value)} placeholder="Maharashtra" /></Field>
+            <Field label="State">
+              <PremiumSelect value={form.state} onChange={(v) => set('state', v)} options={stateOptions(form.state)} placeholder="Select state" />
+            </Field>
             <Field label="Country"><input className={inputCls} value={form.country} onChange={(e) => set('country', e.target.value)} placeholder="India" /></Field>
             <Field label="Pincode"><input className={inputCls} value={form.pincode} maxLength={6} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="400001" /></Field>
           </div>

@@ -331,6 +331,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen, isM
           {showLabels && (
             <button
               onClick={logout}
+              title="Log out"
               className="p-1.5 shrink-0 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
             >
               <LogOut size={16} />

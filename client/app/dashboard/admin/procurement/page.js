@@ -176,7 +176,7 @@ export default function ProcurementPage() {
                       <input type="number" min="0" onKeyDown={blockNegative} value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="â‚¹/unit" className={`${inputCls} w-24`} />
                       <span className="text-xs font-semibold text-(--color-text-primary) w-20 text-right"><Money value={(Number(it.quantity) || 0) * (Number(it.unitCost) || 0)} /></span>
                       {poItems.length > 1 && (
-                        <button onClick={() => setPoItems((p) => p.filter((_, i) => i !== idx))} className="p-2 text-danger hover:bg-danger/10 rounded-lg"><Trash2 size={14} /></button>
+                        <button onClick={() => setPoItems((p) => p.filter((_, i) => i !== idx))} title="Remove item" className="p-2 text-danger hover:bg-danger/10 rounded-lg"><Trash2 size={14} /></button>
                       )}
                     </div>
                   ))}

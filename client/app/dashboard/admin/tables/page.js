@@ -536,6 +536,7 @@ export default function AdminTablesPage() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
+              title="Refresh"
               className="p-3 rounded-xl bg-(--color-bg-soft) text-(--color-text-muted) hover:text-primary hover:bg-primary/10 transition-all border border-(--color-border) disabled:opacity-50"
             >
               <RefreshCcw size={20} className={isRefreshing ? 'animate-spin' : ''} />

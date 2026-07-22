@@ -369,6 +369,7 @@ export default function AdminOrdersDashboard() {
             </button>
             <button
               onClick={fetchData}
+              title="Refresh"
               className="h-11 w-11 flex items-center justify-center bg-primary text-(--color-on-primary) rounded-xl transition-all shadow-sm active:scale-90"
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />

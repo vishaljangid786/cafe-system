@@ -88,7 +88,7 @@ export default function ForecastingDashboard() {
                 }
               />
 
-              <button onClick={fetchForecast} className="p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 text-(--color-text-muted) shrink-0">
+              <button onClick={fetchForecast} title="Refresh" className="p-3 bg-(--color-surface) border border-(--color-border) rounded-xl hover:border-primary/30 text-(--color-text-muted) shrink-0">
                 <RefreshCcw size={16} />
               </button>
             </div>

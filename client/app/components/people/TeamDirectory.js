@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
 import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import { todayInput } from '@/app/utils/dateInput';
+import { stateOptions } from '@/app/utils/indianStates';
 import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, UserX, Mail, Phone, MapPin, Edit3, Trash2, Shield, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
@@ -322,6 +323,7 @@ export default function TeamDirectory() {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleViewStaff(member); }}
                     className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
+                    title="View details"
                   >
                     <Info size={18} />
                   </button>
@@ -346,12 +348,14 @@ export default function TeamDirectory() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
                         className="p-3 hover:bg-(--color-surface-soft) rounded-xl transition-all text-(--color-text-muted) hover:text-primary"
+                        title="Edit details"
                       >
                         <Edit3 size={18} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
                         className="p-3 hover:bg-(--color-surface) rounded-xl transition-all text-(--color-text-muted) hover:text-danger"
+                        title="Remove staff member"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -817,6 +821,7 @@ export default function TeamDirectory() {
                                 whileTap={{ scale: 0.9 }}
                                 onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
                                 className="p-2.5 text-(--color-text-muted) hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                                title="Edit details"
                               >
                                 <Edit3 size={18} />
                               </motion.button>
@@ -825,6 +830,7 @@ export default function TeamDirectory() {
                                 whileTap={{ scale: 0.9 }}
                                 onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(member._id); }}
                                 className="p-2.5 text-(--color-text-muted) hover:text-danger hover:bg-danger/10 rounded-xl transition-all"
+                                title="Remove staff member"
                               >
                                 <Trash2 size={18} />
                               </motion.button>
@@ -1000,8 +1006,7 @@ export default function TeamDirectory() {
                   <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">State</label>
-                  <input required className="w-full px-5 py-4 rounded-xl bg-(--color-bg-soft) border border-(--color-border) focus:ring-2 focus:ring-primary transition-all text-sm font-medium text-(--color-text-primary) outline-none" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} />
+                  <PremiumSelect label="State" value={formData.state} onChange={(v) => setFormData({ ...formData, state: v })} options={stateOptions(formData.state)} placeholder="Select state" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-(--color-text-muted) tracking-normal mb-2 ml-1">Country</label>
