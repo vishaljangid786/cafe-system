@@ -265,6 +265,7 @@ export default function OrderAnalyticsDashboard() {
             {/* Date Filter (branch/cafe scope comes from the Navbar filter) */}
             <div className="lg:col-span-10 flex items-center">
               <UniversalDateFilter
+                persistKey="dashboard"
                 onFilterChange={({ startDate, endDate }) =>
                   setDateRange({ start: startDate, end: endDate })
                 }

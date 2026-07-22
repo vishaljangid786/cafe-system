@@ -108,6 +108,7 @@ export default function DashboardFilters({
             and a fixed h-11 clipped the wrapped pills over the cards below. */}
         <div className="lg:col-span-12">
           <UniversalDateFilter
+            persistKey="dashboard"
             onFilterChange={({ startDate, endDate }) => setDateRange({ start: startDate, end: endDate })}
             loading={loading}
             className="w-full min-h-11"

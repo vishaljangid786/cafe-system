@@ -77,6 +77,7 @@ export default function ForecastingDashboard() {
 
             <div className="flex items-center gap-4">
               <UniversalDateFilter
+                persistKey="dashboard"
                 defaultFilter="today"
                 loading={refetching}
                 onFilterChange={({ startDate, endDate, filterType }) =>

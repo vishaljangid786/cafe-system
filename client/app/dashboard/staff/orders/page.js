@@ -401,6 +401,7 @@ export default function StaffOrdersPage() {
                  <div className="flex-1 bg-(--color-surface-soft) rounded-xl px-5 py-4 border border-(--color-border) flex items-center justify-between group overflow-hidden relative">
                     <div className="flex items-center gap-6 relative z-10">
                        <UniversalDateFilter
+                        persistKey="dashboard"
                         onFilterChange={({ startDate, endDate }) => { setStartDate(startDate); setEndDate(endDate); }}
                         loading={loading}
                         variant="ghost"

@@ -314,6 +314,7 @@ export default function AdminDashboard() {
           {/* Rich reusable date filter — Today (default), week, month, specific month,
               quarter, half-year, year, financial year, custom. Applies on select. */}
           <UniversalDateFilter
+            persistKey="dashboard"
             defaultFilter="today"
             loading={refetching}
             onFilterChange={({ startDate, endDate, filterType }) =>

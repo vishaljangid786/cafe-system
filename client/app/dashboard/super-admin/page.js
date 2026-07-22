@@ -130,6 +130,7 @@ export default function SuperAdminDashboard() {
                   pill container must grow instead of clipping over content. */}
               <div className="w-full sm:w-auto">
                 <UniversalDateFilter
+                  persistKey="dashboard"
                   onFilterChange={({ startDate, endDate }) => setFilters((f) => ({ ...f, startDate, endDate }))}
                   loading={refetching}
                   className="w-full min-h-11"

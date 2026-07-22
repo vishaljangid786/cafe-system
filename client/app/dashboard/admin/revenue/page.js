@@ -201,6 +201,7 @@ export default function RevenuePage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <UniversalDateFilter
+              persistKey="dashboard"
               defaultFilter="this_month"
               loading={refetching}
               onFilterChange={({ startDate, endDate }) => {

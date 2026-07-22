@@ -374,6 +374,7 @@ export default function ExpensesPage() {
 
               <div className="flex flex-wrap items-center mt-6 gap-3">
                 <UniversalDateFilter
+                  persistKey="dashboard"
                   defaultFilter="all"
                   loading={refetching}
                   onFilterChange={({ startDate, endDate }) => {

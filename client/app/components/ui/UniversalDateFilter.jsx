@@ -194,6 +194,24 @@ function Dropdown({ label, active, options, onPick, isSelected }) {
   );
 }
 
+// Persist the chosen range so the SAME period follows the user across pages —
+// pick "Last month" on the overview and every other page that shares the key opens
+// on last month too, no re-applying. Opt-in via the `persistKey` prop; filters
+// meant to stay independent (e.g. a single customer's order history) simply omit it.
+const STORAGE_PREFIX = 'cafeos:dateFilter:';
+const readPersisted = (key) => {
+  if (!key || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_PREFIX + key);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && parsed.kind ? parsed : null;
+  } catch { return null; }
+};
+const writePersisted = (key, value) => {
+  if (!key || typeof window === 'undefined') return;
+  try { window.localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value)); } catch { /* ignore */ }
+};
+
 // ── Main filter ──────────────────────────────────────────────────────────────
 export default function UniversalDateFilter({
   onFilterChange,
@@ -203,6 +221,10 @@ export default function UniversalDateFilter({
   // 'solid' renders its own pill container; 'ghost' drops the box (for callers
   // that already place the filter inside a styled bar).
   variant = 'solid',
+  // When set, the selected range is saved under this key and restored on every
+  // page that shares it — so a filter chosen once persists across navigation.
+  // Omit for independent filters.
+  persistKey = null,
 }) {
   const [value, setValue] = useState(() => initialValueFromDefault(defaultFilter));
   const [showCustom, setShowCustom] = useState(false);
@@ -221,18 +243,28 @@ export default function UniversalDateFilter({
     onFilterChange?.({ startDate, endDate, filterType: v.kind, label: labelFor(v) });
   }, [onFilterChange]);
 
-  // Fire once on mount so consumers get their initial range (matches old behaviour).
+  // Fire once on mount so consumers get their initial range. When a persistKey is
+  // set, restore the last-chosen range (so it survives navigation); otherwise seed
+  // the shared slot with this page's default so every sharing page starts aligned.
   const mounted = useRef(false);
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
-    emit(value);
+    const saved = readPersisted(persistKey);
+    if (saved) {
+      setValue(saved);
+      emit(saved);
+    } else {
+      if (persistKey) writePersisted(persistKey, value);
+      emit(value);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pick = (v) => {
     setShowCustom(false);
     setValue(v);
+    writePersisted(persistKey, v);
     emit(v);
   };
 
@@ -256,6 +288,7 @@ export default function UniversalDateFilter({
     if (start && end) {
       const v = { kind: 'custom', start, end };
       setValue(v);
+      writePersisted(persistKey, v);
       emit(v);
     }
   };
