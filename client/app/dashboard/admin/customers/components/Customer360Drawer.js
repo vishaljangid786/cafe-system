@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Phone, Mail, Cake, Lock, Store, Pencil, Save } from 'lucide-react';
 import api from '@/app/services/api';
 import { Money, Num } from '@/app/components/ui/Money';
@@ -90,10 +91,15 @@ export default function Customer360Drawer({ customerId, onClose, canEdit, onSave
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+  if (typeof document === 'undefined') return null;
+
+  // Portal to <body> so the drawer escapes the page's transformed stacking
+  // context (PageTransition) — otherwise its z-index can't beat the sticky
+  // navbar and the drawer renders UNDER it. z index sits above the navbar (200).
+  return createPortal(
+    <div className="fixed inset-0 z-9999 flex justify-end bg-black/40" onClick={onClose}>
       <div
-        className="w-full max-w-xl h-full bg-(--color-surface) overflow-y-auto"
+        className="w-full max-w-xl h-full bg-(--color-surface) overflow-y-auto shadow-(--shadow-md)"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-(--color-surface) border-b border-(--color-border) px-5 py-4 flex items-start justify-between gap-3 z-10">
@@ -284,6 +290,7 @@ export default function Customer360Drawer({ customerId, onClose, canEdit, onSave
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

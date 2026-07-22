@@ -20,21 +20,44 @@ const maskPhone = (phone) => {
   return d.length <= 4 ? d : `${'•'.repeat(d.length - 4)}${d.slice(-4)}`;
 };
 
-const KPI = ({ icon: Icon, label, value, tone = 'primary' }) => (
-  <div className={`rounded-xl border p-4 bg-(--color-surface) ${
-    tone === 'danger' ? 'border-danger/20' : tone === 'success' ? 'border-success/20' : 'border-(--color-border)'
-  }`}>
-    <div className="flex items-center gap-2">
-      <span className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-        tone === 'danger' ? 'bg-danger/15 text-danger' : tone === 'success' ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
-      }`}>
-        <Icon size={15} />
+// Deterministic soft colour per name so a customer's avatar stays the same
+// across renders — six brand-adjacent tints, no jarring random palette.
+const AVATAR_TINTS = [
+  'bg-primary/12 text-primary',
+  'bg-success/12 text-success',
+  'bg-secondary/12 text-secondary',
+  'bg-(--color-amber)/12 text-(--color-amber)',
+  'bg-danger/12 text-danger',
+  'bg-(--color-text-muted)/12 text-(--color-text-secondary)',
+];
+const tintFor = (str = '') => {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return AVATAR_TINTS[h % AVATAR_TINTS.length];
+};
+const Avatar = ({ name, size = 'md' }) => {
+  const s = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm';
+  return (
+    <span className={`${s} ${tintFor(name)} rounded-xl flex items-center justify-center font-bold shrink-0`}>
+      {(name || '?').charAt(0).toUpperCase()}
+    </span>
+  );
+};
+
+const KPI = ({ icon: Icon, label, value, tone = 'primary' }) => {
+  const ring = tone === 'danger' ? 'border-danger/20' : tone === 'success' ? 'border-success/20' : 'border-(--color-border)';
+  const chip = tone === 'danger' ? 'bg-danger/12 text-danger' : tone === 'success' ? 'bg-success/12 text-success' : 'bg-primary/12 text-primary';
+  return (
+    <div className={`group rounded-2xl border ${ring} p-4 bg-(--color-surface) shadow-sm hover:shadow-(--shadow-md) transition-shadow relative overflow-hidden`}>
+      <Icon size={72} className="absolute -right-3 -bottom-3 opacity-[0.04] group-hover:opacity-[0.07] transition-opacity" />
+      <span className={`h-9 w-9 rounded-xl flex items-center justify-center ${chip}`}>
+        <Icon size={16} />
       </span>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-(--color-text-muted)">{label}</p>
+      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-(--color-text-muted)">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-(--color-text-primary) tracking-tight">{value}</p>
     </div>
-    <p className="mt-2 text-xl font-bold text-(--color-text-primary)">{value}</p>
-  </div>
-);
+  );
+};
 
 /**
  * The CRM report surface: scoped filters, KPI tiles, and the customer table with
@@ -150,7 +173,7 @@ export default function CrmWorkspace() {
   return (
     <div className="space-y-5">
       {/* Filter bar */}
-      <div className="-mx-1 px-1 py-2">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <UniversalDateFilter
             defaultFilter="all"
@@ -231,16 +254,21 @@ export default function CrmWorkspace() {
       )}
 
       {/* Report table */}
-      <div className="bg-(--color-surface) rounded-xl border border-(--color-border) overflow-hidden">
-        <div className="px-4 py-3 border-b border-(--color-border) flex items-center justify-between">
-          <h3 className="text-sm font-bold text-(--color-text-primary)">Customers</h3>
-          <span className="text-xs text-(--color-text-muted)">{total} total</span>
+      <div className="bg-(--color-surface) rounded-2xl border border-(--color-border) overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-(--color-border) flex items-center justify-between">
+          <h3 className="text-sm font-bold text-(--color-text-primary) flex items-center gap-2">
+            <Users size={15} className="text-primary" /> Customers
+          </h3>
+          <span className="text-[11px] font-bold text-(--color-text-muted) bg-(--color-surface-soft) px-2.5 py-1 rounded-full">{total} total</span>
         </div>
 
         {loading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : rows.length === 0 ? (
-          <p className="text-sm text-(--color-text-muted) text-center py-10">No customers match these filters.</p>
+          <div className="py-14 flex flex-col items-center text-(--color-text-muted)">
+            <Users size={40} className="opacity-20 mb-3" />
+            <p className="text-sm font-medium">No customers match these filters.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -259,8 +287,13 @@ export default function CrmWorkspace() {
                     <tr key={c._id} onClick={() => setOpenCustomer(c._id)}
                       className="cursor-pointer hover:bg-(--color-surface-soft)/40 transition-colors">
                       <td className="px-4 py-3">
-                        <p className="text-xs font-bold text-(--color-text-primary)">{c.name}</p>
-                        <p className="text-[11px] text-(--color-text-muted)">{maskPhone(c.phone)}</p>
+                        <div className="flex items-center gap-3">
+                          <Avatar name={c.name} size="sm" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-(--color-text-primary) truncate">{c.name}</p>
+                            <p className="text-[11px] text-(--color-text-muted)">{maskPhone(c.phone)}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${

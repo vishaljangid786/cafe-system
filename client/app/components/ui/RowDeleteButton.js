@@ -109,20 +109,27 @@ export default function RowDeleteButton({
         </button>
       )}
 
-      <ConfirmDialog
-        isOpen={open}
-        loading={busy}
-        onClose={() => (busy ? null : setOpen(false))}
-        onConfirm={run}
-        title={`Delete ${label}?`}
-        message={
-          description ||
-          'This permanently removes the record. Financial and audit history that references it is kept.'
-        }
-        confirmText="Delete"
-        type="danger"
-        isImpersonating={!!user?.isImpersonating}
-      />
+      {/* This button often sits inside a clickable row. React events bubble
+          through the component tree (even for portaled/fixed overlays), so
+          without this a click on Cancel / the backdrop would bubble up to the
+          row's onClick and open its drawer. Swallow every click that happens
+          inside the confirm dialog. */}
+      <span onClick={(e) => e.stopPropagation()}>
+        <ConfirmDialog
+          isOpen={open}
+          loading={busy}
+          onClose={() => (busy ? null : setOpen(false))}
+          onConfirm={run}
+          title={`Delete ${label}?`}
+          message={
+            description ||
+            'This permanently removes the record. Financial and audit history that references it is kept.'
+          }
+          confirmText="Delete"
+          type="danger"
+          isImpersonating={!!user?.isImpersonating}
+        />
+      </span>
     </>
   );
 }

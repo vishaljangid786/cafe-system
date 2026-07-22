@@ -239,13 +239,26 @@ export default function CustomersDashboard() {
                       return (
                         <tr key={cust._id} className="hover:bg-primary/[0.02] transition-colors group">
                           <td className="px-5 py-4">
-                            <span className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-semibold ${idx < 3 ? 'bg-primary/20 text-primary-dark dark:text-primary' : 'bg-(--color-surface-soft) text-(--color-text-muted)'}`}>
-                              #{idx + 1}
+                            {/* Gold / silver / bronze medals for the top three. */}
+                            <span className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                              idx === 0 ? 'bg-(--color-amber)/15 text-(--color-amber)' :
+                              idx === 1 ? 'bg-(--color-text-muted)/15 text-(--color-text-secondary)' :
+                              idx === 2 ? 'bg-danger/10 text-danger' :
+                              'bg-(--color-surface-soft) text-(--color-text-muted)'
+                            }`}>
+                              {idx < 3 ? ['🥇', '🥈', '🥉'][idx] : `#${idx + 1}`}
                             </span>
                           </td>
                           <td className="px-5 py-4">
-                            <p className="font-medium text-(--color-text-primary)">{cust.name}</p>
-                            <p className="text-xs font-medium text-(--color-text-secondary)">{maskPhone(cust.phone)}</p>
+                            <div className="flex items-center gap-3">
+                              <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
+                                {(cust.name || '?').charAt(0).toUpperCase()}
+                              </span>
+                              <div>
+                                <p className="font-medium text-(--color-text-primary)">{cust.name}</p>
+                                <p className="text-xs font-medium text-(--color-text-secondary)">{maskPhone(cust.phone)}</p>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-5 py-4">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium tracking-normal ${tier.bg} ${tier.color}`}>
@@ -286,17 +299,27 @@ export default function CustomersDashboard() {
             
             {refetching ? (
               <ListSkeleton rows={5} />
+            ) : inactiveCustomers.length === 0 ? (
+              <div className="bg-(--color-surface) rounded-2xl border border-(--color-border) p-10 shadow-sm flex flex-col items-center text-(--color-text-muted)">
+                <Heart size={36} className="opacity-20 mb-3" />
+                <p className="text-sm font-medium">No customers need winning back right now.</p>
+              </div>
             ) : (
-            <div className="bg-(--color-surface) rounded-xl border border-(--color-border) p-6 shadow-sm flex flex-col gap-4">
+            <div className="bg-(--color-surface) rounded-2xl border border-(--color-border) p-4 shadow-sm flex flex-col gap-3">
               {inactiveCustomers.map(cust => (
-                <div key={cust._id} className="p-4 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex justify-between items-center group hover:border-danger/30 transition-colors">
-                  <div>
-                    <p className="font-medium text-(--color-text-primary)">{cust.name}</p>
-                    <p className="text-xs font-medium text-(--color-text-muted) mt-1 flex items-center gap-1">
-                      <Calendar size={12}/> Last: {new Date(cust.lastVisit).toLocaleDateString()}
-                    </p>
+                <div key={cust._id} className="p-3.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex justify-between items-center gap-3 group hover:border-danger/30 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="h-9 w-9 rounded-xl bg-danger/10 text-danger flex items-center justify-center text-sm font-bold shrink-0">
+                      {(cust.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-(--color-text-primary) truncate">{cust.name}</p>
+                      <p className="text-xs font-medium text-(--color-text-muted) mt-0.5 flex items-center gap-1">
+                        <Calendar size={12}/> Last: {new Date(cust.lastVisit).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <a href={`tel:${cust.phone}`} className="h-10 w-10 rounded-full bg-danger/10 text-danger flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
+                  <a href={`tel:${cust.phone}`} title="Call customer" className="h-10 w-10 rounded-full bg-danger/10 text-danger flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                     <Phone size={16} />
                   </a>
                 </div>
