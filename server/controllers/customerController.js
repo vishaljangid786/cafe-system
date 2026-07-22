@@ -385,7 +385,10 @@ const getCustomerOrders = asyncHandler(async (req, res) => {
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum)
       .populate('branch', 'name city')
-      .select('createdAt branch items totalAmount grandTotal paymentType status')
+      .populate('coupon', 'code discountType discountValue')
+      // Everything the order-detail popup needs (items already carry the snapshot
+      // name/price/qty/modifiers), so no extra round-trip per order.
+      .select('createdAt branch items totalAmount grandTotal discountAmount taxAmount amountPaid paymentType status coupon orderType')
       .lean(),
     Order.aggregate([
       { $match: match },
@@ -409,6 +412,100 @@ const getCustomerOrders = asyncHandler(async (req, res) => {
     data: orders,
     totals: { count: totals[0]?.count || 0, amount: totals[0]?.amount || 0 },
     byDate: byDate.map((d) => ({ date: d._id, count: d.count, amount: d.amount })),
+  });
+});
+
+// @desc    Rich per-customer analytics for the detail page: where they spend,
+//          what they order, how often they come, discounts & coupons.
+// @route   GET /api/customers/:id/insights
+const getCustomerInsights = asyncHandler(async (req, res) => {
+  const customer = await findScopedCustomer(req, res, req.params.id);
+
+  // Scope to the CALLER's branches (same rule as the order list).
+  const match = await orderScopeMatch(req);
+  match.$or = [{ customerId: customer._id }, { customerPhone: customer.phone }];
+  const spendExpr = { $ifNull: ['$grandTotal', '$totalAmount'] };
+
+  const [perCafe, topItems, topCategories, discountAgg, couponAgg, orderTimes, byMonth] = await Promise.all([
+    // Orders + spend per cafe (branch -> location -> cafe).
+    Order.aggregate([
+      { $match: match },
+      { $lookup: { from: 'locations', localField: 'branch', foreignField: '_id', as: 'loc' } },
+      { $unwind: { path: '$loc', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'cafes', localField: 'loc.cafe', foreignField: '_id', as: 'cafe' } },
+      { $unwind: { path: '$cafe', preserveNullAndEmptyArrays: true } },
+      { $group: { _id: '$cafe._id', cafeName: { $first: '$cafe.name' }, orders: { $sum: 1 }, spend: { $sum: spendExpr }, lastVisit: { $max: '$createdAt' } } },
+      { $sort: { orders: -1 } },
+    ]),
+    // Most-ordered items (by quantity).
+    Order.aggregate([
+      { $match: match },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.itemName', count: { $sum: '$items.quantity' }, spend: { $sum: { $multiply: [{ $ifNull: ['$items.price', 0] }, '$items.quantity'] } } } },
+      { $sort: { count: -1 } },
+      { $limit: 8 },
+    ]),
+    // Favourite categories (item -> menuItem -> category).
+    Order.aggregate([
+      { $match: match },
+      { $unwind: '$items' },
+      { $lookup: { from: 'menuitems', localField: 'items.menuItem', foreignField: '_id', as: 'mi' } },
+      { $unwind: { path: '$mi', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'categories', localField: 'mi.category', foreignField: '_id', as: 'cat' } },
+      { $unwind: { path: '$cat', preserveNullAndEmptyArrays: true } },
+      { $group: { _id: '$cat.name', count: { $sum: '$items.quantity' } } },
+      { $match: { _id: { $ne: null } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 },
+    ]),
+    // Total discount taken.
+    Order.aggregate([
+      { $match: match },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$discountAmount', 0] } }, withDiscount: { $sum: { $cond: [{ $gt: [{ $ifNull: ['$discountAmount', 0] }, 0] }, 1, 0] } }, orders: { $sum: 1 } } },
+    ]),
+    // Coupons used, grouped by code.
+    Order.aggregate([
+      { $match: { ...match, coupon: { $ne: null } } },
+      { $group: { _id: '$coupon', count: { $sum: 1 } } },
+      { $lookup: { from: 'coupons', localField: '_id', foreignField: '_id', as: 'c' } },
+      { $unwind: { path: '$c', preserveNullAndEmptyArrays: true } },
+      { $project: { code: '$c.code', count: 1 } },
+      { $sort: { count: -1 } },
+    ]),
+    // Ordered timestamps for the average-gap-between-visits calc.
+    Order.find(match).select('createdAt').sort({ createdAt: 1 }).lean(),
+    // Monthly trend.
+    Order.aggregate([
+      { $match: match },
+      { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, count: { $sum: 1 }, spend: { $sum: spendExpr } } },
+      { $sort: { _id: 1 } },
+    ]),
+  ]);
+
+  // Average gap (days) between consecutive orders.
+  const times = orderTimes.map((d) => new Date(d.createdAt).getTime()).filter(Boolean);
+  let avgGapDays = null;
+  if (times.length >= 2) {
+    let sum = 0;
+    for (let i = 1; i < times.length; i += 1) sum += times[i] - times[i - 1];
+    avgGapDays = Math.round((sum / (times.length - 1)) / (24 * 60 * 60 * 1000) * 10) / 10;
+  }
+
+  const disc = discountAgg[0] || {};
+  res.json({
+    success: true,
+    data: {
+      perCafe: perCafe.map((c) => ({ cafeId: c._id, cafeName: c.cafeName || 'Unknown cafe', orders: c.orders, spend: c.spend, lastVisit: c.lastVisit })),
+      topItems: topItems.map((i) => ({ name: i._id || 'Item', count: i.count, spend: i.spend })),
+      topCategories: topCategories.map((c) => ({ category: c._id, count: c.count })),
+      discount: { total: disc.total || 0, ordersWithDiscount: disc.withDiscount || 0, totalOrders: disc.orders || 0 },
+      coupons: { totalUsed: couponAgg.reduce((s, c) => s + c.count, 0), byCoupon: couponAgg.map((c) => ({ code: c.code || '—', count: c.count })) },
+      avgGapDays,
+      firstOrderAt: times.length ? new Date(times[0]) : null,
+      lastOrderAt: times.length ? new Date(times[times.length - 1]) : null,
+      totalOrders: times.length,
+      byMonth: byMonth.map((m) => ({ month: m._id, count: m.count, spend: m.spend })),
+    },
   });
 });
 
@@ -1056,6 +1153,7 @@ module.exports = {
   getCustomerSummary,
   getCustomerById,
   getCustomerOrders,
+  getCustomerInsights,
   updateCustomer,
   getCustomerBirthdays,
   getDiscountConfig,

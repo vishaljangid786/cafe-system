@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Percent, Cake, Users, UserPlus, Repeat, RotateCcw, Wallet, ShoppingBag, AlertTriangle, Gift } from 'lucide-react';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
@@ -9,7 +10,6 @@ import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Money, Num } from '@/app/components/ui/Money';
 import { StatGridSkeleton, TableSkeleton } from '@/app/components/ui/Skeleton';
 import ExportActions from '@/app/components/ui/ExportActions';
-import Customer360Drawer from './Customer360Drawer';
 import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
 import DiscountSettingsModal from './DiscountSettingsModal';
 import BirthdayCampaignModal from './BirthdayCampaignModal';
@@ -91,7 +91,7 @@ export default function CrmWorkspace() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [openCustomer, setOpenCustomer] = useState(null);
+  const router = useRouter();
   const [showDiscount, setShowDiscount] = useState(false);
   const [showCampaign, setShowCampaign] = useState(false);
 
@@ -294,7 +294,7 @@ export default function CrmWorkspace() {
                   }
                   const isNew = memberships.some((m) => m.status === 'new');
                   return (
-                    <tr key={c._id} onClick={() => setOpenCustomer(c._id)}
+                    <tr key={c._id} onClick={() => router.push(`/dashboard/admin/customers/${c._id}`)}
                       className="cursor-pointer hover:bg-(--color-surface-soft)/40 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -376,14 +376,6 @@ export default function CrmWorkspace() {
         )}
       </div>
 
-      {openCustomer && (
-        <Customer360Drawer
-          customerId={openCustomer}
-          canEdit={canEdit}
-          onClose={() => setOpenCustomer(null)}
-          onSaved={load}
-        />
-      )}
       <DiscountSettingsModal isOpen={showDiscount} onClose={() => setShowDiscount(false)} cafes={cafes} branches={locations} />
       <BirthdayCampaignModal isOpen={showCampaign} onClose={() => setShowCampaign(false)} cafes={cafes} branches={locations} />
     </div>

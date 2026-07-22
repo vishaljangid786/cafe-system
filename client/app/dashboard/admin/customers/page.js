@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
-import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, X, MessageCircle } from 'lucide-react';
+import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, MessageCircle } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
-import { motion } from 'framer-motion';import LoadingScreen from '@/app/components/ui/LoadingScreen';
+import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
@@ -16,17 +17,18 @@ export default function CustomersDashboard() {
   // Scope CRM data to the global top-navbar cafe/branch selector (previously the
   // customer KPIs/lists were always global, ignoring the selector).
   const { user, selectedCafe, selectedLocation } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
   const [analytics, setAnalytics] = useState(null);
   const [topCustomers, setTopCustomers] = useState([]);
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
-  const [viewingCustomer, setViewingCustomer] = useState(null);
   const [loyaltyCfg, setLoyaltyCfg] = useState(null);
-  // Two views on one page: 'crm' (the report + campaigns) and 'rewards' (loyalty
-  // points, top earners, win-back list).
+  // CRM is the single view now — the customer table plus the loyalty insights
+  // (reward KPIs, top earners, win-back) that used to be a separate Rewards tab.
   const [tab, setTab] = useState('crm');
+  const openCustomer = (id) => router.push(`/dashboard/admin/customers/${id}`);
 
   const fetchCRMData = async () => {
     const isInitial = !didInitRef.current;
@@ -114,7 +116,7 @@ export default function CustomersDashboard() {
               </h1>
               <p className="text-sm font-medium text-(--color-text-secondary) mt-2">Manage customer relationships and reward points.</p>
             </div>
-            {tab === 'rewards' && (
+            {tab === 'crm' && (
               <button
                 onClick={fetchCRMData}
                 className="px-6 py-3 bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal rounded-xl  transition-transform shadow-sm "
@@ -125,12 +127,11 @@ export default function CustomersDashboard() {
           </div>
         </SlideIn>
 
-        {/* Two tabs: the CRM report + campaigns, and the loyalty/rewards view.
-            Both share the page_customers grant, so this is a plain in-page switch. */}
+        {/* CRM (customer table + loyalty insights) and WhatsApp share the
+            page_customers grant, so this is a plain in-page switch. */}
         <div className="inline-flex flex-wrap items-center gap-1 bg-(--color-surface) border border-(--color-border) rounded-xl p-1.5 shadow-sm">
           {[
             { key: 'crm', label: 'CRM', icon: Users },
-            { key: 'rewards', label: 'Rewards', icon: Award },
             (can(user, 'customers.message') || can(user, 'customers.automate')) && { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
           ].filter(Boolean).map((t) => {
             const on = tab === t.key;
@@ -155,9 +156,19 @@ export default function CustomersDashboard() {
 
         {tab === 'whatsapp' && (can(user, 'customers.message') || can(user, 'customers.automate')) && <WhatsAppWorkspace />}
 
-        {tab === 'rewards' && loading && <LoadingScreen fullScreen={false} />}
+        {/* Loyalty & Rewards — merged into the CRM view so everything about a
+            customer base lives on one page. */}
+        {tab === 'crm' && (
+          <div className="flex items-center gap-3 pt-4">
+            <Award className="text-primary h-5 w-5" />
+            <h2 className="text-lg font-semibold tracking-tight text-(--color-text-primary)">Loyalty &amp; Rewards</h2>
+            <span className="h-px flex-1 bg-(--color-border)" />
+          </div>
+        )}
 
-        {tab === 'rewards' && !loading && (<>
+        {tab === 'crm' && loading && <LoadingScreen fullScreen={false} />}
+
+        {tab === 'crm' && !loading && (<>
         {/* Analytics KPIs */}
         {refetching ? (
           <StatGridSkeleton count={4} />
@@ -278,7 +289,8 @@ export default function CustomersDashboard() {
                           </td>
                           <td className="px-5 py-4">
                             <button
-                              onClick={() => setViewingCustomer(cust)}
+                              onClick={() => openCustomer(cust._id)}
+                              title="View full profile"
                               className="p-2 rounded-xl bg-(--color-surface-soft) text-(--color-text-muted) hover:bg-primary hover:text-(--color-on-primary) transition-all shadow-sm"
                             >
                               <ChevronRight size={16} />
@@ -312,7 +324,8 @@ export default function CustomersDashboard() {
             ) : (
             <div className="bg-(--color-surface) rounded-2xl border border-(--color-border) p-4 shadow-sm flex flex-col gap-3">
               {inactiveCustomers.map(cust => (
-                <div key={cust._id} className="p-3.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex justify-between items-center gap-3 group hover:border-danger/30 transition-colors">
+                <div key={cust._id} onClick={() => openCustomer(cust._id)}
+                  className="p-3.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) flex justify-between items-center gap-3 group hover:border-danger/30 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="h-9 w-9 rounded-xl bg-danger/10 text-danger flex items-center justify-center text-sm font-bold shrink-0">
                       {(cust.name || '?').charAt(0).toUpperCase()}
@@ -324,7 +337,7 @@ export default function CustomersDashboard() {
                       </p>
                     </div>
                   </div>
-                  <a href={`tel:${cust.phone}`} title="Call customer" className="h-10 w-10 rounded-full bg-danger/10 text-danger flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <a href={`tel:${cust.phone}`} onClick={(e) => e.stopPropagation()} title="Call customer" className="h-10 w-10 rounded-full bg-danger/10 text-danger flex items-center justify-center shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                     <Phone size={16} />
                   </a>
                 </div>
@@ -335,61 +348,6 @@ export default function CustomersDashboard() {
         </div>
         </>)}
       </div>
-
-      {/* Customer Deep Dive Modal */}
-      {viewingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 ">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-(--color-surface) w-full max-w-lg rounded-xl shadow-sm overflow-hidden border border-(--color-border)"
-          >
-            <div className="p-5 border-b border-(--color-border) flex justify-between items-start">
-              <div>
-                <h3 className="text-xl font-semibold text-(--color-text-primary)">Customer <span className="text-primary">Profile</span></h3>
-                <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) mt-1">ID: {viewingCustomer._id}</p>
-              </div>
-              <button onClick={() => setViewingCustomer(null)} className="h-10 w-10 rounded-full bg-(--color-surface-soft) flex items-center justify-center text-(--color-text-muted) hover:text-danger transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-6">
-              <div className="flex items-center gap-4 p-4 bg-(--color-surface-soft) rounded-xl border border-(--color-border)">
-                <div className="h-14 w-14 rounded-xl bg-primary text-(--color-on-primary) flex items-center justify-center text-2xl font-semibold shadow-sm ">
-                  {viewingCustomer.name?.charAt(0) || 'C'}
-                </div>
-                <div>
-                  <p className="font-semibold text-xl text-(--color-text-primary)">{viewingCustomer.name}</p>
-                  <p className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-1 mt-1">
-                    <Phone size={14}/> {maskPhone(viewingCustomer.phone)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-success/10 border border-success/20">
-                  <p className="text-[11px] font-medium uppercase tracking-normal text-success mb-1">Lifetime Value</p>
-                  <p className="text-2xl font-semibold text-success"><Money value={viewingCustomer.totalSpend} /></p>
-                </div>
-                <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-                  <p className="text-[11px] font-medium uppercase tracking-normal text-primary mb-1 flex items-center gap-1"><Award size={12}/> Reward Points</p>
-                  <p className="text-2xl font-semibold text-primary">{viewingCustomer.loyaltyPoints} pts</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 bg-(--color-surface-soft)/30 border-t border-(--color-border)">
-              <button
-                onClick={() => setViewingCustomer(null)}
-                className="w-full py-4 rounded-xl bg-(--color-text-primary) text-(--color-bg-base) text-xs font-medium uppercase tracking-normal transition-all  shadow-sm "
-              >
-                Close Profile
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </PageTransition>
   );
 }
