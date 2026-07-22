@@ -16,7 +16,7 @@ export default function GiftCardsPage() {
   const [form, setForm] = useState({ amount: '', issuedToName: '', issuedToPhone: '' });
   const [busy, setBusy] = useState(false);
 
-  // lookup (balance check only — redemption happens at billing, against an order)
+  // lookup (balance check only â€” redemption happens at billing, against an order)
   const [code, setCode] = useState('');
   const [found, setFound] = useState(null);
 
@@ -51,7 +51,7 @@ export default function GiftCardsPage() {
     } catch (e) { setFound(null); toast.error(e.response?.data?.message || 'Card not found'); }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none focus:border-primary';
 
@@ -73,7 +73,7 @@ export default function GiftCardsPage() {
           <SlideIn delay={0.05}>
             <div className="glass-card p-6 rounded-xl space-y-3 h-full">
               <h2 className="text-sm font-semibold text-(--color-text-primary) flex items-center gap-2"><Plus size={15} className="text-primary" /> Issue a card</h2>
-              <input type="number" min="0" onKeyDown={blockNegative} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (₹)" className={`${inputCls} w-full`} />
+              <input type="number" min="0" onKeyDown={blockNegative} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (â‚¹)" className={`${inputCls} w-full`} />
               <input value={form.issuedToName} onChange={(e) => setForm({ ...form, issuedToName: e.target.value })} placeholder="Recipient name (optional)" className={`${inputCls} w-full`} />
               <input type="tel" inputMode="numeric" maxLength={10} value={form.issuedToPhone} onChange={(e) => setForm({ ...form, issuedToPhone: digitsOnly(e.target.value, 10) })} placeholder="Phone (optional)" className={`${inputCls} w-full`} />
               <button onClick={issue} disabled={busy} className="w-full py-3 bg-primary text-(--color-on-primary) text-[11px] font-semibold uppercase tracking-normal rounded-xl hover:opacity-90 disabled:opacity-50">Issue card</button>
@@ -90,7 +90,7 @@ export default function GiftCardsPage() {
               </div>
               {found && (
                 <div className="p-3 rounded-xl bg-(--color-surface-soft) border border-(--color-border)">
-                  <p className="text-xs font-medium text-(--color-text-primary)">{found.code} · balance <span className="text-primary font-semibold"><Money value={found.balance} /></span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
+                  <p className="text-xs font-medium text-(--color-text-primary)">{found.code} Â· balance <span className="text-primary font-semibold"><Money value={found.balance} /></span> {!found.active && <span className="text-danger">({found.expired ? 'expired' : 'inactive'})</span>}</p>
                 </div>
               )}
               <p className="text-[11px] text-(--color-text-muted)">Check a card&apos;s balance here before accepting it as payment.</p>
@@ -107,8 +107,8 @@ export default function GiftCardsPage() {
               {cards.map((c) => (
                 <div key={c._id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-xs font-medium text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[11px]">· {c.issuedToName || 'guest'}</span></p>
-                    <p className="text-[11px] text-(--color-text-muted)">Issued <Money value={c.initialBalance} /> · {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
+                    <p className="text-xs font-medium text-(--color-text-primary)">{c.code} <span className="text-(--color-text-muted) text-[11px]">Â· {c.issuedToName || 'guest'}</span></p>
+                    <p className="text-[11px] text-(--color-text-muted)">Issued <Money value={c.initialBalance} /> Â· {new Date(c.createdAt).toLocaleDateString('en-IN')}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-semibold ${c.balance > 0 ? 'text-primary' : 'text-(--color-text-muted)'}`}><Money value={c.balance} /></span>
@@ -116,7 +116,7 @@ export default function GiftCardsPage() {
                       actionKey="giftcards.delete"
                       endpoint={`/gift-cards/${c._id}`}
                       label={`gift card ${c.code}`}
-                      description="A card still carrying a balance is money owed to the customer, so it cannot simply be erased — the server will say so if this one still has value left."
+                      description="A card still carrying a balance is money owed to the customer, so it cannot simply be erased â€” the server will say so if this one still has value left."
                       onDeleted={load}
                       size={14}
                       className="p-2!"

@@ -23,18 +23,18 @@ const TABS = [
 const FIELDS = {
   tax: [
     ['tax', 'gstRate', 'GST rate (%)', 'number', '5 / 12 / 18'],
-    ['tax', 'gstin', 'GSTIN (for invoices)', 'text', 'Fallback only — receipts use the cafe’s GSTIN when set (edit it on the Cafes page)'],
+    ['tax', 'gstin', 'GSTIN (for invoices)', 'text', 'Fallback only â€” receipts use the cafeâ€™s GSTIN when set (edit it on the Cafes page)'],
   ],
   billing: [
     ['billing', 'serviceChargeRate', 'Service charge (%)', 'number', '0 to disable'],
     ['billing', 'roundBill', 'Round final bill to nearest rupee', 'checkbox', ''],
   ],
   payments: [
-    ['payments', 'upiVpa', 'UPI ID / VPA', 'text', 'e.g. cafe@okhdfcbank — customers scan this to prepay'],
+    ['payments', 'upiVpa', 'UPI ID / VPA', 'text', 'e.g. cafe@okhdfcbank â€” customers scan this to prepay'],
     ['payments', 'upiName', 'UPI payee name', 'text', 'Shown to the customer while paying'],
     ['payments', 'acceptUpi', 'Accept UPI (QR self-order prepay)', 'checkbox', 'Needs a UPI ID above'],
     ['payments', 'acceptCash', 'Accept cash at counter', 'checkbox', ''],
-    ['payments', 'requireApprovalForQr', 'Confirm payment before sending to kitchen', 'checkbox', 'Recommended — a QR order waits for staff confirmation'],
+    ['payments', 'requireApprovalForQr', 'Confirm payment before sending to kitchen', 'checkbox', 'Recommended â€” a QR order waits for staff confirmation'],
   ],
   payroll: [
     ['payroll', 'shiftStart', 'Shift start (HH:mm)', 'text', 'e.g. 09:00'],
@@ -46,14 +46,14 @@ const FIELDS = {
     ['payroll', 'halfDayThresholdMinutes', 'Half-day below (minutes)', 'number', '240 = 4h'],
   ],
   loyalty: [
-    ['loyalty', 'pointsPer100', 'Points earned per ₹100', 'number', ''],
+    ['loyalty', 'pointsPer100', 'Points earned per â‚¹100', 'number', ''],
     ['loyalty', 'rewardThresholdPoints', 'Points needed for a reward', 'number', ''],
-    ['loyalty', 'rewardCouponValue', 'Reward coupon value (₹)', 'number', ''],
-    ['loyalty', 'rewardMinOrder', 'Min order for reward coupon (₹)', 'number', ''],
+    ['loyalty', 'rewardCouponValue', 'Reward coupon value (â‚¹)', 'number', ''],
+    ['loyalty', 'rewardMinOrder', 'Min order for reward coupon (â‚¹)', 'number', ''],
     ['loyalty', 'rewardExpiryDays', 'Reward coupon expiry (days)', 'number', ''],
-    ['loyalty', 'tierSilver', 'Silver tier from (₹ lifetime spend)', 'number', ''],
-    ['loyalty', 'tierGold', 'Gold tier from (₹ lifetime spend)', 'number', ''],
-    ['loyalty', 'tierPlatinum', 'Platinum tier from (₹ lifetime spend)', 'number', ''],
+    ['loyalty', 'tierSilver', 'Silver tier from (â‚¹ lifetime spend)', 'number', ''],
+    ['loyalty', 'tierGold', 'Gold tier from (â‚¹ lifetime spend)', 'number', ''],
+    ['loyalty', 'tierPlatinum', 'Platinum tier from (â‚¹ lifetime spend)', 'number', ''],
   ],
   invoice: [
     ['invoice', 'prefix', 'Invoice number prefix', 'text', 'e.g. INV'],
@@ -132,7 +132,7 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading || !form) return <LoadingScreen />;
+  if (loading || !form) return <LoadingScreen fullScreen={false} />;
 
   return (
     <PageTransition>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
             disabled={saving}
             className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary text-(--color-on-primary) text-sm font-semibold tracking-normal rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
           >
-            <Save size={15} /> {saving ? 'Saving…' : 'Save settings'}
+            <Save size={15} /> {saving ? 'Savingâ€¦' : 'Save settings'}
           </button>
         </SlideIn>
       </div>

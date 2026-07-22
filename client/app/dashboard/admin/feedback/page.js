@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../../services/api';
@@ -90,7 +90,7 @@ export default function FeedbackPage() {
     ? (user?.assignedLocation?.name || 'Your Branch')
     : (locations.find(l => l._id === scope)?.name || '');
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   const total = stats?.count || 0;
 

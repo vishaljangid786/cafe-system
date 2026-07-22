@@ -72,7 +72,7 @@ export default function WaitlistPage() {
     finally { setBusy(false); }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none focus:border-primary';
 
@@ -85,7 +85,7 @@ export default function WaitlistPage() {
               <div className="p-3 rounded-xl bg-primary/10 text-primary"><Users size={22} /></div>
               <div>
                 <h1 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">Waitlist</h1>
-                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Walk-in queue · {entries.length} waiting</p>
+                <p className="text-[11px] font-medium text-(--color-text-muted) uppercase tracking-normal">Walk-in queue Â· {entries.length} waiting</p>
               </div>
             </div>
             {!branchScoped && (
@@ -131,9 +131,9 @@ export default function WaitlistPage() {
                     <div className="flex items-center gap-3">
                       <span className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">#{idx + 1}</span>
                       <div>
-                        <p className="text-xs font-medium text-(--color-text-primary)">{e.customerName} <span className="text-(--color-text-muted)">· party of {e.partySize}</span></p>
+                        <p className="text-xs font-medium text-(--color-text-primary)">{e.customerName} <span className="text-(--color-text-muted)">Â· party of {e.partySize}</span></p>
                         <p className={`text-[11px] font-medium flex items-center gap-1 ${over ? 'text-danger' : 'text-(--color-text-muted)'}`}>
-                          <Clock size={10} /> waiting {waited}m{e.quotedWaitMinutes > 0 ? ` / ~${e.quotedWaitMinutes}m` : ''}{e.customerPhone ? ` · ${e.customerPhone}` : ''}
+                          <Clock size={10} /> waiting {waited}m{e.quotedWaitMinutes > 0 ? ` / ~${e.quotedWaitMinutes}m` : ''}{e.customerPhone ? ` Â· ${e.customerPhone}` : ''}
                         </p>
                       </div>
                     </div>

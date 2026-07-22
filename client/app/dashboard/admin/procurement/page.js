@@ -103,7 +103,7 @@ export default function ProcurementPage() {
     setBusy(true);
     try {
       await api.patch(`/purchase-orders/${id}/receive`);
-      toast.success('Received — stock & expense recorded');
+      toast.success('Received â€” stock & expense recorded');
       load();
     } catch (e) { toast.error(e.response?.data?.message || 'Could not receive'); }
     finally { setBusy(false); }
@@ -119,7 +119,7 @@ export default function ProcurementPage() {
     finally { setBusy(false); }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   const inputCls = 'px-3 py-2.5 rounded-xl bg-(--color-surface-soft) border border-(--color-border) text-xs font-medium text-(--color-text-primary) outline-none focus:border-primary';
 
@@ -155,7 +155,7 @@ export default function ProcurementPage() {
                 <h2 className="text-sm font-semibold text-(--color-text-primary)">New purchase order</h2>
                 <div className="flex flex-wrap gap-3">
                   <div className="w-56">
-                    <PremiumSelect value={poSupplier} onChange={setPoSupplier} options={suppliers.map((s) => ({ label: s.name, value: s._id }))} placeholder="Select supplier…" />
+                    <PremiumSelect value={poSupplier} onChange={setPoSupplier} options={suppliers.map((s) => ({ label: s.name, value: s._id }))} placeholder="Select supplierâ€¦" />
                   </div>
                   {!branchScoped && (
                     <div className="w-44">
@@ -168,12 +168,12 @@ export default function ProcurementPage() {
                   {poItems.map((it, idx) => (
                     <div key={idx} className="flex flex-wrap gap-2 items-center">
                       <div className="flex-1 min-w-40">
-                        <PremiumSelect value={it.ingredient} onChange={(v) => onPickIngredient(idx, v)} options={ingredients.map((ing) => ({ label: ing.name, value: ing._id }))} placeholder="Ingredient (links to stock)…" />
+                        <PremiumSelect value={it.ingredient} onChange={(v) => onPickIngredient(idx, v)} options={ingredients.map((ing) => ({ label: ing.name, value: ing._id }))} placeholder="Ingredient (links to stock)â€¦" />
                       </div>
                       <input value={it.name} onChange={(e) => setItem(idx, { name: e.target.value })} placeholder="or item name" className={`${inputCls} w-36`} />
                       <input type="number" min="0" onKeyDown={blockNonInteger} value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} placeholder="Qty" className={`${inputCls} w-20`} />
                       <span className="text-[10px] text-(--color-text-muted) uppercase">{it.unit}</span>
-                      <input type="number" min="0" onKeyDown={blockNegative} value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="₹/unit" className={`${inputCls} w-24`} />
+                      <input type="number" min="0" onKeyDown={blockNegative} value={it.unitCost} onChange={(e) => setItem(idx, { unitCost: e.target.value })} placeholder="â‚¹/unit" className={`${inputCls} w-24`} />
                       <span className="text-xs font-semibold text-(--color-text-primary) w-20 text-right"><Money value={(Number(it.quantity) || 0) * (Number(it.unitCost) || 0)} /></span>
                       {poItems.length > 1 && (
                         <button onClick={() => setPoItems((p) => p.filter((_, i) => i !== idx))} className="p-2 text-danger hover:bg-danger/10 rounded-lg"><Trash2 size={14} /></button>
@@ -203,8 +203,8 @@ export default function ProcurementPage() {
                   {orders.map((po) => (
                     <div key={po._id} className="py-3 flex items-center justify-between flex-wrap gap-3">
                       <div>
-                        <p className="text-xs font-medium text-(--color-text-primary)">{po.supplier?.name || 'Supplier'} · <Money value={po.totalAmount} /> <span className="text-(--color-text-muted) text-[11px]">· {po.items?.length} items</span></p>
-                        <p className="text-[10px] text-(--color-text-muted)">{po.locationId?.name || ''} · {new Date(po.createdAt).toLocaleDateString('en-IN')}</p>
+                        <p className="text-xs font-medium text-(--color-text-primary)">{po.supplier?.name || 'Supplier'} Â· <Money value={po.totalAmount} /> <span className="text-(--color-text-muted) text-[11px]">Â· {po.items?.length} items</span></p>
+                        <p className="text-[10px] text-(--color-text-muted)">{po.locationId?.name || ''} Â· {new Date(po.createdAt).toLocaleDateString('en-IN')}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`text-[11px] font-medium tracking-normal px-2.5 py-1 rounded-lg ${po.status === 'received' ? 'bg-success/10 text-success' : po.status === 'cancelled' ? 'bg-danger/10 text-danger' : 'bg-amber-500/10 text-amber-500'}`}>{po.status}</span>
@@ -224,7 +224,7 @@ export default function ProcurementPage() {
                           actionKey="procurement.delete"
                           endpoint={`/purchase-orders/${po._id}`}
                           label={`this ${po.supplier?.name || 'supplier'} order`}
-                          description="A received order has already moved stock and money — cancel it instead of deleting. The server will say so if that applies here."
+                          description="A received order has already moved stock and money â€” cancel it instead of deleting. The server will say so if that applies here."
                           onDeleted={load}
                           size={14}
                           className="p-2!"
@@ -263,13 +263,13 @@ export default function ProcurementPage() {
                     <div key={s._id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
                       <div>
                         <p className="text-xs font-medium text-(--color-text-primary)">{s.name}</p>
-                        <p className="text-[10px] text-(--color-text-muted)">{[s.phone, s.gstin, s.paymentTerms].filter(Boolean).join(' · ') || '—'}</p>
+                        <p className="text-[10px] text-(--color-text-muted)">{[s.phone, s.gstin, s.paymentTerms].filter(Boolean).join(' Â· ') || 'â€”'}</p>
                       </div>
                       <RowDeleteButton
                         actionKey="procurement.delete"
                         endpoint={`/suppliers/${s._id}`}
                         label={s.name}
-                        description="A supplier that still has purchase orders against it cannot be removed — the server will tell you how many to clear first."
+                        description="A supplier that still has purchase orders against it cannot be removed â€” the server will tell you how many to clear first."
                         onDeleted={load}
                         size={14}
                         className="p-2!"

@@ -49,7 +49,7 @@ export default function CashDrawerPage() {
 
   const q = useCallback(() => (scope ? `?locationId=${scope}` : ''), [scope]);
 
-  // `silent` skips the full-screen loader — used for realtime updates and the
+  // `silent` skips the full-screen loader â€” used for realtime updates and the
   // manual refresh so a live cash event never flashes a blank loading screen.
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!isBranchScoped && !scope) return;
@@ -70,7 +70,7 @@ export default function CashDrawerPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Realtime: refetch whenever a cash event fires for the branch on screen — a
+  // Realtime: refetch whenever a cash event fires for the branch on screen â€” a
   // cash order completing, a cash expense, a refund, or a manual pay-in/out.
   // Branch-scoped users are auto-joined to their branch room on connect; an
   // admin/super admin viewing a specific branch explicitly (re)joins that room
@@ -126,7 +126,7 @@ export default function CashDrawerPage() {
     try {
       const res = await api.post(`/cash-drawer/${current.session._id}/close`, { countedCash: Number(countedCash), notes: closeNotes });
       const v = res.data.data.variance;
-      toast.success(v === 0 ? 'Drawer balanced — closed' : `Closed · variance ${formatIndianCompact(v, { currency: true })}`);
+      toast.success(v === 0 ? 'Drawer balanced â€” closed' : `Closed Â· variance ${formatIndianCompact(v, { currency: true })}`);
       setCountedCash(''); setCloseNotes('');
       refresh({ silent: true });
     } catch (e) {
@@ -134,7 +134,7 @@ export default function CashDrawerPage() {
     } finally { setBusy(false); }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen fullScreen={false} />;
 
   const live = current?.live;
   const session = current?.session;
@@ -175,7 +175,7 @@ export default function CashDrawerPage() {
                   </h1>
                   <p className="mt-1.5 text-sm font-medium text-(--color-text-secondary)">
                     {session
-                      ? <>Opened by {displayUserName(session.openedBy, '—')} · {new Date(session.openedAt).toLocaleString('en-IN')}</>
+                      ? <>Opened by {displayUserName(session.openedBy, 'â€”')} Â· {new Date(session.openedAt).toLocaleString('en-IN')}</>
                       : 'Open a shift to start tracking cash for this branch.'}
                   </p>
                 </div>
@@ -247,7 +247,7 @@ export default function CashDrawerPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-wide">Expected in drawer</p>
                     </div>
                     <p className="mt-3 text-4xl font-semibold tracking-tight text-(--color-text-primary)"><Money value={live.expectedCash} /></p>
-                    <p className="mt-2 text-[11px] font-medium text-(--color-text-muted)">Float + sales + pay-ins − expenses, refunds &amp; pay-outs</p>
+                    <p className="mt-2 text-[11px] font-medium text-(--color-text-muted)">Float + sales + pay-ins âˆ’ expenses, refunds &amp; pay-outs</p>
                   </div>
                 </div>
 
@@ -335,7 +335,7 @@ export default function CashDrawerPage() {
                 <div className="flex h-full flex-col rounded-2xl border border-(--color-border) bg-(--color-surface) p-5 shadow-sm">
                   <div className="mb-3 flex items-center gap-2">
                     <History size={16} className="text-primary" />
-                    <h2 className="text-sm font-semibold text-(--color-text-primary)">Cash activity · this shift</h2>
+                    <h2 className="text-sm font-semibold text-(--color-text-primary)">Cash activity Â· this shift</h2>
                     {entries.length > 0 && <span className="ml-auto rounded-full bg-(--color-surface-soft) px-2 py-0.5 text-[10px] font-semibold text-(--color-text-muted)">{entries.length}</span>}
                   </div>
                   {entries.length === 0 ? (
@@ -355,11 +355,11 @@ export default function CashDrawerPage() {
                                 {isIn ? <ArrowDownCircle size={16} /> : <ArrowUpCircle size={16} />}
                               </span>
                               <div className="min-w-0">
-                                <p className="truncate text-xs font-medium text-(--color-text-primary)">{e.label}{e.pending ? <span className="text-warning"> · pending</span> : ''}</p>
+                                <p className="truncate text-xs font-medium text-(--color-text-primary)">{e.label}{e.pending ? <span className="text-warning"> Â· pending</span> : ''}</p>
                                 <p className="text-[11px] text-(--color-text-muted)">{new Date(e.at).toLocaleString('en-IN')}</p>
                               </div>
                             </div>
-                            <span className={`shrink-0 text-sm font-semibold ${isIn ? 'text-success' : 'text-danger'}`}><Money value={e.amount} prefix={isIn ? '+' : '−'} /></span>
+                            <span className={`shrink-0 text-sm font-semibold ${isIn ? 'text-success' : 'text-danger'}`}><Money value={e.amount} prefix={isIn ? '+' : 'âˆ’'} /></span>
                           </div>
                         );
                       })}
@@ -383,8 +383,8 @@ export default function CashDrawerPage() {
                 {closedShifts.map((s) => (
                   <div key={s._id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-(--color-text-primary)">{new Date(s.openedAt).toLocaleDateString('en-IN')} · {s.locationId?.name || ''}</p>
-                      <p className="text-[11px] text-(--color-text-muted)">Sales <Money value={s.cashSales} />{s.cashExpenses ? <> · Expenses <Money value={s.cashExpenses} /></> : ''} · Expected <Money value={s.expectedCash} /> · Counted <Money value={s.countedCash} /></p>
+                      <p className="text-xs font-medium text-(--color-text-primary)">{new Date(s.openedAt).toLocaleDateString('en-IN')} Â· {s.locationId?.name || ''}</p>
+                      <p className="text-[11px] text-(--color-text-muted)">Sales <Money value={s.cashSales} />{s.cashExpenses ? <> Â· Expenses <Money value={s.cashExpenses} /></> : ''} Â· Expected <Money value={s.expectedCash} /> Â· Counted <Money value={s.countedCash} /></p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${s.variance === 0 ? 'bg-success/10 text-success' : s.variance > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
@@ -394,7 +394,7 @@ export default function CashDrawerPage() {
                         actionKey="cashdrawer.delete"
                         endpoint={`/cash-drawer/${s._id}`}
                         label={`the ${new Date(s.openedAt).toLocaleDateString('en-IN')} shift`}
-                        description="A closed shift is that day's Z-report — the record of what was counted against what was expected. Removing it leaves the day unreconciled."
+                        description="A closed shift is that day's Z-report â€” the record of what was counted against what was expected. Removing it leaves the day unreconciled."
                         onDeleted={refresh}
                         size={14}
                         className="p-2!"
