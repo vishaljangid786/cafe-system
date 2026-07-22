@@ -260,6 +260,8 @@ const getCustomerReport = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(limitNum)
       .populate('memberships.cafe', 'name')
+      .populate('memberships.branches', 'name city')
+      .populate('branch', 'name city')
       .lean(),
   ]);
 

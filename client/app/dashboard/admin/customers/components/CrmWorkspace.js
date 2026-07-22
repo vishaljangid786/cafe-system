@@ -274,15 +274,25 @@ export default function CrmWorkspace() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-(--color-border) bg-(--color-surface-soft)/50">
-                  {['Customer', 'Status', 'Cafes', 'Orders', 'Spend', 'Last visit', ''].map((h, i) => (
+                  {['Customer', 'Status', 'Cafes / Branches', 'Orders', 'Spend', 'Last visit', ''].map((h, i) => (
                     <th key={h || `actions-${i}`} className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-(--color-text-muted) whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-(--color-border)">
                 {rows.map((c) => {
-                  const cafeNames = (c.memberships || []).map((m) => m.cafe?.name).filter(Boolean);
-                  const isNew = (c.memberships || []).some((m) => m.status === 'new');
+                  const memberships = c.memberships || [];
+                  const cafeNames = [...new Set(memberships.map((m) => m.cafe?.name).filter(Boolean))];
+                  // Every branch the customer is enrolled in, across their cafes.
+                  const branchNames = [...new Set(
+                    memberships.flatMap((m) => (m.branches || []).map((b) => b?.name || b?.city).filter(Boolean))
+                  )];
+                  // Fall back to the acquisition branch for customers/data with no
+                  // membership branches (e.g. imported or QR-captured before an order).
+                  if (branchNames.length === 0 && (c.branch?.name || c.branch?.city)) {
+                    branchNames.push(c.branch.name || c.branch.city);
+                  }
+                  const isNew = memberships.some((m) => m.status === 'new');
                   return (
                     <tr key={c._id} onClick={() => setOpenCustomer(c._id)}
                       className="cursor-pointer hover:bg-(--color-surface-soft)/40 transition-colors">
@@ -303,15 +313,29 @@ export default function CrmWorkspace() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {cafeNames.slice(0, 2).map((n) => (
-                            <span key={n} className="px-2 py-0.5 rounded-md bg-(--color-surface-soft) text-[10px] font-bold text-(--color-text-secondary)">{n}</span>
-                          ))}
-                          {cafeNames.length > 2 && (
-                            <span className="text-[10px] font-bold text-(--color-text-muted)">+{cafeNames.length - 2}</span>
-                          )}
-                          {cafeNames.length === 0 && <span className="text-[11px] text-(--color-text-muted)">—</span>}
-                        </div>
+                        {cafeNames.length === 0 && branchNames.length === 0 ? (
+                          <span className="text-[11px] text-(--color-text-muted)">—</span>
+                        ) : (
+                          <div className="space-y-1">
+                            {cafeNames.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {cafeNames.map((n) => (
+                                  <span key={n} className="px-2 py-0.5 rounded-md bg-primary/10 text-[10px] font-bold text-primary">{n}</span>
+                                ))}
+                              </div>
+                            )}
+                            {branchNames.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {branchNames.slice(0, 3).map((n) => (
+                                  <span key={n} className="px-2 py-0.5 rounded-md bg-(--color-surface-soft) text-[10px] font-medium text-(--color-text-secondary)">{n}</span>
+                                ))}
+                                {branchNames.length > 3 && (
+                                  <span className="text-[10px] font-bold text-(--color-text-muted)">+{branchNames.length - 3}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-xs font-bold text-(--color-text-primary)"><Num value={c.visits || 0} /></td>
                       <td className="px-4 py-3 text-xs font-bold text-(--color-text-primary)"><Money value={c.totalSpend || 0} /></td>

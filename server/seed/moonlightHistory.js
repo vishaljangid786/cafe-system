@@ -77,7 +77,7 @@ const EXPENSE_CATS = ['Inventory', 'Electricity', 'Water', 'Maintenance', 'Marke
 // Expense.proofImage is a required field (every real expense has a receipt).
 const RECEIPT_PLACEHOLDER = 'https://placehold.co/600x800/1f2937/e5e7eb.png?text=Receipt';
 
-const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins, staff, chefs }) => {
+const seedMoonlightHistory = async ({ cafe, locations, superAdmin, admin, branchAdmins, staff, chefs }) => {
   console.log('[seed] Moon Light history — starting.');
   const now = new Date();
 
@@ -94,17 +94,42 @@ const seedMoonlightHistory = async ({ locations, superAdmin, admin, branchAdmins
   const adminAt = (bId) => branchAdmins.find((a) => idOf(a.assignedLocation) === bId) || admin;
 
   // ---------------------------------------------------------------- Customers
+  // Each customer gets a per-cafe MEMBERSHIP (cafe + the branch(es) they visit),
+  // because that is what the CRM report reads for the "Cafes / Branches" column.
+  // Every few customers touch a second branch, so multi-branch enrolment shows.
   let phoneSeq = 9700000000;
-  const customerDocs = CUSTOMER_NAMES.map((name, i) => ({
-    name,
-    phone: String(++phoneSeq),
-    email: `${name.toLowerCase().replace(/[^a-z]+/g, '.')}@example.com`,
-    loyaltyPoints: rand(0, 600),
-    totalSpend: rand(500, 12000),
-    visits: rand(1, 18),
-    lastVisit: new Date(now.getTime() - rand(0, DAYS) * 86400000),
-    branch: locations[i % locations.length]._id,
-  }));
+  const customerDocs = CUSTOMER_NAMES.map((name, i) => {
+    const primary = locations[i % locations.length];
+    const second = locations[(i + 1) % locations.length];
+    const multi = i % 3 === 0 && locations.length > 1 && String(primary._id) !== String(second._id);
+    const branchIds = multi ? [primary._id, second._id] : [primary._id];
+    const totalSpend = rand(500, 12000);
+    const visits = rand(1, 18);
+    const loyaltyPoints = rand(0, 600);
+    const lastVisit = new Date(now.getTime() - rand(0, DAYS) * 86400000);
+    return {
+      name,
+      phone: String(++phoneSeq),
+      email: `${name.toLowerCase().replace(/[^a-z]+/g, '.')}@example.com`,
+      loyaltyPoints,
+      totalSpend,
+      visits,
+      lastVisit,
+      branch: primary._id,
+      memberships: [{
+        cafe: cafe._id,
+        status: 'existing',
+        branches: branchIds,
+        firstBranch: primary._id,
+        joinedAt: lastVisit,
+        firstOrderAt: lastVisit,
+        lastVisit,
+        orderCount: visits,
+        totalSpend,
+        loyaltyPoints,
+      }],
+    };
+  });
   const customers = await Customer.insertMany(customerDocs);
   const customersAt = (bId) => customers.filter((c) => c.branch.toString() === bId);
 
