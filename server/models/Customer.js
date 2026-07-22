@@ -109,6 +109,14 @@ const customerSchema = new mongoose.Schema(
     },
     profileCompletedAt: { type: Date, default: null }, // set when the QR form is submitted
     skippedAt: { type: Date, default: null },          // last time the QR popup was dismissed
+
+    // ── Marketing consent ──────────────────────────────────────────────────
+    // WhatsApp policy requires honouring opt-outs. Set true when a customer
+    // replies STOP/UNSUBSCRIBE (handled on the webhook); broadcasts and
+    // automations skip anyone opted out.
+    marketingOptOut: { type: Boolean, default: false },
+    marketingOptOutAt: { type: Date, default: null },
+    lastMarketedAt: { type: Date, default: null }, // last time we sent them a campaign
   },
   { timestamps: true }
 );

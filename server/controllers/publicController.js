@@ -311,6 +311,13 @@ const upsertPublicCustomerProfile = asyncHandler(async (req, res) => {
     customer = customer.toObject ? customer.toObject() : customer;
   }
 
+  // First-time QR signup → fire the "welcome" WhatsApp automation if one is set.
+  // Best-effort: fireWelcome never throws and no-ops when WhatsApp isn't configured.
+  if (!existing) {
+    const { fireWelcome } = require('../services/whatsappAutomation');
+    await fireWelcome(customer);
+  }
+
   const settings = await getSettings(branch._id);
   const membership = membershipFor(customer, branch.cafe);
 

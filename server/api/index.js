@@ -3,7 +3,7 @@ require('dotenv').config();
 const { assertRequiredEnv } = require('../config/requiredEnv');
 const app = require('../app');
 const connectDB = require('../config/db');
-const { handleCronDailyReport, handleCronGeneratePayroll } = require('../utils/scheduler');
+const { handleCronDailyReport, handleCronGeneratePayroll, handleCronWhatsappAutomations } = require('../utils/scheduler');
 
 assertRequiredEnv();
 
@@ -23,6 +23,9 @@ module.exports = async (req, res) => {
   }
   if (path === '/api/cron/generate-payroll') {
     return handleCronGeneratePayroll(req, res);
+  }
+  if (path === '/api/cron/whatsapp-automations') {
+    return handleCronWhatsappAutomations(req, res);
   }
 
   return app(req, res);

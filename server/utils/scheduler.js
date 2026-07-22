@@ -201,4 +201,39 @@ const handleCronGeneratePayroll = async (req, res) => {
   }
 };
 
-module.exports = { initScheduler, generateDailyReport, handleCronDailyReport, generateMonthlyPayroll, handleCronGeneratePayroll };
+// Run the daily WhatsApp automations (birthday + win-back). Best-effort per rule.
+const runWhatsappAutomations = async () => {
+  const engine = require('../services/whatsappAutomation');
+  const wa = require('../services/whatsappService');
+  if (!wa.isConfigured()) {
+    console.log('[SCHEDULER] WhatsApp not configured — skipping automations.');
+    return { skipped: true };
+  }
+  console.log('[SCHEDULER] Running WhatsApp birthday + win-back automations...');
+  const birthday = await engine.runScheduled('birthday');
+  const winback = await engine.runScheduled('winback');
+  return { birthday, winback };
+};
+
+// Secret-guarded HTTP trigger for the daily WhatsApp automations. Same auth model
+// as the other crons: Vercel Cron carries CRON_SECRET as `Authorization: Bearer`.
+const handleCronWhatsappAutomations = async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers?.authorization || '';
+  const provided = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  if (!secret || provided !== secret) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const result = await runWhatsappAutomations();
+    res.status(200).json({ success: true, result });
+  } catch (err) {
+    console.error('[SCHEDULER] Cron WhatsApp automations failed:', err);
+    res.status(500).json({ success: false });
+  }
+};
+
+module.exports = { initScheduler, generateDailyReport, handleCronDailyReport, generateMonthlyPayroll, handleCronGeneratePayroll, runWhatsappAutomations, handleCronWhatsappAutomations };

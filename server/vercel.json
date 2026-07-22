@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/generate-payroll",
       "schedule": "30 0 1 * *"
+    },
+    {
+      "path": "/api/cron/whatsapp-automations",
+      "schedule": "0 4 * * *"
     }
   ]
 }

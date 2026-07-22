@@ -162,6 +162,8 @@ export const ACTION_SCOPES = [
       { action: 'modify', label: 'Edit customer details', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['viewAnalytics'] } },
       { action: 'discount', label: 'Set new-customer discount', legacy: { roles: ['admin', 'branch_admin'], perms: [] } },
       { action: 'campaign', label: 'Generate birthday / offer coupons', legacy: { roles: ['admin'], perms: ['manageCoupons'] } },
+      { action: 'message', label: 'Send WhatsApp broadcasts', legacy: { roles: ['admin', 'branch_admin'], perms: ['manageCoupons'] } },
+      { action: 'automate', label: 'Manage WhatsApp automations', legacy: { roles: ['admin'], perms: [] } },
       { action: 'export', label: 'Export customer report', legacy: { roles: ['admin', 'branch_admin', 'location_admin'], perms: ['exportReports'] } },
       { action: 'delete', label: 'Delete customer profiles', legacy: { roles: ['admin'], perms: [] } },
     ],

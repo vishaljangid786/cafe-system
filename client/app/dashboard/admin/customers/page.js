@@ -1,19 +1,21 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import api from '@/app/services/api';
-import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, X } from 'lucide-react';
+import { Users, Crown, Activity, Heart, Calendar, Phone, Award, Ticket, Star, ChevronRight, X, MessageCircle } from 'lucide-react';
 import { PageTransition, SlideIn } from '@/app/components/ui/AnimatedContainer';
 import { motion } from 'framer-motion';import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { progress } from '@/app/components/ui/TopProgressBar';
 import { StatGridSkeleton, TableSkeleton, ListSkeleton } from '@/app/components/ui/Skeleton';
 import { useAuth } from '@/app/context/AuthContext';
+import { can } from '@/app/config/actions';
 import { Money, Num } from '@/app/components/ui/Money';
 import CrmWorkspace from './components/CrmWorkspace';
+import WhatsAppWorkspace from './components/WhatsAppWorkspace';
 
 export default function CustomersDashboard() {
   // Scope CRM data to the global top-navbar cafe/branch selector (previously the
   // customer KPIs/lists were always global, ignoring the selector).
-  const { selectedCafe, selectedLocation } = useAuth();
+  const { user, selectedCafe, selectedLocation } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
   const didInitRef = useRef(false);
@@ -129,7 +131,8 @@ export default function CustomersDashboard() {
           {[
             { key: 'crm', label: 'CRM', icon: Users },
             { key: 'rewards', label: 'Rewards', icon: Award },
-          ].map((t) => {
+            (can(user, 'customers.message') || can(user, 'customers.automate')) && { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+          ].filter(Boolean).map((t) => {
             const on = tab === t.key;
             return (
               <button
@@ -149,6 +152,8 @@ export default function CustomersDashboard() {
         {/* CRM report: scoped filters, KPIs, customer table and the 360 drawer.
             Self-contained — it loads its own data. */}
         {tab === 'crm' && <CrmWorkspace />}
+
+        {tab === 'whatsapp' && (can(user, 'customers.message') || can(user, 'customers.automate')) && <WhatsAppWorkspace />}
 
         {tab === 'rewards' && loading && <LoadingScreen fullScreen={false} />}
 

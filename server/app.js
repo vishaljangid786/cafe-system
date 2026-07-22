@@ -43,6 +43,7 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const waitlistRoutes = require('./routes/waitlistRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 const seedRoutes = require('./routes/seedRoutes');
 const cookieParser = require('cookie-parser');
 const app = express();
@@ -98,7 +99,8 @@ const corsOptions = {
 };
 
 // Middlewares
-app.use(express.json());
+// Keep the raw body so the WhatsApp webhook can verify Meta's X-Hub-Signature-256.
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -203,6 +205,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/seed', seedRoutes);
 
 // Browser-visitable full demo seed: GET /seed shows a confirm page, its form
