@@ -16,6 +16,7 @@ import { progress } from '@/app/components/ui/TopProgressBar';
 import { PageTransition, SlideIn, CardHover } from '../../../components/ui/AnimatedContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumSelect from '../../../components/ui/PremiumSelect';
+import { runValidation, required, pincode, hasErrors, firstError } from '@/app/utils/validators';
 
 export default function BranchesPage() {
   const router = useRouter();
@@ -211,14 +212,22 @@ export default function BranchesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const action = editingId ? 'Updating' : 'Creating';
-    const loadToast = toast.loading(`${action} branch...`);
 
     // A cafe is required when creating a new branch (the branch's brand owner).
     if (!editingId && !formData.cafe) {
-      toast.error('Please choose which cafe this branch belongs to', { id: loadToast });
+      toast.error('Please choose which cafe this branch belongs to');
       return;
     }
+    // Validate the branch fields with specific messages.
+    const errors = runValidation(formData, {
+      name: [required('Branch name')],
+      city: [required('City')],
+      pincode: [pincode],
+    });
+    if (hasErrors(errors)) return toast.error(firstError(errors));
+
+    const action = editingId ? 'Updating' : 'Creating';
+    const loadToast = toast.loading(`${action} branch...`);
 
     try {
       const payload = {

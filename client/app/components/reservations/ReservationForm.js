@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { runValidation, required, phone, hasErrors, firstError } from '@/app/utils/validators';
 import {
   X, Calendar, Clock, Users,
   MapPin, Phone, CreditCard,
@@ -168,6 +169,26 @@ export default function ReservationForm({ isOpen, onClose, onSuccess, editData =
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate the essentials with specific messages before the request.
+    const errors = runValidation(formData, {
+      eventName: [required('Event name')],
+      locationId: [required('Branch')],
+      date: [required('Date')],
+      startTime: [required('Start time')],
+      endTime: [required('End time')],
+      customerName: [required('Customer name')],
+      customerPhone: [required('Customer phone'), phone],
+    });
+    if (formData.startTime && formData.endTime && formData.endTime <= formData.startTime) {
+      errors.endTime = 'End time must be after the start time';
+    }
+    const adv = Number(formData.advancePayment) || 0;
+    const tot = Number(formData.totalAmount) || 0;
+    if (adv < 0) errors.advancePayment = 'Advance cannot be negative';
+    else if (tot > 0 && adv > tot) errors.advancePayment = 'Advance cannot exceed the total amount';
+    if (hasErrors(errors)) return toast.error(firstError(errors));
+
     if (availabilityStatus && !availabilityStatus.available) {
       toast.error('Selected slot is not available');
       return;

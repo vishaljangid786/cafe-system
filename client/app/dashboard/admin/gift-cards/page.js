@@ -9,6 +9,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import { Money } from '@/app/components/ui/Money';
 import { Gift, Plus, Search, IndianRupee } from 'lucide-react';
 import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
+import { runValidation, positiveAmount, phone, hasErrors, firstError } from '@/app/utils/validators';
 
 export default function GiftCardsPage() {
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,11 @@ export default function GiftCardsPage() {
   useEffect(() => { load(); }, [load]);
 
   const issue = async () => {
-    if (!form.amount || Number(form.amount) <= 0) return toast.error('Enter an amount');
+    const errors = runValidation(form, {
+      amount: [positiveAmount],
+      issuedToPhone: [phone], // optional, but valid when entered
+    });
+    if (hasErrors(errors)) return toast.error(firstError(errors));
     setBusy(true);
     try {
       const res = await api.post('/gift-cards', form);

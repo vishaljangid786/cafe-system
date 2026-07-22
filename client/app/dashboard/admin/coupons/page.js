@@ -1,5 +1,6 @@
 'use client';
 import { blockNegative, blockNonInteger } from '@/app/utils/inputValidation';
+import { runValidation, required, minLength, positiveAmount, nonNegativeAmount, futureDate, hasErrors, firstError } from '@/app/utils/validators';
 import {
   Tag, Search, Plus, Filter,
   Edit2, Trash2, CheckCircle2, XCircle,
@@ -171,6 +172,18 @@ export default function CouponsManagementPage() {
       },
       isActive: formData.get('isActive') === 'on'
     };
+
+    // Validate before hitting the server, with a specific message per field.
+    const errors = runValidation(couponData, {
+      code: [required('Coupon code'), minLength(3, 'Coupon code')],
+      discountValue: [positiveAmount],
+      expiryDate: [required('Expiry date'), futureDate('Expiry date')],
+      minOrderAmount: [nonNegativeAmount],
+    });
+    if (couponData.discountType === 'percentage' && couponData.discountValue > 100) {
+      errors.discountValue = 'A percentage discount cannot exceed 100%';
+    }
+    if (hasErrors(errors)) return toast.error(firstError(errors));
 
     const loadToast = toast.loading(editingCoupon ? 'Updating coupon...' : 'Creating coupon...');
     try {

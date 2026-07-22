@@ -11,6 +11,7 @@ import LoadingScreen from '@/app/components/ui/LoadingScreen';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { Users, Clock, Plus, Check, X, UserX } from 'lucide-react';
 import RowDeleteButton from '@/app/components/ui/RowDeleteButton';
+import { runValidation, required, phone, positiveInteger, hasErrors, firstError } from '@/app/utils/validators';
 
 export default function WaitlistPage() {
   const { user } = useAuth();
@@ -51,7 +52,13 @@ export default function WaitlistPage() {
   useEffect(() => { if (user) load(); }, [user, load]);
 
   const add = async () => {
-    if (!form.customerName.trim()) return toast.error('Enter a name');
+    const errors = runValidation(form, {
+      customerName: [required('Customer name')],
+      customerPhone: [phone], // optional, valid when entered
+      partySize: [positiveInteger('Party size')],
+    });
+    if (!branchScoped && !scope) errors.scope = 'Select a branch first';
+    if (hasErrors(errors)) return toast.error(firstError(errors));
     setBusy(true);
     try {
       await api.post('/waitlist', { ...form, ...(branchScoped ? {} : { locationId: scope }) });

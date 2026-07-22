@@ -7,6 +7,7 @@ import { Money, Num } from '@/app/components/ui/Money';
 import UniversalDateFilter from '@/app/components/ui/UniversalDateFilter';
 import { Button } from '@/app/components/ui/Button';
 import toast from 'react-hot-toast';
+import { runValidation, required, email, phone, hasErrors, firstError } from '@/app/utils/validators';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const maskPhone = (phone) => {
@@ -74,6 +75,15 @@ export default function Customer360Drawer({ customerId, onClose, canEdit, onSave
   useEffect(() => { if (customerId) loadOrders(); }, [customerId, loadOrders]);
 
   const save = async () => {
+    // Validate the editable fields before saving. Name is required; email and
+    // phone must be well-formed when present.
+    const errors = runValidation(form, {
+      name: [required('Name')],
+      email: [email],
+      phone: [phone],
+    });
+    if (hasErrors(errors)) { toast.error(firstError(errors)); return; }
+
     setSaving(true);
     try {
       const body = { name: form.name, gender: form.gender || null, email: form.email };

@@ -5,6 +5,7 @@ import api from '@/app/services/api';
 import { digitsOnly, sanitizeEmail, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import { todayInput } from '@/app/utils/dateInput';
 import { stateOptions } from '@/app/utils/indianStates';
+import { runValidation, required, email, phone, age, pincode, aadhaar, nonNegativeAmount, hasErrors, firstError } from '@/app/utils/validators';
 import { Filter, ChevronRight, ChevronDown, Search, Users, Target, UserCheck, UserX, Mail, Phone, MapPin, Edit3, Trash2, Shield, ShieldAlert, Layers, Info, Hash, Award, CreditCard, Globe, Grid2X2, List, Plus } from 'lucide-react';
 import PremiumSelect from '@/app/components/ui/PremiumSelect';
 import { PageTransition, SlideIn, CardHover } from '@/app/components/ui/AnimatedContainer';
@@ -183,6 +184,20 @@ export default function TeamDirectory() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+
+    // Validate the profile fields with a specific message before saving.
+    const errors = runValidation(formData, {
+      name: [required('Name')],
+      email: [required('Email'), email],
+      phone: [required('Phone'), phone],
+      age: [age],
+      city: [required('City')],
+      pincode: [pincode],
+      aadharNumber: [aadhaar],
+      monthlySalary: [nonNegativeAmount],
+    });
+    if (hasErrors(errors)) { toast.error(firstError(errors)); return; }
+
     setIsSubmitting(true);
     const loadToast = toast.loading('Saving changes...');
     try {
