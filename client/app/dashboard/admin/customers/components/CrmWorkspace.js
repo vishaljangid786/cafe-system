@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Percent, Cake, Users, UserPlus, Repeat, RotateCcw, Wallet, ShoppingBag, AlertTriangle, Gift } from 'lucide-react';
+import { Search, Percent, Cake, Users, UserPlus, Repeat, RotateCcw, Wallet, ShoppingBag, AlertTriangle, Gift, ArrowDownUp } from 'lucide-react';
 import api from '@/app/services/api';
 import { useAuth } from '@/app/context/AuthContext';
 import { can } from '@/app/config/actions';
@@ -81,6 +81,7 @@ export default function CrmWorkspace() {
   );
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('-totalSpend'); // server-supported sort keys
   const [page, setPage] = useState(1);
 
   const [summary, setSummary] = useState(null);
@@ -111,8 +112,9 @@ export default function CrmWorkspace() {
     else if (cafeId) p.append('cafeId', cafeId);
     if (status !== 'all') p.append('status', status);
     if (search.trim()) p.append('search', search.trim());
+    if (sort) p.append('sort', sort);
     return p;
-  }, [range, cafeId, locationId, status, search]);
+  }, [range, cafeId, locationId, status, search, sort]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -152,7 +154,7 @@ export default function CrmWorkspace() {
 
   // Any filter change returns to page 1 so the user can't strand on a page that
   // no longer exists in the narrowed set.
-  useEffect(() => { setPage(1); }, [range, cafeId, locationId, status, search]);
+  useEffect(() => { setPage(1); }, [range, cafeId, locationId, status, search, sort]);
 
   const branchOptions = [
     { value: '', label: 'All branches' },
@@ -214,6 +216,23 @@ export default function CrmWorkspace() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or phone…"
               className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-(--color-surface) border border-(--color-border) text-sm outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="w-full sm:w-48">
+            <PremiumSelect
+              icon={ArrowDownUp}
+              value={sort}
+              onChange={setSort}
+              options={[
+                { value: '-totalSpend', label: 'Most relevant (spend)' },
+                { value: '-loyaltyPoints', label: 'Most reward points' },
+                { value: '-lastVisit', label: 'Recently active' },
+                { value: '-createdAt', label: 'Newest first' },
+                { value: 'createdAt', label: 'Oldest first' },
+                { value: '-visits', label: 'Most visits' },
+                { value: 'name', label: 'Name (A–Z)' },
+              ]}
             />
           </div>
 

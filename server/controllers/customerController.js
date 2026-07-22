@@ -426,16 +426,14 @@ const getCustomerInsights = asyncHandler(async (req, res) => {
   match.$or = [{ customerId: customer._id }, { customerPhone: customer.phone }];
   const spendExpr = { $ifNull: ['$grandTotal', '$totalAmount'] };
 
-  const [perCafe, topItems, topCategories, discountAgg, couponAgg, orderTimes, byMonth] = await Promise.all([
-    // Orders + spend per cafe (branch -> location -> cafe).
+  const [perBranch, topItems, topCategories, discountAgg, couponAgg, orderTimes, byMonth] = await Promise.all([
+    // Orders + spend per BRANCH. Branch is always stamped on an order, whereas the
+    // branch's cafe link isn't guaranteed on every deployment — so we group by
+    // branch here and resolve the cafe name from the customer's memberships below
+    // (the same source the CRM table uses), which is reliable.
     Order.aggregate([
       { $match: match },
-      { $lookup: { from: 'locations', localField: 'branch', foreignField: '_id', as: 'loc' } },
-      { $unwind: { path: '$loc', preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: 'cafes', localField: 'loc.cafe', foreignField: '_id', as: 'cafe' } },
-      { $unwind: { path: '$cafe', preserveNullAndEmptyArrays: true } },
-      { $group: { _id: '$cafe._id', cafeName: { $first: '$cafe.name' }, orders: { $sum: 1 }, spend: { $sum: spendExpr }, lastVisit: { $max: '$createdAt' } } },
-      { $sort: { orders: -1 } },
+      { $group: { _id: '$branch', orders: { $sum: 1 }, spend: { $sum: spendExpr }, lastVisit: { $max: '$createdAt' } } },
     ]),
     // Most-ordered items (by quantity).
     Order.aggregate([
@@ -482,6 +480,32 @@ const getCustomerInsights = asyncHandler(async (req, res) => {
     ]),
   ]);
 
+  // Resolve each order-branch to its cafe via the customer's memberships (cafe is
+  // populated there), then roll the per-branch order counts up per cafe. Falls back
+  // to the branch's own name, and only "Unknown cafe" when nothing resolves.
+  const branchInfo = {}; // branchId -> { cafeId, cafeName, branchName }
+  (customer.memberships || []).forEach((m) => {
+    const cafeId = m.cafe?._id ? String(m.cafe._id) : null;
+    const cafeName = m.cafe?.name || null;
+    (m.branches || []).forEach((b) => {
+      const bid = String(b?._id || b);
+      branchInfo[bid] = { cafeId, cafeName, branchName: b?.name || null };
+    });
+  });
+  const cafeRollup = {};
+  perBranch.forEach((b) => {
+    const info = branchInfo[String(b._id)] || {};
+    const key = info.cafeId || info.branchName || 'unknown';
+    if (!cafeRollup[key]) {
+      cafeRollup[key] = { cafeId: info.cafeId || null, cafeName: info.cafeName || info.branchName || 'Unknown cafe', orders: 0, spend: 0, lastVisit: null };
+    }
+    const r = cafeRollup[key];
+    r.orders += b.orders;
+    r.spend += b.spend;
+    if (!r.lastVisit || b.lastVisit > r.lastVisit) r.lastVisit = b.lastVisit;
+  });
+  const perCafe = Object.values(cafeRollup).sort((a, b) => b.orders - a.orders);
+
   // Average gap (days) between consecutive orders.
   const times = orderTimes.map((d) => new Date(d.createdAt).getTime()).filter(Boolean);
   let avgGapDays = null;
@@ -495,7 +519,7 @@ const getCustomerInsights = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      perCafe: perCafe.map((c) => ({ cafeId: c._id, cafeName: c.cafeName || 'Unknown cafe', orders: c.orders, spend: c.spend, lastVisit: c.lastVisit })),
+      perCafe,
       topItems: topItems.map((i) => ({ name: i._id || 'Item', count: i.count, spend: i.spend })),
       topCategories: topCategories.map((c) => ({ category: c._id, count: c.count })),
       discount: { total: disc.total || 0, ordersWithDiscount: disc.withDiscount || 0, totalOrders: disc.orders || 0 },
