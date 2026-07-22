@@ -24,6 +24,9 @@ const waCampaignSchema = new mongoose.Schema(
     name: { type: String, trim: true, default: 'Broadcast' },
     template: { type: String, required: true },
     language: { type: String, default: 'en' },
+    // The template variable values (may contain the {name} token), kept so a
+    // batched/resumed send personalises exactly like the first batch.
+    variables: { type: [String], default: [] },
     // What was targeted, kept for the history view.
     segment: { type: String, default: 'all' },
     cafe: { type: mongoose.Schema.Types.ObjectId, ref: 'Cafe', default: null },

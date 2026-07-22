@@ -22,6 +22,7 @@ const {
 const { verifyToken, checkRoles, checkPermissions } = require('../middlewares/authMiddleware');
 const rateLimit = require('express-rate-limit');
 const { withRateLimitStore } = require('../utils/rateLimitStore');
+const { cacheGet } = require('../utils/cache');
 
 const router = express.Router();
 
@@ -42,12 +43,15 @@ router.use(analyticsLimiter);
 // Cash-flow summary is available to EVERY authenticated role (it powers the
 // overview card for staff/chef too), so it is registered before the blanket
 // viewAnalytics gate below. Role scoping happens inside the controller.
-router.route('/cash-flow').get(getCashFlow);
+// These endpoints run heavy aggregations and are read on nearly every dashboard
+// load, so a short (60s) per-user response cache cuts repeat DB work sharply. It
+// no-ops entirely when REDIS_URL isn't set, so behaviour is unchanged without it.
+router.route('/cash-flow').get(cacheGet(60), getCashFlow);
 
 router.use(checkPermissions('viewAnalytics'));
 
 router.route('/advanced')
-  .get(checkRoles('admin', 'super_admin', 'branch_admin', 'location_admin'), getAdvancedAnalytics);
+  .get(checkRoles('admin', 'super_admin', 'branch_admin', 'location_admin'), cacheGet(60), getAdvancedAnalytics);
 
 // Analytics pages are governed by the blanket viewAnalytics permission above,
 // so any user granted viewAnalytics (not just admins) can open them.
@@ -64,13 +68,13 @@ router.route('/payment-intelligence')
   .get(getPaymentInfo);
 
 router.route('/branch-comparison-suite')
-  .get(getBranchComparisonSuite);
+  .get(cacheGet(60), getBranchComparisonSuite);
 
 router.route('/command-center')
-  .get(getCommandCenterStats);
+  .get(cacheGet(60), getCommandCenterStats);
 
 router.route('/forecasting')
-  .get(getForecastingAnalytics);
+  .get(cacheGet(120), getForecastingAnalytics);
 
 router.route('/location-intelligence/:id')
   .get(checkRoles('admin', 'super_admin'), getLocationInfo);

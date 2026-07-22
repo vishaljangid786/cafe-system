@@ -98,6 +98,10 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
+// Request metrics (Prometheus). Recorded in-process; exposed at /metrics below.
+const { metricsMiddleware, metricsHandler } = require('./utils/metrics');
+app.use(metricsMiddleware);
+
 // Middlewares
 // Keep the raw body so the WhatsApp webhook can verify Meta's X-Hub-Signature-256.
 app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
@@ -171,6 +175,9 @@ app.get('/readyz', (req, res) => {
     mongo: ready ? 'connected' : 'not_connected',
   });
 });
+
+// Prometheus scrape endpoint — bearer-token guarded, 404 when no token configured.
+app.get('/metrics', metricsHandler);
 
 // Routes
 app.use('/api/auth', authRoutes);

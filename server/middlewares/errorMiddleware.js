@@ -1,3 +1,5 @@
+const { captureException } = require('../utils/sentry');
+
 const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
@@ -43,6 +45,16 @@ const errorHandler = (err, req, res, next) => {
   if (err.http_code || /cloudinary/i.test(err.message || '') || /allowed formats|Invalid image file/i.test(err.message || '')) {
     statusCode = 400;
     message = 'Image upload failed. Please use a valid JPG, PNG or WEBP image under 5MB.';
+  }
+
+  // Report unexpected server-side failures to Sentry (no-op unless SENTRY_DSN is
+  // set). 4xx are user/operational errors, so they are intentionally NOT reported.
+  if (statusCode >= 500) {
+    captureException(err, {
+      url: req.originalUrl,
+      method: req.method,
+      userId: req.user?._id ? String(req.user._id) : undefined,
+    });
   }
 
   // In production, never leak internal error details for server-side (>=500)

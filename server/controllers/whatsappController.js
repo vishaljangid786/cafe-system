@@ -4,6 +4,7 @@ const WaCampaign = require('../models/WaCampaign');
 const WaAutomation = require('../models/WaAutomation');
 const wa = require('../services/whatsappService');
 const engine = require('../services/whatsappAutomation');
+const dispatch = require('../services/whatsappDispatch');
 const { canAccessCafe, canAccessLocation, resolveUserCafeIds, userLocationIds, isAllLocation } = require('../utils/accessControl');
 
 // Hard cap on a single broadcast so one click can't fan out unbounded on a
@@ -97,41 +98,39 @@ const sendBroadcast = asyncHandler(async (req, res) => {
   const customers = await Customer.find(q).select('name phone').limit(MAX_BROADCAST).lean();
   if (!customers.length) { res.status(400); throw new Error('No customers match this audience'); }
 
+  // Snapshot the whole audience as a QUEUED job, then drain only the first batch
+  // synchronously. The rest stay queued and are finished by the caller's resume
+  // loop or the cron sweep — so a large list can never time out this request.
   const campaign = await WaCampaign.create({
     name: name || 'Broadcast',
-    template, language, segment,
+    template, language, segment, variables,
     cafe: cafeId && !isAllLocation(cafeId) ? cafeId : null,
     location: locationId && !isAllLocation(locationId) ? locationId : null,
     createdBy: req.user._id,
     source: 'broadcast',
     status: 'sending',
     counts: { total: customers.length, sent: 0, failed: 0, delivered: 0, read: 0 },
-    recipients: [],
+    recipients: customers.map((c) => ({ customer: c._id, name: c.name, phone: c.phone, status: 'queued' })),
   });
 
-  let sent = 0, failed = 0;
-  const recipients = [];
-  for (const c of customers) {
-    // Per-recipient personalisation: {name} in any variable -> the first name.
-    const vars = (variables || []).map((v) => engine.fillVar(v, c));
-    try {
-      const { wamid } = await wa.sendTemplate({ to: c.phone, template, language, variables: vars });
-      recipients.push({ customer: c._id, name: c.name, phone: c.phone, wamid, status: 'sent' });
-      sent += 1;
-    } catch (err) {
-      recipients.push({ customer: c._id, name: c.name, phone: c.phone, status: 'failed', error: err.message });
-      failed += 1;
-    }
-  }
+  const { sent, failed, remaining, done } = await dispatch.dispatchCampaign(campaign._id);
+  res.json({ success: true, data: { campaignId: campaign._id, total: customers.length, sent, failed, remaining, done } });
+});
 
-  await Customer.updateMany({ _id: { $in: customers.map((c) => c._id) } }, { $set: { lastMarketedAt: new Date() } });
-  campaign.recipients = recipients;
-  campaign.counts.sent = sent;
-  campaign.counts.failed = failed;
-  campaign.status = failed && !sent ? 'failed' : 'completed';
-  await campaign.save();
+// @route POST /api/whatsapp/campaigns/:id/resume
+// Sends the next queued batch of an in-progress broadcast. The client calls this
+// in a loop until `done`, which keeps every batch short (no serverless timeout).
+const resumeCampaign = asyncHandler(async (req, res) => {
+  const campaign = await WaCampaign.findById(req.params.id).select('createdBy cafe status');
+  if (!campaign) { res.status(404); throw new Error('Campaign not found'); }
+  // Only the creator, a super admin, or someone scoped to its cafe may drive it.
+  const isOwner = String(campaign.createdBy) === String(req.user._id);
+  const isSuper = req.user.role === 'super_admin';
+  const scoped = campaign.cafe && canAccessCafe(req.user, campaign.cafe);
+  if (!isOwner && !isSuper && !scoped) { res.status(403); throw new Error('Not allowed to send this campaign'); }
 
-  res.json({ success: true, data: { campaignId: campaign._id, total: customers.length, sent, failed } });
+  const result = await dispatch.dispatchCampaign(req.params.id);
+  res.json({ success: true, data: result });
 });
 
 // @route GET /api/whatsapp/campaigns
@@ -269,6 +268,7 @@ module.exports = {
   getTemplates,
   previewAudience,
   sendBroadcast,
+  resumeCampaign,
   listCampaigns,
   listAutomations,
   upsertAutomation,

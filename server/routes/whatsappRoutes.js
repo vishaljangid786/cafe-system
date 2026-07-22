@@ -5,6 +5,7 @@ const {
   getTemplates,
   previewAudience,
   sendBroadcast,
+  resumeCampaign,
   listCampaigns,
   listAutomations,
   upsertAutomation,
@@ -40,6 +41,7 @@ router.get('/templates', requireWaAny, getTemplates);
 router.get('/campaigns', requireWaAny, listCampaigns);
 router.post('/audience/preview', checkAction('customers.message'), previewAudience);
 router.post('/broadcast', checkAction('customers.message'), sendBroadcast);
+router.post('/campaigns/:id/resume', checkAction('customers.message'), resumeCampaign);
 
 router.get('/automations', requireWaAny, listAutomations);
 router.put('/automations', checkAction('customers.automate'), upsertAutomation);

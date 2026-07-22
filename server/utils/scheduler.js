@@ -212,7 +212,11 @@ const runWhatsappAutomations = async () => {
   console.log('[SCHEDULER] Running WhatsApp birthday + win-back automations...');
   const birthday = await engine.runScheduled('birthday');
   const winback = await engine.runScheduled('winback');
-  return { birthday, winback };
+  // Safety net: finish any broadcasts whose batches were left queued (e.g. the
+  // admin closed the tab before the resume loop drained them).
+  const dispatch = require('../services/whatsappDispatch');
+  const sweep = await dispatch.sweepPending();
+  return { birthday, winback, sweep };
 };
 
 // Secret-guarded HTTP trigger for the daily WhatsApp automations. Same auth model

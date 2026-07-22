@@ -199,6 +199,7 @@ function BroadcastPanel({ configured, approved, cafeOptions, locations, defaultC
     if (!audience?.total) return toast.error('No customers match this audience');
     if (!window.confirm(`Send this template to ${audience.total} customer(s) on WhatsApp?`)) return;
     setSending(true);
+    const tId = toast.loading('Starting…');
     try {
       const r = await api.post('/whatsapp/broadcast', {
         name: name || undefined,
@@ -209,12 +210,30 @@ function BroadcastPanel({ configured, approved, cafeOptions, locations, defaultC
         locationId: locationId || undefined,
         variables: vars,
       });
-      const { sent, failed } = r.data.data;
-      toast.success(`Sent to ${sent}${failed ? `, ${failed} failed` : ''}`);
+      let { campaignId, total, sent, failed, remaining, done } = r.data.data;
+      // The server sends only the first batch synchronously; drive the rest here,
+      // one short request at a time, so a big list never times out on the server.
+      let guard = 0;
+      toast.loading(`Sending… ${total - remaining}/${total}`, { id: tId });
+      while (!done && remaining > 0 && guard < 5000) {
+        guard += 1;
+        const rr = await api.post(`/whatsapp/campaigns/${campaignId}/resume`);
+        sent += rr.data.data.sent;
+        failed += rr.data.data.failed;
+        remaining = rr.data.data.remaining;
+        done = rr.data.data.done;
+        toast.loading(`Sending… ${total - remaining}/${total}`, { id: tId });
+      }
+      if (remaining > 0) {
+        toast.success(`Sent ${sent}. ${remaining} will finish automatically shortly.`, { id: tId });
+      } else {
+        toast.success(`Sent to ${sent}${failed ? `, ${failed} failed` : ''}`, { id: tId });
+      }
       setName('');
       onSent?.();
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Could not send the broadcast');
+      toast.error(e.response?.data?.message || 'Could not send the broadcast. Any remaining messages will finish automatically.', { id: tId });
+      onSent?.();
     } finally {
       setSending(false);
     }

@@ -1,5 +1,8 @@
 require('dotenv').config();
 
+// Initialise Sentry before the app so it can instrument HTTP (no-op without DSN).
+require('../utils/sentry');
+
 const { assertRequiredEnv } = require('../config/requiredEnv');
 const app = require('../app');
 const connectDB = require('../config/db');

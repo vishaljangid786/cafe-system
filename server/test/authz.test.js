@@ -40,6 +40,12 @@ const PUBLIC_ENDPOINTS = new Set([
   'bookingRoutes.js:createBooking',       // a guest books without an account
   'feedbackRoutes.js:submitFeedback',     // QR feedback form, no login
   'locationRoutes.js:public',             // branch list for the public booking page
+  // Meta calls the WhatsApp webhook unauthenticated: GET is the subscription
+  // handshake (verify_token), POST is verified by the X-Hub-Signature-256 HMAC.
+  'whatsappRoutes.js:webhook',
+  // The scheduled-automations runner is guarded INSIDE the controller — a cron
+  // sends CRON_SECRET, otherwise it requires a super_admin session (optionalVerifyToken).
+  'whatsappRoutes.js:automations/run',
 ]);
 
 // Endpoints that act only on the CALLER'S OWN data, so a permission gate would
