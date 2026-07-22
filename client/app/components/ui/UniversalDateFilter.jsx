@@ -236,6 +236,14 @@ export default function UniversalDateFilter({
     emit(v);
   };
 
+  // Double-clicking the filter clears it back to "All time" (empty range) — the
+  // same reset the Custom popover's "All time (clear)" does, but reachable from
+  // anywhere on the control. No-op when nothing is filtered.
+  const clearAll = () => {
+    if (value.kind === 'all') return;
+    pick({ kind: 'all' });
+  };
+
   useEffect(() => {
     if (!showCustom) return undefined;
     const onDoc = (e) => { if (customRef.current && !customRef.current.contains(e.target)) setShowCustom(false); };
@@ -270,6 +278,8 @@ export default function UniversalDateFilter({
 
   return (
     <div
+      onDoubleClick={clearAll}
+      title={value.kind !== 'all' ? 'Double-click to clear (show all time)' : undefined}
       className={`inline-flex flex-wrap items-center gap-0.5 ${
         variant === 'ghost' ? '' : 'px-2 py-1 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-sm'
       } ${className}`}
