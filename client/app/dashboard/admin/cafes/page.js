@@ -727,7 +727,7 @@ export default function CafesPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="absolute inset-0 bg-black/80" />
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }}
-                className="bg-(--color-surface) rounded-xl max-w-3xl w-full shadow-sm relative z-10 border border-(--color-border) max-h-[90vh] flex flex-col"
+                className="bg-(--color-surface) rounded-xl max-w-3xl w-full shadow-sm relative z-10 border border-(--color-border) max-h-[70vh] flex flex-col"
               >
                 <div className="flex justify-between items-center px-6 py-4 border-b border-(--color-border) shrink-0">
                   <h2 className="text-2xl font-semibold text-(--color-text-primary) tracking-tight">

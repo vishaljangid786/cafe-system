@@ -7,7 +7,7 @@ import { can } from '@/app/config/actions';
 import api from '../../../services/api';
 import ImpactDeleteModal from '@/app/components/ui/ImpactDeleteModal';
 import { digitsOnly } from '@/app/utils/inputValidation';
-import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store, X } from 'lucide-react';
+import { MapPin, Plus, Trash2, ShieldAlert, Globe, Hash, Navigation, Edit2, Users, User, ArrowUp, ArrowDown, Settings2, Info, Activity, Target, Store, X, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
 import LoadingScreen from '@/app/components/ui/LoadingScreen';
@@ -45,6 +45,10 @@ export default function BranchesPage() {
   const [branchStats, setBranchStats] = useState(null);
   const [fetchingStats, setFetchingStats] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // Per-list filters (client-side over the already-loaded branches).
+  const [cafeFilter, setCafeFilter] = useState('');     // cafe _id, '' = all
+  const [statusFilter, setStatusFilter] = useState(''); // 'active' | 'inactive' | '' = all
+  const [typeFilter, setTypeFilter] = useState('');     // 'both' | 'veg' | 'non-veg' | '' = all
   const [staffFormData, setStaffFormData] = useState({
     name: '', email: '', phone: '', monthlySalary: '', role: '', address1: ''
   });
@@ -260,6 +264,28 @@ export default function BranchesPage() {
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
+  // Search + the three dropdown filters, applied client-side over the loaded
+  // branches so every change is instant.
+  const cafeIdOf = (loc) => String(loc.cafe?._id || loc.cafe || '');
+  const filteredLocations = locations.filter((loc) => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = !q
+      || (loc.name || '').toLowerCase().includes(q)
+      || (loc.city || '').toLowerCase().includes(q)
+      || (loc.state || '').toLowerCase().includes(q);
+    const matchesCafe = !cafeFilter || cafeIdOf(loc) === cafeFilter;
+    const matchesStatus = !statusFilter || (loc.status || 'active') === statusFilter;
+    const matchesType = !typeFilter || (loc.dietaryType || 'both') === typeFilter;
+    return matchesSearch && matchesCafe && matchesStatus && matchesType;
+  });
+
+  // Cafe dropdown options from the cafes the branches actually belong to (falls
+  // back to the fetched cafes list), so you never pick a cafe with no branches.
+  const cafeOptions = [
+    { label: 'All Cafes', value: '' },
+    ...cafes.map((c) => ({ label: c.name, value: String(c._id) })),
+  ];
+
   return (
     <PageTransition>
       <div className="space-y-6">
@@ -274,8 +300,8 @@ export default function BranchesPage() {
               </p>
             </div>
 
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1 max-w-3xl">
-              <div className="relative flex-1 min-w-0">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1 max-w-4xl flex-wrap">
+              <div className="relative flex-1 min-w-48">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-(--color-text-muted)">
                   <Globe size={18} />
                 </div>
@@ -286,6 +312,32 @@ export default function BranchesPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+
+              {/* Only show the cafe filter when more than one cafe is in play. */}
+              {cafes.length > 1 && (
+                <div className="w-full md:w-44">
+                  <PremiumSelect icon={Store} value={cafeFilter} onChange={setCafeFilter} options={cafeOptions} placeholder="All Cafes" />
+                </div>
+              )}
+              <div className="w-full md:w-40">
+                <PremiumSelect icon={Filter} value={statusFilter} onChange={setStatusFilter}
+                  options={[
+                    { label: 'All Statuses', value: '' },
+                    { label: 'Active', value: 'active' },
+                    { label: 'Inactive', value: 'inactive' },
+                  ]}
+                  placeholder="All Statuses" />
+              </div>
+              <div className="w-full md:w-40">
+                <PremiumSelect icon={Filter} value={typeFilter} onChange={setTypeFilter}
+                  options={[
+                    { label: 'All Types', value: '' },
+                    { label: 'Mixed', value: 'both' },
+                    { label: 'Veg', value: 'veg' },
+                    { label: 'Non-Veg', value: 'non-veg' },
+                  ]}
+                  placeholder="All Types" />
               </div>
 
               {can(user, 'branches.add') && (
@@ -319,13 +371,13 @@ export default function BranchesPage() {
               </tr>
             </thead>
             <tbody>
-              {locations
-                .filter(loc =>
-                  (loc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (loc.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (loc.state || '').toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((loc, i) => (
+              {filteredLocations.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-5 py-12 text-center text-(--color-text-muted) font-medium text-sm">
+                    No branches match these filters.
+                  </td>
+                </tr>
+              ) : filteredLocations.map((loc, i) => (
                   <motion.tr 
                     key={loc._id}
                     initial={{ opacity: 0, y: 10 }}
@@ -420,12 +472,6 @@ export default function BranchesPage() {
                 ))}
             </tbody>
           </table>
-          {locations.length === 0 && (
-            <div className="p-10 text-center text-(--color-text-muted)">
-              <Globe size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-medium uppercase tracking-normal">No branches found matching search</p>
-            </div>
-          )}
         </div>
 
         <AnimatePresence>
