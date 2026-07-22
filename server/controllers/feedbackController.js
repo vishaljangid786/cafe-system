@@ -2,7 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const Feedback = require('../models/Feedback');
 const Location = require('../models/Location');
 const mongoose = require('mongoose');
-const { scopedLocationId, clampLimit } = require('../utils/accessControl');
+const { scopedLocationId, clampLimit, escapeRegex } = require('../utils/accessControl');
 const { requireRecord, assertCanDelete, announceDeletion } = require('../utils/deleteGuard');
 
 const clampRating = (v) => {
@@ -62,8 +62,21 @@ const getFeedback = asyncHandler(async (req, res) => {
       : new mongoose.Types.ObjectId(scope.toString());
   }
 
-  const [list, statsAgg] = await Promise.all([
-    Feedback.find(match).populate('locationId', 'name').sort({ createdAt: -1 }).limit(clampLimit(req.query.limit, 50, 200)),
+  // Name search narrows the LIST only; the stats below stay over the whole branch
+  // so the average/distribution never shift as you search or page.
+  const listMatch = { ...match };
+  const search = (req.query.search || '').toString().trim();
+  if (search) listMatch.customerName = { $regex: escapeRegex(search), $options: 'i' };
+
+  // Pagination — 10 per page by default so admins can walk the full history, not
+  // just the most recent handful.
+  const limit = clampLimit(req.query.limit, 10, 100);
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const skip = (page - 1) * limit;
+
+  const [list, listTotal, statsAgg] = await Promise.all([
+    Feedback.find(listMatch).populate('locationId', 'name').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Feedback.countDocuments(listMatch),
     Feedback.aggregate([
       { $match: match },
       {
@@ -87,6 +100,7 @@ const getFeedback = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: list,
+    pagination: { page, limit, total: listTotal, pages: Math.max(1, Math.ceil(listTotal / limit)) },
     stats: {
       avgRating: s.avgRating ? Number(s.avgRating.toFixed(2)) : 0,
       avgFood: s.avgFood ? Number(s.avgFood.toFixed(2)) : 0,

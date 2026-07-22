@@ -170,9 +170,10 @@ export function buildNavGroups(user, { locations = [], unreadCount = 0 } = {}) {
     // Permissions and Login As moved into the People hub, so Setup keeps only
     // what is genuinely org configuration. Cafes + Branches are one hub now.
     const setupItems = [];
-    const places = hubItem('Cafes & Branches', '/dashboard/admin/places', Store, ['page_cafes', 'page_branches']);
+    // Settings folds into this hub as a tab too, so it no longer gets its own
+    // sidebar entry — `covers` keeps the Granted-Access fallback from re-adding it.
+    const places = hubItem('Cafes & Branches', '/dashboard/admin/places', Store, ['page_cafes', 'page_branches', 'page_settings']);
     if (places) setupItems.push(places);
-    if (canView('page_settings')) setupItems.push({ name: 'Settings', pageKey: 'page_settings', href: r('page_settings'), icon: Settings });
     if (canView('page_auditlogs')) setupItems.push({ name: 'Security Logs', pageKey: 'page_auditlogs', href: r('page_auditlogs'), icon: Activity });
     pushGroup('Setup', setupItems);
   } else {

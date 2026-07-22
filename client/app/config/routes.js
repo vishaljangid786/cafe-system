@@ -269,7 +269,7 @@ export const ROUTE_TABLE = {
   },
   hub_places: {
     canonical: '/dashboard/admin/places',
-    anyOf: ['page_cafes', 'page_branches'],
+    anyOf: ['page_cafes', 'page_branches', 'page_settings'],
     paths: ['/dashboard/admin/places'],
   },
 };
