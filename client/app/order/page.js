@@ -916,7 +916,7 @@ function OrderApp() {
 
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-wide text-(--color-text-muted)">Gender</label>
-                <div className="mt-1 grid grid-cols-4 gap-1.5">
+                <div className="mt-1 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {[
                     { v: 'male', l: 'Male' }, { v: 'female', l: 'Female' },
                     { v: 'other', l: 'Other' }, { v: 'prefer_not_to_say', l: 'Skip' },

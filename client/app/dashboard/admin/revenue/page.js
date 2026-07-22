@@ -538,7 +538,7 @@ export default function RevenuePage() {
               {selectedTransaction.orders && selectedTransaction.orders.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-[11px] font-medium uppercase tracking-normal text-(--color-text-muted) ml-1">Order Details</p>
-                  <div className="rounded-xl border border-(--color-border) overflow-hidden">
+                  <div className="rounded-xl border border-(--color-border) overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-(--color-surface-soft)/50">

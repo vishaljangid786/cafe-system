@@ -146,12 +146,20 @@
      toward 14px for a denser UI, or back to 16px to restore the default size. */
   html {
     font-size: 14px;
+    /* App-wide guard against horizontal scroll on ANY page (including the public
+       order / feedback / auth pages that sit outside .dashboard-content). `clip`
+       prevents sideways scrolling without creating a scroll container, so sticky
+       navbars/filters keep working; scrollable regions (tables) still scroll
+       inside their own overflow-x-auto wrappers. */
+    overflow-x: clip;
     @apply transition-colors duration-300;
   }
 
   body {
     background-color: var(--color-bg-base) !important;
     color: var(--color-text-primary) !important;
+    max-width: 100%;
+    overflow-x: clip;
     @apply antialiased;
   }
 
