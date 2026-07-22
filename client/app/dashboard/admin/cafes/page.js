@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
+import { uploadImageFile } from '@/app/utils/imageUpload';
 import { digitsOnly, sanitizeEmail, sanitizeName, blockNonInteger, blockNegative } from '@/app/utils/inputValidation';
 import {
   Store, Plus, Edit2, Trash2, MapPin, Users, ShieldCheck, X, UserPlus, Image as ImageIcon, Receipt, Mail, Phone, User, CreditCard, Check, ChevronLeft, ChevronRight, Lock, Unlock,
@@ -271,18 +272,18 @@ export default function CafesPage() {
   const togglePerm = (key) => setForm((f) => ({ ...f, adminPermissions: { ...f.adminPermissions, [key]: !f.adminPermissions[key] } }));
 
   // Upload the chosen logo/icon image → store the returned hosted URL in form.logo.
+  // The shared helper compresses large photos and retries a transient failure,
+  // so a cold serverless function no longer means "upload failed, try again".
   const handleLogoFile = async (file) => {
     if (!file) return;
     setUploadingLogo(true);
     const t = toast.loading('Uploading logo…');
     try {
-      const data = new FormData();
-      data.append('image', file);
-      const res = await api.post('/cafes/upload-logo', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setField('logo', res.data.url);
+      const url = await uploadImageFile(file, { endpoint: '/cafes/upload-logo' });
+      setField('logo', url);
       toast.success('Logo uploaded', { id: t });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Logo upload failed', { id: t });
+      toast.error(err.response?.data?.message || err.message || 'Logo upload failed', { id: t });
     } finally {
       setUploadingLogo(false);
     }
@@ -295,13 +296,11 @@ export default function CafesPage() {
     setUploadingImg((u) => ({ ...u, [which]: true }));
     const t = toast.loading('Uploading image…');
     try {
-      const data = new FormData();
-      data.append('image', file);
-      const res = await api.post('/cafes/upload-logo', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setAdmin(field, res.data.url);
+      const url = await uploadImageFile(file, { endpoint: '/cafes/upload-image' });
+      setAdmin(field, url);
       toast.success('Image uploaded', { id: t });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Image upload failed', { id: t });
+      toast.error(err.response?.data?.message || err.message || 'Image upload failed', { id: t });
     } finally {
       setUploadingImg((u) => ({ ...u, [which]: false }));
     }

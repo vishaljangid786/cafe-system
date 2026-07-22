@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/app/services/api';
+import { compressImage, validateImageFile, uploadErrorMessage } from '@/app/utils/imageUpload';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   UserPlus, User, MapPin, Shield, CreditCard,
@@ -295,6 +296,11 @@ export default function AddMemberPage() {
       toast.error('Please upload the Aadhaar card image.');
       return;
     }
+    // Specific type/size feedback before we build the request.
+    const aadhaarErr = validateImageFile(aadharImage);
+    if (aadhaarErr) { toast.error(`Aadhaar image: ${aadhaarErr}`); return; }
+    const profileErr = profileImage && validateImageFile(profileImage);
+    if (profileErr) { toast.error(`Profile photo: ${profileErr}`); return; }
     // A member must be given access to at least one page — no zero-access accounts.
     // (Staff/Chef work from their own fixed menu, so they're exempt.)
     if (selectedPages.length === 0 && !Object.values(permissions).some(Boolean)) {
@@ -320,8 +326,10 @@ export default function AddMemberPage() {
       if (Array.isArray(v)) v.forEach((x) => data.append(k, x));
       else if (v !== '' && v != null) data.append(k, v);
     });
-    if (aadharImage) data.append('aadharImage', aadharImage);
-    if (profileImage) data.append('profileImage', profileImage);
+    // Downscale the phone photos before sending — two raw images are what most
+    // often exceeded Vercel's ~4.5MB serverless body limit and timed out.
+    if (aadharImage) data.append('aadharImage', await compressImage(aadharImage));
+    if (profileImage) data.append('profileImage', await compressImage(profileImage));
     data.append('permissions', JSON.stringify(permissions));
     data.append('allowedPages', JSON.stringify(selectedPages));
     data.append('actionPermissions', JSON.stringify(selectedActions));
@@ -333,7 +341,7 @@ export default function AddMemberPage() {
       toast.success('Member created successfully', { id: loadToast });
       router.push(currentUser?.role === 'branch_admin' ? '/dashboard/branch-admin/staff' : '/dashboard/admin/staff');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not create member. Please check the details.', { id: loadToast });
+      toast.error(uploadErrorMessage(err) || 'Could not create member. Please check the details.', { id: loadToast });
     } finally {
       setSubmitting(false);
     }
@@ -519,13 +527,13 @@ export default function AddMemberPage() {
             <div />
             <Field label={<>Aadhaar Card Image <span className="text-danger">*</span></>}>
               <label className={`group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden ${aadharImage ? 'border-(--color-border)' : 'border-danger/40'}`}>
-                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setAadharImage(e.target.files[0])} />
+                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => { const f = e.target.files[0]; const err = f && validateImageFile(f); if (err) { toast.error(err); e.target.value = ''; return; } setAadharImage(f); }} />
                 {aadharPreview ? <img src={aadharPreview} alt="Aadhaar" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-medium">Upload Aadhaar photo</span></div>}
               </label>
             </Field>
             <Field label={<>Profile Photo <span className="text-(--color-text-muted) normal-case font-medium">(optional)</span></>}>
               <label className="group relative flex items-center justify-center min-h-36 bg-(--color-bg-soft) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
-                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} />
+                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => { const f = e.target.files[0]; const err = f && validateImageFile(f); if (err) { toast.error(err); e.target.value = ''; return; } setProfileImage(f); }} />
                 {profilePreview ? <img src={profilePreview} alt="Profile" className="w-full h-36 object-contain p-2" /> : <div className="flex flex-col items-center text-(--color-text-muted)"><ImageIcon size={28} className="mb-2 group-hover:text-primary" /><span className="text-xs font-medium">Upload profile photo</span></div>}
               </label>
             </Field>

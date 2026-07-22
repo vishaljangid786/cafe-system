@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
+import { compressImage } from '../../../utils/imageUpload';
 import { Coffee, Plus, Check, Users, ShoppingBag, X, Zap, Receipt, Trash2, Edit3, Loader2, Search, Globe, ShieldAlert, MessageSquare, RefreshCcw, QrCode, Package, Store } from 'lucide-react';
 import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
@@ -439,7 +440,8 @@ export default function TablesPage() {
   const handleFinalizeSession = async (file, finalTotal, paymentType = 'CASH') => {
     const loadToast = toast.loading('Saving bill...');
     const data = new FormData();
-    data.append('billImage', file);
+    // Downscale the receipt photo before upload (no-op when there is no file).
+    data.append('billImage', await compressImage(file));
     data.append('paymentType', paymentType);
     if (forceBill) data.append('force', 'true');
     try {

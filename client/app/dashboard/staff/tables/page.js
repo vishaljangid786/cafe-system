@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../../../services/api';
+import { compressImage } from '../../../utils/imageUpload';
 import { Coffee, MapPin, Plus, Zap, ShoppingBag, Receipt, X, Search, Check, Globe, Users, MessageSquare, RefreshCcw, QrCode, Package, Store } from 'lucide-react';
 import { TableQRModal, TableQRBulkModal, BranchQRModal } from '@/app/components/tables/TableQR';
 import PendingApprovals from '@/app/components/orders/PendingApprovals';
@@ -284,7 +285,8 @@ export default function StaffTablesPage() {
     }
 
     const data = new FormData();
-    data.append('billImage', file);
+    // Downscale the receipt photo before upload (no-op when there is no file).
+    data.append('billImage', await compressImage(file));
     data.append('paymentType', paymentType);
     if (forceBill) data.append('force', 'true');
     try {

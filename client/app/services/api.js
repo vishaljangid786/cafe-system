@@ -62,6 +62,20 @@ api.interceptors.request.use((config) => {
       config.headers['x-csrf-token'] = csrfToken;
     }
   }
+
+  // File uploads must not share the 10s default. A photo upload travels
+  // browser → same-origin proxy → API serverless function → Cloudinary, and a
+  // COLD serverless function plus a real photo routinely takes longer than 10s.
+  // When it does, axios aborts and the user sees "upload failed" — then a retry
+  // hits a now-warm function and works, which is exactly the "have to try a few
+  // times" symptom. Give anything carrying a file a much longer budget.
+  const isUpload =
+    (typeof FormData !== 'undefined' && config.data instanceof FormData)
+    || String(config.headers?.['Content-Type'] || '').includes('multipart/form-data');
+  if (isUpload && (config.timeout == null || config.timeout < 60000)) {
+    config.timeout = 60000;
+  }
+
   return config;
 });
 

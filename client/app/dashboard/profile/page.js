@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { compressImage, validateImageFile, uploadErrorMessage } from '../../utils/imageUpload';
 import { blockNonInteger } from '@/app/utils/inputValidation';
 import {
   User as UserIcon, Mail, Phone, MapPin,
@@ -115,7 +116,11 @@ export default function ProfilePage() {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) setPreviewImage(URL.createObjectURL(file));
+    if (!file) return;
+    // Reject an unsupported or oversized photo the moment it's picked.
+    const err = validateImageFile(file);
+    if (err) { toast.error(err); e.target.value = ''; return; }
+    setPreviewImage(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -125,7 +130,10 @@ export default function ProfilePage() {
     try {
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
-      if (fileInputRef.current?.files[0]) data.append('profileImage', fileInputRef.current.files[0]);
+      const picked = fileInputRef.current?.files[0];
+      // Downscale before sending so a phone photo stays well under Vercel's
+      // ~4.5MB serverless body limit and uploads fast.
+      if (picked) data.append('profileImage', await compressImage(picked));
 
       const res = await api.put('/users/update-profile', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -134,7 +142,7 @@ export default function ProfilePage() {
       setIsEditing(false);
       toast.success('Profile updated successfully', { id: loadToast });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+      toast.error(uploadErrorMessage(error) || 'Update failed', { id: loadToast });
     } finally {
       setLoading(false);
     }

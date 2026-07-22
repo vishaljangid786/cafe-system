@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '../services/api';
+import { compressImage, validateImageFile, uploadErrorMessage } from '../utils/imageUpload';
 import {
   UserPlus, User as UserIcon, MapPin, Image as ImageIcon,
   ArrowLeft, Briefcase, GraduationCap, Eye,
@@ -250,6 +251,13 @@ function SignupContent() {
   };
 
   const onSubmit = async (formData) => {
+    // Validate the photos up front with a specific reason (type/size), so a bad
+    // Aadhaar scan is caught instantly instead of after a failed submit.
+    const aadhaarErr = image && validateImageFile(image);
+    if (aadhaarErr) return toast.error(`Aadhaar image: ${aadhaarErr}`);
+    const profileErr = profileImage && validateImageFile(profileImage);
+    if (profileErr) return toast.error(`Profile photo: ${profileErr}`);
+
     const loadToast = toast.loading('Creating account...');
     const data = new FormData();
     Object.keys(formData).forEach(key => {
@@ -258,8 +266,11 @@ function SignupContent() {
         else data.append(key, formData[key]);
       }
     });
-    if (image) data.append('aadharImage', image);
-    if (profileImage) data.append('profileImage', profileImage);
+    // Compress both photos client-side. Aadhaar scans + selfies straight off a
+    // phone are the largest files the app handles, and sending two of them raw
+    // is what most often blew past Vercel's ~4.5MB body limit / the timeout.
+    if (image) data.append('aadharImage', await compressImage(image));
+    if (profileImage) data.append('profileImage', await compressImage(profileImage));
     // An admin/branch-admin creating a member sends the chosen permission set;
     // the backend validates it against what the creator is allowed to grant.
     if (!isSetup) data.append('permissions', JSON.stringify(permissions));
@@ -274,7 +285,7 @@ function SignupContent() {
         router.push(routeForPage(currentUser?.role, 'page_staff'));
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not create account. Please check your details.', { id: loadToast });
+      toast.error(uploadErrorMessage(error) || 'Could not create account. Please check your details.', { id: loadToast });
     }
   };
 
@@ -363,7 +374,7 @@ function SignupContent() {
                     <div className="relative">
                       <div className="h-28 w-28 rounded-xl bg-(--color-surface) border-2 border-dashed border-(--color-border) flex items-center justify-center overflow-hidden transition-colors group-hover:border-primary">
                         {profileImagePreview ? <img src={profileImagePreview} alt="Preview" className="h-full w-full object-cover" /> : <UserIcon size={30} className="text-(--color-text-soft)" />}
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setProfileImage(e.target.files[0])} accept="image/*" />
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => { const f = e.target.files[0]; const err = f && validateImageFile(f); if (err) { toast.error(err); e.target.value = ''; return; } setProfileImage(f); }} accept="image/*" />
                       </div>
                       <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-lg bg-primary text-(--color-on-primary) flex items-center justify-center"><UserPlus size={16} /></div>
                     </div>
@@ -533,7 +544,7 @@ function SignupContent() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-normal text-(--color-text-muted) ml-1">Upload Aadhar Image</label>
                     <div className="group relative flex flex-col items-center justify-center min-h-60 bg-(--color-surface) border-2 border-dashed border-(--color-border) rounded-xl hover:border-primary transition-colors cursor-pointer overflow-hidden">
-                      <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => setImage(e.target.files[0])} accept="image/*" />
+                      <input type="file" className="absolute inset-0 z-10 opacity-0 cursor-pointer" onChange={(e) => { const f = e.target.files[0]; const err = f && validateImageFile(f); if (err) { toast.error(err); e.target.value = ''; return; } setImage(f); }} accept="image/*" />
                       {aadharImagePreview ? <img src={aadharImagePreview} alt="Aadhar" className="w-full h-full object-contain p-4" /> : <div className="flex flex-col items-center"><ImageIcon size={36} className="text-(--color-text-soft) group-hover:text-primary transition-colors mb-3" /><p className="text-sm font-medium text-(--color-text-muted)">Upload Aadhar Photo</p></div>}
                     </div>
                   </div>
