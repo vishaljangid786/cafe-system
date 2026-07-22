@@ -88,7 +88,22 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/auth/profile');
+      // Cold-start resilience: the first serverless request after the API has
+      // gone idle can take much longer than the default 10s timeout (lambda +
+      // Mongo warm-up). Give the boot check a generous timeout and retry transient
+      // network/timeout/5xx failures, so a single slow boot no longer strands the
+      // user on the splash needing a manual reload. A real 401/403 is not retried.
+      let res;
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          res = await api.get('/auth/profile', { timeout: 30000 });
+          break;
+        } catch (err) {
+          const status = err.response?.status;
+          if (status === 401 || status === 403 || attempt >= 3) throw err;
+          await new Promise((r) => setTimeout(r, 600 * attempt));
+        }
+      }
       if (res.data.success) {
         const userData = res.data.data;
         setUser(userData);
@@ -118,8 +133,10 @@ export const AuthProvider = ({ children }) => {
         }
 
         initializeSocket(userData, initialLocation);
-        // Fetch locations only after session is confirmed to avoid unauthenticated API calls.
-        await fetchLocations();
+        // Locations load in the BACKGROUND — the workspace no longer waits on a
+        // second serverless round-trip before it can render. The branch selector
+        // and pages fill in as soon as this resolves.
+        fetchLocations();
       }
     } catch (err) {
       if (err.response?.status !== 401) {
