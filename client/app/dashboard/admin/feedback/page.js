@@ -195,12 +195,6 @@ export default function FeedbackPage() {
                 <button onClick={() => setQrOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-(--color-surface-soft) text-(--color-text-secondary) text-[11px] font-medium tracking-normal rounded-lg border border-(--color-border) hover:text-primary hover:border-primary/30 transition-all" title="Show the QR code">
                   <QrCode size={12} /> Show QR
                 </button>
-                <button onClick={downloadQR} className="flex items-center gap-1.5 px-3 py-2 bg-(--color-surface-soft) text-(--color-text-secondary) text-[11px] font-medium tracking-normal rounded-lg border border-(--color-border) hover:text-primary hover:border-primary/30 transition-all" title="Download the QR as a PNG">
-                  <Download size={12} /> Download
-                </button>
-                <button onClick={printQR} className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary text-[11px] font-medium tracking-normal rounded-lg border border-primary/20 hover:bg-primary hover:text-(--color-on-primary) transition-all" title="Print a QR poster">
-                  <Printer size={12} /> Print
-                </button>
               </div>
             </div>
           </SlideIn>
